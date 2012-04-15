@@ -150,17 +150,11 @@ public class RawChunk
 					if (sections != null)
 					{
 						// Parse as anvil format
-						
-						System.out.println("Chunk is in Anvil format");
-						
 						parseAnvilData(level);
 					}
 					else
 					{
 						// Parse as McRegion format
-						
-						System.out.println("Chunk is in McRegion format");
-						
 						parseMcRegionData(level);
 					}
 					
@@ -292,8 +286,6 @@ public class RawChunk
 			ByteArrayTag blocksTag = NbtUtil.getChild(compound, "Blocks", ByteArrayTag.class);
 			if (blocksTag != null)
 			{
-				System.out.println("blocksTag length: "+blocksTag.getValue().length);
-				
 				for (int x=0; x<SECTION_WIDTH; x++)
 				{
 					for (int y=0; y<SECTION_HEIGHT; y++)
@@ -310,8 +302,6 @@ public class RawChunk
 			ByteArrayTag addTag = NbtUtil.getChild(compound, "Add", ByteArrayTag.class);
 			if (addTag != null)
 			{
-				System.out.println("addTag length: "+addTag.getValue().length);
-				
 				for (int x=0; x<SECTION_WIDTH; x++)
 				{
 					for (int y=0; y<SECTION_HEIGHT; y++)
@@ -329,8 +319,6 @@ public class RawChunk
 			ByteArrayTag dataTag = NbtUtil.getChild(compound, "Data", ByteArrayTag.class);
 			if (dataTag != null)
 			{
-				System.out.println("dataTag length: "+dataTag.getValue().length);
-				
 				for (int x=0; x<SECTION_WIDTH; x++)
 				{
 					for (int y=0; y<SECTION_HEIGHT; y++)
@@ -347,8 +335,6 @@ public class RawChunk
 			ByteArrayTag skylightTag = NbtUtil.getChild(compound, "SkyLight", ByteArrayTag.class);
 			if (skylightTag != null)
 			{
-				System.out.println("skylightTag length: "+skylightTag.getValue().length);
-				
 				for (int x=0; x<SECTION_WIDTH; x++)
 				{
 					for (int y=0; y<SECTION_HEIGHT; y++)
@@ -365,8 +351,6 @@ public class RawChunk
 			ByteArrayTag blocklightTag = NbtUtil.getChild(compound, "BlockLight", ByteArrayTag.class);
 			if (blocklightTag != null)
 			{
-				System.out.println("blocklightTag length: "+blocklightTag.getValue().length);
-				
 				for (int x=0; x<SECTION_WIDTH; x++)
 				{
 					for (int y=0; y<SECTION_HEIGHT; y++)
@@ -379,17 +363,12 @@ public class RawChunk
 					}
 				}
 			}
-			
-			System.out.println();
 		}
 		
 		// Parse "Biomes" data (16x16)
 		ByteArrayTag biomeDataTag = NbtUtil.getChild(level, "Biomes", ByteArrayTag.class);
 		if (biomeDataTag != null)
 		{
-			System.out.println("biomeDataTag length: "+biomeDataTag.getValue().length);
-			System.out.println("Per element:"+(biomeDataTag.getValue().length / 16 / 16));
-			
 			biomes = new byte[SECTION_WIDTH][SECTION_DEPTH];
 			
 			for (int x=0; x<SECTION_WIDTH; x++)
