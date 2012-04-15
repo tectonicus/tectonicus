@@ -2,6 +2,8 @@
 
 <project name="Tectonicus" default="BuildCopyUpload" basedir=".">
 	
+	<property file="user.properties"/>
+	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
 	<property name="Version"			value="2.08" />
@@ -138,13 +140,13 @@
 	<target name="Upload">
 		
 		<gcupload	projectname="tectonicus"
-					username="googleuser"
-					password="secretpassword"
+					username="${googlecode.username}"
+					password="${googlecode.password}"
 					filename="${FactoryFloor}/Tectonicus_v${Version}.zip"
 					targetfilename="Tectonicus_v${Version}.zip"
 					summary="Tectonicus v${Version}"
-					labels="Featured, Type-Package, OpSys-All"
-					verbose="yes"
+					labels="Featured, Type-Executable, OpSys-All"
+					verbose="true"
 		/>
 		
 	</target>
