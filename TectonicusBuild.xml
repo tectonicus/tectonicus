@@ -27,19 +27,26 @@
 	
 	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CopyToServerProject, Upload" />
 	
+	<!--
 	<target name="UpdateBiomeExtractorJar">
 		<copy file="../BiomeExtractor/Dist/BiomeExtractor.jar" todir="${Jars}" />
 	</target>
+	-->
 	
 	<target name="Compile">
 		<mkdir dir="${FactoryFloor}"/>
 		<mkdir dir="${FactoryFloor}/Binary"/>
 		
-		<!-- todo: compile jnbt -->
-		<javac srcdir="../Jnbt/Source" destdir="${FactoryFloor}/Binary" source="1.5" target="1.5" />
-		
-		<javac srcdir="${Source}" destdir="${FactoryFloor}/Binary" source="1.5" target="1.5" classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/dzzd.jar" debug="true" debuglevel="lines,source" verbose="false" >
-		</javac>
+		<javac srcdir="${Source}"
+				destdir="${FactoryFloor}/Binary"
+				source="1.5"
+				target="1.5"
+				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/dzzd.jar;${Jars}/jnbt.jar"
+				debug="true"
+				debuglevel="lines,source"
+				verbose="false"
+				includeantruntime="false"
+		/>
 	</target>
 	
 	<!-- Create a single, unified jar for the whole project -->
@@ -177,7 +184,12 @@
 		<mkdir dir="${FactoryFloor}"/>
 		<mkdir dir="${FactoryFloor}/JsonBinary"/>
 		
-		<javac srcdir="${Libs}/Json/src" destdir="${FactoryFloor}/JsonBinary" source="1.5" target="1.5" />
+		<javac srcdir="${Libs}/Json/src"
+				destdir="${FactoryFloor}/JsonBinary"
+				source="1.5"
+				target="1.5"
+				includeantruntime="false"
+		/>
 		
 		<jar destfile="${FactoryFloor}/json.jar" basedir="${FactoryFloor}/JsonBinary">
 		</jar>
