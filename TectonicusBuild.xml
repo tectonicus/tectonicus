@@ -4,7 +4,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.07" />
+	<property name="Version"			value="2.08" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -19,19 +19,17 @@
 	<!--
 	<taskdef name="jsmoothgen" classname="net.charabia.jsmoothgen.ant.JSmoothGen" />
 	-->
+	<taskdef name="gcupload"
+			 classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask"
+			 classpath="${Libs}/ant-googlecode-0.0.3/ant-googlecode-0.0.3.jar"
+	/>
 	
 	<target name="CleanBuild">
 		<delete failonerror="false" dir="${FactoryFloor}" />
 		<delete failonerror="false" file="TectonicusLog.txt" />
 	</target>
 	
-	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CopyToServerProject, Upload" />
-	
-	<!--
-	<target name="UpdateBiomeExtractorJar">
-		<copy file="../BiomeExtractor/Dist/BiomeExtractor.jar" todir="${Jars}" />
-	</target>
-	-->
+	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CreatePackage, Upload" />
 	
 	<target name="Compile">
 		<mkdir dir="${FactoryFloor}"/>
@@ -98,13 +96,17 @@
 	</target>
 	
 	
-	<target name="CopyToServerProject">
+	<target name="CreatePackage">
 		
-		<delete includeemptydirs="true" failonerror="true">
-			<fileset file="../Pickaxe/Tools/Tectonicus.jar"/>
-		</delete>
+		<!-- Remove any existing package -->
+		<delete failonerror="false" file="${FactoryFloor}/Tectonicus_v${Version}.zip" />
 		
-		<copy tofile="../Pickaxe/Tools/Tectonicus.jar" file="${FactoryFloor}/Tectonicus_v${Version}.jar"/>
+		<!-- Create the final package with the jar + example files -->
+		<zip destfile="${FactoryFloor}/Tectonicus_v${Version}.zip" >
+			<fileset file="${FactoryFloor}/Tectonicus_v${Version}.jar" />
+			<fileset file="${Docs}/exampleConfig.xml" />
+			<fileset file="${Data}/defaultBlockConfig.xml" />
+		</zip>
 		
 	</target>
 	
@@ -134,43 +136,17 @@
 	</target>
 	
 	<target name="Upload">
-		<!-- Disabled because this needs to be re-written for google code -->
-		<!--
-		<ftp 	server="triangularpixels.com"
-				userid="jcampbell"
-				password="*********"
-				remotedir="/home/jcampbell/webapps/static/Tectonicus"
-				verbose="yes"
-				passive="yes">
-			
-			<fileset file="${FactoryFloor}/Tectonicus_v${Version}.jar" />
-		</ftp>
 		
-		<copy file="${FactoryFloor}/Tectonicus_v${Version}.jar"
-				tofile="${FactoryFloor}/Tectonicus.jar"
+		<gcupload	projectname="tectonicus"
+					username="googleuser"
+					password="secretpassword"
+					filename="${FactoryFloor}/Tectonicus_v${Version}.zip"
+					targetfilename="Tectonicus_v${Version}.zip"
+					summary="Tectonicus v${Version}"
+					labels="Featured, Type-Package, OpSys-All"
+					verbose="yes"
 		/>
 		
-		<copy file="../BiomeExtractor/Dist/BiomeExtractor.jar" todir="${Jars}" />
-		<ftp 	server="triangularpixels.com"
-						userid="jcampbell"
-						password="*********"
-						remotedir="/home/jcampbell/webapps/static/Tectonicus"
-						verbose="yes"
-						passive="yes">
-					
-			<fileset file="${FactoryFloor}/Tectonicus.jar" />
-		</ftp>
-		<ftp 	server="triangularpixels.com"
-								userid="jcampbell"
-								password="*********"
-								remotedir="/home/jcampbell/webapps/static/Tectonicus"
-								verbose="yes"
-								passive="yes">
-							
-			<fileset file="${Docs}/exampleConfig.xml" />
-			<fileset file="${Data}/defaultBlockConfig.xml" />
-		</ftp>
-		-->
 	</target>
 	
 	<target name="MakeExe">

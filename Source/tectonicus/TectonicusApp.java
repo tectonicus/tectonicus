@@ -807,7 +807,9 @@ import tectonicus.world.World;
 
 // v2.07
 
+// - added Anvil map format support
 
+// v2.08
 
 // TODO: Remove Wool and any other block types made redundant by new id:data syntax
 

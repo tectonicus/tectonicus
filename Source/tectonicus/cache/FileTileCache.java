@@ -61,7 +61,7 @@ import tectonicus.world.World;
 public class FileTileCache implements TileCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
-	private static final int RENDERER_VERSION = 14;
+	private static final int RENDERER_VERSION = 15;
 	
 	private final File tileCacheDir;
 	
