@@ -1,0 +1,304 @@
+<blockConfig version="1">
+
+	<!-- This doesn't have to be in numeric block order, but it's a lot easier to follow if it is -->
+	
+	<Air id="0" name="Air" />
+	
+	<!--
+	terrain indexed by 16x16 tile
+	<Solid id="1" name="Stone" texture="terrain[1, 0]" />
+	
+	terrain indexed by pixel coord
+	<Solid id="1" name="Stone" texture="terrain[0, 0, 8, 8]" />
+	
+	custom image
+	<Solid id="1" name="Stone" texture="custom/file.png" />
+
+	subsection in custom image	
+	<Solid id="1" name="Stone" texture="custom/sheet.png[1, 1]" />
+	-->
+	
+	<Solid id="1" name="Stone" texture="terrain[1, 0]" />
+	
+	<Grass id="2" name="Grass" dirtSide="terrain[3, 0]" grassSide="terrain[6, 2]" snowSide="terrain[4, 4]" top="terrain[0, 0]" bottom="terrain[2, 0]" />
+	
+	<Solid id="3" name="Dirt" texture="terrain[2, 0]" />
+	
+	<Solid id="4" name="Cobblestone" texture="terrain[0, 1]" />
+	
+	<Solid id="5" name="Wood" texture="terrain[4, 0]" />
+	
+	<Sapling id="6" name="Sapling" normal="terrain[15, 0]" spruce="terrain[15, 3]" birch="terrain[15, 4]" />
+	
+	<Solid id="7" name="Adamantium" texture="terrain[1, 1]" />
+	
+	<Water id="8" name="Water" texture="terrain[15, 12]" />
+	
+	<Water id="9" name="Water" texture="terrain[15, 12]" />
+	
+	<Solid id="10" name="Lava" texture="terrain[15, 15]" />	
+	
+	<Solid id="11" name="Lava" texture="terrain[15, 15]" />
+	
+	<Solid id="12" name="Sand" texture="terrain[2, 1]" />
+	
+	<Solid id="13" name="Gravel" texture="terrain[3, 1]" />
+	
+	<Solid id="14" name="Gold Ore" texture="terrain[0, 2]" />
+	
+	<Solid id="15" name="Iron Ore" texture="terrain[1, 2]" />
+	
+	<Solid id="16" name="Coal Ore" texture="terrain[2, 2]" />
+	
+	<Log id="17" name="Log" normal="terrain[4, 1]" spruce="terrain[4, 7]" birch="terrain[5, 7]" top="terrain[5, 1]" />
+	
+	<Leaves id="18" name="Leaves" normal="terrain[4, 3]" spruce="terrain[5, 8]" birch="terrain[4, 8]" />
+
+	<Solid id="19" name="Sponge" texture="terrain[0, 3]" />
+	
+	<Glass id="20" name="Glass" texture="terrain[1, 3]" />
+	
+	<Solid id="21" name="Lapis Lazuli Ore" texture="terrain[0, 10]" />
+	
+	<Solid id="22" name="Lapis Lazuli Block" texture="terrain[0, 9]" />
+	
+	<Dispenser id="23" name="Dispenser" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[14, 2]" />
+	
+	<Solid id="24" name="Sandstone" side="terrain[0, 12]" top="terrain[0, 11]" />
+	
+	<Solid id="25" name="Note Block" texture="terrain[10, 4]" />
+	
+	<Bed id="26" name="Bed"	headTop="terrain[7, 8]" footTop="terrain[6, 8]"
+				headSide="terrain[8, 9]" footSide="terrain[5, 9]"
+				headEdge="terrain[7, 9]" footEdge="terrain[6, 9]" />
+	
+	<MinecartTracks id="27" name="Powered rails" straight="terrain[3, 10]" corner="terrain[3, 10]" powered="terrain[3, 11]" isStraightOnly="true" />
+
+	<MinecartTracks id="28" name="Detector rails" straight="terrain[3, 12]" corner="terrain[3, 12]" powered="terrain[3, 12]" isStraightOnly="true" />
+	
+	<PistonBase id="29" name="Sticky Piston" side="terrain[12, 6]" top="terrain[14, 6]" bottom="terrain[13, 6]" pistonFace="terrain[10, 6]" />
+	
+	<Plant id="30" name="Web" texture="terrain[11, 0]" />
+	
+	<TallGrass id="31" name="Tall Grass" dead="terrain[7, 3]" tall="terrain[7, 2]" fern="terrain[8, 3]" />
+	
+	<Plant id="32" name="Dead Shrub" texture="terrain[7, 3]" />
+	
+	<PistonBase id="33" name="Piston" side="terrain[12, 6]" top="terrain[14, 6]" bottom="terrain[13, 6]" pistonFace="terrain[11, 6]" />
+	
+	<PistonExtension id="34" name="Piston Extension" edge="terrain[12, 6]" normalFace="terrain[11, 6]" stickyFace="terrain[10, 6]" />
+	
+	<!-- Various wool colours -->
+	
+	<Solid id="35:0" name="White wool"  texture="terrain[0, 4]" />
+	<Solid id="35:1" name="Orange wool"  texture="terrain[2, 13]" />
+	<Solid id="35:2" name="Magenta wool"  texture="terrain[2, 12]" />
+	<Solid id="35:3" name="Light blue wool"  texture="terrain[2, 11]" />
+	<Solid id="35:4" name="Yellow wool"  texture="terrain[2, 10]" />
+	<Solid id="35:5" name="Light green wool"  texture="terrain[2, 9]" />
+	<Solid id="35:6" name="Pink wool"  texture="terrain[2, 8]" />
+	<Solid id="35:7" name="Grey wool"  texture="terrain[2, 7]" />
+	<Solid id="35:8" name="Light grey wool"  texture="terrain[1, 14]" />
+	<Solid id="35:9" name="Cyan wool"  texture="terrain[1, 13]" />
+	<Solid id="35:10" name="Purple wool"  texture="terrain[1, 12]" />
+	<Solid id="35:11" name="Blue wool"  texture="terrain[1, 11]" />
+	<Solid id="35:12" name="Brown wool"  texture="terrain[1, 10]" />
+	<Solid id="35:13" name="Dark green wool"  texture="terrain[1, 9]" />
+	<Solid id="35:14" name="Red wool"  texture="terrain[1, 8]" />
+	<Solid id="35:15" name="Black wool"  texture="terrain[1, 7]" />
+	
+	<!-- id 36 block moved by piston (not needed) -->
+	
+	<Plant id="37" name="Yellow Flower" texture="terrain[13, 0]" />
+	
+	<Plant id="38" name="Red Flower" texture="terrain[12, 0]" />
+	
+	<Plant id="39" name="Brown Mushroom" texture="terrain[13, 1]" />
+	
+	<Plant id="40" name="Red Mushroom" texture="terrain[12, 1]" />
+	
+	<Solid id="41" name="Gold Block" texture="terrain[7, 1]" />
+	
+	<Solid id="42" name="Iron Block" texture="terrain[6, 1]" />
+	
+	<DoubleSlab id="43" name="Double Slab"	stoneSide="terrain[5, 0]" stoneTop="terrain[6, 0]"
+						sandSide="terrain[0, 12]" sandTop="terrain[0, 11]"
+						woodenSide="terrain[4, 0]" woodenTop="terrain[4, 0]"
+						cobblestoneSide="terrain[0, 1]" cobblestoneTop="terrain[0, 1]"
+						brickSide="terrain[7, 0]" brickTop="terrain[7, 0]"
+						stoneBrickSide="terrain[6, 3]" stoneBrickTop="terrain[6, 3]"
+						/>
+	
+	<Slab id="44" name="Slab"	stoneSide="terrain[5, 0]" stoneTop="terrain[6, 0]"
+					sandSide="terrain[0, 12]" sandTop="terrain[0, 11]"
+					woodenSide="terrain[4, 0]" woodenTop="terrain[4, 0]"
+					cobblestoneSide="terrain[0, 1]" cobblestoneTop="terrain[0, 1]"
+					brickSide="terrain[7, 0]" brickTop="terrain[7, 0]"
+					stoneBrickSide="terrain[6, 3]" stoneBrickTop="terrain[6, 3]"
+					/>
+
+	<Solid id="45" name="Brick" texture="terrain[7, 0]" />
+	
+	<Solid id="46" name="TNT" side="terrain[8, 0]" top="terrain[9, 0]" />
+	
+	<Solid id="47" name="Bookshelf" side="terrain[3, 2]" top="terrain[4, 0]" />
+	
+	<Solid id="48" name="Mossy Cobblestone" texture="terrain[4, 2]" />
+	
+	<Solid id="49" name="Obsidian" texture="terrain[5, 2]" />
+	
+	<Torch id="50" name="Torch" texture="terrain[0, 5]" />
+	
+	<Fire id="51" name="Fire" texture="Images/Fire.png" />
+	
+	<Solid id="52" name="Mob Spawner" texture="terrain[1, 4]" alphaTest="true" />
+	
+	<Stairs id="53" name="WoodenStairs" texture="terrain[4, 0]" />
+
+	<Chest id="54" name="Chest" top="terrain[9, 1]" side="terrain[10, 1]" front="terrain[11, 1]"	
+					doubleSideLeft="terrain[9, 3]" doubleSideRight="terrain[10, 3]"
+					doubleFrontLeft="terrain[9, 2]" doubleFrontRight="terrain[10, 2]" />
+
+	<RedstoneWire id="55" name="Redstone Wire" offJunction="terrain[4, 10]" onJunction="terrain[4, 10]" offLine="terrain[5, 10]" onLine="terrain[5, 10]" />
+
+	<Solid id="56" name="Diamond Ore" texture="terrain[2, 3]" />
+	
+	<Solid id="57" name="Diamond Block" texture="terrain[8, 1]" />
+	
+	<Workbench id="58" name="Workbench" top="terrain[11, 2]" side1="terrain[11, 3]" side2="terrain[12, 3]" />
+	
+	<Wheat id="59" name="Wheat" tex0="terrain[8, 5]" tex1="terrain[9, 5]" tex2="terrain[10, 5]" tex3="terrain[11, 5]" tex4="terrain[12, 5]" tex5="terrain[13, 5]" tex6="terrain[14, 5]" tex7="terrain[15, 5]" />
+	
+	<Soil id="60" name="Soil" top="terrain[7, 5]" side="terrain[2, 0]" />
+	
+	<Furnace id="61" name="Furnace" top="terrain[1, 0]" side="terrain[13, 2]" front="terrain[12, 2]" />
+	
+	<Furnace id="62" name="Furnace" top="terrain[1, 0]" side="terrain[13, 2]" front="terrain[13, 3]" />
+	
+	<Sign id="63" name="Sign Post" texture="terrain[4, 0]" hasPost="true" />
+	
+	<Door id="64" name="Wooden Door" top="terrain[1, 5]" bottom="terrain[1, 6]" />
+	
+	<Ladder id="65" name="Ladder" texture="terrain[3, 5]" />
+	
+	<MinecartTracks id="66" name="Rails" straight="terrain[0, 8]" corner="terrain[0, 7]" powered="terrain[0, 8]" isStraightOnly="false" />
+	
+	<Stairs id="67" name="Cobblestone Stairs" texture="terrain[0, 1]" />
+	
+	<Sign id="68" name="Wall Sign" texture="terrain[4, 0]" />
+
+	<!-- 69 is lever -->
+	
+	<PressurePlate id="70" name="Stone Pressure Plate" texture="terrain[1, 0]" />
+
+	<Door id="71" name="Iron Door" top="terrain[2, 5]" bottom="terrain[2, 6]" />
+	
+	<PressurePlate id="72" name="Wooden Pressure Plate" texture="terrain[4, 0]" />
+	
+	<Solid id="73" name="Redstone Ore" texture="terrain[3, 3]" />
+
+	<Solid id="74" name="Redstone Ore" texture="terrain[3, 3]" />
+
+	<Torch id="75" name="Redstone Torch" texture="terrain[3, 7]" />
+	
+	<Torch id="76" name="Redstone Torch" texture="terrain[3, 6]" />
+	
+	<Button id="77" name="Stone Button" texture="terrain[1, 0]" />
+	
+	<Snow id="78" name="Snow" texture="terrain[2, 4]" />
+	
+	<Ice id="79" name="Ice" texture="terrain[3, 4]" />
+	
+	<Solid id="80" name="Snow Block" texture="terrain[2, 4]" />
+
+	<Cactus id="81" name="Cactus" side="terrain[6, 4]" top="terrain[5, 4]" />
+	
+	<Solid id="82" name="Clay" texture="terrain[8, 4]" />
+	
+	<Plant id="83" name="Sugar Canes" texture="terrain[9, 4]" />
+	
+	<Solid id="84" name="Jukebox" side="terrain[10, 4]" top="terrain[11, 4]" />
+	
+	<Fence id="85" name="Fence" texture="terrain[4, 0]" />
+
+	<Pumpkin id="86" name="Pumpkin" top="terrain[6, 6]" side="terrain[6, 7]" front="terrain[7, 7]" />
+	
+	<Solid id="87" name="Netherstone" texture="terrain[7, 6]" />
+	
+	<Solid id="88" name="Slow Sand" texture="terrain[8, 6]" />
+	
+	<Solid id="89" name="Lightstone" texture="terrain[9, 6]" />
+	
+	<Portal id="90" name="Portal" texture="Images/Portal.png" />
+
+	<Pumpkin id="91" name="Jack-o-lantern" top="terrain[6, 6]" side="terrain[6, 7]" front="terrain[8, 7]" />
+	
+	<Cake id="92" name="Cake" top="terrain[9, 7]" side="terrain[10, 7]" interior="terrain[11, 7]" />
+
+	<RedstoneRepeater id="93" name="Redstone Repeater" base="terrain[3, 8]" side="terrain[6, 0]" torch="terrain[3, 7]" />
+	
+	<RedstoneRepeater id="94" name="Redstone Repeater" base="terrain[3, 9]" side="terrain[6, 0]" torch="terrain[3, 6]" />
+	
+	<Chest id="95" name="Locked Chest" top="terrain[9, 1]" side="terrain[10, 1]" front="terrain[11, 1]"	
+					doubleSideLeft="terrain[9, 3]" doubleSideRight="terrain[10, 3]"
+					doubleFrontLeft="terrain[9, 2]" doubleFrontRight="terrain[10, 2]" />
+	
+	<!-- id 96 trapdoor -->
+	
+	<DataSolid id="97" name="Hidden Silverfish"	side0="terrain[1, 0]" top0="terrain[1, 0]"
+							side1="terrain[0, 1]" top1="terrain[0, 1]"
+							side2="terrain[6, 3]" top2="terrain[6, 3]" />
+	
+	<DataSolid id="98" name="Stone Brick" 	side0="terrain[6, 3]" top0="terrain[6, 3]"
+						side1="terrain[4, 6]" top1="terrain[4, 6]"
+						side2="terrain[5, 6]" top2="terrain[5, 6]" />
+	
+	<HugeMushroom id="99" name="Huge Brown Mushroom" cap="terrain[14, 7]" pores="terrain[14, 8]" stem="terrain[13, 8]" />
+	
+	<HugeMushroom id="100" name="Huge Red Mushroom" cap="terrain[13, 7]" pores="terrain[14, 8]" stem="terrain[13, 8]" />
+	
+	<GlassPane id="101" name="Iron Bar" texture="terrain[5, 5]" />
+	
+	<GlassPane id="102" name="Glass Pane" texture="terrain[1, 3]" />
+	
+	<Solid id="103" name="Melon" side="terrain[8, 8]" top="terrain[9, 8]" />
+	
+	<FruitStem id="104" name="Pumpkin Stem" growingStem="terrain[15, 6]" bentStem="terrain[15, 7]" fruitId="86" />
+	
+	<FruitStem id="105" name="Melon Stem" growingStem="terrain[15, 6]" bentStem="terrain[15, 7]" fruitId="103" />
+	
+	<Vines id="106" name="Vines" texture="terrain[15, 8]" />
+	
+	<!-- id 107 fence gate -->
+	
+	<Stairs id="108" name="Brick Stairs" texture="terrain[7, 0]" />
+	
+	<Stairs id="109" name="Stone Brick Stairs" texture="terrain[6, 3]" />	
+	
+	<Solid id="110" name="Mycelium" side="terrain[13, 4]" top="terrain[14, 4]" />
+	
+	<Lilly id="111" name="Lilly Pad" texture="terrain[12, 4]" />
+	
+	<Solid id="112" name="Nether Brick" texture="terrain[0, 14]" />
+	
+	<Fence id="113" name="Nether Brick Fence" texture="terrain[0, 14]" />
+	
+	<Stairs id="114" name="Nether Brick Stairs" texture="terrain[0, 14]" />
+	
+	<NetherWart id="115" name="Nether Wart" texture0="terrain[2, 14]" texture1="terrain[3, 14]" texture2="terrain[4, 14]" />
+	
+	<EnchantmentTable id="116" name="Enchantment Table" top="terrain[6, 10]" side="terrain[6, 11]" bottom="terrain[7, 10]" />
+	
+	<BrewingStand id="117" name="Brewing Stand" base="terrain[12, 9]" stand="terrain[13, 9]" />
+	
+	<Cauldron id="118" name="Cauldron" top="terrain[10, 8]" side="terrain[10, 9]" bottom="terrain[11, 8]" water="terrain[15, 12]" />
+	
+	<EnderPortal id="119" name="EnderPortal" texture="Images/EnderPortal.png" />
+	
+	<EnderPortalFrame id="120" name="End Portal Frame" top="terrain[14, 9]" side="terrain[15, 9]" bottom="terrain[15, 10]" eye="terrain[14, 10]" />
+	
+	<Solid id="121" name="End Stone" texture="terrain[15, 10]" />
+	
+	<DragonEgg id="122" name="Dragon Egg" texture="terrain[7, 10]" />
+	
+</blockConfig>

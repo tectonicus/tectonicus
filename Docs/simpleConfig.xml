@@ -1,0 +1,28 @@
+<tectonicus>
+
+	<config mode = "cmd"
+			worldDir = "/Users/xxx/Pickaxe/World/world"
+			outputDir = "/Users/xxx/TectonicusTests/TestRender"
+			outputHtmlName = "map.html"
+	>
+	</config>
+	
+	<!-- A generated map layer -->
+	<layer	dimension = "terra"
+			cameraAngle = "45"
+			cameraElevation = "45"
+			imageFormat = "png"
+			lighting = "day"
+			
+			numZoomLevels = "8"
+			closestZoomSize = "12">
+			
+			<!-- Markers to display on this layer -->
+			<signs filter="special" initiallyVisible="true" />
+			<players filter="all" initiallyVisible="true" />
+			<portals filter="all" initiallyVisible="true" />
+			<spawn show="true" intiallyVisible="true" />
+			<beds initiallyVisible="true" />
+	</layer>
+	
+</tectonicus>

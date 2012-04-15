@@ -1,0 +1,62 @@
+<tectonicus>
+
+	<config mode = "cmd / gui / interactive / help"
+			worldDir = "dir path"
+			outputDir = "dir path"
+			
+			outputHtmlName = "map.html"
+			minecraftJar = "file path or optional"
+			texturePack = "file path or optional"
+			
+			numDownsampleThreads = "N"
+			eraseOutputDir = "true / false"
+			useCache = "true / false"
+			cacheDir = "dir path"
+			logFile = "file path"
+	>
+	</config>
+	
+	<!-- Rasteriser config applies to all layers -->
+	<rasteriser type="lwjgl / processing / raster"
+				colourDepth="N"
+				alphaBits="N"
+				numSamples="N"
+				tileSize = "64-2048"
+		>
+	</rasteriser>
+	
+	<!-- A generated map layer -->
+	<layer	dimension = "terra / nether"
+			cameraAngle = "N"
+			cameraElevation = "N"
+			imageFormat = "png / jgp / gif"
+			imageCompressionLevel = "%age"
+			lighting = "day / night / cave / none"
+			useBiomeColours = "true / false"
+			
+			numZoomLevels = "N"
+			closestZoomSize = "N"
+			>
+			<!-- Markers to display on this layer -->
+			<signs filter="special" initiallyVisible="true" />
+			<players filter="all" playerFilterFile="file path" initiallyVisible="true" />
+			<portals filter="all" />
+			<spawn show="true" intiallyVisible="true" />
+			<beds initiallyVisible="true" />
+	</layer>
+	
+	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
+	<tweeks
+		extractLwjglNatives = "true / false"
+		forceLoadAwt = "true / false"
+		force32BitNatives = "true / false"
+		force64BitNatives = "true / false"
+	>
+	</tweeks>
+	
+	<!-- Debug options, you shouldn't need to tinker with these -->
+	<debug maxTiles = "N"
+	>
+	</debug>
+	
+</tectonicus>

@@ -1,0 +1,75 @@
+<tectonicus>
+
+	<config mode = "cmd"
+			worldDir = "/Users/xxx/Pickaxe/World/world"
+			outputDir = "/Users/xxx/TectonicusTests/TestRender"
+			
+			outputHtmlName = "map.html"
+			minecraftJar = "/Users/xxx/Library/Application Support/minecraft/bin/minecraft.jar"
+			texturePack = "/Users/xxx/Texture pack.jar"
+			
+			numDownsampleThreads = "2"
+			eraseOutputDir = "false"
+			useCache = "true"
+			cacheDir = "/Users/xxx/TectonicusTests/TestRender/cache"
+			logFile = "/Users/xxx/TectonicusTests/TestRender/TectonicusLog.txt"
+	>
+	</config>
+	
+	<!-- Rasteriser config applies to all layers -->
+	<rasteriser type = "lwjgl"
+				colourDepth = "32"
+				alphaBits = "8"
+				numSamples = "4"
+				tileSize = "512"
+		>
+	</rasteriser>
+	
+	<!-- A generated map layer -->
+	<layer	dimension = "terra"
+			renderStyle = "normal"
+			cameraAngle = "45"
+			cameraElevation = "45"
+			imageFormat = "png"
+			imageCompressionLevel = "1.0"
+			lighting = "day"
+			useBiomeColours = "true"
+			
+			singlePlayerName="YourPlayerNameHere"
+						
+			numZoomLevels = "8"
+			closestZoomSize = "12"
+			
+			useDefaultBlocks="true"
+			customBlocks="/Users/xxx/TectonicusTests/customBlocks.xml"
+			>
+			
+			<!-- Markers to display on this layer -->
+			<signs filter="special" initiallyVisible="true" />
+			<players filter="all" playerFilterFile="/Users/xxx/TectonicusTests/players.txt" initiallyVisible="true" />
+			<portals filter="all" initiallyVisible="true" />
+			<spawn show="true" intiallyVisible="true" />
+			<beds initiallyVisible="true" />
+			
+			<!-- Limit world rendering to a sub region. Optional, omit for the full world -->
+			<subset>
+				<!-- Radius is in world units. Remove 'origin' to center around the spawn point -->
+				<CircularSubset origin="0, 0" radius="1000" />
+			</subset>
+	</layer>
+	
+	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
+	<tweeks
+		extractLwjglNatives = "true"
+		forceLoadAwt = "false"
+		force32BitNatives = "false"
+		force64BitNatives = "false"
+	>
+	</tweeks>
+	
+	<!-- Debug options, you shouldn't need to tinker with these -->
+	<debug maxTiles = "-1"
+	>
+	</debug>
+	
+</tectonicus>

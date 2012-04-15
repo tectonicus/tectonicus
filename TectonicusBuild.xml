@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Tectonicus" default="BuildCopyUpload" basedir=".">
+	
+	<property name="ProjectName" 		value="Tectonicus" />
+	
+	<property name="Version"			value="2.07" />
+	
+	<property name="Source"				location="Source" />
+	<property name="Data"				location="Data" />
+	<property name="Binary"				location="Binary" />
+	<property name="Dist"				location="Dist" />
+	<property name="Docs"				location="Docs" />
+	<property name="Exe"				location="${Dist}/Exe" />
+	<property name="Libs"				location="Libs" />
+	<property name="Jars"				location="${Libs}/Jars" />
+	<property name="FactoryFloor"		location="${Dist}/FactoryFloor"/>
+	
+	<!--
+	<taskdef name="jsmoothgen" classname="net.charabia.jsmoothgen.ant.JSmoothGen" />
+	-->
+	
+	<target name="CleanBuild">
+		<delete failonerror="false" dir="${FactoryFloor}" />
+		<delete failonerror="false" file="TectonicusLog.txt" />
+	</target>
+	
+	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CopyToServerProject, Upload" />
+	
+	<target name="UpdateBiomeExtractorJar">
+		<copy file="../BiomeExtractor/Dist/BiomeExtractor.jar" todir="${Jars}" />
+	</target>
+	
+	<target name="Compile">
+		<mkdir dir="${FactoryFloor}"/>
+		<mkdir dir="${FactoryFloor}/Binary"/>
+		
+		<!-- todo: compile jnbt -->
+		<javac srcdir="../Jnbt/Source" destdir="${FactoryFloor}/Binary" source="1.5" target="1.5" />
+		
+		<javac srcdir="${Source}" destdir="${FactoryFloor}/Binary" source="1.5" target="1.5" classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/dzzd.jar" debug="true" debuglevel="lines,source" verbose="false" >
+		</javac>
+	</target>
+	
+	<!-- Create a single, unified jar for the whole project -->
+	<target name="CreateSingleJar" depends="CleanBuild, Compile, ExportBuildInfo" >
+			
+		<mkdir dir="${FactoryFloor}"/>
+		<mkdir dir="${FactoryFloor}/Temp"/>
+		
+		<!-- Copy compiled code from Temp -->
+		<copy toDir="${FactoryFloor}/Temp" >
+			<fileset dir="${FactoryFloor}/Binary"/>
+		</copy>
+		
+		<!-- Copy build info from Binary -->
+		<copy toDir="${FactoryFloor}/Temp" file="${Binary}/tectonicus.buildInfo" />
+		
+		<!-- Copy resources -->
+		<copy toDir="${FactoryFloor}/Temp">
+			<fileset dir="${Data}"/>
+		</copy>
+		
+		<!-- Unjar our libraries (lwjgl, jnbt) -->
+		<unjar src="${Jars}/lwjgl.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/lwjgl_util.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/ProcessingCore.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/json.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/jpct.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/dzzd.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/BiomeExtractor.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<!-- Create the unified jar -->
+		<jar destfile="${FactoryFloor}/Tectonicus_v${Version}.jar" basedir="${FactoryFloor}/Temp">
+			<manifest>
+				<attribute name="Main-Class" value="tectonicus.TectonicusApp"/>
+			</manifest>
+		</jar>
+		
+		<!-- Cleanup -->
+		<delete includeemptydirs="true" failonerror="true">
+			<fileset dir="${FactoryFloor}/Temp" includes="**/*" />
+		</delete>
+		<delete dir="${FactoryFloor}/Temp" includeemptydirs="true" />
+	</target>
+	
+	
+	<target name="CopyToServerProject">
+		
+		<delete includeemptydirs="true" failonerror="true">
+			<fileset file="../Pickaxe/Tools/Tectonicus.jar"/>
+		</delete>
+		
+		<copy tofile="../Pickaxe/Tools/Tectonicus.jar" file="${FactoryFloor}/Tectonicus_v${Version}.jar"/>
+		
+	</target>
+	
+	<target name="ExportBuildInfo" >
+		
+		<exec dir="." executable="svnversion" output="build.number" searchpath="true" failifexecutionfails="false">
+			<arg value="-n" />
+		</exec>
+		<loadfile property="BuildNumber" srcFile="build.number"/>
+		
+		<delete file="build.number" />
+		
+		<tstamp/>
+		
+		<propertyfile file="${Binary}/tectonicus.buildInfo" comment="Tectonicus build info">
+			<entry key="buildNumber" type="string" value="${BuildNumber}" />
+			<entry key="buildDate" type="string" value="${TODAY}" />
+			<entry key="buildTime" type="string" value="${TSTAMP}" />
+			<entry key="version" type="string" value="${Version}" />
+		</propertyfile>
+		
+		<echo message="Version: ${Version}" />
+		<echo message="Build number: ${BuildNumber}" />
+		<echo message="Build date: ${TODAY}" />
+		<echo message="Build time: ${TSTAMP}" />
+		
+	</target>
+	
+	<target name="Upload">
+		<!-- Disabled because this needs to be re-written for google code -->
+		<!--
+		<ftp 	server="triangularpixels.com"
+				userid="jcampbell"
+				password="*********"
+				remotedir="/home/jcampbell/webapps/static/Tectonicus"
+				verbose="yes"
+				passive="yes">
+			
+			<fileset file="${FactoryFloor}/Tectonicus_v${Version}.jar" />
+		</ftp>
+		
+		<copy file="${FactoryFloor}/Tectonicus_v${Version}.jar"
+				tofile="${FactoryFloor}/Tectonicus.jar"
+		/>
+		
+		<copy file="../BiomeExtractor/Dist/BiomeExtractor.jar" todir="${Jars}" />
+		<ftp 	server="triangularpixels.com"
+						userid="jcampbell"
+						password="*********"
+						remotedir="/home/jcampbell/webapps/static/Tectonicus"
+						verbose="yes"
+						passive="yes">
+					
+			<fileset file="${FactoryFloor}/Tectonicus.jar" />
+		</ftp>
+		<ftp 	server="triangularpixels.com"
+								userid="jcampbell"
+								password="*********"
+								remotedir="/home/jcampbell/webapps/static/Tectonicus"
+								verbose="yes"
+								passive="yes">
+							
+			<fileset file="${Docs}/exampleConfig.xml" />
+			<fileset file="${Data}/defaultBlockConfig.xml" />
+		</ftp>
+		-->
+	</target>
+	
+	<target name="MakeExe">
+		<jsmoothgen
+			project="${Exe}/tectonicus.jsmooth" 
+			skeletonroot="${Exe}/skeletons">
+		</jsmoothgen>
+	</target>
+	
+	<target name="CompileJsonLib">
+		<mkdir dir="${FactoryFloor}"/>
+		<mkdir dir="${FactoryFloor}/JsonBinary"/>
+		
+		<javac srcdir="${Libs}/Json/src" destdir="${FactoryFloor}/JsonBinary" source="1.5" target="1.5" />
+		
+		<jar destfile="${FactoryFloor}/json.jar" basedir="${FactoryFloor}/JsonBinary">
+		</jar>
+	</target>
+	
+</project>
