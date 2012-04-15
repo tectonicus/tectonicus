@@ -26,12 +26,13 @@
 			 classpath="${Libs}/ant-googlecode-0.0.3/ant-googlecode-0.0.3.jar"
 	/>
 	
+	<!-- To upload a new version, update the 'version' property above, then run this task -->
+	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CreatePackage, Upload" />
+	
 	<target name="CleanBuild">
 		<delete failonerror="false" dir="${FactoryFloor}" />
 		<delete failonerror="false" file="TectonicusLog.txt" />
 	</target>
-	
-	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CreatePackage, Upload" />
 	
 	<target name="Compile">
 		<mkdir dir="${FactoryFloor}"/>
@@ -138,6 +139,17 @@
 	</target>
 	
 	<target name="Upload">
+		
+		<fail unless="googlecode.username">
+			Missing googlecode.username
+			You have not set your google code username.
+			Rename 'example.user.properties' to 'user.properties' and fill in your account details.
+		</fail>
+		<fail unless="googlecode.password">
+			Missing googlecode.password
+			You have not set your google code password.
+			Rename 'example.user.properties' to 'user.properties' and fill in your account details.
+		</fail>
 		
 		<gcupload	projectname="tectonicus"
 					username="${googlecode.username}"
