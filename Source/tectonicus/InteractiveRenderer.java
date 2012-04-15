@@ -78,7 +78,6 @@ public class InteractiveRenderer
 	private float orthoAngleOffset;
 	
 	private RawSign perspectiveSign;
-	private float perspectiveAngleOffset;
 	
 	private ArrayList<RawSign> views;
 	private int currentViewIndex;
@@ -156,24 +155,14 @@ public class InteractiveRenderer
 		if (rasteriser.isKeyDown(KeyEvent.VK_Q))
 		{
 			orthoAngleOffset += 0.1f;
-			perspectiveAngleOffset += 1f;
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_E))
 		{
 			orthoAngleOffset -= 0.1f;
-			perspectiveAngleOffset -= 1f;
 		}
 	}
 	private void updatePerspectiveCamera()
 	{
-		if (rasteriser.isKeyDown(KeyEvent.VK_Q))
-		{
-			perspectiveAngleOffset += 1f;
-		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_E))
-		{
-			perspectiveAngleOffset -= 1f;
-		}
 		if (rasteriser.isKeyJustDown(KeyEvent.VK_EQUALS))
 		{
 			currentViewIndex++;
@@ -181,7 +170,6 @@ public class InteractiveRenderer
 				currentViewIndex = 0;
 			
 			perspectiveSign = views.get(currentViewIndex);
-			perspectiveAngleOffset = 0;
 		}
 	}
 	
@@ -247,8 +235,6 @@ public class InteractiveRenderer
 					viewMode = ViewMode.PerspectiveView;
 					perspectiveSign = nearest;
 				}
-				
-				perspectiveAngleOffset = 0;
 			}
 			else if (viewMode == ViewMode.PerspectiveView)
 			{

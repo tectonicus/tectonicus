@@ -44,8 +44,6 @@ import tectonicus.ChunkCoord;
 
 class RawCache
 {
-	private static final long serialVersionUID = 1L;
-
 	private int maxSize;
 	
 	private LinkedHashMap<ChunkCoord, Chunk> chunks;

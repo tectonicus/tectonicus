@@ -3,5 +3,21 @@
 	<classpathentry kind="src" path="Source"/>
 	<classpathentry kind="src" path="UnitTests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="Libs/Jars/AppleJavaExtensions.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/BiomeExtractor.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/dzzd.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/jinput.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/jnbt.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/jpct.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/json.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lwjgl_test.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lwjgl_util_applet.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lwjgl_util.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lwjgl-debug.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lwjgl.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lzma.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/ProcessingCore.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/seaglass.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="Binary"/>
 </classpath>

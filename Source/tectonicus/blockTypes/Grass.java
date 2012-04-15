@@ -36,17 +36,12 @@
  */
 package tectonicus.blockTypes;
 
-import java.awt.Color;
-import java.awt.Point;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.cache.BiomeCache;
-import tectonicus.cache.BiomeData;
 import tectonicus.rasteriser.Mesh;
-import tectonicus.raw.BiomeIds;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -56,8 +51,6 @@ import tectonicus.util.Colour4f;
 public class Grass implements BlockType
 {
 	private final String name;
-	private final BiomeCache biomeCache;
-	private final TexturePack texturePack;
 	
 	private final SubTexture sideTexture, grassSideTexture, topTexture, bottomTexture, snowSideTexture;
 	
@@ -67,9 +60,6 @@ public class Grass implements BlockType
 			throw new RuntimeException("subtexture is null!");
 		
 		this.name = name;
-		
-		this.biomeCache = biomeCache;
-		this.texturePack = texturePack;
 		
 		this.sideTexture = sideTexture;
 		this.grassSideTexture = grassSideTexture;
