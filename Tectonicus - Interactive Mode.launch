@@ -14,7 +14,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="tectonicus.TectonicusApp"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="mode=interactive&#10;worldDir=&quot;Worlds/BlockGallery&quot;&#10;outputDir=&quot;Worlds/Output&quot;&#10;logFile=&quot;Worlds/Output/TectonicusLog.txt&quot;&#10;closestZoomSize=12&#10;cameraAngle=45&#10;cameraElevation=45&#10;lighting=day&#10;numSamples=4&#10;useBiomeColours=true"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="mode=interactive&#10;worldDir=&quot;Worlds/BlockGallery&quot;&#10;outputDir=&quot;Worlds/Output&quot;&#10;logFile=&quot;Worlds/Output/TectonicusLog.txt&quot;&#10;closestZoomSize=12&#10;cameraAngle=45&#10;cameraElevation=45&#10;lighting=day&#10;numSamples=4&#10;useBiomeColours=false"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Tectonicus2"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#10;-Dorg.lwjgl.util.Debug=false&#10;-XX:MaxDirectMemorySize=256M&#10;-Xmx512M&#10;-Xms512M"/>
 </launchConfiguration>
