@@ -6,7 +6,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.08" />
+	<property name="Version"			value="2.09" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -82,6 +82,8 @@
 		
 		<unjar src="${Jars}/dzzd.jar" dest="${FactoryFloor}/Temp"/>
 		
+		<unjar src="${Jars}/jnbt.jar" dest="${FactoryFloor}/Temp"/>
+		
 		<unjar src="${Jars}/BiomeExtractor.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<!-- Create the unified jar -->
@@ -107,6 +109,7 @@
 		<!-- Create the final package with the jar + example files -->
 		<zip destfile="${FactoryFloor}/Tectonicus_v${Version}.zip" >
 			<fileset file="${FactoryFloor}/Tectonicus_v${Version}.jar" />
+			<fileset file="${Docs}/release.txt" />
 			<fileset file="${Docs}/exampleConfig.xml" />
 			<fileset file="${Data}/defaultBlockConfig.xml" />
 		</zip>

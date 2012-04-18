@@ -37,11 +37,12 @@
 package tectonicus.world.subset;
 
 import tectonicus.ChunkCoord;
+import tectonicus.SaveFormat;
 import tectonicus.world.filter.BlockFilter;
 
 public interface WorldSubset
 {
-	public RegionIterator createRegionIterator();
+	public RegionIterator createRegionIterator(SaveFormat format);
 
 	public boolean contains(ChunkCoord coord);
 

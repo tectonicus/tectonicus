@@ -39,12 +39,14 @@ package tectonicus.world.subset;
 import java.io.File;
 
 import tectonicus.Region;
+import tectonicus.SaveFormat;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
 
 public class CircularRegionIterator implements RegionIterator
 {
 	private final File baseDir;
+	private final SaveFormat saveFormat;
 	
 	private final Vector3l origin;
 	private final long radius; // In world units
@@ -54,9 +56,10 @@ public class CircularRegionIterator implements RegionIterator
 	
 	private long currentX, currentZ;
 	
-	public CircularRegionIterator(File baseDir, Vector3l origin, final long radius)
+	public CircularRegionIterator(File baseDir, SaveFormat saveFormat, Vector3l origin, final long radius)
 	{
 		this.baseDir = baseDir;
+		this.saveFormat = saveFormat;
 		this.origin = new Vector3l(origin.x, 0, origin.z);
 		this.radius = radius;
 		
@@ -115,7 +118,7 @@ public class CircularRegionIterator implements RegionIterator
 			final long bufferedRadius = radius + regionDiagonal / 2;
 			if (sep <= bufferedRadius)
 			{
-				File regionFile = new File(baseDir, "region/r."+currentX+"."+currentZ+".mcr");
+				File regionFile = new File(baseDir, "region/r."+currentX+"."+currentZ+"."+saveFormat.extension);
 				if (regionFile.exists())
 					return regionFile;
 			}

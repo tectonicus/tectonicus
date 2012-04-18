@@ -37,6 +37,7 @@
 package tectonicus.world.subset;
 
 import tectonicus.ChunkCoord;
+import tectonicus.SaveFormat;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
 import tectonicus.world.World;
@@ -67,10 +68,10 @@ public class CircularWorldSubset implements WorldSubset
 	}
 	
 	@Override
-	public RegionIterator createRegionIterator()
+	public RegionIterator createRegionIterator(SaveFormat saveFormat)
 	{
 		Vector3l actualOrigin = origin != null ? origin : world.getLevelDat().getSpawnPosition();
-		return new CircularRegionIterator(world.getDimensionDir(), actualOrigin, radius);
+		return new CircularRegionIterator(world.getDimensionDir(), saveFormat, actualOrigin, radius);
 	}
 	
 	@Override

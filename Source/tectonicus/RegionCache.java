@@ -70,6 +70,11 @@ public class RegionCache
 		this.cache.setMinSize(4);
 	}
 	
+	public SaveFormat getFormat()
+	{
+		return this.format;
+	}
+	
 	public Region getRegion(RegionCoord coord)
 	{
 		Region region = null;

@@ -287,7 +287,7 @@ public class World implements BlockContext
 	
 	public RegionIterator createRegionIterator()
 	{
-		return worldSubset.createRegionIterator();
+		return worldSubset.createRegionIterator(regionCache.getFormat());
 	}
 	
 	public boolean contains(ChunkCoord coord)

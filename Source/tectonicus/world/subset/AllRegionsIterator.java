@@ -39,6 +39,8 @@ package tectonicus.world.subset;
 import java.io.File;
 import java.io.FileFilter;
 
+import tectonicus.SaveFormat;
+
 
 public class AllRegionsIterator implements RegionIterator
 {
@@ -48,12 +50,12 @@ public class AllRegionsIterator implements RegionIterator
 	
 	private int position;
 	
-	public AllRegionsIterator(File worldDir)
+	public AllRegionsIterator(File worldDir, SaveFormat saveFormat)
 	{
 		this.worldDir = worldDir;
 		
 		File regionDir = new File(worldDir, "region");
-		regionFiles = regionDir.listFiles(new RegionFileFilter());
+		regionFiles = regionDir.listFiles(saveFormat == SaveFormat.McRegion ? new RegionFileFilter() : new AnvilFileFilter());
 		if (regionFiles == null)
 			regionFiles = new File[0];
 		
@@ -97,6 +99,15 @@ public class AllRegionsIterator implements RegionIterator
 		public boolean accept(File pathname)
 		{
 			return pathname != null && pathname.isFile() && pathname.getName().startsWith("r.") && pathname.getName().endsWith(".mcr");
+		}
+	}
+
+	private static class AnvilFileFilter implements FileFilter
+	{
+		@Override
+		public boolean accept(File pathname)
+		{
+			return pathname != null && pathname.isFile() && pathname.getName().startsWith("r.") && pathname.getName().endsWith(".mca");
 		}
 	}
 }

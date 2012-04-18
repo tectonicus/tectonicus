@@ -38,6 +38,7 @@ package tectonicus.world.subset;
 
 import tectonicus.ChunkCoord;
 import tectonicus.NullBlockFilter;
+import tectonicus.SaveFormat;
 import tectonicus.world.World;
 import tectonicus.world.filter.BlockFilter;
 
@@ -51,9 +52,9 @@ public class FullWorldSubset implements WorldSubset
 	}
 	
 	@Override
-	public RegionIterator createRegionIterator()
+	public RegionIterator createRegionIterator(SaveFormat saveFormat)
 	{
-		return new AllRegionsIterator(world.getDimensionDir());
+		return new AllRegionsIterator(world.getDimensionDir(), saveFormat);
 	}
 	
 	@Override
