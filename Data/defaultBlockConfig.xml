@@ -30,7 +30,7 @@
 	
 	<Sapling id="6" name="Sapling" normal="terrain[15, 0]" spruce="terrain[15, 3]" birch="terrain[15, 4]" />
 	
-	<Solid id="7" name="Adamantium" texture="terrain[1, 1]" />
+	<Solid id="7" name="Bedrock" texture="terrain[1, 1]" />
 	
 	<Water id="8" name="Water" texture="terrain[15, 12]" />
 	
@@ -223,11 +223,11 @@
 
 	<Pumpkin id="86" name="Pumpkin" top="terrain[6, 6]" side="terrain[6, 7]" front="terrain[7, 7]" />
 	
-	<Solid id="87" name="Netherstone" texture="terrain[7, 6]" />
+	<Solid id="87" name="Netherrack" texture="terrain[7, 6]" />
 	
-	<Solid id="88" name="Slow Sand" texture="terrain[8, 6]" />
+	<Solid id="88" name="Soul Sand" texture="terrain[8, 6]" />
 	
-	<Solid id="89" name="Lightstone" texture="terrain[9, 6]" />
+	<Solid id="89" name="Glowstone" texture="terrain[9, 6]" />
 	
 	<Portal id="90" name="Portal" texture="Images/Portal.png" />
 
@@ -300,5 +300,9 @@
 	<Solid id="121" name="End Stone" texture="terrain[15, 10]" />
 	
 	<DragonEgg id="122" name="Dragon Egg" texture="terrain[7, 10]" />
+	
+	<Solid id="123" name="Redstone Lamp" texture="terrain[13, 3]" />
+	
+	<Solid id="124" name="Redstone Lamp" texture="terrain[13, 4]" />
 	
 </blockConfig>

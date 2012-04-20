@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="Tectonicus" default="BuildCopyUpload" basedir=".">
+<project name="Tectonicus" default="BuildCopy" basedir=".">
 	
 	<property file="user.properties"/>
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.09" />
+	<property name="Version"			value="2.10" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -25,6 +25,9 @@
 			 classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask"
 			 classpath="${Libs}/ant-googlecode-0.0.3/ant-googlecode-0.0.3.jar"
 	/>
+	
+	<!-- To build a test version, update the 'version' property above, then run this task -->
+	<target name="BuildCopy" depends="CleanBuild, CreateSingleJar, CreatePackage" />
 	
 	<!-- To upload a new version, update the 'version' property above, then run this task -->
 	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CreatePackage, Upload" />

@@ -44,34 +44,33 @@ public class NetherBlockFilter implements BlockFilter
 	@Override
 	public void filter(RawChunk rawChunk)
 	{
+		final int NETHER_ROOF = 127;
 		for (int x=0; x<RawChunk.WIDTH; x++)
 		{
 			for (int z=0; z<RawChunk.DEPTH; z++)
 			{
-				// Accumulate a count of non-adamantium and non nether stone blocks, break out
-				// when we have two or more other blocks in a vertical collumn
-				// This is because the top of the nether tends to have single-block air holes
-				// which prevent us just stripping off until we hit air
+				final int roofId = rawChunk.getBlockId(x, NETHER_ROOF, z);
+				if (roofId == BlockIds.ADAMANTIUM)
+				{
+					rawChunk.setBlockId(x, NETHER_ROOF, z, BlockIds.AIR);
+					// remove the mushrooms
+					final int roof1Id = rawChunk.getBlockId(x, NETHER_ROOF+1, z);
+					if (roof1Id == BlockIds.RED_MUSHROOM || roof1Id == BlockIds.BROWN_MUSHROOM)
+					{
+						rawChunk.setBlockId(x, NETHER_ROOF+1, z, BlockIds.AIR);
+					}
+				}
 				
-				int otherCount = 0;
-				
-				for (int y=RawChunk.HEIGHT-1; y>=0; y--)
+				for (int y=NETHER_ROOF-1; y>=0; y--)
 				{
 					final int id = rawChunk.getBlockId(x, y, z);
 					if (id == BlockIds.ADAMANTIUM || id == BlockIds.NETHERSTONE)
 					{
-						rawChunk.setBlockId(x, y, z, (byte)BlockIds.AIR);
-						
-						otherCount = 0;
+						rawChunk.setBlockId(x, y, z, BlockIds.AIR);
 					}
 					else
 					{
-						otherCount++;
-						
-						if (otherCount >= 2)
-						{
-							break;
-						}
+						break;
 					}
 				}
 			}

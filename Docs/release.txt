@@ -431,3 +431,9 @@ Version 2.09
 
 - finished Anvil file format support
 
+Version 2.10
+
+- fixed Nether render mode
+- added Redstone Lamp to default blocks
+- renamed Bedrock, Netherrack, Soul sand, and Glowstone to offical names in default blocks
+
