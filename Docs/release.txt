@@ -437,3 +437,13 @@ Version 2.10
 - added Redstone Lamp to default blocks
 - renamed Bedrock, Netherrack, Soul sand, and Glowstone to offical names in default blocks
 
+Version 2.11
+
+- changed slabs, wooden planks, wood/log, leaves and saplings to use id:data in block config xml
+- added upside down slabs and stairs
+- added Jungle wood/leaf type
+- added leaves color option to block config xml (overrides any calc'd biome colors, set color="" to use old calculation instead)
+- added sandstone variants
+- added round stone bricks
+- fixed stairs side texture orientation (and maybe a few other blocks)
+

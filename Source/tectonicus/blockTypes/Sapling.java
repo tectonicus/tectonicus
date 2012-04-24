@@ -50,14 +50,12 @@ import tectonicus.texture.SubTexture;
 public class Sapling implements BlockType
 {
 	private final String name;
-	private final SubTexture normalTexture, spruceTexture, birchTexture;
+	private final SubTexture texture;
 	
-	public Sapling(String name, SubTexture normalTexture, SubTexture spruceTexture, SubTexture birchTexture)
+	public Sapling(String name, SubTexture texture)
 	{
 		this.name = name;
-		this.normalTexture = normalTexture;
-		this.spruceTexture = spruceTexture;
-		this.birchTexture = birchTexture;
+		this.texture = texture;
 	}
 	
 	
@@ -88,33 +86,11 @@ public class Sapling implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(normalTexture.texture, Geometry.MeshType.AlphaTest);
-		
-		final int data = rawChunk.getBlockData(x, y, z);
-		SubTexture texture = getTexture(data);
+		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
 		final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
 		Vector4f colour = new Vector4f(lightVal, lightVal, lightVal, 1.0f);
 
 		Plant.addPlantGeometry(x, y, z, mesh, colour, texture);
-	}
-
-	private SubTexture getTexture(final int data)
-	{
-		final int type = data & 0x3;
-		
-		if (type == 0)
-		{
-			return normalTexture;
-		}
-		else if (type == 1)
-		{
-			return spruceTexture;
-		}
-		else if (type == 2)
-		{
-			return birchTexture;
-		}
-		return normalTexture;
 	}
 }

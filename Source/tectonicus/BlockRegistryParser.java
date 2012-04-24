@@ -36,6 +36,7 @@
  */
 package tectonicus;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -255,28 +256,26 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("sapling"))
 		{
-			SubTexture normal = parseTexture(element, "normal", null);
-			SubTexture spruce = parseTexture(element, "spruce", null);
-			SubTexture birch = parseTexture(element, "birch", null);
+			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Sapling(name, normal, spruce, birch);
+			blockType = new Sapling(name, texture);
+			registry.register(id.id, id.data + 0x8, blockType);
 		}
 		else if (nodeName.equals("log"))
 		{
-			SubTexture normal = parseTexture(element, "normal", null);
-			SubTexture spruce = parseTexture(element, "spruce", null);
-			SubTexture birch = parseTexture(element, "birch", null);
+			SubTexture side = parseTexture(element, "side", null);
 			SubTexture top = parseTexture(element, "top", null);
 			
-			blockType = new Log(name, normal, spruce, birch, top);
+			blockType = new Log(name, side, top);
 		}
 		else if (nodeName.equals("leaves"))
 		{
-			SubTexture normal = parseTexture(element, "normal", null);
-			SubTexture spruce = parseTexture(element, "spruce", null);
-			SubTexture birch = parseTexture(element, "birch", null);
-			
-			blockType = new Leaves(name, normal, spruce, birch, biomeCache, texturePack);
+			SubTexture texture = parseTexture(element, "texture", null);
+			Color color = parseColor(element, "color", null);
+
+			blockType = new Leaves(name, texture, color, biomeCache, texturePack);
+			registry.register(id.id, id.data + 0x4, blockType);
+			registry.register(id.id, id.data + 0x8, blockType);
 		}
 		else if (nodeName.equals("glass"))
 		{
@@ -336,25 +335,13 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("slab"))
 		{
-			SubTexture stoneSide = parseTexture(element, "stoneSide", null);
-			SubTexture stoneTop = parseTexture(element, "stoneTop", null);
+			SubTexture side = parseTexture(element, "side", null);
+			SubTexture top = parseTexture(element, "top", null);
 			
-			SubTexture sandSide = parseTexture(element, "sandSide", null);
-			SubTexture sandTop = parseTexture(element, "sandTop", null);
+			blockType = new Slab(name, side, top);
 			
-			SubTexture woodenSide = parseTexture(element, "woodenSide", null);
-			SubTexture woodenTop = parseTexture(element, "woodenTop", null);
-			
-			SubTexture cobblestoneSide = parseTexture(element, "cobblestoneSide", null);
-			SubTexture cobblestoneTop = parseTexture(element, "cobblestoneTop", null);
-			
-			SubTexture brickSide = parseTexture(element, "brickSide", null);
-			SubTexture brickTop = parseTexture(element, "brickTop", null);
-			
-			SubTexture stoneBrickSide = parseTexture(element, "stoneBrickSide", null);
-			SubTexture stoneBrickTop = parseTexture(element, "stoneBrickTop", null);
-			
-			blockType = new Slab(name, stoneSide, stoneTop, sandSide, sandTop, woodenSide, woodenTop, cobblestoneSide, cobblestoneTop, brickSide, brickTop, stoneBrickSide, stoneBrickTop);
+			// upsidedown half-slab has bit 0x8
+			registry.register(id.id, id.data + 0x8, blockType);
 		}
 		else if (nodeName.equals("doubleslab"))
 		{
@@ -676,6 +663,32 @@ public class BlockRegistryParser
 		if (result == null)
 			return defaultTex;
 		
+		return result;
+	}
+	
+	private Color parseColor(Element element, String attribName, Color defaultColor)
+	{
+		if (!element.hasAttribute(attribName))
+			return defaultColor;
+		
+		String colorName = element.getAttribute(attribName);
+		Color result = parseHtmlColor(colorName);
+		
+		if (result == null)
+			return defaultColor;
+		
+		return result;
+	}
+	
+	private Color parseHtmlColor(String colorStr)
+	{
+		Color result = null;
+		if (colorStr != null && colorStr != "" && colorStr.charAt(0) == '#')
+		{
+			try {
+				result = new Color(Integer.parseInt(colorStr.substring(1,7), 16));
+			} catch (Exception e) {}
+		}
 		return result;
 	}
 	

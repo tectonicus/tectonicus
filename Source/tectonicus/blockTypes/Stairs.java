@@ -104,29 +104,57 @@ public class Stairs implements BlockType
 		// 0x1: Ascending north
 		// 0x2: Ascending west
 		// 0x3: Ascending east
+		// 0x4: Upside down
 		
-		// Base block is always present
-		BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 16, 8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
-		
-		if (data == 0x1)
+		if (data < 0x4)
 		{
-			// Ascending north
-			BlockUtil.addBlock(mesh, x, y, z, 0, 8, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+			// Base block is always present
+			BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 16, 8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
+			if (data == 0x1)
+			{
+				// Ascending north
+				BlockUtil.addBlock(mesh, x, y, z, 0, 8, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+			}
+			else if (data == 0x0)
+			{
+				// Ascending south
+				BlockUtil.addBlock(mesh, x, y, z, 8, 8, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+			}
+			else if (data == 0x3)
+			{
+				// Ascending east
+				BlockUtil.addBlock(mesh, x, y, z, 0, 8, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+			}
+			else if (data == 0x2)
+			{
+				// Ascending west
+				BlockUtil.addBlock(mesh, x, y, z, 0, 8, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+			}
 		}
-		else if (data == 0x0)
+		else
 		{
-			// Ascending south
-			BlockUtil.addBlock(mesh, x, y, z, 8, 8, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
-		}
-		else if (data == 0x3)
-		{
-			// Ascending east
-			BlockUtil.addBlock(mesh, x, y, z, 0, 8, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
-		}
-		else if (data == 0x2)
-		{
-			// Ascending west
-			BlockUtil.addBlock(mesh, x, y, z, 0, 8, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+			// Base block is always present
+			BlockUtil.addBlock(mesh, x, y, z,       0, 8, 0,   16,  8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
+			if (data == 0x5)
+			{
+				// Ascending north upside down
+				BlockUtil.addBlock(mesh, x, y, z,   0, 0, 0,    8,  8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+			}
+			else if (data == 0x4)
+			{
+				// Ascending south upside down
+				BlockUtil.addBlock(mesh, x, y, z,   8, 0, 0,    8,  8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+			}
+			else if (data == 0x7)
+			{
+				// Ascending east upside down
+				BlockUtil.addBlock(mesh, x, y, z,   0, 0, 0,   16,  8,  8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+			}
+			else if (data == 0x6)
+			{
+				// Ascending west upside down
+				BlockUtil.addBlock(mesh, x, y, z,   0, 0, 8,   16,  8,  8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+			}
 		}
 	}
 }

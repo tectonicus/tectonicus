@@ -26,9 +26,21 @@
 	
 	<Solid id="4" name="Cobblestone" texture="terrain[0, 1]" />
 	
-	<Solid id="5" name="Wood" texture="terrain[4, 0]" />
+	<Solid id="5:0" name="Oak Wooden Plank" texture="terrain[4, 0]" />
 	
-	<Sapling id="6" name="Sapling" normal="terrain[15, 0]" spruce="terrain[15, 3]" birch="terrain[15, 4]" />
+	<Solid id="5:1" name="Spruce Wooden Plank" texture="terrain[6, 12]" />
+	
+	<Solid id="5:2" name="Birch Wooden Plank" texture="terrain[6, 13]" />
+	
+	<Solid id="5:3" name="Jungle Wooden Plank" texture="terrain[7, 12]" />
+	
+	<Sapling id="6:0" name="Oak Sapling" texture="terrain[15, 0]" />
+	
+	<Sapling id="6:1" name="Spruce Sapling" texture="terrain[15, 3]" />
+	
+	<Sapling id="6:2" name="Birch Sapling" texture="terrain[15, 4]" />
+	
+	<Sapling id="6:3" name="Jungle Sapling" texture="terrain[14, 1]" />
 	
 	<Solid id="7" name="Bedrock" texture="terrain[1, 1]" />
 	
@@ -50,9 +62,21 @@
 	
 	<Solid id="16" name="Coal Ore" texture="terrain[2, 2]" />
 	
-	<Log id="17" name="Log" normal="terrain[4, 1]" spruce="terrain[4, 7]" birch="terrain[5, 7]" top="terrain[5, 1]" />
+	<Log id="17:0" name="Oak Wood" side="terrain[4, 1]" top="terrain[5, 1]" />
 	
-	<Leaves id="18" name="Leaves" normal="terrain[4, 3]" spruce="terrain[5, 8]" birch="terrain[4, 8]" />
+	<Log id="17:1" name="Spruce Wood" side="terrain[4, 7]" top="terrain[5, 1]" />
+
+	<Log id="17:2" name="Birch Wood" side="terrain[5, 7]" top="terrain[5, 1]" />
+
+	<Log id="17:3" name="Jungle Wood" side="terrain[9, 9]" top="terrain[5, 1]" />
+
+	<Leaves id="18:0" name="Oak Leaves" texture="terrain[4, 3]" color="#48b518" />
+
+	<Leaves id="18:1" name="Spruce Leaves" texture="terrain[4, 8]" color="#619961" />
+
+	<Leaves id="18:2" name="Birch Leaves" texture="terrain[4, 3]" color="#80a755" />
+
+	<Leaves id="18:3" name="Jungle Leaves" texture="terrain[4, 12]" color="#48b518" />
 
 	<Solid id="19" name="Sponge" texture="terrain[0, 3]" />
 	
@@ -64,8 +88,12 @@
 	
 	<Dispenser id="23" name="Dispenser" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[14, 2]" />
 	
-	<Solid id="24" name="Sandstone" side="terrain[0, 12]" top="terrain[0, 11]" />
-	
+	<Solid id="24:0" name="Sandstone" side="terrain[0, 12]" top="terrain[0, 11]" bottom="terrain[0, 13]" />
+
+	<Solid id="24:1" name="Sandstone" side="terrain[5, 14]" top="terrain[0, 11]" />
+
+	<Solid id="24:2" name="Sandstone" side="terrain[6, 14]" top="terrain[0, 11]" />
+
 	<Solid id="25" name="Note Block" texture="terrain[10, 4]" />
 	
 	<Bed id="26" name="Bed"	headTop="terrain[7, 8]" footTop="terrain[6, 8]"
@@ -129,13 +157,17 @@
 						stoneBrickSide="terrain[6, 3]" stoneBrickTop="terrain[6, 3]"
 						/>
 	
-	<Slab id="44" name="Slab"	stoneSide="terrain[5, 0]" stoneTop="terrain[6, 0]"
-					sandSide="terrain[0, 12]" sandTop="terrain[0, 11]"
-					woodenSide="terrain[4, 0]" woodenTop="terrain[4, 0]"
-					cobblestoneSide="terrain[0, 1]" cobblestoneTop="terrain[0, 1]"
-					brickSide="terrain[7, 0]" brickTop="terrain[7, 0]"
-					stoneBrickSide="terrain[6, 3]" stoneBrickTop="terrain[6, 3]"
-					/>
+	<Slab id="44:0" name="Stone Slab"	side="terrain[5, 0]" top="terrain[6, 0]" />
+
+	<Slab id="44:1" name="Sandstone Slab"	side="terrain[0, 12]" top="terrain[0, 11]" />
+
+	<Slab id="44:2" name="Wooden Slab"	side="terrain[4, 0]" top="terrain[4, 0]" />
+
+	<Slab id="44:3" name="Cobblestone Slab"	side="terrain[0, 1]" top="terrain[0, 1]" />
+
+	<Slab id="44:4" name="Brick Slab"	side="terrain[7, 0]" top="terrain[7, 0]" />
+
+	<Slab id="44:5" name="Stone Brick Slab"	side="terrain[6, 3]" top="terrain[6, 3]" />
 
 	<Solid id="45" name="Brick" texture="terrain[7, 0]" />
 	
@@ -153,7 +185,7 @@
 	
 	<Solid id="52" name="Mob Spawner" texture="terrain[1, 4]" alphaTest="true" />
 	
-	<Stairs id="53" name="WoodenStairs" texture="terrain[4, 0]" />
+	<Stairs id="53" name="Wooden Stairs" texture="terrain[4, 0]" />
 
 	<Chest id="54" name="Chest" top="terrain[9, 1]" side="terrain[10, 1]" front="terrain[11, 1]"	
 					doubleSideLeft="terrain[9, 3]" doubleSideRight="terrain[10, 3]"
@@ -251,7 +283,8 @@
 	
 	<DataSolid id="98" name="Stone Brick" 	side0="terrain[6, 3]" top0="terrain[6, 3]"
 						side1="terrain[4, 6]" top1="terrain[4, 6]"
-						side2="terrain[5, 6]" top2="terrain[5, 6]" />
+						side2="terrain[5, 6]" top2="terrain[5, 6]"
+						side3="terrain[5, 13]" top3="terrain[5, 13]" />
 	
 	<HugeMushroom id="99" name="Huge Brown Mushroom" cap="terrain[14, 7]" pores="terrain[14, 8]" stem="terrain[13, 8]" />
 	
@@ -301,8 +334,8 @@
 	
 	<DragonEgg id="122" name="Dragon Egg" texture="terrain[7, 10]" />
 	
-	<Solid id="123" name="Redstone Lamp" texture="terrain[13, 3]" />
+	<Solid id="123" name="Redstone Lamp" texture="terrain[3, 13]" />
 	
-	<Solid id="124" name="Redstone Lamp" texture="terrain[13, 4]" />
+	<Solid id="124" name="Redstone Lamp" texture="terrain[4, 13]" />
 	
 </blockConfig>

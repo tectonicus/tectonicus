@@ -48,18 +48,16 @@ import tectonicus.util.Colour4f;
 public class Log implements BlockType
 {
 	private final String name;
-	private final SubTexture normalSideTexture, spruceSideTexture, birtchSideTexture, topTexture;
+	private final SubTexture sideTexture, topTexture;
 	private Colour4f colour;
 	
-	public Log(String name, SubTexture normalSideTex, SubTexture spruceSideTex, SubTexture birchSideTex, SubTexture topTexture)
+	public Log(String name, SubTexture sideTex, SubTexture topTexture)
 	{
 		if (topTexture == null)
 			throw new RuntimeException("top subtexture is null!");
 		
 		this.name = name;
-		this.normalSideTexture = normalSideTex;
-		this.spruceSideTexture = spruceSideTex;
-		this.birtchSideTexture = birchSideTex;
+		this.sideTexture = sideTex;
 		this.topTexture = topTexture;
 		this.colour = new Colour4f(1, 1, 1, 1);
 	}
@@ -85,8 +83,6 @@ public class Log implements BlockType
 	@Override
 	public void addInteriorGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		SubTexture sideTexture = getSideTexture(rawChunk.getBlockData(x, y, z));
-		
 		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
 		
@@ -103,8 +99,6 @@ public class Log implements BlockType
 	{
 		Mesh mesh = geometry.getBaseMesh();
 		
-		SubTexture sideTexture = getSideTexture(rawChunk.getBlockData(x, y, z));
-		
 		BlockUtil.addTop(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
 		BlockUtil.addBottom(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
 		
@@ -112,23 +106,6 @@ public class Log implements BlockType
 		BlockUtil.addSouth(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
 		BlockUtil.addEast(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
 		BlockUtil.addWest(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
-	}
-	
-	private SubTexture getSideTexture(final int data)
-	{
-		if (data == 0)
-		{
-			return normalSideTexture;
-		}
-		else if (data == 1)
-		{
-			return spruceSideTexture;
-		}
-		else if (data == 2)
-		{
-			return birtchSideTexture;
-		}
-		return normalSideTexture;
 	}
 	
 }

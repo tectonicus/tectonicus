@@ -360,10 +360,10 @@ public class BlockUtil
 			 					new Vector3f(x,	y,		z + d),
 			 					new Vector3f(x,	y,		z),
 			 					northColour,
-			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v0 + vRange * normOffY),
-			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v0 + vRange * normOffY)
+			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * normOffY),
+			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * normOffY)
 		);
 		
 		// South
@@ -372,22 +372,22 @@ public class BlockUtil
 			 					new Vector3f(x + w,	y,		z),
 			 					new Vector3f(x + w,	y,		z + d),
 			 					southColour,
-			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v0 + vRange * normOffY),
-			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v0 + vRange * normOffY)
+			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * normOffY),
+			 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * normOffY)
 		);
 
 		// East
-		MeshUtil.addQuad(mesh, new Vector3f(x + w,	y + h,	z),
+		MeshUtil.addQuad(mesh,	new Vector3f(x + w,	y + h,	z),
 			 					new Vector3f(x,		y + h,	z),
 			 					new Vector3f(x,		y,		z),
 			 					new Vector3f(x + w,	y,		z ),
 			 					eastColour,
-			 					new Vector2f(texture.u0 + uRange * (normOffX + w),		texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * normOffX,			texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * normOffX,			texture.v0 + vRange * normOffY),
-			 					new Vector2f(texture.u0 + uRange * (normOffX + w),		texture.v0 + vRange * normOffY)
+			 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * normOffY),
+			 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * normOffY)
 		);
 		
 		// West
@@ -396,10 +396,10 @@ public class BlockUtil
 			 					new Vector3f(x + w,	y,		z + d),
 			 					new Vector3f(x,		y,		z + d),
 			 					westColour,
-			 					new Vector2f(texture.u0 + uRange * (normOffX + w),		texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * normOffX,			texture.v0 + vRange * (normOffY + h)),
-			 					new Vector2f(texture.u0 + uRange * normOffX,			texture.v0 + vRange * normOffY),
-			 					new Vector2f(texture.u0 + uRange * (normOffX + w),		texture.v0 + vRange * normOffY)
+			 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * (normOffY + h)),
+			 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * normOffY),
+			 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * normOffY)
 		);
 	}
 }

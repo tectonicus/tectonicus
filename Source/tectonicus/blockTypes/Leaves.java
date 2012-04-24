@@ -53,18 +53,18 @@ import tectonicus.util.Colour4f;
 public class Leaves implements BlockType
 {
 	private final String name;
-	private final SubTexture normalTexture, spruceTexture, birchTexture;
+	private final SubTexture texture;
+	private final Color color; 
 	
 	private final BiomeCache biomeCache;
 	private final TexturePack texturePack;
 	
-	public Leaves(String name, SubTexture normalTexture, SubTexture spruceTexture, SubTexture birchTexture, BiomeCache biomeCache, TexturePack texturePack)
+	public Leaves(String name, SubTexture texture, Color color, BiomeCache biomeCache, TexturePack texturePack)
 	{
 		this.name = name;
 		
-		this.normalTexture = normalTexture;
-		this.spruceTexture = spruceTexture;
-		this.birchTexture = birchTexture;
+		this.texture = texture;
+		this.color = color;
 		
 		this.biomeCache = biomeCache;
 		this.texturePack = texturePack;
@@ -97,13 +97,15 @@ public class Leaves implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		SubTexture texture = getTexture(rawChunk.getBlockData(x, y, z));
-		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
-		BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
-		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
-		Color rawColour = texturePack.getFoliageColour(colourCoord.getX(), colourCoord.getY());
+		Color rawColour = this.color;
+		if (rawColour == null)
+		{
+			BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
+			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
+			rawColour = texturePack.getFoliageColour(colourCoord.getX(), colourCoord.getY());
+		}
 		
 		Colour4f colour = new Colour4f(rawColour);
 		
@@ -114,23 +116,6 @@ public class Leaves implements BlockType
 		BlockUtil.addSouth(world, rawChunk, mesh, x, y, z, colour, texture, registry);
 		BlockUtil.addEast(world, rawChunk, mesh, x, y, z, colour, texture, registry);
 		BlockUtil.addWest(world, rawChunk, mesh, x, y, z, colour, texture, registry);
-	}
-	
-	private SubTexture getTexture(final int data)
-	{
-		if (data == 0)
-		{
-			return normalTexture;
-		}
-		else if (data == 1)
-		{
-			return spruceTexture;
-		}
-		else if (data == 2)
-		{
-			return birchTexture;
-		}
-		return normalTexture;
 	}
 	
 }
