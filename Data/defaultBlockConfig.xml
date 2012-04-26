@@ -302,7 +302,7 @@
 	
 	<Vines id="106" name="Vines" texture="terrain[15, 8]" />
 	
-	<!-- id 107 fence gate -->
+	<FenceGate id="107" name="Gate" texture="terrain[4, 0]" />
 	
 	<Stairs id="108" name="Brick Stairs" texture="terrain[7, 0]" />
 	

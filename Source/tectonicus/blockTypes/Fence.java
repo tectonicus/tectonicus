@@ -39,6 +39,7 @@ package tectonicus.blockTypes;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
+import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
@@ -104,53 +105,53 @@ public class Fence implements BlockType
 		
 		// North
 		final int northId = world.getBlockId(chunk.getChunkCoord(), x-1, y, z);
-		if (northId == blockId)
+		if (northId == blockId || northId == BlockIds.FENCE_GATE)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	0, 10, 7,
+			BlockUtil.addBlock(mesh, x, y, z,	0, 12, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	0, 4, 7,
+			BlockUtil.addBlock(mesh, x, y, z,	0, 6, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
 		// South
 		final int southId = world.getBlockId(chunk.getChunkCoord(), x+1, y, z);
-		if (southId == blockId)
+		if (southId == blockId || southId == BlockIds.FENCE_GATE)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	8, 10, 7,
+			BlockUtil.addBlock(mesh, x, y, z,	8, 12, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	8, 4, 7,
+			BlockUtil.addBlock(mesh, x, y, z,	8, 6, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
 		// East
 		final int eastId = world.getBlockId(chunk.getChunkCoord(), x, y, z-1);
-		if (eastId == blockId)
+		if (eastId == blockId || eastId == BlockIds.FENCE_GATE)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 10, 0,
+			BlockUtil.addBlock(mesh, x, y, z,	7, 12, 0,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 4, 0,
+			BlockUtil.addBlock(mesh, x, y, z,	7, 6, 0,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
 		// West
 		final int westId = world.getBlockId(chunk.getChunkCoord(), x, y, z+1);
-		if (westId == blockId)
+		if (westId == blockId || westId == BlockIds.FENCE_GATE)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 10, 8,
+			BlockUtil.addBlock(mesh, x, y, z,	7, 12, 8,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 4, 8,
+			BlockUtil.addBlock(mesh, x, y, z,	7, 6, 8,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 	}

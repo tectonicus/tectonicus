@@ -67,6 +67,7 @@ import tectonicus.blockTypes.EnchantmentTable;
 import tectonicus.blockTypes.EnderPortal;
 import tectonicus.blockTypes.EnderPortalFrame;
 import tectonicus.blockTypes.Fence;
+import tectonicus.blockTypes.FenceGate;
 import tectonicus.blockTypes.Fire;
 import tectonicus.blockTypes.FruitStem;
 import tectonicus.blockTypes.Furnace;
@@ -495,6 +496,12 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Fence(name, id.id, texture);
+		}
+		else if (nodeName.equals("fencegate"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+			
+			blockType = new FenceGate(name, id.id, texture);
 		}
 		else if (nodeName.equals("pumpkin"))
 		{

@@ -133,7 +133,8 @@ public class BlockIds
 	public static final int CAKE					= 92;
 	public static final int REDSTONE_REPEATER_OFF	= 93;
 	public static final int REDSTONE_REPEATER_ON	= 94;
-	
+	public static final int FENCE_GATE				= 107;
+
 	// Enum thoughts:
 	//	using a proper enum instead of constants would be nice for typesafety
 	//	and it would avoid autoboxing to/from Integer when used in a Map
