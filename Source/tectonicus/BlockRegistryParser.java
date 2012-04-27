@@ -501,7 +501,7 @@ public class BlockRegistryParser
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new FenceGate(name, id.id, texture);
+			blockType = new FenceGate(name, texture);
 		}
 		else if (nodeName.equals("pumpkin"))
 		{
