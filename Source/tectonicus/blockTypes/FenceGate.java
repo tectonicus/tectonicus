@@ -50,13 +50,11 @@ import tectonicus.texture.SubTexture;
 public class FenceGate implements BlockType
 {
 	private final String name;
-	private final int blockId;
 	private final SubTexture texture;
 	
-	public FenceGate(String name, final int blockId, SubTexture texture)
+	public FenceGate(String name, SubTexture texture)
 	{
 		this.name = name;
-		this.blockId = blockId;
 		this.texture = texture;
 	}
 	
