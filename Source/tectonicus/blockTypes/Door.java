@@ -65,7 +65,7 @@ public class Door implements BlockType
 		this.topTexture = topTexture;
 		this.bottomTexture = bottomTexture;
 		
-		final float uWidth = 1.0f / 16.0f / 16.0f * 3.0f;
+		final float uWidth = 1.0f / 16.0f / 16.0f * 2.5f; // fudge factor
 		this.edgeTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u0+uWidth, topTexture.v1);
 		this.topEdgeTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+uWidth);
 	}

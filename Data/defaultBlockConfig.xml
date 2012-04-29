@@ -20,7 +20,7 @@
 	
 	<Solid id="1" name="Stone" texture="terrain[1, 0]" />
 	
-	<Grass id="2" name="Grass" dirtSide="terrain[3, 0]" grassSide="terrain[6, 2]" snowSide="terrain[4, 4]" top="terrain[0, 0]" bottom="terrain[2, 0]" />
+	<Grass id="2" name="Grass" betterGrass="fancy" dirtSide="terrain[3, 0]" grassSide="terrain[6, 2]" snowSide="terrain[4, 4]" top="terrain[0, 0]" bottom="terrain[2, 0]" />
 	
 	<Solid id="3" name="Dirt" texture="terrain[2, 0]" />
 	
@@ -149,25 +149,29 @@
 	
 	<Solid id="42" name="Iron Block" texture="terrain[6, 1]" />
 	
-	<DoubleSlab id="43" name="Double Slab"	stoneSide="terrain[5, 0]" stoneTop="terrain[6, 0]"
-						sandSide="terrain[0, 12]" sandTop="terrain[0, 11]"
-						woodenSide="terrain[4, 0]" woodenTop="terrain[4, 0]"
-						cobblestoneSide="terrain[0, 1]" cobblestoneTop="terrain[0, 1]"
-						brickSide="terrain[7, 0]" brickTop="terrain[7, 0]"
-						stoneBrickSide="terrain[6, 3]" stoneBrickTop="terrain[6, 3]"
-						/>
-	
-	<Slab id="44:0" name="Stone Slab"	side="terrain[5, 0]" top="terrain[6, 0]" />
+	<Solid id="43:0" name="Stone Double Slab" side="terrain[5, 0]" top="terrain[6, 0]" />
 
-	<Slab id="44:1" name="Sandstone Slab"	side="terrain[0, 12]" top="terrain[0, 11]" />
+	<Solid id="43:1" name="Sandstone Double Slab" side="terrain[0, 12]" top="terrain[0, 11]" />
 
-	<Slab id="44:2" name="Wooden Slab"	side="terrain[4, 0]" top="terrain[4, 0]" />
+	<Solid id="43:2" name="Wooden Stone Double Slab" texture="terrain[4, 0]" />
 
-	<Slab id="44:3" name="Cobblestone Slab"	side="terrain[0, 1]" top="terrain[0, 1]" />
+	<Solid id="43:3" name="Cobblestone Double Slab" texture="terrain[0, 1]" />
 
-	<Slab id="44:4" name="Brick Slab"	side="terrain[7, 0]" top="terrain[7, 0]" />
+	<Solid id="43:4" name="Brick Double Slab" texture="terrain[7, 0]" />
 
-	<Slab id="44:5" name="Stone Brick Slab"	side="terrain[6, 3]" top="terrain[6, 3]" />
+	<Solid id="43:5" name="Stone Brick Double Slab" texture="terrain[6, 3]" />
+
+	<Slab id="44:0" name="Stone Slab" side="terrain[5, 0]" top="terrain[6, 0]" />
+
+	<Slab id="44:1" name="Sandstone Slab" side="terrain[0, 12]" top="terrain[0, 11]" />
+
+	<Slab id="44:2" name="Wooden Stone Slab" texture="terrain[4, 0]" />
+
+	<Slab id="44:3" name="Cobblestone Slab" texture="terrain[0, 1]" />
+
+	<Slab id="44:4" name="Brick Slab" texture="terrain[7, 0]" />
+
+	<Slab id="44:5" name="Stone Brick Slab" texture="terrain[6, 3]" />
 
 	<Solid id="45" name="Brick" texture="terrain[7, 0]" />
 	
@@ -275,7 +279,7 @@
 					doubleSideLeft="terrain[9, 3]" doubleSideRight="terrain[10, 3]"
 					doubleFrontLeft="terrain[9, 2]" doubleFrontRight="terrain[10, 2]" />
 	
-	<!-- id 96 trapdoor -->
+	<Trapdoor id="96" name="Trapdoor" texture="terrain[4, 5]" />
 	
 	<DataSolid id="97" name="Hidden Silverfish"	side0="terrain[1, 0]" top0="terrain[1, 0]"
 							side1="terrain[0, 1]" top1="terrain[0, 1]"
@@ -334,8 +338,24 @@
 	
 	<DragonEgg id="122" name="Dragon Egg" texture="terrain[7, 10]" />
 	
-	<Solid id="123" name="Redstone Lamp" texture="terrain[3, 13]" />
+	<Solid id="123" name="Redstone Lamp" texture="terrain[3, 13]" /><!-- off -->
 	
-	<Solid id="124" name="Redstone Lamp" texture="terrain[4, 13]" />
+	<Solid id="124" name="Redstone Lamp" texture="terrain[4, 13]" /><!-- on -->
+
+	<Solid id="125:0" name="Oak Wood Double Slab" texture="terrain[4, 0]" />
+	
+	<Solid id="125:1" name="Spruce Wood Double Slab" texture="terrain[6, 12]" />
+
+	<Solid id="125:2" name="Birch Wood Double Slab" texture="terrain[6, 13]" />
+
+	<Solid id="125:3" name="Jungle Wood Double Slab" texture="terrain[7, 12]" />
+
+	<Slab id="125:0" name="Oak Wood Half Slab" texture="terrain[4, 0]" />
+
+	<Slab id="125:1" name="Spruce Wood Half Slab" texture="terrain[6, 12]" />
+
+	<Slab id="125:2" name="Birch Wood Half Slab" texture="terrain[6, 13]" />
+
+	<Slab id="125:3" name="Jungle Wood Half Slab" texture="terrain[7, 12]" />
 	
 </blockConfig>

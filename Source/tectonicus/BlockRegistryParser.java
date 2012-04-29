@@ -99,6 +99,7 @@ import tectonicus.blockTypes.SolidBlockType;
 import tectonicus.blockTypes.Stairs;
 import tectonicus.blockTypes.TallGrass;
 import tectonicus.blockTypes.Torch;
+import tectonicus.blockTypes.Trapdoor;
 import tectonicus.blockTypes.Vines;
 import tectonicus.blockTypes.Water;
 import tectonicus.blockTypes.Wheat;
@@ -252,15 +253,22 @@ public class BlockRegistryParser
 			SubTexture snowSide = parseTexture(element, "snowSide", null);
 			SubTexture top = parseTexture(element, "top", null);
 			SubTexture bottom = parseTexture(element, "bottom", null);
+
+			String betterGrassMode = element.getAttribute("betterGrass");
+			Grass.BetterGrassMode betterGrass =
+					betterGrassMode == null ? Grass.BetterGrassMode.None
+					: betterGrassMode.equalsIgnoreCase("fast") ? Grass.BetterGrassMode.Fast
+					: betterGrassMode.equalsIgnoreCase("fancy") ? Grass.BetterGrassMode.Fancy
+					: Grass.BetterGrassMode.None;
 			
-			blockType = new Grass(name, side, grassSide, snowSide, top, bottom, biomeCache, texturePack);
+			blockType = new Grass(name, betterGrass, side, grassSide, snowSide, top, bottom, biomeCache, texturePack);
 		}
 		else if (nodeName.equals("sapling"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Sapling(name, texture);
-			registry.register(id.id, id.data + 0x8, blockType);
+			registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("log"))
 		{
@@ -275,8 +283,8 @@ public class BlockRegistryParser
 			Color color = parseColor(element, "color", null);
 
 			blockType = new Leaves(name, texture, color, biomeCache, texturePack);
-			registry.register(id.id, id.data + 0x4, blockType);
-			registry.register(id.id, id.data + 0x8, blockType);
+			registry.register(id.id, id.data | 0x4, blockType);
+			registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("glass"))
 		{
@@ -336,16 +344,19 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("slab"))
 		{
-			SubTexture side = parseTexture(element, "side", null);
-			SubTexture top = parseTexture(element, "top", null);
+			SubTexture tex = parseTexture(element, "texture", null);
+			SubTexture side = parseTexture(element, "side", tex);
+			SubTexture top = parseTexture(element, "top", tex);
 			
 			blockType = new Slab(name, side, top);
 			
 			// upsidedown half-slab has bit 0x8
-			registry.register(id.id, id.data + 0x8, blockType);
+			registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("doubleslab"))
 		{
+			System.out.println("Warning: DoubleSlab block type is obsolete. It will be removed in a future version. Use Solid instead.");
+			
 			SubTexture stoneSide = parseTexture(element, "stoneSide", null);
 			SubTexture stoneTop = parseTexture(element, "stoneTop", null);
 			
@@ -644,6 +655,12 @@ public class BlockRegistryParser
 			SubTexture stand = parseTexture(element, "stand", null);
 	
 			blockType = new BrewingStand(name, base, stand);
+		}
+		else if (nodeName.equals("trapdoor"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+			
+			blockType = new Trapdoor(name, texture);
 		}
 		else
 		{
