@@ -20,7 +20,7 @@
 	
 	<Solid id="1" name="Stone" texture="terrain[1, 0]" />
 	
-	<Grass id="2" name="Grass" betterGrass="fancy" dirtSide="terrain[3, 0]" grassSide="terrain[6, 2]" snowSide="terrain[4, 4]" top="terrain[0, 0]" bottom="terrain[2, 0]" />
+	<Grass id="2" name="Grass" betterGrass="none" dirtSide="terrain[3, 0]" grassSide="terrain[6, 2]" snowSide="terrain[4, 4]" top="terrain[0, 0]" bottom="terrain[2, 0]" />
 	
 	<Solid id="3" name="Dirt" texture="terrain[2, 0]" />
 	
