@@ -37,7 +37,6 @@
 package tectonicus;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.LinkedHashMap;
 
 public class RegionCache
@@ -53,6 +52,8 @@ public class RegionCache
 	{
 		if (worldDir == null)
 			throw new IllegalArgumentException("worldDir cannot be null");
+		if (!worldDir.exists())
+			throw new IllegalArgumentException("worldDir must exist ("+worldDir.getAbsolutePath()+")");
 		
 		this.worldDir = worldDir;
 		
@@ -137,26 +138,6 @@ public class RegionCache
 			Region r = remove(coord);
 			if (r != null)
 				put(coord, r);
-		}
-	}
-	
-	private static class AnvilFileFilter implements FilenameFilter
-	{
-		private boolean hasFoundAnvilFile = false;
-		
-		@Override
-		public boolean accept(File dir, String file)
-		{
-			if (hasFoundAnvilFile)
-				return false;
-			
-			if (file.endsWith(".mca"))
-			{
-				hasFoundAnvilFile = true;
-				return true;
-			}
-			
-			return false;
 		}
 	}
 }

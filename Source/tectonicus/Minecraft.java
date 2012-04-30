@@ -136,4 +136,19 @@ public class Minecraft
 		
 		return new File(worldDir.getParentFile(), "ops.txt");
 	}
+
+	/** Look for dimensionDir/region/*.mcr or dimensionDir/region/*.mca */
+	public static boolean isValidDimensionDir(File dimensionDir)
+	{
+		File regionDir = new File(dimensionDir, "region");
+		if (!regionDir.exists())
+			return false;
+		
+		File[] mcRegionFiles = regionDir.listFiles(new McRegionFileFilter());
+		
+		File[] anvilRegionFiles = regionDir.listFiles(new AnvilFileFilter());
+		
+		return (mcRegionFiles != null && mcRegionFiles.length > 0)
+				|| (anvilRegionFiles != null && anvilRegionFiles.length > 0);
+	}
 }

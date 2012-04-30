@@ -156,11 +156,16 @@ public class World implements BlockContext
 			dimensionDir = worldDir;
 		}
 		
+		System.out.println("Loading world from base dir "+worldDir.getPath()+" with dimension "+dimension);
+		System.out.println("\tFull dimension dir: "+dimensionDir.getAbsolutePath());
+		
 		this.biomeCache = biomeCache;
 		
 		// Check that this looks like a world dir
 		if (!Minecraft.isValidWorldDir(baseDir))
 			throw new RuntimeException("Invalid world dir! No level.dat found at "+Minecraft.findLevelDat(baseDir).getAbsolutePath());
+		if (!Minecraft.isValidDimensionDir(dimensionDir))
+			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 		
 		// TODO: Better error handling here.
 		// World should throw Exception?
