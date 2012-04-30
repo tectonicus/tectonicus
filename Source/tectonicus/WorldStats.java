@@ -102,6 +102,7 @@ public class WorldStats
 		
 		// First merge with block id names (so that 'flowing lava' and 'stationary lava' becomes 'lava'
 		Map<String, Long> nameCounts = new HashMap<String, Long>();
+		Map<IdDataPair, Boolean> unknownBlockIds = new HashMap<IdDataPair, Boolean>();
 		for (IdDataPair id : blockIdCounts.keySet())
 		{
 			// Find the name
@@ -121,8 +122,13 @@ public class WorldStats
 				// Update the count
 				nameCounts.put(name, count);
 			}
+			else
+			{
+				if (!unknownBlockIds.containsKey(id))
+					unknownBlockIds.put(id, true);
+			}
 		}
-		
+
 		JsArrayWriter jsWriter = null;
 		try
 		{
@@ -156,7 +162,14 @@ public class WorldStats
 				jsWriter.close();
 		}
 		
-		System.out.println("Outputted "+blockIdCounts.size()+" block counts");
+		System.out.println("Outputted "+nameCounts.size()+" block counts");
+
+		if (!unknownBlockIds.isEmpty())
+		{
+			System.out.println("Unknown block types:");
+			for (IdDataPair id : unknownBlockIds.keySet())
+				System.out.println("\t" + id.id + ":" + id.data);
+		}
 	}
 	
 	public void outputWorldStats(File statsFile, String varNamePrefix)
@@ -188,7 +201,7 @@ public class WorldStats
 				jsWriter.close();
 		}
 		
-		System.out.println("Outputted "+blockIdCounts.size()+" block counts");
+		System.out.println("Outputted world stats");
 	}
 
 	private static class IdDataPair
