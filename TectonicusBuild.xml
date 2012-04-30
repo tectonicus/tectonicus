@@ -6,7 +6,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.11" />
+	<property name="Version"			value="2.13" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -166,7 +166,7 @@
 					labels="Featured, Type-Executable, OpSys-All"
 					verbose="true"
 		/>
-		
+		<gcupload />
 	</target>
 	
 	<target name="MakeExe">

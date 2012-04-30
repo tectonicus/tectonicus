@@ -293,7 +293,8 @@ public class RawChunk
 						for (int z=0; z<SECTION_DEPTH; z++)
 						{
 							final int index = calcAnvilIndex(x, y, z);
-							newSection.blockIds[x][y][z] = blocksTag.getValue()[index];
+							final int id = blocksTag.getValue()[index] & 0xFF;
+							newSection.blockIds[x][y][z] = id;
 						}
 					}
 				}
