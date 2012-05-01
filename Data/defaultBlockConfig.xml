@@ -86,7 +86,7 @@
 	
 	<Solid id="22" name="Lapis Lazuli Block" texture="terrain[0, 9]" />
 	
-	<Dispenser id="23" name="Dispenser" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[14, 2]" />
+	<Furnace id="23" name="Dispenser" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[14, 2]" />
 	
 	<Solid id="24:0" name="Sandstone" side="terrain[0, 12]" top="terrain[0, 11]" bottom="terrain[0, 13]" />
 
@@ -207,9 +207,9 @@
 	
 	<Soil id="60" name="Soil" top="terrain[7, 5]" side="terrain[2, 0]" />
 	
-	<Furnace id="61" name="Furnace" top="terrain[1, 0]" side="terrain[13, 2]" front="terrain[12, 2]" />
+	<Furnace id="61" name="Furnace" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[12, 2]" />
 	
-	<Furnace id="62" name="Furnace" top="terrain[1, 0]" side="terrain[13, 2]" front="terrain[13, 3]" />
+	<Furnace id="62" name="Furnace" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[13, 3]" />
 	
 	<Sign id="63" name="Sign Post" texture="terrain[4, 0]" hasPost="true" />
 	
@@ -350,12 +350,12 @@
 
 	<Solid id="125:3" name="Jungle Wood Double Slab" texture="terrain[7, 12]" />
 
-	<Slab id="125:0" name="Oak Wood Half Slab" texture="terrain[4, 0]" />
+	<Slab id="126:0" name="Oak Wood Half Slab" texture="terrain[4, 0]" />
 
-	<Slab id="125:1" name="Spruce Wood Half Slab" texture="terrain[6, 12]" />
+	<Slab id="126:1" name="Spruce Wood Half Slab" texture="terrain[6, 12]" />
 
-	<Slab id="125:2" name="Birch Wood Half Slab" texture="terrain[6, 13]" />
+	<Slab id="126:2" name="Birch Wood Half Slab" texture="terrain[6, 13]" />
 
-	<Slab id="125:3" name="Jungle Wood Half Slab" texture="terrain[7, 12]" />
+	<Slab id="126:3" name="Jungle Wood Half Slab" texture="terrain[7, 12]" />
 	
 </blockConfig>
