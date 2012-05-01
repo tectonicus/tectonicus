@@ -92,33 +92,26 @@ public class JackOLantern implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
-		Mesh sideMesh = geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid);
-		Mesh frontMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
+		Mesh mesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		
 		final int data = chunk.getBlockData(x, y, z);
 		
-		// 0x0: Facing east
-		// 0x1: Facing south
-		// 0x2: Facing west
-		// 0x3: Facing north
+		// 0x0: Facing west
+		// 0x1: Facing north
+		// 0x2: Facing east
+		// 0x3: Facing south
 		
-		SubTexture northTex = data == 0x3 ? frontTexture : sideTexture;
-		SubTexture southTex = data == 0x1 ? frontTexture : sideTexture;
-		SubTexture eastTex = data == 0x0 ? frontTexture : sideTexture;
-		SubTexture westTex = data == 0x2 ? frontTexture : sideTexture;
+		SubTexture northTex = data == 0x1 ? frontTexture : sideTexture;
+		SubTexture southTex = data == 0x3 ? frontTexture : sideTexture;
+		SubTexture eastTex = data == 0x2 ? frontTexture : sideTexture;
+		SubTexture westTex = data == 0x0 ? frontTexture : sideTexture;
 		
-		Mesh northMesh = data == 0x3 ? frontMesh : sideMesh;
-		Mesh southMesh = data == 0x1 ? frontMesh : sideMesh;
-		Mesh eastMesh = data == 0x0 ? frontMesh : sideMesh;
-		Mesh westMesh = data == 0x2 ? frontMesh : sideMesh;
+		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, topTexture, registry);
+		BlockUtil.addBottom(world, chunk, mesh, x, y, z, colour, topTexture, registry);
 		
-		BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-		BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-		
-		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry);
-		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry);
-		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
-		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addNorth(world, chunk, mesh, x, y, z, colour, northTex, registry);
+		BlockUtil.addSouth(world, chunk, mesh, x, y, z, colour, southTex, registry);
+		BlockUtil.addEast(world, chunk, mesh, x, y, z, colour, eastTex, registry);
+		BlockUtil.addWest(world, chunk, mesh, x, y, z, colour, westTex, registry);
 	}
 }

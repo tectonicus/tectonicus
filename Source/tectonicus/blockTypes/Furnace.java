@@ -53,17 +53,13 @@ public class Furnace implements BlockType
 	private final SubTexture sideTexture;
 	private final SubTexture frontTexture;
 	
-	private Colour4f colour;
-
-	public Furnace(String name, SubTexture top, SubTexture side, SubTexture front)
+	public Furnace(String name, SubTexture topTexture, SubTexture sideTexture, SubTexture frontTexture)
 	{
 		this.name = name;
 		
-		this.topTexture = top;
-		this.sideTexture = side;
-		this.frontTexture = front;
-		
-		colour = new Colour4f(1, 1, 1, 1);
+		this.topTexture = topTexture;
+		this.sideTexture = sideTexture;
+		this.frontTexture = frontTexture;
 	}
 	
 	@Override
@@ -93,10 +89,10 @@ public class Furnace implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
-		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
-		Mesh frontMesh = geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid);
-		
+		Mesh mesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
+
+		Colour4f colour = new Colour4f(1, 1, 1, 1);
+
 		final int data = chunk.getBlockData(x, y, z);
 		
 		// 0x2: Facing east
@@ -106,20 +102,15 @@ public class Furnace implements BlockType
 		
 		SubTexture northTex = data == 0x4 ? frontTexture : sideTexture;
 		SubTexture southTex = data == 0x5 ? frontTexture : sideTexture;
-		SubTexture eastTex = data == 0x4 ? frontTexture : sideTexture;
+		SubTexture eastTex = data == 0x2 ? frontTexture : sideTexture;
 		SubTexture westTex = data == 0x3 ? frontTexture : sideTexture;
 		
-		Mesh northMesh = data == 0x4 ? frontMesh : sideMesh;
-		Mesh southMesh = data == 0x5 ? frontMesh : sideMesh;
-		Mesh eastMesh = data == 0x4 ? frontMesh : sideMesh;
-		Mesh westMesh = data == 0x3 ? frontMesh : sideMesh;
+		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, topTexture, registry);
+		BlockUtil.addBottom(world, chunk, mesh, x, y, z, colour, topTexture, registry);
 		
-		BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-		BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-		
-		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry);
-		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry);
-		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
-		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addNorth(world, chunk, mesh, x, y, z, colour, northTex, registry);
+		BlockUtil.addSouth(world, chunk, mesh, x, y, z, colour, southTex, registry);
+		BlockUtil.addEast(world, chunk, mesh, x, y, z, colour, eastTex, registry);
+		BlockUtil.addWest(world, chunk, mesh, x, y, z, colour, westTex, registry);
 	}
 }

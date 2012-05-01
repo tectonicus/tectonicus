@@ -153,23 +153,23 @@ public class RedstoneRepeater implements BlockType
 		float angle = 0;
 		
 		final int direction = data & 0x3;
-		if (direction == 0)
+		if (direction == 2)
 		{
 			// Facing east
 			rotation = Rotation.Clockwise;
 			angle = 180;
 		}
-		else if (direction == 1)
+		else if (direction == 3)
 		{
 			// Facing south
 			rotation = Rotation.Clockwise;
 			angle = 90;
 		}
-		else if (direction == 2)
+		else if (direction == 0)
 		{
 			// Facing west (built direction)
 		}
-		else if (direction == 3)
+		else if (direction == 1)
 		{
 			// Facing south
 			rotation = Rotation.AntiClockwise;

@@ -59,7 +59,6 @@ import tectonicus.blockTypes.Cake;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.DataSolid;
-import tectonicus.blockTypes.Dispenser;
 import tectonicus.blockTypes.Door;
 import tectonicus.blockTypes.DoubleSlab;
 import tectonicus.blockTypes.DragonEgg;
@@ -268,7 +267,7 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Sapling(name, texture);
-			registry.register(id.id, id.data | 0x8, blockType);
+			//registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("log"))
 		{
@@ -285,6 +284,7 @@ public class BlockRegistryParser
 			blockType = new Leaves(name, texture, color, biomeCache, texturePack);
 			registry.register(id.id, id.data | 0x4, blockType);
 			registry.register(id.id, id.data | 0x8, blockType);
+			registry.register(id.id, id.data | 0x12, blockType);
 		}
 		else if (nodeName.equals("glass"))
 		{
@@ -307,11 +307,13 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("dispenser"))
 		{
+			System.out.println("Warning: Dispenser block type is obsolete. It will be removed in a future version. Use Furnace instead.");
+
 			SubTexture top = parseTexture(element, "top", null);
 			SubTexture side = parseTexture(element, "side", null);
 			SubTexture front = parseTexture(element, "front", null);
 			
-			blockType = new Dispenser(top, side, front);
+			blockType = new Furnace(name, top, side, front);
 		}
 		else if (nodeName.equals("minecarttracks"))
 		{
