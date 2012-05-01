@@ -447,3 +447,22 @@ Version 2.11
 - added round stone bricks
 - fixed stairs side texture orientation (and maybe a few other blocks)
 
+Version 2.12
+
+- better validation of region data
+
+Version 2.13
+
+- fixed custom block ids >127 not recognized
+
+Version 2.14
+
+- added fence gates
+- added trapdoor
+- added betterGrass attribute to Grass block type ('fast' or 'fancy')
+- added wooden double slabs (untested)
+- made DoubleSlab block type obsolete, Solid using id:data is sufficient
+- fixed Door edge texture showing more than 3 pixels
+- added reporting of unknown block types
+- fixed pumpkins, furnaces, dispensers, restone repeaters facing wrong direction
+- fixed furnace top texture
