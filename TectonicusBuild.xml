@@ -113,7 +113,9 @@
 		<zip destfile="${FactoryFloor}/Tectonicus_v${Version}.zip" >
 			<fileset file="${FactoryFloor}/Tectonicus_v${Version}.jar" />
 			<fileset file="${Docs}/release.txt" />
+			<fileset file="${Docs}/simpleConfig.xml" />
 			<fileset file="${Docs}/exampleConfig.xml" />
+			<fileset file="${Docs}/fullConfig.xml" />
 			<fileset file="${Data}/defaultBlockConfig.xml" />
 		</zip>
 		
