@@ -1,75 +1,88 @@
-<tectonicus>
+<tectonicus version="2">
+<!--
+	This sample configuration demonstrates the majority of the configuration settings.
+	It will render a single map of a 500 block radius around (0,0) with three layers: day, night and caves.
+	Most of the settings are the default values and could be omitted.
+	See fullConfig.xml for all the available settings and their defaults.
+-->
 
-	<config mode = "cmd"
-			worldDir = "/Users/xxx/Pickaxe/World/world"
-			outputDir = "/Users/xxx/TectonicusTests/TestRender"
-			
-			outputHtmlName = "map.html"
-			minecraftJar = "/Users/xxx/Library/Application Support/minecraft/bin/minecraft.jar"
-			texturePack = "/Users/xxx/Texture pack.jar"
-			
-			numDownsampleThreads = "2"
-			eraseOutputDir = "false"
-			useCache = "true"
-			cacheDir = "/Users/xxx/TectonicusTests/TestRender/cache"
-			logFile = "/Users/xxx/TectonicusTests/TestRender/TectonicusLog.txt"
+	<config
+		mode="cmd"
+		minecraftJar="/Users/Xxxx/AppData/Roaming/.minecraft/bin/minecraft.jar"
+		texturePack="/Users/Xxxx/AppData/Roaming/.minecraft/texturepacks/My Texture Pack.zip"
+
+		outputDir="/Tectonicus Maps/My World"
+		outputHtmlName="index.html"
+
+		numZoomLevels="8"
+		singlePlayerName="Steve"
+
+		numDownsampleThreads="2"
+		eraseOutputDir="false"
+		useCache="true"
+		cacheDir="/Tectonicus Maps/My World/cache"
+		logFile="/Tectonicus Maps/My World/TectonicusLog.txt"
+		spawnInitiallyVisible="true"
+		playersInitiallyVisible="true"
+		bedsInitiallyVisible="true"
+		signsInitiallyVisible="true"
+		portalsInitiallyVisible="true"
+		viewsInitiallyVisible="true"
+	/>
+
+	<!-- Rasteriser config applies to all maps/layers -->
+	<rasteriser
+		type="lwjgl"
+		colourDepth="32"
+		alphaBits="8"
+		numSamples="4"
+		tileSize="512"
+	/>
+
+	<map
+		name="My World"
+		worldDir="/Users/xxx/AppData/roaming/.minecraft/saves/My World"
+		dimension="terra"
+		cameraAngle="45"
+		cameraElevation="45"
+		useBiomeColours="false"
+		north="-z"
 	>
-	</config>
-	
-	<!-- Rasteriser config applies to all layers -->
-	<rasteriser type = "lwjgl"
-				colourDepth = "32"
-				alphaBits = "8"
-				numSamples = "4"
-				tileSize = "512"
-		>
-	</rasteriser>
-	
-	<!-- A generated map layer -->
-	<layer	dimension = "terra"
-			renderStyle = "normal"
-			cameraAngle = "45"
-			cameraElevation = "45"
-			imageFormat = "png"
-			imageCompressionLevel = "1.0"
-			lighting = "day"
-			useBiomeColours = "true"
-			
-			singlePlayerName="YourPlayerNameHere"
-						
-			numZoomLevels = "8"
-			closestZoomSize = "12"
-			
-			useDefaultBlocks="true"
-			customBlocks="/Users/xxx/TectonicusTests/customBlocks.xml"
-			>
-			
-			<!-- Markers to display on this layer -->
-			<signs filter="special" initiallyVisible="true" />
-			<players filter="all" playerFilterFile="/Users/xxx/TectonicusTests/players.txt" initiallyVisible="true" />
-			<portals filter="all" initiallyVisible="true" />
-			<spawn show="true" intiallyVisible="true" />
-			<beds initiallyVisible="true" />
-			
-			<!-- Limit world rendering to a sub region. Optional, omit for the full world -->
-			<subset>
-				<!-- Radius is in world units. Remove 'origin' to center around the spawn point -->
-				<CircularSubset origin="0, 0" radius="1000" />
-			</subset>
-	</layer>
-	
-	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
-	<tweeks
-		extractLwjglNatives = "true"
-		forceLoadAwt = "false"
-		force32BitNatives = "false"
-		force64BitNatives = "false"
-	>
-	</tweeks>
-	
-	<!-- Debug options, you shouldn't need to tinker with these -->
-	<debug maxTiles = "-1"
-	>
-	</debug>
-	
+		<signs filter="special" />
+		<views filter="all" />
+		<players filter="all" />
+		<portals filter="all" />
+
+		<!-- Limit world rendering to a sub region. Optional, omit for the full world -->
+		<subset>
+			<!-- Radius is in world units. Omit 'origin' to center around the spawn point -->
+			<CircularSubset origin="0, 0" radius="500" />
+		</subset>
+
+		<layer
+			name="Day"
+			lighting="day"
+			renderStyle="normal"
+			imageFormat="jpg"
+			imageCompressionLevel="0.85"
+		/>
+
+		<layer
+			name="Night"
+			lighting="night"
+			renderStyle="normal"
+			imageFormat="jpg"
+			imageCompressionLevel="0.85"
+		/>
+
+		<layer
+			name="Caves"
+			lighting="day"
+			renderStyle="caves"
+			imageFormat="jpg"
+			imageCompressionLevel="0.85"
+		/>
+
+	</map>
+
 </tectonicus>

@@ -1,0 +1,98 @@
+<tectonicus version="2">
+
+	<config
+		mode="cmd / gui / interactive / players / views"
+		minecraftJar="(auto-find)"
+		texturePack=""
+		outputDir="."
+		outputHtmlName="map.html"
+		numZoomLevels="8"
+		singlePlayerName=""
+		numDownsampleThreads="(num of CPU/cores)"
+		eraseOutputDir="false / true"
+		useCache="true / false"
+		cacheDir="outputDir/cache"
+		logFile="./TectonicusLog.txt"
+		spawnInitiallyVisible="true / false"
+		playersInitiallyVisible="true / false"
+		bedsInitiallyVisible="true / false"
+		signsInitiallyVisible="true / false"
+		portalsInitiallyVisible="true / false"
+		viewsInitiallyVisible="true / false"
+	/>
+
+	<!-- Rasteriser config applies to all maps/layers -->
+	<rasteriser
+		type="lwjgl / processing"
+		colourDepth="24"
+		alphaBits="8"
+		numSamples="4"
+		tileSize="512 / 64 - 2048"
+	/>
+
+	<!-- Maps to process (must have at least one map) -->
+	<map
+		name=""
+		worldDir="/Users/xxxx/AppData/Roaming/.minecraft/saves/My World" <!-- required -->
+		dimension="terra / nether / ender"
+		closestZoomSize="12"
+		cameraAngle="45"
+		cameraElevation="45 / 10 - 90"
+		useBiomeColours="false / true"
+		north="-z / +z / -x / +x" <!-- compass rose north direction -->
+	>
+
+		<subset>
+			<!-- Radius is in world units. Remove 'origin' to center around the spawn point -->
+			<CircularSubset radius="200" origin="0, 0" />
+		</subset>
+
+		<!-- Markers to display on this layer -->
+
+		<signs
+			filter="special / all / none"
+		/>
+
+		<views
+			filter="all / none"
+			imageFormat="png / jpg / gif"
+			imageCompressionLevel="0.95 / 0.1 - 1.0"
+			drawDistance="200"
+		/>
+
+		<players
+			filter="all / none / ops / whitelist / blacklist"
+			playerFilterFile="." <!-- required only for whitelist or blacklist -->
+		/>
+
+		<portals
+			filter="all / none"
+		/>
+
+		<!-- A generated map layer (can be more than one per map) -->
+		<layer
+			name=""
+			lighting="day / night / cave / none"
+			renderStyle="normal / cave / nether / exploredcaves"
+			imageFormat="png / jpg / gif"
+			imageCompressionLevel="0.95 / 0.1 - 1.0"
+			useDefaultBlocks="true / false"
+			customBlocks="."
+		/>
+
+	</map>
+
+	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
+	<tweeks
+		extractLwjglNatives="true / false"
+		forceLoadAwt="false / true"
+		force32BitNatives="false / true"
+		force64BitNatives="false / true"
+	/>
+
+	<!-- Debug options, you shouldn't need to tinker with these -->
+	<debug
+		maxTiles=""
+	/>
+
+</tectonicus>

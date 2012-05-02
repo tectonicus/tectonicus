@@ -1,28 +1,32 @@
-<tectonicus>
+<tectonicus version="2">
+<!--
+	This sample configuration demonstrates the most commonly used configuration settings.
+	It will render a map of the entire world at daytime with all markers shown.
 
-	<config mode = "cmd"
-			worldDir = "/Users/xxx/Pickaxe/World/world"
-			outputDir = "/Users/xxx/TectonicusTests/TestRender"
-			outputHtmlName = "map.html"
+	You only need to change the "worldDir" path below to your Minecraft world folder,
+	and the "outputDir" path if desired. Increasing the "closestZoomSize" to "24" or "48" will
+	save you disk space, but with less detail available when zoomed all the way in.
+	
+	See exampleConfig.xml for a sample with more options,
+	or fullConfig.xml for all the available settings and their defaults.
+-->
+
+	<config
+		outputDir="C:\Tectonicus\My World Map"
+		numZoomLevels="8"
+	/>
+
+	<map
+		name="My World Map"
+		worldDir="C:\Users\xxxx\AppData\Roaming\.minecraft\saves\My World"
+		dimension="terra"
+		closestZoomSize="12"
 	>
-	</config>
-	
-	<!-- A generated map layer -->
-	<layer	dimension = "terra"
-			cameraAngle = "45"
-			cameraElevation = "45"
-			imageFormat = "png"
-			lighting = "day"
-			
-			numZoomLevels = "8"
-			closestZoomSize = "12">
-			
-			<!-- Markers to display on this layer -->
-			<signs filter="special" initiallyVisible="true" />
-			<players filter="all" initiallyVisible="true" />
-			<portals filter="all" initiallyVisible="true" />
-			<spawn show="true" intiallyVisible="true" />
-			<beds initiallyVisible="true" />
-	</layer>
-	
+		<layer
+			name="Day"
+			lighting="day"
+			renderStyle="normal"
+		/>
+	</map>
+
 </tectonicus>
