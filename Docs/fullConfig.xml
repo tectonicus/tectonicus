@@ -1,4 +1,11 @@
 <tectonicus version="2">
+<!--
+	THIS IS NOT A VALID CONFIGURATION FILE.
+	
+	This configuration file lists all of the available settings with the
+	default value listed first. Any element or attribute may be omitted if the
+	default value is desired.
+-->
 
 	<config
 		mode="cmd / gui / interactive / players / views"
