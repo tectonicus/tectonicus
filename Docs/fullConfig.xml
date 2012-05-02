@@ -47,6 +47,7 @@
 		cameraElevation="45 / 10 - 90"
 		useBiomeColours="false / true"
 		north="-z / +z / -x / +x" <!-- compass rose north direction -->
+		compassRose="" <!-- custom image path -->
 	>
 
 		<subset>
