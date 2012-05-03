@@ -267,7 +267,8 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Sapling(name, texture);
-			//registry.register(id.id, id.data | 0x8, blockType);
+			// counter bit is 0x8
+			registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("log"))
 		{
@@ -284,7 +285,7 @@ public class BlockRegistryParser
 			blockType = new Leaves(name, texture, color, biomeCache, texturePack);
 			registry.register(id.id, id.data | 0x4, blockType);
 			registry.register(id.id, id.data | 0x8, blockType);
-			registry.register(id.id, id.data | 0x12, blockType);
+			registry.register(id.id, id.data | 0x4 | 0x8, blockType);
 		}
 		else if (nodeName.equals("glass"))
 		{

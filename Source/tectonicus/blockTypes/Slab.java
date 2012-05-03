@@ -47,6 +47,7 @@ import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
+import tectonicus.renderer.Geometry.MeshType;
 import tectonicus.texture.SubTexture;
 
 public class Slab implements BlockType
@@ -104,6 +105,7 @@ public class Slab implements BlockType
 		SubTexture halfSideTexture = new SubTexture(this.sideTexture.texture, this.sideTexture.u0, this.sideTexture.v0+vOffset, this.sideTexture.u1, this.sideTexture.v0+halfV+vOffset);
 		
 		Mesh mesh = geometry.getBaseMesh();
+		Mesh halfSideMesh = geometry.getMesh(halfSideTexture.texture, MeshType.Solid);
 		
 		final float yOffset = (upsidedown ? 0.5f : 0f);
 		
@@ -141,7 +143,7 @@ public class Slab implements BlockType
 		final BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		if (!north.isSolid())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+0.5f+yOffset,	z),
+			MeshUtil.addQuad(halfSideMesh,	new Vector3f(x,		y+0.5f+yOffset,	z),
 									new Vector3f(x,		y+0.5f+yOffset,	z+1),
 									new Vector3f(x,		y+yOffset,		z+1),
 									new Vector3f(x,		y+yOffset,		z),
@@ -154,7 +156,7 @@ public class Slab implements BlockType
 		final BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		if (!south.isSolid())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+0.5f+yOffset,		z+1),
+			MeshUtil.addQuad(halfSideMesh,	new Vector3f(x+1,		y+0.5f+yOffset,		z+1),
 									new Vector3f(x+1,		y+0.5f+yOffset,	z),
 									new Vector3f(x+1,		y+yOffset,	z),
 									new Vector3f(x+1,		y+yOffset,	z+1),
@@ -167,7 +169,7 @@ public class Slab implements BlockType
 		final BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 		if (!east.isSolid())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+0.5f+yOffset,	z),
+			MeshUtil.addQuad(halfSideMesh,	new Vector3f(x+1,	y+0.5f+yOffset,	z),
 									new Vector3f(x,		y+0.5f+yOffset,	z),
 									new Vector3f(x,		y+yOffset,		z),
 									new Vector3f(x+1,	y+yOffset,		z),
@@ -180,7 +182,7 @@ public class Slab implements BlockType
 		final BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 		if (!west.isSolid())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+0.5f+yOffset,	z+1),
+			MeshUtil.addQuad(halfSideMesh,	new Vector3f(x,		y+0.5f+yOffset,	z+1),
 									new Vector3f(x+1,	y+0.5f+yOffset,	z+1),
 									new Vector3f(x+1,	y+yOffset,		z+1),
 									new Vector3f(x,		y+yOffset,		z+1),
