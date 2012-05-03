@@ -108,6 +108,12 @@ public class Chest implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
 		Mesh mesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
+		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
+		Mesh frontMesh = geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid);
+		Mesh doubleSide0Mesh = geometry.getMesh(doubleSide0.texture, Geometry.MeshType.Solid);
+		Mesh doubleSide1Mesh = geometry.getMesh(doubleSide1.texture, Geometry.MeshType.Solid);
+		Mesh doubleFront0Mesh = geometry.getMesh(doubleFront0.texture, Geometry.MeshType.Solid);
+		Mesh doubleFront1Mesh = geometry.getMesh(doubleFront1.texture, Geometry.MeshType.Solid);
 		
 		final int northId = world.getBlockId(chunk.getChunkCoord(), x-1, y, z);
 		final int southId = world.getBlockId(chunk.getChunkCoord(), x+1, y, z);
@@ -129,6 +135,10 @@ public class Chest implements BlockType
 		SubTexture southTex = sideTexture;
 		SubTexture eastTex = sideTexture;
 		SubTexture westTex = sideTexture;
+		Mesh northMesh = sideMesh;
+		Mesh southMesh = sideMesh;
+		Mesh eastMesh = sideMesh;
+		Mesh westMesh = sideMesh;
 		
 		if (chestNorth || chestSouth || chestEast || chestWest)
 		{
@@ -144,13 +154,17 @@ public class Chest implements BlockType
 				{
 					// face east
 					eastTex = doubleFront0;
+					eastMesh = doubleFront0Mesh;
 					westTex = doubleSide1;
+					westMesh = doubleSide1Mesh;
 				}
 				else
 				{
 					// face west
 					westTex = doubleFront1;
+					westMesh = doubleFront1Mesh;
 					eastTex = doubleSide0;
+					eastMesh = doubleSide0Mesh;
 				}
 			}
 			else if (chestSouth)
@@ -162,13 +176,17 @@ public class Chest implements BlockType
 				{
 					// face east
 					eastTex = doubleFront1;
+					eastMesh = doubleFront1Mesh;
 					westTex = doubleSide0;
+					westMesh = doubleSide0Mesh;
 				}
 				else
 				{
 					// face west
 					westTex = doubleFront0;
+					westMesh = doubleFront0Mesh;
 					eastTex = doubleSide1;
+					eastMesh = doubleSide1Mesh;
 				}
 			}
 			else if (chestEast)
@@ -180,13 +198,17 @@ public class Chest implements BlockType
 				{
 					// face north
 					northTex = doubleFront1;
+					northMesh = doubleFront1Mesh;
 					southTex = doubleSide0;	
+					southMesh = doubleSide0Mesh;	
 				}
 				else
 				{
 					// face south
 					southTex = doubleFront0;
+					southMesh = doubleFront0Mesh;
 					northTex = doubleSide1;
+					northMesh = doubleSide1Mesh;
 				}
 			}
 			else
@@ -198,13 +220,17 @@ public class Chest implements BlockType
 				{
 					// face north
 					northTex = doubleFront0;
+					northMesh = doubleFront0Mesh;
 					southTex = doubleSide1;	
+					southMesh = doubleSide1Mesh;	
 				}
 				else
 				{
 					// face south
 					southTex = doubleFront1;
+					southMesh = doubleFront1Mesh;
 					northTex = doubleSide0;
+					northMesh = doubleSide0Mesh;
 				}
 			}
 		}
@@ -231,13 +257,25 @@ public class Chest implements BlockType
 				// Faces the direction which isn't covered
 				
 				if (!northType.isSolid())
+				{
 					northTex = frontTexture;
+					northMesh = frontMesh;
+				}
 				else if (!southType.isSolid())
+				{
 					southTex = frontTexture;
+					southMesh = frontMesh;
+				}
 				else if (!eastType.isSolid())
+				{
 					eastTex = frontTexture;
+					eastMesh = frontMesh;
+				}
 				else if (!westType.isSolid())
+				{
 					westTex = frontTexture;
+					westMesh = frontMesh;
+				}
 			}
 			else if (numSolid == 2)
 			{
@@ -246,6 +284,7 @@ public class Chest implements BlockType
 				if (northType.isSolid() && southType.isSolid())
 				{
 					westTex = frontTexture;
+					westMesh = frontMesh;
 				}
 				else if (eastType.isSolid() && westType.isSolid())
 				{
@@ -255,18 +294,22 @@ public class Chest implements BlockType
 				else if (northType.isSolid() && eastType.isSolid())
 				{
 					southTex = frontTexture;
+					southMesh = frontMesh;
 				}
 				else if (eastType.isSolid() && southType.isSolid())
 				{
 					northTex = frontTexture;
+					northMesh = frontMesh;
 				}
 				else if (southType.isSolid() && westType.isSolid())
 				{
 					northTex = frontTexture;
+					northMesh = frontMesh;
 				}
 				else if (westType.isSolid() && northType.isSolid())
 				{
 					southTex = frontTexture;
+					southMesh = frontMesh;
 				}
 			}
 			else if (numSolid == 1)
@@ -274,28 +317,41 @@ public class Chest implements BlockType
 				// Faces away from a single solid block
 				
 				if (northType.isSolid())
+				{
 					southTex = frontTexture;
+					southMesh = frontMesh;
+				}
 				else if (southType.isSolid())
+				{
 					northTex = frontTexture;
+					northMesh = frontMesh;
+				}
 				else if (eastType.isSolid())
+				{
 					westTex = frontTexture;
+					westMesh = frontMesh;
+				}
 				else if (westType.isSolid())
+				{
 					eastTex = frontTexture;
+					eastMesh = frontMesh;
+				}
 			}
 			else
 			{
 				// Default to facing west
 				westTex = frontTexture;
+				westMesh = frontMesh;
 			}
 		}
 		
 		// Top is always the same
 		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, topTexture, registry);
 		
-		BlockUtil.addNorth(world, chunk, mesh, x, y, z, colour, northTex, registry);
-		BlockUtil.addSouth(world, chunk, mesh, x, y, z, colour, southTex, registry);
-		BlockUtil.addEast(world, chunk, mesh, x, y, z, colour, eastTex, registry);
-		BlockUtil.addWest(world, chunk, mesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry);
+		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry);
+		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
+		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry);
 	}
 	
 	private static final boolean isSolid(ChunkCoord coord, int x, int y, int z, BlockContext world, BlockTypeRegistry registry)
