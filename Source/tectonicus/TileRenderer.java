@@ -531,7 +531,7 @@ public class TileRenderer
 							findViews(c.getRawChunk(), views, viewFilter);
 							
 							if (worldStats.numChunks() % 100 == 0)
-								System.out.println("\tfound "+worldStats.numChunks()+" chunks so far");
+								System.out.print("\tfound "+worldStats.numChunks()+" chunks so far\r"); //prints a carraige return after line
 						}
 					}
 					
@@ -540,7 +540,7 @@ public class TileRenderer
 			}
 		}
 		
-		System.out.println("Found "+worldStats.numChunks()+" chunks in total");
+		System.out.println("\nFound "+worldStats.numChunks()+" chunks in total");
 		
 		if (worldStats.numChunks() == 0)
 		{
@@ -665,7 +665,7 @@ public class TileRenderer
 		
 		for (TileCoord t : tiles)
 		{
-			System.out.println("Rendering tile @ "+t.x+","+t.y+" (tile "+(done+1)+" of "+tiles.size()+")");
+			System.out.print("Rendering tile @ "+t.x+","+t.y+" (tile "+(done+1)+" of "+tiles.size()+")\r"); //prints a carraige return after line
 			progressListener.onTaskUpdate(done, tiles.size());
 			
 			setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
@@ -698,7 +698,7 @@ public class TileRenderer
 		
 		imageWriteQueue.waitUntilFinished();
 		
-		System.out.println("Base tile render complete");
+		System.out.println("\nBase tile render complete");
 	}
 
 	public static void setupCameraForTile(OrthoCamera camera, TileCoord tile, final int tileWidth, final int tileHeight, final float cameraAngleRads, final float cameraElevationRads, final int zoom)
@@ -838,7 +838,7 @@ public class TileRenderer
 						if (count % 100 == 0)
 						{
 							final int percentage = (int)Math.floor((count / (float)numChunks) * 100);
-							System.out.println(percentage+"%");
+							System.out.print(percentage+"%\r"); //prints a carraige return after line
 						}
 						progressListener.onTaskUpdate(count, numChunks);
 					}

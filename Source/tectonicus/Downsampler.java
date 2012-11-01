@@ -83,7 +83,7 @@ public class Downsampler
 			if (count % 20 == 0)
 			{
 				final int percentage = (int)Math.floor((count / (float)tiles.size()) * 100);
-				System.out.println(percentage+"%");
+				System.out.print(percentage+"%\r"); //prints a carraige return after line
 			}
 			progressListener.onTaskUpdate(count, tiles.size());
 		}
