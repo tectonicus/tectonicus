@@ -38,8 +38,11 @@ package tectonicus.cache;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
@@ -235,15 +238,38 @@ public class PlayerSkinCache
 		{
 			String url = "http://www.minecraft.net/skin/"+playerName+".png";
 			
-			BufferedImage skin = ImageIO.read( new URL(url) );
-			if (skin != null)
+            URLConnection remote = openConnection(url);
+            InputStream skinStream = remote.getInputStream();
+            try
+            {
+                BufferedImage skin = ImageIO.read(skinStream);
+                if(skin != null)
 				return skin;
+		}
+            finally
+            {
+                skinStream.close();
+            }
 		}
 		catch (Exception e) {}
 		
 		System.out.println("No skin for player "+playerName);
 		return null;
 	}
+	
+    private static URLConnection openConnection(String location)
+        throws IOException
+    {
+        URLConnection connection = null;
+        do
+        {
+            URL skinURL = new URL(location);
+            connection = skinURL.openConnection();
+            location = connection.getHeaderField("Location");
+        }
+        while(location != null);
+        return connection;
+    }
 	
 	private static class CacheEntry
 	{

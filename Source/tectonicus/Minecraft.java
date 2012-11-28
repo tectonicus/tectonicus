@@ -121,7 +121,7 @@ public class Minecraft
 		return new File(worldDir, "level.dat");
 	}
 	
-	public static File findPlayesDir(File worldDir)
+	public static File findPlayersDir(File worldDir)
 	{
 		if (worldDir == null)
 			return null;

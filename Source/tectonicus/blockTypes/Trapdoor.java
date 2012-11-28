@@ -103,6 +103,7 @@ public class Trapdoor implements BlockType
 		
 		final int data = rawChunk.getBlockData(x, y, z);
 		final boolean isOpen = (data & 0x4) > 0;
+		final boolean isOnTop = (data & 0x8) > 0;
 		final int hingePos = data & 0x3;
 		
 		SubMesh subMesh = new SubMesh();
@@ -120,64 +121,128 @@ public class Trapdoor implements BlockType
 
 		if (!isOpen)
 		{
-			//if (!above.isSolid())
-			//{
-				// top face
-				subMesh.addQuad(new Vector3f(0, thickness, 0),
-								new Vector3f(1, thickness, 0),
-								new Vector3f(1, thickness, 1),
-								new Vector3f(0, thickness, 1),
-								white, texture);
-			//}
-			
-			if (!below.isSolid())
+			if(isOnTop)  // check if trapdoor hinge is on the top of the block
 			{
-				// bottom face
-				subMesh.addQuad(new Vector3f(0, 0, 1),
-								new Vector3f(1, 0, 1),
-								new Vector3f(1, 0, 0),
-								new Vector3f(0, 0, 0),
-								white, new Vector2f(texture.u1, texture.v0), new Vector2f(texture.u0, texture.v0),new Vector2f(texture.u0, texture.v1), new Vector2f(texture.u1, texture.v1) );
-			}
-
-			if (!north.isSolid())
-			{
-				// north edge
-				subMesh.addQuad(new Vector3f(0, thickness, 0),
-								new Vector3f(0, thickness, 1),
-								new Vector3f(0, 0, 1),
-								new Vector3f(0, 0, 0),
-								white, bottomEdgeTexture);
-			}
+				if (!above.isSolid())
+				{
+					// top face
+					subMesh.addQuad(new Vector3f(0, 1, 0),
+									new Vector3f(1, 1, 0),
+									new Vector3f(1, 1, 1),
+									new Vector3f(0, 1, 1),
+									white, texture);
+				}
+				//if (!below.isSolid())
+				//{
+					// bottom face
+					subMesh.addQuad(new Vector3f(0, 1-thickness, 1),
+									new Vector3f(1, 1-thickness, 1),
+									new Vector3f(1, 1-thickness, 0),
+									new Vector3f(0, 1-thickness, 0),
+									white, new Vector2f(texture.u1, texture.v0), new Vector2f(texture.u0, texture.v0),new Vector2f(texture.u0, texture.v1), new Vector2f(texture.u1, texture.v1) );
+				//}
 	
-			if (!south.isSolid())
-			{
-				// south edge
-				subMesh.addQuad(new Vector3f(1, thickness, 1),
-								new Vector3f(1, thickness, 0),
-								new Vector3f(1, 0, 0),
-								new Vector3f(1, 0, 1),
-								white, bottomEdgeTexture);
+				if (!north.isSolid())
+				{
+					// actually west edge
+					subMesh.addQuad(new Vector3f(0, 1, 0),
+									new Vector3f(0, 1, 1),
+									new Vector3f(0, 1-thickness, 1),
+									new Vector3f(0, 1-thickness, 0),									
+									white, topEdgeTexture);
+				}
+		
+				if (!south.isSolid())
+				{
+					// actually east edge
+					subMesh.addQuad(new Vector3f(1, 1, 1),
+									new Vector3f(1, 1, 0),
+									new Vector3f(1, 1-thickness, 0),
+									new Vector3f(1, 1-thickness, 1),
+									white, topEdgeTexture);
+				}
+		
+				if (!east.isSolid())
+				{
+					// actually south edge
+					subMesh.addQuad(new Vector3f(1, 1, 0),
+									new Vector3f(0, 1, 0),																		
+									new Vector3f(0, 1-thickness, 0),
+									new Vector3f(1, 1-thickness, 0),
+									white, topEdgeTexture);
+				}
+		
+				if (!west.isSolid())
+				{
+					// actually north edge
+					subMesh.addQuad(new Vector3f(0, 1, 1),
+									new Vector3f(1, 1, 1),
+									new Vector3f(1, 1-thickness, 1),
+									new Vector3f(0, 1-thickness, 1),									
+									white, topEdgeTexture);
+				}
 			}
-	
-			if (!east.isSolid())
+			else if(!isOnTop)
 			{
-				// east edge
-				subMesh.addQuad(new Vector3f(1, thickness, 0),
-								new Vector3f(0, thickness, 0),
-								new Vector3f(0, 0, 0),
-								new Vector3f(1, 0, 0),
-								white, bottomEdgeTexture);
-			}
-	
-			if (!west.isSolid())
-			{
-				// west edge
-				subMesh.addQuad(new Vector3f(0, thickness, 1),
-								new Vector3f(1, thickness, 1),
-								new Vector3f(1, 0, 1),
-								new Vector3f(0, 0, 1),
-								white, bottomEdgeTexture);
+				//if (!above.isSolid())
+				//{
+					// top face
+					subMesh.addQuad(new Vector3f(0, thickness, 0),
+									new Vector3f(1, thickness, 0),
+									new Vector3f(1, thickness, 1),
+									new Vector3f(0, thickness, 1),
+									white, texture);
+				//}
+				
+				if (!below.isSolid())
+				{
+					// bottom face
+					subMesh.addQuad(new Vector3f(0, 0, 1),
+									new Vector3f(1, 0, 1),
+									new Vector3f(1, 0, 0),
+									new Vector3f(0, 0, 0),
+									white, new Vector2f(texture.u1, texture.v0), new Vector2f(texture.u0, texture.v0),new Vector2f(texture.u0, texture.v1), new Vector2f(texture.u1, texture.v1) );
+				}
+				
+				if (!north.isSolid())
+				{
+					// north edge
+					subMesh.addQuad(new Vector3f(0, thickness, 0),
+									new Vector3f(0, thickness, 1),
+									new Vector3f(0, 0, 1),
+									new Vector3f(0, 0, 0),
+									white, topEdgeTexture);
+				}
+		
+				if (!south.isSolid())
+				{
+					// south edge
+					subMesh.addQuad(new Vector3f(1, thickness, 1),
+									new Vector3f(1, thickness, 0),
+									new Vector3f(1, 0, 0),
+									new Vector3f(1, 0, 1),
+									white, topEdgeTexture);
+				}
+		
+				if (!east.isSolid())
+				{
+					// east edge
+					subMesh.addQuad(new Vector3f(1, thickness, 0),
+									new Vector3f(0, thickness, 0),
+									new Vector3f(0, 0, 0),
+									new Vector3f(1, 0, 0),
+									white, topEdgeTexture);
+				}
+		
+				if (!west.isSolid())
+				{
+					// west edge
+					subMesh.addQuad(new Vector3f(0, thickness, 1),
+									new Vector3f(1, thickness, 1),
+									new Vector3f(1, 0, 1),
+									new Vector3f(0, 0, 1),
+									white, topEdgeTexture);
+				}
 			}
 		}
 		else if (hingePos == 0) // west

@@ -747,7 +747,10 @@ public class RawChunk
 	
 	public int getBiomeId(final int x, final int y, final int z)
 	{
-		return biomes[x][z];
+		if(biomes != null)
+			return biomes[x][z];
+		else
+			return BiomeIds.UNKNOWN;
 	}
 	
 	private static class Section

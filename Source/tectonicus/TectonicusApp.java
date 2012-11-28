@@ -967,7 +967,7 @@ public class TectonicusApp
 				for (tectonicus.configuration.Map map : args.getMaps())
 				{
 					ArrayList<Player> players = World.loadPlayers(map.getWorldDir());
-				
+			
 					PlayerList ops = PlayerList.loadOps(map.getWorldDir());
 									
 					File mapDir = new File(args.outputDir(), map.getId());

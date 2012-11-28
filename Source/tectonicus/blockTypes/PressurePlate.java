@@ -93,6 +93,7 @@ public class PressurePlate implements BlockType
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
 		final float height = 1.0f / 16.0f;
+		final float border = 1.0f / 16.0f;  //used to make pressure plate slightly smaller than the block it sits on
 		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
@@ -101,19 +102,19 @@ public class PressurePlate implements BlockType
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		// Top quad
-		MeshUtil.addQuad(mesh, new Vector3f(x, y+height, z), new Vector3f(x+1, y+height, z), new Vector3f(x+1, y+height, z+1), new Vector3f(x, y+height, z+1), white, texture);
-		
-		// North edge
-		MeshUtil.addQuad(mesh, new Vector3f(x, y+height, z), new Vector3f(x, y+height, z+1), new Vector3f(x, y, z+1), new Vector3f(x, y, z), white, edgeTexture);
-		
-		// South edge
-		MeshUtil.addQuad(mesh, new Vector3f(x+1, y+height, z+1), new Vector3f(x+1, y+height, z), new Vector3f(x+1, y, z), new Vector3f(x+1, y, z+1), white, edgeTexture);
-		
-		// East edge
-		MeshUtil.addQuad(mesh, new Vector3f(x+1, y+height, z), new Vector3f(x, y+height, z), new Vector3f(x, y, z), new Vector3f(x+1, y, z), white, edgeTexture);
+		MeshUtil.addQuad(mesh, new Vector3f(x+border, y+height, z+border), new Vector3f(x+1-border, y+height, z+border), new Vector3f(x+1-border, y+height, z+1-border), new Vector3f(x+border, y+height, z+1-border), white, texture);
 		
 		// West edge
-		MeshUtil.addQuad(mesh, new Vector3f(x, y+height, z+1), new Vector3f(x+1, y+height, z+1), new Vector3f(x+1, y, z+1), new Vector3f(x, y, z+1), white, edgeTexture);
+		MeshUtil.addQuad(mesh, new Vector3f(x+border, y+height, z+border), new Vector3f(x+border, y+height, z+1-border), new Vector3f(x+border, y, z+1-border), new Vector3f(x+border, y, z+border), white, edgeTexture);
+		
+		// East edge
+		MeshUtil.addQuad(mesh, new Vector3f(x+1-border, y+height, z+1-border), new Vector3f(x+1-border, y+height, z+border), new Vector3f(x+1-border, y, z+border), new Vector3f(x+1-border, y, z+1-border), white, edgeTexture);
+		
+		// South edge
+		MeshUtil.addQuad(mesh, new Vector3f(x+1-border, y+height, z+border), new Vector3f(x+border, y+height, z+border), new Vector3f(x+border, y, z+border), new Vector3f(x+1-border, y, z+border), white, edgeTexture);
+		
+		// North edge
+		MeshUtil.addQuad(mesh, new Vector3f(x+border, y+height, z+1-border), new Vector3f(x+1-border, y+height, z+1-border), new Vector3f(x+1-border, y, z+1-border), new Vector3f(x+border, y, z+1-border), white, edgeTexture);
 	}
 	
 }

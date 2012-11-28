@@ -103,7 +103,7 @@ public class TallGrass implements BlockType
 		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
-		Colour4f baseColour = getColour(x, z, data, rawChunk);
+		Colour4f baseColour = getColour(x, y, z, data, world, rawChunk);
 		final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
 		Vector4f colour = new Vector4f(baseColour.r * lightVal, baseColour.g * lightVal, baseColour.b * lightVal, baseColour.a);
 
@@ -129,7 +129,7 @@ public class TallGrass implements BlockType
 		return tallGrassTexture;
 	}
 	
-	private Colour4f getColour(final int x, final int z, final int data, RawChunk rawChunk)
+	private Colour4f getColour(final int x, final int y, final int z, final int data, BlockContext world, RawChunk rawChunk)
 	{
 		final int type = data & 0x3;
 		
@@ -137,9 +137,10 @@ public class TallGrass implements BlockType
 		{
 			// Tall grass and ferns take the biome colour
 			
-			BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
+			/*BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
-			Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );
+			Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
+			Colour4f colour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
 			return colour;
 		}
 		else

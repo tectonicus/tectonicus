@@ -192,12 +192,7 @@ public class World implements BlockContext
 		
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir);
-		
-		Player singlePlayer = levelDat.getSinglePlayer();
-		if (singlePlayer != null)
-		{
-			players.add(singlePlayer);
-		}
+		System.out.println("ArrayList: "+players.size());
 		
 		ops = PlayerList.loadOps(worldDir);
 		
@@ -902,7 +897,7 @@ public class World implements BlockContext
 	
 	public static ArrayList<Player> loadPlayers(File worldDir)
 	{
-		File playersDir = Minecraft.findPlayesDir(worldDir);
+		File playersDir = Minecraft.findPlayersDir(worldDir);
 		
 		System.out.println("Loading players from "+playersDir.getAbsolutePath());
 		

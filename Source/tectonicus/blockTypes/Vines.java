@@ -112,9 +112,10 @@ public class Vines implements BlockType
 		
 		final boolean isTop = (data == 0 || aboveIsSolid);
 		
-		BiomeData biomeData = biomeCache.loadBiomeData(chunk.getChunkCoord());
+		/*BiomeData biomeData = biomeCache.loadBiomeData(chunk.getChunkCoord());
 		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
-		Colour4f grassColour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );
+		Colour4f grassColour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
+		Colour4f grassColour = world.getGrassColour(chunk.getChunkCoord(), x, y, z);
 		
 		final float ewLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z);
 		Vector4f eastWestLightness = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);

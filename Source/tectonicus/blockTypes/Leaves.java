@@ -99,15 +99,17 @@ public class Leaves implements BlockType
 	{
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
+		Colour4f colour = null;
 		Color rawColour = this.color;
 		if (rawColour == null)
 		{
-			BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
+			colour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
+			/*BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
-			rawColour = texturePack.getFoliageColour(colourCoord.getX(), colourCoord.getY());
+			rawColour = texturePack.getFoliageColour(colourCoord.getX(), colourCoord.getY());*/
 		}
-		
-		Colour4f colour = new Colour4f(rawColour);
+		else		
+			colour = new Colour4f(rawColour);
 		
 		BlockUtil.addTop(world, rawChunk, mesh, x, y, z, colour, texture, registry);
 		BlockUtil.addBottom(world, rawChunk, mesh, x, y, z, colour, texture, registry);
