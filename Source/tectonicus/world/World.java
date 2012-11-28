@@ -192,7 +192,6 @@ public class World implements BlockContext
 		
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir);
-		System.out.println("ArrayList: "+players.size());
 		
 		ops = PlayerList.loadOps(worldDir);
 		
