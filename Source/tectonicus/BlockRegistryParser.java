@@ -101,7 +101,7 @@ import tectonicus.blockTypes.Torch;
 import tectonicus.blockTypes.Trapdoor;
 import tectonicus.blockTypes.Vines;
 import tectonicus.blockTypes.Water;
-import tectonicus.blockTypes.Wheat;
+import tectonicus.blockTypes.Crops;
 import tectonicus.blockTypes.Wool;
 import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
@@ -423,7 +423,7 @@ public class BlockRegistryParser
 			
 			blockType = new Workbench(name, top, side1, side2);
 		}
-		else if (nodeName.equals("wheat"))
+		else if (nodeName.equals("crops"))
 		{
 			SubTexture tex0 = parseTexture(element, "tex0", null);
 			SubTexture tex1 = parseTexture(element, "tex1", null);
@@ -434,7 +434,7 @@ public class BlockRegistryParser
 			SubTexture tex6 = parseTexture(element, "tex6", null);
 			SubTexture tex7 = parseTexture(element, "tex7", null);
 			
-			blockType = new Wheat(name, tex0, tex1, tex2, tex3, tex4, tex5, tex6, tex7);
+			blockType = new Crops(name, tex0, tex1, tex2, tex3, tex4, tex5, tex6, tex7);
 		}
 		else if (nodeName.equals("soil"))
 		{

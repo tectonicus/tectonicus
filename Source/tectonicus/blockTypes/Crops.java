@@ -49,12 +49,12 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
-public class Wheat implements BlockType
+public class Crops implements BlockType
 {
 	private final String name;
 	private final SubTexture[] textures;
 	
-	public Wheat(String name, SubTexture t0, SubTexture t1, SubTexture t2, SubTexture t3, SubTexture t4, SubTexture t5, SubTexture t6, SubTexture t7)
+	public Crops(String name, SubTexture t0, SubTexture t1, SubTexture t2, SubTexture t3, SubTexture t4, SubTexture t5, SubTexture t6, SubTexture t7)
 	{
 		this.name = name;
 		

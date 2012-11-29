@@ -203,7 +203,7 @@
 	
 	<Workbench id="58" name="Workbench" top="terrain[11, 2]" side1="terrain[11, 3]" side2="terrain[12, 3]" />
 	
-	<Wheat id="59" name="Wheat" tex0="terrain[8, 5]" tex1="terrain[9, 5]" tex2="terrain[10, 5]" tex3="terrain[11, 5]" tex4="terrain[12, 5]" tex5="terrain[13, 5]" tex6="terrain[14, 5]" tex7="terrain[15, 5]" />
+	<Crops id="59" name="Wheat" tex0="terrain[8, 5]" tex1="terrain[9, 5]" tex2="terrain[10, 5]" tex3="terrain[11, 5]" tex4="terrain[12, 5]" tex5="terrain[13, 5]" tex6="terrain[14, 5]" tex7="terrain[15, 5]" />
 	
 	<Soil id="60" name="Soil" top="terrain[7, 5]" side="terrain[2, 0]" />
 	
@@ -371,6 +371,10 @@
 	<Stairs id="136" name="Jungle Wood Stairs" texture="terrain[7, 12]" />
 	
 	<Solid id="137" name="Command Block" texture="terrain[8, 11]" />
+	
+	<Crops id="141" name="Carrots" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[11, 12]" />
+	
+	<Crops id="142" name="Potatoes" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[12, 12]" />
 	
 	<Button id="143" name="Wooden Button" texture="terrain[4, 0]" />
 	
