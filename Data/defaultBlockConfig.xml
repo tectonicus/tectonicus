@@ -372,6 +372,8 @@
 	
 	<Solid id="137" name="Command Block" texture="terrain[8, 11]" />
 	
+	<Wall id="139" name="Cobblestone Wall" texture0="terrain[0, 1]" texture1="terrain[4, 2]" />
+	
 	<Crops id="141" name="Carrots" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[11, 12]" />
 	
 	<Crops id="142" name="Potatoes" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[12, 12]" />

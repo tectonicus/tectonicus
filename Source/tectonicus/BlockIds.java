@@ -135,6 +135,7 @@ public class BlockIds
 	//public static final int REDSTONE_REPEATER_OFF	= 93;
 	//public static final int REDSTONE_REPEATER_ON	= 94;
 	public static final int FENCE_GATE				= 107;
+	public static final int WALL					= 139;
 
 	// Enum thoughts:
 	//	using a proper enum instead of constants would be nice for typesafety

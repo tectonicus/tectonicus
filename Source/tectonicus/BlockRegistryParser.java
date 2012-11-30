@@ -100,6 +100,7 @@ import tectonicus.blockTypes.TallGrass;
 import tectonicus.blockTypes.Torch;
 import tectonicus.blockTypes.Trapdoor;
 import tectonicus.blockTypes.Vines;
+import tectonicus.blockTypes.Wall;
 import tectonicus.blockTypes.Water;
 import tectonicus.blockTypes.Crops;
 import tectonicus.blockTypes.Wool;
@@ -664,6 +665,13 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Trapdoor(name, texture);
+		}
+		else if (nodeName.equals("wall"))
+		{
+			SubTexture texture0 = parseTexture(element, "texture0", null);
+			SubTexture texture1 = parseTexture(element, "texture1", null);
+			
+			blockType = new Wall(name, id.id, texture0, texture1);
 		}
 		else
 		{
