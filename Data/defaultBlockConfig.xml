@@ -44,9 +44,9 @@
 	
 	<Solid id="7" name="Bedrock" texture="terrain[1, 1]" />
 	
-	<Water id="8" name="Water" texture="misc/water.png" /><!-- terrain[15, 12] -->  <!-- use the misc/water.png to avoid "patch noob" messages with HD texture packs -->
+	<Water id="8" name="Water" texture="terrain[15, 12]" /><!-- terrain[15, 12] -->  <!-- use the misc/water.png to avoid "patch noob" messages with HD texture packs? -->
 	
-	<Water id="9" name="Water" texture="misc/water.png" />
+	<Water id="9" name="Water" texture="terrain[15, 12]" /> <!--  misc/water.png-->
 	
 	<Solid id="10" name="Lava" texture="terrain[15, 15]" />	
 	
@@ -372,7 +372,9 @@
 	
 	<Solid id="137" name="Command Block" texture="terrain[8, 11]" />
 	
-	<Wall id="139" name="Cobblestone Wall" texture0="terrain[0, 1]" texture1="terrain[4, 2]" />
+	<Wall id="139" name="Cobblestone Wall" texture="terrain[0, 1]" />
+	
+	<Wall id="139:1" name="Mossy Cobblestone Wall" texture="terrain[4, 2]" />
 	
 	<Crops id="141" name="Carrots" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[11, 12]" />
 	

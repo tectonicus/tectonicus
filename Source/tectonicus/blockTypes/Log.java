@@ -99,6 +99,11 @@ public class Log implements BlockType
 	{
 		Mesh mesh = geometry.getBaseMesh();
 		
+		final int data = rawChunk.getBlockData(x, y, z);
+		
+		//0x4 sideways log east/west facing
+		//0x8 sideways log north/south facing
+		
 		BlockUtil.addTop(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
 		BlockUtil.addBottom(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
 		

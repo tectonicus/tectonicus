@@ -668,10 +668,9 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("wall"))
 		{
-			SubTexture texture0 = parseTexture(element, "texture0", null);
-			SubTexture texture1 = parseTexture(element, "texture1", null);
+			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Wall(name, id.id, texture0, texture1);
+			blockType = new Wall(name, id.id, texture);
 		}
 		else
 		{

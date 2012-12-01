@@ -16,15 +16,13 @@ public class Wall implements BlockType
 {
 	private final String name;
 	private final int blockId;
-	private final SubTexture texture0;
-	private final SubTexture texture1;
+	private final SubTexture texture;
 
-	public Wall(String name, final int blockId, SubTexture texture0, SubTexture texture1)
+	public Wall(String name, final int blockId, SubTexture texture)
 	{
 		this.name = name;
 		this.blockId = blockId;
-		this.texture0 = texture0;
-		this.texture1 = texture1;
+		this.texture = texture;
 	}
 
 	@Override
@@ -54,17 +52,6 @@ public class Wall implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		SubTexture texture;
-		final int data = rawChunk.getBlockData(x, y, z);
-		if (data == 0)
-		{
-			texture = texture0;
-		}
-		else
-		{
-			texture = texture1;
-		}
-		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
