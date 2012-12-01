@@ -92,6 +92,8 @@ public class Water implements BlockType
 		
 		final float alpha = 0.8f;
 		final float internalAlpha = 0.3f;
+		final float waterLevel = 14.0f/16.0f; // This will make every water block about 2 pixels lower than a regular block.  Should this only be for surface water blocks
+											  // or does it matter?
 		
 		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		final float northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
@@ -104,8 +106,8 @@ public class Water implements BlockType
 		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		if (!north.isWater())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
-									new Vector3f(x,		y+1,	z+1),
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
+									new Vector3f(x,		y+waterLevel,	z+1),
 									new Vector3f(x,		y,		z+1),
 									new Vector3f(x,		y,		z),
 									new Vector4f(northLight, northLight, northLight, alpha),
@@ -117,8 +119,8 @@ public class Water implements BlockType
 		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		if (!south.isWater())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,		z+1),
-									new Vector3f(x+1,		y+1,	z),
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+waterLevel,		z+1),
+									new Vector3f(x+1,		y+waterLevel,	z),
 									new Vector3f(x+1,		y,	z),
 									new Vector3f(x+1,		y,	z+1),
 									new Vector4f(southLight, southLight, southLight, alpha),
@@ -130,8 +132,8 @@ public class Water implements BlockType
 		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 		if (!east.isWater())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
-									new Vector3f(x,		y+1,	z),
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+waterLevel,	z),
+									new Vector3f(x,		y+waterLevel,	z),
 									new Vector3f(x,		y,		z),
 									new Vector3f(x+1,	y,		z),
 									new Vector4f(eastLight, eastLight, eastLight, alpha),
@@ -143,8 +145,8 @@ public class Water implements BlockType
 		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 		if (!west.isWater())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
-									new Vector3f(x+1,	y+1,	z+1),
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z+1),
+									new Vector3f(x+1,	y+waterLevel,	z+1),
 									new Vector3f(x+1,	y,		z+1),
 									new Vector3f(x,		y,		z+1),
 									new Vector4f(westLight, westLight, westLight, alpha),
@@ -158,10 +160,10 @@ public class Water implements BlockType
 	//	if (!above.isWater())
 		{
 			final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
-									new Vector3f(x+1,	y+1,	z),
-									new Vector3f(x+1,	y+1,	z+1),
-									new Vector3f(x,		y+1,	z+1),
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
+									new Vector3f(x+1,	y+waterLevel,	z),
+									new Vector3f(x+1,	y+waterLevel,	z+1),
+									new Vector3f(x,		y+waterLevel,	z+1),
 									new Vector4f(topLight, topLight, topLight, aboveAlpha),
 									subTexture);
 		}

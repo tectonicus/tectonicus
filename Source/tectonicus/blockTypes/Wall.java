@@ -73,17 +73,18 @@ public class Wall implements BlockType
 		final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
 		final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
 		
+		final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
 		final int northId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
 		final int southId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
 		final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
 		final int westId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
 		
-		if ((northId == blockId && southId == blockId) && (eastId != blockId && westId != blockId))
+		if ((northId == blockId && southId == blockId) && (eastId != blockId && westId != blockId && aboveId != blockId))
 		{
 			BlockUtil.addBlock(mesh, x, y, z, 	5, 0, 0, 
 												6, 13, 16, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
-		else if ((eastId == blockId && westId == blockId) && (northId != blockId && southId != blockId))
+		else if ((eastId == blockId && westId == blockId) && (northId != blockId && southId != blockId && aboveId != blockId))
 		{
 			BlockUtil.addBlock(mesh, x, y, z, 	0, 0, 5,
 												16, 13, 6, colour, texture, topLight, northSouthLight, eastWestLight);
