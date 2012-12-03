@@ -466,3 +466,15 @@ Version 2.14
 - added reporting of unknown block types
 - fixed pumpkins, furnaces, dispensers, restone repeaters facing wrong direction
 - fixed furnace top texture
+
+Version 2.15
+- added Sandstone Stairs, Spruce Wood Stairs, Birch Wood Stairs, Jungle Wood Stairs, Emerald Ore, Emerald Block, Command Block, and Wooden Button to default block config xml
+- added Carrots and Potatoes
+- added Sideways Logs
+- added Cobblestone and Mossy Cobblestone wall blocks
+- fixed Fence Gates so they render at the correct height when placed in-between wall blocks
+- Trapdoors can now render with the hinge on the top of a block
+- Spruce Leaves, Jungle Leaves, Tall Grass, Ferns, and Vines now attempt to get the correct biome color (still needs work)
+- made pressure plates slightly smaller
+- made water blocks slightly lower
+- player skins will now download correctly again

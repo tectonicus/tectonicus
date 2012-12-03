@@ -36,10 +36,16 @@
  */
 package tectonicus.blockTypes;
 
+import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
+
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -83,7 +89,9 @@ public class Log implements BlockType
 	@Override
 	public void addInteriorGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
+		addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
+		
+		/*Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
 		
 		BlockUtil.addInteriorTop(world, rawChunk, topMesh, x, y, z, colour, topTexture, registry);
@@ -91,7 +99,7 @@ public class Log implements BlockType
 		BlockUtil.addInteriorNorth(world, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
 		BlockUtil.addInteriorSouth(world, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
 		BlockUtil.addInteriorEast(world, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addInteriorWest(world, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
+		BlockUtil.addInteriorWest(world, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);*/
 	}
 	
 	@Override
@@ -101,16 +109,114 @@ public class Log implements BlockType
 		
 		final int data = rawChunk.getBlockData(x, y, z);
 		
-		//0x4 sideways log east/west facing
-		//0x8 sideways log north/south facing
+		//0x4 - 0x7 sideways log east/west facing
+		//0x8 - 0x11 sideways log north/south facing
 		
-		BlockUtil.addTop(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
-		BlockUtil.addBottom(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
+		//SubTexture eastWestTex = data >= 0x4 && data <= 0x7 ? topTexture : sideTexture;
+		//SubTexture northSouthTex = data >= 0x8 && data <= 0x11 ? topTexture : sideTexture;
+		SubTexture topBottomTex = data >= 0x4 && data <= 0x11 ? sideTexture : topTexture;
 		
-		BlockUtil.addNorth(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addSouth(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addEast(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addWest(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
+		
+		if (data >= 0x4 && data <= 0x7)  // side, top, and bottom textures for east/west facing sideways blocks have to be rotated
+		{
+			BlockType above = context.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
+			if (!above.isSolid())
+			{
+				final float lightness = context.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+				
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
+										new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x,	y+1,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										new Vector2f(sideTexture.u0, sideTexture.v1), new Vector2f(sideTexture.u0, sideTexture.v0),new Vector2f(sideTexture.u1, sideTexture.v0), new Vector2f(sideTexture.u1, sideTexture.v1));
+			}
+			
+			BlockType below = context.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
+			if (!below.isSolid())
+			{
+				final float lightness = context.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+				
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
+										new Vector3f(x+1,	y,	z+1),
+										new Vector3f(x+1,	y,	z),
+										new Vector3f(x,		y,	z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										new Vector2f(sideTexture.u1, sideTexture.v1), new Vector2f(sideTexture.u1, sideTexture.v0),new Vector2f(sideTexture.u0, sideTexture.v0), new Vector2f(sideTexture.u0, sideTexture.v1));
+			}
+			
+			BlockType south = context.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);  //TODO:  Some side textures need a bit of adjusting still
+			if (!south.isSolid())
+			{
+				final float lightness = context.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
+				
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y,		z),
+										new Vector3f(x+1,	y,		z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										new Vector2f(sideTexture.u0, sideTexture.v0), new Vector2f(sideTexture.u0, sideTexture.v1),new Vector2f(sideTexture.u1, sideTexture.v1), new Vector2f(sideTexture.u1, sideTexture.v0));
+			}
+			
+			BlockType north = context.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
+			if (!north.isSolid())
+			{
+				final float lightness = context.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
+				
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x+1,	y,		z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										new Vector2f(sideTexture.u1, sideTexture.v1), new Vector2f(sideTexture.u1, sideTexture.v0),new Vector2f(sideTexture.u0, sideTexture.v0), new Vector2f(sideTexture.u0, sideTexture.v1));
+			}
+			
+			BlockUtil.addNorth(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
+			BlockUtil.addSouth(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
+		}
+		else if (data >= 0x8 && data <= 0x11)  // side textures for north/south facing sideways blocks have to be rotated
+		{
+			BlockUtil.addTop(context, rawChunk, mesh, x, y, z, colour, topBottomTex, registry);
+			BlockUtil.addBottom(context, rawChunk, mesh, x, y, z, colour, topBottomTex, registry);
+			
+			BlockType east = context.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
+			if (!east.isSolid())
+			{
+				final float lightness = context.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.NorthSouth);
+				
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,	z+1),
+										new Vector3f(x+1,		y+1,	z),
+										new Vector3f(x+1,		y,		z),
+										new Vector3f(x+1,		y,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										new Vector2f(sideTexture.u1, sideTexture.v1), new Vector2f(sideTexture.u1, sideTexture.v0),new Vector2f(sideTexture.u0, sideTexture.v0), new Vector2f(sideTexture.u0, sideTexture.v1));
+			}
+			
+			BlockType west = context.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
+			if (!west.isSolid())
+			{
+				final float lightness = context.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
+				
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y,		z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										new Vector2f(sideTexture.u1, sideTexture.v1), new Vector2f(sideTexture.u1, sideTexture.v0),new Vector2f(sideTexture.u0, sideTexture.v0), new Vector2f(sideTexture.u0, sideTexture.v1));
+			}
+			
+			BlockUtil.addEast(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
+			BlockUtil.addWest(context, rawChunk, mesh, x, y, z, colour, topTexture, registry);
+		}
+		else
+		{
+			BlockUtil.addTop(context, rawChunk, mesh, x, y, z, colour, topBottomTex, registry);
+			BlockUtil.addBottom(context, rawChunk, mesh, x, y, z, colour, topBottomTex, registry);
+			BlockUtil.addEast(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addWest(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addNorth(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addSouth(context, rawChunk, mesh, x, y, z, colour, sideTexture, registry);
+		}
 	}
 	
 }

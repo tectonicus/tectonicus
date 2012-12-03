@@ -69,6 +69,22 @@
 	<Log id="17:2" name="Birch Wood" side="terrain[5, 7]" top="terrain[5, 1]" />
 
 	<Log id="17:3" name="Jungle Wood" side="terrain[9, 9]" top="terrain[5, 1]" />
+	
+	<Log id="17:4" name="Oak Wood East/West" side="terrain[4, 1]" top="terrain[5, 1]" />
+	
+	<Log id="17:5" name="Spruce Wood East/West" side="terrain[4, 7]" top="terrain[5, 1]" />
+	
+	<Log id="17:6" name="Birch Wood East/West" side="terrain[5, 7]" top="terrain[5, 1]" />
+	
+	<Log id="17:7" name="Jungle Wood East/West" side="terrain[9, 9]" top="terrain[5, 1]" />
+	
+	<Log id="17:8" name="Oak Wood North/South" side="terrain[4, 1]" top="terrain[5, 1]" />
+	
+	<Log id="17:9" name="Spruce Wood North/South" side="terrain[4, 7]" top="terrain[5, 1]" />
+	
+	<Log id="17:10" name="Birch Wood North/South" side="terrain[5, 7]" top="terrain[5, 1]" />
+	
+	<Log id="17:11" name="Jungle Wood North/South" side="terrain[9, 9]" top="terrain[5, 1]" />
 
 	<Leaves id="18:0" name="Oak Leaves" texture="terrain[4, 3]" color="" />  <!-- color="#48b518" -->
 
