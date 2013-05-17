@@ -95,6 +95,8 @@ public class World implements BlockContext
 {
 	private static final int BATCH_SIZE = 100;
 	
+	private String textureVersion;
+	
 	private final Rasteriser rasteriser;
 	
 	private final File worldDir;
@@ -186,6 +188,7 @@ public class World implements BlockContext
 		
 		System.out.println("Loading textures");
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile);
+		this.textureVersion = texturePack.getVersion();
 		
 		System.out.println("Creating block registry");
 		loadBlockRegistry(null, true);
@@ -216,7 +219,9 @@ public class World implements BlockContext
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache);
 		
-		if (useDefaultBlocks)
+		if (useDefaultBlocks && this.textureVersion == "1.4")
+			parser.parse("defaultBlockConfigMC1.4.xml", registry);
+		else
 			parser.parse("defaultBlockConfig.xml", registry);
 		
 		if (customConfigPath != null && customConfigPath.length() > 0)

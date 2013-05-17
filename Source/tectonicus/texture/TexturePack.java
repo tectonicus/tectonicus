@@ -55,6 +55,8 @@ import tectonicus.texture.ZipStack.ZipStackEntry;
 
 public class TexturePack
 {
+	private String version;
+	
 	private Rasteriser rasteriser;
 	
 	private Texture vignetteTexture;
@@ -80,6 +82,8 @@ public class TexturePack
 		
 		loadedPackTextures = new HashMap<String, PackTexture>();
 		
+		//this.version = Minecraft.getTexturePackVersion(minecraftJar);
+		
 		try
 		{
 			zipStack = new ZipStack(minecraftJar, texturePack);
@@ -89,9 +93,20 @@ public class TexturePack
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 		
+		ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
+		if (terrainEntry != null)
+			this.version = "1.4";
+		else
+			this.version = "1.5";
+		
 		try
 		{
-			findTexture("terrain.png[0, 0]");
+			if (this.version == "1.4")
+				findTexture("terrain.png[0, 0]");
+			else if (this.version == "1.5")
+			{
+				// Load each individual texture file?
+			}
 			
 		/*	ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
 			if (terrainEntry != null)
@@ -153,16 +168,20 @@ public class TexturePack
 				vignetteTexture = rasteriser.createTexture(vignetteImage, TextureFilter.LINEAR);
 			}
 			
-			ZipStackEntry itemsEntry = zipStack.getEntry("gui/items.png");
-			if (itemsEntry != null)
+			//TODO: For MC 1.5, do we need to load each individual item into the TexturePack object?
+			if (version == "1.4")
 			{
-				itemSheet = copy( ImageIO.read( itemsEntry.getInputStream() ) );
+				ZipStackEntry itemsEntry = zipStack.getEntry("gui/items.png");
+				if (itemsEntry != null)
+				{
+					itemSheet = copy( ImageIO.read( itemsEntry.getInputStream() ) );
+				}
+				else
+				{
+					throw new RuntimeException("Couldn't find items.png in "+formatPaths(minecraftJar, texturePack));
+				}
 			}
-			else
-			{
-				throw new RuntimeException("Couldn't find items.png in "+formatPaths(minecraftJar, texturePack));
-			}
-			
+				
 			ZipStackEntry iconsEntry = zipStack.getEntry("gui/icons.png");
 			if (iconsEntry != null)
 			{
@@ -229,11 +248,14 @@ public class TexturePack
 		return result.trim();
 	}
 	
-	// todo: refactor to remove this? why is it still needed?
+	// TODO: refactor to remove this? why is it still needed?
 	public Texture getTexture()
 	{
 	//	return terrainTexture;
-		return findTexture("terrain").texture;
+		if (this.version == "1.4")
+			return findTexture("terrain").texture;
+		else
+			return null;
 	}
 	
 	public SubTexture findTexture(String texturePath)
@@ -268,6 +290,13 @@ public class TexturePack
 		// path/file.ext[0, 1]
 		// path/file.ext(0, 1, 2, 3)
 		
+		// Minecraft 1.5
+		// texture path could be:
+		// file.ext  -assume it's located in textures/blocks/
+		// path/file.ext
+		// path/file.ext[0, 1]
+		// path/file.ext(0, 1, 2, 3)
+		
 		texturePath = texturePath.trim();
 		
 		String path;
@@ -290,9 +319,11 @@ public class TexturePack
 			params = "";
 		}
 		
-		// The name 'texture' is a synonym for terrain.png
-		if (path.equals("terrain"))
+		// The name 'terrain' is a synonym for terrain.png
+		if (path.equals("terrain") && version == "1.4")  //MC 1.4 texture packs
 			path = "terrain.png";
+		else if (!path.contains("/") && !path.contains("\\") && version == "1.5") //MC 1.5 texture packs
+			path = "textures/blocks/" + path;
 		
 		return new TextureRequest(path, params);
 	}
@@ -389,6 +420,11 @@ public class TexturePack
 		return copy( img );
 	}
 	
+	public String getVersion()
+	{
+		return version;
+	}
+	
 	public Texture getVignetteTexture()
 	{
 		return vignetteTexture;
@@ -412,6 +448,12 @@ public class TexturePack
 		final int x = itemTileX * itemWidth;
 		final int y = itemTileY * itemHeight;
 		return itemSheet.getSubimage(x, y, itemWidth, itemHeight);
+	}
+	
+	public BufferedImage getItem(String fileName)
+	{
+		// in MC 1.5 items are already separate images, we load them so we can resize them
+		return loadTexture(fileName);
 	}
 	
 	public BufferedImage getIcon(final int virtualX, final int virtualY, final int width, final int height)

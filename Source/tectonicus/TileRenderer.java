@@ -1576,13 +1576,25 @@ public class TileRenderer
 		
 		FileUtils.extractResource("Images/Spacer.png", new File(imagesDir, "Spacer.png"));
 		
-		writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
-		writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
-		
-		writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));
-		writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
-		writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
-		writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
+		if (texturePack.getVersion() == "1.4")
+		{
+			writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
+			writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
+			
+			writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));
+			writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
+			writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+			writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
+		}
+		else //assume version is 1.5+
+		{
+			writeImage(texturePack.getItem("textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+			writeImage(texturePack.getItem("textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+			writeImage(texturePack.getItem("textures/items/ingotIron.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+			writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+			writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+			writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+		}
 		
 		// Hearts need composing so they get the outline
 		{

@@ -101,9 +101,9 @@ public class Minecraft
 		{
 			ZipStack zips = new ZipStack(minecraftJar, null);
 			
-			ZipStackEntry terrainEntry = zips.getEntry("terrain.png");
+			//ZipStackEntry terrainEntry = zips.getEntry("terrain.png");
 			
-			return terrainEntry != null;
+			return (zips.getEntry("terrain.png") != null || zips.getEntry("activatorRail.png") != null);
 		}
 		catch (Exception e)
 		{
@@ -111,6 +111,26 @@ public class Minecraft
 		}
 		
 		return false;
+	}
+	
+	public static String getTexturePackVersion(File minecraftJar)
+	{
+		ZipStack zipStack;
+		
+		try
+		{
+			zipStack = new ZipStack(minecraftJar, null);
+		}
+		catch (Exception e)
+		{
+			throw new RuntimeException("Couldn't open jar files for texture reading", e);
+		}
+		
+		ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
+		if (terrainEntry != null)
+			return "1.4";
+		else
+			return "1.5";
 	}
 
 	public static File findLevelDat(File worldDir)
