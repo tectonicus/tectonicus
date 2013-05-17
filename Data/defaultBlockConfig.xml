@@ -398,4 +398,14 @@
 	
 	<Button id="143" name="Wooden Button" texture="wood.png" />
 	
+	<PressurePlate id="147" name="Gold Pressure Plate" texture="blockGold.png" />
+	
+	<PressurePlate id="148" name="Iron Pressure Plate" texture="blockIron.png" />
+	
+	<Solid id="152" name="Redstone Block" texture="blockRedstone.png" />
+	
+	<Solid id="153" name="Nether Quartz Ore" texture="netherquartz.png" />
+	
+	<Stairs id="156" name="Quartz Stairs" texture="quartzblock_top.png" />
+	
 </blockConfig>
