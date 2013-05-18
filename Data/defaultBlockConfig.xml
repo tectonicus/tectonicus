@@ -408,4 +408,8 @@
 	
 	<Stairs id="156" name="Quartz Stairs" texture="quartzblock_top.png" />
 	
+	<MinecartTracks id="157" name="Activator rails" straight="activatorRail.png" corner="activatorRail.png" powered="activatorRail_powered.png" isStraightOnly="true" />
+	
+	<Furnace id="158" name="Dropper" top="furnace_top.png" side="furnace_side.png" front="dropper_front.png" />
+	
 </blockConfig>
