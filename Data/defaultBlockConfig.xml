@@ -116,7 +116,7 @@
 				headSide="bed_head_end.png" footSide="bed_feet_end.png"
 				headEdge="bed_head_side.png" footEdge="bed_feet_side.png" />
 	
-	<MinecartTracks id="27" name="Powered rails" straight="piston_side.png" corner="goldenRail.png" powered="goldenRail_powered.png" isStraightOnly="true" />
+	<MinecartTracks id="27" name="Powered rails" straight="goldenRail.png" corner="goldenRail.png" powered="goldenRail_powered.png" isStraightOnly="true" />
 
 	<MinecartTracks id="28" name="Detector rails" straight="detectorRail.png" corner="detectorRail.png" powered="detectorRail_on.png" isStraightOnly="true" />
 	
