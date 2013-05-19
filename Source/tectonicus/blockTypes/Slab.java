@@ -42,6 +42,7 @@ import org.lwjgl.util.vector.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.Minecraft;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
@@ -101,10 +102,11 @@ public class Slab implements BlockType
 		final boolean upsidedown = data > 7;
 		
 		final float halfV = 1.0f / 16.0f / 2.0f;
+		
 		final float vOffset = (upsidedown ? 0f : halfV);
 		SubTexture halfSideTexture = new SubTexture(this.sideTexture.texture, this.sideTexture.u0, this.sideTexture.v0+vOffset, this.sideTexture.u1, this.sideTexture.v0+halfV+vOffset);
 		
-		Mesh mesh = geometry.getBaseMesh();
+		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh halfSideMesh = geometry.getMesh(halfSideTexture.texture, MeshType.Solid);
 		
 		final float yOffset = (upsidedown ? 0.5f : 0f);
@@ -119,7 +121,7 @@ public class Slab implements BlockType
 		final BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 		if (!upsidedown || !above.isSolid())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+0.5f+yOffset,	z),
+			MeshUtil.addQuad(topMesh,	new Vector3f(x,		y+0.5f+yOffset,	z),
 									new Vector3f(x+1,	y+0.5f+yOffset,	z),
 									new Vector3f(x+1,	y+0.5f+yOffset,	z+1),
 									new Vector3f(x,		y+0.5f+yOffset,	z+1),
@@ -130,7 +132,7 @@ public class Slab implements BlockType
 		final BlockType bellow = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 		if (upsidedown || !bellow.isSolid())
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+yOffset,	z),
+			MeshUtil.addQuad(topMesh,	new Vector3f(x,		y+yOffset,	z),
 									new Vector3f(x+1,	y+yOffset,	z),
 									new Vector3f(x+1,	y+yOffset,	z+1),
 									new Vector3f(x,		y+yOffset,	z+1),

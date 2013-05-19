@@ -252,9 +252,9 @@ public class TexturePack
 	public Texture getTexture()
 	{
 	//	return terrainTexture;
-		if (this.version == "1.4")
+		/*if (this.version == "1.4")
 			return findTexture("terrain").texture;
-		else
+		else*/
 			return null;
 	}
 	

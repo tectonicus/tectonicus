@@ -116,7 +116,7 @@
 				headSide="bed_head_end.png" footSide="bed_feet_end.png"
 				headEdge="bed_head_side.png" footEdge="bed_feet_side.png" />
 	
-	<MinecartTracks id="27" name="Powered rails" straight="goldenRail.png" corner="goldenRail.png" powered="goldenRail_powered.png" isStraightOnly="true" />
+	<MinecartTracks id="27" name="Powered rails" straight="piston_side.png" corner="goldenRail.png" powered="goldenRail_powered.png" isStraightOnly="true" />
 
 	<MinecartTracks id="28" name="Detector rails" straight="detectorRail.png" corner="detectorRail.png" powered="detectorRail_on.png" isStraightOnly="true" />
 	
@@ -405,6 +405,16 @@
 	<Solid id="152" name="Redstone Block" texture="blockRedstone.png" />
 	
 	<Solid id="153" name="Nether Quartz Ore" texture="netherquartz.png" />
+	
+	<Solid id="155:0" name="Quartz Block" side="quartzblock_side.png" top="quartzblock_top.png" bottom="quartzblock_bottom.png" />
+	
+	<Solid id="155:1" name="Chiseled Quartz Block" side="quartzblock_chiseled.png" top="quartzblock_chiseled_top.png" />
+	
+	<Solid id="155:2" name="Quartz Pillar" side="quartzblock_lines.png" top="quartzblock_lines_top.png" />
+	
+	<Log id="155:3" name="Quartz Pillar North/South" side="quartzblock_lines.png" top="quartzblock_lines_top.png" />
+	
+	<Log id="155:4" name="Quartz Pillar East/West" side="quartzblock_lines.png" top="quartzblock_lines_top.png" />
 	
 	<Stairs id="156" name="Quartz Stairs" texture="quartzblock_top.png" />
 	
