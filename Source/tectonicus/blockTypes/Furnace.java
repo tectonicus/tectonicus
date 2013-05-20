@@ -97,27 +97,27 @@ public class Furnace implements BlockType
 
 		final int data = chunk.getBlockData(x, y, z);
 		
-		// 0x2: Facing east
-		// 0x3: Facing west
-		// 0x4: Facing north
-		// 0x5: Facing south
+		// 0x2: Facing north
+		// 0x3: Facing south
+		// 0x4: Facing west
+		// 0x5: Facing east
 		
-		SubTexture northTex = data == 0x4 ? frontTexture : sideTexture;
-		SubTexture southTex = data == 0x5 ? frontTexture : sideTexture;
-		SubTexture eastTex = data == 0x2 ? frontTexture : sideTexture;
-		SubTexture westTex = data == 0x3 ? frontTexture : sideTexture;
+		SubTexture northTex = data == 0x2 ? frontTexture : sideTexture;
+		SubTexture southTex = data == 0x3 ? frontTexture : sideTexture;
+		SubTexture eastTex = data == 0x5 ? frontTexture : sideTexture;
+		SubTexture westTex = data == 0x4 ? frontTexture : sideTexture;
 		
-		Mesh northMesh = data == 0x4 ? frontMesh : sideMesh;
-		Mesh southMesh = data == 0x4 ? frontMesh : sideMesh;
-		Mesh eastMesh = data == 0x4 ? frontMesh : sideMesh;
+		Mesh northMesh = data == 0x2 ? frontMesh : sideMesh;
+		Mesh southMesh = data == 0x3 ? frontMesh : sideMesh;
+		Mesh eastMesh = data == 0x5 ? frontMesh : sideMesh;
 		Mesh westMesh = data == 0x4 ? frontMesh : sideMesh;
 		
 		BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
 		BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
 		
-		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry);
-		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry);
-		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
-		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addNorth(world, chunk, westMesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addSouth(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
+		BlockUtil.addEast(world, chunk, northMesh, x, y, z, colour, northTex, registry);
+		BlockUtil.addWest(world, chunk, southMesh, x, y, z, colour, southTex, registry);
 	}
 }
