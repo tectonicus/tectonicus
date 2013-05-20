@@ -92,7 +92,9 @@ public class MinecartTracks implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(straightTexture.texture, Geometry.MeshType.AlphaTest);
+		Mesh straightMesh = geometry.getMesh(straightTexture.texture, Geometry.MeshType.AlphaTest);
+		Mesh poweredMesh = geometry.getMesh(poweredTexture.texture, Geometry.MeshType.AlphaTest);
+		Mesh cornerMesh = geometry.getMesh(cornerTexture.texture, Geometry.MeshType.AlphaTest);
 		
 		// TODO: Should we change the light if the track is inclined?
 		final float light = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
@@ -124,7 +126,7 @@ public class MinecartTracks implements BlockType
 		{
 			case 0x0:
 			{
-				// flat track going east-west
+				// flat track going north-south
 				uv0.set(straightTex.u0, straightTex.v0);
 				uv1.set(straightTex.u1, straightTex.v0);
 				uv2.set(straightTex.u1, straightTex.v1);
@@ -133,7 +135,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x1:
 			{
-				// flat track going north-south
+				// flat track going east-west
 				uv0.set(straightTex.u1, straightTex.v0);
 				uv1.set(straightTex.u1, straightTex.v1);
 				uv2.set(straightTex.u0, straightTex.v1);
@@ -142,7 +144,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x2:
 			{
-				// track ascending to the south
+				// track ascending to the east
 				uv0.set(straightTex.u1, straightTex.v0);
 				uv1.set(straightTex.u1, straightTex.v1);
 				uv2.set(straightTex.u0, straightTex.v1);
@@ -154,7 +156,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x3:
 			{
-				// track ascending to the north
+				// track ascending to the west
 				uv0.set(straightTex.u1, straightTex.v0);
 				uv1.set(straightTex.u1, straightTex.v1);
 				uv2.set(straightTex.u0, straightTex.v1);
@@ -166,7 +168,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x4:
 			{
-				// track ascending to the east
+				// track ascending to the north
 				uv0.set(straightTex.u0, straightTex.v0);
 				uv1.set(straightTex.u1, straightTex.v0);
 				uv2.set(straightTex.u1, straightTex.v1);
@@ -178,7 +180,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x5:
 			{
-				// track ascending to the west
+				// track ascending to the south
 				uv0.set(straightTex.u0, straightTex.v0);
 				uv1.set(straightTex.u1, straightTex.v0);
 				uv2.set(straightTex.u1, straightTex.v1);
@@ -190,7 +192,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x6:
 			{
-				// north-east corner
+				// north-west corner
 				uv0.set(cornerTexture.u0, cornerTexture.v0);
 				uv1.set(cornerTexture.u1, cornerTexture.v0);
 				uv2.set(cornerTexture.u1, cornerTexture.v1);
@@ -199,7 +201,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x7:
 			{
-				// south-east
+				// north-east
 				uv0.set(cornerTexture.u1, cornerTexture.v0);
 				uv1.set(cornerTexture.u0, cornerTexture.v0);
 				uv2.set(cornerTexture.u0, cornerTexture.v1);
@@ -208,7 +210,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x8:
 			{
-				// south-west
+				// south-east
 				uv0.set(cornerTexture.u1, cornerTexture.v1);
 				uv1.set(cornerTexture.u0, cornerTexture.v1);
 				uv2.set(cornerTexture.u0, cornerTexture.v0);
@@ -217,7 +219,7 @@ public class MinecartTracks implements BlockType
 			}
 			case 0x9:
 			{
-				// north-west
+				// south-west
 				uv0.set(cornerTexture.u0, cornerTexture.v1);
 				uv1.set(cornerTexture.u1, cornerTexture.v1);
 				uv2.set(cornerTexture.u1, cornerTexture.v0);
@@ -228,12 +230,33 @@ public class MinecartTracks implements BlockType
 				assert (false);
 		}
 		
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		p0Height,	z),
+		if(orientation >= 0x6)
+		{
+			MeshUtil.addQuad(cornerMesh,	new Vector3f(x,		p0Height,	z),
+					new Vector3f(x+1,	p1Height,	z),
+					new Vector3f(x+1,	p2Height,	z+1),
+					new Vector3f(x,		p3Height,	z+1),
+					new Vector4f(light, light, light, 1.0f),
+					uv0, uv1, uv2, uv3);
+		}
+		else if(isPowered)
+		{
+			MeshUtil.addQuad(poweredMesh,	new Vector3f(x,		p0Height,	z),
+					new Vector3f(x+1,	p1Height,	z),
+					new Vector3f(x+1,	p2Height,	z+1),
+					new Vector3f(x,		p3Height,	z+1),
+					new Vector4f(light, light, light, 1.0f),
+					uv0, uv1, uv2, uv3);
+		}
+		else
+		{
+			MeshUtil.addQuad(straightMesh,	new Vector3f(x,		p0Height,	z),
 								new Vector3f(x+1,	p1Height,	z),
 								new Vector3f(x+1,	p2Height,	z+1),
 								new Vector3f(x,		p3Height,	z+1),
 								new Vector4f(light, light, light, 1.0f),
 								uv0, uv1, uv2, uv3);
+		}
 	}
 	
 }
