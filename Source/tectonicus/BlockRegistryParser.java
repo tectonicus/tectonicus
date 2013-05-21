@@ -58,7 +58,9 @@ import tectonicus.blockTypes.Cactus;
 import tectonicus.blockTypes.Cake;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
+import tectonicus.blockTypes.CocoaPod;
 import tectonicus.blockTypes.DataSolid;
+import tectonicus.blockTypes.Dispenser;
 import tectonicus.blockTypes.Door;
 import tectonicus.blockTypes.DoubleSlab;
 import tectonicus.blockTypes.DragonEgg;
@@ -309,13 +311,14 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("dispenser"))
 		{
-			System.out.println("Warning: Dispenser block type is obsolete. It will be removed in a future version. Use Furnace instead.");
+			//System.out.println("Warning: Dispenser block type is obsolete. It will be removed in a future version. Use Furnace instead.");
 
 			SubTexture top = parseTexture(element, "top", null);
+			SubTexture topBottom = parseTexture(element, "topBottom", null);
 			SubTexture side = parseTexture(element, "side", null);
 			SubTexture front = parseTexture(element, "front", null);
 			
-			blockType = new Furnace(name, top, side, front);
+			blockType = new Dispenser(name, top, topBottom, side, front);
 		}
 		else if (nodeName.equals("minecarttracks"))
 		{
@@ -671,6 +674,14 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Wall(name, id.id, texture);
+		}
+		else if (nodeName.equals("cocoapod"))
+		{
+			SubTexture smallTexture = parseTexture(element, "smallTexture", null);
+			SubTexture mediumTexture = parseTexture(element, "mediumTexture", null);
+			SubTexture largeTexture = parseTexture(element, "largeTexture", null);
+			
+			blockType = new CocoaPod(name, smallTexture, mediumTexture, largeTexture);
 		}
 		else
 		{

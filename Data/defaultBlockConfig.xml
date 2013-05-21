@@ -102,7 +102,7 @@
 	
 	<Solid id="22" name="Lapis Lazuli Block" texture="blockLapis.png" />
 	
-	<Furnace id="23" name="Dispenser" top="furnace_top.png" side="furnace_side.png" front="dispenser_front.png" />
+	<Dispenser id="23" name="Dispenser" top="furnace_top.png" topBottom="dispenser_front_vertical.png" side="furnace_side.png" front="dispenser_front.png" />
 	
 	<Solid id="24:0" name="Sandstone" side="sandstone_side.png" top="sandstone_top.png" bottom="sandstone_bottom.png" />
 
@@ -420,6 +420,6 @@
 	
 	<MinecartTracks id="157" name="Activator rails" straight="activatorRail.png" corner="activatorRail.png" powered="activatorRail_powered.png" isStraightOnly="true" />
 	
-	<Furnace id="158" name="Dropper" top="furnace_top.png" side="furnace_side.png" front="dropper_front.png" />
+	<Dispenser id="158" name="Dropper" top="furnace_top.png" topBottom="dropper_front_vertical.png" side="furnace_side.png" front="dropper_front.png" />
 	
 </blockConfig>
