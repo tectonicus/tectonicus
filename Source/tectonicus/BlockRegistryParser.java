@@ -58,7 +58,6 @@ import tectonicus.blockTypes.Cactus;
 import tectonicus.blockTypes.Cake;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
-import tectonicus.blockTypes.CocoaPod;
 import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.Dispenser;
 import tectonicus.blockTypes.Door;
@@ -674,14 +673,6 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Wall(name, id.id, texture);
-		}
-		else if (nodeName.equals("cocoapod"))
-		{
-			SubTexture smallTexture = parseTexture(element, "smallTexture", null);
-			SubTexture mediumTexture = parseTexture(element, "mediumTexture", null);
-			SubTexture largeTexture = parseTexture(element, "largeTexture", null);
-			
-			blockType = new CocoaPod(name, smallTexture, mediumTexture, largeTexture);
 		}
 		else
 		{
