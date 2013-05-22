@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -93,6 +93,7 @@ public class RedstoneWire implements BlockType
 		// Figure out if we're connected to anything N/S/E/W
 		
 		Mesh mesh = geometry.getMesh(junction.texture, Geometry.MeshType.AlphaTest);
+		Mesh lineMesh = geometry.getMesh(line.texture, Geometry.MeshType.AlphaTest);
 		
 		final int data = chunk.getBlockData(x, y, z);
 		
@@ -119,8 +120,7 @@ public class RedstoneWire implements BlockType
 		final float nudge = 0.001f;
 		final float actualY = y + nudge;
 		
-		if ( (hasNorth && hasSouth && hasEast && hasWest)
-			|| (!hasNorth && !hasSouth && !hasEast && !hasWest))
+		if ( (hasNorth && hasSouth && hasEast && hasWest))
 		{
 			// Full junction
 			MeshUtil.addQuad(mesh,	new Vector3f(x,		actualY, z),
@@ -133,7 +133,7 @@ public class RedstoneWire implements BlockType
 		{
 			// Single line north-south
 			
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		actualY, z),
+			MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
 									new Vector3f(x+1,	actualY, z),
 									new Vector3f(x+1,	actualY, z+1),
 									new Vector3f(x,		actualY, z+1), colour, line);
@@ -143,7 +143,7 @@ public class RedstoneWire implements BlockType
 		{
 			// Single line east-west
 			
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		actualY, z+1),
+			MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z+1),
 									new Vector3f(x,		actualY, z),
 									new Vector3f(x+1,	actualY, z),
 									new Vector3f(x+1,	actualY, z+1), colour, line);
@@ -155,15 +155,20 @@ public class RedstoneWire implements BlockType
 			final float one16th = 1.0f / 16.0f;
 			final float leftOffset = one16th * 4;
 			final float rightOffset = one16th * 12;
-			
-			final float texel = 1.0f / 16.0f / 16.0f;
+			final float texel;
+			if (junction.texturePackVersion == "1.4")
+				texel = 1.0f / 16.0f / 16.0f;
+			else
+				texel = 1.0f / 16.0f;
 			final float leftTexOffset = texel * 4;
 			
 			SubTexture center = new SubTexture(junction.texture,
 												junction.u0 + leftTexOffset, junction.v0 + leftTexOffset,
 												junction.u1 - leftTexOffset, junction.v1 - leftTexOffset);
 			
-			MeshUtil.addQuad(mesh,	new Vector3f(x + leftOffset,	actualY, z + rightOffset),
+			Mesh centerMesh = geometry.getMesh(center.texture, Geometry.MeshType.AlphaTest);
+			
+			MeshUtil.addQuad(centerMesh,	new Vector3f(x + leftOffset,	actualY, z + rightOffset),
 									new Vector3f(x + leftOffset,	actualY, z + leftOffset),
 									new Vector3f(x + rightOffset,	actualY, z + leftOffset),
 									new Vector3f(x + rightOffset,	actualY, z + rightOffset), colour, center);
@@ -174,7 +179,9 @@ public class RedstoneWire implements BlockType
 						junction.u0, junction.v0,
 						junction.u0 + leftTexOffset, junction.v1);
 				
-				MeshUtil.addQuad(mesh,	new Vector3f(x,	actualY, z),
+				Mesh northMesh = geometry.getMesh(northTex.texture, Geometry.MeshType.AlphaTest);
+				
+				MeshUtil.addQuad(northMesh,	new Vector3f(x,	actualY, z),
 										new Vector3f(x + leftOffset,	actualY, z),
 										new Vector3f(x + leftOffset,	actualY, z + 1),
 										new Vector3f(x,	actualY, z + 1), colour, northTex);
@@ -186,7 +193,9 @@ public class RedstoneWire implements BlockType
 						junction.u1 - leftTexOffset, junction.v0,
 						junction.u1, junction.v1);
 				
-				MeshUtil.addQuad(mesh,	new Vector3f(x + 1 - leftOffset,	actualY, z),
+				Mesh southMesh = geometry.getMesh(southTex.texture, Geometry.MeshType.AlphaTest);
+				
+				MeshUtil.addQuad(southMesh,	new Vector3f(x + 1 - leftOffset,	actualY, z),
 										new Vector3f(x + 1,	actualY, z),
 										new Vector3f(x + 1,	actualY, z + 1),
 										new Vector3f(x + 1 - leftOffset,	actualY, z + 1), colour, southTex);
@@ -198,7 +207,9 @@ public class RedstoneWire implements BlockType
 						junction.u0, junction.v0,
 						junction.u1, junction.v0 + leftTexOffset);
 				
-				MeshUtil.addQuad(mesh,	new Vector3f(x,	actualY, z),
+				Mesh eastMesh = geometry.getMesh(eastTex.texture, Geometry.MeshType.AlphaTest);
+				
+				MeshUtil.addQuad(eastMesh,	new Vector3f(x,	actualY, z),
 										new Vector3f(x + 1,	actualY, z),
 										new Vector3f(x + 1,	actualY, z + leftOffset),
 										new Vector3f(x,	actualY, z + leftOffset), colour, eastTex);
@@ -210,7 +221,9 @@ public class RedstoneWire implements BlockType
 						junction.u0, junction.v1 - leftTexOffset,
 						junction.u1, junction.v1);
 				
-				MeshUtil.addQuad(mesh,	new Vector3f(x,	actualY, z + 1 - leftOffset),
+				Mesh westMesh = geometry.getMesh(westTex.texture, Geometry.MeshType.AlphaTest);
+				
+				MeshUtil.addQuad(westMesh,	new Vector3f(x,	actualY, z + 1 - leftOffset),
 										new Vector3f(x + 1,	actualY, z + 1 - leftOffset),
 										new Vector3f(x + 1,	actualY, z + 1),
 										new Vector3f(x,	actualY, z + 1), colour, westTex);
@@ -221,7 +234,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasNorthAbove)
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x + nudge,	y,		z+1),
+			MeshUtil.addQuad(lineMesh,	new Vector3f(x + nudge,	y,		z+1),
 									new Vector3f(x + nudge,	y+1,	z+1),
 									new Vector3f(x + nudge,	y+1,	z),
 									new Vector3f(x + nudge,	y,		z), colour, line);
@@ -229,7 +242,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasSouthAbove)
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x + 1 - nudge,	y,		z),
+			MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1 - nudge,	y,		z),
 									new Vector3f(x + 1 - nudge,	y+1,	z),
 									new Vector3f(x + 1 - nudge,	y+1,	z+1),
 									new Vector3f(x + 1 - nudge,	y,		z+1), colour, line);
@@ -237,7 +250,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasEastAbove)
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z + nudge),
+			MeshUtil.addQuad(lineMesh,	new Vector3f(x,		y,		z + nudge),
 									new Vector3f(x,		y+1,	z + nudge),
 									new Vector3f(x+1,	y+1,	z + nudge),
 									new Vector3f(x+1,	y,		z + nudge), colour, line);
@@ -245,7 +258,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasWestAbove)
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x + 1,	y,		z + 1 - nudge),
+			MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1,	y,		z + 1 - nudge),
 									new Vector3f(x + 1,	y + 1,	z + 1 - nudge),
 									new Vector3f(x,		y + 1,	z + 1 - nudge),
 									new Vector3f(x,		y,		z + 1 - nudge), colour, line);

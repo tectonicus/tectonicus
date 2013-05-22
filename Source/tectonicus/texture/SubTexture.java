@@ -40,6 +40,8 @@ import tectonicus.rasteriser.Texture;
 
 public class SubTexture
 {
+	public String texturePackVersion;
+	
 	public final Texture texture;
 	public final float u0, v0, u1, v1;
 	

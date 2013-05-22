@@ -274,7 +274,7 @@ public class TexturePack
 			
 			result = tex.find(request); // find existing or load
 			assert (result != null);
-			
+			result.texturePackVersion = this.version;
 		//	loadedSubTextures.put(request, result);
 		}
 		
