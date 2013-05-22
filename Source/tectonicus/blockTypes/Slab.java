@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -42,7 +42,6 @@ import org.lwjgl.util.vector.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.Minecraft;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
@@ -101,7 +100,11 @@ public class Slab implements BlockType
 		final int data = rawChunk.getBlockData(x, y, z);
 		final boolean upsidedown = data > 7;
 		
-		final float halfV = 1.0f / 16.0f / 2.0f;
+		final float halfV;
+		if (topTexture.texturePackVersion == "1.4")
+			halfV = 1.0f / 16.0f / 2.0f;
+		else
+			halfV = 1.0f / 2.0f;
 		
 		final float vOffset = (upsidedown ? 0f : halfV);
 		SubTexture halfSideTexture = new SubTexture(this.sideTexture.texture, this.sideTexture.u0, this.sideTexture.v0+vOffset, this.sideTexture.u1, this.sideTexture.v0+halfV+vOffset);
