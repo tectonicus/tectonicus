@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -62,7 +62,11 @@ public class Torch implements BlockType
 		
 		this.name = name;
 		
-		final float texelSize = 1.0f / 16.0f / 16.0f;
+		final float texelSize;
+		if (texture.texturePackVersion == "1.4")
+			texelSize = 1.0f / 16.0f / 16.0f;
+		else
+			texelSize = 1.0f / 16.0f;
 		
 		final float topOffset = texelSize * 6;
 		this.sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0 + topOffset, texture.u1, texture.v1);

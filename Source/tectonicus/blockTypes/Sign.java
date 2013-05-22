@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -75,7 +75,11 @@ public class Sign implements BlockType
 		this.name = name;
 		this.hasPost = hasPost;
 		
-		final float texel = 1.0f / 16.0f / 16.0f;
+		final float texel;
+		if (texture.texturePackVersion == "1.4")
+			texel = 1.0f / 16.0f / 16.0f;
+		else
+			texel = 1.0f / 16.0f;
 		
 		this.frontTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+texel*HEIGHT);
 		this.sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+texel*THICKNESS);
