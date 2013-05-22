@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -65,7 +65,11 @@ public class EnderPortalFrame implements BlockType
 		this.side = side;
 		this.bottom = bottom;
 		
-		final float texel = 1.0f / 16.0f / 16.0f;
+		final float texel;
+		if (eye.texturePackVersion == "1.4")
+			texel = 1.0f / 16.0f / 16.0f;
+		else
+			texel = 1.0f / 16.0f;
 		
 		eyeSide = new SubTexture(eye.texture, eye.u0+(texel*4), eye.v0, eye.u0+(texel*12), eye.v0+(texel*4));
 		eyeTop = new SubTexture(eye.texture, eye.u0+(texel*4), eye.v0+(texel*4), eye.u0+(texel*12), eye.v0+(texel*12));
@@ -97,9 +101,7 @@ public class EnderPortalFrame implements BlockType
 
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext context, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
-	{
-		// TODO Auto-generated method stub
-		
+	{		
 		final int data = rawChunk.getBlockData(x, y, z);
 		
 		Colour4f colour = new Colour4f(1, 1, 1, 1);
