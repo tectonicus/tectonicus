@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -65,7 +65,12 @@ public class Trapdoor implements BlockType
 		this.name = name;
 		this.texture = texture;
 
-		final float uWidth = 1.0f / 16.0f / 16.0f * 2.5f; // fudge factor
+		final float uWidth; // fudge factor
+		if (texture.texturePackVersion == "1.4")
+			uWidth = 1.0f / 16.0f / 16.0f * 2.5f;
+		else
+			uWidth = 1.0f / 16.0f * 2.5f;
+		
 		this.rightEdgeTexture = new SubTexture(texture.texture, texture.u1-uWidth, texture.v0, texture.u1, texture.v1);
 		this.leftEdgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u0+uWidth, texture.v1);
 		this.topEdgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+uWidth);

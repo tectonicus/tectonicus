@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -63,7 +63,12 @@ public class Cake implements BlockType
 		
 		this.top = top;
 		
-		final float half = ((1.0f / 16.0f) / 2.0f);
+		final float half;
+		if (top.texturePackVersion == "1.4")
+			half = 1.0f / 16.0f / 2.0f;
+		else
+			half = 1.0f / 2.0f;
+		
 		this.side = new SubTexture(s.texture, s.u0, s.v0+half, s.u1, s.v1);
 		this.interior = new SubTexture(interior.texture, interior.u0, interior.v0+half, interior.u1, interior.v1);
 	}
