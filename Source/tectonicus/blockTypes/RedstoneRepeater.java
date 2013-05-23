@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -44,7 +44,6 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Chunk;
 import tectonicus.configuration.LightFace;
-import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
@@ -65,15 +64,18 @@ public class RedstoneRepeater implements BlockType
 		this.name = name;
 		
 		this.baseTexture = baseTexture;
+
+		final float texelSize;
+		if (baseTexture.texturePackVersion == "1.4")
+			texelSize = 1.0f / 16.0f / 16.0f;
+		else
+			texelSize = 1.0f / 16.0f;
 		
-		final float vHeight = 1.0f / 16.0f / 16.0f * HEIGHT_IN_TEXELS;
-		
-		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+vHeight);
+		final float vHeight = texelSize * 14;
+		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0+vHeight, sideTexture.u1, sideTexture.v1);
 		
 		
 		// Torch textures
-		
-		final float texelSize = 1.0f / 16.0f / 16.0f;
 		
 		final float topOffset = texelSize * 6;
 		this.torchSideTexture = new SubTexture(torchTexture.texture, torchTexture.u0, torchTexture.v0 + topOffset, torchTexture.u1, torchTexture.v1);
@@ -111,8 +113,6 @@ public class RedstoneRepeater implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		// TODO Auto-generated method stub
-		
 		final int data = chunk.getBlockData(x, y, z);
 		
 		final float height = 1.0f / 16.0f * HEIGHT_IN_TEXELS;
@@ -121,8 +121,10 @@ public class RedstoneRepeater implements BlockType
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		SubMesh subMesh = new SubMesh();
+		SubMesh baseMesh = new SubMesh();
+		SubMesh torchMesh = new SubMesh();
 		
-		subMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, baseTexture);
+		baseMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, baseTexture);
 		
 		// North edge
 		subMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(0, height, 1), new Vector3f(0, 0, 1), new Vector3f(0, 0, 0), white, sideTexture);
@@ -140,13 +142,13 @@ public class RedstoneRepeater implements BlockType
 		final float texel = 1.0f / 16.0f;
 		
 		// Static torch
-		addTorch(subMesh, texel*7, 0, texel*2);
+		addTorch(torchMesh, texel*7, 0, texel*2);
 		
 		// Delay torch
 		final int delay = (data>>2) & 0x3;
 		
 		final float yPixel = delay * 2 + 6; // Valid offsets are from 6 to 12
-		addTorch(subMesh, texel*7, 0, texel*yPixel);
+		addTorch(torchMesh, texel*7, 0, texel*yPixel);
 		
 		// Now do rotation
 		Rotation rotation = Rotation.None;
@@ -176,8 +178,9 @@ public class RedstoneRepeater implements BlockType
 			angle = 90;			
 		}
 		
-		Mesh mesh = geometry.getMesh(baseTexture.texture, Geometry.MeshType.AlphaTest);
-		subMesh.pushTo(mesh, x, y, z, rotation, angle);
+		subMesh.pushTo(geometry.getMesh(sideTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		baseMesh.pushTo(geometry.getMesh(baseTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		torchMesh.pushTo(geometry.getMesh(torchSideTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
 	}
 	
 	private void addTorch(SubMesh subMesh, float x, float y, float z)
@@ -205,37 +208,7 @@ public class RedstoneRepeater implements BlockType
 		final float bottomOffsetX;
 		final float bottomOffsetZ;
 		final float bottomOffsetY;
-		/*
-		if (data == 1)
-		{
-			// Pointing south
-			bottomOffsetX = -0.5f;
-			bottomOffsetZ = 0.0f;
-			bottomOffsetY = 0.4f;
-		}
-		else if (data == 2)
-		{
-			// Pointing north
-			bottomOffsetX = 0.5f;
-			bottomOffsetZ = 0.0f;
-			bottomOffsetY = 0.4f;
-		}
-		else if (data == 3)
-		{
-			// Pointing west
-			bottomOffsetX = 0.0f;
-			bottomOffsetZ = -0.5f;
-			bottomOffsetY = 0.4f;
-		}
-		else if (data == 4)
-		{
-			// Pointing east
-			bottomOffsetX = 0.0f;
-			bottomOffsetZ = 0.5f;
-			bottomOffsetY = 0.4f;
-		}
-		else
-		*/
+
 		{
 			// Standing on the floor
 			bottomOffsetX = 0.0f;
