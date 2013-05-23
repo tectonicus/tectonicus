@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -64,7 +64,12 @@ public class PistonExtension implements BlockType
 		this.normalFace = normalFace;
 		this.stickyFace = stickyFace;
 		
-		final float divide = 1.0f / 16.0f / 16.0f * 4.0f;
+		final float divide;
+		if (edge.texturePackVersion == "1.4")
+			divide = 1.0f / 16.0f / 16.0f * 4.0f;
+		else
+			divide = 1.0f / 16.0f * 4.0f;
+		
 		this.pistonEdge = new SubTexture(edge.texture, edge.u0, edge.v0, edge.u1, edge.v0+divide);
 	}
 	
@@ -105,12 +110,34 @@ public class PistonExtension implements BlockType
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
 		
-		final float height = 1.0f / 16.0f * 4.0f;
+		final float height = 1.0f / 16.0f * 12.0f;
 		
 		SubTexture pistonFace = isSticky ? stickyFace : normalFace;
 		
 		// Piston face
-		SubMesh.addBlock(subMesh, 0, 1f-height, 0, 1, height, 1, colour, pistonEdge, pistonFace, normalFace);
+		// We do this manually with multiple SubMeshes in order to work with MC 1.5 texture packs, but still use the SubMesh rotation
+		SubMesh topMesh = new SubMesh();
+		// Top
+		topMesh.addQuad(new Vector3f(0, 1, 0), new Vector3f(1, 1, 0),
+						new Vector3f(1, 1, 1), new Vector3f(0, 1, 1), colour, pistonFace);
+		
+		SubMesh bottomMesh = new SubMesh();
+		// Bottom
+		bottomMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(0, height, 1),
+						new Vector3f(1, height, 1), new Vector3f(1, height, 0), colour, normalFace);
+	
+		// West
+		subMesh.addQuad(new Vector3f(0, 1, 0), new Vector3f(0, 1, 1),
+						new Vector3f(0, height, 1),  new Vector3f(0, height, 0), colour, pistonEdge);
+		// North
+		subMesh.addQuad(new Vector3f(1, 1, 0), new Vector3f(0, 1, 0),
+						new Vector3f(0, height, 0),  new Vector3f(1, height, 0), colour, pistonEdge);
+		// South
+		subMesh.addQuad(new Vector3f(0, 1, 1), new Vector3f(1, 1, 1),
+						new Vector3f(1, height, 1),  new Vector3f(0, height, 1), colour, pistonEdge);
+		// East
+		subMesh.addQuad(new Vector3f(1, 1, 1), new Vector3f(1, 1, 0),
+						new Vector3f(1, height, 0), new Vector3f(1, height, 1), colour, pistonEdge);	
 		
 		// Piston arm
 		{
@@ -122,28 +149,28 @@ public class PistonExtension implements BlockType
 		
 			// Have to add these manually as they have rotated texture coords
 			
-			// North
+			// West
 			subMesh.addQuad( new Vector3f(armX, armY+1, armZ), new Vector3f(armX, armY+1, armZ+armWidth),
 							new Vector3f(armX, armY, armZ+armWidth),  new Vector3f(armX, armY, armZ),
 							colour,
 							new Vector2f(pistonEdge.u1, pistonEdge.v0), new Vector2f(pistonEdge.u1, pistonEdge.v1),
 							new Vector2f(pistonEdge.u0, pistonEdge.v1), new Vector2f(pistonEdge.u0, pistonEdge.v0));
 			
-			// East
+			// South
 			subMesh.addQuad( new Vector3f(armX+armWidth, armY+1, armZ), new Vector3f(armX, armY+1, armZ),
 							new Vector3f(armX, armY, armZ),  new Vector3f(armX+armWidth, armY, armZ), 
 							colour,
 							new Vector2f(pistonEdge.u1, pistonEdge.v0), new Vector2f(pistonEdge.u1, pistonEdge.v1),
 							new Vector2f(pistonEdge.u0, pistonEdge.v1), new Vector2f(pistonEdge.u0, pistonEdge.v0));
 			
-			// West
+			// North
 			subMesh.addQuad( new Vector3f(armX, armY+1, armZ+armWidth), new Vector3f(armX+armWidth, armY+1, armZ+armWidth),
 							new Vector3f(armX+armWidth, armY, armZ+armWidth),  new Vector3f(armX, armY, armZ+armWidth), 
 							colour,
 							new Vector2f(pistonEdge.u1, pistonEdge.v0), new Vector2f(pistonEdge.u1, pistonEdge.v1),
 							new Vector2f(pistonEdge.u0, pistonEdge.v1), new Vector2f(pistonEdge.u0, pistonEdge.v0));
 			
-			// South
+			// East
 			subMesh.addQuad(new Vector3f(armX+armWidth, armY+1, armZ+armWidth), new Vector3f(armX+armWidth, armY+1, armZ),
 							new Vector3f(armX+armWidth, armY, armZ), new Vector3f(armX+armWidth, armY, armZ+armWidth), 
 							colour,
@@ -203,7 +230,8 @@ public class PistonExtension implements BlockType
 			horizAngle = 180;
 		}
 		
-		subMesh.pushTo(geometry.getMesh(normalFace.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, vertRotation, vertAngle);
+		subMesh.pushTo(geometry.getMesh(pistonEdge.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, vertRotation, vertAngle);
+		topMesh.pushTo(geometry.getMesh(pistonFace.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, vertRotation, vertAngle);
+		bottomMesh.pushTo(geometry.getMesh(normalFace.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, vertRotation, vertAngle);
 	}
-	
 }

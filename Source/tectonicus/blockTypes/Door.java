@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -65,7 +65,12 @@ public class Door implements BlockType
 		this.topTexture = topTexture;
 		this.bottomTexture = bottomTexture;
 		
-		final float uWidth = 1.0f / 16.0f / 16.0f * 2.5f; // fudge factor
+		final float uWidth; // fudge factor
+		if (topTexture.texturePackVersion =="1.4")
+			uWidth = 1.0f / 16.0f / 16.0f * 2.5f;
+		else
+			uWidth = 1.0f / 16.0f * 2.5f;
+		
 		this.edgeTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u0+uWidth, topTexture.v1);
 		this.topEdgeTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+uWidth);
 	}
@@ -199,7 +204,10 @@ public class Door implements BlockType
 			}
 		}
 		
-		subMesh.pushTo(geometry.getMesh(topTexture.texture, Geometry.MeshType.AlphaTest), xOffset, yOffset, zOffset, rotation, angle);
+		if(isTop)
+			subMesh.pushTo(geometry.getMesh(topTexture.texture, Geometry.MeshType.AlphaTest), xOffset, yOffset, zOffset, rotation, angle);
+		else
+			subMesh.pushTo(geometry.getMesh(bottomTexture.texture, Geometry.MeshType.AlphaTest), xOffset, yOffset, zOffset, rotation, angle);
 	}
 	
 }
