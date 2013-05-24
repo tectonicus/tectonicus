@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -92,8 +92,7 @@ public class Water implements BlockType
 		
 		final float alpha = 0.8f;
 		final float internalAlpha = 0.3f;
-		final float waterLevel = 14.0f/16.0f; // This will make every water block about 2 pixels lower than a regular block.  Should this only be for surface water blocks
-											  // or does it matter?
+		final float waterLevel = 14.0f/16.0f;
 		
 		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		final float northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
@@ -101,84 +100,160 @@ public class Water implements BlockType
 		final float eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
 		final float westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
 		
-	//	final int northId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
-	//	BlockType north = registry.find(northId);
-		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
-		if (!north.isWater())
-		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
-									new Vector3f(x,		y+waterLevel,	z+1),
-									new Vector3f(x,		y,		z+1),
-									new Vector3f(x,		y,		z),
-									new Vector4f(northLight, northLight, northLight, alpha),
-									subTexture); 
-		}
-		
-	//	final int southId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
-	//	BlockType south = registry.find(southId);
-		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
-		if (!south.isWater())
-		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+waterLevel,		z+1),
-									new Vector3f(x+1,		y+waterLevel,	z),
-									new Vector3f(x+1,		y,	z),
-									new Vector3f(x+1,		y,	z+1),
-									new Vector4f(southLight, southLight, southLight, alpha),
-									subTexture); 
-		}
-		
-	//	final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
-	//	BlockType east = registry.find(eastId);
-		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
-		if (!east.isWater())
-		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+waterLevel,	z),
-									new Vector3f(x,		y+waterLevel,	z),
-									new Vector3f(x,		y,		z),
-									new Vector3f(x+1,	y,		z),
-									new Vector4f(eastLight, eastLight, eastLight, alpha),
-									subTexture); 
-		}
-		
-	//	final int westId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
-	//	BlockType west = registry.find(westId);
-		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
-		if (!west.isWater())
-		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z+1),
-									new Vector3f(x+1,	y+waterLevel,	z+1),
-									new Vector3f(x+1,	y,		z+1),
-									new Vector3f(x,		y,		z+1),
-									new Vector4f(westLight, westLight, westLight, alpha),
-									subTexture); 
-		}
-		
-		
-	//	final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
-	//	BlockType above = registry.find(aboveId);
 		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-	//	if (!above.isWater())
+		BlockType aboveNorth = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z+1);
+		BlockType aboveSouth = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z-1);
+		BlockType aboveEast = world.getBlockType(rawChunk.getChunkCoord(), x+1, y+1, z);
+		BlockType aboveWest = world.getBlockType(rawChunk.getChunkCoord(), x-1, y+1, z);
+		if(!above.isWater() && !aboveNorth.isWater() && !aboveSouth.isWater() && !aboveEast.isWater() && !aboveWest.isWater())  // Only water blocks that don't have another water block above them should be lower
 		{
-			final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
-									new Vector3f(x+1,	y+waterLevel,	z),
-									new Vector3f(x+1,	y+waterLevel,	z+1),
-									new Vector3f(x,		y+waterLevel,	z+1),
-									new Vector4f(topLight, topLight, topLight, aboveAlpha),
-									subTexture);
+			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
+			if (!north.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
+										new Vector3f(x,		y+waterLevel,	z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y,		z),
+										new Vector4f(northLight, northLight, northLight, alpha),
+										subTexture); 
+			}
+
+			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
+			if (!south.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+waterLevel,		z+1),
+										new Vector3f(x+1,		y+waterLevel,	z),
+										new Vector3f(x+1,		y,	z),
+										new Vector3f(x+1,		y,	z+1),
+										new Vector4f(southLight, southLight, southLight, alpha),
+										subTexture); 
+			}
+
+			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
+			if (!east.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+waterLevel,	z),
+										new Vector3f(x,		y+waterLevel,	z),
+										new Vector3f(x,		y,		z),
+										new Vector3f(x+1,	y,		z),
+										new Vector4f(eastLight, eastLight, eastLight, alpha),
+										subTexture); 
+			}
+
+			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
+			if (!west.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z+1),
+										new Vector3f(x+1,	y+waterLevel,	z+1),
+										new Vector3f(x+1,	y,		z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector4f(westLight, westLight, westLight, alpha),
+										subTexture); 
+			}
+			
+		//	if (!above.isWater())
+			
+				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
+										new Vector3f(x+1,	y+waterLevel,	z),
+										new Vector3f(x+1,	y+waterLevel,	z+1),
+										new Vector3f(x,		y+waterLevel,	z+1),
+										new Vector4f(topLight, topLight, topLight, aboveAlpha),
+										subTexture);
+			
+			
+			BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
+			if (!below.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
+										new Vector3f(x+1,	y,	z+1),
+										new Vector3f(x+1,	y,	z),
+										new Vector3f(x,		y,	z),
+										new Vector4f(topLight, topLight, topLight, alpha),
+										subTexture);
+			}
 		}
-		
-	//	final int belowId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
-	//	BlockType below = registry.find(belowId);
-		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-		if (!below.isWater())
+		else
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
-									new Vector3f(x+1,	y,	z+1),
-									new Vector3f(x+1,	y,	z),
-									new Vector3f(x,		y,	z),
-									new Vector4f(topLight, topLight, topLight, alpha),
-									subTexture);
+		//	final int northId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
+		//	BlockType north = registry.find(northId);
+			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
+			if (!north.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y,		z),
+										new Vector4f(northLight, northLight, northLight, alpha),
+										subTexture); 
+			}
+			
+		//	final int southId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
+		//	BlockType south = registry.find(southId);
+			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
+			if (!south.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,		z+1),
+										new Vector3f(x+1,		y+1,	z),
+										new Vector3f(x+1,		y,	z),
+										new Vector3f(x+1,		y,	z+1),
+										new Vector4f(southLight, southLight, southLight, alpha),
+										subTexture); 
+			}
+			
+		//	final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
+		//	BlockType east = registry.find(eastId);
+			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
+			if (!east.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y,		z),
+										new Vector3f(x+1,	y,		z),
+										new Vector4f(eastLight, eastLight, eastLight, alpha),
+										subTexture); 
+			}
+			
+		//	final int westId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
+		//	BlockType west = registry.find(westId);
+			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
+			if (!west.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x+1,	y,		z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector4f(westLight, westLight, westLight, alpha),
+										subTexture); 
+			}
+			
+			
+		//	final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
+		//	BlockType above = registry.find(aboveId);
+			
+		//	if (!above.isWater())
+			
+				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
+										new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector4f(topLight, topLight, topLight, aboveAlpha),
+										subTexture);
+			
+			
+		//	final int belowId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
+		//	BlockType below = registry.find(belowId);
+			BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
+			if (!below.isWater())
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
+										new Vector3f(x+1,	y,	z+1),
+										new Vector3f(x+1,	y,	z),
+										new Vector3f(x,		y,	z),
+										new Vector4f(topLight, topLight, topLight, alpha),
+										subTexture);
+			}
 		}
 	}
 	
