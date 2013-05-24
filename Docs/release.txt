@@ -478,3 +478,10 @@ Version 2.15
 - made pressure plates slightly smaller
 - made water blocks slightly lower
 - player skins will now download correctly again
+
+Version 2.16
+- added support for Minecraft 1.5 texture packs while retaining support for Minecraft 1.4 texture packs (1.4 texture packs of course won't support 1.5 blocks).
+- added Weighted Pressure Plates(Gold, Iron), Redstone Block, Nether Quartz Ore, Quartz Blocks(Quartz Block, Chiseled Quartz Block, Pillar Quartz Block), Quartz Stairs, 
+	Quartz Slab, Nether Brick Slab, Dropper, and Activator Rails to defaultBlockConfig.xml
+- fixed a whole bunch of block textures that were not working correctly with 1.5 texture packs
+- tried to make Water block work a little better
