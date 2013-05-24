@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -62,7 +62,12 @@ public class Bed implements BlockType
 		this.headTop = headTop;
 		this.footTop = footTop;
 		
-		final float vHeight = 1.0f / 16.0f / 16.0f * 9.0f;
+		final float vHeight;
+		if (headTop.texturePackVersion == "1.4")
+			vHeight = 1.0f / 16.0f / 16.0f * 9.0f;
+		else
+			vHeight = 1.0f / 16.0f * 9.0f;
+		
 		this.headSide = new SubTexture(headSide.texture, headSide.u0, headSide.v0+vHeight, headSide.u1, headSide.v1);
 		this.footSide = new SubTexture(footSide.texture, footSide.u0, footSide.v0+vHeight, footSide.u1, footSide.v1);
 		
@@ -105,30 +110,35 @@ public class Bed implements BlockType
 		
 		final float height = 1.0f / 16.0f * 9.0f;
 		
-		
-		SubMesh subMesh = new SubMesh();
+		SubMesh headSideMesh = new SubMesh();
+		SubMesh headTopMesh = new SubMesh();
+		SubMesh footSideMesh = new SubMesh();
+		SubMesh rightMesh = new SubMesh();
+		SubMesh leftMesh = new SubMesh();
 		
 		// Create the geometry in the unit cube
 		
 		SubTexture topTex = isHead ? headTop : footTop;
-		subMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, topTex);
+		headTopMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, topTex);
 		
 		// Head or feet sides
 		if (isHead)
 		{
-			subMesh.addQuad(new Vector3f(1, height, 1), new Vector3f(1, height, 0), new Vector3f(1, 0, 0), new Vector3f(1, 0, 1), white, headSide);
+			headSideMesh.addQuad(new Vector3f(1, height, 1), new Vector3f(1, height, 0), new Vector3f(1, 0, 0), new Vector3f(1, 0, 1), white, headSide);
 		}
 		else
 		{
-			subMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(0, height, 1), new Vector3f(0, 0, 1), new Vector3f(0, 0, 0), white, footSide);
+			footSideMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(0, height, 1), new Vector3f(0, 0, 1), new Vector3f(0, 0, 0), white, footSide);
 		}
 		
 		// Left side (if lying down in bed facing up)
-		subMesh.addQuad(new Vector3f(0, height, 1), new Vector3f(1, height, 1), new Vector3f(1, 0, 1), new Vector3f(0, 0, 1), white, isHead ? headEdge : footEdge);
+		SubTexture leftSide = isHead ? headEdge : footEdge;
+		leftMesh.addQuad(new Vector3f(0, height, 1), new Vector3f(1, height, 1), new Vector3f(1, 0, 1), new Vector3f(0, 0, 1), white, leftSide);
 		
 		// Right side
+		
 		SubTexture rightSide = isHead ? headEdge : footEdge;
-		subMesh.addQuad(new Vector3f(1, height, 0), new Vector3f(0, height, 0), new Vector3f(0, 0, 0), new Vector3f(1, 0, 0), white,
+		rightMesh.addQuad(new Vector3f(1, height, 0), new Vector3f(0, height, 0), new Vector3f(0, 0, 0), new Vector3f(1, 0, 0), white,
 						new Vector2f(rightSide.u1, rightSide.v0), new Vector2f(rightSide.u0, rightSide.v0),new Vector2f(rightSide.u0, rightSide.v1), new Vector2f(rightSide.u1, rightSide.v1) );
 		
 		SubMesh.Rotation rotation = Rotation.None;
@@ -163,7 +173,11 @@ public class Bed implements BlockType
 		}
 		
 		// Apply rotation
-		subMesh.pushTo(geometry.getMesh(headTop.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		rightMesh.pushTo(geometry.getMesh(rightSide.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		leftMesh.pushTo(geometry.getMesh(leftSide.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		headSideMesh.pushTo(geometry.getMesh(headSide.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		headTopMesh.pushTo(geometry.getMesh(topTex.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		footSideMesh.pushTo(geometry.getMesh(footSide.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
 	}
 	
 }
