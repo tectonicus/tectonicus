@@ -188,6 +188,10 @@
 	<Slab id="44:4" name="Brick Slab" texture="brick.png" />
 
 	<Slab id="44:5" name="Stone Brick Slab" texture="stonebricksmooth.png" />
+	
+	<Slab id="44:6" name="Nether Brick Slab" texture="netherBrick.png" />
+	
+	<Slab id="44:7" name="Quartz Slab" texture="quartzblock_top.png" />
 
 	<Solid id="45" name="Brick" texture="brick.png" />
 	
