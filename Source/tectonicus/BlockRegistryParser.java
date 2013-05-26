@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -69,6 +69,7 @@ import tectonicus.blockTypes.EnderPortalFrame;
 import tectonicus.blockTypes.Fence;
 import tectonicus.blockTypes.FenceGate;
 import tectonicus.blockTypes.Fire;
+import tectonicus.blockTypes.FlowerPot;
 import tectonicus.blockTypes.FruitStem;
 import tectonicus.blockTypes.Furnace;
 import tectonicus.blockTypes.Glass;
@@ -673,6 +674,14 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Wall(name, id.id, texture);
+		}
+		else if (nodeName.equals("flowerpot"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+			SubTexture dirt = parseTexture(element, "dirt", null);
+			SubTexture plant = parseTexture(element, "plant", null);
+			
+			blockType = new FlowerPot(name, texture, dirt, plant);
 		}
 		else
 		{

@@ -396,6 +396,30 @@
 	
 	<Wall id="139:1" name="Mossy Cobblestone Wall" texture="stoneMoss.png" />
 	
+	<FlowerPot id="140:0" name="Flower Pot" texture="flowerPot.png" dirt="dirt.png" plant="dirt.png"/>
+	
+	<FlowerPot id="140:1" name="Flower Pot Rose" texture="flowerPot.png" dirt="dirt.png" plant="rose.png"/>
+	
+	<FlowerPot id="140:2" name="Flower Pot Yellow Flower" texture="flowerPot.png" dirt="dirt.png" plant="flower.png"/>
+	
+	<FlowerPot id="140:3" name="Flower Pot Oak Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling.png"/>
+	
+	<FlowerPot id="140:4" name="Flower Pot Spruce Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling_spruce.png"/>
+	
+	<FlowerPot id="140:5" name="Flower Pot Birch Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling_birch.png"/>
+	
+	<FlowerPot id="140:6" name="Flower Pot Jungle Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling_jungle.png"/>
+	
+	<FlowerPot id="140:7" name="Flower Pot Red Mushroom" texture="flowerPot.png" dirt="dirt.png" plant="mushroom_red.png"/>
+	
+	<FlowerPot id="140:8" name="Flower Pot Brown Mushroom" texture="flowerPot.png" dirt="dirt.png" plant="mushroom_brown.png"/>
+	
+	<FlowerPot id="140:9" name="Flower Pot Cactus" texture="flowerPot.png" dirt="dirt.png" plant="cactus_side.png"/>
+	
+	<FlowerPot id="140:10" name="Flower Pot Dead Bush" texture="flowerPot.png" dirt="dirt.png" plant="deadbush.png"/>
+	
+	<FlowerPot id="140:11" name="Flower Pot Fern" texture="flowerPot.png" dirt="dirt.png" plant="fern.png"/>
+	
 	<Crops id="141" name="Carrots" tex0="carrots_0.png" tex1="carrots_0.png" tex2="carrots_1.png" tex3="carrots_1.png" tex4="carrots_2.png" tex5="carrots_2.png" tex6="carrots_2.png" tex7="carrots_3.png" />
 	
 	<Crops id="142" name="Potatoes" tex0="potatoes_0.png" tex1="potatoes_0.png" tex2="potatoes_1.png" tex3="potatoes_1.png" tex4="potatoes_2.png" tex5="potatoes_2.png" tex6="potatoes_2.png" tex7="potatoes_3.png" />

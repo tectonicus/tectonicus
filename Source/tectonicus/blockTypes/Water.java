@@ -58,7 +58,14 @@ public class Water implements BlockType
 	public Water(String name, SubTexture subTexture)
 	{
 		this.name = name;
-		this.subTexture = subTexture;
+		
+		final float texel;
+		if (subTexture.texturePackVersion == "1.4")
+			texel = 1.0f / 16.0f / 16.0f;
+		else
+			texel = 1.0f / 16.0f;
+		
+		this.subTexture = new SubTexture(subTexture.texture, subTexture.u0, subTexture.v0, subTexture.u0+texel*16, subTexture.v0+texel*16);
 	}
 	
 	@Override

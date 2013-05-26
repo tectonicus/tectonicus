@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -91,6 +91,6 @@ public class Sapling implements BlockType
 		final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
 		Vector4f colour = new Vector4f(lightVal, lightVal, lightVal, 1.0f);
 
-		Plant.addPlantGeometry(x, y, z, mesh, colour, texture);
+		Plant.addPlantGeometry(x, y, z, 0, mesh, colour, texture);
 	}
 }

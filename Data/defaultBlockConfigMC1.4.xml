@@ -392,6 +392,30 @@
 	
 	<Wall id="139:1" name="Mossy Cobblestone Wall" texture="terrain[4, 2]" />
 	
+	<FlowerPot id="140:0" name="Flower Pot" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[2, 0]"/>
+	
+	<FlowerPot id="140:1" name="Flower Pot Rose" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[12, 0]"/>
+	
+	<FlowerPot id="140:2" name="Flower Pot Yellow Flower" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[13, 0]"/>
+	
+	<FlowerPot id="140:3" name="Flower Pot Oak Sapling" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[15, 0]"/>
+	
+	<FlowerPot id="140:4" name="Flower Pot Spruce Sapling" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[15, 3]"/>
+	
+	<FlowerPot id="140:5" name="Flower Pot Birch Sapling" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[15, 4]"/>
+	
+	<FlowerPot id="140:6" name="Flower Pot Jungle Sapling" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[14, 1]"/>
+	
+	<FlowerPot id="140:7" name="Flower Pot Red Mushroom" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[12, 1]"/>
+	
+	<FlowerPot id="140:8" name="Flower Pot Brown Mushroom" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[13, 1]"/>
+	
+	<FlowerPot id="140:9" name="Flower Pot Cactus" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[6, 4]"/>
+	
+	<FlowerPot id="140:10" name="Flower Pot Dead Bush" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[7, 3]"/>
+	
+	<FlowerPot id="140:11" name="Flower Pot Fern" texture="terrain[10, 11]" dirt="terrain[2, 0]" plant="terrain[8, 3]"/>
+	
 	<Crops id="141" name="Carrots" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[11, 12]" />
 	
 	<Crops id="142" name="Potatoes" tex0="terrain[8, 12]" tex1="terrain[8, 12]" tex2="terrain[9, 12]" tex3="terrain[9, 12]" tex4="terrain[10, 12]" tex5="terrain[10, 12]" tex6="terrain[10, 12]" tex7="terrain[12, 12]" />

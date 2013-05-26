@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -98,41 +98,41 @@ public class Plant implements BlockType
 		
 		Vector4f colour = new Vector4f(lightVal, lightVal, lightVal, 1.0f);
 		
-		addPlantGeometry(x, y, z, mesh, colour, texture);
+		addPlantGeometry(x, y, z, 0, mesh, colour, texture);
 	}
 	
-	public static void addPlantGeometry(final float x, final float y, final float z, Mesh mesh, Vector4f colour, SubTexture texture)
+	public static void addPlantGeometry(final float x, final float y, final float z, final float heightOffGround, Mesh mesh, Vector4f colour, SubTexture texture)
 	{
 		
 		// NE corner to SW corner
 		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
 								new Vector3f(x+1,	y+1,	z+1),
-								new Vector3f(x+1,	y,		z+1),
-								new Vector3f(x,		y,		z),
+								new Vector3f(x+1,	y+heightOffGround,		z+1),
+								new Vector3f(x,		y+heightOffGround,		z),
 								colour,
 								texture);
 	
 		// SE corner to NW corner
 		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
 								new Vector3f(x,		y+1,	z+1),
-								new Vector3f(x,		y,		z+1),
-								new Vector3f(x+1,	y,		z),
+								new Vector3f(x,		y+heightOffGround,		z+1),
+								new Vector3f(x+1,	y+heightOffGround,		z),
 								colour,
 								texture); 
 	
 		// SW corner to NE corner
 		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z+1),
 								new Vector3f(x,		y+1,	z),
-								new Vector3f(x,		y,		z),
-								new Vector3f(x+1,	y,		z+1),
+								new Vector3f(x,		y+heightOffGround,		z),
+								new Vector3f(x+1,	y+heightOffGround,		z+1),
 								colour,
 								texture);
 		
 		// NW corner to SE corner
 		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
 								new Vector3f(x+1,	y+1,	z),
-								new Vector3f(x+1,	y,		z),
-								new Vector3f(x,		y,		z+1),
+								new Vector3f(x+1,	y+heightOffGround,		z),
+								new Vector3f(x,		y+heightOffGround,		z+1),
 								colour,
 								texture); 
 	}
