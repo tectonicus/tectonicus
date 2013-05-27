@@ -382,6 +382,8 @@
 
 	<Slab id="126:3" name="Jungle Wood Half Slab" texture="wood_jungle.png" />
 	
+	<CocoaPod id="127" name="Cocoa Pod" small="cocoa_0.png" medium="cocoa_1.png" large="cocoa_2.png" />
+	
 	<Stairs id="128" name="Sandstone Stairs" texture="sandstone_side.png" />
 	
 	<Solid id="129" name="Emerald Ore" texture="oreEmerald.png" />

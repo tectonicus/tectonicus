@@ -374,6 +374,8 @@
 
 	<Slab id="126:3" name="Jungle Wood Half Slab" texture="terrain[7, 12]" />
 	
+	<CocoaPod id="127" name="Cocoa Pod" small="terrain[10, 10]" medium="terrain[9, 10]" large="terrain[8, 10]" />
+	
 	<Stairs id="128" name="Sandstone Stairs" texture="terrain[0, 12]" />
 	
 	<Solid id="129" name="Emerald Ore" texture="terrain[11, 10]" />

@@ -1214,6 +1214,7 @@ public class TileRenderer
 			
 			writer.flush();
 			out.close();
+			scanner.close();
 		}
 		catch (Exception e)
 		{
@@ -1260,6 +1261,7 @@ public class TileRenderer
 				in.close();
 				in = null;
 			}
+			writer.close();
 		}
 		catch (Exception e)
 		{
