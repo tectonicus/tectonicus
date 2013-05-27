@@ -176,6 +176,10 @@
 	<Solid id="43:4" name="Brick Double Slab" texture="brick.png" />
 
 	<Solid id="43:5" name="Stone Brick Double Slab" texture="stonebricksmooth.png" />
+	
+	<Solid id="43:6" name="Nether Brick Double Slab" texture="netherBrick.png" />
+	
+	<Solid id="43:7" name="Quartz Double Slab" texture="quartzblock_top.png" />
 
 	<Slab id="44:0" name="Stone Slab" side="stoneslab_side.png" top="stoneslab_top.png" />
 
@@ -211,9 +215,9 @@
 	
 	<Stairs id="53" name="Wooden Stairs" texture="wood.png" />
 
-	<Chest id="54" name="Chest" top="cactus_bottom.png" side="cactus_bottom.png" front="cactus_bottom.png"	
-					doubleSideLeft="cactus_bottom.png" doubleSideRight="cactus_bottom.png"
-					doubleFrontLeft="cactus_bottom.png" doubleFrontRight="cactus_bottom.png" />
+	<Chest id="54" name="Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+								trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
+								xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
 
 	<RedstoneWire id="55" name="Redstone Wire" offJunction="redstoneDust_cross.png" onJunction="redstoneDust_cross.png" offLine="redstoneDust_line.png" onLine="redstoneDust_line.png" />
 
@@ -295,9 +299,9 @@
 	
 	<RedstoneRepeater id="94" name="Redstone Repeater" base="repeater_lit.png" side="stoneslab_top.png" torch="redtorch_lit.png" />
 	
-	<Chest id="95" name="Locked Chest" top="cactus_bottom.png" side="cactus_bottom.png" front="cactus_bottom.png"	
+	<!-- <Chest id="95" name="Locked Chest" top="cactus_bottom.png" side="cactus_bottom.png" front="cactus_bottom.png"	
 					doubleSideLeft="cactus_bottom.png" doubleSideRight="cactus_bottom.png"
-					doubleFrontLeft="cactus_bottom.png" doubleFrontRight="cactus_bottom.png" />
+					doubleFrontLeft="cactus_bottom.png" doubleFrontRight="cactus_bottom.png" />-->
 	
 	<Trapdoor id="96" name="Trapdoor" texture="trapdoor.png" />
 	
@@ -382,6 +386,10 @@
 	
 	<Solid id="129" name="Emerald Ore" texture="oreEmerald.png" />
 	
+	<Chest id="130" name="Ender Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
+										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
+	
 	<Solid id="133" name="Emerald Block" texture="blockEmerald.png" />
 	
 	<Stairs id="134" name="Spruce Wood Stairs" texture="wood_spruce.png" />
@@ -425,6 +433,10 @@
 	<Crops id="142" name="Potatoes" tex0="potatoes_0.png" tex1="potatoes_0.png" tex2="potatoes_1.png" tex3="potatoes_1.png" tex4="potatoes_2.png" tex5="potatoes_2.png" tex6="potatoes_2.png" tex7="potatoes_3.png" />
 	
 	<Button id="143" name="Wooden Button" texture="wood.png" />
+	
+	<Chest id="146" name="Trapped Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
+										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
 	
 	<PressurePlate id="147" name="Gold Pressure Plate" texture="blockGold.png" />
 	

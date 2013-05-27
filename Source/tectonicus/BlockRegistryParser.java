@@ -398,17 +398,23 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("chest"))
 		{
-			SubTexture top = parseTexture(element, "top", null);
-			SubTexture side = parseTexture(element, "side", null);
-			SubTexture front = parseTexture(element, "front", null);
-			SubTexture doubleSideLeft = parseTexture(element, "doubleSideLeft", null);
-			SubTexture doubleSideRight = parseTexture(element, "doubleSideRight", null);
-			SubTexture doubleFrontLeft = parseTexture(element, "doubleFrontLeft", null);
-			SubTexture doubleFrontRight = parseTexture(element, "doubleFrontRight", null);
+			SubTexture small = parseTexture(element, "small", null);
+			SubTexture large = parseTexture(element, "large", null);
+			SubTexture ender = parseTexture(element, "ender", null);
+			SubTexture trappedsmall = null;
+			SubTexture trappedlarge = null;
+			SubTexture xmassmall = null;
+			SubTexture xmaslarge = null;
 			
-			blockType = new Chest(name, top, side, front,
-									doubleSideLeft, doubleSideRight,
-									doubleFrontLeft, doubleFrontRight );
+			if(texturePack.getVersion() == "1.5")
+			{
+				trappedsmall = parseTexture(element, "trappedsmall", null);
+				trappedlarge = parseTexture(element, "trappedlarge", null);
+				xmassmall = parseTexture(element, "xmassmall", null);
+				xmaslarge = parseTexture(element, "xmaslarge", null);
+			}
+			
+			blockType = new Chest(name, small, large, ender, trappedsmall, trappedlarge, xmassmall, xmaslarge);
 		}
 		else if (nodeName.equals("redstonewire"))
 		{

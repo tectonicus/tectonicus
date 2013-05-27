@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -36,48 +36,82 @@
  */
 package tectonicus.blockTypes;
 
+import java.util.Calendar;
+
+import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
+
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.ChunkCoord;
-import tectonicus.rasteriser.Mesh;
+import tectonicus.Chunk;
+import tectonicus.configuration.LightFace;
+import tectonicus.rasteriser.SubMesh;
+import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
-import tectonicus.util.Colour4f;
 
 public class Chest implements BlockType
 {
 	private final String name;
 	
-	private final SubTexture topTexture;
-	private final SubTexture sideTexture;
-	private final SubTexture frontTexture;
-	
-	private final SubTexture doubleSide0, doubleSide1;
-	private final SubTexture doubleFront0, doubleFront1;
-	
-	private Colour4f colour;
+	private final SubTexture smallTop, smallTopSide, smallTopFront, smallBottom, smallBaseSide, smallBaseFront, smallLock;
+	private final SubTexture largeTopLeft, largeTopRight, largeTopSide, largeTopFrontLeft, largeTopFrontRight, largeTopBackLeft, largeTopBackRight,
+							 largeBottomLeft, largeBottomRight, largeBaseSide, largeBaseFrontLeft, largeBaseFrontRight, largeBaseBackLeft, largeBaseBackRight, largeLock;
 
-	public Chest(String name,
-					SubTexture top, SubTexture side, SubTexture front,
-					SubTexture doubleSide0, SubTexture doubleSide1,
-					SubTexture doubleFront0, SubTexture doubleFront1)
+	public Chest(String name, SubTexture small, SubTexture large, SubTexture ender,
+							SubTexture trappedSmall, SubTexture trappedLarge,
+							SubTexture xmasSmall, SubTexture xmasLarge)
 	{
 		this.name = name;
 		
-		this.topTexture = top;
-		this.sideTexture = side;
-		this.frontTexture = front;
+		final float texel = 1.0f / 64.0f;
+		final float wideTexel = 1.0f / 128.0f;
 		
-		this.doubleSide0 = doubleSide0;
-		this.doubleSide1 = doubleSide1;
+		Calendar calendar = Calendar.getInstance();
+		SubTexture smallChest;
+		if(name.equals("Ender Chest"))
+			smallChest = ender;
+		else if(name.equals("Trapped Chest"))
+			smallChest = trappedSmall;
+		else
+			smallChest = small;
 		
-		this.doubleFront0 = doubleFront0;
-		this.doubleFront1 = doubleFront1;
+		SubTexture largeChest = name.equals("Trapped Chest") ? trappedLarge : large;
 		
-		colour = new Colour4f(1, 1, 1, 1);
+		if(calendar.get(Calendar.MONTH) == 11 && calendar.get(Calendar.DAY_OF_MONTH) == 25 && large.texturePackVersion == "1.5")
+		{
+			smallChest = xmasSmall;
+			largeChest = xmasLarge;
+		}
+		
+		// Small Chest Textures
+		smallTop = new SubTexture(smallChest.texture, smallChest.u0+texel*14, smallChest.v0, smallChest.u0+texel*28, smallChest.v0+texel*14);
+		smallTopSide = new SubTexture(smallChest.texture, smallChest.u0, smallChest.v0+texel*14, smallChest.u0+texel*14, smallChest.v0+texel*19);
+		smallTopFront = new SubTexture(smallChest.texture, smallChest.u0+texel*14, smallChest.v0+texel*14, smallChest.u0+texel*28, smallChest.v0+texel*19);
+		smallBottom = new SubTexture(smallChest.texture, smallChest.u0+texel*28, smallChest.v0+texel*19, smallChest.u0+texel*42, smallChest.v0+texel*33);
+		smallBaseSide = new SubTexture(smallChest.texture, smallChest.u0, smallChest.v0+texel*34, smallChest.u0+texel*14, smallChest.v0+texel*43);
+		smallBaseFront = new SubTexture(smallChest.texture, smallChest.u0+texel*14, smallChest.v0+texel*34, smallChest.u0+texel*28, smallChest.v0+texel*43);
+		smallLock = new SubTexture(smallChest.texture, smallChest.u0+texel*2, smallChest.v0, smallChest.u0+texel*3, smallChest.v0+texel*4);
+		
+		//Large Chest Textures
+		largeTopLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*14, largeChest.v0, largeChest.u0+wideTexel*29, largeChest.v0+texel*14);
+		largeTopRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*30, largeChest.v0, largeChest.u0+wideTexel*44, largeChest.v0+texel*14);
+		largeTopSide = new SubTexture(largeChest.texture, largeChest.u0, largeChest.v0+texel*14, largeChest.u0+wideTexel*14, largeChest.v0+texel*19);
+		largeTopFrontLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*14, largeChest.v0+texel*14, largeChest.u0+wideTexel*29, largeChest.v0+texel*19);
+		largeTopFrontRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*30, largeChest.v0+texel*14, largeChest.u0+wideTexel*44, largeChest.v0+texel*19);
+		largeTopBackRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*57, largeChest.v0+texel*14, largeChest.u0+wideTexel*73, largeChest.v0+texel*19);
+		largeTopBackLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*73, largeChest.v0+texel*14, largeChest.u0+wideTexel*88, largeChest.v0+texel*19);
+		largeBottomLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*45, largeChest.v0+texel*20, largeChest.u0+wideTexel*60, largeChest.v0+texel*34);
+		largeBottomRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*61, largeChest.v0+texel*20, largeChest.u0+wideTexel*74, largeChest.v0+texel*34);
+		largeBaseSide = new SubTexture(largeChest.texture, largeChest.u0, largeChest.v0+texel*34, largeChest.u0+wideTexel*14, largeChest.v0+texel*43);
+		largeBaseFrontLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*14, largeChest.v0+texel*34, largeChest.u0+wideTexel*29, largeChest.v0+texel*43);
+		largeBaseFrontRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*30, largeChest.v0+texel*34, largeChest.u0+wideTexel*44, largeChest.v0+texel*43);
+		largeBaseBackRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*58, largeChest.v0+texel*34, largeChest.u0+wideTexel*73, largeChest.v0+texel*43);
+		largeBaseBackLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*73, largeChest.v0+texel*34, largeChest.u0+wideTexel*88, largeChest.v0+texel*43);
+		largeLock = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*2, largeChest.v0, largeChest.u0+wideTexel*3, largeChest.v0+texel*4);
 	}
 
 	@Override
@@ -89,7 +123,7 @@ public class Chest implements BlockType
 	@Override
 	public boolean isSolid()
 	{
-		return true;
+		return false;
 	}
 	
 	@Override
@@ -107,256 +141,211 @@ public class Chest implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
-		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
-		Mesh frontMesh = geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid);
-		Mesh doubleSide0Mesh = geometry.getMesh(doubleSide0.texture, Geometry.MeshType.Solid);
-		Mesh doubleSide1Mesh = geometry.getMesh(doubleSide1.texture, Geometry.MeshType.Solid);
-		Mesh doubleFront0Mesh = geometry.getMesh(doubleFront0.texture, Geometry.MeshType.Solid);
-		Mesh doubleFront1Mesh = geometry.getMesh(doubleFront1.texture, Geometry.MeshType.Solid);
+		final int data = chunk.getBlockData(x, y, z);
 		
-		final int northId = world.getBlockId(chunk.getChunkCoord(), x-1, y, z);
-		final int southId = world.getBlockId(chunk.getChunkCoord(), x+1, y, z);
-		final int eastId = world.getBlockId(chunk.getChunkCoord(), x, y, z-1);
-		final int westId = world.getBlockId(chunk.getChunkCoord(), x, y, z+1);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
+		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
 		
-		BlockType northType = world.getBlockType(chunk.getChunkCoord(), x-1, y, z);
-		BlockType southType = world.getBlockType(chunk.getChunkCoord(), x+1, y, z);
-		BlockType eastType = world.getBlockType(chunk.getChunkCoord(), x, y, z-1);
-		BlockType westType = world.getBlockType(chunk.getChunkCoord(), x, y, z+1);
+		SubMesh smallMesh = new SubMesh();
+		SubMesh largeMesh = new SubMesh();
 		
-		final boolean chestNorth = northId == BlockIds.CHEST;
-		final boolean chestSouth = southId == BlockIds.CHEST;
-		final boolean chestEast = eastId == BlockIds.CHEST;
-		final boolean chestWest = westId == BlockIds.CHEST;
+		final float offSet = 1.0f / 16.0f;
+		final float height = offSet * 10.0f;
 		
-		// Default everything to the side textures
-		SubTexture northTex = sideTexture;
-		SubTexture southTex = sideTexture;
-		SubTexture eastTex = sideTexture;
-		SubTexture westTex = sideTexture;
-		Mesh northMesh = sideMesh;
-		Mesh southMesh = sideMesh;
-		Mesh eastMesh = sideMesh;
-		Mesh westMesh = sideMesh;
+		final int westId = world.getBlockId(chunk.getChunkCoord(), x-1, y, z);
+		final int eastId = world.getBlockId(chunk.getChunkCoord(), x+1, y, z);
+		final int northId = world.getBlockId(chunk.getChunkCoord(), x, y, z-1);
+		final int southId = world.getBlockId(chunk.getChunkCoord(), x, y, z+1);		
 		
+		final boolean chestNorth;
+		final boolean chestSouth;
+		final boolean chestEast;
+		final boolean chestWest;
+		if(name.equals("Trapped Chest"))
+		{
+			chestNorth = northId == BlockIds.TRAPPED_CHEST;
+			chestSouth = southId == BlockIds.TRAPPED_CHEST;
+			chestEast = eastId == BlockIds.TRAPPED_CHEST;
+			chestWest = westId == BlockIds.TRAPPED_CHEST;
+		}
+		else if(name.equals("Chest"))
+		{
+			chestNorth = northId == BlockIds.CHEST;
+			chestSouth = southId == BlockIds.CHEST;
+			chestEast = eastId == BlockIds.CHEST;
+			chestWest = westId == BlockIds.CHEST;
+		}
+		else
+		{
+			chestNorth = chestSouth = chestEast = chestWest = false;
+		}
+			
+		
+
 		if (chestNorth || chestSouth || chestEast || chestWest)
 		{
 			// Double chest!
-			// We either can run north-south or east-west
 			
-			if (chestNorth)
+			if((data == 2 && chestWest) || (data == 3 && chestEast) || (data == 4 && chestSouth) || (data == 5 && chestNorth))
 			{
-				// North-south, this south
-				// face east if any blocks west, otherwise face west
-				if (isSolid(chunk.getChunkCoord(), x, y, z+1, world, registry)
-					|| isSolid(chunk.getChunkCoord(), x-1, y, z+1, world, registry))
-				{
-					// face east
-					eastTex = doubleFront0;
-					eastMesh = doubleFront0Mesh;
-					westTex = doubleSide1;
-					westMesh = doubleSide1Mesh;
-				}
-				else
-				{
-					// face west
-					westTex = doubleFront1;
-					westMesh = doubleFront1Mesh;
-					eastTex = doubleSide0;
-					eastMesh = doubleSide0Mesh;
-				}
+				// Left half
+				
+				// Top
+				largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(1, 1-offSet*2, 0+offSet),
+								new Vector3f(1, 1-offSet*2, 1-offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet), colour, largeTopLeft);
+				// West
+				largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
+								new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, largeTopSide);
+				// North
+				largeMesh.addQuad(new Vector3f(1, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 0+offSet),
+								new Vector3f(0+offSet, height, 0+offSet),  new Vector3f(1, height, 0+offSet), colour, largeTopBackLeft);
+				// South
+				largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 1-offSet), new Vector3f(1, 1-offSet*2, 1-offSet),
+								new Vector3f(1, height, 1-offSet),  new Vector3f(0+offSet, height, 1-offSet), colour, largeTopFrontLeft);
+				// East
+				/*largeLeftMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+								new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, largeTopSide);*/
+				
+				
+				//Chest bottom
+				
+				// Bottom
+				largeMesh.addQuad(new Vector3f(0+offSet, 0, 0+offSet), new Vector3f(0+offSet, 0, 1-offSet),
+								new Vector3f(1, 0, 1-offSet), new Vector3f(1, 0, 0+offSet), colour, largeBottomLeft);
+			
+				// West
+				largeMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
+								new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, largeBaseSide);
+				// North
+				largeMesh.addQuad(new Vector3f(1, height, 0+offSet), new Vector3f(0+offSet, height, 0+offSet),
+								new Vector3f(0+offSet, 0, 0+offSet),  new Vector3f(1, 0, 0+offSet), colour, largeBaseBackLeft);
+				// South
+				largeMesh.addQuad(new Vector3f(0+offSet, height, 1-offSet), new Vector3f(1, height, 1-offSet),
+								new Vector3f(1, 0, 1-offSet),  new Vector3f(0+offSet, 0, 1-offSet), colour, largeBaseFrontLeft);
+				// East
+				/*largeLeftMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
+								new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);*/
+				
+				SubMesh.addBlock(largeMesh, 1-offSet, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
 			}
-			else if (chestSouth)
+			else if ((data == 2 && chestEast) || (data == 3 && chestWest) || (data == 4 && chestNorth) || (data == 5 && chestSouth))
 			{
-				// North-south, this north
-				// face east if any blocks west, otherwise face west
-				if (isSolid(chunk.getChunkCoord(), x, y, z+1, world, registry)
-					|| isSolid(chunk.getChunkCoord(), x-1, y, z+1, world, registry))
-				{
-					// face east
-					eastTex = doubleFront1;
-					eastMesh = doubleFront1Mesh;
-					westTex = doubleSide0;
-					westMesh = doubleSide0Mesh;
-				}
-				else
-				{
-					// face west
-					westTex = doubleFront0;
-					westMesh = doubleFront0Mesh;
-					eastTex = doubleSide1;
-					eastMesh = doubleSide1Mesh;
-				}
-			}
-			else if (chestEast)
-			{
-				// East-west, this west
-				// face north if any blocks south, otherwise face south
-				if (isSolid(chunk.getChunkCoord(), x+1, y, z, world, registry)
-					|| isSolid(chunk.getChunkCoord(), x+1, y, z-1, world, registry))
-				{
-					// face north
-					northTex = doubleFront1;
-					northMesh = doubleFront1Mesh;
-					southTex = doubleSide0;	
-					southMesh = doubleSide0Mesh;	
-				}
-				else
-				{
-					// face south
-					southTex = doubleFront0;
-					southMesh = doubleFront0Mesh;
-					northTex = doubleSide1;
-					northMesh = doubleSide1Mesh;
-				}
-			}
-			else
-			{
-				// East-west, this east
-				// face north if any blocks south, otherwise face south
-				if (isSolid(chunk.getChunkCoord(), x+1, y, z, world, registry)
-					|| isSolid(chunk.getChunkCoord(), x+1, y, z+1, world, registry))
-				{
-					// face north
-					northTex = doubleFront0;
-					northMesh = doubleFront0Mesh;
-					southTex = doubleSide1;	
-					southMesh = doubleSide1Mesh;	
-				}
-				else
-				{
-					// face south
-					southTex = doubleFront1;
-					southMesh = doubleFront1Mesh;
-					northTex = doubleSide0;
-					northMesh = doubleSide0Mesh;
-				}
+				// Right half
+				
+				// Top
+				largeMesh.addQuad(new Vector3f(0, 1-offSet*2, 0+offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+								new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(0, 1-offSet*2, 1-offSet), colour, largeTopRight);
+				// West
+				/*largeLeftMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
+								new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, largeTopSide);*/
+				// North
+				largeMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 0+offSet), new Vector3f(0, 1-offSet*2, 0+offSet),
+								new Vector3f(0, height, 0+offSet),  new Vector3f(1-offSet, height, 0+offSet), colour, largeTopBackRight);
+				// South
+				largeMesh.addQuad(new Vector3f(0, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 1-offSet),
+								new Vector3f(1-offSet, height, 1-offSet),  new Vector3f(0, height, 1-offSet), colour, largeTopFrontRight);
+				// East
+				largeMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+								new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, largeTopSide);
+				
+				
+				//Chest bottom
+				
+				// Bottom
+				largeMesh.addQuad(new Vector3f(0, 0, 0+offSet), new Vector3f(0, 0, 1-offSet),
+								new Vector3f(1-offSet, 0, 1-offSet), new Vector3f(1-offSet, 0, 0+offSet), colour, largeBottomRight);
+			
+				// West
+				/*largeRightMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
+								new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, largeBaseSide);*/
+				// North
+				largeMesh.addQuad(new Vector3f(1-offSet, height, 0+offSet), new Vector3f(0, height, 0+offSet),
+								new Vector3f(0, 0, 0+offSet),  new Vector3f(1-offSet, 0, 0+offSet), colour, largeBaseBackRight);
+				// South
+				largeMesh.addQuad(new Vector3f(0, height, 1-offSet), new Vector3f(1-offSet, height, 1-offSet),
+								new Vector3f(1-offSet, 0, 1-offSet),  new Vector3f(0, 0, 1-offSet), colour, largeBaseFrontRight);
+				// East
+				largeMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
+								new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);
+				
+				SubMesh.addBlock(largeMesh, 0, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
 			}
 		}
 		else
 		{
 			// Single chest
-			// Direction changes based on surrounding blocks
-			int numSolid = 0;
-			if (northType.isSolid())
-				numSolid++;
-			if (southType.isSolid())
-				numSolid++;
-			if (eastType.isSolid())
-				numSolid++;
-			if (westType.isSolid())
-				numSolid++;
 			
-			if (numSolid == 4)
-			{
-				// Don't really care which is the front face, all hidden
-			}
-			else if (numSolid == 3)
-			{
-				// Faces the direction which isn't covered
-				
-				if (!northType.isSolid())
-				{
-					northTex = frontTexture;
-					northMesh = frontMesh;
-				}
-				else if (!southType.isSolid())
-				{
-					southTex = frontTexture;
-					southMesh = frontMesh;
-				}
-				else if (!eastType.isSolid())
-				{
-					eastTex = frontTexture;
-					eastMesh = frontMesh;
-				}
-				else if (!westType.isSolid())
-				{
-					westTex = frontTexture;
-					westMesh = frontMesh;
-				}
-			}
-			else if (numSolid == 2)
-			{
-				// Have to hard code all possibilities since MC logic seems a bit weird
-				
-				if (northType.isSolid() && southType.isSolid())
-				{
-					westTex = frontTexture;
-					westMesh = frontMesh;
-				}
-				else if (eastType.isSolid() && westType.isSolid())
-				{
-					// Front doesn't show, oddly!
-					// Probably a MC bug, expect this to get fixed sometime
-				}
-				else if (northType.isSolid() && eastType.isSolid())
-				{
-					southTex = frontTexture;
-					southMesh = frontMesh;
-				}
-				else if (eastType.isSolid() && southType.isSolid())
-				{
-					northTex = frontTexture;
-					northMesh = frontMesh;
-				}
-				else if (southType.isSolid() && westType.isSolid())
-				{
-					northTex = frontTexture;
-					northMesh = frontMesh;
-				}
-				else if (westType.isSolid() && northType.isSolid())
-				{
-					southTex = frontTexture;
-					southMesh = frontMesh;
-				}
-			}
-			else if (numSolid == 1)
-			{
-				// Faces away from a single solid block
-				
-				if (northType.isSolid())
-				{
-					southTex = frontTexture;
-					southMesh = frontMesh;
-				}
-				else if (southType.isSolid())
-				{
-					northTex = frontTexture;
-					northMesh = frontMesh;
-				}
-				else if (eastType.isSolid())
-				{
-					westTex = frontTexture;
-					westMesh = frontMesh;
-				}
-				else if (westType.isSolid())
-				{
-					eastTex = frontTexture;
-					eastMesh = frontMesh;
-				}
-			}
-			else
-			{
-				// Default to facing west
-				westTex = frontTexture;
-				westMesh = frontMesh;
-			}
+			// Chest top
+			
+			// Top
+			smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+							new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet), colour, smallTop);
+			// West
+			smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
+							new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, smallTopSide);
+			// North
+			smallMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 0+offSet),
+							new Vector3f(0+offSet, height, 0+offSet),  new Vector3f(1-offSet, height, 0+offSet), colour, smallTopSide);
+			// South
+			smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 1-offSet),
+							new Vector3f(1-offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 1-offSet), colour, smallTopFront);
+			// East
+			smallMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+							new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, smallTopSide);
+			
+			
+			//Chest bottom
+			
+			// Bottom
+			smallMesh.addQuad(new Vector3f(0, 0, 0), new Vector3f(0, 0, 1),
+							new Vector3f(1, 0, 1), new Vector3f(1, 0, 0), colour, smallBottom);
+		
+			// West
+			smallMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
+							new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, smallBaseSide);
+			// North
+			smallMesh.addQuad(new Vector3f(1-offSet, height, 0+offSet), new Vector3f(0+offSet, height, 0+offSet),
+							new Vector3f(0+offSet, 0, 0+offSet),  new Vector3f(1-offSet, 0, 0+offSet), colour, smallBaseSide);
+			// South
+			smallMesh.addQuad(new Vector3f(0+offSet, height, 1-offSet), new Vector3f(1-offSet, height, 1-offSet),
+							new Vector3f(1-offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 1-offSet), colour, smallBaseFront);
+			// East
+			smallMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
+							new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, smallBaseSide);
+			
+			SubMesh.addBlock(smallMesh, offSet*7, offSet*8, offSet*15, offSet*2, offSet*4, offSet, colour, smallLock, smallLock, smallLock);
+		}
+
+		
+		Rotation horizRotation = Rotation.Clockwise;
+		float horizAngle = 0;
+	
+		// Set angle/rotation from block data flags
+		if (data == 2)
+		{
+			// north			
+			horizRotation = Rotation.AntiClockwise;
+			horizAngle = 180;
+		}
+		else if (data == 3)
+		{
+			// south
+		}
+		else if (data == 4)
+		{
+			// west
+			horizRotation = Rotation.Clockwise;
+			horizAngle = 270;
+
+		}
+		else if (data == 5)
+		{
+			// east			
+			horizRotation = Rotation.Clockwise;
+			horizAngle = 90;
 		}
 		
-		// Top is always the same
-		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, topTexture, registry);
-		
-		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry);
-		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry);
-		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
-		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry);
-	}
-	
-	private static final boolean isSolid(ChunkCoord coord, int x, int y, int z, BlockContext world, BlockTypeRegistry registry)
-	{
-		BlockType type = world.getBlockType(coord, x, y, z);
-		return type.isSolid();
+		smallMesh.pushTo(geometry.getMesh(smallTop.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, Rotation.None, 0);
+		largeMesh.pushTo(geometry.getMesh(largeTopLeft.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, Rotation.None, 0);
 	}
 }

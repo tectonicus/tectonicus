@@ -207,9 +207,9 @@
 	
 	<Stairs id="53" name="Wooden Stairs" texture="terrain[4, 0]" />
 
-	<Chest id="54" name="Chest" top="terrain[9, 1]" side="terrain[10, 1]" front="terrain[11, 1]"	
-					doubleSideLeft="terrain[9, 3]" doubleSideRight="terrain[10, 3]"
-					doubleFrontLeft="terrain[9, 2]" doubleFrontRight="terrain[10, 2]" />
+	<Chest id="54" name="Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+								trappedsmall="" trappedlarge=""
+								xmassmall="" xmaslarge="" />
 
 	<RedstoneWire id="55" name="Redstone Wire" offJunction="terrain[4, 10]" onJunction="terrain[4, 10]" offLine="terrain[5, 10]" onLine="terrain[5, 10]" />
 
@@ -291,9 +291,9 @@
 	
 	<RedstoneRepeater id="94" name="Redstone Repeater" base="terrain[3, 9]" side="terrain[6, 0]" torch="terrain[3, 6]" />
 	
-	<Chest id="95" name="Locked Chest" top="terrain[9, 1]" side="terrain[10, 1]" front="terrain[11, 1]"	
+	<!-- <Chest id="95" name="Locked Chest" top="terrain[9, 1]" side="terrain[10, 1]" front="terrain[11, 1]"	
 					doubleSideLeft="terrain[9, 3]" doubleSideRight="terrain[10, 3]"
-					doubleFrontLeft="terrain[9, 2]" doubleFrontRight="terrain[10, 2]" />
+					doubleFrontLeft="terrain[9, 2]" doubleFrontRight="terrain[10, 2]" />-->
 	
 	<Trapdoor id="96" name="Trapdoor" texture="terrain[4, 5]" />
 	
@@ -377,6 +377,10 @@
 	<Stairs id="128" name="Sandstone Stairs" texture="terrain[0, 12]" />
 	
 	<Solid id="129" name="Emerald Ore" texture="terrain[11, 10]" />
+	
+	<Chest id="130" name="Ender Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+										trappedsmall="" trappedlarge=""
+										xmassmall="" xmaslarge="" />
 	
 	<Solid id="133" name="Emerald Block" texture="terrain[9, 1]" />
 	
