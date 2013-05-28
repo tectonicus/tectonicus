@@ -448,6 +448,8 @@
 	
 	<PressurePlate id="148" name="Iron Pressure Plate" texture="blockIron.png" />
 	
+	<DaylightSensor id="151" name="Daylight Sensor" top="daylightDetector_top.png" bottom="daylightDetector_side.png" />
+	
 	<Solid id="152" name="Redstone Block" texture="blockRedstone.png" />
 	
 	<Solid id="153" name="Nether Quartz Ore" texture="netherquartz.png" />

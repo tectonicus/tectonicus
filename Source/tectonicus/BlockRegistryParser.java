@@ -62,6 +62,7 @@ import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.CocoaPod;
 import tectonicus.blockTypes.DataSolid;
+import tectonicus.blockTypes.DaylightSensor;
 import tectonicus.blockTypes.Dispenser;
 import tectonicus.blockTypes.Door;
 import tectonicus.blockTypes.DoubleSlab;
@@ -716,6 +717,13 @@ public class BlockRegistryParser
 		 	SubTexture top2 = parseTexture(element, "top2", null);
 		 	
 		 	blockType = new Anvil(name, base, top0, top1, top2);
+		}
+		else if (nodeName.equals("daylightsensor"))
+		{
+			SubTexture top = parseTexture(element, "top", null);
+		 	SubTexture bottom = parseTexture(element, "bottom", null);
+		 	
+		 	blockType = new DaylightSensor(name, top, bottom);
 		}
 		else
 		{
