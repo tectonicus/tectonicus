@@ -51,6 +51,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.Anvil;
 import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
 import tectonicus.blockTypes.BrewingStand;
@@ -706,6 +707,15 @@ public class BlockRegistryParser
 		 	SubTexture obsidian = parseTexture(element, "obsidian", null);
 		 	
 		 	blockType = new Beacon(name, glass, beacon, obsidian);
+		}
+		else if (nodeName.equals("anvil"))
+		{
+			SubTexture base = parseTexture(element, "base", null);
+		 	SubTexture top0 = parseTexture(element, "top0", null);
+		 	SubTexture top1 = parseTexture(element, "top1", null);
+		 	SubTexture top2 = parseTexture(element, "top2", null);
+		 	
+		 	blockType = new Anvil(name, base, top0, top1, top2);
 		}
 		else
 		{

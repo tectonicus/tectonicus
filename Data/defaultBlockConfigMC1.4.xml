@@ -430,4 +430,6 @@
 	
 	<Button id="143" name="Wooden Button" texture="terrain[4, 0]" />
 	
+	<Anvil id="145" name="Anvil" base="terrain[7, 13]" top0="terrain[7, 14]" top1="terrain[8, 13]" top2="terrain[8, 14]" />
+	
 </blockConfig>

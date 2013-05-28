@@ -88,6 +88,21 @@ public class SubMesh
 		addVertex(p3, colour, uv3.x, uv3.y);
 	}
 	
+	public void addDoubleSidedQuad(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
+	{
+		// Clockwise
+		addVertex(p0, colour, texture.u0, texture.v0);
+		addVertex(p1, colour, texture.u1, texture.v0);
+		addVertex(p2, colour, texture.u1, texture.v1);
+		addVertex(p3, colour, texture.u0, texture.v1);
+		
+		// Anticlockwise
+		addVertex(p0, colour, texture.u0, texture.v0);
+		addVertex(p3, colour, texture.u0, texture.v1);
+		addVertex(p2, colour, texture.u1, texture.v1);
+		addVertex(p1, colour, texture.u1, texture.v0);
+	}
+	
 	public void pushTo(Mesh mesh, final float xOffset, final float yOffset, final float zOffset, Rotation rotation, final float angleDeg)
 	{
 		pushTo(mesh, xOffset, yOffset, zOffset, rotation, angleDeg, Rotation.None, 0);
@@ -236,4 +251,36 @@ public class SubMesh
 									new Vector3f(x+width, y, z+depth), new Vector3f(x+width, y, z), 
 									colour, bottomTex);
 	}
+	
+	
+	public static void addBlock(SubMesh subMesh, final float x, final float y, final float z,
+			final float width, final float height, final float depth,
+			Vector4f colour, SubTexture sideTex, SubTexture bottomTex)
+	{
+		// North
+		subMesh.addQuad( new Vector3f(x, y+height, z), new Vector3f(x, y+height, z+depth),
+			new Vector3f(x, y, z+depth),  new Vector3f(x, y, z), 
+			colour, sideTex);
+		
+		// East
+		subMesh.addQuad( new Vector3f(x+width, y+height, z), new Vector3f(x, y+height, z),
+			new Vector3f(x, y, z),  new Vector3f(x+width, y, z), 
+			colour, sideTex);
+		
+		// West
+		subMesh.addQuad( new Vector3f(x, y+height, z+depth), new Vector3f(x+width, y+height, z+depth),
+			new Vector3f(x+width, y, z+depth),  new Vector3f(x, y, z+depth), 
+			colour, sideTex);
+		
+		// South
+		subMesh.addQuad(new Vector3f(x+width, y+height, z+depth), new Vector3f(x+width, y+height, z),
+			new Vector3f(x+width, y, z), new Vector3f(x+width, y, z+depth), 
+			colour, sideTex);
+		
+		// Bottom
+		subMesh.addQuad(new Vector3f(x, y, z), new Vector3f(x, y, z+depth),
+						new Vector3f(x+width, y, z+depth), new Vector3f(x+width, y, z), 
+						colour, bottomTex);
+	}
+
 }

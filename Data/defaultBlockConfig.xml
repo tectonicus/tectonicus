@@ -438,6 +438,8 @@
 	
 	<Button id="143" name="Wooden Button" texture="wood.png" />
 	
+	<Anvil id="145" name="Anvil" base="anvil_base.png" top0="anvil_top.png" top1="anvil_top_damaged_1.png" top2="anvil_top_damaged_2.png" />
+	
 	<Chest id="146" name="Trapped Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
 										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
 										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
