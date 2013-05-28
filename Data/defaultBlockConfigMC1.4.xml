@@ -394,6 +394,8 @@
 	
 	<Solid id="137" name="Command Block" texture="terrain[8, 11]" />
 	
+	<Beacon id="138" name="Beacon" glass="terrain[1, 3]" beacon="terrain[9, 2]" obsidian="terrain[5, 2]"/>
+	
 	<Wall id="139" name="Cobblestone Wall" texture="terrain[0, 1]" />
 	
 	<Wall id="139:1" name="Mossy Cobblestone Wall" texture="terrain[4, 2]" />

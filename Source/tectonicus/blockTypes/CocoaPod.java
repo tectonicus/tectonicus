@@ -93,7 +93,6 @@ public class CocoaPod implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{		
 		SubMesh podMesh = new SubMesh();
-		//SubMesh stemMesh = new SubMesh();
 		
 		SubTexture side = null;
 		SubTexture topBottom = null;
@@ -230,7 +229,7 @@ public class CocoaPod implements BlockType
 													colour, stem);
 		}
 		
-		podMesh.pushTo(geometry.getMesh(side.texture, Geometry.MeshType.Solid), x, y, z, Rotation.None, 0, Rotation.None, 0);
+		podMesh.pushTo(geometry.getMesh(side.texture, Geometry.MeshType.Solid), x, y, z, Rotation.None, 0);
 	}
 
 }

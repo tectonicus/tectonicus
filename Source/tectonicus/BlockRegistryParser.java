@@ -51,6 +51,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
 import tectonicus.blockTypes.BrewingStand;
 import tectonicus.blockTypes.Button;
@@ -691,13 +692,21 @@ public class BlockRegistryParser
 			blockType = new FlowerPot(name, texture, dirt, plant);
 		}
 		else if (nodeName.equals("cocoapod"))
-			{
-				SubTexture smallTexture = parseTexture(element, "small", null);
-			 	SubTexture mediumTexture = parseTexture(element, "medium", null);
-			 	SubTexture largeTexture = parseTexture(element, "large", null);
-			 	
-			 	blockType = new CocoaPod(name, smallTexture, mediumTexture, largeTexture);
-		 	}
+		{
+			SubTexture smallTexture = parseTexture(element, "small", null);
+		 	SubTexture mediumTexture = parseTexture(element, "medium", null);
+		 	SubTexture largeTexture = parseTexture(element, "large", null);
+		 	
+		 	blockType = new CocoaPod(name, smallTexture, mediumTexture, largeTexture);
+		}
+		else if (nodeName.equals("beacon"))
+		{
+			SubTexture glass = parseTexture(element, "glass", null);
+		 	SubTexture beacon = parseTexture(element, "beacon", null);
+		 	SubTexture obsidian = parseTexture(element, "obsidian", null);
+		 	
+		 	blockType = new Beacon(name, glass, beacon, obsidian);
+		}
 		else
 		{
 			System.err.println("Unrecognised block type: "+nodeName);
