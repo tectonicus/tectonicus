@@ -107,37 +107,39 @@ public class Crops implements BlockType
 		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
-		// NE corner to SW corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
-								new Vector3f(x+1,	y+1,	z+1),
-								new Vector3f(x+1,	y,		z+1),
-								new Vector3f(x,		y,		z),
-								colour,
-								texture);
-	
-		// SE corner to NW corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
-								new Vector3f(x,		y+1,	z+1),
-								new Vector3f(x,		y,		z+1),
-								new Vector3f(x+1,	y,		z),
-								colour,
-								texture); 
-	
-		// SW corner to NE corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z+1),
-								new Vector3f(x,		y+1,	z),
-								new Vector3f(x,		y,		z),
-								new Vector3f(x+1,	y,		z+1),
-								colour,
-								texture);
+		final float offset = 4.0f / 16.0f;
 		
-		// NW corner to SE corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
-								new Vector3f(x+1,	y+1,	z),
-								new Vector3f(x+1,	y,		z),
-								new Vector3f(x,		y,		z+1),
-								colour,
-								texture); 
+		// West edge	
+		MeshUtil.addDoubleSidedQuad(mesh,	new Vector3f(x+offset,	y+1,	z),
+											new Vector3f(x+offset,	y+1,	z+1),
+											new Vector3f(x+offset,	y,		z+1),
+											new Vector3f(x+offset,	y,		z),
+											colour,
+											texture);
+		
+		// East edge		
+		MeshUtil.addDoubleSidedQuad(mesh,	new Vector3f(x+1-offset,	y+1,	z),
+											new Vector3f(x+1-offset,	y+1,	z+1),
+											new Vector3f(x+1-offset,	y,		z+1),
+											new Vector3f(x+1-offset,	y,		z),
+											colour,
+											texture);
+		
+		// South edge		
+		MeshUtil.addDoubleSidedQuad(mesh,	new Vector3f(x,			y+1,	z+offset),
+											new Vector3f(x+1,		y+1,	z+offset),
+											new Vector3f(x+1,		y,		z+offset),
+											new Vector3f(x,			y,		z+offset),
+											colour,
+											texture);
+		
+		// North edge
+		MeshUtil.addDoubleSidedQuad(mesh,	new Vector3f(x,			y+1,	z+1-offset),
+											new Vector3f(x+1,		y+1,	z+1-offset),
+											new Vector3f(x+1,		y,		z+1-offset),
+											new Vector3f(x,			y,		z+1-offset),
+											colour,
+											texture);
 	}
 	
 }
