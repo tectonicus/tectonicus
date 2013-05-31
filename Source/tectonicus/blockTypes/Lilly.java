@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -107,12 +107,51 @@ public class Lilly implements BlockType
 		
 		final float lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
 		
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z),
-								new Vector3f(x+1,	y,		z),
-								new Vector3f(x+1,	y,		z+1),
-								new Vector3f(x,		y,		z+1),
-								new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-								texture);
+		int wx = (int)rawChunk.getChunkCoord().x * 16 + x;
+		int wz = (int)rawChunk.getChunkCoord().z * 16 + z;
+		
+		/* The three lines below, to figure out lilypad rotation, were taken straight from this blog here: http://llbit.se/?p=1537 */
+		long pr = (wx * 3129871L) ^ (wz * 116129781L) ^ ((long) y);
+		pr = pr * pr * 42317861L + pr * 11L;
+		int rotation = 3 & (int)(pr >> 16);
+		
+		if(rotation == 0)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector3f(x,		y,		z),
+									new Vector3f(x+1,	y,		z),
+									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+									texture);
+		}
+		else if(rotation == 1)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z),
+									new Vector3f(x+1,	y,		z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector3f(x,		y,		z),
+									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+									texture);
+		}
+		else if(rotation == 2)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z),
+									new Vector3f(x+1,	y,		z),
+									new Vector3f(x+1,	y,		z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+									texture);
+		}
+		else if(rotation == 3)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z+1),
+									new Vector3f(x,		y,		z),
+									new Vector3f(x+1,	y,		z),
+									new Vector3f(x+1,	y,		z+1),
+									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+									texture);
+		}
+		
 	}
 	
 	
