@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -96,6 +96,13 @@ public class SolidBlockType implements BlockType
 		this.colour = colour;
 		if (colour == null)
 			this.colour = new Colour4f(1, 1, 1, 1);
+		
+		if(name.equals("Lava") && sideTexture.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / 320.0f;
+			this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+texel*16);
+			this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+texel*16);
+		}
 	}
 	
 	@Override
