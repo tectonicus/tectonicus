@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -54,16 +54,11 @@ public class Snow implements BlockType
 	private final String name;
 	
 	private SubTexture texture;
-	private SubTexture sideTexture;
 	
 	public Snow(String name, SubTexture texture)
 	{
 		this.name = name;
 		this.texture = texture;
-		
-		final float texelSize = 1.0f / 16.0f / 16.0f;
-		final float offset = texelSize * 14;
-		this.sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0 + offset, texture.u1, texture.v1);
 	}
 
 	@Override
@@ -93,8 +88,7 @@ public class Snow implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Mesh topMesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
-		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
+		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		final float northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
@@ -102,72 +96,85 @@ public class Snow implements BlockType
 		final float eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
 		final float westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
 		
-		final float height = 2.0f / 16.0f;
+		final int data = rawChunk.getBlockData(x, y, z);
 		
-	//	final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
-	//	BlockType above = registry.find(aboveId);
-		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-		if (!above.isSolid())
-		{
-			MeshUtil.addQuad(topMesh,	new Vector3f(x,		y+height,	z),
-										new Vector3f(x+1,	y+height,	z),
-										new Vector3f(x+1,	y+height,	z+1),
-										new Vector3f(x,		y+height,	z+1),
-										new Vector4f(topLight, topLight, topLight, 1.0f),
-										texture); 
-		}
+		final float height;
+		if(data == 0)
+			height = 2.0f / 16.0f;
+		else if(data == 1)
+			height = 4.0f / 16.0f;
+		else if(data == 2)
+			height = 6.0f / 16.0f;
+		else if(data == 3)
+			height = 8.0f / 16.0f;
+		else if(data == 4)
+			height = 10.0f / 16.0f;
+		else if(data == 5)
+			height = 12.0f / 16.0f;
+		else if(data == 6)
+			height = 14.0f / 16.0f;
+		else if(data == 7)
+			height = 1;
+		else
+			height = 0;
 		
-	//	final int northId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
-	//	BlockType north = registry.find(northId);
+		final float texHeight;
+		if(texture.texturePackVersion == "1.4")
+			texHeight = (1-height) / 16;
+		else
+			texHeight = 1-height;
+		
+		SubTexture sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texHeight, texture.u1, texture.v1);
+		
+		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+height,	z),
+								new Vector3f(x+1,	y+height,	z),
+								new Vector3f(x+1,	y+height,	z+1),
+								new Vector3f(x,		y+height,	z+1),
+								new Vector4f(topLight, topLight, topLight, 1.0f),
+								texture);
+		
 		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		if (!north.isSolid())
 		{
-			MeshUtil.addQuad(sideMesh,	new Vector3f(x,		y+height,	z),
-										new Vector3f(x,		y+height,	z+1),
-										new Vector3f(x,		y,		z+1),
-										new Vector3f(x,		y,		z),
-										new Vector4f(northLight, northLight, northLight, 1.0f),
-										sideTexture); 
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+height,	z),
+									new Vector3f(x,		y+height,	z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector3f(x,		y,		z),
+									new Vector4f(northLight, northLight, northLight, 1.0f),
+									sideTexture); 
 		}
 		
-	//	final int southId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
-	//	BlockType south = registry.find(southId);
 		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		if (!south.isSolid())
 		{
-			MeshUtil.addQuad(sideMesh,	new Vector3f(x+1,		y+height,		z+1),
-										new Vector3f(x+1,		y+height,	z),
-										new Vector3f(x+1,		y,	z),
-										new Vector3f(x+1,		y,	z+1),
-										new Vector4f(southLight, southLight, southLight, 1.0f),
-										sideTexture); 
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+height,		z+1),
+									new Vector3f(x+1,		y+height,	z),
+									new Vector3f(x+1,		y,	z),
+									new Vector3f(x+1,		y,	z+1),
+									new Vector4f(southLight, southLight, southLight, 1.0f),
+									sideTexture);
 		}
 		
-	//	final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
-	//	BlockType east = registry.find(eastId);
 		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 		if (!east.isSolid())
 		{
-			MeshUtil.addQuad(sideMesh,	new Vector3f(x+1,	y+height,	z),
-										new Vector3f(x,		y+height,	z),
-										new Vector3f(x,		y,		z),
-										new Vector3f(x+1,	y,		z),
-										new Vector4f(eastLight, eastLight, eastLight, 1.0f),
-										sideTexture); 
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+height,	z),
+									new Vector3f(x,		y+height,	z),
+									new Vector3f(x,		y,		z),
+									new Vector3f(x+1,	y,		z),
+									new Vector4f(eastLight, eastLight, eastLight, 1.0f),
+									sideTexture); 
 		}
 		
-	//	final int westId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
-	//	BlockType west = registry.find(westId);
 		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 		if (!west.isSolid())
 		{
-			MeshUtil.addQuad(sideMesh,	new Vector3f(x,		y+height,	z+1),
-										new Vector3f(x+1,	y+height,	z+1),
-										new Vector3f(x+1,	y,		z+1),
-										new Vector3f(x,		y,		z+1),
-										new Vector4f(westLight, westLight, westLight, 1.0f),
-										sideTexture); 
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+height,	z+1),
+									new Vector3f(x+1,	y+height,	z+1),
+									new Vector3f(x+1,	y,		z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector4f(westLight, westLight, westLight, 1.0f),
+									sideTexture); 
 		}
 	}
-	
 }
