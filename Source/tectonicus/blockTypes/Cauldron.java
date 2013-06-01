@@ -65,7 +65,10 @@ public class Cauldron implements BlockType
 		this.side = side;
 		this.bottom = bottom;
 		
-		this.water = water;
+		if (water.texturePackVersion == "1.4")
+			this.water = water;
+		else
+			this.water = new SubTexture(water.texture, water.u0, water.v0, water.u1, water.v0+16.0f/512.0f);
 	}
 	
 	@Override
