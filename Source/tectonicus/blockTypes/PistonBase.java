@@ -185,7 +185,7 @@ public class PistonBase implements BlockType
 		}
 		else if (direction == 2)
 		{
-			// east
+			// north
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
 			
@@ -194,7 +194,7 @@ public class PistonBase implements BlockType
 		}
 		else if (direction == 3)
 		{
-			// west
+			// south
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
 			
@@ -203,13 +203,13 @@ public class PistonBase implements BlockType
 		}
 		else if (direction == 4)
 		{
-			// north
+			// west
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
 		}
 		else if (direction == 5)
 		{
-			// south
+			// east
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
 			

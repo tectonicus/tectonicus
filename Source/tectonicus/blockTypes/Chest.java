@@ -59,7 +59,7 @@ public class Chest implements BlockType
 	
 	private final SubTexture smallTop, smallTopSide, smallTopFront, smallBottom, smallBaseSide, smallBaseFront, smallLock;
 	private final SubTexture largeTopLeft, largeTopRight, largeTopSide, largeTopFrontLeft, largeTopFrontRight, largeTopBackLeft, largeTopBackRight,
-							 largeBottomLeft, largeBottomRight, largeBaseSide, largeBaseFrontLeft, largeBaseFrontRight, largeBaseBackLeft, largeBaseBackRight, largeLock;
+							 largeBottomLeft, largeBottomRight, largeBaseSide, largeBaseFrontLeft, largeBaseFrontRight, largeBaseBackLeft, largeBaseBackRight, largeLock, largeLock2;
 
 	public Chest(String name, SubTexture small, SubTexture large, SubTexture ender,
 							SubTexture trappedSmall, SubTexture trappedLarge,
@@ -94,24 +94,25 @@ public class Chest implements BlockType
 		smallBottom = new SubTexture(smallChest.texture, smallChest.u0+texel*28, smallChest.v0+texel*19, smallChest.u0+texel*42, smallChest.v0+texel*33);
 		smallBaseSide = new SubTexture(smallChest.texture, smallChest.u0, smallChest.v0+texel*34, smallChest.u0+texel*14, smallChest.v0+texel*43);
 		smallBaseFront = new SubTexture(smallChest.texture, smallChest.u0+texel*14, smallChest.v0+texel*34, smallChest.u0+texel*28, smallChest.v0+texel*43);
-		smallLock = new SubTexture(smallChest.texture, smallChest.u0+texel*2, smallChest.v0, smallChest.u0+texel*3, smallChest.v0+texel*4);
+		smallLock = new SubTexture(smallChest.texture, smallChest.u0+texel*3, smallChest.v0, smallChest.u0+texel*5, smallChest.v0+texel*4);
 		
 		//Large Chest Textures
 		largeTopLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*14, largeChest.v0, largeChest.u0+wideTexel*29, largeChest.v0+texel*14);
 		largeTopRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*30, largeChest.v0, largeChest.u0+wideTexel*44, largeChest.v0+texel*14);
 		largeTopSide = new SubTexture(largeChest.texture, largeChest.u0, largeChest.v0+texel*14, largeChest.u0+wideTexel*14, largeChest.v0+texel*19);
 		largeTopFrontLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*14, largeChest.v0+texel*14, largeChest.u0+wideTexel*29, largeChest.v0+texel*19);
-		largeTopFrontRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*30, largeChest.v0+texel*14, largeChest.u0+wideTexel*44, largeChest.v0+texel*19);
+		largeTopFrontRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*29, largeChest.v0+texel*14, largeChest.u0+wideTexel*44, largeChest.v0+texel*19);
 		largeTopBackRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*57, largeChest.v0+texel*14, largeChest.u0+wideTexel*73, largeChest.v0+texel*19);
 		largeTopBackLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*73, largeChest.v0+texel*14, largeChest.u0+wideTexel*88, largeChest.v0+texel*19);
 		largeBottomLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*45, largeChest.v0+texel*20, largeChest.u0+wideTexel*60, largeChest.v0+texel*34);
 		largeBottomRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*61, largeChest.v0+texel*20, largeChest.u0+wideTexel*74, largeChest.v0+texel*34);
 		largeBaseSide = new SubTexture(largeChest.texture, largeChest.u0, largeChest.v0+texel*34, largeChest.u0+wideTexel*14, largeChest.v0+texel*43);
 		largeBaseFrontLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*14, largeChest.v0+texel*34, largeChest.u0+wideTexel*29, largeChest.v0+texel*43);
-		largeBaseFrontRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*30, largeChest.v0+texel*34, largeChest.u0+wideTexel*44, largeChest.v0+texel*43);
+		largeBaseFrontRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*29, largeChest.v0+texel*34, largeChest.u0+wideTexel*44, largeChest.v0+texel*43);
 		largeBaseBackRight = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*58, largeChest.v0+texel*34, largeChest.u0+wideTexel*73, largeChest.v0+texel*43);
 		largeBaseBackLeft = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*73, largeChest.v0+texel*34, largeChest.u0+wideTexel*88, largeChest.v0+texel*43);
-		largeLock = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*2, largeChest.v0, largeChest.u0+wideTexel*3, largeChest.v0+texel*4);
+		largeLock = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*3, largeChest.v0, largeChest.u0+wideTexel*4, largeChest.v0+texel*4);
+		largeLock2 = new SubTexture(largeChest.texture, largeChest.u0+wideTexel*4, largeChest.v0, largeChest.u0+wideTexel*5, largeChest.v0+texel*4);
 	}
 
 	@Override
@@ -226,7 +227,7 @@ public class Chest implements BlockType
 				/*largeLeftMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
 								new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);*/
 				
-				SubMesh.addBlock(largeMesh, 1-offSet, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
+				SubMesh.addBlockSimple(largeMesh, 1-offSet, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
 			}
 			else if ((data == 2 && chestEast) || (data == 3 && chestWest) || (data == 4 && chestNorth) || (data == 5 && chestSouth))
 			{
@@ -268,7 +269,7 @@ public class Chest implements BlockType
 				largeMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
 								new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);
 				
-				SubMesh.addBlock(largeMesh, 0, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
+				SubMesh.addBlockSimple(largeMesh, 0, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock2, largeLock2, largeLock2);
 			}
 		}
 		else
@@ -313,7 +314,7 @@ public class Chest implements BlockType
 			smallMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
 							new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, smallBaseSide);
 			
-			SubMesh.addBlock(smallMesh, offSet*7, offSet*8, offSet*15, offSet*2, offSet*4, offSet, colour, smallLock, smallLock, smallLock);
+			SubMesh.addBlockSimple(smallMesh, offSet*7, offSet*8, offSet*15, offSet*2, offSet*4, offSet, colour, smallLock, smallLock, smallLock);
 		}
 
 		

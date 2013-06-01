@@ -175,7 +175,7 @@ public class CocoaPod implements BlockType
 				zpos = 7;
 			}
 			// north			
-			SubMesh.addBlock(podMesh, offSet*xpos, offSet*ypos, offSet*zpos, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
+			SubMesh.addBlockSimple(podMesh, offSet*xpos, offSet*ypos, offSet*zpos, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
 			
 			MeshUtil.addDoubleSidedQuad(stemMesh,	new Vector3f(x+offSet*8,	y+1,	z+offSet*12),
 													new Vector3f(x+offSet*8,	y+1,	z+1),
@@ -186,7 +186,7 @@ public class CocoaPod implements BlockType
 		else if (direction == 1)
 		{
 			// east
-			SubMesh.addBlock(podMesh, offSet, offSet*ypos, offSet*zpos, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
+			SubMesh.addBlockSimple(podMesh, offSet, offSet*ypos, offSet*zpos, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
 			
 			MeshUtil.addDoubleSidedQuad(stemMesh,	new Vector3f(x+offSet*4,		y+1,	z+offSet*8),
 													new Vector3f(x,			y+1,	z+offSet*8),
@@ -197,7 +197,7 @@ public class CocoaPod implements BlockType
 		else if (direction == 2)
 		{
 			// south
-			SubMesh.addBlock(podMesh, offSet*xpos, offSet*ypos, offSet, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
+			SubMesh.addBlockSimple(podMesh, offSet*xpos, offSet*ypos, offSet, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
 			
 			MeshUtil.addDoubleSidedQuad(stemMesh,	new Vector3f(x+offSet*8,	y+1,	z+offSet*4),
 													new Vector3f(x+offSet*8,	y+1,	z),
@@ -220,7 +220,7 @@ public class CocoaPod implements BlockType
 				xpos = 7;
 			}
 			// west
-			SubMesh.addBlock(podMesh, offSet*xpos, offSet*ypos, offSet*zpos, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
+			SubMesh.addBlockSimple(podMesh, offSet*xpos, offSet*ypos, offSet*zpos, offSet*width, offSet*height, offSet*width, colour, side, topBottom, topBottom);
 			
 			MeshUtil.addDoubleSidedQuad(stemMesh,	new Vector3f(x+offSet*12,	y+1,	z+offSet*8),
 													new Vector3f(x+1,		y+1,	z+offSet*8),

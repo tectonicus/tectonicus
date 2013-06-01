@@ -103,7 +103,7 @@ public class DaylightSensor implements BlockType
 		SubMesh topMesh = new SubMesh();
 		SubMesh bottomMesh = new SubMesh();
 
-		SubMesh.addBlock(bottomMesh, 0, 0, 0, 1, offSet*6, 1, colour, side, bottom);
+		SubMesh.addBlockSimple(bottomMesh, 0, 0, 0, 1, offSet*6, 1, colour, side, null, bottom);
 	
 		// Top
 		topMesh.addQuad(new Vector3f(1, offSet*6, 0),

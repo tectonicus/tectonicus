@@ -138,7 +138,7 @@ public class Anvil implements BlockType
 			//East-West 
 			SubMesh.addBlock(baseMesh, offSet*3, offSet*4, offSet*4, offSet*10, offSet, offSet*8, colour, base, base, base);
 			SubMesh.addBlock(baseMesh, offSet*4, offSet*5, offSet*6, offSet*8, offSet*5, offSet*4, colour, base, base, base);
-			SubMesh.addBlock(baseMesh, 0, offSet*10, offSet*3, offSet*16, offSet*6, offSet*10, colour, base, base);
+			SubMesh.addBlock(baseMesh, 0, offSet*10, offSet*3, offSet*16, offSet*6, offSet*10, colour, base, null, base);
 			
 			BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 			if (!above.isSolid())
@@ -156,7 +156,7 @@ public class Anvil implements BlockType
 			//North-South
 			SubMesh.addBlock(baseMesh, offSet*4, offSet*5, offSet*3, offSet*8, offSet, offSet*10, colour, base, base, base);
 			SubMesh.addBlock(baseMesh, offSet*6, offSet*6, offSet*4, offSet*4, offSet*5, offSet*8, colour, base, base, base);
-			SubMesh.addBlock(baseMesh, offSet*3, offSet*10, 0, offSet*10, offSet*6, offSet*16, colour, base, base);
+			SubMesh.addBlock(baseMesh, offSet*3, offSet*10, 0, offSet*10, offSet*6, offSet*16, colour, base, null, base);
 			
 			BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 			if (!above.isSolid())

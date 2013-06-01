@@ -239,7 +239,7 @@
 	
 	<Sign id="68" name="Wall Sign" texture="terrain[4, 0]" />
 
-	<!-- 69 is lever -->
+	<Lever id="69" name="Lever" lever="terrain[0, 6]" base="terrain[0, 1]" />
 	
 	<PressurePlate id="70" name="Stone Pressure Plate" texture="terrain[1, 0]" />
 

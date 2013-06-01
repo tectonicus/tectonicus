@@ -247,7 +247,7 @@
 	
 	<Sign id="68" name="Wall Sign" texture="wood.png" />
 
-	<!-- 69 is lever -->
+	<Lever id="69" name="Lever" lever="lever.png" base="stonebrick.png" />
 	
 	<PressurePlate id="70" name="Stone Pressure Plate" texture="stone.png" />
 
@@ -447,6 +447,10 @@
 	<PressurePlate id="147" name="Gold Pressure Plate" texture="blockGold.png" />
 	
 	<PressurePlate id="148" name="Iron Pressure Plate" texture="blockIron.png" />
+	
+	<RedstoneRepeater id="149" name="Redstone Comparator" base="comparator.png" side="stoneslab_top.png" torch="redtorch.png" />
+	
+	<RedstoneRepeater id="150" name="Redstone Comparator Lit" base="comparator_lit.png" side="stoneslab_top.png" torch="redtorch_lit.png" />
 	
 	<DaylightSensor id="151" name="Daylight Sensor" top="daylightDetector_top.png" bottom="daylightDetector_side.png" />
 	

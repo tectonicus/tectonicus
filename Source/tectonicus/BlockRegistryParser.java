@@ -84,6 +84,7 @@ import tectonicus.blockTypes.Ice;
 import tectonicus.blockTypes.JackOLantern;
 import tectonicus.blockTypes.Ladder;
 import tectonicus.blockTypes.Leaves;
+import tectonicus.blockTypes.Lever;
 import tectonicus.blockTypes.Lilly;
 import tectonicus.blockTypes.Log;
 import tectonicus.blockTypes.MinecartTracks;
@@ -724,6 +725,13 @@ public class BlockRegistryParser
 		 	SubTexture bottom = parseTexture(element, "bottom", null);
 		 	
 		 	blockType = new DaylightSensor(name, top, bottom);
+		}
+		else if (nodeName.equals("lever"))
+		{
+			SubTexture lever = parseTexture(element, "lever", null);
+		 	SubTexture base = parseTexture(element, "base", null);
+		 	
+		 	blockType = new Lever(name, lever, base);
 		}
 		else
 		{

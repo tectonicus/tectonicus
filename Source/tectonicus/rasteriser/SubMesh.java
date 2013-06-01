@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -221,61 +221,94 @@ public class SubMesh
 								final float width, final float height, final float depth,
 								Vector4f colour, SubTexture sideTex, SubTexture topTex, SubTexture bottomTex)
 	{
-		// North
-		subMesh.addQuad( new Vector3f(x, y+height, z), new Vector3f(x, y+height, z+depth),
-						new Vector3f(x, y, z+depth),  new Vector3f(x, y, z), 
-						colour, sideTex);
+		final float uRange = sideTex.u1 - sideTex.u0;
+		final float vRange = sideTex.v1 - sideTex.v0;
 		
-		// East
-		subMesh.addQuad( new Vector3f(x+width, y+height, z), new Vector3f(x, y+height, z),
-						new Vector3f(x, y, z),  new Vector3f(x+width, y, z), 
-						colour, sideTex);
 		
 		// West
-		subMesh.addQuad( new Vector3f(x, y+height, z+depth), new Vector3f(x+width, y+height, z+depth),
-						new Vector3f(x+width, y, z+depth),  new Vector3f(x, y, z+depth), 
-						colour, sideTex);
+		subMesh.addQuad( new Vector3f(x, y+height, z), new Vector3f(x, y+height, z+depth),
+						new Vector3f(x, y, z+depth),  new Vector3f(x, y, z), 
+						colour, new Vector2f(sideTex.u0 + uRange * z,			sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u0 + uRange * (z + depth),		sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u0 + uRange * (z + depth),		sideTex.v1 - vRange * y),
+	 					new Vector2f(sideTex.u0 + uRange * z,			sideTex.v1 - vRange * y));
+		
+		// North
+		subMesh.addQuad( new Vector3f(x+width, y+height, z), new Vector3f(x, y+height, z),
+						new Vector3f(x, y, z),  new Vector3f(x+width, y, z), 
+						colour, new Vector2f(sideTex.u1 - uRange * (x + width),		sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u1 - uRange * x,			sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u1 - uRange * x,			sideTex.v1 - vRange * y),
+	 					new Vector2f(sideTex.u1 - uRange * (x + width),		sideTex.v1 - vRange * y));
 		
 		// South
+		subMesh.addQuad( new Vector3f(x, y+height, z+depth), new Vector3f(x+width, y+height, z+depth),
+						new Vector3f(x+width, y, z+depth),  new Vector3f(x, y, z+depth), 
+						colour, new Vector2f(sideTex.u1 - uRange * (x + width),		sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u1 - uRange * x,			sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u1 - uRange * x,			sideTex.v1 - vRange * y),
+	 					new Vector2f(sideTex.u1 - uRange * (x + width),		sideTex.v1 - vRange * y));
+		
+		// East
 		subMesh.addQuad(new Vector3f(x+width, y+height, z+depth), new Vector3f(x+width, y+height, z),
 						new Vector3f(x+width, y, z), new Vector3f(x+width, y, z+depth), 
-						colour, sideTex);
+						colour, new Vector2f(sideTex.u0 + uRange * z,	sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u0 + uRange * (z + depth),		sideTex.v1 - vRange * (y + height)),
+	 					new Vector2f(sideTex.u0 + uRange * (z + depth),		sideTex.v1 - vRange * y),
+	 					new Vector2f(sideTex.u0 + uRange * z,			sideTex.v1 - vRange * y));
 		
-		// Top
-		subMesh.addQuad(new Vector3f(x, y+height, z), new Vector3f(x+width, y+height, z),
-						new Vector3f(x+width, y+height, z+depth), new Vector3f(x, y+height, z+depth), 
-						colour, topTex);
+		if(topTex != null)
+		{
+			// Top
+			subMesh.addQuad(new Vector3f(x, y+height, z), new Vector3f(x+width, y+height, z),
+							new Vector3f(x+width, y+height, z+depth), new Vector3f(x, y+height, z+depth), 
+							colour, new Vector2f(topTex.u0 + uRange * x,		topTex.v0 + vRange * z),
+							new Vector2f(topTex.u0 + uRange * (x + width),	topTex.v0 + vRange * z),
+							new Vector2f(topTex.u0 + uRange * (x + width),	topTex.v0 + vRange * (z + depth)),
+							new Vector2f(topTex.u0 + uRange * x,		topTex.v0 + vRange * (z + depth)));
+		}
 		
 		// Bottom
 		subMesh.addQuad(new Vector3f(x, y, z), new Vector3f(x, y, z+depth),
-									new Vector3f(x+width, y, z+depth), new Vector3f(x+width, y, z), 
-									colour, bottomTex);
+						new Vector3f(x+width, y, z+depth), new Vector3f(x+width, y, z), 
+						colour, new Vector2f(bottomTex.u0 + uRange * x,		bottomTex.v0 + vRange * z),
+						new Vector2f(bottomTex.u0 + uRange * (x + width),	bottomTex.v0 + vRange * z),
+						new Vector2f(bottomTex.u0 + uRange * (x + width),	bottomTex.v0 + vRange * (z + depth)),
+						new Vector2f(bottomTex.u0 + uRange * x,		bottomTex.v0 + vRange * (z + depth)));
 	}
 	
 	
-	public static void addBlock(SubMesh subMesh, final float x, final float y, final float z,
+	public static void addBlockSimple(SubMesh subMesh, final float x, final float y, final float z,
 			final float width, final float height, final float depth,
-			Vector4f colour, SubTexture sideTex, SubTexture bottomTex)
+			Vector4f colour, SubTexture sideTex, SubTexture topTex, SubTexture bottomTex)
 	{
-		// North
+		// West
 		subMesh.addQuad( new Vector3f(x, y+height, z), new Vector3f(x, y+height, z+depth),
 			new Vector3f(x, y, z+depth),  new Vector3f(x, y, z), 
 			colour, sideTex);
 		
-		// East
+		// North
 		subMesh.addQuad( new Vector3f(x+width, y+height, z), new Vector3f(x, y+height, z),
 			new Vector3f(x, y, z),  new Vector3f(x+width, y, z), 
 			colour, sideTex);
 		
-		// West
+		// South
 		subMesh.addQuad( new Vector3f(x, y+height, z+depth), new Vector3f(x+width, y+height, z+depth),
 			new Vector3f(x+width, y, z+depth),  new Vector3f(x, y, z+depth), 
 			colour, sideTex);
 		
-		// South
+		// East
 		subMesh.addQuad(new Vector3f(x+width, y+height, z+depth), new Vector3f(x+width, y+height, z),
 			new Vector3f(x+width, y, z), new Vector3f(x+width, y, z+depth), 
 			colour, sideTex);
+		
+		if(topTex != null)
+		{
+			// Top
+			subMesh.addQuad(new Vector3f(x, y+height, z), new Vector3f(x+width, y+height, z),
+							new Vector3f(x+width, y+height, z+depth), new Vector3f(x, y+height, z+depth), 
+							colour, topTex);
+		}
 		
 		// Bottom
 		subMesh.addQuad(new Vector3f(x, y, z), new Vector3f(x, y, z+depth),
