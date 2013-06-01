@@ -44,9 +44,9 @@
 	
 	<Solid id="7" name="Bedrock" texture="bedrock.png" />
 	
-	<Water id="8" name="Water" texture="water.png" /><!-- terrain[15, 12] -->  <!-- use the misc/water.png to avoid "patch noob" messages with HD texture packs? -->
+	<Water id="8" name="Water" texture="water.png" />
 	
-	<Water id="9" name="Water" texture="water.png" /> <!--  misc/water.png-->
+	<Water id="9" name="Water" texture="water.png" />
 	
 	<Solid id="10" name="Lava" texture="lava.png" />	
 	
@@ -457,6 +457,8 @@
 	<Solid id="152" name="Redstone Block" texture="blockRedstone.png" />
 	
 	<Solid id="153" name="Nether Quartz Ore" texture="netherquartz.png" />
+	
+	<Hopper id="154" name="Hopper" top="hopper_top.png" side="hopper.png" inside="hopper_inside.png" />
 	
 	<Solid id="155:0" name="Quartz Block" side="quartzblock_side.png" top="quartzblock_top.png" bottom="quartzblock_bottom.png" />
 	

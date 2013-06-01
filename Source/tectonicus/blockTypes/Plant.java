@@ -105,32 +105,32 @@ public class Plant implements BlockType
 	{
 		
 		// NE corner to SW corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
-								new Vector3f(x+1,	y+1,	z+1),
+		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1+heightOffGround,	z),
+								new Vector3f(x+1,	y+1+heightOffGround,	z+1),
 								new Vector3f(x+1,	y+heightOffGround,		z+1),
 								new Vector3f(x,		y+heightOffGround,		z),
 								colour,
 								texture);
 	
 		// SE corner to NW corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
-								new Vector3f(x,		y+1,	z+1),
+		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1+heightOffGround,	z),
+								new Vector3f(x,		y+1+heightOffGround,	z+1),
 								new Vector3f(x,		y+heightOffGround,		z+1),
 								new Vector3f(x+1,	y+heightOffGround,		z),
 								colour,
 								texture); 
 	
 		// SW corner to NE corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z+1),
-								new Vector3f(x,		y+1,	z),
+		MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1+heightOffGround,	z+1),
+								new Vector3f(x,		y+1+heightOffGround,	z),
 								new Vector3f(x,		y+heightOffGround,		z),
 								new Vector3f(x+1,	y+heightOffGround,		z+1),
 								colour,
 								texture);
 		
 		// NW corner to SE corner
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
-								new Vector3f(x+1,	y+1,	z),
+		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1+heightOffGround,	z+1),
+								new Vector3f(x+1,	y+1+heightOffGround,	z),
 								new Vector3f(x+1,	y+heightOffGround,		z),
 								new Vector3f(x,		y+heightOffGround,		z+1),
 								colour,

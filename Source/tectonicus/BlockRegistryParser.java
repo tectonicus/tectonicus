@@ -79,6 +79,7 @@ import tectonicus.blockTypes.Furnace;
 import tectonicus.blockTypes.Glass;
 import tectonicus.blockTypes.GlassPane;
 import tectonicus.blockTypes.Grass;
+import tectonicus.blockTypes.Hopper;
 import tectonicus.blockTypes.HugeMushroom;
 import tectonicus.blockTypes.Ice;
 import tectonicus.blockTypes.JackOLantern;
@@ -732,6 +733,14 @@ public class BlockRegistryParser
 		 	SubTexture base = parseTexture(element, "base", null);
 		 	
 		 	blockType = new Lever(name, lever, base);
+		}
+		else if (nodeName.equals("hopper"))
+		{
+			SubTexture top = parseTexture(element, "top", null);
+		 	SubTexture side = parseTexture(element, "side", null);
+		 	SubTexture inside = parseTexture(element, "inside", null);
+		 	
+		 	blockType = new Hopper(name, top, side, inside);
 		}
 		else
 		{
