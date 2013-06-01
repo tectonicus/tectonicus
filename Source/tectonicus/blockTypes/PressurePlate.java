@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -59,10 +59,15 @@ public class PressurePlate implements BlockType
 	public PressurePlate(String name, SubTexture texture)
 	{
 		this.name = name;
-		this.texture = texture;
 		
-		final float vSize = 1.0f / 16.0f / 16.0f;
-		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+vSize);
+		final float texel;
+		if (texture.texturePackVersion == "1.4")
+			texel = 1.0f / 16.0f / 16.0f;
+		else
+			texel = 1.0f / 16.0f;
+		
+		this.texture = new SubTexture(texture.texture, texture.u0+texel, texture.v0+texel, texture.u1-texel, texture.v1-texel);
+		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+texel);
 	}
 	
 	@Override
