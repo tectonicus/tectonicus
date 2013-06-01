@@ -59,13 +59,10 @@ public class Water implements BlockType
 	{
 		this.name = name;
 		
-		final float texel;
 		if (subTexture.texturePackVersion == "1.4")
-			texel = 1.0f / 16.0f / 16.0f;
+			this.subTexture = subTexture;
 		else
-			texel = 1.0f / 16.0f;
-		
-		this.subTexture = new SubTexture(subTexture.texture, subTexture.u0, subTexture.v0, subTexture.u0+texel*16, subTexture.v0+texel*16);
+			this.subTexture = new SubTexture(subTexture.texture, subTexture.u0, subTexture.v0, subTexture.u1, subTexture.v0+16.0f/512.0f);
 	}
 	
 	@Override
@@ -112,7 +109,7 @@ public class Water implements BlockType
 		BlockType aboveSouth = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z-1);
 		BlockType aboveEast = world.getBlockType(rawChunk.getChunkCoord(), x+1, y+1, z);
 		BlockType aboveWest = world.getBlockType(rawChunk.getChunkCoord(), x-1, y+1, z);
-		if(!above.isWater() && !aboveNorth.isWater() && !aboveSouth.isWater() && !aboveEast.isWater() && !aboveWest.isWater())  // Only water blocks that don't have another water block above them should be lower
+		if(!above.getName().equals("Ice") && !above.isWater() && !aboveNorth.isWater() && !aboveSouth.isWater() && !aboveEast.isWater() && !aboveWest.isWater())  // Only water blocks that don't have another water block above them should be lower
 		{
 			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 			if (!north.isWater())
