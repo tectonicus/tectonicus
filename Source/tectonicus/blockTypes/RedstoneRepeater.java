@@ -57,13 +57,14 @@ public class RedstoneRepeater implements BlockType
 	private final String name;
 	
 	private final SubTexture baseTexture, sideTexture;
-	private final SubTexture torchTopTexture, torchSideTexture;
+	private final SubTexture torchTopTexture, torchSideTexture, litTorchTopTexture, baseLit;
 	
-	public RedstoneRepeater(String name, SubTexture baseTexture, SubTexture sideTexture, SubTexture torchTexture)
+	public RedstoneRepeater(String name, SubTexture baseTexture, SubTexture sideTexture, SubTexture torchTexture, SubTexture litTorchTexture, SubTexture baseLit)
 	{
 		this.name = name;
 		
 		this.baseTexture = baseTexture;
+		this.baseLit = baseLit;
 
 		final float texelSize;
 		if (baseTexture.texturePackVersion == "1.4")
@@ -84,6 +85,13 @@ public class RedstoneRepeater implements BlockType
 		final float vOffset0 = texelSize * 6;
 		final float vOffset1 = texelSize * 8;
 		this.torchTopTexture = new SubTexture(torchTexture.texture, torchTexture.u0 + uOffset, torchTexture.v0 + vOffset0, torchTexture.u1 - uOffset, torchTexture.v1 - vOffset1);
+		
+		if(litTorchTexture != null)
+		{
+			this.litTorchTopTexture = new SubTexture(litTorchTexture.texture, torchTexture.u0 + uOffset, torchTexture.v0 + vOffset0, torchTexture.u1 - uOffset, torchTexture.v1 - vOffset1);
+		}
+		else
+			litTorchTopTexture = null;
 	}
 	
 	@Override
@@ -123,6 +131,7 @@ public class RedstoneRepeater implements BlockType
 		SubMesh subMesh = new SubMesh();
 		SubMesh baseMesh = new SubMesh();
 		SubMesh torchMesh = new SubMesh();
+		SubMesh litTorchMesh = new SubMesh();
 		
 		baseMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, baseTexture);
 		
@@ -141,14 +150,44 @@ public class RedstoneRepeater implements BlockType
 		
 		final float texel = 1.0f / 16.0f;
 		
-		// Static torch
-		addTorch(torchMesh, texel*7, 0, texel*2);
+		//This is rather messy because block ID 150 "Redstone Comparator (Active)" doesn't seem to be valid, so we have to pass in all possibly needed textures, etc.
+		if(name.equals("Redstone Repeater"))
+		{
+			// Static torch
+			addTorch(torchMesh, texel*7, 0, texel*2);
+			
+			// Delay torch
+			final int delay = (data>>2) & 0x3;
+			
+			final float yPixel = delay * 2 + 6; // Valid offsets are from 6 to 12
+			addTorch(torchMesh, texel*7, 0, texel*yPixel);
+		}
+		else if(data == 4 || data == 5 || data == 6 || data == 7 && litTorchTopTexture != null)
+		{
+			addTorch(litTorchMesh, texel*7, -texel, texel*2);
+			addTorch(torchMesh, texel*4, -texel, texel*11);
+			addTorch(torchMesh, texel*10, -texel, texel*11);
+		}
+		else if(data == 8 || data == 9 || data == 10 || data == 11 && litTorchTopTexture != null)
+		{
+			addTorch(torchMesh, texel*7, texel*-4, texel*2);
+			addTorch(litTorchMesh, texel*4, -texel, texel*11);
+			addTorch(litTorchMesh, texel*10, -texel, texel*11);
+		}
+		else if(data == 12 || data == 13 || data == 14 || data == 15 && litTorchTopTexture != null)
+		{
+			addTorch(litTorchMesh, texel*7, -texel, texel*2);
+			addTorch(litTorchMesh, texel*4, -texel, texel*11);
+			addTorch(litTorchMesh, texel*10, -texel, texel*11);
+		}
+		else
+		{
+			addTorch(torchMesh, texel*7, texel*-4, texel*2);
+			addTorch(torchMesh, texel*4, -texel, texel*11);
+			addTorch(torchMesh, texel*10, -texel, texel*11);
+		}
 		
-		// Delay torch
-		final int delay = (data>>2) & 0x3;
 		
-		final float yPixel = delay * 2 + 6; // Valid offsets are from 6 to 12
-		addTorch(torchMesh, texel*7, 0, texel*yPixel);
 		
 		// Now do rotation
 		Rotation rotation = Rotation.None;
@@ -179,8 +218,15 @@ public class RedstoneRepeater implements BlockType
 		}
 		
 		subMesh.pushTo(geometry.getMesh(sideTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
-		baseMesh.pushTo(geometry.getMesh(baseTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		if((data & 0x8) > 0 && baseLit != null)
+			baseMesh.pushTo(geometry.getMesh(baseLit.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		else
+			baseMesh.pushTo(geometry.getMesh(baseTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
 		torchMesh.pushTo(geometry.getMesh(torchSideTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		if(litTorchTopTexture != null)
+		{
+			litTorchMesh.pushTo(geometry.getMesh(litTorchTopTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		}
 	}
 	
 	private void addTorch(SubMesh subMesh, float x, float y, float z)

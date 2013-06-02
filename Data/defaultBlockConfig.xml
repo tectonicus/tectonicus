@@ -448,9 +448,9 @@
 	
 	<PressurePlate id="148" name="Iron Pressure Plate" texture="blockIron.png" />
 	
-	<RedstoneRepeater id="149" name="Redstone Comparator" base="comparator.png" side="stoneslab_top.png" torch="redtorch.png" />
+	<RedstoneRepeater id="149" name="Redstone Comparator" base="comparator.png" side="stoneslab_top.png" torch="redtorch.png" torchlit="redtorch_lit.png" baselit="comparator_lit.png" />
 	
-	<RedstoneRepeater id="150" name="Redstone Comparator Lit" base="comparator_lit.png" side="stoneslab_top.png" torch="redtorch_lit.png" />
+	<RedstoneRepeater id="150" name="Redstone Comparator Lit" base="comparator_lit.png" side="stoneslab_top.png" torch="redtorch.png" torchlit="redtorch_lit.png" />
 	
 	<DaylightSensor id="151" name="Daylight Sensor" top="daylightDetector_top.png" bottom="daylightDetector_side.png" />
 	

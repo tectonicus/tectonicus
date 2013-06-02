@@ -554,8 +554,10 @@ public class BlockRegistryParser
 			SubTexture base = parseTexture(element, "base", null);
 			SubTexture side = parseTexture(element, "side", null);
 			SubTexture torch = parseTexture(element, "torch", null);
+			SubTexture torchlit = parseTexture(element, "torchlit", null);
+			SubTexture baselit = parseTexture(element, "baselit", null);
 			
-			blockType = new RedstoneRepeater(name, base, side, torch);
+			blockType = new RedstoneRepeater(name, base, side, torch, torchlit, baselit);
 		}
 		else if (nodeName.equals("glasspane"))
 		{
