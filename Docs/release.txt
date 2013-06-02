@@ -485,3 +485,13 @@ Version 2.16
 	Quartz Slab, Nether Brick Slab, Dropper, and Activator Rails to defaultBlockConfig.xml
 - fixed a whole bunch of block textures that were not working correctly with 1.5 texture packs
 - tried to make Water block work a little better
+
+Version 2.17
+- fixed Chests (finally!).  On Dec. 25 all chests will use Christmas textures.
+- added Trapped Chests, Flower Pot, Cocoa Pod, Beacon, Anvil, Daylight Sensor, Redstone Comparator, Levers, Hopper, Tripwire Hook, Corner Stairs
+- added variable snow height
+- added correct Lily Pad rotation
+- Fruit Stems now turn toward nearest fruit
+- fixed 1.5 texture pack problems with Water texture, Water texture in Cauldron, Lava texture, Pressure plate textures
+- Fire now uses texture from 1.5 texture packs
+- fixed a problem with a 1.5 minecraft.jar not being found by the gui
