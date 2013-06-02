@@ -209,7 +209,7 @@
 	
 	<Torch id="50" name="Torch" texture="torch.png" />
 	
-	<Fire id="51" name="Fire" texture="Images/Fire.png" />
+	<Fire id="51" name="Fire" texture="fire_0.png" />
 	
 	<Solid id="52" name="Mob Spawner" texture="mobSpawner.png" alphaTest="true" />
 	
