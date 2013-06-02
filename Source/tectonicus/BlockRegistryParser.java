@@ -107,6 +107,7 @@ import tectonicus.blockTypes.Stairs;
 import tectonicus.blockTypes.TallGrass;
 import tectonicus.blockTypes.Torch;
 import tectonicus.blockTypes.Trapdoor;
+import tectonicus.blockTypes.TripwireHook;
 import tectonicus.blockTypes.Vines;
 import tectonicus.blockTypes.Wall;
 import tectonicus.blockTypes.Water;
@@ -743,6 +744,13 @@ public class BlockRegistryParser
 		 	SubTexture inside = parseTexture(element, "inside", null);
 		 	
 		 	blockType = new Hopper(name, top, side, inside);
+		}
+		else if (nodeName.equals("tripwirehook"))
+		{
+			SubTexture base = parseTexture(element, "texture", null);
+		 	SubTexture hook = parseTexture(element, "texture2", null);
+		 	
+		 	blockType = new TripwireHook(name, base, hook);
 		}
 		else
 		{

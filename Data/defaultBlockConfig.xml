@@ -392,6 +392,8 @@
 										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
 										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
 	
+	<TripwireHook id="131" name="Tripwire Hook" texture="wood.png" texture2="tripWireSource.png" />
+	
 	<Solid id="133" name="Emerald Block" texture="blockEmerald.png" />
 	
 	<Stairs id="134" name="Spruce Wood Stairs" texture="wood_spruce.png" />

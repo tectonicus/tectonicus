@@ -384,6 +384,8 @@
 										trappedsmall="" trappedlarge=""
 										xmassmall="" xmaslarge="" />
 	
+	<TripwireHook id="131" name="Tripwire Hook" texture="terrain[4, 0]" texture2="terrain[12, 10]" />
+	
 	<Solid id="133" name="Emerald Block" texture="terrain[9, 1]" />
 	
 	<Stairs id="134" name="Spruce Wood Stairs" texture="terrain[6, 12]" />
