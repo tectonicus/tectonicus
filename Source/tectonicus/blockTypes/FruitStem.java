@@ -36,6 +36,7 @@
  */
 package tectonicus.blockTypes;
 
+import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
@@ -45,7 +46,8 @@ import tectonicus.Chunk;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
-import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.SubMesh;
+import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -106,21 +108,30 @@ public class FruitStem implements BlockType
 		final int data = chunk.getBlockData(x, y, z);
 		
 		final float texel = 1.0f / 16.0f;
-		final float offsetY = (y-1) + (1 + data*2) * texel;
+		//final float offsetY = (y-1) + (1 + data*2) * texel;
+		final float offsetY = (1 + data*2) * texel;
 		
 		final boolean isBent;
+		float horizAngle = 0;
 		
 		if (data == 0x7)
 		{
 			// Fully grown, try and find a fruit to bend towards
-			final boolean isFruitN = world.getBlockId(chunk.getChunkCoord(), x-1, y, z) == fruitBlockId;
-			final boolean isFruitS = world.getBlockId(chunk.getChunkCoord(), x+1, y, z) == fruitBlockId;
-			final boolean isFruitE = world.getBlockId(chunk.getChunkCoord(), x, y, z-1) == fruitBlockId;
-			final boolean isFruitW = world.getBlockId(chunk.getChunkCoord(), x, y, z+1) == fruitBlockId;
+			final boolean isFruitW = world.getBlockId(chunk.getChunkCoord(), x-1, y, z) == fruitBlockId;
+			final boolean isFruitE = world.getBlockId(chunk.getChunkCoord(), x+1, y, z) == fruitBlockId;
+			final boolean isFruitN = world.getBlockId(chunk.getChunkCoord(), x, y, z-1) == fruitBlockId;
+			final boolean isFruitS = world.getBlockId(chunk.getChunkCoord(), x, y, z+1) == fruitBlockId;
 			
 			isBent = (isFruitN || isFruitS || isFruitE || isFruitW);
 			
-			// TODO: Actually bend the stem towards the fruit
+			if(isFruitN)
+				horizAngle = 270;
+			else if(isFruitS)
+				horizAngle = 90;
+			else if(isFruitW)
+				horizAngle = 0;
+			else if(isFruitE)
+				horizAngle = 180;					
 		}
 		else
 		{
@@ -136,10 +147,22 @@ public class FruitStem implements BlockType
 		colour.g *= lightness;
 		colour.b *= lightness;
 		
+		//final float lightVal = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
+		/*Colour4f grassColour = world.getGrassColour(chunk.getChunkCoord(), x, y, z);
+		Vector4f colour = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);*/
+		
 		SubTexture texture = isBent ? bentStem : growingStem;
+		SubMesh subMesh = new SubMesh();
+		//Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
-		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
+		subMesh.addDoubleSidedQuad(new Vector3f(0,	0+offsetY,	0.5f),
+									new Vector3f(1,	0+offsetY,	0.5f),
+									new Vector3f(1,	-1+offsetY,		0.5f),
+									new Vector3f(0,	-1+offsetY,		0.5f),
+									new Vector4f(colour.r, colour.g, colour.b, 1.0f), texture);
 		
-		Plant.addPlantGeometry(x, offsetY, z, mesh, new Vector4f(colour.r, colour.g, colour.b, 1.0f), texture);
+		subMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest), x, y, z, Rotation.Clockwise, horizAngle);		
+		
+		//Plant.addPlantGeometry(x, offsetY, z, mesh, new Vector4f(colour.r, colour.g, colour.b, 1.0f), texture);
 	}
 }
