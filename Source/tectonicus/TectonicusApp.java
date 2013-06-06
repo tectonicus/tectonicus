@@ -811,11 +811,11 @@ import tectonicus.world.World;
 
 // v2.08
 
-// TODO: Remove Wool and any other block types made redundant by new id:data syntax
+// TODO: Remove any block types made redundant by new id:data syntax
 
 // TODO: Write up biome data in chunk proposal
 
-// TODO: Snow and Soil classes check that above block is solid, but are not full height
+// TODO: Soil class checks that above block is solid, but is not full height
 // Looks like a bug. Check up!
 
 // Idea: Lots of wasted time looking chunk data, then (id+data)->BlockType

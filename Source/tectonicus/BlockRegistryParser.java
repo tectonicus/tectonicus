@@ -112,7 +112,6 @@ import tectonicus.blockTypes.Vines;
 import tectonicus.blockTypes.Wall;
 import tectonicus.blockTypes.Water;
 import tectonicus.blockTypes.Crops;
-import tectonicus.blockTypes.Wool;
 import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
 import tectonicus.texture.SubTexture;
@@ -351,10 +350,6 @@ public class BlockRegistryParser
 			SubTexture fern = parseTexture(element, "fern", null);
 			
 			blockType = new TallGrass(name, dead, tall, fern, biomeCache, texturePack);
-		}
-		else if (nodeName.equals("wool"))
-		{
-			blockType = new Wool(name, texturePack);
 		}
 		else if (nodeName.equals("slab"))
 		{

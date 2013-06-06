@@ -98,6 +98,7 @@ public class Snow implements BlockType
 		
 		final int data = rawChunk.getBlockData(x, y, z);
 		
+		// Determine snow block height
 		final float height;
 		if(data == 0)
 			height = 2.0f / 16.0f;
@@ -126,12 +127,16 @@ public class Snow implements BlockType
 		
 		SubTexture sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texHeight, texture.u1, texture.v1);
 		
-		MeshUtil.addQuad(mesh,	new Vector3f(x,		y+height,	z),
-								new Vector3f(x+1,	y+height,	z),
-								new Vector3f(x+1,	y+height,	z+1),
-								new Vector3f(x,		y+height,	z+1),
-								new Vector4f(topLight, topLight, topLight, 1.0f),
-								texture);
+		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
+		if(!(data == 7 && above.isSolid()))
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+height,	z),
+									new Vector3f(x+1,	y+height,	z),
+									new Vector3f(x+1,	y+height,	z+1),
+									new Vector3f(x,		y+height,	z+1),
+									new Vector4f(topLight, topLight, topLight, 1.0f),
+									texture);
+		}
 		
 		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		if (!north.isSolid())
