@@ -58,6 +58,7 @@ import tectonicus.blockTypes.BrewingStand;
 import tectonicus.blockTypes.Button;
 import tectonicus.blockTypes.Cactus;
 import tectonicus.blockTypes.Cake;
+import tectonicus.blockTypes.Carpet;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.CocoaPod;
@@ -746,6 +747,12 @@ public class BlockRegistryParser
 		 	SubTexture hook = parseTexture(element, "texture2", null);
 		 	
 		 	blockType = new TripwireHook(name, base, hook);
+		}
+		else if (nodeName.equals("carpet"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+		 	
+		 	blockType = new Carpet(name, texture);
 		}
 		else
 		{
