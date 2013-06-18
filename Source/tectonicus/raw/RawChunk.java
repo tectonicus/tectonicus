@@ -578,7 +578,7 @@ public class RawChunk
 		final int localY = y % SECTION_HEIGHT;
 		
 		Section s = sections[sectionY];
-		if (s != null && x >= 0 && x <= 15)  //TODO:  Fix this
+		if (s != null && x >= 0 && x <= 15 && z >= 0 && z <= 15)  //TODO:  Fix this
 			return s.blockData[x][localY][z];
 		else
 			return 0;

@@ -103,7 +103,7 @@ public class Minecraft
 			
 			//ZipStackEntry terrainEntry = zips.getEntry("terrain.png");
 			
-			return (zips.getEntry("terrain.png") != null || zips.getEntry("textures/blocks/activatorRail.png") != null);
+			return (zips.getEntry("terrain.png") != null || zips.getEntry("textures/blocks/activatorRail.png") != null || zips.getEntry("assets/minecraft/textures/blocks/rail_activator.png") != null);
 		}
 		catch (Exception e)
 		{

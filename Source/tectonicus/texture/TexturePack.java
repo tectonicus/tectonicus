@@ -93,11 +93,13 @@ public class TexturePack
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 		
-		ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
-		if (terrainEntry != null)
+		//ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
+		if (zipStack.getEntry("terrain.png") != null)
 			this.version = "1.4";
-		else
+		else if(zipStack.getEntry("textures/blocks/activatorRail.png") != null)
 			this.version = "1.5";
+		else
+			this.version = "1.6+";
 		
 		try
 		{
@@ -324,6 +326,8 @@ public class TexturePack
 			path = "terrain.png";
 		else if (!path.contains("/") && !path.contains("\\") && version == "1.5") //MC 1.5 texture packs
 			path = "textures/blocks/" + path;
+		else if (!path.contains("/") && !path.contains("\\") && version == "1.6+") //MC 1.6+ texture packs
+			path = "assets/minecraft/textures/blocks/" + path;
 		
 		return new TextureRequest(path, params);
 	}
