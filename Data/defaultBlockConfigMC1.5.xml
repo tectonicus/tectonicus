@@ -1,0 +1,481 @@
+<blockConfig version="1">
+
+	<!-- This doesn't have to be in numeric block order, but it's a lot easier to follow if it is -->
+	
+	<Air id="0" name="Air" />
+	
+	<!--
+	terrain indexed by 16x16 tile
+	<Solid id="1" name="Stone" texture="stone.png" />
+	
+	terrain indexed by pixel coord
+	<Solid id="1" name="Stone" texture="terrain[0, 0, 8, 8]" />
+	
+	custom image
+	<Solid id="1" name="Stone" texture="custom/file.png" />
+
+	subsection in custom image	
+	<Solid id="1" name="Stone" texture="custom/sheet.png[1, 1]" />
+	-->
+	
+	<Solid id="1" name="Stone" texture="stone.png" />
+	
+	<Grass id="2" name="Grass" betterGrass="none" dirtSide="grass_side.png" grassSide="grass_side_overlay.png" snowSide="snow_side.png" top="grass_top.png" bottom="dirt.png" />
+	
+	<Solid id="3" name="Dirt" texture="dirt.png" />
+	
+	<Solid id="4" name="Cobblestone" texture="stonebrick.png" />
+	
+	<Solid id="5:0" name="Oak Wooden Plank" texture="wood.png" />
+	
+	<Solid id="5:1" name="Spruce Wooden Plank" texture="wood_spruce.png" />
+	
+	<Solid id="5:2" name="Birch Wooden Plank" texture="wood_birch.png" />
+	
+	<Solid id="5:3" name="Jungle Wooden Plank" texture="wood_jungle.png" />
+	
+	<Sapling id="6:0" name="Oak Sapling" texture="sapling.png" />
+	
+	<Sapling id="6:1" name="Spruce Sapling" texture="sapling_spruce.png" />
+	
+	<Sapling id="6:2" name="Birch Sapling" texture="sapling_birch.png" />
+	
+	<Sapling id="6:3" name="Jungle Sapling" texture="sapling_jungle.png" />
+	
+	<Solid id="7" name="Bedrock" texture="bedrock.png" />
+	
+	<Water id="8" name="Water" texture="water.png" />
+	
+	<Water id="9" name="Water" texture="water.png" />
+	
+	<Solid id="10" name="Lava" texture="lava.png" />	
+	
+	<Solid id="11" name="Lava" texture="lava.png" />
+	
+	<Solid id="12" name="Sand" texture="sand.png" />
+	
+	<Solid id="13" name="Gravel" texture="gravel.png" />
+	
+	<Solid id="14" name="Gold Ore" texture="oreGold.png" />
+	
+	<Solid id="15" name="Iron Ore" texture="oreIron.png" />
+	
+	<Solid id="16" name="Coal Ore" texture="oreCoal.png" />
+	
+	<Log id="17:0" name="Oak Wood" side="tree_side.png" top="tree_top.png" />
+	
+	<Log id="17:1" name="Spruce Wood" side="tree_spruce.png" top="tree_top.png" />
+
+	<Log id="17:2" name="Birch Wood" side="tree_birch.png" top="tree_top.png" />
+
+	<Log id="17:3" name="Jungle Wood" side="tree_jungle.png" top="tree_top.png" />
+	
+	<Log id="17:4" name="Oak Wood East/West" side="tree_side.png" top="tree_top.png" />
+	
+	<Log id="17:5" name="Spruce Wood East/West" side="tree_spruce.png" top="tree_top.png" />
+	
+	<Log id="17:6" name="Birch Wood East/West" side="tree_birch.png" top="tree_top.png" />
+	
+	<Log id="17:7" name="Jungle Wood East/West" side="tree_jungle.png" top="tree_top.png" />
+	
+	<Log id="17:8" name="Oak Wood North/South" side="tree_side.png" top="tree_top.png" />
+	
+	<Log id="17:9" name="Spruce Wood North/South" side="tree_spruce.png" top="tree_top.png" />
+	
+	<Log id="17:10" name="Birch Wood North/South" side="tree_birch.png" top="tree_top.png" />
+	
+	<Log id="17:11" name="Jungle Wood North/South" side="tree_jungle.png" top="tree_top.png" />
+
+	<Leaves id="18:0" name="Oak Leaves" texture="leaves.png" color="" />  <!-- color="#48b518" -->
+
+	<Leaves id="18:1" name="Spruce Leaves" texture="leaves_spruce.png" color="#619961" />
+
+	<Leaves id="18:2" name="Birch Leaves" texture="leaves.png" color="#80a755" />
+
+	<Leaves id="18:3" name="Jungle Leaves" texture="leaves_jungle.png" color="" /><!-- color="#48b518" -->
+
+	<Solid id="19" name="Sponge" texture="sponge.png" />
+	
+	<Glass id="20" name="Glass" texture="glass.png" />
+	
+	<Solid id="21" name="Lapis Lazuli Ore" texture="oreLapis.png" />
+	
+	<Solid id="22" name="Lapis Lazuli Block" texture="blockLapis.png" />
+	
+	<Dispenser id="23" name="Dispenser" top="furnace_top.png" topBottom="dispenser_front_vertical.png" side="furnace_side.png" front="dispenser_front.png" />
+	
+	<Solid id="24:0" name="Sandstone" side="sandstone_side.png" top="sandstone_top.png" bottom="sandstone_bottom.png" />
+
+	<Solid id="24:1" name="Sandstone" side="sandstone_carved.png" top="sandstone_top.png" />
+
+	<Solid id="24:2" name="Sandstone" side="sandstone_smooth.png" top="sandstone_top.png" />
+
+	<Solid id="25" name="Note Block" texture="musicBlock.png" />
+	
+	<Bed id="26" name="Bed"	headTop="bed_head_top.png" footTop="bed_feet_top.png"
+				headSide="bed_head_end.png" footSide="bed_feet_end.png"
+				headEdge="bed_head_side.png" footEdge="bed_feet_side.png" />
+	
+	<MinecartTracks id="27" name="Powered rails" straight="goldenRail.png" corner="goldenRail.png" powered="goldenRail_powered.png" isStraightOnly="true" />
+
+	<MinecartTracks id="28" name="Detector rails" straight="detectorRail.png" corner="detectorRail.png" powered="detectorRail_on.png" isStraightOnly="true" />
+	
+	<PistonBase id="29" name="Sticky Piston" side="piston_side.png" top="piston_inner_top.png" bottom="piston_bottom.png" pistonFace="piston_top_sticky.png" />
+	
+	<Plant id="30" name="Web" texture="web.png" />
+	
+	<TallGrass id="31" name="Tall Grass" dead="deadbush.png" tall="tallgrass.png" fern="fern.png" />
+	
+	<Plant id="32" name="Dead Shrub" texture="deadbush.png" />
+	
+	<PistonBase id="33" name="Piston" side="piston_side.png" top="piston_inner_top.png" bottom="piston_bottom.png" pistonFace="piston_top.png" />
+	
+	<PistonExtension id="34" name="Piston Extension" edge="piston_side.png" normalFace="piston_top.png" stickyFace="piston_top_sticky.png" />
+	
+	<!-- Various wool colours -->
+	
+	<Solid id="35:0" name="White wool"  texture="cloth_0.png" />
+	<Solid id="35:1" name="Orange wool"  texture="cloth_1.png" />
+	<Solid id="35:2" name="Magenta wool"  texture="cloth_2.png" />
+	<Solid id="35:3" name="Light blue wool"  texture="cloth_3.png" />
+	<Solid id="35:4" name="Yellow wool"  texture="cloth_4.png" />
+	<Solid id="35:5" name="Light green wool"  texture="cloth_5.png" />
+	<Solid id="35:6" name="Pink wool"  texture="cloth_6.png" />
+	<Solid id="35:7" name="Grey wool"  texture="cloth_7.png" />
+	<Solid id="35:8" name="Light grey wool"  texture="cloth_8.png" />
+	<Solid id="35:9" name="Cyan wool"  texture="cloth_9.png" />
+	<Solid id="35:10" name="Purple wool"  texture="cloth_10.png" />
+	<Solid id="35:11" name="Blue wool"  texture="cloth_11.png" />
+	<Solid id="35:12" name="Brown wool"  texture="cloth_12.png" />
+	<Solid id="35:13" name="Dark green wool"  texture="cloth_13.png" />
+	<Solid id="35:14" name="Red wool"  texture="cloth_14.png" />
+	<Solid id="35:15" name="Black wool"  texture="cloth_15.png" />
+	
+	<!-- id 36 block moved by piston (not needed) -->
+	
+	<Plant id="37" name="Yellow Flower" texture="flower.png" />
+	
+	<Plant id="38" name="Red Flower" texture="rose.png" />
+	
+	<Plant id="39" name="Brown Mushroom" texture="mushroom_brown.png" />
+	
+	<Plant id="40" name="Red Mushroom" texture="mushroom_red.png" />
+	
+	<Solid id="41" name="Gold Block" texture="blockGold.png" />
+	
+	<Solid id="42" name="Iron Block" texture="blockIron.png" />
+	
+	<Solid id="43:0" name="Stone Double Slab" side="stoneslab_side.png" top="stoneslab_top.png" />
+
+	<Solid id="43:1" name="Sandstone Double Slab" side="sandstone_side.png" top="sandstone_top.png" />
+
+	<Solid id="43:2" name="Wooden Stone Double Slab" texture="wood.png" />
+
+	<Solid id="43:3" name="Cobblestone Double Slab" texture="stonebrick.png" />
+
+	<Solid id="43:4" name="Brick Double Slab" texture="brick.png" />
+
+	<Solid id="43:5" name="Stone Brick Double Slab" texture="stonebricksmooth.png" />
+	
+	<Solid id="43:6" name="Nether Brick Double Slab" texture="netherBrick.png" />
+	
+	<Solid id="43:7" name="Quartz Double Slab" texture="quartzblock_top.png" />
+
+	<Slab id="44:0" name="Stone Slab" side="stoneslab_side.png" top="stoneslab_top.png" />
+
+	<Slab id="44:1" name="Sandstone Slab" side="sandstone_side.png" top="sandstone_top.png" />
+
+	<Slab id="44:2" name="Wooden Stone Slab" texture="wood.png" />
+
+	<Slab id="44:3" name="Cobblestone Slab" texture="stonebrick.png" />
+
+	<Slab id="44:4" name="Brick Slab" texture="brick.png" />
+
+	<Slab id="44:5" name="Stone Brick Slab" texture="stonebricksmooth.png" />
+	
+	<Slab id="44:6" name="Nether Brick Slab" texture="netherBrick.png" />
+	
+	<Slab id="44:7" name="Quartz Slab" texture="quartzblock_top.png" />
+
+	<Solid id="45" name="Brick" texture="brick.png" />
+	
+	<Solid id="46" name="TNT" side="tnt_side.png" top="tnt_top.png" />
+	
+	<Solid id="47" name="Bookshelf" side="bookshelf.png" top="wood.png" />
+	
+	<Solid id="48" name="Mossy Cobblestone" texture="stoneMoss.png" />
+	
+	<Solid id="49" name="Obsidian" texture="obsidian.png" />
+	
+	<Torch id="50" name="Torch" texture="torch.png" />
+	
+	<Fire id="51" name="Fire" texture="fire_0.png" />
+	
+	<Solid id="52" name="Mob Spawner" texture="mobSpawner.png" alphaTest="true" />
+	
+	<Stairs id="53" name="Wooden Stairs" texture="wood.png" />
+
+	<Chest id="54" name="Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+								trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
+								xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
+
+	<RedstoneWire id="55" name="Redstone Wire" offJunction="redstoneDust_cross.png" onJunction="redstoneDust_cross.png" offLine="redstoneDust_line.png" onLine="redstoneDust_line.png" />
+
+	<Solid id="56" name="Diamond Ore" texture="oreDiamond.png" />
+	
+	<Solid id="57" name="Diamond Block" texture="blockDiamond.png" />
+	
+	<Workbench id="58" name="Workbench" top="workbench_top.png" side1="workbench_side.png" side2="workbench_front.png" />
+	
+	<Crops id="59" name="Wheat" tex0="crops_0.png" tex1="crops_1.png" tex2="crops_2.png" tex3="crops_3.png" tex4="crops_4.png" tex5="crops_5.png" tex6="crops_6.png" tex7="crops_7.png" />
+	
+	<Soil id="60" name="Soil" top="farmland_dry.png" side="dirt.png" />
+	
+	<Furnace id="61" name="Furnace" top="furnace_top.png" side="furnace_side.png" front="furnace_front.png" />
+	
+	<Furnace id="62" name="Furnace" top="furnace_top.png" side="furnace_side.png" front="furnace_front_lit.png" />
+	
+	<Sign id="63" name="Sign Post" texture="wood.png" hasPost="true" />
+	
+	<Door id="64" name="Wooden Door" top="doorWood_upper.png" bottom="doorWood_lower.png" />
+	
+	<Ladder id="65" name="Ladder" texture="ladder.png" />
+	
+	<MinecartTracks id="66" name="Rails" straight="rail.png" corner="rail_turn.png" powered="rail.png" isStraightOnly="false" />
+	
+	<Stairs id="67" name="Cobblestone Stairs" texture="stonebrick.png" />
+	
+	<Sign id="68" name="Wall Sign" texture="wood.png" />
+
+	<Lever id="69" name="Lever" lever="lever.png" base="stonebrick.png" />
+	
+	<PressurePlate id="70" name="Stone Pressure Plate" texture="stone.png" />
+
+	<Door id="71" name="Iron Door" top="doorIron_upper.png" bottom="doorIron_lower.png" />
+	
+	<PressurePlate id="72" name="Wooden Pressure Plate" texture="wood.png" />
+	
+	<Solid id="73" name="Redstone Ore" texture="oreRedstone.png" />
+
+	<Solid id="74" name="Redstone Ore" texture="oreRedstone.png" />
+
+	<Torch id="75" name="Redstone Torch" texture="redtorch.png" />
+	
+	<Torch id="76" name="Redstone Torch" texture="redtorch_lit.png" />
+	
+	<Button id="77" name="Stone Button" texture="stone.png" />
+	
+	<Snow id="78" name="Snow" texture="snow.png" />
+	
+	<Ice id="79" name="Ice" texture="ice.png" />
+	
+	<Solid id="80" name="Snow Block" texture="snow.png" />
+
+	<Cactus id="81" name="Cactus" side="cactus_side.png" top="cactus_top.png" />
+	
+	<Solid id="82" name="Clay" texture="clay.png" />
+	
+	<Plant id="83" name="Sugar Canes" texture="reeds.png" />
+	
+	<Solid id="84" name="Jukebox" side="musicBlock.png" top="jukebox_top.png" />
+	
+	<Fence id="85" name="Fence" texture="wood.png" />
+
+	<Pumpkin id="86" name="Pumpkin" top="pumpkin_top.png" side="pumpkin_side.png" front="pumpkin_face.png" />
+	
+	<Solid id="87" name="Netherrack" texture="hellrock.png" />
+	
+	<Solid id="88" name="Soul Sand" texture="hellsand.png" />
+	
+	<Solid id="89" name="Glowstone" texture="lightgem.png" />
+	
+	<Portal id="90" name="Portal" texture="Images/Portal.png" />
+
+	<Pumpkin id="91" name="Jack-o-lantern" top="pumpkin_top.png" side="pumpkin_side.png" front="pumpkin_jack.png" />
+	
+	<Cake id="92" name="Cake" top="cake_top.png" side="cake_side.png" interior="cake_inner.png" />
+
+	<RedstoneRepeater id="93" name="Redstone Repeater" base="repeater.png" side="stoneslab_top.png" torch="redtorch.png" />
+	
+	<RedstoneRepeater id="94" name="Redstone Repeater" base="repeater_lit.png" side="stoneslab_top.png" torch="redtorch_lit.png" />
+	
+	<!-- <Chest id="95" name="Locked Chest" top="cactus_bottom.png" side="cactus_bottom.png" front="cactus_bottom.png"	
+					doubleSideLeft="cactus_bottom.png" doubleSideRight="cactus_bottom.png"
+					doubleFrontLeft="cactus_bottom.png" doubleFrontRight="cactus_bottom.png" />-->
+	
+	<Trapdoor id="96" name="Trapdoor" texture="trapdoor.png" />
+	
+	<DataSolid id="97" name="Hidden Silverfish"	side0="stone.png" top0="stone.png"
+							side1="stonebrick.png" top1="stonebrick.png"
+							side2="stonebricksmooth.png" top2="stonebricksmooth.png" />
+	
+	<DataSolid id="98" name="Stone Brick" 	side0="stonebricksmooth.png" top0="stonebricksmooth.png"
+						side1="stonebricksmooth_mossy.png" top1="stonebricksmooth_mossy.png"
+						side2="stonebricksmooth_cracked.png" top2="stonebricksmooth_cracked.png"
+						side3="stonebricksmooth_carved.png" top3="stonebricksmooth_carved.png" />
+	
+	<HugeMushroom id="99" name="Huge Brown Mushroom" cap="mushroom_skin_brown.png" pores="mushroom_inside.png" stem="mushroom_skin_stem.png" />
+	
+	<HugeMushroom id="100" name="Huge Red Mushroom" cap="mushroom_skin_red.png" pores="mushroom_inside.png" stem="mushroom_skin_stem.png" />
+	
+	<GlassPane id="101" name="Iron Bar" texture="fenceIron.png" />
+	
+	<GlassPane id="102" name="Glass Pane" texture="glass.png" />
+	
+	<Solid id="103" name="Melon" side="melon_side.png" top="melon_top.png" />
+	
+	<FruitStem id="104" name="Pumpkin Stem" growingStem="stem_straight.png" bentStem="stem_bent.png" fruitId="86" />
+	
+	<FruitStem id="105" name="Melon Stem" growingStem="stem_straight.png" bentStem="stem_bent.png" fruitId="103" />
+	
+	<Vines id="106" name="Vines" texture="vine.png" />
+	
+	<FenceGate id="107" name="Gate" texture="wood.png" />
+	
+	<Stairs id="108" name="Brick Stairs" texture="brick.png" />
+	
+	<Stairs id="109" name="Stone Brick Stairs" texture="stonebricksmooth.png" />	
+	
+	<Solid id="110" name="Mycelium" side="mycel_side.png" top="mycel_top.png" />
+	
+	<Lilly id="111" name="Lily Pad" texture="waterlily.png" />
+	
+	<Solid id="112" name="Nether Brick" texture="netherBrick.png" />
+	
+	<Fence id="113" name="Nether Brick Fence" texture="netherBrick.png" />
+	
+	<Stairs id="114" name="Nether Brick Stairs" texture="netherBrick.png" />
+	
+	<NetherWart id="115" name="Nether Wart" texture0="netherStalk_0.png" texture1="netherStalk_1.png" texture2="netherStalk_2.png" />
+	
+	<EnchantmentTable id="116" name="Enchantment Table" top="enchantment_top.png" side="enchantment_side.png" bottom="enchantment_bottom.png" />
+	
+	<BrewingStand id="117" name="Brewing Stand" base="brewingStand_base.png" stand="brewingStand.png" />
+	
+	<Cauldron id="118" name="Cauldron" top="cauldron_top.png" side="cauldron_side.png" bottom="cauldron_inner.png" water="water.png" />
+	
+	<EnderPortal id="119" name="EnderPortal" texture="Images/EnderPortal.png" />
+	
+	<EnderPortalFrame id="120" name="End Portal Frame" top="endframe_top.png" side="endframe_side.png" bottom="whiteStone.png" eye="endframe_eye.png" />
+	
+	<Solid id="121" name="End Stone" texture="whiteStone.png" />
+	
+	<DragonEgg id="122" name="Dragon Egg" texture="dragonEgg.png" />
+	
+	<Solid id="123" name="Redstone Lamp" texture="redstoneLight.png" /><!-- off -->
+	
+	<Solid id="124" name="Redstone Lamp" texture="redstoneLight_lit.png" /><!-- on -->
+
+	<Solid id="125:0" name="Oak Wood Double Slab" texture="wood.png" />
+	
+	<Solid id="125:1" name="Spruce Wood Double Slab" texture="wood_spruce.png" />
+
+	<Solid id="125:2" name="Birch Wood Double Slab" texture="wood_birch.png" />
+
+	<Solid id="125:3" name="Jungle Wood Double Slab" texture="wood_jungle.png" />
+
+	<Slab id="126:0" name="Oak Wood Half Slab" texture="wood.png" />
+
+	<Slab id="126:1" name="Spruce Wood Half Slab" texture="wood_spruce.png" />
+
+	<Slab id="126:2" name="Birch Wood Half Slab" texture="wood_birch.png" />
+
+	<Slab id="126:3" name="Jungle Wood Half Slab" texture="wood_jungle.png" />
+	
+	<CocoaPod id="127" name="Cocoa Pod" small="cocoa_0.png" medium="cocoa_1.png" large="cocoa_2.png" />
+	
+	<Stairs id="128" name="Sandstone Stairs" texture="sandstone_side.png" />
+	
+	<Solid id="129" name="Emerald Ore" texture="oreEmerald.png" />
+	
+	<Chest id="130" name="Ender Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
+										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
+	
+	<TripwireHook id="131" name="Tripwire Hook" texture="wood.png" texture2="tripWireSource.png" />
+	
+	<Solid id="133" name="Emerald Block" texture="blockEmerald.png" />
+	
+	<Stairs id="134" name="Spruce Wood Stairs" texture="wood_spruce.png" />
+	
+	<Stairs id="135" name="Birch Wood Stairs" texture="wood_birch.png" />
+	
+	<Stairs id="136" name="Jungle Wood Stairs" texture="wood_jungle.png" />
+	
+	<Solid id="137" name="Command Block" texture="commandBlock.png" />
+	
+	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png"/>
+	
+	<Wall id="139" name="Cobblestone Wall" texture="stonebrick.png" />
+	
+	<Wall id="139:1" name="Mossy Cobblestone Wall" texture="stoneMoss.png" />
+	
+	<FlowerPot id="140:0" name="Flower Pot" texture="flowerPot.png" dirt="dirt.png" plant="dirt.png"/>
+	
+	<FlowerPot id="140:1" name="Flower Pot Rose" texture="flowerPot.png" dirt="dirt.png" plant="rose.png"/>
+	
+	<FlowerPot id="140:2" name="Flower Pot Yellow Flower" texture="flowerPot.png" dirt="dirt.png" plant="flower.png"/>
+	
+	<FlowerPot id="140:3" name="Flower Pot Oak Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling.png"/>
+	
+	<FlowerPot id="140:4" name="Flower Pot Spruce Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling_spruce.png"/>
+	
+	<FlowerPot id="140:5" name="Flower Pot Birch Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling_birch.png"/>
+	
+	<FlowerPot id="140:6" name="Flower Pot Jungle Sapling" texture="flowerPot.png" dirt="dirt.png" plant="sapling_jungle.png"/>
+	
+	<FlowerPot id="140:7" name="Flower Pot Red Mushroom" texture="flowerPot.png" dirt="dirt.png" plant="mushroom_red.png"/>
+	
+	<FlowerPot id="140:8" name="Flower Pot Brown Mushroom" texture="flowerPot.png" dirt="dirt.png" plant="mushroom_brown.png"/>
+	
+	<FlowerPot id="140:9" name="Flower Pot Cactus" texture="flowerPot.png" dirt="dirt.png" plant="cactus_side.png"/>
+	
+	<FlowerPot id="140:10" name="Flower Pot Dead Bush" texture="flowerPot.png" dirt="dirt.png" plant="deadbush.png"/>
+	
+	<FlowerPot id="140:11" name="Flower Pot Fern" texture="flowerPot.png" dirt="dirt.png" plant="fern.png"/>
+	
+	<Crops id="141" name="Carrots" tex0="carrots_0.png" tex1="carrots_0.png" tex2="carrots_1.png" tex3="carrots_1.png" tex4="carrots_2.png" tex5="carrots_2.png" tex6="carrots_2.png" tex7="carrots_3.png" />
+	
+	<Crops id="142" name="Potatoes" tex0="potatoes_0.png" tex1="potatoes_0.png" tex2="potatoes_1.png" tex3="potatoes_1.png" tex4="potatoes_2.png" tex5="potatoes_2.png" tex6="potatoes_2.png" tex7="potatoes_3.png" />
+	
+	<Button id="143" name="Wooden Button" texture="wood.png" />
+	
+	<Anvil id="145" name="Anvil" base="anvil_base.png" top0="anvil_top.png" top1="anvil_top_damaged_1.png" top2="anvil_top_damaged_2.png" />
+	
+	<Chest id="146" name="Trapped Chest" small="item/chest.png" large="item/largechest.png" ender="item/enderchest.png"
+										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
+										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
+	
+	<PressurePlate id="147" name="Gold Pressure Plate" texture="blockGold.png" />
+	
+	<PressurePlate id="148" name="Iron Pressure Plate" texture="blockIron.png" />
+	
+	<RedstoneRepeater id="149" name="Redstone Comparator" base="comparator.png" side="stoneslab_top.png" torch="redtorch.png" torchlit="redtorch_lit.png" baselit="comparator_lit.png" />
+	
+	<RedstoneRepeater id="150" name="Redstone Comparator Lit" base="comparator_lit.png" side="stoneslab_top.png" torch="redtorch.png" torchlit="redtorch_lit.png" />
+	
+	<DaylightSensor id="151" name="Daylight Sensor" top="daylightDetector_top.png" bottom="daylightDetector_side.png" />
+	
+	<Solid id="152" name="Redstone Block" texture="blockRedstone.png" />
+	
+	<Solid id="153" name="Nether Quartz Ore" texture="netherquartz.png" />
+	
+	<Hopper id="154" name="Hopper" top="hopper_top.png" side="hopper.png" inside="hopper_inside.png" />
+	
+	<Solid id="155:0" name="Quartz Block" side="quartzblock_side.png" top="quartzblock_top.png" bottom="quartzblock_bottom.png" />
+	
+	<Solid id="155:1" name="Chiseled Quartz Block" side="quartzblock_chiseled.png" top="quartzblock_chiseled_top.png" />
+	
+	<Solid id="155:2" name="Quartz Pillar" side="quartzblock_lines.png" top="quartzblock_lines_top.png" />
+	
+	<Log id="155:3" name="Quartz Pillar North/South" side="quartzblock_lines.png" top="quartzblock_lines_top.png" />
+	
+	<Log id="155:4" name="Quartz Pillar East/West" side="quartzblock_lines.png" top="quartzblock_lines_top.png" />
+	
+	<Stairs id="156" name="Quartz Stairs" texture="quartzblock_top.png" />
+	
+	<MinecartTracks id="157" name="Activator rails" straight="activatorRail.png" corner="activatorRail.png" powered="activatorRail_powered.png" isStraightOnly="true" />
+	
+	<Dispenser id="158" name="Dropper" top="furnace_top.png" topBottom="dropper_front_vertical.png" side="furnace_side.png" front="dropper_front.png" />
+	
+</blockConfig>

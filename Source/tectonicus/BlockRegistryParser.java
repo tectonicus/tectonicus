@@ -409,7 +409,7 @@ public class BlockRegistryParser
 			SubTexture xmassmall = null;
 			SubTexture xmaslarge = null;
 			
-			if(texturePack.getVersion() == "1.5")
+			if(texturePack.getVersion() == "1.5" || texturePack.getVersion() == "1.6+")
 			{
 				trappedsmall = parseTexture(element, "trappedsmall", null);
 				trappedlarge = parseTexture(element, "trappedlarge", null);

@@ -221,6 +221,8 @@ public class World implements BlockContext
 		
 		if (useDefaultBlocks && this.textureVersion == "1.4")
 			parser.parse("defaultBlockConfigMC1.4.xml", registry);
+		else if (useDefaultBlocks && this.textureVersion == "1.5")
+			parser.parse("defaultBlockConfigMC1.5.xml", registry);
 		else
 			parser.parse("defaultBlockConfig.xml", registry);
 		

@@ -162,8 +162,13 @@ public class TexturePack
 				}
 			}
 		*/
+			String path;
+			if(version == "1.6+")
+				path = "assets/minecraft/textures/";
+			else
+				path = "";
 			
-			ZipStackEntry vignetteEntry = zipStack.getEntry("misc/vignette.png");
+			ZipStackEntry vignetteEntry = zipStack.getEntry(path + "misc/vignette.png");
 			if (vignetteEntry != null)
 			{
 				BufferedImage vignetteImage = copy( ImageIO.read(vignetteEntry.getInputStream()) );
@@ -184,7 +189,7 @@ public class TexturePack
 				}
 			}
 				
-			ZipStackEntry iconsEntry = zipStack.getEntry("gui/icons.png");
+			ZipStackEntry iconsEntry = zipStack.getEntry(path + "gui/icons.png");
 			if (iconsEntry != null)
 			{
 				iconSheet = copy( ImageIO.read( iconsEntry.getInputStream() ) );
@@ -194,7 +199,12 @@ public class TexturePack
 				throw new RuntimeException("Couldn't find icons.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
-			ZipStackEntry grassEntry = zipStack.getEntry("misc/grasscolor.png");
+			ZipStackEntry grassEntry;
+			if (version == "1.4" || version == "1.5")
+				grassEntry = zipStack.getEntry(path + "misc/grasscolor.png");
+			else
+				grassEntry = zipStack.getEntry(path + "colormap/grass.png");
+			
 			if (grassEntry != null)
 			{
 				grassLookupImage = copy( ImageIO.read( grassEntry.getInputStream() ) );
@@ -205,7 +215,12 @@ public class TexturePack
 				throw new RuntimeException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
-			ZipStackEntry foliageEntry = zipStack.getEntry("misc/foliagecolor.png");
+			ZipStackEntry foliageEntry;
+			if (version == "1.4" || version == "1.5")
+				foliageEntry = zipStack.getEntry(path + "misc/foliagecolor.png");
+			else
+				foliageEntry = zipStack.getEntry(path + "colormap/foliage.png");
+			
 			if (foliageEntry != null)
 			{
 				foliageLookupImage = copy( ImageIO.read( foliageEntry.getInputStream() ) );
@@ -215,7 +230,11 @@ public class TexturePack
 				throw new RuntimeException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
-			ZipStackEntry fontEntry = zipStack.getEntry("font/default.png");
+			ZipStackEntry fontEntry;
+			if (version == "1.4" || version == "1.5")
+				fontEntry = zipStack.getEntry(path + "font/default.png");
+			else
+				fontEntry = zipStack.getEntry(path + "font/ascii.png");
 			ZipStackEntry fontTextEntry = zipStack.getEntry("font.txt");
 			if (fontEntry != null && fontTextEntry != null)
 			{
