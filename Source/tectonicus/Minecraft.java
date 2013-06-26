@@ -38,7 +38,6 @@ package tectonicus;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.Arrays;
 
 import tectonicus.texture.ZipStack;
 import tectonicus.texture.ZipStack.ZipStackEntry;
@@ -81,7 +80,6 @@ public class Minecraft
 			    return new File(dir, name).isDirectory();
 			  }
 			});
-			System.out.println(Arrays.toString(directories));
 			
 			String major = "0";
 			String minor = "0";
