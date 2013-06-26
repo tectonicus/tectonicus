@@ -37,6 +37,8 @@
 package tectonicus;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Arrays;
 
 import tectonicus.texture.ZipStack;
 import tectonicus.texture.ZipStack.ZipStackEntry;
@@ -69,7 +71,65 @@ public class Minecraft
 	
 	public static File findMinecraftJar()
 	{
-		return new File(findMinecraftDir(), "bin/minecraft.jar");
+		File versionsDir = new File(findMinecraftDir(), "versions");
+		
+		if(versionsDir.exists())
+		{
+			String[] directories = versionsDir.list(new FilenameFilter() {
+			  @Override
+			  public boolean accept(File dir, String name) {
+			    return new File(dir, name).isDirectory();
+			  }
+			});
+			System.out.println(Arrays.toString(directories));
+			
+			String major = "0";
+			String minor = "0";
+			String patch = "0";
+			for(String directory : directories)
+			{
+				String[] version = directory.split("\\.");
+				
+				if(version.length == 2)
+				{
+					if(Integer.parseInt(major) < Integer.parseInt(version[0]))
+					{
+						major = version[0];
+						minor = "0";
+						patch = "0";
+					}
+					if(Integer.parseInt(minor) < Integer.parseInt(version[1]))
+					{
+						minor = version[1];
+						patch = "0";
+					}
+				}
+				else if (version.length == 3)
+				{
+					if(Integer.parseInt(major) < Integer.parseInt(version[0]))
+					{
+						major = version[0];
+						minor = "0";
+						patch = "0";
+					}
+					if(Integer.parseInt(minor) < Integer.parseInt(version[1]))
+					{
+						minor = version[1];
+						patch = "0";
+					}
+					if(Integer.parseInt(patch) < Integer.parseInt(version[2]))
+						patch = version[2];
+				}
+			}
+			String version;
+			if(patch.equals("0"))
+				version = major + "." + minor;
+			else
+				version = major + "." + minor + "." + patch;
+			return new File(findMinecraftDir(), "versions/" + version + "/" + version + ".jar");
+		}
+		else	
+			return new File(findMinecraftDir(), "bin/minecraft.jar");
 	}
 	
 	public static File findWorldDir(final int index)
