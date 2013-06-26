@@ -147,7 +147,7 @@ public class WorldStats
 				args.put("name", "\""+key+"\"");
 				
 				String countStr = NumberFormat.getInstance().format(count);
-				args.put("count", "'"+countStr+"'");
+				args.put("count", "\""+countStr+"\"");
 			
 				jsWriter.write(args);
 			}
