@@ -495,3 +495,13 @@ Version 2.17
 - fixed 1.5 texture pack problems with Water texture, Water texture in Cauldron, Lava texture, Pressure plate textures
 - Fire now uses texture from 1.5 texture packs
 - fixed a problem with a 1.5 minecraft.jar not being found by the gui
+
+Version 2.17.01
+- fixed ArrayIndexOutOfBoundsExceptions when creating stairs
+
+Version 2.18
+- added support for Minecraft 1.6 resource packs
+- if minecraftJar is not specified in the config, Tectonicus will use the most recent official release or release candidate jar it can find (it ignores weekly builds)
+- added Carpet(all colors), Stained Clay(all colors), Hardened Clay, Hay Block, Coal Block
+- fixed number format problem in block stats for locales that use an apostrophe as the thousands separator (Swizterland, Liechtenstein)
+- removed Wool blocktype (unnecessary redundancy)
