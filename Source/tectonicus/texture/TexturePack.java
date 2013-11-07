@@ -235,11 +235,13 @@ public class TexturePack
 				fontEntry = zipStack.getEntry(path + "font/default.png");
 			else
 				fontEntry = zipStack.getEntry(path + "font/ascii.png");
-			ZipStackEntry fontTextEntry = zipStack.getEntry("font.txt");
-			if (fontEntry != null && fontTextEntry != null)
+			//ZipStackEntry fontTextEntry = zipStack.getEntry("font.txt");
+			InputStream textIn = this.getClass().getResourceAsStream("/font.txt");
+			
+			if (fontEntry != null && textIn != null)
 			{
 				BufferedImage fontSheet = ImageIO.read( fontEntry.getInputStream() );
-				InputStream textIn = fontTextEntry.getInputStream();
+				//InputStream textIn = fontTextEntry.getInputStream();
 				
 				font = new Font(rasteriser, fontSheet, textIn);
 			}

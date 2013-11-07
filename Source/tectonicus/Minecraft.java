@@ -87,36 +87,42 @@ public class Minecraft
 			for(String directory : directories)
 			{
 				String[] version = directory.split("\\.");
-				
-				if(version.length == 2)
+				try 
 				{
-					if(Integer.parseInt(major) < Integer.parseInt(version[0]))
+					if(version.length == 2)
 					{
-						major = version[0];
-						minor = "0";
-						patch = "0";
+						if(Integer.parseInt(major) < Integer.parseInt(version[0]))
+						{
+							major = version[0];
+							minor = "0";
+							patch = "0";
+						}
+						if(Integer.parseInt(minor) < Integer.parseInt(version[1]))
+						{
+							minor = version[1];
+							patch = "0";
+						}
 					}
-					if(Integer.parseInt(minor) < Integer.parseInt(version[1]))
+					else if (version.length == 3)
 					{
-						minor = version[1];
-						patch = "0";
+						if(Integer.parseInt(major) < Integer.parseInt(version[0]))
+						{
+							major = version[0];
+							minor = "0";
+							patch = "0";
+						}
+						if(Integer.parseInt(minor) < Integer.parseInt(version[1]))
+						{
+							minor = version[1];
+							patch = "0";
+						}
+						if(Integer.parseInt(patch) < Integer.parseInt(version[2]))
+							patch = version[2];
 					}
 				}
-				else if (version.length == 3)
+				catch(NumberFormatException e)
 				{
-					if(Integer.parseInt(major) < Integer.parseInt(version[0]))
-					{
-						major = version[0];
-						minor = "0";
-						patch = "0";
-					}
-					if(Integer.parseInt(minor) < Integer.parseInt(version[1]))
-					{
-						minor = version[1];
-						patch = "0";
-					}
-					if(Integer.parseInt(patch) < Integer.parseInt(version[2]))
-						patch = version[2];
+					System.out.println("Skipping directory with invalid version number: " + directory);
 				}
 			}
 			String version;
