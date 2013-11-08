@@ -84,7 +84,7 @@ public class Glass implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
+		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Transparent);
 		
 		Colour4f colour = new Colour4f(1, 1, 1, 1);
 		

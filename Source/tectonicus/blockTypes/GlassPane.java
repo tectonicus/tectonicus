@@ -87,13 +87,15 @@ public class GlassPane implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
+		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Transparent);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
 		final float topLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
 		final float northSouthLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
 		final float eastWestLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+		
+		//TODO: Fix GlassPanes so they work better
 		
 		// Auto-connect to adjacent fences
 		

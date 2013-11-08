@@ -23,24 +23,23 @@
 	<Grass id="2" name="Grass" betterGrass="none" dirtSide="grass_side.png" grassSide="grass_side_overlay.png" snowSide="grass_side_snowed.png" top="grass_top.png" bottom="dirt.png" />
 	
 	<Solid id="3" name="Dirt" texture="dirt.png" />
+	<Solid id="3:2" name="Podzol" top="dirt_podzol_top.png" side="dirt_podzol_side.png" />
 	
 	<Solid id="4" name="Cobblestone" texture="cobblestone.png" />
 	
 	<Solid id="5:0" name="Oak Wooden Plank" texture="planks_oak.png" />
-	
 	<Solid id="5:1" name="Spruce Wooden Plank" texture="planks_spruce.png" />
-	
 	<Solid id="5:2" name="Birch Wooden Plank" texture="planks_birch.png" />
-	
 	<Solid id="5:3" name="Jungle Wooden Plank" texture="planks_jungle.png" />
+	<Solid id="5:4" name="Acacia Wooden Plank" texture="planks_acacia.png" />
+	<Solid id="5:5" name="Dark Oak Wooden Plank" texture="planks_big_oak.png" />
 	
 	<Sapling id="6:0" name="Oak Sapling" texture="sapling_oak.png" />
-	
 	<Sapling id="6:1" name="Spruce Sapling" texture="sapling_spruce.png" />
-	
 	<Sapling id="6:2" name="Birch Sapling" texture="sapling_birch.png" />
-	
 	<Sapling id="6:3" name="Jungle Sapling" texture="sapling_jungle.png" />
+	<Sapling id="6:4" name="Acacia Sapling" texture="sapling_acacia.png" />
+	<Sapling id="6:5" name="Dark Oak Sapling" texture="sapling_roofed_oak.png" />
 	
 	<Solid id="7" name="Bedrock" texture="bedrock.png" />
 	
@@ -52,7 +51,8 @@
 	
 	<Solid id="11" name="Lava" texture="lava_still.png" />
 	
-	<Solid id="12" name="Sand" texture="sand.png" />
+	<Solid id="12:0" name="Sand" texture="sand.png" />
+	<Solid id="12:1" name="Red Sand" texture="red_sand.png" />
 	
 	<Solid id="13" name="Gravel" texture="gravel.png" />
 	
@@ -63,35 +63,21 @@
 	<Solid id="16" name="Coal Ore" texture="coal_ore.png" />
 	
 	<Log id="17:0" name="Oak Wood" side="log_oak.png" top="log_oak_top.png" />
-	
 	<Log id="17:1" name="Spruce Wood" side="log_spruce.png" top="log_spruce_top.png" />
-
 	<Log id="17:2" name="Birch Wood" side="log_birch.png" top="log_birch_top.png" />
-
 	<Log id="17:3" name="Jungle Wood" side="log_jungle.png" top="log_jungle_top.png" />
-	
 	<Log id="17:4" name="Oak Wood East/West" side="log_oak.png" top="log_oak_top.png" />
-	
 	<Log id="17:5" name="Spruce Wood East/West" side="log_spruce.png" top="log_spruce_top.png" />
-	
 	<Log id="17:6" name="Birch Wood East/West" side="log_birch.png" top="log_birch_top.png" />
-	
 	<Log id="17:7" name="Jungle Wood East/West" side="log_jungle.png" top="log_jungle_top.png" />
-	
 	<Log id="17:8" name="Oak Wood North/South" side="log_oak.png" top="log_oak_top.png" />
-	
 	<Log id="17:9" name="Spruce Wood North/South" side="log_spruce.png" top="log_spruce_top.png" />
-	
 	<Log id="17:10" name="Birch Wood North/South" side="log_birch.png" top="log_birch_top.png" />
-	
 	<Log id="17:11" name="Jungle Wood North/South" side="log_jungle.png" top="log_jungle_top.png" />
 
 	<Leaves id="18:0" name="Oak Leaves" texture="leaves_oak.png" color="" />  <!-- color="#48b518" -->
-
 	<Leaves id="18:1" name="Spruce Leaves" texture="leaves_spruce.png" color="#619961" />
-
 	<Leaves id="18:2" name="Birch Leaves" texture="leaves_birch.png" color="#80a755" />
-
 	<Leaves id="18:3" name="Jungle Leaves" texture="leaves_jungle.png" color="" /><!-- color="#48b518" -->
 
 	<Solid id="19" name="Sponge" texture="sponge.png" />
@@ -105,9 +91,7 @@
 	<Dispenser id="23" name="Dispenser" top="furnace_top.png" topBottom="dispenser_front_vertical.png" side="furnace_side.png" front="dispenser_front_horizontal.png" />
 	
 	<Solid id="24:0" name="Sandstone" side="sandstone_normal.png" top="sandstone_top.png" bottom="sandstone_bottom.png" />
-
 	<Solid id="24:1" name="Sandstone" side="sandstone_carved.png" top="sandstone_top.png" />
-
 	<Solid id="24:2" name="Sandstone" side="sandstone_smooth.png" top="sandstone_top.png" />
 
 	<Solid id="25" name="Note Block" texture="noteblock.png" />
@@ -133,7 +117,6 @@
 	<PistonExtension id="34" name="Piston Extension" edge="piston_side.png" normalFace="piston_top_normal.png" stickyFace="piston_top_sticky.png" />
 	
 	<!-- Various wool colours -->
-	
 	<Solid id="35:0" name="White wool"  texture="wool_colored_white.png" />
 	<Solid id="35:1" name="Orange wool"  texture="wool_colored_orange.png" />
 	<Solid id="35:2" name="Magenta wool"  texture="wool_colored_magenta.png" />
@@ -153,9 +136,17 @@
 	
 	<!-- id 36 block moved by piston (not needed) -->
 	
+	<!-- Small flowers -->
 	<Plant id="37" name="Yellow Flower" texture="flower_dandelion.png" />
-	
-	<Plant id="38" name="Red Flower" texture="flower_rose.png" />
+	<Plant id="38:0" name="Poppy" texture="flower_rose.png" />
+	<Plant id="38:1" name="Blue Orchid" texture="flower_blue_orchid.png" />
+	<Plant id="38:2" name="Allium" texture="flower_allium.png" />
+	<Plant id="38:3" name="Azure Bluet" texture="flower_houstonia.png" />
+	<Plant id="38:4" name="Red Tulip" texture="flower_tulip_red.png" />
+	<Plant id="38:5" name="Orange Tulip" texture="flower_tulip_orange.png" />
+	<Plant id="38:6" name="White Tulip" texture="flower_tulip_white.png" />
+	<Plant id="38:7" name="Pink Tulip" texture="flower_tulip_pink.png" />
+	<Plant id="38:8" name="Oxeye Daisy" texture="flower_oxeye_daisy.png" />
 	
 	<Plant id="39" name="Brown Mushroom" texture="mushroom_brown.png" />
 	
@@ -166,35 +157,21 @@
 	<Solid id="42" name="Iron Block" texture="iron_block.png" />
 	
 	<Solid id="43:0" name="Stone Double Slab" side="stone_slab_side.png" top="stone_slab_top.png" />
-
 	<Solid id="43:1" name="Sandstone Double Slab" side="sandstone_normal.png" top="sandstone_top.png" />
-
 	<Solid id="43:2" name="Wooden Stone Double Slab" texture="planks_oak.png" />
-
 	<Solid id="43:3" name="Cobblestone Double Slab" texture="cobblestone.png" />
-
 	<Solid id="43:4" name="Brick Double Slab" texture="brick.png" />
-
 	<Solid id="43:5" name="Stone Brick Double Slab" texture="stonebrick.png" />
-	
 	<Solid id="43:6" name="Nether Brick Double Slab" texture="nether_brick.png" />
-	
 	<Solid id="43:7" name="Quartz Double Slab" texture="quartz_block_top.png" />
 
 	<Slab id="44:0" name="Stone Slab" side="stone_slab_side.png" top="stone_slab_top.png" />
-
 	<Slab id="44:1" name="Sandstone Slab" side="sandstone_normal.png" top="sandstone_top.png" />
-
 	<Slab id="44:2" name="Wooden Stone Slab" texture="planks_oak.png" />
-
 	<Slab id="44:3" name="Cobblestone Slab" texture="cobblestone.png" />
-
 	<Slab id="44:4" name="Brick Slab" texture="brick.png" />
-
 	<Slab id="44:5" name="Stone Brick Slab" texture="stonebrick.png" />
-	
 	<Slab id="44:6" name="Nether Brick Slab" texture="nether_brick.png" />
-	
 	<Slab id="44:7" name="Quartz Slab" texture="quartz_block_top.png" />
 
 	<Solid id="45" name="Brick" texture="brick.png" />
@@ -299,9 +276,22 @@
 	
 	<RedstoneRepeater id="94" name="Redstone Repeater" base="repeater_on.png" side="stone_slab_top.png" torch="redstone_torch_on.png" />
 	
-	<!-- <Chest id="95" name="Locked Chest" top="cactus_bottom.png" side="cactus_bottom.png" front="cactus_bottom.png"	
-					doubleSideLeft="cactus_bottom.png" doubleSideRight="cactus_bottom.png"
-					doubleFrontLeft="cactus_bottom.png" doubleFrontRight="cactus_bottom.png" />-->
+	<Glass id="95:0" name="White Stained Glass" texture="glass_white.png" />
+	<Glass id="95:1" name="Orange Stained Glass" texture="glass_orange.png" />
+	<Glass id="95:2" name="Magenta Stained Glass" texture="glass_magenta.png" />
+	<Glass id="95:3" name="Light Blue Stained Glass" texture="glass_light_blue.png" />
+	<Glass id="95:4" name="Yellow Stained Glass" texture="glass_yellow.png" />
+	<Glass id="95:5" name="Lime Stained Glass" texture="glass_lime.png" />
+	<Glass id="95:6" name="Pink Stained Glass" texture="glass_pink.png" />
+	<Glass id="95:7" name="Gray Stained Glass" texture="glass_gray.png" />
+	<Glass id="95:8" name="Light Gray Stained Glass" texture="glass_silver.png" />
+	<Glass id="95:9" name="Cyan Stained Glass" texture="glass_cyan.png" />
+	<Glass id="95:10" name="Purple Stained Glass" texture="glass_purple.png" />
+	<Glass id="95:11" name="Blue Stained Glass" texture="glass_blue.png" />
+	<Glass id="95:12" name="Brown Stained Glass" texture="glass_brown.png" />
+	<Glass id="95:13" name="Green Stained Glass" texture="glass_green.png" />
+	<Glass id="95:14" name="Red Stained Glass" texture="glass_red.png" />
+	<Glass id="95:15" name="Black Stained Glass" texture="glass_black.png" />
 	
 	<Trapdoor id="96" name="Trapdoor" texture="trapdoor.png" />
 	
@@ -367,21 +357,19 @@
 	<Solid id="124" name="Redstone Lamp" texture="redstone_lamp_on.png" /><!-- on -->
 
 	<Solid id="125:0" name="Oak Wood Double Slab" texture="planks_oak.png" />
-	
 	<Solid id="125:1" name="Spruce Wood Double Slab" texture="planks_spruce.png" />
-
 	<Solid id="125:2" name="Birch Wood Double Slab" texture="planks_birch.png" />
-
 	<Solid id="125:3" name="Jungle Wood Double Slab" texture="planks_jungle.png" />
+	<Solid id="125:4" name="Acacia Wood Double Slab" texture="planks_acacia.png" />
+	<Solid id="125:5" name="Dark Oak Wood Double Slab" texture="planks_big_oak.png" />
 
-	<Slab id="126:0" name="Oak Wood Half Slab" texture="planks_oak.png" />
-
-	<Slab id="126:1" name="Spruce Wood Half Slab" texture="planks_spruce.png" />
-
-	<Slab id="126:2" name="Birch Wood Half Slab" texture="planks_birch.png" />
-
-	<Slab id="126:3" name="Jungle Wood Half Slab" texture="planks_jungle.png" />
-	
+	<Slab id="126:0" name="Oak Wood Slab" texture="planks_oak.png" />
+	<Slab id="126:1" name="Spruce Wood Slab" texture="planks_spruce.png" />
+	<Slab id="126:2" name="Birch Wood Slab" texture="planks_birch.png" />
+	<Slab id="126:3" name="Jungle Wood Slab" texture="planks_jungle.png" />
+	<Slab id="126:4" name="Acacia Wood Slab" texture="planks_acacia.png" />
+	<Slab id="126:5" name="Dark Oak Wood Slab" texture="planks_big_oak.png" />
+        
 	<CocoaPod id="127" name="Cocoa Pod" small="cocoa_stage_0.png" medium="cocoa_stage_1.png" large="cocoa_stage_2.png" />
 	
 	<Stairs id="128" name="Sandstone Stairs" texture="sandstone_normal.png" />
@@ -411,27 +399,16 @@
 	<Wall id="139:1" name="Mossy Cobblestone Wall" texture="cobblestone_mossy.png" />
 	
 	<FlowerPot id="140:0" name="Flower Pot" texture="flower_pot.png" dirt="dirt.png" plant="dirt.png"/>
-	
 	<FlowerPot id="140:1" name="Flower Pot Rose" texture="flower_pot.png" dirt="dirt.png" plant="flower_rose.png"/>
-	
 	<FlowerPot id="140:2" name="Flower Pot Yellow Flower" texture="flower_pot.png" dirt="dirt.png" plant="flower_dandelion.png"/>
-	
 	<FlowerPot id="140:3" name="Flower Pot Oak Sapling" texture="flower_pot.png" dirt="dirt.png" plant="sapling_oak.png"/>
-	
 	<FlowerPot id="140:4" name="Flower Pot Spruce Sapling" texture="flower_pot.png" dirt="dirt.png" plant="sapling_spruce.png"/>
-	
 	<FlowerPot id="140:5" name="Flower Pot Birch Sapling" texture="flower_pot.png" dirt="dirt.png" plant="sapling_birch.png"/>
-	
 	<FlowerPot id="140:6" name="Flower Pot Jungle Sapling" texture="flower_pot.png" dirt="dirt.png" plant="sapling_jungle.png"/>
-	
 	<FlowerPot id="140:7" name="Flower Pot Red Mushroom" texture="flower_pot.png" dirt="dirt.png" plant="mushroom_red.png"/>
-	
 	<FlowerPot id="140:8" name="Flower Pot Brown Mushroom" texture="flower_pot.png" dirt="dirt.png" plant="mushroom_brown.png"/>
-	
 	<FlowerPot id="140:9" name="Flower Pot Cactus" texture="flower_pot.png" dirt="dirt.png" plant="cactus_side.png"/>
-	
 	<FlowerPot id="140:10" name="Flower Pot Dead Bush" texture="flower_pot.png" dirt="dirt.png" plant="deadbush.png"/>
-	
 	<FlowerPot id="140:11" name="Flower Pot Fern" texture="flower_pot.png" dirt="dirt.png" plant="fern.png"/>
 	
 	<Crops id="141" name="Carrots" tex0="carrots_stage_0.png" tex1="carrots_stage_0.png" tex2="carrots_stage_1.png" tex3="carrots_stage_1.png" tex4="carrots_stage_2.png" tex5="carrots_stage_2.png" tex6="carrots_stage_2.png" tex7="carrots_stage_3.png" />
@@ -452,8 +429,6 @@
 	
 	<RedstoneRepeater id="149" name="Redstone Comparator" base="comparator_off.png" side="stone_slab_top.png" torch="redstone_torch_off.png" torchlit="redstone_torch_on.png" baselit="comparator_on.png" />
 	
-	<RedstoneRepeater id="150" name="Redstone Comparator Lit" base="comparator_on.png" side="stone_slab_top.png" torch="redstone_torch_off.png" torchlit="redstone_torch_on.png" />
-	
 	<DaylightSensor id="151" name="Daylight Sensor" top="daylight_detector_top.png" bottom="daylight_detector_side.png" />
 	
 	<Solid id="152" name="Redstone Block" texture="redstone_block.png" />
@@ -463,13 +438,9 @@
 	<Hopper id="154" name="Hopper" top="hopper_top.png" side="hopper_outside.png" inside="hopper_inside.png" />
 	
 	<Solid id="155:0" name="Quartz Block" side="quartz_block_side.png" top="quartz_block_top.png" bottom="quartz_block_bottom.png" />
-	
 	<Solid id="155:1" name="Chiseled Quartz Block" side="quartz_block_chiseled.png" top="quartz_block_chiseled_top.png" />
-	
 	<Solid id="155:2" name="Quartz Pillar" side="quartz_block_lines.png" top="quartz_block_lines_top.png" />
-	
 	<Log id="155:3" name="Quartz Pillar North/South" side="quartz_block_lines.png" top="quartz_block_lines_top.png" />
-	
 	<Log id="155:4" name="Quartz Pillar East/West" side="quartz_block_lines.png" top="quartz_block_lines_top.png" />
 	
 	<Stairs id="156" name="Quartz Stairs" texture="quartz_block_top.png" />
@@ -496,10 +467,39 @@
 	<Solid id="159:14" name="Red stained clay"  texture="hardened_clay_stained_red.png" />
 	<Solid id="159:15" name="Black stained clay"  texture="hardened_clay_stained_black.png" />
 	
+	<GlassPane id="160:0" name="White Stained Glass Pane" texture="glass_white.png" />
+	<GlassPane id="160:1" name="Orange Stained Glass Pane" texture="glass_orange.png" />
+	<GlassPane id="160:2" name="Magenta Stained Glass Pane" texture="glass_magenta.png" />
+	<GlassPane id="160:3" name="Light Blue Stained Glass Pane" texture="glass_light_blue.png" />
+	<GlassPane id="160:4" name="Yellow Stained Glass Pane" texture="glass_yellow.png" />
+	<GlassPane id="160:5" name="Lime Stained Glass Pane" texture="glass_lime.png" />
+	<GlassPane id="160:6" name="Pink Stained Glass Pane" texture="glass_pink.png" />
+	<GlassPane id="160:7" name="Gray Stained Glass Pane" texture="glass_gray.png" />
+	<GlassPane id="160:8" name="Light Gray Stained Glass Pane" texture="glass_silver.png" />
+	<GlassPane id="160:9" name="Cyan Stained Glass Pane" texture="glass_cyan.png" />
+	<GlassPane id="160:10" name="Purple Stained Glass Pane" texture="glass_purple.png" />
+	<GlassPane id="160:11" name="Blue Stained Glass Pane" texture="glass_blue.png" />
+	<GlassPane id="160:12" name="Brown Stained Glass Pane" texture="glass_brown.png" />
+	<GlassPane id="160:13" name="Green Stained Glass Pane" texture="glass_green.png" />
+	<GlassPane id="160:14" name="Red Stained Glass Pane" texture="glass_red.png" />
+	<GlassPane id="160:15" name="Black Stained Glass Pane" texture="glass_black.png" />
+	
+	<Leaves id="161:0" name="Acacia Leaves" texture="leaves_acacia.png" color="" />
+	<Leaves id="161:1" name="Dark Oak Leaves" texture="leaves_big_oak.png" color="" />
+        
+	<Log id="162:0" name="Acacia Wood" side="log_acacia.png" top="log_acacia_top.png" />
+	<Log id="162:1" name="Dark Oak Wood" side="log_big_oak.png" top="log_big_oak_top.png" />
+	<Log id="162:4" name="Acacia Wood East/West" side="log_acacia.png" top="log_acacia_top.png" />
+	<Log id="162:5" name="Dark Oak Wood East/West" side="log_big_oak.png" top="log_big_oak_top.png" />
+	<Log id="162:8" name="Acacia Wood North/South" side="log_acacia.png" top="log_acacia_top.png" />
+	<Log id="162:9" name="Dark Oak Wood North/South" side="log_big_oak.png" top="log_big_oak_top.png" />
+	
+	<Stairs id="163" name="Acacia Wood Stairs" texture="planks_acacia.png" />
+	
+	<Stairs id="164" name="Dark Oak Wood Stairs" texture="planks_big_oak.png" />
+	
 	<Log id="170:0" name="Hay Block" side="hay_block_side.png" top="hay_block_top.png" />
-	
 	<Log id="170:8" name="Hay Block North/South" side="hay_block_side.png" top="hay_block_top.png" />
-	
 	<Log id="170:4" name="Hay Block East/West" side="hay_block_side.png" top="hay_block_top.png" />
 	
 	<Carpet id="171:0" name="White carpet"  texture="wool_colored_white.png" />
@@ -523,4 +523,12 @@
 	
 	<Solid id="173" name="Coal Block"  texture="coal_block.png" />
 	
+	<Solid id="174" name="Packed Ice" texture="ice_packed.png" />
+	
+	<Plant id="175:0" name="Sunflower" texture="double_plant_sunflower_front.png" />
+	<Plant id="175:1" name="Lilac" texture="double_plant_syringa_top.png" />
+	<Plant id="175:2" name="Double Tall Grass" texture="double_plant_grass_top.png" />
+	<Plant id="175:3" name="Large Fern" texture="double_plant_fern_top.png" />
+	<Plant id="175:4" name="Rose Bush" texture="double_plant_rose_top.png" />
+	<Plant id="175:5" name="Peony" texture="double_plant_paeonia_top.png" />
 </blockConfig>
