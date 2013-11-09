@@ -51,6 +51,7 @@ import java.util.Map;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
+import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
@@ -242,8 +243,8 @@ public class LwjglRasteriser implements Rasteriser
 	public void printInfo()
 	{
 		System.out.println(" -- Lwjgl Rasteriser -- ");
+		System.out.println("\tLWJGL version: " + Sys.getVersion());
 		System.out.println("\ttype: "+type);
-		
 		System.out.println("\twidth: "+width);
 		System.out.println("\theigth: "+height);
 		System.out.println("\tpBuffer: "+pbuffer);

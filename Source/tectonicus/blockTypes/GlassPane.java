@@ -97,13 +97,13 @@ public class GlassPane implements BlockType
 		BlockType east = world.getBlockType(chunk.getChunkCoord(), x+1, y, z);
 		BlockType west = world.getBlockType(chunk.getChunkCoord(), x-1, y, z);
 		
-		boolean hasNorth = north instanceof GlassPane;
-		boolean hasSouth = south instanceof GlassPane;
-		boolean hasEast = east instanceof GlassPane;
-		boolean hasWest = west instanceof GlassPane;
+		boolean hasNorth = north instanceof GlassPane || north instanceof Glass;
+		boolean hasSouth = south instanceof GlassPane || south instanceof Glass;
+		boolean hasEast = east instanceof GlassPane || east instanceof Glass;
+		boolean hasWest = west instanceof GlassPane || west instanceof Glass;
 		
 		// TODO: Fix textures for GlassPanes
-		// GlassPanes will connect to any other GlassPanes (including Iron Bars) or Solid blocks
+		// GlassPanes will connect to any other GlassPanes (including Iron Bars), Glass blocks, or any Solid blocks
 		
 		if ((!hasNorth && !hasSouth && !hasEast && !hasWest) && (!north.isSolid() && !south.isSolid() && !east.isSolid() && !west.isSolid()))
 		{

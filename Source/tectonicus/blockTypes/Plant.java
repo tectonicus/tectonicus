@@ -163,7 +163,6 @@ public class Plant implements BlockType
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 			Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
 			Colour4f colour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
-			System.out.println(this.getName());
 			return colour;
 			
 			//return new Colour4f(1, 1, 1, 1);
