@@ -402,4 +402,135 @@ public class BlockUtil
 			 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * normOffY)
 		);
 	}
+	
+	public static void addPartialBlock(Mesh mesh, final float blockX, final float blockY, final float blockZ,
+			final int offsetX, final int offsetY, final int offsetZ,
+			final int width, final int height, final int depth,
+			Vector4f colour, SubTexture texture,
+			final float topLight, final float northSouthLight, final float eastWestLight,
+			final boolean top, final boolean bottom, final boolean north, final boolean south, final boolean east, final boolean west)
+	{
+		addPartialBlock(mesh, blockX, blockY, blockZ, offsetX, offsetY, offsetZ, width, height, depth, colour, texture, topLight, northSouthLight, northSouthLight, eastWestLight, eastWestLight, top, bottom, north, south, east, west);
+	}
+	
+	public static void addPartialBlock(Mesh mesh, final float blockX, final float blockY, final float blockZ,
+			final int offsetX, final int offsetY, final int offsetZ,
+			final int width, final int height, final int depth,
+			Vector4f colour, SubTexture texture,
+			final float topLight, final float northLight, final float southLight, final float eastLight, final float westLight, 
+			final boolean top, final boolean bottom, final boolean north, final boolean south, final boolean east, final boolean west)
+	{
+		final float normOffX = (offsetX / 16.0f);
+		final float normOffY = (offsetY / 16.0f);
+		final float normOffZ = (offsetZ / 16.0f);
+		
+		final float x = blockX + normOffX;
+		final float y = blockY + normOffY;
+		final float z = blockZ + normOffZ;
+		
+		final float w = width / 16.0f;
+		final float h = height / 16.0f;
+		final float d = depth / 16.0f;
+		
+		final float uRange = texture.u1 - texture.u0;
+		final float vRange = texture.v1 - texture.v0;
+		
+		Vector4f topColour = new Vector4f(colour.x * topLight, colour.y * topLight, colour.z * topLight, colour.w);
+		Vector4f northColour = new Vector4f(colour.x * northLight, colour.y * northLight, colour.z * northLight, colour.w);
+		Vector4f southColour = new Vector4f(colour.x * southLight, colour.y * southLight, colour.z * southLight, colour.w);
+		Vector4f eastColour = new Vector4f(colour.x * eastLight, colour.y * eastLight, colour.z * eastLight, colour.w);
+		Vector4f westColour = new Vector4f(colour.x * westLight, colour.y * westLight, colour.z * westLight, colour.w);
+		
+		// Top
+		if(top)
+		{
+			Vector3f p0 = new Vector3f(x,		y + h,	z);
+			Vector3f p1 = new Vector3f(x + w,	y + h,	z);
+			Vector3f p2 = new Vector3f(x + w,	y + h,	z + d);
+			Vector3f p3 =  new Vector3f(x,		y + h,	z + d);
+			MeshUtil.addQuad(mesh,	p0, p1, p2, p3,
+									topColour,
+									new Vector2f(texture.u0 + uRange * normOffX,		texture.v0 + vRange * normOffZ),
+									new Vector2f(texture.u0 + uRange * (normOffX + w),	texture.v0 + vRange * normOffZ),
+									new Vector2f(texture.u0 + uRange * (normOffX + w),	texture.v0 + vRange * (normOffZ + d)),
+									new Vector2f(texture.u0 + uRange * normOffX,		texture.v0 + vRange * (normOffZ + d))
+			);
+		}
+
+		// Bottom
+		if(bottom)
+		{
+			Vector3f p0 = new Vector3f(x,		y,	z);
+			Vector3f p1 = new Vector3f(x + w,	y,	z);
+			Vector3f p2 = new Vector3f(x + w,	y,	z + d);
+			Vector3f p3 =  new Vector3f(x,		y,	z + d);
+			MeshUtil.addQuad(mesh,	p3, p2, p1, p0,
+									topColour,
+									new Vector2f(texture.u0 + uRange * normOffX,		texture.v0 + vRange * normOffZ),
+									new Vector2f(texture.u0 + uRange * (normOffX + w),	texture.v0 + vRange * normOffZ),
+									new Vector2f(texture.u0 + uRange * (normOffX + w),	texture.v0 + vRange * (normOffZ + d)),
+									new Vector2f(texture.u0 + uRange * normOffX,		texture.v0 + vRange * (normOffZ + d))
+			);
+		}
+		
+		// East
+		if(east)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x,	y + h,	z),
+				 					new Vector3f(x,	y + h,	z + d),
+				 					new Vector3f(x,	y,		z + d),
+				 					new Vector3f(x,	y,		z),
+				 					eastColour,
+				 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * normOffY),
+				 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * normOffY)
+			);
+		}
+		
+		// West
+		if(west)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x + w,	y + h,	z + d),
+				 					new Vector3f(x + w,	y + h,	z),
+				 					new Vector3f(x + w,	y,		z),
+				 					new Vector3f(x + w,	y,		z + d),
+				 					westColour,
+				 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u0 + uRange * (normOffZ + d),		texture.v1 - vRange * normOffY),
+				 					new Vector2f(texture.u0 + uRange * normOffZ,			texture.v1 - vRange * normOffY)
+			);
+		}
+
+		// north
+		if(north)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x + w,	y + h,	z),
+				 					new Vector3f(x,		y + h,	z),
+				 					new Vector3f(x,		y,		z),
+				 					new Vector3f(x + w,	y,		z ),
+				 					northColour,
+				 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * normOffY),
+				 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * normOffY)
+			);
+		}
+		
+		// South
+		if(south)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x,		y + h,	z + d),
+				 					new Vector3f(x + w,	y + h,	z + d),
+				 					new Vector3f(x + w,	y,		z + d),
+				 					new Vector3f(x,		y,		z + d),
+				 					southColour,
+				 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * (normOffY + h)),
+				 					new Vector2f(texture.u1 - uRange * normOffX,			texture.v1 - vRange * normOffY),
+				 					new Vector2f(texture.u1 - uRange * (normOffX + w),		texture.v1 - vRange * normOffY)
+			);
+		}
+	}
 }

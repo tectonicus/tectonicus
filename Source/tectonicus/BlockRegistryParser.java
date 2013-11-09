@@ -560,7 +560,7 @@ public class BlockRegistryParser
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new GlassPane(name, id.id, texture);
+			blockType = new GlassPane(name, texture);
 		}
 		else if (nodeName.equals("pistonbase"))
 		{

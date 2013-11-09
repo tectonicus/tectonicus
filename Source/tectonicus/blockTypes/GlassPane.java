@@ -37,7 +37,6 @@
 package tectonicus.blockTypes;
 
 import org.lwjgl.util.vector.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
@@ -50,13 +49,11 @@ import tectonicus.texture.SubTexture;
 public class GlassPane implements BlockType
 {
 	private final String name;
-	private final int blockId;
 	private final SubTexture texture;
 	
-	public GlassPane(String name, final int blockId, SubTexture texture)
+	public GlassPane(String name, SubTexture texture)
 	{
 		this.name = name;
-		this.blockId = blockId;
 		this.texture = texture;
 	}
 
@@ -95,50 +92,54 @@ public class GlassPane implements BlockType
 		final float northSouthLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
 		final float eastWestLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.EastWest);
 		
-		//TODO: Fix GlassPanes so they work better
+		BlockType north = world.getBlockType(chunk.getChunkCoord(), x, y, z-1);
+		BlockType south = world.getBlockType(chunk.getChunkCoord(), x, y, z+1);
+		BlockType east = world.getBlockType(chunk.getChunkCoord(), x+1, y, z);
+		BlockType west = world.getBlockType(chunk.getChunkCoord(), x-1, y, z);
 		
-		// Auto-connect to adjacent fences
+		boolean hasNorth = north instanceof GlassPane;
+		boolean hasSouth = south instanceof GlassPane;
+		boolean hasEast = east instanceof GlassPane;
+		boolean hasWest = west instanceof GlassPane;
 		
-		// Bars are two wide and three high
+		// TODO: Fix textures for GlassPanes
+		// GlassPanes will connect to any other GlassPanes (including Iron Bars) or Solid blocks
 		
-		// North
-		boolean hasNorth = world.getBlockId(chunk.getChunkCoord(), x-1, y, z) == blockId;
-		boolean hasSouth = world.getBlockId(chunk.getChunkCoord(), x+1, y, z) == blockId;
-		boolean hasEast = world.getBlockId(chunk.getChunkCoord(), x, y, z-1) == blockId;
-		boolean hasWest = world.getBlockId(chunk.getChunkCoord(), x, y, z+1) == blockId;
-		
-		if (!hasNorth && !hasSouth && !hasEast && !hasWest)
+		if ((!hasNorth && !hasSouth && !hasEast && !hasWest) && (!north.isSolid() && !south.isSolid() && !east.isSolid() && !west.isSolid()))
 		{
 			hasNorth = hasSouth = hasEast = hasWest = true;
 		}
 		
-		if (hasNorth)
+		if (hasNorth || north.isSolid())
 		{
-			BlockUtil.addBlock(mesh, x, y, z,	0, 0, 7,
-												8, 16, 2,
-												colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addPartialBlock(mesh, x, y, z,	7, 0, 0,
+														2, 16, 9,
+														colour, texture, topLight, northSouthLight, eastWestLight,
+														true, true, false, true, true, true);
 		}
 		
-		if (hasSouth)
+		if (hasSouth || south.isSolid())
 		{
-			BlockUtil.addBlock(mesh, x, y, z,	8, 0, 7,
-												8, 16, 2,
-												colour, texture, topLight, northSouthLight, eastWestLight);
-			
+			BlockUtil.addPartialBlock(mesh, x, y, z,	7, 0, 7,
+														2, 16, 9,
+														colour, texture, topLight, northSouthLight, eastWestLight,
+														true, true, true, false, true, true);			
 		}
 		
-		if (hasEast)
+		if (hasEast || east.isSolid())
 		{
-			BlockUtil.addBlock(mesh, x, y, z,	7, 0, 0,
-												2, 16, 8,
-												colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addPartialBlock(mesh, x, y, z,	7, 0, 7,
+														9, 16, 2,
+														colour, texture, topLight, northSouthLight, eastWestLight,
+														true, true, true, true, false, true);
 		}
 		
-		if (hasWest)
+		if (hasWest || west.isSolid())
 		{
-			BlockUtil.addBlock(mesh, x, y, z,	7, 0, 8,
-												2, 16, 8,
-												colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addPartialBlock(mesh, x, y, z,	0, 0, 7,
+														9, 16, 2,
+														colour, texture, topLight, northSouthLight, eastWestLight,
+														true, true, true, true, true, false);
 		}
 	}
 }
