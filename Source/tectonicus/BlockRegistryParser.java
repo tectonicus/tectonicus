@@ -341,8 +341,10 @@ public class BlockRegistryParser
 		else if (nodeName.equals("plant"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
+			SubTexture top = parseTexture(element, "top", texture);
+			SubTexture bottom = parseTexture(element, "bottom", texture);
 			
-			blockType = new Plant(name, texture);
+			blockType = new Plant(name, id.id, top, bottom);
 		}
 		else if (nodeName.equals("tallgrass"))
 		{

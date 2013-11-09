@@ -525,10 +525,10 @@
 	
 	<Solid id="174" name="Packed Ice" texture="ice_packed.png" />
 	
-	<Plant id="175:0" name="Sunflower" texture="double_plant_sunflower_front.png" />
-	<Plant id="175:1" name="Lilac" texture="double_plant_syringa_top.png" />
-	<Plant id="175:2" name="Double Tall Grass" texture="double_plant_grass_top.png" />
-	<Plant id="175:3" name="Large Fern" texture="double_plant_fern_top.png" />
-	<Plant id="175:4" name="Rose Bush" texture="double_plant_rose_top.png" />
-	<Plant id="175:5" name="Peony" texture="double_plant_paeonia_top.png" />
+	<Plant id="175:0" name="Sunflower" top="double_plant_sunflower_front.png" bottom="double_plant_sunflower_bottom.png" />
+	<Plant id="175:1" name="Lilac" top="double_plant_syringa_top.png" bottom="double_plant_syringa_bottom.png" />
+	<Plant id="175:2" name="Double Tall Grass" top="double_plant_grass_top.png" bottom="double_plant_grass_bottom.png" />
+	<Plant id="175:3" name="Large Fern" top="double_plant_fern_top.png" bottom="double_plant_fern_bottom.png" />
+	<Plant id="175:4" name="Rose Bush" top="double_plant_rose_top.png" bottom="double_plant_rose_bottom.png" />
+	<Plant id="175:5" name="Peony" top="double_plant_paeonia_top.png" bottom="double_plant_paeonia_bottom.png" />
 </blockConfig>

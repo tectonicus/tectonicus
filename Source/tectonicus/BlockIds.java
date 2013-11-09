@@ -137,6 +137,7 @@ public class BlockIds
 	public static final int FENCE_GATE				= 107;
 	public static final int WALL					= 139;
 	public static final int TRAPPED_CHEST			= 146;
+	public static final int LARGE_FLOWERS			= 175;
 
 	// Enum thoughts:
 	//	using a proper enum instead of constants would be nice for typesafety
