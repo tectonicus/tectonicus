@@ -43,8 +43,8 @@
 		
 		<javac srcdir="${Source}"
 				destdir="${FactoryFloor}/Binary"
-				source="1.5"
-				target="1.5"
+				source="1.7"
+				target="1.7"
 				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/dzzd.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
 				debug="true"
 				debuglevel="lines,source"

@@ -91,6 +91,7 @@ import tectonicus.blockTypes.Lilly;
 import tectonicus.blockTypes.Log;
 import tectonicus.blockTypes.MinecartTracks;
 import tectonicus.blockTypes.NetherWart;
+import tectonicus.blockTypes.Painting;
 import tectonicus.blockTypes.PistonBase;
 import tectonicus.blockTypes.PistonExtension;
 import tectonicus.blockTypes.Plant;
@@ -746,6 +747,12 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 		 	
 		 	blockType = new Carpet(name, texture);
+		}
+		else if (nodeName.equals("painting"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+		 	
+		 	blockType = new Painting(name, texture);
 		}
 		else
 		{

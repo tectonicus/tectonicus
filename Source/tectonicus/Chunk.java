@@ -42,7 +42,6 @@ import java.util.ArrayList;
 
 import org.jnbt.NBTInputStream.Compression;
 import org.lwjgl.util.vector.Vector3f;
-
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
@@ -155,6 +154,29 @@ public class Chunk
 				}
 			}
 		}
+		
+		BlockType type = registry.find(-1, 0);
+		type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
+		//System.out.println(type.getName());
+		/*for (TileEntity p : rawChunk.getPaintings())
+		{
+			if (p.dir == 0)
+			{
+				type.addEdgeGeometry(p.localX, p.localY, p.localZ+1, world, registry, rawChunk, geometry);
+			}
+			else if (p.dir == 1)
+			{
+				type.addEdgeGeometry(p.localX-1, p.localY, p.localZ, world, registry, rawChunk, geometry);
+			}
+			else if (p.dir == 2)
+			{
+				type.addEdgeGeometry(p.localX, p.localY, p.localZ-1, world, registry, rawChunk, geometry);
+			}
+			else if (p.dir == 3)
+			{
+				type.addEdgeGeometry(p.localX+1, p.localY, p.localZ, world, registry, rawChunk, geometry);
+			}
+		}*/
 		
 		/*
 		for (int y=0; y<RawChunk.HEIGHT; y++)

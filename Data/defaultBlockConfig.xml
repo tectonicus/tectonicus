@@ -531,4 +531,6 @@
 	<Plant id="175:3" name="Large Fern" top="double_plant_fern_top.png" bottom="double_plant_fern_bottom.png" />
 	<Plant id="175:4" name="Rose Bush" top="double_plant_rose_top.png" bottom="double_plant_rose_bottom.png" />
 	<Plant id="175:5" name="Peony" top="double_plant_paeonia_top.png" bottom="double_plant_paeonia_bottom.png" />
+	
+	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
 </blockConfig>

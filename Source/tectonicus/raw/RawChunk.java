@@ -44,8 +44,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.jnbt.ByteArrayTag;
+import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
 import org.jnbt.ListTag;
@@ -53,7 +53,6 @@ import org.jnbt.NBTInputStream;
 import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
-
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
 
@@ -81,6 +80,7 @@ public class RawChunk
 	
 	private ArrayList<RawSign> signs;
 	private ArrayList<TileEntity> flowerPots;
+	private ArrayList<TileEntity> paintings;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -117,6 +117,7 @@ public class RawChunk
 	{
 		signs = new ArrayList<RawSign>();
 		flowerPots = new ArrayList<TileEntity>();
+		paintings = new ArrayList<TileEntity>();
 		sections = new Section[MAX_SECTIONS];
 	}
 	
@@ -157,6 +158,39 @@ public class RawChunk
 					{
 						// Parse as McRegion format
 						parseMcRegionData(level);
+					}
+					
+					ListTag entitiesTag = NbtUtil.getChild(level, "Entities", ListTag.class);
+					if (entitiesTag != null)
+					{
+						for (Tag t : entitiesTag.getValue())
+						{
+							if (t instanceof CompoundTag)
+							{
+								CompoundTag entity = (CompoundTag)t;
+								
+								StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
+								if (idTag.getValue().endsWith("Painting"))
+								{
+									StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
+									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
+									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
+									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
+									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
+									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + xTag.getValue() + ", " + yTag.getValue() + ", " + zTag.getValue());
+									
+									final int x = xTag.getValue();
+									final int y = yTag.getValue();
+									final int z = zTag.getValue();
+									
+									final int localX = x-(blockX*WIDTH);
+									final int localY  = y-(blockY*HEIGHT);
+									final int localZ = z-(blockZ*DEPTH);
+									
+									paintings.add(new TileEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), dir.getValue()));
+								}
+							}
+						}
 					}
 					
 					ListTag tileEntitiesTag = NbtUtil.getChild(level, "TileEntities", ListTag.class);
@@ -706,6 +740,11 @@ public class RawChunk
 	public ArrayList<TileEntity> getFlowerPots()
 	{
 		return new ArrayList<TileEntity>(flowerPots);
+	}
+	
+	public ArrayList<TileEntity> getPaintings()
+	{
+		return new ArrayList<TileEntity>(paintings);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)
