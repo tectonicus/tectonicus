@@ -34,12 +34,12 @@
 	<Solid id="5:4" name="Acacia Wooden Plank" texture="planks_acacia.png" />
 	<Solid id="5:5" name="Dark Oak Wooden Plank" texture="planks_big_oak.png" />
 	
-	<Sapling id="6:0" name="Oak Sapling" texture="sapling_oak.png" />
-	<Sapling id="6:1" name="Spruce Sapling" texture="sapling_spruce.png" />
-	<Sapling id="6:2" name="Birch Sapling" texture="sapling_birch.png" />
-	<Sapling id="6:3" name="Jungle Sapling" texture="sapling_jungle.png" />
-	<Sapling id="6:4" name="Acacia Sapling" texture="sapling_acacia.png" />
-	<Sapling id="6:5" name="Dark Oak Sapling" texture="sapling_roofed_oak.png" />
+	<Plant id="6:0" name="Oak Sapling" texture="sapling_oak.png" />
+	<Plant id="6:1" name="Spruce Sapling" texture="sapling_spruce.png" />
+	<Plant id="6:2" name="Birch Sapling" texture="sapling_birch.png" />
+	<Plant id="6:3" name="Jungle Sapling" texture="sapling_jungle.png" />
+	<Plant id="6:4" name="Acacia Sapling" texture="sapling_acacia.png" />
+	<Plant id="6:5" name="Dark Oak Sapling" texture="sapling_roofed_oak.png" />
 	
 	<Solid id="7" name="Bedrock" texture="bedrock.png" />
 	

@@ -98,7 +98,6 @@ import tectonicus.blockTypes.Portal;
 import tectonicus.blockTypes.PressurePlate;
 import tectonicus.blockTypes.RedstoneRepeater;
 import tectonicus.blockTypes.RedstoneWire;
-import tectonicus.blockTypes.Sapling;
 import tectonicus.blockTypes.Sign;
 import tectonicus.blockTypes.Slab;
 import tectonicus.blockTypes.Snow;
@@ -271,14 +270,6 @@ public class BlockRegistryParser
 					: Grass.BetterGrassMode.None;
 			
 			blockType = new Grass(name, betterGrass, side, grassSide, snowSide, top, bottom, biomeCache, texturePack);
-		}
-		else if (nodeName.equals("sapling"))
-		{
-			SubTexture texture = parseTexture(element, "texture", null);
-			
-			blockType = new Sapling(name, texture);
-			// counter bit is 0x8
-			registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("log"))
 		{
@@ -774,7 +765,7 @@ public class BlockRegistryParser
 	{
 		if (!element.hasAttribute(attribName))
 			return defaultTex;
-		
+
 		String texName = element.getAttribute(attribName);
 		SubTexture result = texturePack.findTexture(texName);
 		

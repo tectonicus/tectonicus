@@ -80,6 +80,7 @@ public class RawChunk
 	private int blockX, blockY, blockZ;
 	
 	private ArrayList<RawSign> signs;
+	private ArrayList<TileEntity> flowerPots;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -115,7 +116,7 @@ public class RawChunk
 	private void clear()
 	{
 		signs = new ArrayList<RawSign>();
-		
+		flowerPots = new ArrayList<TileEntity>();
 		sections = new Section[MAX_SECTIONS];
 	}
 	
@@ -213,6 +214,27 @@ public class RawChunk
 																x, y, z,
 																localX, localY, localZ,
 																text1, text2, text3, text4) );
+									}
+									else if (id.equals("FlowerPot"))
+									{
+										IntTag dataTag = NbtUtil.getChild(entity, "Data", IntTag.class);
+										IntTag itemTag = NbtUtil.getChild(entity, "Item", IntTag.class);
+										
+										final int x = xTag.getValue();
+										final int y = yTag.getValue();
+										final int z = zTag.getValue();
+										
+										final int localX = x-(blockX*WIDTH);
+										final int localY  = y-(blockY*HEIGHT);
+										final int localZ = z-(blockZ*DEPTH);
+										
+										final int blockId = getBlockId(localX, localY, localZ);
+										final int blockData = getBlockData(localX, localY, localZ);
+										
+										final int data = dataTag.getValue();
+										final int item = itemTag.getValue();
+										
+										flowerPots.add(new TileEntity(blockId, blockData, x, y, z, localX, localY, localZ, data, item));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -679,6 +701,11 @@ public class RawChunk
 	public ArrayList<RawSign> getSigns()
 	{
 		return new ArrayList<RawSign>(signs);
+	}
+	
+	public ArrayList<TileEntity> getFlowerPots()
+	{
+		return new ArrayList<TileEntity>(flowerPots);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

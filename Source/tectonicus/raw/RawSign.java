@@ -18,7 +18,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice, this
  *     list of conditions and the following disclaimer in the documentation and/or
  *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
+ *   * Neither the name of 'Tectonicus' nor the names of
  *     its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -36,35 +36,13 @@
  */
 package tectonicus.raw;
 
-public class RawSign
+public class RawSign extends TileEntity
 {
-	public final int blockId;
-	public final int data;
-	
-	public final int x, y, z;
-	public final int localX, localY, localZ;	
-	
-	public final String text1, text2, text3, text4;
-	
-	public RawSign(final int blockId, final int data,
-					final int x, final int y, final int z,
-					final int localX, final int localY, final int localZ,
-					final String text1, final String text2, final String text3, final String text4)
+	public RawSign(int blockId, int data, int x, int y, int z, int localX,
+			int localY, int localZ, String text1, String text2, String text3,
+			String text4)
 	{
-		this.blockId = blockId;
-		this.data = data;
-		
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		
-		this.localX = localX;
-		this.localY = localY;
-		this.localZ = localZ;
-		
-		this.text1 = text1;
-		this.text2 = text2;
-		this.text3 = text3;
-		this.text4 = text4;
+		super(blockId, data, x, y, z, localX, localY, localZ, text1, text2, text3,
+				text4);
 	}
 }

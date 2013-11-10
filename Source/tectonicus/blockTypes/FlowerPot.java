@@ -47,6 +47,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
+import tectonicus.raw.TileEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -104,7 +105,7 @@ public class FlowerPot implements BlockType
 	{
 		Mesh sideMesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		Mesh dirtMesh = geometry.getMesh(dirt.texture, Geometry.MeshType.Solid);
-		Mesh plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
+		Mesh plantMesh = null;
 		
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
 		
@@ -196,16 +197,35 @@ public class FlowerPot implements BlockType
 								   colour, side);
 		
 		
-		if(data > 0 && data != 9 && data != 11)
+		// Flowerpots use a Tile Entity to store which plant they contain
+		for (TileEntity te : rawChunk.getFlowerPots())
 		{
+			if (te.localX == x && te.localY == y && te.localZ == z)
+			{
+				BlockType type = registry.find(te.item, te.data);
+				if(type instanceof Plant)
+				{
+					Plant p = (Plant)type;
+					plantMesh = geometry.getMesh(p.getTexture().texture, Geometry.MeshType.AlphaTest);
+					Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
+					//System.out.println("Name: " + p.getName() + " Item: " + te.item + " Data: " + te.data);
+				}
+			}
+		}
+		
+		if(plantMesh == null && data > 0 && data != 9 && data != 11)
+		{
+			plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
 			Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
 		}
-		else if(data == 9)
+		else if(plantMesh == null && data == 9)
 		{
+			plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
 			BlockUtil.addBlock(plantMesh, x, y, z, 6, 4, 6, 4, 16, 4, colour, plant, lightness, lightness, lightness);
 		}
-		else if(data == 11)
+		else if(plantMesh == null && data == 11)
 		{
+			plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
 			Colour4f baseColour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
 			final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
 			colour = new Vector4f(baseColour.r * lightVal, baseColour.g * lightVal, baseColour.b * lightVal, baseColour.a);

@@ -68,7 +68,11 @@ public class Plant implements BlockType
 		this.bottomTexture = bottomTexture;
 	}
 	
-
+	public SubTexture getTexture()
+	{
+		return texture;
+	}
+	
 	@Override
 	public String getName()
 	{
