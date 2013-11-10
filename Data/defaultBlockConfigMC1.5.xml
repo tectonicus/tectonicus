@@ -478,4 +478,6 @@
 	
 	<Dispenser id="158" name="Dropper" top="furnace_top.png" topBottom="dropper_front_vertical.png" side="furnace_side.png" front="dropper_front.png" />
 	
+	<Painting id="-1" name="Paintings" texture="art/kz.png" />
+	
 </blockConfig>

@@ -330,13 +330,16 @@ public class BlockRegistryParser
 			
 			blockType = new MinecartTracks(name, straight, corner, powered, isStraightOnly);
 		}
-		else if (nodeName.equals("plant"))
+		else if (nodeName.equals("plant") || nodeName.equals("sapling"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			SubTexture top = parseTexture(element, "top", texture);
 			SubTexture bottom = parseTexture(element, "bottom", texture);
 			
 			blockType = new Plant(name, id.id, top, bottom);
+			
+			if (name.contains("Sapling"))
+				registry.register(id.id, id.data | 0x8, blockType);
 		}
 		else if (nodeName.equals("tallgrass"))
 		{
