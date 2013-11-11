@@ -146,6 +146,19 @@ public class Painting implements BlockType
 			
 		for (TileEntity p : rawChunk.getPaintings())
 		{
+			int tempX = p.localX;
+			int tempY = p.localY;
+			int tempZ = p.localZ;
+			
+			if (tempZ < 0)
+				tempZ = 0;
+			//final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ);
+			//Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
+			//Vector4f colour = new Vector4f(1, 1, 1, 1);
+			//final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
+			//final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
+			//final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
+			
 			int dim1 = 16;
 			int dim2 = 16;
 			int numTilesX = 1;
@@ -295,12 +308,18 @@ public class Painting implements BlockType
 			{
 				x = numTilesX > 2 ? p.localX-1 : p.localX;
 				y = numTilesY > 2 ? p.localY-1 : p.localY;
-				z = p.localZ+1;
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+				z = tempZ = p.localZ+1;
+				
+				if (tempZ < 0)
+					tempZ++;
+				if (tempZ == 16)
+					tempZ--;
+				
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
+				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
+				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 0, 0, 0, 
 													dim1, dim2, 1, colour, backing, topLight, northSouthLight, eastWestLight,
@@ -310,14 +329,20 @@ public class Painting implements BlockType
 			}
 			else if (p.dir == 1) // Facing West
 			{
-				x = p.localX-1;
+				x = tempX = p.localX-1;
 				y = numTilesY > 2 ? p.localY-1 : p.localY;
 				z = numTilesX > 2 ? p.localZ-1 : p.localZ;
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+				
+				if (tempX < 0)
+					tempX++;
+				else if (tempX == 16)
+					tempX--;
+				
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
+				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
+				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 15, 0, 0, 
 													1, dim2, dim1, colour, backing, topLight, northSouthLight, eastWestLight,
@@ -330,12 +355,18 @@ public class Painting implements BlockType
 				x = numTilesX > 1 ? p.localX-1 : p.localX;
 				x = numTilesX > 2 ? x-1 : x;
 				y = numTilesY > 2 ? p.localY-1 : p.localY;
-				z = p.localZ-1;
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+				z = tempZ = p.localZ-1;
+				
+				if (tempZ < 0)
+					tempZ++;
+				else if(tempZ == 16)
+					tempZ--;
+				
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
+				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
+				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 0, 0, 15, 
 													dim1, dim2, 1, colour, backing, topLight, northSouthLight, eastWestLight,
@@ -345,15 +376,21 @@ public class Painting implements BlockType
 			}
 			else if (p.dir == 3) // Facing East
 			{
-				x = p.localX+1;
+				x = tempX = p.localX+1;
 				y = numTilesY > 2 ? p.localY-1 : p.localY;
 				z = numTilesX > 1 ? p.localZ-1 : p.localZ;
 				z = numTilesX > 2 ? z-1 : z;
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+				
+				if (tempX < 0)
+					tempX = 0;
+				else if (tempX == 16)
+					tempX--;
+				
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
+				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
+				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 0, 0, 0, 
 													1, dim2, dim1, colour, backing, topLight, northSouthLight, eastWestLight,

@@ -177,7 +177,7 @@ public class RawChunk
 									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
 									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
 									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
-									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + xTag.getValue() + ", " + yTag.getValue() + ", " + zTag.getValue());
+									
 									
 									final int x = xTag.getValue();
 									final int y = yTag.getValue();
@@ -187,6 +187,8 @@ public class RawChunk
 									final int localY  = y-(blockY*HEIGHT);
 									final int localZ = z-(blockZ*DEPTH);
 									
+									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
+											//", " + localY + ", " + localZ);
 									paintings.add(new TileEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), dir.getValue()));
 								}
 							}
