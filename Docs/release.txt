@@ -505,3 +505,14 @@ Version 2.18
 - added Carpet(all colors), Stained Clay(all colors), Hardened Clay, Hay Block, Coal Block
 - fixed number format problem in block stats for locales that use an apostrophe as the thousands separator (Swizterland, Liechtenstein)
 - removed Wool blocktype (unnecessary redundancy)
+
+Version 2.19
+- compatible with Minecraft 1.7
+- added Acacia and Dark Oak logs, planks, slabs, and stairs, Stained glass blocks and panes, Packed Ice, Podzol, Red sand, New saplings and small flowers, Tall flowers to
+defaultBlockConfig.xml
+- added Paintings
+- fixed FlowerPots so they work with new flowers and saplings
+- changed GlassPane behavior so they work like in-game
+- fixed parsing problem when searching for minecraft jar directory
+- updated LWJGL to 2.9.0
+- switched source and target to Java 1.6 (if this causes any issues we can switch it back)

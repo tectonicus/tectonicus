@@ -6,7 +6,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.18" />
+	<property name="Version"			value="2.19" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -43,8 +43,8 @@
 		
 		<javac srcdir="${Source}"
 				destdir="${FactoryFloor}/Binary"
-				source="1.7"
-				target="1.7"
+				source="1.6"
+				target="1.6"
 				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/dzzd.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
 				debug="true"
 				debuglevel="lines,source"
