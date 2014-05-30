@@ -3,7 +3,6 @@
 	<classpathentry kind="src" path="Source"/>
 	<classpathentry kind="src" path="UnitTests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="Libs/Jars/AppleJavaExtensions.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/BiomeExtractor.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jinput.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jnbt.jar"/>
