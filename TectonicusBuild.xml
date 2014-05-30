@@ -21,10 +21,10 @@
 	<!--
 	<taskdef name="jsmoothgen" classname="net.charabia.jsmoothgen.ant.JSmoothGen" />
 	-->
-	<taskdef name="gcupload"
+	<!--<taskdef name="gcupload"
 			 classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask"
 			 classpath="${Libs}/ant-googlecode-0.0.3/ant-googlecode-0.0.3.jar"
-	/>
+	/>-->
 	
 	<!-- To build a test version, update the 'version' property above, then run this task -->
 	<target name="BuildCopy" depends="CleanBuild, CreateSingleJar, CreatePackage" />
@@ -82,8 +82,6 @@
 		<unjar src="${Jars}/json.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<unjar src="${Jars}/jpct.jar" dest="${FactoryFloor}/Temp"/>
-		
-		<unjar src="${Jars}/dzzd.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<unjar src="${Jars}/jnbt.jar" dest="${FactoryFloor}/Temp"/>
 		
@@ -183,8 +181,8 @@
 		
 		<javac srcdir="${Libs}/Json/src"
 				destdir="${FactoryFloor}/JsonBinary"
-				source="1.5"
-				target="1.5"
+				source="1.6"
+				target="1.6"
 				includeantruntime="false"
 		/>
 		

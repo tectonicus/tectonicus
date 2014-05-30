@@ -1065,13 +1065,8 @@ public class TectonicusApp
 			"liblwjgl.jnilib",
 			"liblwjgl.so",
 			"liblwjgl64.so",
-			"libopenal.so",
-			"libopenal64.so",
 			"lwjgl.dll",
-			"lwjgl64.dll",
-			"openal.dylib",
-			"OpenAL32.dll",
-			"OpenAL64.dll"
+			"lwjgl64.dll"
 		};
 		
 		Map<String, String> force64BitMapping = new HashMap<String, String>();
@@ -1080,7 +1075,6 @@ public class TectonicusApp
 		force64BitMapping.put("libjinput-linux64.so", "libjinput-linux.so");
 		force64BitMapping.put("liblwjgl64.so", "liblwjgl.so");
 		force64BitMapping.put("lwjgl64.dll", "lwjgl.dll");
-		force64BitMapping.put("OpenAL64.dll", "OpenAL32.dll");
 		
 		Map<String, String> force32BitMapping = new HashMap<String, String>();
 		force32BitMapping.put("jinput-dx8.dll", "jinput-dx8_64.dll");
@@ -1088,7 +1082,6 @@ public class TectonicusApp
 		force32BitMapping.put("libjinput-linux.so", "libjinput-linux64.so");
 		force32BitMapping.put("liblwjgl.so", "liblwjgl64.so");
 		force32BitMapping.put("lwjgl.dll", "lwjgl64.dll");
-		force32BitMapping.put("OpenAL32.dll", "OpenAL64.dll");
 		
 		File cacheDir = new File(System.getProperty("user.home"), ".tectonicus/native");
 		FileUtils.deleteDirectory(cacheDir);
