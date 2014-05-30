@@ -2,8 +2,6 @@
 
 <project name="Tectonicus" default="BuildCopy" basedir=".">
 	
-	<property file="user.properties"/>
-	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
 	<property name="Version"			value="2.19" />
@@ -18,19 +16,8 @@
 	<property name="Jars"				location="${Libs}/Jars" />
 	<property name="FactoryFloor"		location="${Dist}/FactoryFloor"/>
 	
-	<!--
-	<taskdef name="jsmoothgen" classname="net.charabia.jsmoothgen.ant.JSmoothGen" />
-	-->
-	<!--<taskdef name="gcupload"
-			 classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask"
-			 classpath="${Libs}/ant-googlecode-0.0.3/ant-googlecode-0.0.3.jar"
-	/>-->
-	
 	<!-- To build a test version, update the 'version' property above, then run this task -->
 	<target name="BuildCopy" depends="CleanBuild, CreateSingleJar, CreatePackage" />
-	
-	<!-- To upload a new version, update the 'version' property above, then run this task -->
-	<target name="BuildCopyUpload" depends="CleanBuild, CreateSingleJar, CreatePackage, Upload" />
 	
 	<target name="CleanBuild">
 		<delete failonerror="false" dir="${FactoryFloor}" />
@@ -45,7 +32,7 @@
 				destdir="${FactoryFloor}/Binary"
 				source="1.6"
 				target="1.6"
-				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/dzzd.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
+				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
 				debug="true"
 				debuglevel="lines,source"
 				verbose="false"
@@ -144,47 +131,23 @@
 		
 	</target>
 	
-	<target name="Upload">
-		
-		<fail unless="googlecode.username">
-			Missing googlecode.username
-			You have not set your google code username.
-			Rename 'example.user.properties' to 'user.properties' and fill in your account details.
-		</fail>
-		<fail unless="googlecode.password">
-			Missing googlecode.password
-			You have not set your google code password.
-			Rename 'example.user.properties' to 'user.properties' and fill in your account details.
-		</fail>
-		
-		<gcupload	projectname="tectonicus"
-					username="${googlecode.username}"
-					password="${googlecode.password}"
-					filename="${FactoryFloor}/Tectonicus_v${Version}.zip"
-					targetfilename="Tectonicus_v${Version}.zip"
-					summary="Tectonicus v${Version}"
-					labels="Featured, Type-Executable, OpSys-All"
-					verbose="true"
-		/>
-	</target>
-	
+	<!--JSmooth is very old and obsolete, eventually need to use launch4j or possibly JavaFX
 	<target name="MakeExe">
 		<jsmoothgen
 			project="${Exe}/tectonicus.jsmooth" 
 			skeletonroot="${Exe}/skeletons">
 		</jsmoothgen>
-	</target>
+	</target>-->
 	
 	<target name="CompileJsonLib">
-		<mkdir dir="${FactoryFloor}"/>
-		<mkdir dir="${FactoryFloor}/JsonBinary"/>
+		<mkdir dir="${FactoryFloor}" />
+		<mkdir dir="${FactoryFloor}/JsonBinary" />
 		
 		<javac srcdir="${Libs}/Json/src"
 				destdir="${FactoryFloor}/JsonBinary"
 				source="1.6"
 				target="1.6"
-				includeantruntime="false"
-		/>
+				includeantruntime="false" />
 		
 		<jar destfile="${FactoryFloor}/json.jar" basedir="${FactoryFloor}/JsonBinary">
 		</jar>
