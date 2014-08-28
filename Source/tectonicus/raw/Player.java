@@ -57,7 +57,7 @@ public class Player
 		position = new Vector3d();
 		inventory = new ArrayList<Item>();
 		
-		name = playerFile.getName();
+		name = playerFile.getName();  //TODO:  Need to call Mojang API in order to get the player name
 		
 		final int dotPos = name.lastIndexOf('.');
 		name = name.substring(0, dotPos);

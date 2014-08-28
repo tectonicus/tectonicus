@@ -184,7 +184,11 @@ public class Minecraft
 		if (worldDir == null)
 			return null;
 		
-		return new File(worldDir, "players");
+		File oldDir = new File(worldDir, "players");
+		if (oldDir.exists())
+			return oldDir;
+		else
+			return new File(worldDir, "playerdata");
 	}
 
 	public static File findOpsFile(File worldDir)
