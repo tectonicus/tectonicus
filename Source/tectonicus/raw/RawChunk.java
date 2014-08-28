@@ -609,7 +609,7 @@ public class RawChunk
 		final int localY = y % SECTION_HEIGHT;
 		
 		Section s = sections[sectionY];
-		if (s != null && x >= 0 && x <= 15 && z >= 0 && z <= 15)  //TODO:  Fix this
+		if (s != null && x >= 0 && x <= 15 && z >= 0 && z <= 15)  //TODO:  Fix this (workaround for painting and stair problems)
 			return s.blockData[x][localY][z];
 		else
 			return 0;
@@ -636,7 +636,7 @@ public class RawChunk
 		final int localY = y % SECTION_HEIGHT;
 		
 		Section s = sections[sectionY];
-		if (s != null)
+		if (s != null && x >= 0 && localY >= 0 && z >= 0)  //TODO: Fix this (workaround for painting and stair problems)
 			return s.skylight[x][localY][z];
 		else
 			return MAX_LIGHT-1;
@@ -663,7 +663,7 @@ public class RawChunk
 		final int localY = y % SECTION_HEIGHT;
 		
 		Section s = sections[sectionY];
-		if (s != null)
+		if (s != null && x >= 0 && localY >= 0 && z >= 0)  //TODO: Fix this (workaround for painting and stair problems)
 			return s.blocklight[x][localY][z];
 		else
 			return 0;
