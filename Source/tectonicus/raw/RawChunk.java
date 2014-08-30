@@ -150,6 +150,8 @@ public class RawChunk
 									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
 									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
 									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
+									if (dir == null)
+										dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
 									
 									
 									final int x = xTag.getValue();
