@@ -516,3 +516,7 @@ defaultBlockConfig.xml
 - fixed parsing problem when searching for minecraft jar directory
 - updated LWJGL to 2.9.0
 - switched source and target to Java 1.6 (if this causes any issues we can switch it back)
+
+Version 2.19.01
+- fixed ArrayIndexOutOfBoundsExceptions caused by paintings
+- initial support for new UUID player data files
