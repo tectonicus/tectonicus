@@ -3,6 +3,7 @@ Tectonicus
 Tectonicus generates highly detailed maps of Minecraft worlds, and lets you explore them via Google Maps with panning and zooming. You can upload the generated map to the web and let other people look around your map.
 
 It is highly configurable and is focused on creating maps that look as close to what you see in Minecraft as possible.  
+![Minecraft Castle](/SourceData/FloatingCastle.png)
 
 Basic Usage
 -----------
