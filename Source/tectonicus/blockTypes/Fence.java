@@ -12,7 +12,6 @@ package tectonicus.blockTypes;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
-import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
@@ -76,9 +75,12 @@ public class Fence implements BlockType
 		
 		// Bars are two wide and three high
 		
+		BlockType type = null;
+		
 		// North
 		final int northId = world.getBlockId(chunk.getChunkCoord(), x-1, y, z);
-		if (northId == blockId || northId == BlockIds.FENCE_GATE)
+		type = registry.find(northId, 0);
+		if (northId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
 			BlockUtil.addBlock(mesh, x, y, z,	0, 12, 7,
@@ -91,7 +93,8 @@ public class Fence implements BlockType
 		
 		// South
 		final int southId = world.getBlockId(chunk.getChunkCoord(), x+1, y, z);
-		if (southId == blockId || southId == BlockIds.FENCE_GATE)
+		type = registry.find(southId, 0);
+		if (southId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
 			BlockUtil.addBlock(mesh, x, y, z,	8, 12, 7,
@@ -104,7 +107,8 @@ public class Fence implements BlockType
 		
 		// East
 		final int eastId = world.getBlockId(chunk.getChunkCoord(), x, y, z-1);
-		if (eastId == blockId || eastId == BlockIds.FENCE_GATE)
+		type = registry.find(eastId, 0);
+		if (eastId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
 			BlockUtil.addBlock(mesh, x, y, z,	7, 12, 0,
@@ -117,7 +121,8 @@ public class Fence implements BlockType
 		
 		// West
 		final int westId = world.getBlockId(chunk.getChunkCoord(), x, y, z+1);
-		if (westId == blockId || westId == BlockIds.FENCE_GATE)
+		type = registry.find(westId, 0);
+		if (westId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
 			BlockUtil.addBlock(mesh, x, y, z,	7, 12, 8,

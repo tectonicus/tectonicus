@@ -196,7 +196,7 @@ public class World implements BlockContext
 			parser.parse("defaultBlockConfigMC1.4.xml", registry);
 		else if (useDefaultBlocks && this.textureVersion == "1.5")
 			parser.parse("defaultBlockConfigMC1.5.xml", registry);
-		else
+		else if (useDefaultBlocks)
 			parser.parse("defaultBlockConfig.xml", registry);
 		
 		if (customConfigPath != null && customConfigPath.length() > 0)

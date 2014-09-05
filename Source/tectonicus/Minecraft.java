@@ -47,7 +47,7 @@ public class Minecraft
 		
 		if(versionsDir.exists())
 		{
-			System.out.println("Searching for most recent mincraft jar...");
+			System.out.println("Searching for most recent Minecraft jar...");
 			String[] directories = versionsDir.list(new FilenameFilter() {
 			  @Override
 			  public boolean accept(File dir, String name) {

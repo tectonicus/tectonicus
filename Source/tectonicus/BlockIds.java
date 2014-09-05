@@ -107,8 +107,6 @@ public class BlockIds
 	//public static final int CAKE					= 92;
 	//public static final int REDSTONE_REPEATER_OFF	= 93;
 	//public static final int REDSTONE_REPEATER_ON	= 94;
-	public static final int FENCE_GATE				= 107;
-	public static final int WALL					= 139;
 	public static final int TRAPPED_CHEST			= 146;
 	public static final int LARGE_FLOWERS			= 175;
 

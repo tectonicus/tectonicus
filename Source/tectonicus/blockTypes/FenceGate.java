@@ -12,7 +12,6 @@ package tectonicus.blockTypes;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
-import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
@@ -73,11 +72,16 @@ public class FenceGate implements BlockType
 		final int southId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
 		final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
 		final int westId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
+		final BlockType northType = registry.find(northId, 0);
+		final BlockType southType = registry.find(southId, 0);
+		final BlockType eastType = registry.find(eastId, 0);
+		final BlockType westType = registry.find(westId, 0);
+		
 		
 		final boolean open = (data & 0x04) == 0x04;
 		final int direction = (data & 0x03);
 		
-		if ((direction == 1 || direction == 3) && (northId != BlockIds.WALL || southId != BlockIds.WALL) ) // south/north
+		if ((direction == 1 || direction == 3) && (!(northType instanceof Wall) || !(southType instanceof Wall)) ) // south/north
 		{
 			// outside posts
 			BlockUtil.addBlock(mesh, x, y, z, 7, 5,  0, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
@@ -149,7 +153,7 @@ public class FenceGate implements BlockType
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}
-		else if ((direction == 0 || direction == 2) && (eastId != BlockIds.WALL || westId != BlockIds.WALL) )// east/west
+		else if ((direction == 0 || direction == 2) && (!(eastType instanceof Wall) || !(westType instanceof Wall)) )// east/west
 		{
 			// outside posts
 			BlockUtil.addBlock(mesh, x, y, z,  0, 5, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
@@ -221,7 +225,7 @@ public class FenceGate implements BlockType
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}
-		else if ((direction == 1 || direction == 3) && (northId == BlockIds.WALL || southId == BlockIds.WALL) )  //south/north //If fence gate is connected to walls it needs to be lower
+		else if ((direction == 1 || direction == 3) && (northType instanceof Wall || southType instanceof Wall) )  //south/north //If fence gate is connected to walls it needs to be lower
 		{
 			// outside posts
 			BlockUtil.addBlock(mesh, x, y, z, 7, 2,  0, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);

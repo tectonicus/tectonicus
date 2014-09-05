@@ -18,69 +18,77 @@
 	<Solid id="1" name="Stone" texture="custom/sheet.png[1, 1]" />
 	-->
 	
-	<Solid id="1" name="Stone" texture="stone.png" />
+	<Solid id="1:0" stringId="minecraft:stone" name="Stone" texture="stone.png" />
+	<Solid id="1:1" stringId="minecraft:stone" name="Granite" texture="stone_granite.png" />
+	<Solid id="1:2" stringId="minecraft:stone" name="Polished Granite" texture="stone_granite_smooth.png" />
+	<Solid id="1:3" stringId="minecraft:stone" name="Diorite" texture="stone_diorite.png" />
+	<Solid id="1:4" stringId="minecraft:stone" name="Polished Diorite" texture="stone_diorite_smooth.png" />
+	<Solid id="1:5" stringId="minecraft:stone" name="Andesite" texture="stone_andesite.png" />
+	<Solid id="1:6" stringId="minecraft:stone" name="Polished Andesite" texture="stone_andesite_smooth.png" />
 	
-	<Grass id="2" name="Grass" betterGrass="none" dirtSide="grass_side.png" grassSide="grass_side_overlay.png" snowSide="grass_side_snowed.png" top="grass_top.png" bottom="dirt.png" />
+	<Grass id="2" stringId="minecraft:grass" name="Grass" betterGrass="none" dirtSide="grass_side.png" grassSide="grass_side_overlay.png" snowSide="grass_side_snowed.png" top="grass_top.png" bottom="dirt.png" />
 	
-	<Solid id="3" name="Dirt" texture="dirt.png" />
-	<Solid id="3:2" name="Podzol" top="dirt_podzol_top.png" side="dirt_podzol_side.png" />
+	<Solid id="3:0" stringId="minecraft:dirt" name="Dirt" texture="dirt.png" />
+	<Solid id="3:1" stringId="minecraft:dirt" name="Coarse Dirt" texture="coarse_dirt.png" />
+	<Solid id="3:2" stringId="minecraft:dirt" name="Podzol" top="dirt_podzol_top.png" side="dirt_podzol_side.png" />
 	
-	<Solid id="4" name="Cobblestone" texture="cobblestone.png" />
+	<Solid id="4" stringId="minecraft:cobblestone" name="Cobblestone" texture="cobblestone.png" />
 	
-	<Solid id="5:0" name="Oak Wooden Plank" texture="planks_oak.png" />
-	<Solid id="5:1" name="Spruce Wooden Plank" texture="planks_spruce.png" />
-	<Solid id="5:2" name="Birch Wooden Plank" texture="planks_birch.png" />
-	<Solid id="5:3" name="Jungle Wooden Plank" texture="planks_jungle.png" />
-	<Solid id="5:4" name="Acacia Wooden Plank" texture="planks_acacia.png" />
-	<Solid id="5:5" name="Dark Oak Wooden Plank" texture="planks_big_oak.png" />
+	<Solid id="5:0" stringId="minecraft:planks" name="Oak Wooden Plank" texture="planks_oak.png" />
+	<Solid id="5:1" stringId="minecraft:planks" name="Spruce Wooden Plank" texture="planks_spruce.png" />
+	<Solid id="5:2" stringId="minecraft:planks" name="Birch Wooden Plank" texture="planks_birch.png" />
+	<Solid id="5:3" stringId="minecraft:planks" name="Jungle Wooden Plank" texture="planks_jungle.png" />
+	<Solid id="5:4" stringId="minecraft:planks" name="Acacia Wooden Plank" texture="planks_acacia.png" />
+	<Solid id="5:5" stringId="minecraft:planks" name="Dark Oak Wooden Plank" texture="planks_big_oak.png" />
 	
-	<Plant id="6:0" name="Oak Sapling" texture="sapling_oak.png" />
-	<Plant id="6:1" name="Spruce Sapling" texture="sapling_spruce.png" />
-	<Plant id="6:2" name="Birch Sapling" texture="sapling_birch.png" />
-	<Plant id="6:3" name="Jungle Sapling" texture="sapling_jungle.png" />
-	<Plant id="6:4" name="Acacia Sapling" texture="sapling_acacia.png" />
-	<Plant id="6:5" name="Dark Oak Sapling" texture="sapling_roofed_oak.png" />
+	<Plant id="6:0" stringId="minecraft:sapling" name="Oak Sapling" texture="sapling_oak.png" />
+	<Plant id="6:1" stringId="minecraft:sapling" name="Spruce Sapling" texture="sapling_spruce.png" />
+	<Plant id="6:2" stringId="minecraft:sapling" name="Birch Sapling" texture="sapling_birch.png" />
+	<Plant id="6:3" stringId="minecraft:sapling" name="Jungle Sapling" texture="sapling_jungle.png" />
+	<Plant id="6:4" stringId="minecraft:sapling" name="Acacia Sapling" texture="sapling_acacia.png" />
+	<Plant id="6:5" stringId="minecraft:sapling" name="Dark Oak Sapling" texture="sapling_roofed_oak.png" />
 	
-	<Solid id="7" name="Bedrock" texture="bedrock.png" />
+	<Solid id="7" stringId="minecraft:bedrock" name="Bedrock" texture="bedrock.png" />
 	
-	<Water id="8" name="Water" texture="water_still.png" />
+	<Water id="8" stringId="minecraft:flowing_water" name="Water" texture="water_still.png" />
 	
-	<Water id="9" name="Water" texture="water_still.png" />
+	<Water id="9" stringId="minecraft:water" name="Water" texture="water_still.png" />
 	
-	<Solid id="10" name="Lava" texture="lava_still.png" />	
+	<Solid id="10" stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" />	
 	
-	<Solid id="11" name="Lava" texture="lava_still.png" />
+	<Solid id="11" stringId="minecraft:lava" name="Lava" texture="lava_still.png" />
 	
-	<Solid id="12:0" name="Sand" texture="sand.png" />
-	<Solid id="12:1" name="Red Sand" texture="red_sand.png" />
+	<Solid id="12:0" stringId="minecraft:sand" name="Sand" texture="sand.png" />
+	<Solid id="12:1" stringId="minecraft:sand" name="Red Sand" texture="red_sand.png" />
 	
-	<Solid id="13" name="Gravel" texture="gravel.png" />
+	<Solid id="13" stringId="minecraft:gravel" name="Gravel" texture="gravel.png" />
 	
-	<Solid id="14" name="Gold Ore" texture="gold_ore.png" />
+	<Solid id="14" stringId="minecraft:gold_ore" name="Gold Ore" texture="gold_ore.png" />
 	
-	<Solid id="15" name="Iron Ore" texture="iron_ore.png" />
+	<Solid id="15" stringId="minecraft:iron_ore" name="Iron Ore" texture="iron_ore.png" />
 	
-	<Solid id="16" name="Coal Ore" texture="coal_ore.png" />
+	<Solid id="16" stringId="minecraft:coal_ore" name="Coal Ore" texture="coal_ore.png" />
 	
-	<Log id="17:0" name="Oak Wood" side="log_oak.png" top="log_oak_top.png" />
-	<Log id="17:1" name="Spruce Wood" side="log_spruce.png" top="log_spruce_top.png" />
-	<Log id="17:2" name="Birch Wood" side="log_birch.png" top="log_birch_top.png" />
-	<Log id="17:3" name="Jungle Wood" side="log_jungle.png" top="log_jungle_top.png" />
-	<Log id="17:4" name="Oak Wood East/West" side="log_oak.png" top="log_oak_top.png" />
-	<Log id="17:5" name="Spruce Wood East/West" side="log_spruce.png" top="log_spruce_top.png" />
-	<Log id="17:6" name="Birch Wood East/West" side="log_birch.png" top="log_birch_top.png" />
-	<Log id="17:7" name="Jungle Wood East/West" side="log_jungle.png" top="log_jungle_top.png" />
-	<Log id="17:8" name="Oak Wood North/South" side="log_oak.png" top="log_oak_top.png" />
-	<Log id="17:9" name="Spruce Wood North/South" side="log_spruce.png" top="log_spruce_top.png" />
-	<Log id="17:10" name="Birch Wood North/South" side="log_birch.png" top="log_birch_top.png" />
-	<Log id="17:11" name="Jungle Wood North/South" side="log_jungle.png" top="log_jungle_top.png" />
+	<Log id="17:0" stringId="minecraft:log" name="Oak Wood" side="log_oak.png" top="log_oak_top.png" />
+	<Log id="17:1" stringId="minecraft:log" name="Spruce Wood" side="log_spruce.png" top="log_spruce_top.png" />
+	<Log id="17:2" stringId="minecraft:log" name="Birch Wood" side="log_birch.png" top="log_birch_top.png" />
+	<Log id="17:3" stringId="minecraft:log" name="Jungle Wood" side="log_jungle.png" top="log_jungle_top.png" />
+	<Log id="17:4" stringId="minecraft:log" name="Oak Wood East/West" side="log_oak.png" top="log_oak_top.png" />
+	<Log id="17:5" stringId="minecraft:log" name="Spruce Wood East/West" side="log_spruce.png" top="log_spruce_top.png" />
+	<Log id="17:6" stringId="minecraft:log" name="Birch Wood East/West" side="log_birch.png" top="log_birch_top.png" />
+	<Log id="17:7" stringId="minecraft:log" name="Jungle Wood East/West" side="log_jungle.png" top="log_jungle_top.png" />
+	<Log id="17:8" stringId="minecraft:log" name="Oak Wood North/South" side="log_oak.png" top="log_oak_top.png" />
+	<Log id="17:9" stringId="minecraft:log" name="Spruce Wood North/South" side="log_spruce.png" top="log_spruce_top.png" />
+	<Log id="17:10" stringId="minecraft:log" name="Birch Wood North/South" side="log_birch.png" top="log_birch_top.png" />
+	<Log id="17:11" stringId="minecraft:log" name="Jungle Wood North/South" side="log_jungle.png" top="log_jungle_top.png" />
 
 	<Leaves id="18:0" name="Oak Leaves" texture="leaves_oak.png" color="" />  <!-- color="#48b518" -->
 	<Leaves id="18:1" name="Spruce Leaves" texture="leaves_spruce.png" color="#619961" />
 	<Leaves id="18:2" name="Birch Leaves" texture="leaves_birch.png" color="#80a755" />
 	<Leaves id="18:3" name="Jungle Leaves" texture="leaves_jungle.png" color="" /><!-- color="#48b518" -->
 
-	<Solid id="19" name="Sponge" texture="sponge.png" />
+	<Solid id="19:0" stringId="minecraft:sponge" name="Sponge" texture="sponge.png" />
+	<Solid id="19:1" stringId="minecraft:sponge" name="Wet Sponge" texture="sponge_wet.png" />
 	
 	<Glass id="20" name="Glass" texture="glass.png" />
 	
@@ -91,8 +99,8 @@
 	<Dispenser id="23" name="Dispenser" top="furnace_top.png" topBottom="dispenser_front_vertical.png" side="furnace_side.png" front="dispenser_front_horizontal.png" />
 	
 	<Solid id="24:0" name="Sandstone" side="sandstone_normal.png" top="sandstone_top.png" bottom="sandstone_bottom.png" />
-	<Solid id="24:1" name="Sandstone" side="sandstone_carved.png" top="sandstone_top.png" />
-	<Solid id="24:2" name="Sandstone" side="sandstone_smooth.png" top="sandstone_top.png" />
+	<Solid id="24:1" name="Chiseled Sandstone" side="sandstone_carved.png" top="sandstone_top.png" />
+	<Solid id="24:2" name="Smooth Sandstone" side="sandstone_smooth.png" top="sandstone_top.png" />
 
 	<Solid id="25" name="Note Block" texture="noteblock.png" />
 	
@@ -498,6 +506,18 @@
 	
 	<Stairs id="164" name="Dark Oak Wood Stairs" texture="planks_big_oak.png" />
 	
+	<Glass id="165" stringId="minecraft:slime" name="Slime Block"  texture="slime.png" />
+	
+	<Plant id="166" stringId="minecraft:barrier" name="Barrier" texture="assets/minecraft/textures/items/barrier.png" />
+	
+	<Trapdoor id="167" stringId="minecraft:iron_trapdoor" name="Iron Trapdoor" texture="iron_trapdoor.png" />
+	
+	<Solid id="168:0" stringId="minecraft:prismarine" name="Prismarine"  texture="prismarine_rough.png" />
+	<Solid id="168:1" stringId="minecraft:prismarine" name="Prismarine Bricks"  texture="prismarine_bricks.png" />
+	<Solid id="168:2" stringId="minecraft:prismarine" name="Dark Prismarine"  texture="prismarine_dark.png" />
+	
+	<Solid id="169" stringId="minecraft:sea_lantern" name="Sea Lantern"  texture="sea_lantern.png" />
+	
 	<Log id="170:0" name="Hay Block" side="hay_block_side.png" top="hay_block_top.png" />
 	<Log id="170:8" name="Hay Block North/South" side="hay_block_side.png" top="hay_block_top.png" />
 	<Log id="170:4" name="Hay Block East/West" side="hay_block_side.png" top="hay_block_top.png" />
@@ -531,6 +551,48 @@
 	<Plant id="175:3" name="Large Fern" top="double_plant_fern_top.png" bottom="double_plant_fern_bottom.png" />
 	<Plant id="175:4" name="Rose Bush" top="double_plant_rose_top.png" bottom="double_plant_rose_bottom.png" />
 	<Plant id="175:5" name="Peony" top="double_plant_paeonia_top.png" bottom="double_plant_paeonia_bottom.png" />
+	
+	<DaylightSensor id="178" stringId="minecraft:daylight_detector_inverted" name="Inverted Daylight Sensor" top="daylight_detector_inverted_top.png" bottom="daylight_detector_side.png" />
+	
+	<Solid id="179:0" stringId="minecraft:red_sandstone" name="Red Sandstone" side="red_sandstone_normal.png" top="red_sandstone_top.png" bottom="red_sandstone_bottom.png" />
+	<Solid id="179:1" stringId="minecraft:red_sandstone" name="Chiseled Red Sandstone" side="red_sandstone_carved.png" top="red_sandstone_top.png" />
+	<Solid id="179:2" stringId="minecraft:red_sandstone" name="Smooth Red Sandstone" side="red_sandstone_smooth.png" top="red_sandstone_top.png" />
+	
+	<Stairs id="180" stringId="minecraft:red_sandstone_stairs" name="Red Sandstone Stairs" texture="red_sandstone_normal.png" />
+	
+	<Solid id="181" stringId="minecraft:double_stone_slab2" name="Double Red Sandstone Slab" side="red_sandstone_normal.png" top="red_sandstone_top.png" />
+	
+	<Slab id="182" stringId="minecraft:stone_slab2" name="Red Sandstone Slab" side="red_sandstone_normal.png" top="red_sandstone_top.png" />
+	
+	<FenceGate id="183" stringId="minecraft:spruce_fence_gate" name="Spruce Fence Gate" texture="planks_spruce.png" />
+	
+	<FenceGate id="184" stringId="minecraft:birch_fence_gate" name="Birch Fence Gate" texture="planks_birch.png" />
+	
+	<FenceGate id="185" stringId="minecraft:jungle_fence_gate" name="Jungle Fence Gate" texture="planks_jungle.png" />
+	
+	<FenceGate id="186" stringId="minecraft:dark_oak_fence_gate" name="Dark Oak Fence Gate" texture="planks_big_oak.png" />
+	
+	<FenceGate id="187" stringId="minecraft:acacia_fence_gate" name="Acacia Fence Gate" texture="planks_acacia.png" />
+	
+	<Fence id="188" stringId="minecraft:spruce_fence" name="Spruce Fence" texture="planks_spruce.png" />
+	
+	<Fence id="189" stringId="minecraft:birch_fence" name="Birch Fence" texture="planks_birch.png" />
+	
+	<Fence id="190" stringId="minecraft:jungle_fence" name="Jungle Fence" texture="planks_jungle.png" />
+	
+	<Fence id="191" stringId="minecraft:dark_oak_fence" name="Dark Oak Fence" texture="planks_big_oak.png" />
+	
+	<Fence id="192" stringId="minecraft:acacia_fence" name="Acacia Fence" texture="planks_acacia.png" />
+	
+	<Door id="193" stringId="minecraft:spruce_door" name="Spruce Door" top="door_spruce_upper.png" bottom="door_spruce_lower.png" />
+	
+	<Door id="194" stringId="minecraft:birch_door" name="Birch Door" top="door_birch_upper.png" bottom="door_birch_lower.png" />
+	
+	<Door id="195" stringId="minecraft:jungle_door" name="Jungle Door" top="door_jungle_upper.png" bottom="door_jungle_lower.png" />
+	
+	<Door id="196" stringId="minecraft:acacia_door" name="acacia Door" top="door_acacia_upper.png" bottom="door_acacia_lower.png" />
+	
+	<Door id="197" stringId="minecraft:dark_oak_door" name="Dark Oak Door" top="door_dark_oak_upper.png" bottom="door_dark_oak_lower.png" />
 	
 	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
 </blockConfig>

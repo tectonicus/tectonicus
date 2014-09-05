@@ -12,7 +12,6 @@ package tectonicus.blockTypes;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
-import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
@@ -75,6 +74,8 @@ public class Wall implements BlockType
 		final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
 		final int westId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
 		
+		BlockType type = null;
+		
 		if ((northId == blockId && southId == blockId) && (eastId != blockId && westId != blockId && aboveId != blockId))
 		{
 			BlockUtil.addBlock(mesh, x, y, z, 	5, 0, 0, 
@@ -90,29 +91,33 @@ public class Wall implements BlockType
 			// Center column
 			BlockUtil.addBlock(mesh, x, y, z, 4, 0, 4, 8, 16, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
-			// North		
-			if (northId == blockId || northId == BlockIds.FENCE_GATE)
+			// North
+			type = registry.find(northId, 0);
+			if (northId == blockId || type instanceof FenceGate)
 			{
 				BlockUtil.addBlock(mesh, x, y, z,	5, 0, 12,
 													6, 13, 4, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			
-			// South		
-			if (southId == blockId || southId == BlockIds.FENCE_GATE)
+			// South
+			type = registry.find(southId, 0);
+			if (southId == blockId || type instanceof FenceGate)
 			{
 				BlockUtil.addBlock(mesh, x, y, z,	5, 0, 0,
 													6, 13, 4, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			
-			// East		
-			if (eastId == blockId || eastId == BlockIds.FENCE_GATE)
+			// East
+			type = registry.find(eastId, 0);
+			if (eastId == blockId || type instanceof FenceGate)
 			{
 				BlockUtil.addBlock(mesh, x, y, z,	12, 0, 5,
 													4, 13, 6, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			
 			// West
-			if (westId == blockId || westId == BlockIds.FENCE_GATE)
+			type = registry.find(westId, 0);
+			if (westId == blockId || type instanceof FenceGate)
 			{
 				BlockUtil.addBlock(mesh, x, y, z,	0, 0, 5,
 													4, 13, 6, colour, texture, topLight, northSouthLight, eastWestLight);
