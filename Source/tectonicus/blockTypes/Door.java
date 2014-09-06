@@ -79,8 +79,15 @@ public class Door implements BlockType
 		
 		final int data = rawChunk.getBlockData(x, y, z);
 		final boolean isTop = (data & 0x8) > 0;
-		final boolean isOpen = (data & 0x4) > 0;
-		final int hingePos = data & 0x3;
+		boolean isOpen = (data & 0x4) > 0;
+		int hingePos = data & 0x3;
+		
+		if(isTop)
+		{
+			final int bottomData = rawChunk.getBlockData(x, y-1, z);
+			isOpen = (bottomData & 0x4) > 0;
+			hingePos = bottomData & 0x3;
+		}
 		
 		SubMesh subMesh = new SubMesh();
 		
@@ -120,6 +127,11 @@ public class Door implements BlockType
 		float xOffset = x;
 		float yOffset = y;
 		float zOffset = z;
+		
+		if(isTop)
+		{
+			//TODO: Have to get block data from bottom half of the door
+		}
 		
 		if (isOpen)
 		{
