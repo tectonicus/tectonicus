@@ -34,8 +34,8 @@ public class Sign implements Swappable
 	public Sign(RawSign rawSign)
 	{
 		blockId = rawSign.blockId;
-		blockData = rawSign.data;
-		
+		blockData = rawSign.blockData;
+
 		position = new Vector3l(rawSign.x, rawSign.y, rawSign.z);
 		
 		text = new String[4];

@@ -194,20 +194,20 @@ public class RawChunk
 										StringTag text3Tag = NbtUtil.getChild(entity, "Text3", StringTag.class);
 										StringTag text4Tag = NbtUtil.getChild(entity, "Text4", StringTag.class);
 
-										String text1 = text1Tag.getValue();
-										if (text1 == null)
+										String text1 = text1Tag.getValue().replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
+										if (text1 == null || text1.equals("null"))
 											text1 = "";
 										
-										String text2 = text2Tag.getValue();
-										if (text2 == null)
+										String text2 = text2Tag.getValue().replaceAll("^\"|\"$", "");
+										if (text2 == null || text2.equals("null"))
 											text2 = "";
 										
-										String text3 = text3Tag.getValue();
-										if (text3 == null)
+										String text3 = text3Tag.getValue().replaceAll("^\"|\"$", "");
+										if (text3 == null || text3.equals("null"))
 											text3 = "";
 										
-										String text4 = text4Tag.getValue();
-										if (text4 == null)
+										String text4 = text4Tag.getValue().replaceAll("^\"|\"$", "");
+										if (text4 == null || text4.equals("null"))
 											text4 = "";
 										
 										final int x = xTag.getValue();
@@ -239,13 +239,14 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										final int blockId = getBlockId(localX, localY, localZ);
+										//final int blockId = getBlockId(localX, localY, localZ);
 										final int blockData = getBlockData(localX, localY, localZ);
 										
 										final int data = dataTag.getValue();
-										final int item = itemTag.getValue();
+										//final int item = itemTag.getValue();
+										final int item = 38;
 										
-										flowerPots.add(new TileEntity(blockId, blockData, x, y, z, localX, localY, localZ, data, item));
+										flowerPots.add(new TileEntity(0, blockData, x, y, z, localX, localY, localZ, data, item));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{

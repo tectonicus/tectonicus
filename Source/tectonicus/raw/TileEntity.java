@@ -31,7 +31,7 @@ public class TileEntity
 		init(blockId, blockData, x, y, z, localX, localY, localZ, 0, 0, null, null, null, null, motive, dir);
 	}
 	
-	public TileEntity(int blockId, int blockData,
+	public TileEntity(int blockId, int blockData,  //Constructor for flower pots
 					  int x, int y, int z,
 					  int localX, int localY, int localZ,
 					  int data, int item)
@@ -39,7 +39,7 @@ public class TileEntity
 		init(blockId, blockData, x, y, z, localX, localY, localZ, data, item, null, null, null, null, null, 0);
 	}
 	
-	public TileEntity(int blockId, int data,
+	public TileEntity(int blockId, int data,  //Constructor for signs
 					int x, int y, int z,
 					int localX, int localY, int localZ,
 					String text1, String text2, String text3, String text4)
