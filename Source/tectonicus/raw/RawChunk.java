@@ -150,13 +150,28 @@ public class RawChunk
 									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
 									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
 									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
-									if (dir == null)
+									boolean is18 = false;
+									if (dir == null){
 										dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
+										is18 = true;
+									}
 									
-									
-									final int x = xTag.getValue();
+									int x = xTag.getValue();
 									final int y = yTag.getValue();
-									final int z = zTag.getValue();
+									int z = zTag.getValue();
+									
+									if (is18 && dir.getValue() == 0){
+										z = zTag.getValue() - 1;
+									}
+									else if (is18 && dir.getValue() == 1){
+										x = xTag.getValue() + 1;
+									}
+									else if (is18 && dir.getValue() == 2){
+										z = zTag.getValue() + 1;
+									}
+									else if (is18 && dir.getValue() == 3){
+										x = xTag.getValue() - 1;
+									}
 									
 									final int localX = x-(blockX*WIDTH);
 									final int localY  = y-(blockY*HEIGHT);
