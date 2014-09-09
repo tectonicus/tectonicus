@@ -54,6 +54,7 @@ public class RawChunk
 	private ArrayList<RawSign> signs;
 	private ArrayList<TileEntity> flowerPots;
 	private ArrayList<TileEntity> paintings;
+	private ArrayList<TileEntity> skulls;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -91,6 +92,7 @@ public class RawChunk
 		signs = new ArrayList<RawSign>();
 		flowerPots = new ArrayList<TileEntity>();
 		paintings = new ArrayList<TileEntity>();
+		skulls = new ArrayList<TileEntity>();
 		sections = new Section[MAX_SECTIONS];
 	}
 	
@@ -262,6 +264,21 @@ public class RawChunk
 										final int item = 38;
 										
 										flowerPots.add(new TileEntity(0, blockData, x, y, z, localX, localY, localZ, data, item));
+									}
+									else if (id.equals("Skull"))
+									{
+										ByteTag skullType = NbtUtil.getChild(entity, "SkullType", ByteTag.class);
+										ByteTag rot = NbtUtil.getChild(entity, "Rot", ByteTag.class);
+										
+										final int x = xTag.getValue();
+										final int y = yTag.getValue();
+										final int z = zTag.getValue();
+										
+										final int localX = x-(blockX*WIDTH);
+										final int localY  = y-(blockY*HEIGHT);
+										final int localZ = z-(blockZ*DEPTH);
+										
+										skulls.add(new TileEntity(0, skullType.getValue(), x, y, z, localX, localY, localZ, rot.getValue(), 0));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -738,6 +755,11 @@ public class RawChunk
 	public ArrayList<TileEntity> getPaintings()
 	{
 		return new ArrayList<TileEntity>(paintings);
+	}
+	
+	public ArrayList<TileEntity> getSkulls()
+	{
+		return new ArrayList<TileEntity>(skulls);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

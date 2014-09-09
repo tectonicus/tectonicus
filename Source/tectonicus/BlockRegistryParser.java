@@ -735,8 +735,12 @@ public class BlockRegistryParser
 		else if (nodeName.equals("skull"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
+			SubTexture ctexture = parseTexture(element, "ctexture", null);
+			SubTexture stexture = parseTexture(element, "stexture", null);
+			SubTexture wtexture = parseTexture(element, "wtexture", null);
+			SubTexture ztexture = parseTexture(element, "ztexture", null);
 		 	
-		 	blockType = new Skull(name, texture);
+		 	blockType = new Skull(name, texture, ctexture, stexture, wtexture, ztexture);
 		}
 		else
 		{

@@ -1,39 +1,12 @@
 /*
- * Source code from Tectonicus, http://code.google.com/p/tectonicus/
+ * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
  *
- * Tectonicus is released under the BSD license (below).
- *
- *
- * Original code John Campbell / "Orangy Tang" / www.triangularpixels.com
- *
- * Copyright (c) 2012, John Campbell
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice, this list
- *     of conditions and the following disclaimer.
- *
- *   * Redistributions in binary form must reproduce the above copyright notice, this
- *     list of conditions and the following disclaimer in the documentation and/or
- *     other materials provided with the distribution.
- *   * Neither the name of 'Tecctonicus' nor the names of
- *     its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution.  The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
  *
  */
+
 package tectonicus.blockTypes;
 
 import org.lwjgl.util.vector.Vector2f;
@@ -47,6 +20,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
+import tectonicus.raw.TileEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -55,31 +29,23 @@ public class Skull implements BlockType
 {
 	private final String name;
 	
-	private final SubTexture topTexture;
-	private final SubTexture bottomTexture;
-	private final SubTexture faceTexture;
-	private final SubTexture rearTexture;
-	private final SubTexture rightSideTexture;
-	private final SubTexture leftSideTexture;
+	private SubTexture texture;
+	private final SubTexture ctexture;
+	private final SubTexture stexture;
+	private final SubTexture wtexture;
+	private final SubTexture ztexture;
 
 	private Colour4f colour;
 
-	public Skull(String name, SubTexture texture) 
+	public Skull(String name, SubTexture texture, SubTexture ctexture, SubTexture stexture, SubTexture wtexture, SubTexture ztexture) 
 	{
 		this.name = name;
 		
-		final float widthTexel = 1.0f / texture.texture.getWidth();
-		final float heightTexel = 1.0f / texture.texture.getHeight();
-		
-		topTexture = new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0, texture.u0+widthTexel*16, texture.v0+heightTexel*8);
-		bottomTexture = new SubTexture(texture.texture, texture.u0+widthTexel*16, texture.v0, texture.u0+widthTexel*24, texture.v0+heightTexel*8);
-		faceTexture = new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*8, texture.u0+widthTexel*16, texture.v0+heightTexel*16);
-		rearTexture = new SubTexture(texture.texture, texture.u0+widthTexel*24, texture.v0+heightTexel*8, texture.u0+widthTexel*32, texture.v0+heightTexel*16);
-		rightSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*16, texture.v0+heightTexel*8, texture.u0+widthTexel*24, texture.v0+heightTexel*16);
-		leftSideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+heightTexel*8, texture.u0+widthTexel*8, texture.v0+heightTexel*16);
-		
-		System.out.println("width" + topTexture.texture.getWidth());
-		System.out.println("height" + topTexture.texture.getHeight());
+		this.texture = texture;
+		this.ctexture = ctexture;
+		this.stexture = stexture;
+		this.wtexture = wtexture;
+		this.ztexture = ztexture;
 		
 		colour = new Colour4f(1, 1, 1, 1);
 	}
@@ -111,7 +77,7 @@ public class Skull implements BlockType
 
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) 
-	{
+	{				
 		SubMesh subMesh = new SubMesh();
 		
 		final int data = rawChunk.getBlockData(x, y, z);
@@ -125,14 +91,40 @@ public class Skull implements BlockType
 		float angle = 0;
 		float lightness = 1;
 		
-		if (data > 1) {  // add lighting for each face based on rotation
-			/*float xOffset = x;
-			float yOffset = y;
-			float zOffset = z;
-			
-			Rotation rotation = Rotation.None;
-			float angle = 0;*/
-			
+		SubTexture currentTexture = null;
+		
+		for (TileEntity te : rawChunk.getSkulls())
+		{
+			if (te.localX == x && te.localY == y && te.localZ == z)
+			{
+				rotation = Rotation.AntiClockwise;
+				angle = 90 / 4.0f * te.data + 180;
+				
+				if (te.blockData == 0)
+					currentTexture = stexture;
+				else if (te.blockData == 1)
+					currentTexture = wtexture;
+				else if (te.blockData == 2)
+					currentTexture = ztexture;
+				else if (te.blockData == 3)
+					currentTexture = texture;
+				else if (te.blockData == 4)
+					currentTexture = ctexture;
+			}
+		}
+		
+		final float widthTexel = 1.0f / currentTexture.texture.getWidth();
+		final float heightTexel = 1.0f / currentTexture.texture.getHeight();
+		
+		SubTexture topTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0, texture.u0+widthTexel*16, texture.v0+heightTexel*8);
+		SubTexture bottomTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*16, texture.v0, texture.u0+widthTexel*24, texture.v0+heightTexel*8);
+		SubTexture faceTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*8, texture.u0+widthTexel*16, texture.v0+heightTexel*16);
+		SubTexture rearTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*24, texture.v0+heightTexel*8, texture.u0+widthTexel*32, texture.v0+heightTexel*16);
+		SubTexture rightSideTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*16, texture.v0+heightTexel*8, texture.u0+widthTexel*24, texture.v0+heightTexel*16);
+		SubTexture leftSideTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+heightTexel*8, texture.u0+widthTexel*8, texture.v0+heightTexel*16);
+		
+		if (data > 1)  // TODO: add lighting for each face based on rotation
+		{  
 			if (data == 2)
 			{
 				// Facing north
@@ -227,9 +219,9 @@ public class Skull implements BlockType
 		
 		
 		if(data > 1)
-			subMesh.pushTo(geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4, zOffset, rotation, angle);
+			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4, zOffset, rotation, angle);
 		else
-			subMesh.pushTo(geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid), x, y, z, null, 0);
+			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y, z, rotation, angle);
 			
 	}
 }
