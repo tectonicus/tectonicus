@@ -11,5 +11,6 @@ package tectonicus.rasteriser;
 
 public interface Texture
 {
-	
+	public int getWidth();
+	public int getHeight();
 }

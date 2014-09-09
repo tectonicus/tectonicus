@@ -73,6 +73,7 @@ import tectonicus.blockTypes.PressurePlate;
 import tectonicus.blockTypes.RedstoneRepeater;
 import tectonicus.blockTypes.RedstoneWire;
 import tectonicus.blockTypes.Sign;
+import tectonicus.blockTypes.Skull;
 import tectonicus.blockTypes.Slab;
 import tectonicus.blockTypes.Snow;
 import tectonicus.blockTypes.Soil;
@@ -161,6 +162,7 @@ public class BlockRegistryParser
 		// Every type has an id
 		String idStr = element.getAttribute("id");
 		IdDataPair id = parseIdDataPair(idStr);
+		String stringId = element.getAttribute("stringId");
 		
 		// Every type has a name
 		String name = element.getAttribute("name");
@@ -729,6 +731,12 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 		 	
 		 	blockType = new Painting(name, texture);
+		}
+		else if (nodeName.equals("skull"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+		 	
+		 	blockType = new Skull(name, texture);
 		}
 		else
 		{

@@ -31,4 +31,14 @@ public class ProcessingTexture implements Texture
 	{
 		return image;
 	}
+	
+	public int getWidth()
+	{
+		return 0;
+	}
+	
+	public int getHeight()
+	{
+		return 0;
+	}
 }

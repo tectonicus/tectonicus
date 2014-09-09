@@ -13,5 +13,13 @@ import tectonicus.rasteriser.Texture;
 
 public class JpctTexture implements Texture
 {
+	public int getWidth()
+	{
+		return 0;
+	}
 	
+	public int getHeight()
+	{
+		return 0;
+	}
 }
