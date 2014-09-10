@@ -394,6 +394,8 @@
 	
 	<TripwireHook id="131" name="Tripwire Hook" texture="wood.png" texture2="tripWireSource.png" />
 	
+	<Tripwire id="132" name="Tripwire" texture="tripWire.png" />
+	
 	<Solid id="133" name="Emerald Block" texture="blockEmerald.png" />
 	
 	<Stairs id="134" name="Spruce Wood Stairs" texture="wood_spruce.png" />
@@ -439,6 +441,8 @@
 	<Crops id="142" name="Potatoes" tex0="potatoes_0.png" tex1="potatoes_0.png" tex2="potatoes_1.png" tex3="potatoes_1.png" tex4="potatoes_2.png" tex5="potatoes_2.png" tex6="potatoes_2.png" tex7="potatoes_3.png" />
 	
 	<Button id="143" name="Wooden Button" texture="wood.png" />
+	
+	<Skull id="144" name="Mob Head" texture="mob/char.png" ctexture="mob/creeper.png" stexture="mob/skeleton.png" wtexture="mob/skeleton_wither.png" ztexture="mob/zombie.png" />
 	
 	<Anvil id="145" name="Anvil" base="anvil_base.png" top0="anvil_top.png" top1="anvil_top_damaged_1.png" top2="anvil_top_damaged_2.png" />
 	

@@ -135,6 +135,7 @@ public class Skull implements BlockType
 			if (data == 3)
 			{
 				// Facing south
+				angle = 0;
 				zOffset -= offSet*4;
 			}
 			else if (data == 4)

@@ -70,9 +70,9 @@ public class SolidBlockType implements BlockType
 		if (colour == null)
 			this.colour = new Colour4f(1, 1, 1, 1);
 		
-		if(name.equals("Lava") && sideTexture.texturePackVersion != "1.4")
+		if(sideTexture.texturePackVersion != "1.4")
 		{
-			final float texel = 1.0f / 320.0f;
+			final float texel = 1.0f / sideTexture.texture.getHeight();
 			this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+texel*16);
 			this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+texel*16);
 		}

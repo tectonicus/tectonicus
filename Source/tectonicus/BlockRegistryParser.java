@@ -82,6 +82,7 @@ import tectonicus.blockTypes.Stairs;
 import tectonicus.blockTypes.TallGrass;
 import tectonicus.blockTypes.Torch;
 import tectonicus.blockTypes.Trapdoor;
+import tectonicus.blockTypes.Tripwire;
 import tectonicus.blockTypes.TripwireHook;
 import tectonicus.blockTypes.Vines;
 import tectonicus.blockTypes.Wall;
@@ -741,6 +742,12 @@ public class BlockRegistryParser
 			SubTexture ztexture = parseTexture(element, "ztexture", null);
 		 	
 		 	blockType = new Skull(name, texture, ctexture, stexture, wtexture, ztexture);
+		}
+		else if (nodeName.equals("tripwire"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+			
+			blockType = new Tripwire(name, texture);
 		}
 		else
 		{

@@ -390,6 +390,8 @@
 	
 	<TripwireHook id="131" name="Tripwire Hook" texture="planks_oak.png" texture2="trip_wire_source.png" />
 	
+	<Tripwire id="132" name="Tripwire" texture="trip_wire.png" />
+	
 	<Solid id="133" name="Emerald Block" texture="emerald_block.png" />
 	
 	<Stairs id="134" name="Spruce Wood Stairs" texture="planks_spruce.png" />
