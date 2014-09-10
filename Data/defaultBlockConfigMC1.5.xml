@@ -406,7 +406,7 @@
 	
 	<Solid id="137" name="Command Block" texture="commandBlock.png" />
 	
-	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png"/>
+	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" beam="misc/beam.png" />
 	
 	<Wall id="139" name="Cobblestone Wall" texture="stonebrick.png" />
 	

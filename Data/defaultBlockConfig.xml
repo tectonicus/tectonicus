@@ -346,7 +346,8 @@
 	
 	<NetherWart id="115" name="Nether Wart" texture0="nether_wart_stage_0.png" texture1="nether_wart_stage_1.png" texture2="nether_wart_stage_2.png" />
 	
-	<EnchantmentTable id="116" name="Enchantment Table" top="enchanting_table_top.png" side="enchanting_table_side.png" bottom="enchanting_table_bottom.png" />
+	<EnchantmentTable id="116" name="Enchantment Table" top="enchanting_table_top.png" side="enchanting_table_side.png" bottom="enchanting_table_bottom.png" 
+														book="assets/minecraft/textures/entity/enchanting_table_book.png" />
 	
 	<BrewingStand id="117" name="Brewing Stand" base="brewing_stand_base.png" stand="brewing_stand.png" />
 	
@@ -402,7 +403,7 @@
 	
 	<Solid id="137" name="Command Block" texture="command_block.png" />
 	
-	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png"/>
+	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" beam="assets/minecraft/textures/entity/beacon_beam.png" />
 	
 	<Wall id="139" name="Cobblestone Wall" texture="cobblestone.png" />
 	

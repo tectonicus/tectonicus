@@ -680,8 +680,9 @@ public class BlockRegistryParser
 			SubTexture glass = parseTexture(element, "glass", null);
 		 	SubTexture beacon = parseTexture(element, "beacon", null);
 		 	SubTexture obsidian = parseTexture(element, "obsidian", null);
+		 	SubTexture beam = parseTexture(element, "beam", null);
 		 	
-		 	blockType = new Beacon(name, glass, beacon, obsidian);
+		 	blockType = new Beacon(name, glass, beacon, obsidian, beam);
 		}
 		else if (nodeName.equals("anvil"))
 		{

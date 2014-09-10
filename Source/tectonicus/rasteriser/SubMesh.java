@@ -283,10 +283,13 @@ public class SubMesh
 							colour, topTex);
 		}
 		
-		// Bottom
-		subMesh.addQuad(new Vector3f(x, y, z), new Vector3f(x, y, z+depth),
-						new Vector3f(x+width, y, z+depth), new Vector3f(x+width, y, z), 
-						colour, bottomTex);
+		if(bottomTex != null)
+		{
+			// Bottom
+			subMesh.addQuad(new Vector3f(x, y, z), new Vector3f(x, y, z+depth),
+							new Vector3f(x+width, y, z+depth), new Vector3f(x+width, y, z), 
+							colour, bottomTex);
+		}
 	}
 
 }

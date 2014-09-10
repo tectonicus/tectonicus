@@ -89,7 +89,7 @@ public class Skull implements BlockType
 		
 		Rotation rotation = Rotation.None;
 		float angle = 0;
-		float lightness = 1;
+		//float lightness = 1;
 		
 		SubTexture currentTexture = null;
 		
@@ -155,7 +155,7 @@ public class Skull implements BlockType
 		}
 		
 		//Top
-		//float lightness = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+		float lightness = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 
 		subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
 						new Vector3f(offSet*12,	offSet*8,	offSet*4),
@@ -166,7 +166,7 @@ public class Skull implements BlockType
 
 		
 		//Bottom
-		//lightness = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+		lightness = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 		
 		subMesh.addQuad(new Vector3f(offSet*4,	0,	offSet*12),
 						new Vector3f(offSet*12,	0,	offSet*12),
@@ -177,7 +177,7 @@ public class Skull implements BlockType
 
 	
 		//North
-		//lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
+		lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.Top);
 		
 		subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*4),
 						new Vector3f(offSet*4,	offSet*8,	offSet*4),
@@ -188,7 +188,7 @@ public class Skull implements BlockType
 
 		
 		//South
-		//lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
+		lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.Top);
 		
 		subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*12),
 						new Vector3f(offSet*12,	offSet*8,	offSet*12),
@@ -198,7 +198,7 @@ public class Skull implements BlockType
 						faceTexture);
 		
 		//East	
-		//lightness = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.NorthSouth);
+		lightness = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.Top);
 			
 		subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*12),
 						new Vector3f(offSet*12,	offSet*8,	offSet*4),
@@ -208,7 +208,7 @@ public class Skull implements BlockType
 						rightSideTexture);
 			
 		//West
-		//lightness = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
+		lightness = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.Top);
 		
 		subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
 						new Vector3f(offSet*4,	offSet*8,	offSet*12),
