@@ -44,6 +44,11 @@ public class WorldStats
 		numPortals++;
 	}
 	
+	public void setNumPortals(int numPortals)
+	{
+		this.numPortals = numPortals;
+	}
+	
 	public void incBlockId(final int blockId, final int data)
 	{
 		IdDataPair key = new IdDataPair(blockId, data);

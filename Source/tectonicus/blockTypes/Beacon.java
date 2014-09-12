@@ -89,7 +89,16 @@ public class Beacon implements BlockType
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
 			{
-				if (te.blockData > 0)
+				boolean isBeamBlocked = false;
+				for (int i=1; i<255-te.localY; i++)  //Check for solid blocks above the beacon
+				{
+					BlockType type = registry.find(world.getBlockId(rawChunk.getChunkCoord(), x, te.localY+i, z), 0);
+					if (type.isSolid())
+					{
+						isBeamBlocked = true;
+					}
+				}
+				if (te.blockData > 0 && !isBeamBlocked)
 				{
 					for (int i=0; i<255-te.localY; i++)
 					{

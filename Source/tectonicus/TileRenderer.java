@@ -256,7 +256,7 @@ public class TileRenderer
 			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null), world.getOps());
 			
 			// Output portals
-			outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
+			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
 			
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
@@ -383,7 +383,7 @@ public class TileRenderer
 	
 	public static void setupWorldForLayer(Layer layer, World world)
 	{
-		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());
+		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());  // Why is this here? Is it necessary?
 		
 		world.setLightStyle(layer.getLightStyle());
 		world.setDefaultBlockId(BlockIds.AIR);
@@ -557,7 +557,7 @@ public class TileRenderer
 	private static void findPortals(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter, WorldStats stats)
 	{
 		try
-		{
+		{			
 			for (int x=0; x<RawChunk.WIDTH; x++)
 			{
 				for (int y=1; y<RawChunk.HEIGHT-1; y++)
@@ -566,26 +566,26 @@ public class TileRenderer
 					{
 						final int id = chunk.getBlockId(x, y, z);
 						final int above = chunk.getBlockId(x, y+1, z);
-						final int below = chunk.getBlockId(x, y-1, z);
-						if (id == BlockIds.PORTAL && above == BlockIds.PORTAL && below == BlockIds.PORTAL)
+						int below = chunk.getBlockId(x, y-1, z);
+						
+						if (id == BlockIds.PORTAL && above != BlockIds.PORTAL) //Find vertical center portal blocks
 						{
-							// Must be one of the two center portal blocks
-							final int sum = x + z;
-							if (sum % 2 == 0)
+							ChunkCoord coord = chunk.getChunkCoord();
+
+							int tempY = y;
+							while (below == BlockIds.PORTAL)
 							{
-								// A portal block!
-								
-								stats.incNumPortals();
-								
-								ChunkCoord coord = chunk.getChunkCoord();
-								Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
-															y,
-															coord.z * RawChunk.DEPTH + z);
-								
-								if (filter.passesFilter(coord, pos))
-								{
-									portals.add( new Portal(pos.x, pos.y, pos.z) );
-								}
+								tempY -= 1;
+								below = chunk.getBlockId(x, tempY, z);
+							}
+							
+							Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
+														y-Math.round((y-(tempY+1))/2),
+														coord.z * RawChunk.DEPTH + z);
+							
+							if (filter.passesFilter(coord, pos))
+							{
+								portals.add( new Portal(pos.x, pos.y, pos.z) );
 							}
 						}
 					}
@@ -1755,43 +1755,81 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map)
+	private int outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map)
 	{
+		int numPortals = 0;
+		
 		try
 		{
 			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<Portal>(portalListFile);
-			outputPortals(outFile, portalsIn, map);
+			numPortals = outputPortals(outFile, portalsIn, map);
 			portalsIn.close();
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
+
+		return numPortals;
 	}
 	
-	private void outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map)
+	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map)
 	{
 		System.out.println("Writing portals...");
 		
 		if (portalFile.exists())
 			portalFile.delete();
 		
+		int numPortals = 0;
 		JsArrayWriter jsWriter = null;
 		try
 		{
 			jsWriter = new JsArrayWriter(portalFile, map.getId()+"_portalData");
 			
+			ArrayList<Portal> portals = new ArrayList<Portal>();
+			
+			
+			long prevX, prevY, prevZ, firstX, firstZ;
 			Portal portal = new Portal();
+			portalPositions.read(portal);
+			firstX = portal.getX();
+			firstZ = portal.getZ();
+			prevX = portal.getX();
+			prevY = portal.getY();
+			prevZ = portal.getZ();
+			
 			while (portalPositions.hasNext())
 			{				
 				portalPositions.read(portal);
 				
+				//Find the horizontal center portal block location
+				if((portal.getX() == prevX && portal.getZ() == prevZ+1) || (portal.getX() == prevX+1 && portal.getZ() == prevZ))
+				{
+					prevX = portal.getX();
+					prevY = portal.getY();
+					prevZ = portal.getZ();
+				}
+				else
+				{
+					portals.add(new Portal(prevX+(firstX-prevX)/2, prevY, prevZ+(firstZ-prevZ)/2));
+					numPortals++;
+					prevX = portal.getX();
+					prevY = portal.getY();
+					prevZ = portal.getZ();
+					firstX = portal.getX();
+					firstZ = portal.getZ();
+				}
+			}
+			portals.add(new Portal(portal.getX()+((firstX-prevX)/2), portal.getY(), portal.getZ()+(firstZ-prevZ)/2));
+			numPortals++;
+			
+			for (Portal p : portals)
+			{
+				final float worldX = p.getX();
+				final float worldY = p.getY();
+				final float worldZ = p.getZ();
+				
 				HashMap<String, String> args = new HashMap<String, String>();
-				
-				final float worldX = portal.getX() + 0.5f;
-				final float worldY = portal.getY();
-				final float worldZ = portal.getZ() + 0.5f;				
-				
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
 				
@@ -1807,6 +1845,8 @@ public class TileRenderer
 			if (jsWriter != null)
 				jsWriter.close();
 		}
+		
+		return numPortals;
 	}
 	
 	private void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.Map map, ImageFormat imageFormat)
