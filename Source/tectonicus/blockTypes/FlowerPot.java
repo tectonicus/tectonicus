@@ -183,6 +183,8 @@ public class FlowerPot implements BlockType
 					Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
 					//System.out.println("Name: " + p.getName() + " Item: " + te.item + " Data: " + te.data);
 				}
+				
+				break;
 			}
 		}
 		

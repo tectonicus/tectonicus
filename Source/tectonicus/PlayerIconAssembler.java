@@ -17,6 +17,7 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 import tectonicus.cache.PlayerSkinCache;
+import tectonicus.raw.Player;
 
 public class PlayerIconAssembler
 {
@@ -54,11 +55,11 @@ public class PlayerIconAssembler
 		}
 	}
 	
-	public void writeIcon(String playerName, File file)
+	public void writeIcon(Player player, File file)
 	{
 		try
 		{
-			BufferedImage skin = fetchSkin(playerName);
+			BufferedImage skin = fetchSkin(player);
 			BufferedImage icon = generateIcon(skin);
 			if (icon != null)
 			{
@@ -95,9 +96,9 @@ public class PlayerIconAssembler
 		return icon;
 	}
 
-	private BufferedImage fetchSkin(String playerName)
+	private BufferedImage fetchSkin(Player player)
 	{
-		BufferedImage customSkin = skinCache.fetchSkin(playerName);
+		BufferedImage customSkin = skinCache.fetchSkin(player);
 		if (customSkin != null)
 			return customSkin;
 		else

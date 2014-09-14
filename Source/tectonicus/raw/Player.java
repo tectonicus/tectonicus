@@ -33,6 +33,8 @@ public class Player
 	public static final int MAX_AIR = 300;
 	
 	private String name;
+	private String UUID;
+	private String skinURL;
 	
 	private Dimension dimension;
 	
@@ -57,10 +59,12 @@ public class Player
 		position = new Vector3d();
 		inventory = new ArrayList<Item>();
 		
-		name = playerFile.getName();  //TODO:  Need to call Mojang API in order to get the player name
+		UUID = playerFile.getName();
 		
-		final int dotPos = name.lastIndexOf('.');
-		name = name.substring(0, dotPos);
+		final int dotPos = UUID.lastIndexOf('.');
+		UUID = UUID.substring(0, dotPos).replace("-", "");
+		
+		skinURL = null;
 		
 		InputStream in = null;
 		NBTInputStream nbtIn = null;
@@ -162,6 +166,26 @@ public class Player
 	public String getName()
 	{
 		return name;
+	}
+	
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+	
+	public String getSkinURL()
+	{
+		return skinURL;
+	}
+	
+	public void setSkinURL(String skinURL)
+	{
+		this.skinURL = skinURL;
+	}
+	
+	public String getUUID()
+	{
+		return UUID;
 	}
 	
 	public Vector3d getPosition()

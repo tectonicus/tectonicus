@@ -221,7 +221,7 @@ public class TileRenderer
 			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset);
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache);
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -351,7 +351,7 @@ public class TileRenderer
 			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset);
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache);
 			
 			// TODO: Load custom blocks here
 			
@@ -1455,7 +1455,7 @@ public class TileRenderer
 					jsWriter.write(args);
 					
 					File iconFile = new File(imagesDir, player.getName()+".png");
-					playerIconAssembler.writeIcon(player.getName(), iconFile);
+					playerIconAssembler.writeIcon(player, iconFile);
 					
 					numOutput++;
 				}

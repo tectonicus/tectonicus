@@ -9,7 +9,6 @@
 
 package tectonicus.blockTypes;
 
-import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -93,7 +92,7 @@ public class Skull implements BlockType
 		
 		SubTexture currentTexture = null;
 		
-		for (TileEntity te : rawChunk.getSkulls())
+		for (TileEntity te : rawChunk.getSkulls())  // TODO: If the skull has a player head texture then we need to download it and create an icon
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
 			{
@@ -110,11 +109,23 @@ public class Skull implements BlockType
 					currentTexture = texture;
 				else if (te.blockData == 4)
 					currentTexture = ctexture;
+				
+				break;
 			}
 		}
 		
-		final float widthTexel = 1.0f / currentTexture.texture.getWidth();
-		final float heightTexel = 1.0f / currentTexture.texture.getHeight();
+		final float widthTexel;
+		final float heightTexel;
+		if (currentTexture.texture.getWidth() == currentTexture.texture.getHeight())
+		{
+			widthTexel = 1.0f / 64.0f;
+			heightTexel = 1.0f / 64.0f;
+		}
+		else
+		{
+			widthTexel = 1.0f / 64.0f;
+			heightTexel = 1.0f / 32.0f;
+		}
 		
 		SubTexture topTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0, texture.u0+widthTexel*16, texture.v0+heightTexel*8);
 		SubTexture bottomTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*16, texture.v0, texture.u0+widthTexel*24, texture.v0+heightTexel*8);

@@ -107,6 +107,8 @@ public class Beacon implements BlockType
 														new Vector4f(testColor.r, testColor.g, testColor.b, 0.2f), beam, null, null);
 					}
 				}
+				
+				break;
 			}
 		}
 		

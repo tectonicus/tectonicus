@@ -29,6 +29,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import tectonicus.configuration.Configuration;
+import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
 
 public class PlayerSkinCache
@@ -71,13 +72,19 @@ public class PlayerSkinCache
 						Element e = (Element)entriesList.item(i);
 						
 						String playerName = e.getAttribute("playerName");
+						String playerUUID = e.getAttribute("playerUUID");
 						long fetchedTime = Long.parseLong( e.getAttribute("fetchedTime") );
+						String skinURL = e.getAttribute("skinURL");
 						String filePath = e.getAttribute("skinFile");
 						
 						CacheEntry entry = new CacheEntry();
 						entry.playerName = playerName;
+						entry.playerUUID = playerUUID;
 						entry.fetchedTime = fetchedTime;
+						entry.skinURL = skinURL;
 						entry.skinFile = filePath;
+						
+						skinCache.put(playerUUID, entry);
 					}
 					catch (Exception e)
 					{
@@ -123,7 +130,7 @@ public class PlayerSkinCache
 			
 			for (CacheEntry entry : skinCache.values())
 			{
-				writer.println("\t\t<entry playerName=\""+entry.playerName+"\" skinFile=\""+entry.skinFile+"\" fetchedTime=\""+entry.fetchedTime+"\" />");
+				writer.println("\t\t<entry playerName=\""+entry.playerName+"\" playerUUID=\""+entry.playerUUID+"\" skinURL=\""+entry.skinURL+"\" skinFile=\""+entry.skinFile+"\" fetchedTime=\""+entry.fetchedTime+"\" />");
 				
 				count++;
 				if (count % 100 == 0)
@@ -151,13 +158,18 @@ public class PlayerSkinCache
 		System.out.println("Player skin cache written");
 	}
 	
-	public BufferedImage fetchSkin(String playerName)
+	public CacheEntry getCacheEntry(String playerUUID)
+	{
+		return skinCache.get(playerUUID);
+	}
+	
+	public BufferedImage fetchSkin(Player player)
 	{
 		CacheEntry existing = null;
 		
-		if (skinCache.containsKey(playerName))
+		if (skinCache.containsKey(player.getUUID()))
 		{
-			existing = skinCache.get(playerName);
+			existing = skinCache.get(player.getUUID());
 			
 			// If file is null that means this player has no custom skin
 			if (existing.skinFile == null)
@@ -178,13 +190,13 @@ public class PlayerSkinCache
 		}
 		
 		// Not in cache, or cache stale so refetch from network
-		skinCache.remove(playerName);
+		skinCache.remove(player.getUUID());
 		
-		BufferedImage newSkin = fetchSkinFromNetwork(playerName);
+		BufferedImage newSkin = fetchSkinFromNetwork(player.getSkinURL());
 		File skinFile = null;
 		if (newSkin != null)
 		{
-			skinFile = new File(cacheDir, playerName+".png");
+			skinFile = new File(cacheDir, player.getName()+".png");
 			try
 			{
 				ImageIO.write(newSkin, "png", skinFile);
@@ -194,24 +206,28 @@ public class PlayerSkinCache
 				e.printStackTrace();
 			}
 		}
+		else
+		{
+			System.out.println("No skin for player "+player.getName());
+		}
 		
 		CacheEntry newEntry = new CacheEntry();
-		newEntry.playerName = playerName;
-		newEntry.skinFile = playerName + ".png";
+		newEntry.playerName = player.getName();
+		newEntry.playerUUID = player.getUUID();
+		newEntry.skinURL = player.getSkinURL();
+		newEntry.skinFile = player.getName() + ".png";
 		newEntry.fetchedTime = System.currentTimeMillis();
 		
-		skinCache.put(playerName, newEntry);
+		skinCache.put(player.getUUID(), newEntry);
 		
 		return newSkin;
 	}
 	
-	private BufferedImage fetchSkinFromNetwork(String playerName)
+	private BufferedImage fetchSkinFromNetwork(String skinURL)
 	{
 		try
 		{
-			String url = "http://www.minecraft.net/skin/"+playerName+".png";
-			
-            URLConnection remote = openConnection(url);
+            URLConnection remote = openConnection(skinURL);
             InputStream skinStream = remote.getInputStream();
             try
             {
@@ -226,7 +242,6 @@ public class PlayerSkinCache
 		}
 		catch (Exception e) {}
 		
-		System.out.println("No skin for player "+playerName);
 		return null;
 	}
 	
@@ -244,10 +259,12 @@ public class PlayerSkinCache
         return connection;
     }
 	
-	private static class CacheEntry
+	public static class CacheEntry
 	{
 		public String playerName;
+		public String playerUUID;
 		public long fetchedTime;
+		public String skinURL;
 		public String skinFile;
 	}
 }

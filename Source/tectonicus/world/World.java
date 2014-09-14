@@ -11,7 +11,11 @@ package tectonicus.world;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -20,6 +24,9 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.xml.bind.DatatypeConverter;
+
+import org.json.JSONObject;
 import org.lwjgl.util.vector.Vector3f;
 
 import tectonicus.BlockContext;
@@ -39,6 +46,8 @@ import tectonicus.RegionCoord;
 import tectonicus.Util;
 import tectonicus.blockTypes.Air;
 import tectonicus.cache.BiomeCache;
+import tectonicus.cache.PlayerSkinCache;
+import tectonicus.cache.PlayerSkinCache.CacheEntry;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
@@ -103,7 +112,7 @@ public class World implements BlockContext
 	
 	private Geometry daySkybox, nightSkybox;
 	
-	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory)
+	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache)
 	{
 		this.rasteriser = rasteriser;
 		
@@ -167,7 +176,7 @@ public class World implements BlockContext
 		loadBlockRegistry(null, true);
 		
 		System.out.println("Loading players");
-		players = loadPlayers(worldDir);
+		players = loadPlayers(worldDir, playerSkinCache);
 		
 		ops = PlayerList.loadOps(worldDir);
 		
@@ -874,7 +883,7 @@ public class World implements BlockContext
 	}
 	
 	
-	public static ArrayList<Player> loadPlayers(File worldDir)
+	public static ArrayList<Player> loadPlayers(File worldDir, PlayerSkinCache playerSkinCache)
 	{
 		File playersDir = Minecraft.findPlayersDir(worldDir);
 		
@@ -891,7 +900,48 @@ public class World implements BlockContext
 					try
 					{
 						Player player = new Player(playerFile);
+						
+						CacheEntry ce = playerSkinCache.getCacheEntry(player.getUUID());
+						if (ce != null)
+						{
+							final long age = System.currentTimeMillis() - ce.fetchedTime;
+							if (age < 1000 * 60 * 60  * 60) // one hour in ms
+							{
+								player.setName(ce.playerName);
+								player.setSkinURL(ce.skinURL);
+							}
+						}
+						else
+						{
+							String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+player.getUUID();
+							URL url = new URL(urlString);
+				            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				            connection.setRequestMethod("GET");
+				            connection.addRequestProperty("Content-Type", "application/json");
+				            connection.setReadTimeout(15*1000);
+				            connection.connect();
+				            
+				            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				            StringBuilder builder = new StringBuilder();
+							
+				            String line = null;
+				            while ((line = reader.readLine()) != null)
+				            {
+				            	builder.append(line + "\n");
+				            }
+				            reader.close();
+				            JSONObject obj = new JSONObject(builder.toString());
+				            player.setName(obj.getString("name"));
+				            JSONObject textures = obj.getJSONArray("properties").getJSONObject(0);
+				            byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").toString());
+				            obj = new JSONObject(new String(decoded, "UTF-8"));
+				            String textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
+				            player.setSkinURL(textureUrl);
+				            System.out.println(textureUrl);
+						}			            
+			            
 						players.add(player);
+						System.out.println("Loaded " + player.getName());
 					}
 					catch (Exception e)
 					{
