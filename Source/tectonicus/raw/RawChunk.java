@@ -257,6 +257,21 @@ public class RawChunk
 									{
 										IntTag dataTag = NbtUtil.getChild(entity, "Data", IntTag.class);
 										IntTag itemTag = NbtUtil.getChild(entity, "Item", IntTag.class);
+										final int item;
+										if(itemTag == null)
+										{
+											StringTag stringIdTag = NbtUtil.getChild(entity, "Item", StringTag.class);
+											if (stringIdTag.getValue().equals("minecraft:sapling"))
+												item = 6;
+											else if (stringIdTag.getValue().equals("minecraft:red_flower"))
+												item = 38;
+											else
+												item = 0;
+										}
+										else
+										{
+											item = itemTag.getValue();
+										}
 										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
@@ -265,15 +280,12 @@ public class RawChunk
 										final int localX = x-(blockX*WIDTH);
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
-										
-										//final int blockId = getBlockId(localX, localY, localZ);
+
 										final int blockData = getBlockData(localX, localY, localZ);
 										
-										final int data = dataTag.getValue();
-										//final int item = itemTag.getValue();
-										final int item = 38;
+										final int itemData = dataTag.getValue();
 										
-										flowerPots.add(new TileEntity(0, blockData, x, y, z, localX, localY, localZ, data, item));
+										flowerPots.add(new TileEntity(0, blockData, x, y, z, localX, localY, localZ, itemData, item));
 									}
 									else if (id.equals("Skull"))
 									{

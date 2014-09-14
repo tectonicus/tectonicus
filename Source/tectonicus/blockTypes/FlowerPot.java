@@ -170,7 +170,7 @@ public class FlowerPot implements BlockType
 								   colour, side);
 		
 		
-		// Flowerpots use a Tile Entity to store which plant they contain
+		// Some flowerpots use a Tile Entity to store which plant they contain
 		for (TileEntity te : rawChunk.getFlowerPots())
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
