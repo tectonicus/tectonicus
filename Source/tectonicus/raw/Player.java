@@ -97,6 +97,13 @@ public class Player
 		parse(tag);
 	}
 	
+	public Player(String name, String UUID, String skinURL)
+	{
+		this.name = name;
+		this.UUID = UUID;
+		this.skinURL = skinURL;
+	}
+	
 	private void parse(CompoundTag root) throws Exception
 	{
 		dimension = Dimension.Terra;

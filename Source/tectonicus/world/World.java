@@ -90,6 +90,7 @@ public class World implements BlockContext
 	
 	private ArrayList<Player> players;
 	private PlayerList ops;
+	private PlayerSkinCache playerSkinCache;
 	
 	private TexturePack texturePack;
 	
@@ -144,6 +145,7 @@ public class World implements BlockContext
 		System.out.println("\tFull dimension dir: "+dimensionDir.getAbsolutePath());
 		
 		this.biomeCache = biomeCache;
+		this.playerSkinCache = playerSkinCache;
 		
 		// Check that this looks like a world dir
 		if (!Minecraft.isValidWorldDir(baseDir))
@@ -261,6 +263,11 @@ public class World implements BlockContext
 	public BlockFilter getBlockFilter()
 	{
 		return blockFilter;
+	}
+	
+	public PlayerSkinCache getPlayerSkinCache()
+	{
+		return playerSkinCache;
 	}
 	
 	public void setBlockMaskFactory(BlockMaskFactory factory)

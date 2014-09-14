@@ -75,6 +75,11 @@ public class PackTexture
 		return sub;
 	}
 	
+	public SubTexture getFullTexture()
+	{
+		return new SubTexture(fullTexture, 0, 0, 1, 1);
+	}
+	
 	private void genTileTexture()
 	{
 		BufferedImage[] mipmaps = PackTexture.generateTileMips(image);

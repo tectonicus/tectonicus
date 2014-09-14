@@ -30,6 +30,7 @@ import org.w3c.dom.NodeList;
 
 import tectonicus.configuration.Configuration;
 import tectonicus.raw.Player;
+import tectonicus.texture.TexturePack;
 import tectonicus.util.FileUtils;
 
 public class PlayerSkinCache
@@ -220,7 +221,7 @@ public class PlayerSkinCache
 		
 		skinCache.put(player.getUUID(), newEntry);
 		
-		return newSkin;
+		return TexturePack.copy(newSkin);
 	}
 	
 	private BufferedImage fetchSkinFromNetwork(String skinURL)

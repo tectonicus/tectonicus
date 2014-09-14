@@ -348,6 +348,24 @@ public class TexturePack
 		return tex;
 	}
 	
+	public SubTexture findTexture(BufferedImage img, String path)
+	{
+		PackTexture tex = loadedPackTextures.get(path);
+		
+		if (tex == null)
+		{			
+			tex = new PackTexture(rasteriser, path, img);
+			
+			loadedPackTextures.put(path, tex);
+		}
+		else
+		{
+			System.err.println("Error: Couldn't load "+path);
+		}
+		
+		return tex.getFullTexture();
+	}
+	
 	private BufferedImage loadTexture(String path)
 	{
 		InputStream in = null;

@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.bind.DatatypeConverter;
+
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -26,6 +29,8 @@ import org.jnbt.NBTInputStream;
 import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
+import org.json.JSONObject;
+
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
 
@@ -56,6 +61,7 @@ public class RawChunk
 	private ArrayList<TileEntity> paintings;
 	private ArrayList<TileEntity> skulls;
 	private ArrayList<TileEntity> beacons;
+	private ArrayList<TileEntity> banners;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -95,6 +101,7 @@ public class RawChunk
 		paintings = new ArrayList<TileEntity>();
 		skulls = new ArrayList<TileEntity>();
 		beacons = new ArrayList<TileEntity>();
+		banners = new ArrayList<TileEntity>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -273,6 +280,29 @@ public class RawChunk
 										ByteTag skullType = NbtUtil.getChild(entity, "SkullType", ByteTag.class);
 										ByteTag rot = NbtUtil.getChild(entity, "Rot", ByteTag.class);
 										
+										StringTag nameTag = null;
+										StringTag playerId = null;
+										String name = "";
+										String UUID = "";
+										String textureURL = "";
+										CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);
+										if(owner != null)
+										{
+											nameTag = NbtUtil.getChild(owner, "Name", StringTag.class);
+											name = nameTag.getValue();
+											playerId = NbtUtil.getChild(owner, "Id", StringTag.class);
+											UUID = playerId.getValue().replace("-", "");
+											
+											// Get skin URL
+											CompoundTag properties = NbtUtil.getChild(owner, "Properties", CompoundTag.class);
+											ListTag textures = NbtUtil.getChild(properties, "textures", ListTag.class);
+											CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
+											StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
+											byte[] decoded = DatatypeConverter.parseBase64Binary(value.getValue());
+								            JSONObject obj = new JSONObject(new String(decoded, "UTF-8"));
+								            textureURL = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
+										}
+										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
 										final int z = zTag.getValue();
@@ -281,7 +311,7 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										skulls.add(new TileEntity(0, skullType.getValue(), x, y, z, localX, localY, localZ, rot.getValue(), 0));
+										skulls.add(new TileEntity( skullType.getValue(), rot.getValue(), x, y, z, localX, localY, localZ, name, UUID, textureURL, null));
 									}
 									else if (id.equals("Beacon"))
 									{
@@ -296,6 +326,20 @@ public class RawChunk
 										final int localZ = z-(blockZ*DEPTH);
 										
 										beacons.add(new TileEntity(0, levels.getValue(), x, y, z, localX, localY, localZ, 0, 0));
+									}
+									else if (id.equals("Banner"))
+									{
+										IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
+										
+										final int x = xTag.getValue();
+										final int y = yTag.getValue();
+										final int z = zTag.getValue();
+										
+										final int localX = x-(blockX*WIDTH);
+										final int localY  = y-(blockY*HEIGHT);
+										final int localZ = z-(blockZ*DEPTH);
+										
+										banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, 0, 0));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -782,6 +826,11 @@ public class RawChunk
 	public ArrayList<TileEntity> getBeacons()
 	{
 		return new ArrayList<TileEntity>(beacons);
+	}
+	
+	public ArrayList<TileEntity> getBanners()
+	{
+		return new ArrayList<TileEntity>(banners);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

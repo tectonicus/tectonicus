@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
+import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightFace;
@@ -452,5 +453,10 @@ public class ItemRenderer
 			return new Colour4f(1, 1, 1, 1);
 		}
 		
+		@Override
+		public PlayerSkinCache getPlayerSkinCache()
+		{
+			return null;
+		}
 	}
 }

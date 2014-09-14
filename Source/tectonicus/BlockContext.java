@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.texture.TexturePack;
@@ -29,4 +30,6 @@ public interface BlockContext
 	public int getBiomeId(ChunkCoord chunkCoord, int x, int y, int z);
 	
 	public Colour4f getGrassColour(ChunkCoord chunkCoord, final int x, final int y, final int z);
+	
+	public PlayerSkinCache getPlayerSkinCache();
 }

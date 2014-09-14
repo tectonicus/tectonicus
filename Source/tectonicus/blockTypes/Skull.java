@@ -18,6 +18,7 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.TileEntity;
 import tectonicus.renderer.Geometry;
@@ -92,23 +93,29 @@ public class Skull implements BlockType
 		
 		SubTexture currentTexture = null;
 		
-		for (TileEntity te : rawChunk.getSkulls())  // TODO: If the skull has a player head texture then we need to download it and create an icon
+		for (TileEntity te : rawChunk.getSkulls())
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
 			{
 				rotation = Rotation.AntiClockwise;
-				angle = 90 / 4.0f * te.data + 180;
+				angle = 90 / 4.0f * te.blockData + 180;
 				
-				if (te.blockData == 0)
+				if (te.blockId == 0)
 					currentTexture = stexture;
-				else if (te.blockData == 1)
+				else if (te.blockId == 1)
 					currentTexture = wtexture;
-				else if (te.blockData == 2)
+				else if (te.blockId == 2)
 					currentTexture = ztexture;
-				else if (te.blockData == 3)
+				else if (te.blockId == 3)
 					currentTexture = texture;
-				else if (te.blockData == 4)
+				else if (te.blockId == 4)
 					currentTexture = ctexture;
+				
+				Player player = new Player(te.text1, te.text2, te.text3);
+				if(!player.getSkinURL().equals(""))
+				{
+					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+te.text1);
+				}
 				
 				break;
 			}
