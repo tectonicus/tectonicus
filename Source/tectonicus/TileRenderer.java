@@ -1787,52 +1787,55 @@ public class TileRenderer
 			
 			ArrayList<Portal> portals = new ArrayList<Portal>();
 			
-			
-			long prevX, prevY, prevZ, firstX, firstZ;
-			Portal portal = new Portal();
-			portalPositions.read(portal);
-			firstX = portal.getX();
-			firstZ = portal.getZ();
-			prevX = portal.getX();
-			prevY = portal.getY();
-			prevZ = portal.getZ();
-			
-			while (portalPositions.hasNext())
-			{				
-				portalPositions.read(portal);
-				
-				//Find the horizontal center portal block location
-				if((portal.getX() == prevX && portal.getZ() == prevZ+1) || (portal.getX() == prevX+1 && portal.getZ() == prevZ))
-				{
-					prevX = portal.getX();
-					prevY = portal.getY();
-					prevZ = portal.getZ();
-				}
-				else
-				{
-					portals.add(new Portal(prevX+(firstX-prevX)/2, prevY, prevZ+(firstZ-prevZ)/2));
-					numPortals++;
-					prevX = portal.getX();
-					prevY = portal.getY();
-					prevZ = portal.getZ();
-					firstX = portal.getX();
-					firstZ = portal.getZ();
-				}
-			}
-			portals.add(new Portal(portal.getX()+((firstX-prevX)/2), portal.getY(), portal.getZ()+(firstZ-prevZ)/2));
-			numPortals++;
-			
-			for (Portal p : portals)
+			if (portalPositions.hasNext())
 			{
-				final float worldX = p.getX();
-				final float worldY = p.getY();
-				final float worldZ = p.getZ();
+				long prevX, prevY, prevZ, firstX, firstZ;
+				Portal portal = new Portal();
+				portalPositions.read(portal);
+				firstX = portal.getX();
+				firstZ = portal.getZ();
+				prevX = portal.getX();
+				prevY = portal.getY();
+				prevZ = portal.getZ();
 				
-				HashMap<String, String> args = new HashMap<String, String>();
-				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
-				args.put("worldPos", posStr);
-				
-				jsWriter.write(args);
+				while (portalPositions.hasNext())
+				{				
+					portalPositions.read(portal);
+					
+					//Find the horizontal center portal block location
+					if((portal.getX() == prevX && portal.getZ() == prevZ+1) || (portal.getX() == prevX+1 && portal.getZ() == prevZ))
+					{
+						prevX = portal.getX();
+						prevY = portal.getY();
+						prevZ = portal.getZ();
+					}
+					else
+					{
+						portals.add(new Portal(prevX+(firstX-prevX)/2, prevY, prevZ+(firstZ-prevZ)/2));
+						numPortals++;
+						prevX = portal.getX();
+						prevY = portal.getY();
+						prevZ = portal.getZ();
+						firstX = portal.getX();
+						firstZ = portal.getZ();
+					}
+				}
+				portals.add(new Portal(portal.getX()+((firstX-prevX)/2), portal.getY(), portal.getZ()+(firstZ-prevZ)/2));
+				numPortals++;
+			
+			
+				for (Portal p : portals)
+				{
+					final float worldX = p.getX();
+					final float worldY = p.getY();
+					final float worldZ = p.getZ();
+					
+					HashMap<String, String> args = new HashMap<String, String>();
+					String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
+					args.put("worldPos", posStr);
+					
+					jsWriter.write(args);
+				}
 			}
 		}
 		catch (Exception e)
@@ -1845,6 +1848,7 @@ public class TileRenderer
 				jsWriter.close();
 		}
 		
+		System.out.println("Wrote "+numPortals+" portals");
 		return numPortals;
 	}
 	
