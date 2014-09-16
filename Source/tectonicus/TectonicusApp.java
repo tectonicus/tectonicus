@@ -32,7 +32,6 @@ import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
 import tectonicus.raw.Player;
-import tectonicus.raw.PlayerList;
 import tectonicus.util.FileUtils;
 import tectonicus.world.World;
 
@@ -942,14 +941,14 @@ public class TectonicusApp
 				{
 					ArrayList<Player> players = World.loadPlayers(map.getWorldDir(), skinCache);
 			
-					PlayerList ops = PlayerList.loadOps(map.getWorldDir());
+					//PlayerList ops = PlayerList.loadOps(map.getWorldDir());
 									
 					File mapDir = new File(args.outputDir(), map.getId());
 					File playerDir = new File(mapDir, "players.js");
 					
 					File imagesDir = new File(args.outputDir(), "Images");
 					
-					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, ops, iconAssembler);
+					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, iconAssembler);
 				}
 				
 				skinCache.destroy();

@@ -9,11 +9,12 @@
 
 package tectonicus.raw;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Scanner;
-
-import tectonicus.Minecraft;
+import org.json.JSONArray;
 
 public class PlayerList
 {
@@ -32,29 +33,65 @@ public class PlayerList
 	{
 		playerNames = new ArrayList<String>();
 		
-		Scanner scanner = null;
-		try
+		String ext = "";
+		int index = playerFile.getAbsolutePath().lastIndexOf('.');
+		if (index > 0)
+			ext = playerFile.getAbsolutePath().substring(index+1);
+		if (ext.equals("json"))
 		{
-			if (playerFile.exists())
+			BufferedReader reader = null;
+			try
 			{
-				scanner = new Scanner(playerFile);
+				reader = new BufferedReader(new FileReader(playerFile));
+	            StringBuilder builder = new StringBuilder();
 				
-				while (scanner.hasNextLine())
+	            String line = null;
+	            while ((line = reader.readLine()) != null)
+	            {
+	            	builder.append(line + "\n");
+	            }
+	            reader.close();
+	
+				JSONArray array = new JSONArray(builder.toString());
+				for (int i=0; i<array.length(); i++)
 				{
-					String line = scanner.nextLine();
-					if (line != null)
-						playerNames.add( line.trim() );
+					String name = array.getJSONObject(i).getString("name");
+					playerNames.add(name);
 				}
 			}
-			else
+			finally
 			{
-				System.out.println("No players file found at "+playerFile.getAbsolutePath());
+				if (reader != null)
+					reader.close();
 			}
 		}
-		finally
+		else if (ext.equals("txt"))
 		{
-			if (scanner != null)
-				scanner.close();
+			Scanner scanner = null;
+			try
+			{
+				if (playerFile.exists())
+				{
+					scanner = new Scanner(playerFile);
+					
+					while (scanner.hasNextLine())
+					{
+						String line = scanner.nextLine();
+						if (line != null)
+							playerNames.add( line.trim() );
+					}
+				}
+				
+			}
+			finally
+			{
+				if (scanner != null)
+					scanner.close();
+			}
+		}
+		else
+		{
+			System.out.println("No players file found at "+playerFile.getAbsolutePath());
 		}
 		
 		System.out.println("\tfound "+playerNames.size()+" players");
@@ -68,24 +105,5 @@ public class PlayerList
 				return true;
 		}
 		return false;
-	}
-	
-	public static PlayerList loadOps(File worldDir)
-	{
-		File opsFile = Minecraft.findOpsFile(worldDir);
-		System.out.println("Loading ops from "+opsFile.getAbsolutePath());
-		
-		try
-		{
-			PlayerList ops = new PlayerList(opsFile);
-			return ops;
-		}
-		catch (Exception e)
-		{
-			System.out.println("Error while loading ops from "+opsFile.getAbsolutePath());
-			e.printStackTrace();
-		}
-		
-		return new PlayerList();
 	}
 }

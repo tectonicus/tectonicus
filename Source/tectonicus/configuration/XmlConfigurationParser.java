@@ -185,7 +185,7 @@ public class XmlConfigurationParser
 				PlayerFilterType playerFilterType = parsePlayerFilterType( getString(playersNode, "filter") );
 				File playerFilterFile = parsePlayerFilterFile( getString(playersNode, "playerFilterFile") );
 				
-				PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile);
+				PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir());
 				map.setPlayerFilter(playerFilter);
 			}
 			

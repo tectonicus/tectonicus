@@ -115,7 +115,7 @@ public class CommandLineParser
 		
 		PlayerFilterType playerFilterType = parsePlayerFilterType( parser.getString("players", "") );
 		File playerFilterFile = parsePlayerFilterFile( parser.getString("playerFilterFile", "") );
-		PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile);
+		PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir());
 		map.setPlayerFilter(playerFilter);
 		
 		PortalFilterType portalFilterType = parsePortalFilter( parser.getString("portals", "") );

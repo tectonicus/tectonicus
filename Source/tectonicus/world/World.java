@@ -57,7 +57,6 @@ import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BiomeIds;
 import tectonicus.raw.LevelDat;
-import tectonicus.raw.PlayerList;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.RawSign;
@@ -89,7 +88,6 @@ public class World implements BlockContext
 	private LevelDat levelDat;
 	
 	private ArrayList<Player> players;
-	private PlayerList ops;
 	private PlayerSkinCache playerSkinCache;
 	
 	private TexturePack texturePack;
@@ -179,8 +177,6 @@ public class World implements BlockContext
 		
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir, playerSkinCache);
-		
-		ops = PlayerList.loadOps(worldDir);
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(dimensionDir, biomeCache, regionCache);
@@ -305,11 +301,6 @@ public class World implements BlockContext
 	public int numPlayers()
 	{
 		return players.size();
-	}
-	
-	public PlayerList getOps()
-	{
-		return ops;
 	}
 	
 	public LevelDat getLevelDat()

@@ -11,6 +11,7 @@ package tectonicus.configuration;
 
 import java.io.File;
 
+import tectonicus.Minecraft;
 import tectonicus.raw.PlayerList;
 import tectonicus.raw.Player;
 
@@ -32,13 +33,12 @@ public class PlayerFilter
 		this.filter = type;
 	}
 	
-	public PlayerFilter(final PlayerFilterType type, File playersFile) throws Exception
+	public PlayerFilter(final PlayerFilterType type, File playersFile, File worldDir) throws Exception
 	{
 		this.filter = type;
 		this.filterFile = playersFile;
 		
-		if (filter == PlayerFilterType.Whitelist
-			|| filter == PlayerFilterType.Blacklist)
+		if ((filter == PlayerFilterType.Whitelist || filter == PlayerFilterType.Blacklist || filter == PlayerFilterType.Ops) && (playersFile.exists() && !playersFile.isDirectory()))
 		{
 			try
 			{
@@ -50,10 +50,41 @@ public class PlayerFilter
 				throw e;
 			}
 		}
+		else
+		{
+			if (filter == PlayerFilterType.Ops)
+			{
+				File opsFile = Minecraft.findServerPlayerFile(worldDir, "ops");
+				loadPlayerList(opsFile);
+			}
+			else if (filter == PlayerFilterType.Whitelist)
+			{
+				File whitelist = Minecraft.findServerPlayerFile(worldDir, "whitelist");
+				loadPlayerList(whitelist);
+			}
+			else if (filter == PlayerFilterType.Blacklist)
+			{
+				File blacklist = Minecraft.findServerPlayerFile(worldDir, "banned-players");
+				loadPlayerList(blacklist);
+			}
+		}
 	}
 	
+	private void loadPlayerList(File playerFile)
+	{
+		System.out.println("Loading players from "+playerFile.getAbsolutePath());
+		try
+		{
+			playerList = new PlayerList(playerFile);
+		}
+		catch (Exception e)
+		{
+			System.out.println("Error while loading players from "+playerFile.getAbsolutePath());
+			e.printStackTrace();
+		}
+	}
 	
-	public boolean passesFilter(Player player, PlayerList ops)
+	public boolean passesFilter(Player player)
 	{
 		if (filter == PlayerFilterType.None)
 		{
@@ -65,7 +96,7 @@ public class PlayerFilter
 		}
 		else if (filter == PlayerFilterType.Ops)
 		{
-			return ops.contains(player.getName());
+			return playerList.contains(player.getName());
 		}
 		else if (filter == PlayerFilterType.Whitelist)
 		{

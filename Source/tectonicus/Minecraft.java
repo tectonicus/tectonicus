@@ -191,12 +191,30 @@ public class Minecraft
 			return new File(worldDir, "players");
 	}
 
-	public static File findOpsFile(File worldDir)
+	public static File findServerPlayerFile(File worldDir, String name)
 	{
 		if (worldDir == null)
 			return null;
 		
-		return new File(worldDir.getParentFile(), "ops.txt");
+		File json = new File(worldDir.getParentFile(), name+".json");
+		File txt = null;
+		if (name.equals("whitelist"))
+			txt = new File(worldDir.getParentFile(), "white-list.txt");
+		else
+			txt = new File(worldDir.getParentFile(), name+".txt");
+		
+		if (json.exists() && !json.isDirectory())
+		{
+			return json;
+		}
+		else if (txt.exists() && !txt.isDirectory())
+		{		
+			return txt;
+		}
+		else
+		{
+			return worldDir.getParentFile();
+		}
 	}
 
 	/** Look for dimensionDir/region/*.mcr or dimensionDir/region/*.mca */

@@ -59,7 +59,6 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.raw.LevelDat;
-import tectonicus.raw.PlayerList;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.RawSign;
@@ -250,10 +249,10 @@ public class TileRenderer
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
 			
 			// Output players
-			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images"), map, map.getPlayerFilter(), world.players(map.getDimension()), world.getOps(), playerIconAssembler);
+			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler);
 			
 			// Output beds
-			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null), world.getOps());
+			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null));
 			
 			// Output portals
 			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
@@ -1415,7 +1414,7 @@ public class TileRenderer
 		}
 	}
 	
-	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, PlayerList ops, PlayerIconAssembler playerIconAssembler)
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, PlayerIconAssembler playerIconAssembler)
 	{
 		if (playersFile.exists())
 			playersFile.delete();
@@ -1433,7 +1432,7 @@ public class TileRenderer
 			
 			for (Player player : players)
 			{
-				if (filter.passesFilter(player, ops))
+				if (filter.passesFilter(player))
 				{
 					System.out.println("\toutputting "+player.getName());
 					
@@ -1474,7 +1473,7 @@ public class TileRenderer
 		System.out.println("Outputted "+numOutput+" players");
 	}
 	
-	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, PlayerList ops)
+	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players)
 	{
 		File bedsFile = new File(exportDir, "beds.js");
 		if (bedsFile.exists())
@@ -1493,7 +1492,7 @@ public class TileRenderer
 			{
 				for (Player player : players)
 				{
-					if (filter.passesFilter(player, ops) && player.getSpawnPosition() != null)
+					if (filter.passesFilter(player) && player.getSpawnPosition() != null)
 					{
 						System.out.println("\toutputting "+player.getName()+"'s bed");
 						
