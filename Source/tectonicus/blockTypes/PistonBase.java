@@ -26,22 +26,34 @@ import tectonicus.texture.SubTexture;
 public class PistonBase implements BlockType
 {
 	private final String name;
-	private SubTexture baseSide, top, bottom, pistonFace, pistonEdge;
+	private SubTexture baseSide, side, top, bottom, pistonFace, pistonEdge;
 	
-	public PistonBase(String name, SubTexture side, SubTexture top, SubTexture bottom, SubTexture pistonFace)
+	public PistonBase(String name, SubTexture entireSide, SubTexture top, SubTexture bottom, SubTexture pistonFace)
 	{
 		this.name = name;
 		
-		this.top = top;
-		this.bottom = bottom;
 		this.pistonFace = pistonFace;
 		
 		final float divide;
-		if (side.texturePackVersion == "1.4")
+		final float esTexel, topTexel, bottomTexel, pfTexel;
+		if (top.texturePackVersion == "1.4")
+		{
 			divide = 1.0f / 16.0f / 16.0f * 4.0f;
+			esTexel = topTexel = bottomTexel = pfTexel = 1.0f / 16.0f / 16.0f;
+		}
 		else
+		{
 			divide = 1.0f / 16.0f * 4.0f;
+			esTexel = 1.0f / entireSide.texture.getHeight();
+			topTexel = 1.0f / top.texture.getHeight();
+			bottomTexel = 1.0f / bottom.texture.getHeight();
+			pfTexel = 1.0f / pistonFace.texture.getHeight();
+		}
 		
+		this.top = new SubTexture(top.texture, top.u0, top.v0, top.u1, top.v0+topTexel*16);
+		this.bottom = new SubTexture(bottom.texture, bottom.u0, bottom.v0, bottom.u1, bottom.v0+bottomTexel*16);
+		this.pistonFace = new SubTexture(pistonFace.texture, pistonFace.u0, pistonFace.v0, pistonFace.u1, pistonFace.v0+pfTexel*16);
+		side = new SubTexture(entireSide.texture, entireSide.u0, entireSide.v0, entireSide.u1, entireSide.v0+esTexel*16);
 		baseSide = new SubTexture(side.texture, side.u0, side.v0+divide, side.u1, side.v1);
 		pistonEdge = new SubTexture(side.texture, side.u0, side.v0, side.u1, side.v0+divide);
 	}

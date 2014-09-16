@@ -31,10 +31,15 @@ public class Dispenser implements BlockType
 	{
 		this.name = name;
 		
-		this.topTexture = topTexture;
-		this.topBottomTexture = topBottomTexture;
-		this.sideTexture = sideTexture;
-		this.frontTexture = frontTexture;
+		final float topTexel = 1.0f / topTexture.texture.getHeight();
+		final float frontTexel = 1.0f / frontTexture.texture.getHeight();
+		final float topBottomTexel = 1.0f / topBottomTexture.texture.getHeight();
+		final float sideTexel = 1.0f / sideTexture.texture.getHeight();
+		
+		this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+topTexel*16);
+		this.topBottomTexture = new SubTexture(topBottomTexture.texture, topBottomTexture.u0, topBottomTexture.v0, topBottomTexture.u1, topBottomTexture.v0+topBottomTexel*16);
+		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+sideTexel*16);
+		this.frontTexture = new SubTexture(frontTexture.texture, frontTexture.u0, frontTexture.v0, frontTexture.u1, frontTexture.v0+frontTexel*16);
 	}
 	
 	@Override
@@ -78,10 +83,10 @@ public class Dispenser implements BlockType
 		// 0x4: Facing west
 		// 0x5: Facing east
 		
-		/*SubTexture northTex = data == 0x2 ? frontTexture : sideTexture;
-		SubTexture southTex = data == 0x3 ? frontTexture : sideTexture;
-		SubTexture eastTex = data == 0x5 ? frontTexture : sideTexture;
-		SubTexture westTex = data == 0x4 ? frontTexture : sideTexture;*/
+		SubTexture northTex;
+		SubTexture southTex;
+		SubTexture eastTex;
+		SubTexture westTex;
 		
 		Mesh northMesh;
 		Mesh southMesh;
@@ -90,18 +95,24 @@ public class Dispenser implements BlockType
 		
 		if (data == 0x0)
 		{
+			northTex = southTex = eastTex = westTex = sideTexture;
 			northMesh = southMesh = eastMesh = westMesh = topMesh;
 			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
 			BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
 		}
 		else if(data == 0x1)
 		{
+			northTex = southTex = eastTex = westTex = sideTexture;
 			northMesh = southMesh = eastMesh = westMesh = topMesh;
 			BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
 			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
 		}
 		else
 		{
+			northTex = data == 0x2 ? frontTexture : sideTexture;
+			southTex = data == 0x3 ? frontTexture : sideTexture;
+			eastTex = data == 0x5 ? frontTexture : sideTexture;
+			westTex = data == 0x4 ? frontTexture : sideTexture;
 			northMesh = data == 0x2 ? frontMesh : sideMesh;
 			southMesh = data == 0x3 ? frontMesh : sideMesh;
 			eastMesh = data == 0x5 ? frontMesh : sideMesh;
@@ -109,9 +120,9 @@ public class Dispenser implements BlockType
 			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
 			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
 		}
-		BlockUtil.addNorth(world, chunk, westMesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addSouth(world, chunk, eastMesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addEast(world, chunk, northMesh, x, y, z, colour, sideTexture, registry);
-		BlockUtil.addWest(world, chunk, southMesh, x, y, z, colour, sideTexture, registry);
+		BlockUtil.addNorth(world, chunk, westMesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addSouth(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
+		BlockUtil.addEast(world, chunk, northMesh, x, y, z, colour, northTex, registry);
+		BlockUtil.addWest(world, chunk, southMesh, x, y, z, colour, southTex, registry);
 	}
 }
