@@ -27,7 +27,9 @@ public class Portal implements BlockType
 	public Portal(String name, SubTexture texture)
 	{
 		this.name = name;
-		this.texture = texture;
+		
+		final float texel = 1.0f / texture.texture.getHeight();
+		this.texture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+texel*16);
 	}
 
 	@Override
@@ -59,7 +61,7 @@ public class Portal implements BlockType
 	{
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Transparent);
 		
-		Colour4f colour = new Colour4f(1, 1, 1, 0.6f);
+		Colour4f colour = new Colour4f(1, 1, 1, 0.9f);
 		
 		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, texture, registry);
 		

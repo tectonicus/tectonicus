@@ -289,7 +289,7 @@
 	
 	<Solid id="89" name="Glowstone" texture="lightgem.png" />
 	
-	<Portal id="90" name="Portal" texture="Images/Portal.png" />
+	<Portal id="90" name="Portal" texture="portal.png" />
 
 	<Pumpkin id="91" name="Jack-o-lantern" top="pumpkin_top.png" side="pumpkin_side.png" front="pumpkin_jack.png" />
 	
