@@ -80,17 +80,22 @@ public class Tripwire implements BlockType
 	{
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Transparent);
 		
-		final boolean hasNorth = registry.find(world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1), 0) instanceof Tripwire;
-		final boolean hasSouth = registry.find(world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1), 0) instanceof Tripwire;
-		final boolean hasEast = registry.find(world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z), 0) instanceof Tripwire;
-		final boolean hasWest = registry.find(world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z), 0) instanceof Tripwire;
+		final boolean hasNorth = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1) instanceof Tripwire || 
+									world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1) instanceof TripwireHook;
+		final boolean hasSouth = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1) instanceof Tripwire ||
+									world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1) instanceof TripwireHook;
+		final boolean hasEast = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z) instanceof Tripwire ||
+									world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z) instanceof TripwireHook;
+		final boolean hasWest = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z) instanceof Tripwire ||
+									world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z) instanceof TripwireHook;
+
 		
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
 		Vector4f light = new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a);
 		
 		final float nudge = 1.0f/16.0f;
 		final float actualY = y + nudge;
-		
+
 		//North/South tripwire
 		if ((!hasNorth && !hasSouth && !hasEast && !hasWest) || hasNorth)
 		{

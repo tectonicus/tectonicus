@@ -9,6 +9,7 @@
 
 package tectonicus.blockTypes;
 
+import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
@@ -26,9 +27,9 @@ public class TripwireHook implements BlockType
 {	
 	private final String name;
 
-	private final SubTexture base, hookRing, hookRingSide, hookPole;
+	private final SubTexture base, hookRing, hookRingSide, hookPole, tripwire;
 	
-	public TripwireHook(String name, SubTexture base, SubTexture hook)
+	public TripwireHook(String name, SubTexture base, SubTexture hook, SubTexture tripwire)
 	{
 		this.name = name;
 		
@@ -43,6 +44,11 @@ public class TripwireHook implements BlockType
 		this.hookRing = new SubTexture(hook.texture, hook.u0+texel*5, hook.v0+texel*3, hook.u0+texel*11, hook.v1-texel*7);
 		this.hookRingSide = new SubTexture(hook.texture, hook.u0+texel*5, hook.v0+texel*3, hook.u0+texel*7, hook.v1-texel*7);
 		this.hookPole = new SubTexture(hook.texture, hook.u0+texel*7, hook.v0+texel*10, hook.u0+texel*9, hook.v1);
+		
+		if (base.texturePackVersion == "1.4" || base.texturePackVersion == "1.5")
+			this.tripwire = new SubTexture(tripwire.texture, tripwire.u0, tripwire.v0+texel*2, tripwire.u1, tripwire.v0+texel*4);
+		else
+			this.tripwire = new SubTexture(tripwire.texture, tripwire.u0, tripwire.v0+texel*6, tripwire.u1, tripwire.v0+texel*8);
 	}
 	
 	@Override
@@ -82,8 +88,7 @@ public class TripwireHook implements BlockType
 		SubMesh baseMesh = new SubMesh();
 		SubMesh leverMesh = new SubMesh();
 		SubMesh hookMesh = new SubMesh();
-				
-		
+		SubMesh tripwireMesh = new SubMesh();
 		
 		Rotation horizRotation = Rotation.Clockwise;
 		float horizAngle = 0;
@@ -92,7 +97,7 @@ public class TripwireHook implements BlockType
 		float vertAngle = 0;
 		
 		// Set angle/rotation from block data flags
-		if(data == 3 || data == 7) // Facing east
+		if(data == 3 || data == 7 || data == 15) // Facing east
 		{
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
@@ -100,12 +105,12 @@ public class TripwireHook implements BlockType
 			horizRotation = Rotation.Clockwise;
 			horizAngle = 180;		
 		}
-		else if (data == 1 || data == 5) // Facing west
+		else if (data == 1 || data == 5 || data == 13) // Facing west
 		{
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
 		}
-		else if (data == 0 || data == 4) // Facing south
+		else if (data == 0 || data == 4 || data == 12) // Facing south
 		{
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
@@ -113,7 +118,7 @@ public class TripwireHook implements BlockType
 			horizRotation = Rotation.Clockwise;
 			horizAngle = 90;
 		}
-		else if (data == 2 || data == 6) // Facing north
+		else if (data == 2 || data == 6 || data == 14) // Facing north
 		{
 			vertRotation = Rotation.Clockwise;
 			vertAngle = 90;
@@ -126,10 +131,11 @@ public class TripwireHook implements BlockType
 		float hrotate = 0;
 		
 		SubMesh.addBlock(baseMesh, offSet, 0, offSet*6, offSet*8, offSet*2, offSet*4, white, base, base, base);
-		if((data & 0x4) > 0)
+		if((data & 0x4) > 0 || (data & 0x8) > 0)
 		{
 			SubMesh.addBlockSimple(leverMesh, offSet*5, 0, offSet*7.2f, offSet*1.6f, offSet*6, offSet*1.6f, white, hookPole, hookPole, hookPole);
 			SubMesh.addBlockSimple(hookMesh, offSet*6, offSet*5.9f, offSet*6.25f, offSet*0.5f, offSet*3.5f, offSet*3.5f, white, hookRing, hookRingSide, hookRingSide);
+			tripwireMesh.addQuad(new Vector3f(offSet*-3.8f, offSet*6, offSet*7.7f), new Vector3f(offSet*6, offSet*6, offSet*7.7f), new Vector3f(offSet*6, offSet*6, offSet*8.3f), new Vector3f(offSet*-3.8f, offSet*6, offSet*8.3f), white, tripwire);
 			lrotate = vertAngle+5;
 			hrotate = vertAngle+8;
 		}
@@ -145,5 +151,6 @@ public class TripwireHook implements BlockType
 		baseMesh.pushTo(geometry.getMesh(base.texture, Geometry.MeshType.AlphaTest), x, y, z, horizRotation, horizAngle, vertRotation, vertAngle);
 		leverMesh.pushTo(geometry.getMesh(hookPole.texture, Geometry.MeshType.AlphaTest), x, y, z, horizRotation, horizAngle, vertRotation, lrotate);
 		hookMesh.pushTo(geometry.getMesh(hookRing.texture, Geometry.MeshType.AlphaTest), x, y, z, horizRotation, horizAngle, vertRotation, hrotate);
+		tripwireMesh.pushTo(geometry.getMesh(tripwire.texture, Geometry.MeshType.Transparent), x, y, z, horizRotation, horizAngle, vertRotation, 30);
 	}
 }

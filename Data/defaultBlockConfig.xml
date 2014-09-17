@@ -389,7 +389,7 @@
 										trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
 										xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 	
-	<TripwireHook id="131" name="Tripwire Hook" texture="planks_oak.png" texture2="trip_wire_source.png" />
+	<TripwireHook id="131" name="Tripwire Hook" texture="planks_oak.png" texture2="trip_wire_source.png" tripwire="trip_wire.png" />
 	
 	<Tripwire id="132" name="Tripwire" texture="trip_wire.png" />
 	
@@ -529,24 +529,24 @@
 	<Log id="170:8" name="Hay Block North/South" side="hay_block_side.png" top="hay_block_top.png" />
 	<Log id="170:4" name="Hay Block East/West" side="hay_block_side.png" top="hay_block_top.png" />
 	
-	<Carpet id="171:0" name="White carpet"  texture="wool_colored_white.png" />
-	<Carpet id="171:1" name="Orange carpet"  texture="wool_colored_orange.png" />
-	<Carpet id="171:2" name="Magenta carpet"  texture="wool_colored_magenta.png" />
-	<Carpet id="171:3" name="Light blue carpet"  texture="wool_colored_light_blue.png" />
-	<Carpet id="171:4" name="Yellow carpet"  texture="wool_colored_yellow.png" />
-	<Carpet id="171:5" name="Lime carpet"  texture="wool_colored_lime.png" />
-	<Carpet id="171:6" name="Pink carpet"  texture="wool_colored_pink.png" />
-	<Carpet id="171:7" name="Gray carpet"  texture="wool_colored_gray.png" />
-	<Carpet id="171:8" name="Silver carpet"  texture="wool_colored_silver.png" />
-	<Carpet id="171:9" name="Cyan carpet"  texture="wool_colored_cyan.png" />
-	<Carpet id="171:10" name="Purple carpet"  texture="wool_colored_purple.png" />
-	<Carpet id="171:11" name="Blue carpet"  texture="wool_colored_blue.png" />
-	<Carpet id="171:12" name="Brown carpet"  texture="wool_colored_brown.png" />
-	<Carpet id="171:13" name="Green carpet"  texture="wool_colored_green.png" />
-	<Carpet id="171:14" name="Red carpet"  texture="wool_colored_red.png" />
-	<Carpet id="171:15" name="Black carpet"  texture="wool_colored_black.png" />
+	<Carpet id="171:0" name="White Carpet"  texture="wool_colored_white.png" />
+	<Carpet id="171:1" name="Orange Carpet"  texture="wool_colored_orange.png" />
+	<Carpet id="171:2" name="Magenta Carpet"  texture="wool_colored_magenta.png" />
+	<Carpet id="171:3" name="Light Blue Carpet"  texture="wool_colored_light_blue.png" />
+	<Carpet id="171:4" name="Yellow Carpet"  texture="wool_colored_yellow.png" />
+	<Carpet id="171:5" name="Lime Carpet"  texture="wool_colored_lime.png" />
+	<Carpet id="171:6" name="Pink Carpet"  texture="wool_colored_pink.png" />
+	<Carpet id="171:7" name="Gray Carpet"  texture="wool_colored_gray.png" />
+	<Carpet id="171:8" name="Silver Carpet"  texture="wool_colored_silver.png" />
+	<Carpet id="171:9" name="Cyan Carpet"  texture="wool_colored_cyan.png" />
+	<Carpet id="171:10" name="Purple Carpet"  texture="wool_colored_purple.png" />
+	<Carpet id="171:11" name="Blue Carpet"  texture="wool_colored_blue.png" />
+	<Carpet id="171:12" name="Brown Carpet"  texture="wool_colored_brown.png" />
+	<Carpet id="171:13" name="Green Carpet"  texture="wool_colored_green.png" />
+	<Carpet id="171:14" name="Red Carpet"  texture="wool_colored_red.png" />
+	<Carpet id="171:15" name="Black Carpet"  texture="wool_colored_black.png" />
 	
-	<Solid id="172" name="Hardened clay"  texture="hardened_clay.png" />
+	<Solid id="172" name="Hardened Clay"  texture="hardened_clay.png" />
 	
 	<Solid id="173" name="Coal Block"  texture="coal_block.png" />
 	
@@ -558,6 +558,10 @@
 	<Plant id="175:3" name="Large Fern" top="double_plant_fern_top.png" bottom="double_plant_fern_bottom.png" />
 	<Plant id="175:4" name="Rose Bush" top="double_plant_rose_top.png" bottom="double_plant_rose_bottom.png" />
 	<Plant id="175:5" name="Peony" top="double_plant_paeonia_top.png" bottom="double_plant_paeonia_bottom.png" />
+	
+	<Banner id="176" stringid="minecraft:standing_banner" name="Standing Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true" />
+	
+	<Banner id="177" stringid="minecraft:wall_banner" name="Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
 	
 	<DaylightSensor id="178" stringId="minecraft:daylight_detector_inverted" name="Inverted Daylight Sensor" top="daylight_detector_inverted_top.png" bottom="daylight_detector_side.png" />
 	
@@ -597,9 +601,12 @@
 	
 	<Door id="195" stringId="minecraft:jungle_door" name="Jungle Door" top="door_jungle_upper.png" bottom="door_jungle_lower.png" />
 	
-	<Door id="196" stringId="minecraft:acacia_door" name="acacia Door" top="door_acacia_upper.png" bottom="door_acacia_lower.png" />
+	<Door id="196" stringId="minecraft:acacia_door" name="Acacia Door" top="door_acacia_upper.png" bottom="door_acacia_lower.png" />
 	
 	<Door id="197" stringId="minecraft:dark_oak_door" name="Dark Oak Door" top="door_dark_oak_upper.png" bottom="door_dark_oak_lower.png" />
 	
 	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
+	
+	<ItemFrame id="-2" name="ItemFrame" background="itemframe_background.png" border="planks_birch.png" map="assets/minecraft/textures/map/map_background.png" />
+	
 </blockConfig>

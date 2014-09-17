@@ -392,7 +392,7 @@
 										trappedsmall="item/chests/trap_small.png" trappedlarge="item/chests/trap_large.png"
 										xmassmall="item/xmaschest.png" xmaslarge="item/largexmaschest.png" />
 	
-	<TripwireHook id="131" name="Tripwire Hook" texture="wood.png" texture2="tripWireSource.png" />
+	<TripwireHook id="131" name="Tripwire Hook" texture="wood.png" texture2="tripWireSource.png" tripwire="tripWire.png" />
 	
 	<Tripwire id="132" name="Tripwire" texture="tripWire.png" />
 	
@@ -483,5 +483,7 @@
 	<Dispenser id="158" name="Dropper" top="furnace_top.png" topBottom="dropper_front_vertical.png" side="furnace_side.png" front="dropper_front.png" />
 	
 	<Painting id="-1" name="Paintings" texture="art/kz.png" />
+	
+	<ItemFrame id="-2" name="ItemFrame" background="itemframe_back.png" border="wood_birch.png" map="misc/mapbg.png" />
 	
 </blockConfig>

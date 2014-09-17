@@ -384,7 +384,7 @@
 										trappedsmall="" trappedlarge=""
 										xmassmall="" xmaslarge="" />
 	
-	<TripwireHook id="131" name="Tripwire Hook" texture="terrain[4, 0]" texture2="terrain[12, 10]" />
+	<TripwireHook id="131" name="Tripwire Hook" texture="terrain[4, 0]" texture2="terrain[12, 10]" tripwire="terrain[13, 10]" />
 	
 	<Tripwire id="132" name="Tripwire" texture="terrain[13, 10]" />
 	
@@ -439,5 +439,7 @@
 	<Anvil id="145" name="Anvil" base="terrain[7, 13]" top0="terrain[7, 14]" top1="terrain[8, 13]" top2="terrain[8, 14]" />
 	
 	<Painting id="-1" name="Paintings" texture="art/kz.png" />
+	
+	<ItemFrame id="-2" name="ItemFrame" background="terrain[9, 11]" border="terrain[6, 13]" map="misc/mapbg.png" />
 	
 </blockConfig>

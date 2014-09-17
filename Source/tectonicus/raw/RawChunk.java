@@ -62,6 +62,7 @@ public class RawChunk
 	private ArrayList<TileEntity> skulls;
 	private ArrayList<TileEntity> beacons;
 	private ArrayList<TileEntity> banners;
+	private ArrayList<TileEntity> itemFrames;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -102,6 +103,7 @@ public class RawChunk
 		skulls = new ArrayList<TileEntity>();
 		beacons = new ArrayList<TileEntity>();
 		banners = new ArrayList<TileEntity>();
+		itemFrames = new ArrayList<TileEntity>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -192,6 +194,54 @@ public class RawChunk
 									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
 											//", " + localY + ", " + localZ);
 									paintings.add(new TileEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), dir.getValue()));
+								}
+								else if (idTag.getValue().equals("ItemFrame"))
+								{
+									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
+									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
+									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
+									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
+									boolean is18 = false;
+									if (dir == null){
+										dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
+										is18 = true;
+									}
+									
+									String item = "";
+									Map<String, Tag> map = entity.getValue();
+									CompoundTag itemTag = (CompoundTag) map.get("Item");
+									if(itemTag != null)
+									{
+										StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
+										item = itemIdTag.getValue();
+									}
+									
+
+									int x = xTag.getValue();
+									final int y = yTag.getValue();
+									int z = zTag.getValue();
+									
+									if (is18 && dir.getValue() == 0){
+										z = zTag.getValue() - 1;
+									}
+									else if (is18 && dir.getValue() == 1){
+										x = xTag.getValue() + 1;
+									}
+									else if (is18 && dir.getValue() == 2){
+										z = zTag.getValue() + 1;
+									}
+									else if (is18 && dir.getValue() == 3){
+										x = xTag.getValue() - 1;
+									}
+									
+									final int localX = x-(blockX*WIDTH);
+									final int localY  = y-(blockY*HEIGHT);
+									final int localZ = z-(blockZ*DEPTH);
+									
+									//System.out.println(" Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
+											//", " + localY + ", " + localZ);
+									
+									itemFrames.add(new TileEntity(-2, 0, x, y, z, localX, localY, localZ, item, dir.getValue()));
 								}
 							}
 						}
@@ -843,6 +893,11 @@ public class RawChunk
 	public ArrayList<TileEntity> getBanners()
 	{
 		return new ArrayList<TileEntity>(banners);
+	}
+	
+	public ArrayList<TileEntity> getItemFrames()
+	{
+		return new ArrayList<TileEntity>(itemFrames);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

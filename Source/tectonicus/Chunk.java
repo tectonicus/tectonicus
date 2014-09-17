@@ -130,7 +130,14 @@ public class Chunk
 		
 		// Create painting geometry
 		BlockType type = registry.find(-1, 0);
-		type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
+		if (type != null)
+			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
+		
+		// Create itemframe geometry
+		type = null;
+		type = registry.find(-2, 0);
+		if (type != null)
+			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
 		
 		/*
 		for (int y=0; y<RawChunk.HEIGHT; y++)

@@ -25,6 +25,7 @@ import org.w3c.dom.NodeList;
 
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.Anvil;
+import tectonicus.blockTypes.Banner;
 import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
 import tectonicus.blockTypes.BrewingStand;
@@ -56,6 +57,7 @@ import tectonicus.blockTypes.Grass;
 import tectonicus.blockTypes.Hopper;
 import tectonicus.blockTypes.HugeMushroom;
 import tectonicus.blockTypes.Ice;
+import tectonicus.blockTypes.ItemFrame;
 import tectonicus.blockTypes.JackOLantern;
 import tectonicus.blockTypes.Ladder;
 import tectonicus.blockTypes.Leaves;
@@ -719,8 +721,9 @@ public class BlockRegistryParser
 		{
 			SubTexture base = parseTexture(element, "texture", null);
 		 	SubTexture hook = parseTexture(element, "texture2", null);
+		 	SubTexture tripwire = parseTexture(element, "tripwire", null);
 		 	
-		 	blockType = new TripwireHook(name, base, hook);
+		 	blockType = new TripwireHook(name, base, hook, tripwire);
 		}
 		else if (nodeName.equals("carpet"))
 		{
@@ -749,6 +752,23 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			blockType = new Tripwire(name, texture);
+		}
+		else if (nodeName.equals("banner"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
+			
+			String hasPostStr = element.getAttribute("hasPost");
+			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));
+			
+			blockType = new Banner(name, texture, hasPost);
+		}
+		else if (nodeName.equals("itemframe"))
+		{
+			SubTexture background = parseTexture(element, "background", null);
+			SubTexture border = parseTexture(element, "border", null);
+			SubTexture map = parseTexture(element, "map", null);
+		 	
+		 	blockType = new ItemFrame(name, background, border, map);
 		}
 		else
 		{
