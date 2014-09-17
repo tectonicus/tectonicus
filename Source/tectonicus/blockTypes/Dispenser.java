@@ -31,15 +31,15 @@ public class Dispenser implements BlockType
 	{
 		this.name = name;
 		
-		final float topTexel = 1.0f / topTexture.texture.getHeight();
-		final float frontTexel = 1.0f / frontTexture.texture.getHeight();
-		final float topBottomTexel = 1.0f / topBottomTexture.texture.getHeight();
-		final float sideTexel = 1.0f / sideTexture.texture.getHeight();
+		final float topTile = (1.0f / topTexture.texture.getHeight()) * topTexture.texture.getWidth();
+		final float frontTile = (1.0f / frontTexture.texture.getHeight()) * frontTexture.texture.getWidth();
+		final float topBottomTile = (1.0f / topBottomTexture.texture.getHeight()) * topBottomTexture.texture.getWidth();
+		final float sideTile = (1.0f / sideTexture.texture.getHeight()) * sideTexture.texture.getWidth();
 		
-		this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+topTexel*16);
-		this.topBottomTexture = new SubTexture(topBottomTexture.texture, topBottomTexture.u0, topBottomTexture.v0, topBottomTexture.u1, topBottomTexture.v0+topBottomTexel*16);
-		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+sideTexel*16);
-		this.frontTexture = new SubTexture(frontTexture.texture, frontTexture.u0, frontTexture.v0, frontTexture.u1, frontTexture.v0+frontTexel*16);
+		this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+topTile);
+		this.topBottomTexture = new SubTexture(topBottomTexture.texture, topBottomTexture.u0, topBottomTexture.v0, topBottomTexture.u1, topBottomTexture.v0+topBottomTile);
+		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+sideTile);
+		this.frontTexture = new SubTexture(frontTexture.texture, frontTexture.u0, frontTexture.v0, frontTexture.u1, frontTexture.v0+frontTile);
 	}
 	
 	@Override

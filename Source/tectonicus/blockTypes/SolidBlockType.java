@@ -73,8 +73,9 @@ public class SolidBlockType implements BlockType
 		if(sideTexture.texturePackVersion != "1.4")
 		{
 			final float texel = 1.0f / sideTexture.texture.getHeight();
-			this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+texel*16);
-			this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+texel*16);
+			final float tile = texel * sideTexture.texture.getWidth();
+			this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0, sideTexture.u1, sideTexture.v0+tile);
+			this.topTexture = new SubTexture(topTexture.texture, topTexture.u0, topTexture.v0, topTexture.u1, topTexture.v0+tile);
 		}
 	}
 	

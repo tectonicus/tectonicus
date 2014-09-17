@@ -36,14 +36,31 @@ public class RedstoneRepeater implements BlockType
 	{
 		this.name = name;
 		
-		this.baseTexture = baseTexture;
-		this.baseLit = baseLit;
-
-		final float texelSize;
+		final float texelSize, baseTile, baseLitTile;
 		if (baseTexture.texturePackVersion == "1.4")
+		{
 			texelSize = 1.0f / 16.0f / 16.0f;
+			baseTile = baseLitTile = 0;
+		}
 		else
+		{
 			texelSize = 1.0f / 16.0f;
+			baseTile = (1.0f / baseTexture.texture.getHeight()) * baseTexture.texture.getWidth();
+			if (baseLit != null)
+			{
+				System.out.println("repeater............");
+				baseLitTile = (1.0f / baseLit.texture.getHeight()) * baseLit.texture.getWidth();
+			}
+			else
+				baseLitTile = 0;
+		}
+			
+		
+		this.baseTexture = new SubTexture(baseTexture.texture, baseTexture.u0, baseTexture.v0, baseTexture.u1, baseTexture.v0+baseTile);
+		if (baseLit != null)
+			this.baseLit = new SubTexture(baseLit.texture, baseLit.u0, baseLit.v0, baseLit.u1, baseLit.v0+baseLitTile);
+		else
+			this.baseLit = baseLit;
 		
 		final float vHeight = texelSize * 14;
 		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0+vHeight, sideTexture.u1, sideTexture.v1);

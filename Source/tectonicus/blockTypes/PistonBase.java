@@ -35,25 +35,25 @@ public class PistonBase implements BlockType
 		this.pistonFace = pistonFace;
 		
 		final float divide;
-		final float esTexel, topTexel, bottomTexel, pfTexel;
+		final float esTile, topTile, bottomTile, pfTile;
 		if (top.texturePackVersion == "1.4")
 		{
 			divide = 1.0f / 16.0f / 16.0f * 4.0f;
-			esTexel = topTexel = bottomTexel = pfTexel = 1.0f / 16.0f / 16.0f;
+			esTile = topTile = bottomTile = pfTile = 1.0f / 16.0f / 16.0f;
 		}
 		else
 		{
 			divide = 1.0f / 16.0f * 4.0f;
-			esTexel = 1.0f / entireSide.texture.getHeight();
-			topTexel = 1.0f / top.texture.getHeight();
-			bottomTexel = 1.0f / bottom.texture.getHeight();
-			pfTexel = 1.0f / pistonFace.texture.getHeight();
+			esTile = (1.0f / entireSide.texture.getHeight()) * entireSide.texture.getWidth();
+			topTile = (1.0f / top.texture.getHeight()) * top.texture.getWidth();
+			bottomTile = (1.0f / bottom.texture.getHeight()) * bottom.texture.getWidth();
+			pfTile = (1.0f / pistonFace.texture.getHeight()) * pistonFace.texture.getWidth();
 		}
 		
-		this.top = new SubTexture(top.texture, top.u0, top.v0, top.u1, top.v0+topTexel*16);
-		this.bottom = new SubTexture(bottom.texture, bottom.u0, bottom.v0, bottom.u1, bottom.v0+bottomTexel*16);
-		this.pistonFace = new SubTexture(pistonFace.texture, pistonFace.u0, pistonFace.v0, pistonFace.u1, pistonFace.v0+pfTexel*16);
-		side = new SubTexture(entireSide.texture, entireSide.u0, entireSide.v0, entireSide.u1, entireSide.v0+esTexel*16);
+		this.top = new SubTexture(top.texture, top.u0, top.v0, top.u1, top.v0+topTile);
+		this.bottom = new SubTexture(bottom.texture, bottom.u0, bottom.v0, bottom.u1, bottom.v0+bottomTile);
+		this.pistonFace = new SubTexture(pistonFace.texture, pistonFace.u0, pistonFace.v0, pistonFace.u1, pistonFace.v0+pfTile);
+		side = new SubTexture(entireSide.texture, entireSide.u0, entireSide.v0, entireSide.u1, entireSide.v0+esTile);
 		baseSide = new SubTexture(side.texture, side.u0, side.v0+divide, side.u1, side.v1);
 		pistonEdge = new SubTexture(side.texture, side.u0, side.v0, side.u1, side.v0+divide);
 	}
