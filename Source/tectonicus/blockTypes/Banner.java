@@ -23,21 +23,21 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.TileEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.util.Colour4f;
 
 public class Banner implements BlockType
 {
-	private static final int WIDTH = 14;
+	private static final int WIDTH = 15;
 	private static final int HEIGHT = 2;
 	private static final int THICKNESS = 2;
-	private static final int POST_THICKNESS = 2;
-	private static final int POST_HEIGHT = 30;
+	private static final int POST_HEIGHT = 28;
 	
 	private final String name;
 	
-	private SubTexture frontTexture;
-	private SubTexture sideTexture;
+	private SubTexture frontTexture, bannerSideTexture;
+	private SubTexture sideTexture, sideTexture2;
 	private SubTexture edgeTexture;
-	private SubTexture postTexture;
+	private SubTexture topTexture;
 	
 	private final boolean hasPost;
 	
@@ -49,9 +49,11 @@ public class Banner implements BlockType
 		final float texel = 1.0f / 64.0f;
 		
 		this.frontTexture = new SubTexture(texture.texture, texture.u0+texel, texture.v0+texel, texture.u0+texel*21, texture.v0+texel*41);
-		this.sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+texel*THICKNESS);
-		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u0+texel*THICKNESS, texture.v0+texel*HEIGHT);
-		this.postTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u0+texel*POST_THICKNESS, texture.v0+texel*POST_HEIGHT);
+		this.bannerSideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel, texture.u0+texel, texture.v0+texel*41);
+		this.sideTexture = new SubTexture(texture.texture, texture.u0+texel*50, texture.v0+texel*2, texture.u0+texel*52, texture.v0+texel*43);
+		this.sideTexture2 = new SubTexture(texture.texture, texture.u0+texel*48, texture.v0+texel*2, texture.u0+texel*50, texture.v0+texel*43);
+		this.topTexture = new SubTexture(texture.texture, texture.u0+texel*2, texture.v0+texel*42, texture.u0+texel*22, texture.v0+texel*44);
+		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel*44, texture.u0+texel*2, texture.v0+texel*46);
 	}
 	
 	@Override
@@ -84,12 +86,58 @@ public class Banner implements BlockType
 		final int data = rawChunk.getBlockData(x, y, z);
 		
 		SubMesh subMesh = new SubMesh();
+		int baseColor = 0;
+		for (TileEntity te : rawChunk.getBanners())
+		{
+			if (te.localX == x && te.localY == y && te.localZ == z)
+			{
+				System.out.println("baseColor: "+ te.blockData);
+				baseColor = te.blockData;
+				break;
+			}
+		}
+		
+		Colour4f color;
+		if (baseColor == 0)
+			color = new Colour4f(25f/255f, 25f/255f, 25f/255f, 1);  // Black
+		else if (baseColor == 1)
+			color = new Colour4f(153f/255f, 51f/255f, 51f/255f, 1); // Red
+		else if (baseColor == 2)
+			color = new Colour4f(102f/255f, 127f/255f, 51f/255f, 1); // Green
+		else if (baseColor == 3)
+			color = new Colour4f(102f/255f, 76f/255f, 51f/255f, 1); // Brown
+		else if (baseColor == 4)
+			color = new Colour4f(51f/255f, 76f/255f, 178f/255f, 1); // Blue
+		else if (baseColor == 5)
+			color = new Colour4f(127f/255f, 63f/255f, 178f/255f, 1); // Purple
+		else if (baseColor == 6)
+			color = new Colour4f(76f/255f, 127f/255f, 153f/255f, 1); // Cyan
+		else if (baseColor == 7)
+			color = new Colour4f(153f/255f, 153f/255f, 153f/255f, 1); // Light Gray
+		else if (baseColor == 8)
+			color = new Colour4f(76f/255f, 76f/255f, 76f/255f, 1); // Gray
+		else if (baseColor == 9)
+			color = new Colour4f(242f/255f, 127f/255f, 165f/255f, 1); // Pink
+		else if (baseColor == 10)
+			color = new Colour4f(127f/255f, 204f/255f, 25f/255f, 1); // Lime
+		else if (baseColor == 11)
+			color = new Colour4f(229f/255f, 229f/255f, 51f/255f, 1); // Yellow
+		else if (baseColor == 12)
+			color = new Colour4f(102f/255f, 153f/255f, 216f/255f, 1); // Light Blue
+		else if (baseColor == 13)
+			color = new Colour4f(178f/255f, 76f/255f, 216f/255f, 1); // Magenta
+		else if (baseColor == 14)
+			color = new Colour4f(216f/255f, 127f/255f, 51f/255f, 1); // Orange
+		else
+			color = new Colour4f(1, 1, 1, 1); // White
 		
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
-		
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
+		Vector4f bannerColor = new Vector4f(color.r*lightness, color.g*lightness, color.b*lightness, 1);
 		
+		final float texel = 1.0f / 16.0f;
 		final float signBottom = 1.0f / 16.0f * POST_HEIGHT;
+
 		//final float signBottom = hasPost ? 1.0f / 16.0f * POST_HEIGHT : 0;
 		final float signDepth = hasPost ? 1.0f / 16.0f * 7 : 0;
 		final float width = 1.0f / 16.0f * WIDTH;
@@ -100,26 +148,44 @@ public class Banner implements BlockType
 		final float postLeft = 1.0f / 16.0f * 7;
 		final float postRight = 1.0f / 16.0f * 9;
 		
+		final float bannerHeight = postHeight + height;
+		final float bannerDepth = signDepth + thickness + 0.01f;
+		
+		/* Top of post */
 		// Front
-		subMesh.addQuad(new Vector3f(0, signBottom+height, signDepth+thickness), new Vector3f(width, signBottom+height, signDepth+thickness), new Vector3f(width, signBottom, signDepth+thickness), new Vector3f(0, signBottom, signDepth+thickness), white, frontTexture);
+		subMesh.addQuad(new Vector3f(texel, signBottom+height, signDepth+thickness), new Vector3f(width, signBottom+height, signDepth+thickness), new Vector3f(width, signBottom, signDepth+thickness), new Vector3f(texel, signBottom, signDepth+thickness), white, topTexture);
 		
 		// Back
-		subMesh.addQuad(new Vector3f(width, signBottom+height, signDepth), new Vector3f(0, signBottom+height, signDepth), new Vector3f(0, signBottom, signDepth), new Vector3f(width, signBottom, signDepth), white, frontTexture);
+		subMesh.addQuad(new Vector3f(width, signBottom+height, signDepth), new Vector3f(texel, signBottom+height, signDepth), new Vector3f(texel, signBottom, signDepth), new Vector3f(width, signBottom, signDepth), white, topTexture);
 		
 		// Top
-		subMesh.addQuad(new Vector3f(0, signBottom+height, signDepth), new Vector3f(width, signBottom+height, signDepth), new Vector3f(width, signBottom+height, signDepth+thickness), new Vector3f(0, signBottom+height, signDepth+thickness), white, sideTexture);
+		subMesh.addQuad(new Vector3f(texel, signBottom+height, signDepth), new Vector3f(width, signBottom+height, signDepth), new Vector3f(width, signBottom+height, signDepth+thickness), new Vector3f(texel, signBottom+height, signDepth+thickness), white, topTexture);
 		
 		// Left edge
-		subMesh.addQuad(new Vector3f(0, signBottom+height, signDepth), new Vector3f(0, signBottom+height, signDepth+thickness), new Vector3f(0, signBottom, signDepth+thickness), new Vector3f(0, signBottom, signDepth), white, edgeTexture);
+		subMesh.addQuad(new Vector3f(texel, signBottom+height, signDepth), new Vector3f(texel, signBottom+height, signDepth+thickness), new Vector3f(texel, signBottom, signDepth+thickness), new Vector3f(texel, signBottom, signDepth), white, edgeTexture);
 		
 		// Right edge
 		subMesh.addQuad(new Vector3f(width, signBottom+height, signDepth+thickness), new Vector3f(width, signBottom+height, signDepth), new Vector3f(width, signBottom, signDepth), new Vector3f(width, signBottom, signDepth+thickness), white, edgeTexture);
 		
-		// Banner
-		SubMesh.addBlock(subMesh, 0, 0, signDepth+0.1f, width, postHeight+height, thickness-0.08f, white, frontTexture, frontTexture, frontTexture);
+
+		/* Banner */
+		// Front
+		subMesh.addQuad(new Vector3f(texel, bannerHeight, bannerDepth+texel), new Vector3f(width, bannerHeight, bannerDepth+texel), new Vector3f(width, texel*2, bannerDepth+texel), new Vector3f(texel, texel*2, bannerDepth+texel), bannerColor, frontTexture);
+		
+		// Back
+		subMesh.addQuad(new Vector3f(width, bannerHeight, bannerDepth), new Vector3f(texel, bannerHeight, bannerDepth), new Vector3f(texel, texel*2, bannerDepth), new Vector3f(width, texel*2, bannerDepth), bannerColor, frontTexture);
+		
+		// Top
+		subMesh.addQuad(new Vector3f(texel, bannerHeight, bannerDepth), new Vector3f(width, bannerHeight, bannerDepth), new Vector3f(width, bannerHeight, bannerDepth+texel), new Vector3f(texel, bannerHeight, bannerDepth+texel), bannerColor, bannerSideTexture);
+		
+		// Left edge
+		subMesh.addQuad(new Vector3f(texel, bannerHeight, bannerDepth), new Vector3f(texel, bannerHeight, bannerDepth+texel), new Vector3f(texel, texel*2, bannerDepth+texel), new Vector3f(texel, texel*2, bannerDepth), bannerColor, bannerSideTexture);
+		
+		// Right edge
+		subMesh.addQuad(new Vector3f(width, bannerHeight, bannerDepth+texel), new Vector3f(width, bannerHeight, bannerDepth), new Vector3f(width, texel*2, bannerDepth), new Vector3f(width, texel*2, bannerDepth+texel), bannerColor, bannerSideTexture);
 		
 		final float xOffset = x;
-		final float yOffset = y + (1.0f / 16.0f);
+		final float yOffset;
 		final float zOffset = z;
 		
 		Rotation rotation = Rotation.None;
@@ -127,25 +193,28 @@ public class Banner implements BlockType
 		
 		if (hasPost)
 		{
+			yOffset = y;
 			// Add a post
 			
-			// East face
-			subMesh.addQuad(new Vector3f(postRight, postHeight, postLeft), new Vector3f(postLeft, postHeight, postLeft), new Vector3f(postLeft, 0, postLeft), new Vector3f(postRight, 0, postLeft), white, postTexture);
-			
-			// West face
-			subMesh.addQuad(new Vector3f(postLeft, postHeight, postRight), new Vector3f(postRight, postHeight, postRight), new Vector3f(postRight, 0, postRight), new Vector3f(postLeft, 0, postRight), white, postTexture);
-			
 			// North face
-			subMesh.addQuad(new Vector3f(postLeft, postHeight, postLeft), new Vector3f(postLeft, postHeight, postRight), new Vector3f(postLeft, 0, postRight), new Vector3f(postLeft, 0, postLeft), white, postTexture);
+			subMesh.addQuad(new Vector3f(postRight, postHeight, postLeft), new Vector3f(postLeft, postHeight, postLeft), new Vector3f(postLeft, 0, postLeft), new Vector3f(postRight, 0, postLeft), white, sideTexture);
 			
 			// South face
-			subMesh.addQuad(new Vector3f(postRight, postHeight, postRight), new Vector3f(postRight, postHeight, postLeft), new Vector3f(postRight, 0, postLeft), new Vector3f(postRight, 0, postRight), white, postTexture);
+			subMesh.addQuad(new Vector3f(postLeft, postHeight, postRight), new Vector3f(postRight, postHeight, postRight), new Vector3f(postRight, 0, postRight), new Vector3f(postLeft, 0, postRight), white, sideTexture);
+			
+			// West face
+			subMesh.addQuad(new Vector3f(postLeft, postHeight, postLeft), new Vector3f(postLeft, postHeight, postRight), new Vector3f(postLeft, 0, postRight), new Vector3f(postLeft, 0, postLeft), white, sideTexture2);
+			
+			// East face
+			subMesh.addQuad(new Vector3f(postRight, postHeight, postRight), new Vector3f(postRight, postHeight, postLeft), new Vector3f(postRight, 0, postLeft), new Vector3f(postRight, 0, postRight), white, sideTexture2);
 			
 			rotation = Rotation.AntiClockwise;
 			angle = 90 / 4.0f * data;
 		}
 		else
 		{
+			yOffset = y - 1;
+			
 			if (data == 2)
 			{
 				// Facing east
@@ -174,36 +243,7 @@ public class Banner implements BlockType
 		
 		// Add the text
 		
-		for (TileEntity te : rawChunk.getBanners())
-		{
-			if (te.localX == x && te.localY == y && te.localZ == z)
-			{
-				/*Mesh textMesh = geometry.getMesh(world.getTexturePack().getFont().getTexture(), Geometry.MeshType.AlphaTest);
-				
-				final float epsilon = 0.001f;
-				
-				final float lineHeight = 1.0f / 16.0f * 2.5f;
-				
-				TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
-				text1.setText(s.text1, width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true);
-				
-				TextLayout text2 = new TextLayout(world.getTexturePack().getFont());
-				text2.setText(s.text2, width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true);
-				
-				TextLayout text3 = new TextLayout(world.getTexturePack().getFont());
-				text3.setText(s.text3, width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true);
-				
-				TextLayout text4 = new TextLayout(world.getTexturePack().getFont());
-				text4.setText(s.text4, width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true);
-				
-				text1.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-				text2.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-				text3.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-				text4.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);*/
-				
-				break;
-			}
-		}
+		
 		
 		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);
 	}

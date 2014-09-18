@@ -36,31 +36,20 @@ public class RedstoneRepeater implements BlockType
 	{
 		this.name = name;
 		
-		final float texelSize, baseTile, baseLitTile;
+		final float texelSize, baseTile;
 		if (baseTexture.texturePackVersion == "1.4")
 		{
 			texelSize = 1.0f / 16.0f / 16.0f;
-			baseTile = baseLitTile = 0;
+			baseTile = 0;
 		}
 		else
 		{
 			texelSize = 1.0f / 16.0f;
 			baseTile = (1.0f / baseTexture.texture.getHeight()) * baseTexture.texture.getWidth();
-			if (baseLit != null)
-			{
-				System.out.println("repeater............");
-				baseLitTile = (1.0f / baseLit.texture.getHeight()) * baseLit.texture.getWidth();
-			}
-			else
-				baseLitTile = 0;
 		}
 			
-		
 		this.baseTexture = new SubTexture(baseTexture.texture, baseTexture.u0, baseTexture.v0, baseTexture.u1, baseTexture.v0+baseTile);
-		if (baseLit != null)
-			this.baseLit = new SubTexture(baseLit.texture, baseLit.u0, baseLit.v0, baseLit.u1, baseLit.v0+baseLitTile);
-		else
-			this.baseLit = baseLit;
+		this.baseLit = baseLit;
 		
 		final float vHeight = texelSize * 14;
 		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0+vHeight, sideTexture.u1, sideTexture.v1);
@@ -123,7 +112,18 @@ public class RedstoneRepeater implements BlockType
 		SubMesh torchMesh = new SubMesh();
 		SubMesh litTorchMesh = new SubMesh();
 		
-		baseMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, baseTexture);
+		SubTexture base = null;
+		if((data & 0x8) > 0 && baseLit != null)
+		{
+			final float baseLitTile = (1.0f / baseLit.texture.getHeight()) * baseLit.texture.getWidth();
+			base = new SubTexture(baseLit.texture, baseLit.u0, baseLit.v0, baseLit.u1, baseLit.v0+baseLitTile);
+		}
+		else
+		{
+			base = baseTexture;
+		}
+		
+		baseMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(1, height, 0), new Vector3f(1, height, 1), new Vector3f(0, height, 1), white, base);
 		
 		// North edge
 		subMesh.addQuad(new Vector3f(0, height, 0), new Vector3f(0, height, 1), new Vector3f(0, 0, 1), new Vector3f(0, 0, 0), white, sideTexture);
@@ -209,7 +209,11 @@ public class RedstoneRepeater implements BlockType
 		
 		subMesh.pushTo(geometry.getMesh(sideTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
 		if((data & 0x8) > 0 && baseLit != null)
-			baseMesh.pushTo(geometry.getMesh(baseLit.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		{
+			final float baseLitTile = (1.0f / baseLit.texture.getHeight()) * baseLit.texture.getWidth();
+			SubTexture lit = new SubTexture(baseLit.texture, baseLit.u0, baseLit.v0, baseLit.u1, baseLit.v0+baseLitTile);
+			baseMesh.pushTo(geometry.getMesh(lit.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
+		}
 		else
 			baseMesh.pushTo(geometry.getMesh(baseTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
 		torchMesh.pushTo(geometry.getMesh(torchSideTexture.texture, Geometry.MeshType.AlphaTest), x, y, z, rotation, angle);
