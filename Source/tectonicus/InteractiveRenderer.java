@@ -49,6 +49,7 @@ public class InteractiveRenderer
 	private Vector3f orthoCamPosition;
 	private float orthoZoom;
 	private float orthoAngleOffset;
+	private float cameraElevation;
 	
 	private RawSign perspectiveSign;
 	
@@ -62,7 +63,7 @@ public class InteractiveRenderer
 		rasteriser.printInfo();
 		
 		viewMode = ViewMode.OrthoView;
-		
+
 		orthoCamPosition = new Vector3f();
 		
 		orthoCamera = new OrthoCamera(rasteriser, displayWidth, displayHeight);
@@ -132,6 +133,15 @@ public class InteractiveRenderer
 		if (rasteriser.isKeyDown(KeyEvent.VK_E))
 		{
 			orthoAngleOffset -= 0.1f;
+		}
+		
+		if (rasteriser.isKeyDown(KeyEvent.VK_W))
+		{
+			cameraElevation += 0.1f;
+		}
+		if (rasteriser.isKeyDown(KeyEvent.VK_S))
+		{
+			cameraElevation -= 0.1f;
 		}
 	}
 	private void updatePerspectiveCamera()
@@ -234,6 +244,7 @@ public class InteractiveRenderer
 		
 		orthoZoom = 32;
 		orthoAngleOffset = (float)Math.PI / 4.0f;
+		cameraElevation = (float)Math.PI / 4.0f; // todo: should come from config (first layer?)
 		
 		while (!rasteriser.isCloseRequested())
 		{
@@ -248,7 +259,7 @@ public class InteractiveRenderer
 			Camera activeCamera = null;
 			if (viewMode == ViewMode.OrthoView)
 			{
-				float cameraElevation = (float)Math.PI / 4.0f; // todo: should come from config (first layer?)
+				//float cameraElevation = (float)Math.PI / 4.0f; // todo: should come from config (first layer?)
 				
 				orthoCamera.lookAt(orthoCamPosition.x, orthoCamPosition.y, orthoCamPosition.z, orthoZoom, orthoAngleOffset, cameraElevation);
 				

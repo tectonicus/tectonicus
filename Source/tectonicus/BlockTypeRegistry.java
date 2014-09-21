@@ -18,7 +18,7 @@ import tectonicus.blockTypes.Air;
 
 public class BlockTypeRegistry
 {
-	private Map<Integer, BlockType> blocks;
+	private Map<Integer, BlockType> blocks; // TODO: Implement custom Id object that contains both numeric id and string id
 	private Map<IdDataPair, BlockType> boundBlocks;
 	
 	private BlockType defaultBlock;
@@ -53,7 +53,7 @@ public class BlockTypeRegistry
 		boundBlocks.put(key, type);
 	}
 	
-	public BlockType find(final int id, final int data)
+	public BlockType find(final int id, final int data) // TODO: Create second find method that takes a string id
 	{
 		BlockType result = null;
 		

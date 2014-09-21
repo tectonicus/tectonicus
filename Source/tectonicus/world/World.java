@@ -911,7 +911,7 @@ public class World implements BlockContext
 						}
 						else
 						{
-							if (player.getName().equals(player.getUUID()))
+							if (player.getUUID().equals(player.getName()))
 							{
 								player.setSkinURL("http://www.minecraft.net/skin/"+player.getName()+".png");
 							}
