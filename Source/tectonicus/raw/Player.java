@@ -62,7 +62,14 @@ public class Player
 		UUID = playerFile.getName();
 		
 		final int dotPos = UUID.lastIndexOf('.');
-		UUID = UUID.substring(0, dotPos).replace("-", "");
+		if (UUID.contains("-"))
+		{
+			UUID = UUID.substring(0, dotPos).replace("-", "");
+		}
+		else
+		{
+			name = UUID = UUID.substring(0, dotPos);
+		}
 		
 		skinURL = null;
 		

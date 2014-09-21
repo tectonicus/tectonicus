@@ -91,7 +91,6 @@ public class Banner implements BlockType
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
 			{
-				System.out.println("baseColor: "+ te.blockData);
 				baseColor = te.blockData;
 				break;
 			}

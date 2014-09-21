@@ -140,8 +140,8 @@ public class Stairs implements BlockType
 		final BlockType north = world.getBlockType(chunk.getChunkCoord(), x, y, z-1);
 		final BlockType south = world.getBlockType(chunk.getChunkCoord(), x, y, z+1);
 
-		final boolean stairsToNorth = north.getName().contains("Stairs");
-		final boolean stairsToSouth = south.getName().contains("Stairs");
+		final boolean stairsToNorth = north instanceof Stairs;
+		final boolean stairsToSouth = south instanceof Stairs;
 		
 		if(stairsToNorth || (stairsToNorth && stairsToSouth))
 		{
@@ -177,9 +177,9 @@ public class Stairs implements BlockType
 		
 		final BlockType north = world.getBlockType(chunk.getChunkCoord(), x, y, z-1);
 		final BlockType south = world.getBlockType(chunk.getChunkCoord(), x, y, z+1);
-
-		final boolean stairsToNorth = north.getName().contains("Stairs");
-		final boolean stairsToSouth = south.getName().contains("Stairs");
+		
+		final boolean stairsToNorth = north instanceof Stairs;
+		final boolean stairsToSouth = south instanceof Stairs;
 		
 		if(stairsToSouth || (stairsToSouth && stairsToNorth))
 		{
@@ -217,9 +217,9 @@ public class Stairs implements BlockType
 		
 		final BlockType west = world.getBlockType(chunk.getChunkCoord(), x-1, y, z);
 		final BlockType east = world.getBlockType(chunk.getChunkCoord(), x+1, y, z);
-		
-		final boolean stairsToWest = west.getName().contains("Stairs");
-		final boolean stairsToEast = east.getName().contains("Stairs");
+
+		final boolean stairsToWest = west instanceof Stairs;
+		final boolean stairsToEast = east instanceof Stairs;
 		
 		if(stairsToWest || (stairsToWest && stairsToEast))
 		{
@@ -255,9 +255,9 @@ public class Stairs implements BlockType
 		
 		final BlockType west = world.getBlockType(chunk.getChunkCoord(), x-1, y, z);
 		final BlockType east = world.getBlockType(chunk.getChunkCoord(), x+1, y, z);
-		
-		final boolean stairsToWest = west.getName().contains("Stairs");
-		final boolean stairsToEast = east.getName().contains("Stairs");
+
+		final boolean stairsToWest = west instanceof Stairs;
+		final boolean stairsToEast = east instanceof Stairs;
 		
 		if(stairsToEast || (stairsToEast && stairsToWest))
 		{

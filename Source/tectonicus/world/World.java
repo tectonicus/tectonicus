@@ -911,31 +911,38 @@ public class World implements BlockContext
 						}
 						else
 						{
-							String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+player.getUUID();
-							URL url = new URL(urlString);
-				            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				            connection.setRequestMethod("GET");
-				            connection.addRequestProperty("Content-Type", "application/json");
-				            connection.setReadTimeout(15*1000);
-				            connection.connect();
-				            
-				            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				            StringBuilder builder = new StringBuilder();
-							
-				            String line = null;
-				            while ((line = reader.readLine()) != null)
-				            {
-				            	builder.append(line + "\n");
-				            }
-				            reader.close();
-				            JSONObject obj = new JSONObject(builder.toString());
-				            player.setName(obj.getString("name"));
-				            JSONObject textures = obj.getJSONArray("properties").getJSONObject(0);
-				            byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").toString());
-				            obj = new JSONObject(new String(decoded, "UTF-8"));
-				            String textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
-				            player.setSkinURL(textureUrl);
-				            System.out.println(textureUrl);
+							if (player.getName().equals(player.getUUID()))
+							{
+								player.setSkinURL("http://www.minecraft.net/skin/"+player.getName()+".png");
+							}
+							else
+							{
+								String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+player.getUUID();
+								URL url = new URL(urlString);
+					            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+					            connection.setRequestMethod("GET");
+					            connection.addRequestProperty("Content-Type", "application/json");
+					            connection.setReadTimeout(15*1000);
+					            connection.connect();
+					            
+					            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+					            StringBuilder builder = new StringBuilder();
+								
+					            String line = null;
+					            while ((line = reader.readLine()) != null)
+					            {
+					            	builder.append(line + "\n");
+					            }
+					            reader.close();
+					            JSONObject obj = new JSONObject(builder.toString());
+					            player.setName(obj.getString("name"));
+					            JSONObject textures = obj.getJSONArray("properties").getJSONObject(0);
+					            byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").toString());
+					            obj = new JSONObject(new String(decoded, "UTF-8"));
+					            String textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
+					            player.setSkinURL(textureUrl);
+					            System.out.println(textureUrl);
+							}
 						}			            
 			            
 						players.add(player);

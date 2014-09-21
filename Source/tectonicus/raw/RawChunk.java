@@ -27,6 +27,7 @@ import org.jnbt.IntTag;
 import org.jnbt.ListTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.NBTInputStream.Compression;
+import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import org.json.JSONObject;
@@ -212,8 +213,17 @@ public class RawChunk
 									CompoundTag itemTag = (CompoundTag) map.get("Item");
 									if(itemTag != null)
 									{
-										StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-										item = itemIdTag.getValue();
+										ShortTag itemIdTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
+										if (itemIdTag == null)
+										{
+											StringTag stringItemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
+											item = stringItemIdTag.getValue();
+										}
+										else
+										{
+											if (itemIdTag.getValue() == 358)
+												item = "minecraft:filled_map";
+										}
 									}
 									
 
