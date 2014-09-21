@@ -941,7 +941,6 @@ public class World implements BlockContext
 					            obj = new JSONObject(new String(decoded, "UTF-8"));
 					            String textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
 					            player.setSkinURL(textureUrl);
-					            System.out.println(textureUrl);
 							}
 						}			            
 			            

@@ -357,6 +357,7 @@ public class RawChunk
 										String name = "";
 										String UUID = "";
 										String textureURL = "";
+										StringTag extraType = NbtUtil.getChild(entity, "ExtraType", StringTag.class);
 										CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);
 										if(owner != null)
 										{
@@ -373,6 +374,12 @@ public class RawChunk
 											byte[] decoded = DatatypeConverter.parseBase64Binary(value.getValue());
 								            JSONObject obj = new JSONObject(new String(decoded, "UTF-8"));
 								            textureURL = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
+										}
+										else if (extraType != null && !(extraType.getValue().equals("")))
+										{
+											name = UUID = extraType.getValue();
+											textureURL = "http://www.minecraft.net/skin/"+extraType.getValue()+".png";
+											System.out.println(textureURL);
 										}
 										
 										final int x = xTag.getValue();
