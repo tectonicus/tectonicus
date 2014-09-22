@@ -379,7 +379,6 @@ public class RawChunk
 										{
 											name = UUID = extraType.getValue();
 											textureURL = "http://www.minecraft.net/skin/"+extraType.getValue()+".png";
-											System.out.println(textureURL);
 										}
 										
 										final int x = xTag.getValue();

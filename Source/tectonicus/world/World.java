@@ -939,7 +939,10 @@ public class World implements BlockContext
 					            JSONObject textures = obj.getJSONArray("properties").getJSONObject(0);
 					            byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").toString());
 					            obj = new JSONObject(new String(decoded, "UTF-8"));
-					            String textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
+					            boolean hasSkin = obj.getJSONObject("textures").has("SKIN");
+					            String textureUrl = null;
+					            if (hasSkin == true)
+					            	textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
 					            player.setSkinURL(textureUrl);
 							}
 						}			            
@@ -950,7 +953,8 @@ public class World implements BlockContext
 					catch (Exception e)
 					{
 						System.err.println("Couldn't load player info from "+playerFile.getName());
-						e.printStackTrace();
+						System.err.println("You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
+						//e.printStackTrace();
 					}
 				}
 			}
