@@ -4,7 +4,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.19" />
+	<property name="Version"			value="2.20" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -32,7 +32,7 @@
 				destdir="${FactoryFloor}/Binary"
 				source="1.6"
 				target="1.6"
-				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
+				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/json.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
 				debug="true"
 				debuglevel="lines,source"
 				verbose="false"
@@ -46,7 +46,7 @@
 		<mkdir dir="${FactoryFloor}"/>
 		<mkdir dir="${FactoryFloor}/Temp"/>
 		
-		<!-- Copy compiled code from Temp -->
+		<!-- Copy compiled code to Temp -->
 		<copy toDir="${FactoryFloor}/Temp" >
 			<fileset dir="${FactoryFloor}/Binary"/>
 		</copy>
@@ -63,8 +63,6 @@
 		<unjar src="${Jars}/lwjgl.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<unjar src="${Jars}/lwjgl_util.jar" dest="${FactoryFloor}/Temp"/>
-		
-		<unjar src="${Jars}/ProcessingCore.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<unjar src="${Jars}/json.jar" dest="${FactoryFloor}/Temp"/>
 		
