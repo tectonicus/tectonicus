@@ -520,3 +520,19 @@ defaultBlockConfig.xml
 Version 2.19.01
 - fixed ArrayIndexOutOfBoundsExceptions caused by paintings
 - initial support for new UUID player data files
+
+Version 2.20
+- compatible with Minecraft 1.8
+- added Diorite, Andesite, and Granite blocks, and respective Polished versions of the same; also added all the new Red sandstone blocks, Prismarine, Prismarine Bricks,
+Dark Prismarine, Sea lantern, Wet sponge, Slime block, Barrier, Iron trapdoor, Inverted daylight detector, new fences and fence gates, new wood doors, Mob Heads(and Player Heads),
+Tripwire, Item Frames(empty, no items), and Banners(no patterns yet)
+- added Beacon beam(no colors yet)
+- doors are now textured correctly based on hinge position and whether the door is open or closed
+- right-hinged doors now rotate correctly
+- player filters are working again, the default server json files can be used (e.g. whitelist.json) or a user specified file
+- some blocks will handle large or high-res textures better (more work to do here)
+- player names and texture urls are now retrieved from the Mojang session server
+- player skin cache is now actually functional
+- switched to using correct Nether Portal texture, using better End Portal texture
+- fixed bug with views always pointing north
+- fixed bug with mutiple portal icons appearing on large portals
