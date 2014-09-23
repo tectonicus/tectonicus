@@ -31,9 +31,18 @@ public class RedstoneWire implements BlockType
 	
 	public RedstoneWire(SubTexture offJunction, SubTexture onJunction, SubTexture offLine, SubTexture onLine)
 	{
-		this.junction = offJunction;
-		
-		this.line = offLine;
+		if (offJunction.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / offJunction.texture.getHeight();
+			final float tile = texel * offJunction.texture.getWidth();
+			this.junction = new SubTexture(offJunction.texture, offJunction.u0, offJunction.v0, offJunction.u1, offJunction.v0+tile);
+			this.line = new SubTexture(offLine.texture, offLine.u0, offLine.v0, offLine.u1, offLine.v0+tile);
+		}
+		else
+		{
+			this.junction = offJunction;
+			this.line = offLine;
+		}
 	}
 	
 	@Override
@@ -132,7 +141,7 @@ public class RedstoneWire implements BlockType
 			if (junction.texturePackVersion == "1.4")
 				texel = 1.0f / 16.0f / 16.0f;
 			else
-				texel = 1.0f / 16.0f;
+				texel = 1.0f / junction.texture.getHeight();
 			final float leftTexOffset = texel * 4;
 			
 			SubTexture center = new SubTexture(junction.texture,

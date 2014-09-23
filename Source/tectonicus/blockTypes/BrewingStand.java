@@ -27,7 +27,7 @@ public class BrewingStand implements BlockType
 	private final String name;
 	
 	private final SubTexture base;
-	private final SubTexture stand;
+	private final SubTexture standTile;
 	private final SubTexture post;
 	private final SubTexture standWithBottle;
 	private final SubTexture standWithoutBottle;
@@ -37,13 +37,23 @@ public class BrewingStand implements BlockType
 		this.name = name;
 		
 		this.base = base;
-		this.stand = stand;
 		
-		this.post = new SubTexture(stand.texture, stand.u0, stand.v1, stand.u1, stand.v0);
+		if (stand.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / stand.texture.getHeight();
+			final float tile = texel * stand.texture.getWidth();
+			standTile = new SubTexture(stand.texture, stand.u0, stand.v0, stand.u1, stand.v0+tile);
+		}
+		else
+		{
+			standTile = stand;
+		}
 		
-		final float midU = (stand.u0 + stand.u1) / 2.0f;
-		this.standWithBottle = new SubTexture(stand.texture, stand.u0, stand.v0, midU, stand.v1);
-		this.standWithoutBottle = new SubTexture(stand.texture, stand.u1, stand.v0, midU, stand.v1);
+		this.post = new SubTexture(standTile.texture, standTile.u0, standTile.v1, standTile.u1, standTile.v0);
+		
+		final float midU = (standTile.u0 + standTile.u1) / 2.0f;
+		this.standWithBottle = new SubTexture(standTile.texture, standTile.u0, standTile.v0, midU, standTile.v1);
+		this.standWithoutBottle = new SubTexture(standTile.texture, standTile.u1, standTile.v0, midU, standTile.v1);
 	}
 	
 	@Override
@@ -74,8 +84,8 @@ public class BrewingStand implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world,BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
 		Mesh baseMesh = geometry.getMesh(base.texture, Geometry.MeshType.Solid);
-		Mesh standMesh = geometry.getMesh(stand.texture, Geometry.MeshType.Solid);
-		Mesh bottleMesh = geometry.getMesh(stand.texture, Geometry.MeshType.AlphaTest);
+		Mesh standMesh = geometry.getMesh(standTile.texture, Geometry.MeshType.Solid);
+		Mesh bottleMesh = geometry.getMesh(standTile.texture, Geometry.MeshType.AlphaTest);
 		
 	//	final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
 		

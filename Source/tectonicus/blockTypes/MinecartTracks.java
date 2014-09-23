@@ -26,7 +26,7 @@ import tectonicus.texture.SubTexture;
 public class MinecartTracks implements BlockType
 {
 	private final String name;
-	private final SubTexture straightTexture, cornerTexture, poweredTexture;
+	private final SubTexture straightTexture, cornerTexture, powered;
 	private final boolean straightOnly;
 	
 	public MinecartTracks(String name, SubTexture straight, SubTexture corner, SubTexture powered, final boolean straightOnly)
@@ -34,7 +34,18 @@ public class MinecartTracks implements BlockType
 		this.name = name;
 		this.straightTexture = straight;
 		this.cornerTexture = corner;
-		this.poweredTexture = powered;
+		
+		if (powered.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / powered.texture.getHeight();
+			final float tile = texel * powered.texture.getWidth();
+			this.powered = new SubTexture(powered.texture, powered.u0, powered.v0, powered.u1, powered.v0+tile);
+		}
+		else
+		{
+			this.powered = powered;
+		}
+		
 		this.straightOnly = straightOnly;
 	}
 
@@ -66,7 +77,7 @@ public class MinecartTracks implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
 		Mesh straightMesh = geometry.getMesh(straightTexture.texture, Geometry.MeshType.AlphaTest);
-		Mesh poweredMesh = geometry.getMesh(poweredTexture.texture, Geometry.MeshType.AlphaTest);
+		Mesh poweredMesh = geometry.getMesh(powered.texture, Geometry.MeshType.AlphaTest);
 		Mesh cornerMesh = geometry.getMesh(cornerTexture.texture, Geometry.MeshType.AlphaTest);
 		
 		// TODO: Should we change the light if the track is inclined?
@@ -93,7 +104,7 @@ public class MinecartTracks implements BlockType
 		float p2Height = y + groundOffset;
 		float p3Height = y + groundOffset;
 		
-		SubTexture straightTex = isPowered ? poweredTexture : straightTexture;
+		SubTexture straightTex = isPowered ? powered : straightTexture;
 		
 		switch (orientation)
 		{

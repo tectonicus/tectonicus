@@ -35,8 +35,17 @@ public class EnderPortalFrame implements BlockType
 		this.name = name;
 		
 		this.top = top;
-		this.side = side;
 		this.bottom = bottom;
+		if (side.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / side.texture.getHeight();
+			final float tile = texel * side.texture.getWidth();
+			this.side = new SubTexture(side.texture, side.u0, side.v0, side.u1, side.v0+tile);
+		}
+		else
+		{
+			this.side = side;
+		}
 		
 		final float texel;
 		if (eye.texturePackVersion == "1.4")

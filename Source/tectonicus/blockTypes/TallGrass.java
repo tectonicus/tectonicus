@@ -40,8 +40,21 @@ public class TallGrass implements BlockType
 		this.texturePack = texturePack;
 		
 		this.deadGrassTexture = deadGrassTexture;
-		this.tallGrassTexture = tallGrassTexture;
-		this.fernTexture = fernTexture;
+		
+		if (tallGrassTexture.texturePackVersion != "1.4")
+		{
+			final float grassTexel = 1.0f / tallGrassTexture.texture.getHeight();
+			final float fernTexel = 1.0f / fernTexture.texture.getHeight();
+			final float grassTile = grassTexel * tallGrassTexture.texture.getWidth();
+			final float fernTile = fernTexel * fernTexture.texture.getWidth();
+			this.tallGrassTexture = new SubTexture(tallGrassTexture.texture, tallGrassTexture.u0, tallGrassTexture.v0, tallGrassTexture.u1, tallGrassTexture.v0+grassTile);
+			this.fernTexture = new SubTexture(fernTexture.texture, fernTexture.u0, fernTexture.v0, fernTexture.u1, fernTexture.v0+fernTile);
+		}
+		else
+		{
+			this.tallGrassTexture = tallGrassTexture;
+			this.fernTexture = fernTexture;
+		}
 	}
 
 	@Override

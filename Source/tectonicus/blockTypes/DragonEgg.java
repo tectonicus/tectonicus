@@ -29,7 +29,17 @@ public class DragonEgg implements BlockType
 	public DragonEgg(String name, SubTexture texture)
 	{
 		this.name = name;
-		this.texture = texture;
+		
+		if (texture.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / texture.texture.getHeight();
+			final float tile = texel * texture.texture.getWidth();
+			this.texture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+tile);
+		}
+		else
+		{
+			this.texture = texture;
+		}
 	}
 	
 	@Override

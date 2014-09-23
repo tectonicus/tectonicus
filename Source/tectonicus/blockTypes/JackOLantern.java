@@ -24,7 +24,7 @@ public class JackOLantern implements BlockType
 	
 	private final SubTexture topTexture;
 	private final SubTexture sideTexture;
-	private final SubTexture frontTexture;
+	private final SubTexture front;
 	
 	private Colour4f colour;
 
@@ -33,7 +33,17 @@ public class JackOLantern implements BlockType
 		this.name = name;
 		this.topTexture = top;
 		this.sideTexture = side;
-		this.frontTexture = front;
+		
+		if (front.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / front.texture.getHeight();
+			final float tile = texel * front.texture.getWidth();
+			this.front = new SubTexture(front.texture, front.u0, front.v0, front.u1, front.v0+tile);
+		}
+		else
+		{
+			this.front = front;
+		}
 		
 		colour = new Colour4f(1, 1, 1, 1);
 	}	
@@ -66,7 +76,7 @@ public class JackOLantern implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
 		Mesh mesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
-		Mesh frontMesh = geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid);
+		Mesh frontMesh = geometry.getMesh(front.texture, Geometry.MeshType.Solid);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
 		
 		final int data = chunk.getBlockData(x, y, z);
@@ -76,10 +86,10 @@ public class JackOLantern implements BlockType
 		// 0x2: Facing east
 		// 0x3: Facing south
 		
-		SubTexture northTex = data == 0x1 ? frontTexture : sideTexture;
-		SubTexture southTex = data == 0x3 ? frontTexture : sideTexture;
-		SubTexture eastTex = data == 0x2 ? frontTexture : sideTexture;
-		SubTexture westTex = data == 0x0 ? frontTexture : sideTexture;
+		SubTexture northTex = data == 0x1 ? front : sideTexture;
+		SubTexture southTex = data == 0x3 ? front : sideTexture;
+		SubTexture eastTex = data == 0x2 ? front : sideTexture;
+		SubTexture westTex = data == 0x0 ? front : sideTexture;
 		
 		Mesh northMesh = data == 0x1 ? frontMesh : sideMesh;
 		Mesh southMesh = data == 0x3 ? frontMesh : sideMesh;

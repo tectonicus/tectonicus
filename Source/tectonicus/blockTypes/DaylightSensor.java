@@ -33,7 +33,17 @@ public class DaylightSensor implements BlockType
 	{
 		this.name = name;
 		
-		this.top = top;
+		if (top.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / top.texture.getHeight();
+			final float tile = texel * top.texture.getWidth();
+			this.top = new SubTexture(top.texture, top.u0, top.v0, top.u1, top.v0+tile);
+		}
+		else
+		{
+			this.top = top;
+		}
+		
 		this.bottom = bottom;
 		
 		final float texel = 1.0f / 16.0f;

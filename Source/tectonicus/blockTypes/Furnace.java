@@ -32,7 +32,18 @@ public class Furnace implements BlockType
 		
 		this.topTexture = topTexture;
 		this.sideTexture = sideTexture;
-		this.frontTexture = frontTexture;
+
+		if (frontTexture.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / frontTexture.texture.getHeight();
+			final float tile = texel * frontTexture.texture.getWidth();
+			this.frontTexture = new SubTexture(frontTexture.texture, frontTexture.u0, frontTexture.v0, frontTexture.u1, frontTexture.v0+tile);
+		}
+		else
+		{
+			this.frontTexture = frontTexture;
+		}
+		
 	}
 	
 	@Override

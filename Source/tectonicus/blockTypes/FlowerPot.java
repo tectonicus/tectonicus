@@ -37,7 +37,17 @@ public class FlowerPot implements BlockType
 		
 		this.texture = texture;
 		this.dirt = dirt;
-		this.plant = plant;
+		
+		if (plant.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / plant.texture.getHeight();
+			final float tile = texel * plant.texture.getWidth();
+			this.plant = new SubTexture(plant.texture, plant.u0, plant.v0, plant.u1, plant.v0+tile);
+		}
+		else
+		{
+			this.plant = plant;
+		}
 		
 		final float texel;
 		if (texture.texturePackVersion == "1.4")

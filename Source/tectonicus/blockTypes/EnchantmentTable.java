@@ -31,8 +31,22 @@ public class EnchantmentTable implements BlockType
 	public EnchantmentTable(String name, SubTexture top, SubTexture side, SubTexture bottom)
 	{
 		this.name = name;
-		this.top = top;
-		this.side = side;
+		
+		if (side.texturePackVersion != "1.4")
+		{
+			final float topTexel = 1.0f / top.texture.getHeight();
+			final float sideTexel = 1.0f / side.texture.getHeight();
+			final float topTile = topTexel * top.texture.getWidth();
+			final float sideTile = sideTexel * side.texture.getWidth();
+			this.top = new SubTexture(top.texture, top.u0, top.v0, top.u1, top.v0+topTile);
+			this.side = new SubTexture(side.texture, side.u0, side.v0, side.u1, side.v0+sideTile);
+		}
+		else
+		{
+			this.top = top;
+			this.side = side;
+		}
+		
 		this.bottom = bottom;
 	}
 	

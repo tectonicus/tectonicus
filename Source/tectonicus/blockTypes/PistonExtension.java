@@ -35,7 +35,16 @@ public class PistonExtension implements BlockType
 		this.name = name;
 		
 		this.normalFace = normalFace;
-		this.stickyFace = stickyFace;
+		if (stickyFace.texturePackVersion != "1.4")
+		{
+			final float texel = 1.0f / stickyFace.texture.getHeight();
+			final float tile = texel * stickyFace.texture.getWidth();
+			this.stickyFace = new SubTexture(stickyFace.texture, stickyFace.u0, stickyFace.v0, stickyFace.u1, stickyFace.v0+tile);
+		}
+		else
+		{
+			this.stickyFace = stickyFace;
+		}
 		
 		final float divide;
 		if (edge.texturePackVersion == "1.4")
