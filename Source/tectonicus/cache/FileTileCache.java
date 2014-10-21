@@ -256,7 +256,7 @@ public class FileTileCache implements TileCache
 			if (count % 100 == 0)
 			{
 				final int percentage = (int)Math.floor((count / (float)visibleTiles.size()) * 100);
-				System.out.println(percentage+"%");
+				System.out.print(percentage+"%\r"); //prints a carraige return after line
 			}
 		}
 		

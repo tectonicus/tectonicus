@@ -137,7 +137,7 @@ public class PlayerSkinCache
 				if (count % 100 == 0)
 				{
 					final int percentage = (int)Math.floor((count / (float)skinCache.size()) * 100);
-					System.out.println(percentage+"%");
+					System.out.print(percentage+"%\r"); //prints a carraige return after line
 				}
 			}
 			
