@@ -271,6 +271,9 @@ public class TileRenderer
 			
 			TileCoordBounds bounds = null;
 			
+			if (map.getLayers().isEmpty())
+				System.out.println("No layers found!!!");
+			
 			for (Layer layer : map.getLayers())
 			{
 				// Setup per-layer config
@@ -282,7 +285,7 @@ public class TileRenderer
 			
 				File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
 				FileUtils.ensureExists(baseTilesDir);
-				
+
 				// Find changed tiles
 				HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, regionHashStore, world, map, camera, map.getClosestZoomSize(), tileWidth, tileHeight, baseTilesDir);
 				
@@ -999,8 +1002,6 @@ public class TileRenderer
 		File outputHtmlFile = new File(exportDir, args.getOutputHtmlName());
 		System.out.println("\twriting html to "+outputHtmlFile.getAbsolutePath());
 		
-		final int scale = (int)Math.pow(2, numZoomLevels);
-		
 		InputStream in = null;
 		try
 		{
@@ -1022,14 +1023,6 @@ public class TileRenderer
 					Util.Token first = tokens.remove(0);
 					if (first.isReplaceable)
 					{
-						if (first.value.equals("tileWidth"))
-						{
-							outLine += tileWidth;
-						}
-						else if (first.value.equals("tileHeight"))
-						{
-							outLine += tileHeight;
-						}
 					/*	else if (first.value.equals("mapXMin"))
 						{
 							outLine += mapXMin;
@@ -1046,15 +1039,7 @@ public class TileRenderer
 						{
 							outLine += (mapYMax - mapYMin);
 						}
-					*/	else if (first.value.equals("maxZoom"))
-						{
-							outLine += numZoomLevels;
-						}
-						else if (first.value.equals("mapCoordScaleFactor"))
-						{
-							outLine += scale;
-							outLine += ".0"; // Append .0 so that it's treated as float in the javascript
-						}
+					*/	
 				/*		else if (first.value.equals("origin"))
 						{
 							outLine += (worldVectors.origin.x / scale);
@@ -1091,10 +1076,7 @@ public class TileRenderer
 							outLine += ", ";
 							outLine += (worldVectors.mapYUnit.y * scale);
 						}
-					*/	else if (first.value.equals("showSpawn"))
-						{
-							outLine += args.showSpawn();
-						}
+					*/	
 					/*	else if (first.value.equals("spawnX"))
 						{
 							outLine += levelDat.getSpawnPosition().x;
@@ -1108,31 +1090,7 @@ public class TileRenderer
 							outLine += levelDat.getSpawnPosition().z;
 						}
 					*/
-						else if (first.value.equals("signsInitiallyVisible"))
-						{
-							outLine += args.areSignsInitiallyVisible();
-						}
-						else if (first.value.equals("playersInitiallyVisible"))
-						{
-							outLine += args.arePlayersInitiallyVisible();
-						}
-						else if (first.value.equals("portalsInitiallyVisible"))
-						{
-							outLine += args.arePortalsInitiallyVisible();
-						}
-						else if (first.value.equals("bedsInitiallyVisible"))
-						{
-							outLine += args.areBedsInitiallyVisible();
-						}
-						else if (first.value.equals("spawnInitiallyVisible"))
-						{
-							outLine += args.isSpawnInitiallyVisible();
-						}
-						else if (first.value.equals("viewsInitiallyVisible"))
-						{
-							outLine += args.areViewsInitiallyVisible();
-						}
-						else if (first.value.equals("includes"))
+						if (first.value.equals("includes"))
 						{
 							String templateStart = "		<script type=\"text/javascript\" src=\"";
 							String templateEnd = "\"></script>\n";
@@ -1205,11 +1163,11 @@ public class TileRenderer
 		return outputHtmlFile;
 	}
 	
-	private static void outputMergedJs(File outFile, ArrayList<String> inputResources)
+	private void outputMergedJs(File outFile, ArrayList<String> inputResources)
 	{
 		InputStream in = null;
 		OutputStream out = null;
-		
+		final int scale = (int)Math.pow(2, numZoomLevels);
 		try
 		{
 			out = new FileOutputStream(outFile);
@@ -1224,8 +1182,67 @@ public class TileRenderer
 				String line = null;
 				while ((line = reader.readLine()) != null)
 				{
-					writer.write(line);
-					writer.write('\n');
+					String outLine = "";
+					
+					ArrayList<Util.Token> tokens = Util.split(line);
+					
+					while (!tokens.isEmpty())
+					{
+						Util.Token first = tokens.remove(0);
+						if (first.isReplaceable)
+						{
+							if (first.value.equals("tileWidth"))
+							{
+								outLine += tileWidth;
+							}
+							else if (first.value.equals("tileHeight"))
+							{
+								outLine += tileHeight;
+							}
+							else if (first.value.equals("maxZoom"))
+							{
+								outLine += numZoomLevels;
+							}
+							else if (first.value.equals("mapCoordScaleFactor"))
+							{
+								outLine += scale;
+								outLine += ".0"; // Append .0 so that it's treated as float in the javascript
+							}
+							else if (first.value.equals("showSpawn"))
+							{
+								outLine += args.showSpawn();
+							}
+							else if (first.value.equals("signsInitiallyVisible"))
+							{
+								outLine += args.areSignsInitiallyVisible();
+							}
+							else if (first.value.equals("playersInitiallyVisible"))
+							{
+								outLine += args.arePlayersInitiallyVisible();
+							}
+							else if (first.value.equals("portalsInitiallyVisible"))
+							{
+								outLine += args.arePortalsInitiallyVisible();
+							}
+							else if (first.value.equals("bedsInitiallyVisible"))
+							{
+								outLine += args.areBedsInitiallyVisible();
+							}
+							else if (first.value.equals("spawnInitiallyVisible"))
+							{
+								outLine += args.isSpawnInitiallyVisible();
+							}
+							else if (first.value.equals("viewsInitiallyVisible"))
+							{
+								outLine += args.areViewsInitiallyVisible();
+							}
+						}
+						else
+						{
+							outLine += first.value;
+						}
+					}
+					writer.write(outLine + "\n");
 				}
 				
 				writer.flush();
@@ -1631,6 +1648,7 @@ public class TileRenderer
 		FileUtils.extractResource("math.js", new File(scriptsDir, "math.js"));
 		
 		ArrayList<String> scriptResources = new ArrayList<String>();
+		scriptResources.add("marker.js");
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
 		scriptResources.add("main.js");

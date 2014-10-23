@@ -582,3 +582,5 @@ function findStartView(params, defaultLayerId, defaultSpawnPos)
 	
 	return new ViewPos(queryLayerId, queryPos, queryZoom, startLatLong);
 }
+
+window.onload = main;
