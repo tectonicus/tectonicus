@@ -514,9 +514,8 @@ public class RawChunk
 					{
 						for (int z=0; z<SECTION_DEPTH; z++)
 						{
-							final int index = calcAnvilIndex(x, y, z);
-							final int addValue = addTag.getValue()[index];
-							newSection.blockIds[x][y][z] = newSection.blockIds[x][y][z] + (addValue << 8);
+							final int addValue = getAnvil4Bit(addTag, x, y, z);
+							newSection.blockIds[x][y][z] = newSection.blockIds[x][y][z] | (addValue << 8);
 						}
 					}
 				}
