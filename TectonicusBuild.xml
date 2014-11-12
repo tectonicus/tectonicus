@@ -52,7 +52,7 @@
 		</copy>
 		
 		<!-- Copy build info from Binary -->
-		<copy toDir="${FactoryFloor}/Temp" file="${Binary}/tectonicus.buildInfo" />
+		<copy toDir="${FactoryFloor}/Temp" file="${FactoryFloor}/tectonicus.buildInfo" />
 		
 		<!-- Copy resources -->
 		<copy toDir="${FactoryFloor}/Temp">
@@ -106,24 +106,15 @@
 	
 	<target name="ExportBuildInfo" >
 		
-		<exec dir="." executable="svnversion" output="build.number" searchpath="true" failifexecutionfails="false">
-			<arg value="-n" />
-		</exec>
-		<loadfile property="BuildNumber" srcFile="build.number"/>
-		
-		<delete file="build.number" />
-		
 		<tstamp/>
 		
-		<propertyfile file="${Binary}/tectonicus.buildInfo" comment="Tectonicus build info">
-			<entry key="buildNumber" type="string" value="${BuildNumber}" />
+		<propertyfile file="${FactoryFloor}/tectonicus.buildInfo" comment="Tectonicus build info">
 			<entry key="buildDate" type="string" value="${TODAY}" />
 			<entry key="buildTime" type="string" value="${TSTAMP}" />
 			<entry key="version" type="string" value="${Version}" />
 		</propertyfile>
 		
 		<echo message="Version: ${Version}" />
-		<echo message="Build number: ${BuildNumber}" />
 		<echo message="Build date: ${TODAY}" />
 		<echo message="Build time: ${TSTAMP}" />
 		
