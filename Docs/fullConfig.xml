@@ -50,6 +50,10 @@
 		compassRose="" <!-- custom image path -->
 	>
 
+		<mods>
+			<mod name="" path="" />  <!-- path to mod jar file, used for loading mod textures -->
+		</mods>
+		
 		<subset>
 			<!-- Radius is in world units. Remove 'origin' to center around the spawn point -->
 			<CircularSubset radius="200" origin="0, 0" />

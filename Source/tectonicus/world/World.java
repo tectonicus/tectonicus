@@ -85,7 +85,6 @@ public class World implements BlockContext
 	private final File dimensionDir;
 	
 	private BlockTypeRegistry registry;
-	private List<String> modJars;
 	
 	private LevelDat levelDat;
 	
@@ -198,8 +197,6 @@ public class World implements BlockContext
 	{
 		registry = new BlockTypeRegistry();
 		registry.setDefaultBlock(new Air());
-		
-		modJars = new ArrayList<String>();
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache);
 		

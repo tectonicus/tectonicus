@@ -52,6 +52,11 @@
 		<views filter="all" />
 		<players filter="all" />
 		<portals filter="all" />
+		
+		<mods>
+			<mod name="AwesomeMod" path="/Users/xxx/AppData/roaming/.minecraft/mods/AwesomeMod1.8.jar" />
+			<mod name="TotallyAwesomeMod" path="/Users/xxx/AppData/roaming/.minecraft/mods/TotallyAwesomeMod1.4.2.jar" />
+		</mods>
 
 		<!-- Limit world rendering to a sub region. Optional, omit for the full world -->
 		<subset>
