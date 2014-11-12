@@ -903,7 +903,7 @@ public class TectonicusApp
 				BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.cacheDir(), map, hashAlgorithm);
 				PlayerSkinCache skinCache = new PlayerSkinCache(args, hashAlgorithm);
 				
-				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache);	
+				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache);	
 				TileRenderer.setupWorldForLayer(layer, world);
 				
 				interactiveRenderer.display(world);

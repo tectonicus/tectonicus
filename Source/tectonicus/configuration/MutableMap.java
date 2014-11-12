@@ -39,6 +39,8 @@ public class MutableMap implements Map
 	
 	private WorldSubsetFactory worldSubsetFactory;
 	
+	private List<File> modJars;
+	
 	private ArrayList<Layer> layers;
 	
 	private NorthDirection northDirection;
@@ -57,6 +59,8 @@ public class MutableMap implements Map
 		this.viewFilter = new ViewFilter(ViewFilterType.All);
 		
 		this.viewConfig = new MutableViewConfig();
+		
+		this.modJars = new ArrayList<File>();
 		
 		this.layers = new ArrayList<Layer>();
 		
@@ -156,6 +160,11 @@ public class MutableMap implements Map
 		this.dimension = dimension;
 	}
 	
+	public void setModJars(List<File> modJars)
+	{
+		this.modJars = modJars;
+	}
+	public List<File> getModJars() { return modJars; }
 	
 	@Override
 	public int numLayers()

@@ -219,7 +219,7 @@ public class TileRenderer
 			WorldSubsetFactory subset = map.getWorldSubsetFactory();
 			
 			// Create the world for this map
-			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(),
+			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), map.getModJars(),
 									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache);
 			
 			// Setup camera
@@ -305,7 +305,7 @@ public class TileRenderer
 		
 		// Output html resources
 		// TODO: Should only load texture pack once and share between this and world loading
-		outputHtmlResources( new TexturePack(rasteriser, args.minecraftJar(), args.texturePack()), playerIconAssembler );
+		outputHtmlResources( new TexturePack(rasteriser, args.minecraftJar(), args.texturePack(), args.getMap(0).getModJars()), playerIconAssembler );
 		
 		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), args);
 		
@@ -352,7 +352,7 @@ public class TileRenderer
 			WorldSubsetFactory subset = map.getWorldSubsetFactory();
 			
 			// Create the world for this map
-			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(),
+			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), map.getModJars(),
 									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache);
 			
 			// TODO: Load custom blocks here

@@ -11,6 +11,7 @@ package tectonicus.configuration;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -21,7 +22,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import static tectonicus.configuration.ParseUtil.*;
-
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
@@ -195,6 +195,19 @@ public class XmlConfigurationParser
 			{
 				PortalFilterType portalFilterType = parsePortalFilter( getString(portalsNode, "filter") );
 				map.setPortalFilter( new PortalFilter(portalFilterType) );
+			}
+			
+			Element modsElement = getChild(mapElement, "mods");
+			if (modsElement != null)
+			{
+				List<File> modJars = new ArrayList<File>();
+				Element[] mods = getChildren(modsElement, "mod");
+				for (Element mod : mods)
+				{
+					modJars.add(new File(getString(mod, "path")));
+				}
+				
+				map.setModJars(modJars);
 			}
 			
 			Element[] layers = getChildren(mapElement, "layer");

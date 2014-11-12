@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -46,7 +47,7 @@ public class TexturePack
 	
 	private Map<String, PackTexture> loadedPackTextures;
 	
-	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack)
+	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars)
 	{
 		if (!minecraftJar.exists())
 			throw new RuntimeException("Couldn't find minecraft.jar at "+minecraftJar.getAbsolutePath());
@@ -59,7 +60,7 @@ public class TexturePack
 		
 		try
 		{
-			zipStack = new ZipStack(minecraftJar, texturePack);
+			zipStack = new ZipStack(minecraftJar, texturePack, modJars);
 		}
 		catch (Exception e)
 		{

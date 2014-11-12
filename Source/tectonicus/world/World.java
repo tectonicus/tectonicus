@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
@@ -84,6 +85,7 @@ public class World implements BlockContext
 	private final File dimensionDir;
 	
 	private BlockTypeRegistry registry;
+	private List<String> modJars;
 	
 	private LevelDat levelDat;
 	
@@ -111,7 +113,7 @@ public class World implements BlockContext
 	
 	private Geometry daySkybox, nightSkybox;
 	
-	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache)
+	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache)
 	{
 		this.rasteriser = rasteriser;
 		
@@ -169,7 +171,7 @@ public class World implements BlockContext
 		}
 		
 		System.out.println("Loading textures");
-		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile);
+		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars);
 		this.textureVersion = texturePack.getVersion();
 		
 		System.out.println("Creating block registry");
@@ -196,6 +198,8 @@ public class World implements BlockContext
 	{
 		registry = new BlockTypeRegistry();
 		registry.setDefaultBlock(new Air());
+		
+		modJars = new ArrayList<String>();
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache);
 		

@@ -137,7 +137,7 @@ public class Minecraft
 		
 		try
 		{
-			ZipStack zips = new ZipStack(minecraftJar, null);
+			ZipStack zips = new ZipStack(minecraftJar, null, null);
 			
 			//ZipStackEntry terrainEntry = zips.getEntry("terrain.png");
 			
@@ -157,7 +157,7 @@ public class Minecraft
 		
 		try
 		{
-			zipStack = new ZipStack(minecraftJar, null);
+			zipStack = new ZipStack(minecraftJar, null, null);
 		}
 		catch (Exception e)
 		{

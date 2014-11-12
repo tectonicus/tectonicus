@@ -42,6 +42,8 @@ public interface Map
 	public PortalFilter getPortalFilter();
 	public ViewFilter getViewFilter();
 	
+	public List<File> getModJars();
+	
 	public int numLayers();
 	public Layer getLayer(final int index);
 	public List<Layer> getLayers();

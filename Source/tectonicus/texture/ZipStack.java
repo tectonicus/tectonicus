@@ -12,15 +12,21 @@ package tectonicus.texture;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class ZipStack
 {
 	private ZipFile base;
 	private ZipFile override;
+	private List<File> modJars;
 	
-	public ZipStack(File baseFile, File overrideFile) throws IOException
+	public ZipStack(File baseFile, File overrideFile, List<File> modJars) throws IOException
 	{
 		base = new ZipFile(baseFile);
 		
@@ -31,15 +37,57 @@ public class ZipStack
 			else
 				System.out.println("Couldn't open \""+overrideFile.getAbsolutePath()+"\"");
 		}
+		
+		this.modJars = modJars;
 	}
 	
 	public ZipStackEntry getEntry(String path)
 	{
-		ZipStackEntry first = getEntry(override, path);
-		if (first != null)
-			return first;
+		ZipStackEntry entry = getEntry(override, path);
+		if (entry != null)
+		{
+			return entry;
+		}
+		else
+		{
+			entry = getEntry(base, path);
+			if (entry != null)
+			{
+				return entry;
+			}
+			else
+			{
+				Path p = Paths.get(path);
+				String fileName = p.getFileName().toString();
+				System.out.println(path);
+				for (File jar : modJars)
+				{				
+					ZipFile jarFile;
+					try 
+					{
+						jarFile = new ZipFile(jar);
+						entry = getEntry(jarFile, path);
+						if (entry != null)
+							return entry;
+						
+						ZipEntry ze = null;
+						for (Enumeration<? extends ZipEntry> e = jarFile.entries(); e.hasMoreElements();)
+						{
+							ze = e.nextElement();
+							p = Paths.get(ze.getName());
+							if (p.getFileName().toString().equalsIgnoreCase(fileName))
+								return getEntry(jarFile, ze.getName());
+						}
+					} 
+					catch (Exception e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}
+		}
 		
-		return getEntry(base, path);
+		return null;
 	}
 	
 	public ZipStackEntry getEntry(ZipFile zip, String path)
