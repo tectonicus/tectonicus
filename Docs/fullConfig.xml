@@ -70,6 +70,7 @@
 			imageFormat="png / jpg / gif"
 			imageCompressionLevel="0.95 / 0.1 - 1.0"
 			drawDistance="200"
+			fov="70 / 30 - 110"
 		/>
 
 		<players

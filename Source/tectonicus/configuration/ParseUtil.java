@@ -153,6 +153,25 @@ public class ParseUtil
 		return 200;
 	}
 	
+	public static int parseFOV(String fovStr)
+	{
+		try
+		{
+			final int fov = Integer.parseInt(fovStr);
+			
+			if (fov < 30)
+				return 30;
+			
+			if (fov > 110)
+				return 110;
+			
+			return fov;
+		}
+		catch (Exception e) {}
+		
+		return 70;
+	}
+	
 	public static SignFilter parseSignFilter(String filterStr)
 	{
 		filterStr = filterStr.toLowerCase();

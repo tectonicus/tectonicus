@@ -176,6 +176,9 @@ public class XmlConfigurationParser
 				
 				final int drawDistance = parseDrawDistance( getString(viewsNode, "drawDistance") );
 				viewConfig.setViewDistance(drawDistance);
+				
+				final int fov = parseFOV( getString(viewsNode, "fov") );
+				viewConfig.setFOV(fov);
 			}
 			
 			// Player filter

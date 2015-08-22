@@ -16,4 +16,7 @@ public interface ViewConfig
 	public float getImageCompressionLevel();
 	
 	public int getViewDistance();
+	
+	public int getFOV();
+	public void setFOV(int fov);
 }

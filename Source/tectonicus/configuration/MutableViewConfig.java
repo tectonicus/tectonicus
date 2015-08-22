@@ -15,12 +15,14 @@ public class MutableViewConfig implements ViewConfig
 	private float imageCompressionLevel;
 	
 	private int viewDistance;
+	private int fov;
 	
 	public MutableViewConfig()
 	{
 		this.imageFormat = ImageFormat.Png;
 		this.imageCompressionLevel = 0.95f;
 		this.viewDistance = 100;
+		this.fov = 70;
 	}
 	
 	@Override
@@ -54,5 +56,17 @@ public class MutableViewConfig implements ViewConfig
 	public void setViewDistance(final int distance)
 	{
 		this.viewDistance = distance;
+	}
+	
+	@Override
+	public int getFOV()
+	{
+		return fov;
+	}
+	
+	@Override
+	public void setFOV(int fov) 
+	{
+		this.fov = fov;
 	}
 }

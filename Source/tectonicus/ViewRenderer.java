@@ -97,6 +97,11 @@ public class ViewRenderer
 				
 				Viewpoint view = ViewUtil.findView(sign);
 				
+				if (view.fov < 30 || view.fov > 110)  //if FOV is not set on sign or is in invalid range use config file FOV
+				{
+					view.fov = viewConfig.getFOV();
+				}
+				
 				// TODO: Store size of object list in file so we can see how far through the list we are?
 				// May need to have separate day/night lists for this so it's accurate
 				

@@ -33,15 +33,16 @@ public class ViewUtil
 		public Vector3f lookAt = new Vector3f();
 		public Vector3f up = new Vector3f();
 		
-		public float fov = 90.0f;
+		public float fov;
 		
 		public Viewpoint() {}
 		
-		public Viewpoint(Vector3f eye, Vector3f lookAt, Vector3f up)
+		public Viewpoint(Vector3f eye, Vector3f lookAt, Vector3f up, float fov)
 		{
 			this.eye.set(eye);
 			this.lookAt.set(lookAt);
 			this.up.set(up);
+			this.fov = fov;
 		}
 	}
 	
@@ -71,11 +72,10 @@ public class ViewUtil
 		return settings;
 	}
 	
-	private static int parseHeight(Sign sign)
+	private static int parseHeight(Set<String> settings)
 	{
 		int height = 0;
 		
-		Set<String> settings = extractSettings(sign);
 		for (String s : settings)
 		{
 			if (s.startsWith("h"))
@@ -94,11 +94,10 @@ public class ViewUtil
 		return height;
 	}
 	
-	private static int parseElevation(Sign sign)
+	private static int parseElevation(Set<String> settings)
 	{
 		int angle = 90;
 		
-		Set<String> settings = extractSettings(sign);
 		for (String s : settings)
 		{
 			if (s.startsWith("a"))
@@ -122,10 +121,35 @@ public class ViewUtil
 		return angle;
 	}
 	
-	public static Viewpoint findView(Sign sign)
+	private static int parseFOV(Set<String> settings)
 	{
-		final int heightOffset = parseHeight(sign);
-		int elevation = parseElevation(sign);
+		int fov = 0;
+		
+		for (String s : settings)
+		{
+			if (s.startsWith("f"))
+			{
+				String sub = s.substring(1).trim();
+				try
+				{
+					fov = Integer.parseInt(sub);
+					break;
+				}
+				catch (Exception e)
+				{}
+			}
+		}
+		
+		return fov;
+	}
+	
+	public static Viewpoint findView(Sign sign)
+	{	
+		Set<String> settings = extractSettings(sign);
+		
+		final int heightOffset = parseHeight(settings);
+		int elevation = parseElevation(settings);
+		final int fov = parseFOV(settings);
 		
 		final float angleDeg = 90 / 4.0f * sign.getData() - 90;
 		final float angleRad = angleDeg / 360f * 2.0f * (float)Math.PI;
@@ -166,7 +190,7 @@ public class ViewUtil
 		Vector3f.cross(forward, up, right);
 		Vector3f.cross(right, forward, up);
 		
-		return new Viewpoint(eye, lookAt, up);
+		return new Viewpoint(eye, lookAt, up, fov);
 	}
 	
 	
