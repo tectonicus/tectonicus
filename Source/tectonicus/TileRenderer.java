@@ -1741,7 +1741,12 @@ public class TileRenderer
 			{				
 				signs.read(sign);
 				
-				String message = "\"" + jsEscape(sign.getText(0)) + "\\n" + jsEscape(sign.getText(1)) + "\\n" + jsEscape(sign.getText(2)) + "\\n" + jsEscape(sign.getText(3)) + "\"";
+				String message = "";
+				
+				if (Float.parseFloat(Minecraft.minecraftVersion) >= 1.8f)
+					message = "\"" +sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
+				else
+					message = "\"" + jsEscape(sign.getText(0)) + "\\n" + jsEscape(sign.getText(1)) + "\\n" + jsEscape(sign.getText(2)) + "\\n" + jsEscape(sign.getText(3)) + "\"";
 				
 				HashMap<String, String> args = new HashMap<String, String>();
 				
@@ -1753,10 +1758,20 @@ public class TileRenderer
 				args.put("worldPos", posStr);
 				
 				args.put("message", message);
-				args.put("text1", "\"" + jsEscape(sign.getText(0)) + "\"");
-				args.put("text2", "\"" + jsEscape(sign.getText(1)) + "\"");
-				args.put("text3", "\"" + jsEscape(sign.getText(2)) + "\"");
-				args.put("text4", "\"" + jsEscape(sign.getText(3)) + "\"");
+				if (Float.parseFloat(Minecraft.minecraftVersion) >= 1.8f)
+				{
+					args.put("text1", "\"" + sign.getText(0) + "\"");
+					args.put("text2", "\"" + sign.getText(1) + "\"");
+					args.put("text3", "\"" + sign.getText(2) + "\"");
+					args.put("text4", "\"" + sign.getText(3) + "\"");
+				}
+				else
+				{
+					args.put("text1", "\"" + jsEscape(sign.getText(0)) + "\"");
+					args.put("text2", "\"" + jsEscape(sign.getText(1)) + "\"");
+					args.put("text3", "\"" + jsEscape(sign.getText(2)) + "\"");
+					args.put("text4", "\"" + jsEscape(sign.getText(3)) + "\"");
+				}
 				
 				jsWriter.write(args);
 			}

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="Tectonicus" default="BuildCopy" basedir=".">
+<project name="Tectonicus" default="BuildCopy" basedir="." xmlns:fx="javafx:com.sun.javafx.tools.ant">
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
@@ -30,9 +30,9 @@
 		
 		<javac srcdir="${Source}"
 				destdir="${FactoryFloor}/Binary"
-				source="1.6"
-				target="1.6"
-				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/json.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar"
+				source="1.7"
+				target="1.7"
+				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/json.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar;${Jars}/commons-lang3-3.4.jar;"
 				debug="true"
 				debuglevel="lines,source"
 				verbose="false"
@@ -72,6 +72,8 @@
 		
 		<unjar src="${Jars}/BiomeExtractor.jar" dest="${FactoryFloor}/Temp"/>
 		
+		<unjar src="${Jars}/commons-lang3-3.4.jar" dest="${FactoryFloor}/Temp"/>
+		
 		<!-- Create the unified jar -->
 		<jar destfile="${FactoryFloor}/Tectonicus_v${Version}.jar" basedir="${FactoryFloor}/Temp">
 			<manifest>
@@ -88,6 +90,9 @@
 	
 	
 	<target name="CreatePackage">
+		<taskdef resource="com/sun/javafx/tools/ant/antlib.xml"      
+		    uri="javafx:com.sun.javafx.tools.ant"
+			classpath="${java.home}/../lib/ant-javafx.jar" />
 		
 		<!-- Remove any existing package -->
 		<delete failonerror="false" file="${FactoryFloor}/Tectonicus_v${Version}.zip" />
@@ -101,6 +106,18 @@
 			<fileset file="${Docs}/fullConfig.xml" />
 			<fileset file="${Data}/defaultBlockConfig.xml" />
 		</zip>
+		
+		<!--<fx:deploy nativeBundles="all" width="100" height="100"
+		           outdir="${FactoryFloor}" outfile="HelloWorldApp">
+		            <info title="Hello World App" vendor="Me"
+		                     description="Test built from Java executable jar"/>
+		            <fx:application mainClass="tectonicus.gui.JavaFXGUI"/>
+		            <fx:resources>
+		               <fx:fileset dir="dist">
+		                  <include name="Tectonicus.jar"/>
+		               </fx:fileset>
+		            </fx:resources>
+		</fx:deploy>-->
 		
 	</target>
 	

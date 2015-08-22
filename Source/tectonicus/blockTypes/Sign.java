@@ -11,6 +11,7 @@ package tectonicus.blockTypes;
 
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
+import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
@@ -187,16 +188,16 @@ public class Sign implements BlockType
 				final float lineHeight = 1.0f / 16.0f * 2.5f;
 				
 				TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
-				text1.setText(s.text1, width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true);
+				text1.setText(unescapeJava(s.text1), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true);
 				
 				TextLayout text2 = new TextLayout(world.getTexturePack().getFont());
-				text2.setText(s.text2, width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true);
+				text2.setText(unescapeJava(s.text2), width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true);
 				
 				TextLayout text3 = new TextLayout(world.getTexturePack().getFont());
-				text3.setText(s.text3, width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true);
+				text3.setText(unescapeJava(s.text3), width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true);
 				
 				TextLayout text4 = new TextLayout(world.getTexturePack().getFont());
-				text4.setText(s.text4, width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true);
+				text4.setText(unescapeJava(s.text4), width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true);
 				
 				text1.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
 				text2.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);

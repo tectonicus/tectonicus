@@ -18,7 +18,8 @@ import tectonicus.util.OsDetect;
 
 public class Minecraft
 {
-
+	static String minecraftVersion;
+	
 	public static File findMinecraftDir()
 	{
 		File result;
@@ -99,6 +100,9 @@ public class Minecraft
 					System.out.println("Skipping directory with invalid version number: " + directory);
 				}
 			}
+			
+			minecraftVersion = major + "." + minor;
+			
 			String version;
 			if(patch.equals("0"))
 				version = major + "." + minor;
