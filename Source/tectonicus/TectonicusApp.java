@@ -1028,14 +1028,7 @@ public class TectonicusApp
 	{
 		String[] files =
 		{
-			"jinput-dx8_64.dll",
-			"jinput-dx8.dll",
-			"jinput-raw_64.dll",
-			"jinput-raw.dll",
-			"libjinput-linux.so",
-			"libjinput-linux64.so",
-			"libjinput-osx.jnilib",
-			"liblwjgl.jnilib",
+			"liblwjgl.dylib",
 			"liblwjgl.so",
 			"liblwjgl64.so",
 			"lwjgl.dll",
@@ -1043,16 +1036,10 @@ public class TectonicusApp
 		};
 		
 		Map<String, String> force64BitMapping = new HashMap<String, String>();
-		force64BitMapping.put("jinput-dx8_64.dll", "jinput-dx8.dll");
-		force64BitMapping.put("jinput-raw_64.dll", "jinput-raw.dll");
-		force64BitMapping.put("libjinput-linux64.so", "libjinput-linux.so");
 		force64BitMapping.put("liblwjgl64.so", "liblwjgl.so");
 		force64BitMapping.put("lwjgl64.dll", "lwjgl.dll");
 		
 		Map<String, String> force32BitMapping = new HashMap<String, String>();
-		force32BitMapping.put("jinput-dx8.dll", "jinput-dx8_64.dll");
-		force32BitMapping.put("jinput-raw.dll", "jinput-raw_64.dll");
-		force32BitMapping.put("libjinput-linux.so", "libjinput-linux64.so");
 		force32BitMapping.put("liblwjgl.so", "liblwjgl64.so");
 		force32BitMapping.put("lwjgl.dll", "lwjgl64.dll");
 		
@@ -1094,6 +1081,15 @@ public class TectonicusApp
 			*/
 		}
 		
+		try  // Mac hack
+		{
+			FileUtils.copyFiles(new File(cacheDir, "liblwjgl.dylib"), new File(cacheDir, "liblwjgl.jnilib"), new HashSet<String>());
+		}
+		catch (Exception e)
+		{
+			throw new RuntimeException("Couldn't create liblwjgl.jnilib", e);
+		}
+		
 		Map<String, String> renameMap = null;
 		if (force32BitNatives)
 		{
@@ -1126,7 +1122,6 @@ public class TectonicusApp
 		
 		String nativePath = cacheDir.getAbsolutePath();
 		System.setProperty("org.lwjgl.librarypath", nativePath);
-		System.setProperty("net.java.games.input.librarypath", nativePath);
 		System.setProperty("org.lwjgl.opengl.Display.allowSoftwareOpenGL", "true");
 	}
 	
