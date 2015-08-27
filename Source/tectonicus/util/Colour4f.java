@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -66,5 +66,13 @@ public class Colour4f
 		this.g /= factor;
 		this.b /= factor;
 		this.a /= factor;
+	}
+	
+	public void average(Colour4f other)
+	{
+		this.r = (this.r + other.r) / 2;
+		this.g = (this.g + other.g) / 2;
+		this.b = (this.b + other.b) / 2;
+		this.a = (this.a + other.a) / 2;
 	}
 }
