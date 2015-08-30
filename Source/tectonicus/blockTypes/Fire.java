@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,8 @@
  */
 
 package tectonicus.blockTypes;
+
+import java.util.Random;
 
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
@@ -26,18 +28,22 @@ public class Fire implements BlockType
 	private final String name;
 	
 	private final SubTexture texture;
+	private final int texHeight;
+	private final int texWidth;
+	private final int numTiles;
+	private int frame;
 	
-	public Fire(String name, SubTexture texture)
+	public Fire(String name, SubTexture texture, int frame)
 	{
 		if (texture == null)
 			throw new RuntimeException("fire texture is null!");
-		
+
 		this.name = name;
-		
-		if (texture.texturePackVersion == "1.4")
-			this.texture = texture;
-		else
-			this.texture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+16.0f/512.0f);
+		this.texHeight = texture.texture.getHeight();
+		this.texWidth = texture.texture.getWidth();
+		this.numTiles = texHeight/texWidth;
+		this.texture = texture;
+		this.frame = frame;
 	}
 
 	@Override
@@ -67,11 +73,24 @@ public class Fire implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
+		int newFrame;
+		if(numTiles > 1 && frame == 0)
+		{
+			Random rand = new Random();
+			newFrame = rand.nextInt(numTiles)+1;
+		}
+		else
+		{
+			newFrame = frame;
+		}
+
+		SubTexture randomTexture = new SubTexture(texture.texture, texture.u0, texture.v0+(float)((newFrame-1)*texWidth)/texHeight, texture.u1, texture.v0+(float)(newFrame*texWidth)/texHeight);
+		
+		Mesh mesh = geometry.getMesh(randomTexture.texture, Geometry.MeshType.AlphaTest);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
-		addFireGeometry(x, y, z, mesh, colour, texture);
+		addFireGeometry(x, y, z, mesh, colour, randomTexture);
 	}
 	
 	public static void addFireGeometry(final float x, final float y, final float z, Mesh mesh, Vector4f colour, SubTexture texture)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,8 @@
  */
 
 package tectonicus.blockTypes;
+
+import java.util.Random;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
@@ -24,12 +26,21 @@ public class Portal implements BlockType
 	
 	private final SubTexture texture;
 	
-	public Portal(String name, SubTexture texture)
+	public Portal(String name, SubTexture texture, int frame)
 	{
 		this.name = name;
 		
-		final float texel = 1.0f / texture.texture.getHeight();
-		this.texture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u1, texture.v0+texel*16);
+		final int texHeight = texture.texture.getHeight();
+		final int texWidth = texture.texture.getWidth();
+		final int numTiles = texHeight/texWidth;
+		
+		if(numTiles > 1 && frame == 0)
+		{
+			Random rand = new Random();
+			frame = rand.nextInt(numTiles)+1;
+		}
+
+		this.texture = new SubTexture(texture.texture, texture.u0, texture.v0+(float)(frame-1)*texWidth/texHeight, texture.u1, texture.v0+(float)frame*texWidth/texHeight);
 	}
 
 	@Override

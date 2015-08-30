@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,8 @@
  */
 
 package tectonicus.blockTypes;
+
+import java.util.Random;
 
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
@@ -25,17 +27,26 @@ import tectonicus.texture.SubTexture;
 public class Water implements BlockType
 {
 	private final String name;
-	private SubTexture subTexture;
+	private SubTexture subTexture;	
 	
-	
-	public Water(String name, SubTexture subTexture)
+	public Water(String name, SubTexture subTexture, int frame)
 	{
 		this.name = name;
 		
+		final int texHeight = subTexture.texture.getHeight();
+		final int texWidth = subTexture.texture.getWidth();
+		final int numTiles = texHeight/texWidth;
+
+		if(numTiles > 1 && frame == 0)
+		{
+			Random rand = new Random();
+			frame = rand.nextInt(numTiles)+1;
+		}
+
 		if (subTexture.texturePackVersion == "1.4")
 			this.subTexture = subTexture;
 		else
-			this.subTexture = new SubTexture(subTexture.texture, subTexture.u0, subTexture.v0, subTexture.u1, subTexture.v0+16.0f/512.0f);
+			this.subTexture = new SubTexture(subTexture.texture, subTexture.u0, subTexture.v0+(float)((frame-1)*texWidth)/texHeight, subTexture.u1, subTexture.v0+(float)(frame*texWidth)/texHeight);
 	}
 	
 	@Override

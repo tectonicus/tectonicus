@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -231,7 +232,7 @@ public class BlockRegistryParser
 		{
 			SubTexture tex = parseTexture(element, "texture", null);
 			
-			blockType = new Water(name, tex);
+			blockType = new Water(name, tex, parseFrame(element));
 		}
 		else if (nodeName.equals("grass"))
 		{
@@ -582,13 +583,13 @@ public class BlockRegistryParser
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Fire(name, texture);
+			blockType = new Fire(name, texture, parseFrame(element));
 		}
 		else if (nodeName.equals("portal"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Portal(name, texture);
+			blockType = new Portal(name, texture, parseFrame(element));
 		}
 		else if (nodeName.equals("lilly"))
 		{
@@ -822,6 +823,12 @@ public class BlockRegistryParser
 			} catch (Exception e) {}
 		}
 		return result;
+	}
+	
+	private int parseFrame(Element element)
+	{
+		String frameStr = element.getAttribute("frame");
+		return StringUtils.isNotBlank(frameStr) ? Integer.parseInt(frameStr) : 0;
 	}
 	
 	private static Element loadXml(String resource, String rootName)
