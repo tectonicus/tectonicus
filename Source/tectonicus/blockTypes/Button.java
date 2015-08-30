@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,12 +9,13 @@
 
 package tectonicus.blockTypes;
 
-import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.Chunk;
+import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
@@ -24,27 +25,16 @@ import tectonicus.texture.SubTexture;
 public class Button implements BlockType
 {
 	private static final int WIDTH = 6;
-	private static final int HEIGHT = 4;
-	private static final int DEPTH = 2;
+	private static final int HEIGHT = 2;
+	private static final int DEPTH = 4;
 	
 	private final String name;
-	private final SubTexture frontTexture;
-	private final SubTexture sideTexture;
-	private final SubTexture edgeTexture;
+	private final SubTexture texture;
 	
 	public Button(String name, SubTexture texture)
 	{
 		this.name = name;
-		
-		final float texel;
-		if (texture.texturePackVersion == "1.4")
-			texel = 1.0f / 16.0f / 16.0f;
-		else
-			texel = 1.0f / 16.0f;
-		
-		this.frontTexture = new SubTexture(texture.texture, texture.u0+texel*HEIGHT, texture.v0+texel*WIDTH, texture.u1-texel*HEIGHT, texture.v1-texel*WIDTH);
-		this.sideTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u0+texel*WIDTH, texture.v0+texel*DEPTH);
-		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0, texture.u0+texel*DEPTH, texture.v0+texel*HEIGHT);
+		this.texture = texture;
 	}
 	
 	@Override
@@ -76,73 +66,52 @@ public class Button implements BlockType
 	{
 		final int data = rawChunk.getBlockData(x, y, z);
 		
-		final float texel = 1.0f / 16.0f;
+		final float texel = 1.0f / texture.texture.getWidth();
 		
-		final float width = texel * WIDTH;
-		final float height = texel * HEIGHT;
-		final float depth = texel * DEPTH;
-		
-		final float xMin = texel * 5.0f; // correct?
-		final float xMax = xMin + width;
-		
-		final float yMin = texel * 6.0f; // correct?
-		final float yMax = yMin + height;
-		
-		final float zMin = 0;
-		final float zMax = zMin + depth;
-		
-		Vector4f white = new Vector4f(1, 1, 1, 1);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		SubMesh subMesh = new SubMesh();
-		
-		// Front quad
-		subMesh.addQuad(new Vector3f(xMin, yMax, zMax), new Vector3f(xMax, yMax, zMax), new Vector3f(xMax, yMin, zMax), new Vector3f(xMin, yMin, zMax), white, frontTexture);
-		
-		// South quad
-		subMesh.addQuad(new Vector3f(xMax, yMax, zMax), new Vector3f(xMax, yMax, zMin), new Vector3f(xMax, yMin, zMin), new Vector3f(xMax, yMin, zMax), white, edgeTexture);
-		
-		// North quad
-		subMesh.addQuad(new Vector3f(xMin, yMax, zMin), new Vector3f(xMin, yMax, zMax), new Vector3f(xMin, yMin, zMax), new Vector3f(xMin, yMin, zMin), white, edgeTexture);
-		
-		// Top quad
-		subMesh.addQuad(new Vector3f(xMin, yMax, zMin), new Vector3f(xMax, yMax, zMin), new Vector3f(xMax, yMax, zMax), new Vector3f(xMin, yMax, zMax), white, sideTexture);
-		
-		// TODO: May need a bottom quad when we get streetview views and can see the button from underneath
-		
-		float xOffset = x;
-		float yOffset = y;
-		float zOffset = z;
-		
-		Rotation rotation = Rotation.None;
+
 		float angle = 0;
+		float vertAngle = 0;
 		
-		final int direction = data & 0x3;
+		final int direction = data;
 		
-		if (direction == 0)
+		if (direction == 0 || direction == 5)
+		{
+			SubMesh.addBlock(subMesh, texel*5, 0, texel*6, texel * WIDTH, texel * HEIGHT, texel * DEPTH, white, texture, texture, texture);
+			
+			if (direction == 0)
+				vertAngle = 180;
+		}
+		else
+		{
+			SubMesh.addBlock(subMesh, texel*5, texel*6, 0, texel * WIDTH, texel * DEPTH, texel * HEIGHT, white, texture, texture, texture);
+		}
+		
+		
+		if (direction == 1)
 		{
 			// Facing east
-			rotation = Rotation.Clockwise;
-			angle = 180;
-		}
-		else if (direction == 1)
-		{
-			// Facing south
-			rotation = Rotation.Clockwise;
 			angle = 90;
 		}
 		else if (direction == 2)
 		{
-			// Facing north
-			rotation = Rotation.Clockwise;
+			// Facing west
 			angle = -90;
 		}
 		else if (direction == 3)
+		{ 
+			//Facing south
+		}
+		else if (direction == 4)
 		{
-			// Facing west
-			// ...build in this direction
+			// Facing north
+			angle = 180;
 		}
 		
-		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);
+		subMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.Clockwise, angle, Rotation.Clockwise, vertAngle);
 	}
 	
 }
