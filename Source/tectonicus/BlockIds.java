@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -107,6 +107,7 @@ public class BlockIds
 	//public static final int CAKE					= 92;
 	//public static final int REDSTONE_REPEATER_OFF	= 93;
 	//public static final int REDSTONE_REPEATER_ON	= 94;
+	public static final int WOOD_BUTTON				= 143;
 	public static final int TRAPPED_CHEST			= 146;
 	public static final int LARGE_FLOWERS			= 175;
 

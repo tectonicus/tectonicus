@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -33,8 +33,7 @@ public class RedstoneWire implements BlockType
 	{
 		if (offJunction.texturePackVersion != "1.4")
 		{
-			final float texel = 1.0f / offJunction.texture.getHeight();
-			final float tile = texel * offJunction.texture.getWidth();
+			final float tile = offJunction.texture.getWidth()/offJunction.texture.getHeight();
 			this.junction = new SubTexture(offJunction.texture, offJunction.u0, offJunction.v0, offJunction.u1, offJunction.v0+tile);
 			this.line = new SubTexture(offLine.texture, offLine.u0, offLine.v0, offLine.u1, offLine.v0+tile);
 		}
@@ -79,15 +78,15 @@ public class RedstoneWire implements BlockType
 		
 		final int data = chunk.getBlockData(x, y, z);
 		
-		final boolean hasNorthAbove = hasRedstone(x-1, y+1, z, world, chunk);
-		final boolean hasSouthAbove = hasRedstone(x+1, y+1, z, world, chunk);
-		final boolean hasEastAbove = hasRedstone(x, y+1, z-1, world, chunk);
-		final boolean hasWestAbove = hasRedstone(x, y+1, z+1, world, chunk);
+		final boolean hasNorthAbove = hasRedstoneOnly(x-1, y+1, z, world, chunk);
+		final boolean hasSouthAbove = hasRedstoneOnly(x+1, y+1, z, world, chunk);
+		final boolean hasEastAbove = hasRedstoneOnly(x, y+1, z-1, world, chunk);
+		final boolean hasWestAbove = hasRedstoneOnly(x, y+1, z+1, world, chunk);
 
-		final boolean hasNorthBelow = hasRedstone(x-1, y-1, z, world, chunk);
-		final boolean hasSouthBelow = hasRedstone(x+1, y-1, z, world, chunk);
-		final boolean hasEastBelow = hasRedstone(x, y-1, z-1, world, chunk);
-		final boolean hasWestBelow = hasRedstone(x, y-1, z+1, world, chunk);
+		final boolean hasNorthBelow = hasRedstoneOnly(x-1, y-1, z, world, chunk);
+		final boolean hasSouthBelow = hasRedstoneOnly(x+1, y-1, z, world, chunk);
+		final boolean hasEastBelow = hasRedstoneOnly(x, y-1, z-1, world, chunk);
+		final boolean hasWestBelow = hasRedstoneOnly(x, y-1, z+1, world, chunk);
 		
 		final boolean hasNorth = hasRedstone(x-1, y, z, world, chunk) || hasNorthAbove || hasNorthBelow;
 		final boolean hasSouth = hasRedstone(x+1, y, z, world, chunk) || hasSouthAbove || hasSouthBelow;
@@ -97,7 +96,12 @@ public class RedstoneWire implements BlockType
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
 		final float intensity = ((float)data / 16.0f) * lightness;
 		
-		Vector4f colour = new Vector4f(1.0f * intensity, 0.2f * intensity, 0.2f * intensity, 1);
+		Vector4f colour = new Vector4f(1.0f * intensity + 0.25f, 0.2f * intensity, 0.2f * intensity, 1);
+
+		if (colour.x > 1.0f)
+			colour.x = 1.0f;
+		else if (colour.x < 0.25f)
+			colour.x = 0.25f;
 		
 		final float nudge = 0.001f;
 		final float actualY = y + nudge;
@@ -256,6 +260,14 @@ public class RedstoneWire implements BlockType
 				|| id == BlockIds.LEVER
 				|| id == BlockIds.STONE_PRESSURE_PLATE
 				|| id == BlockIds.WOOD_PRESSURE_PLATE
-				|| id == BlockIds.STONE_BUTTON;
+				|| id == BlockIds.STONE_BUTTON
+				|| id == BlockIds.WOOD_BUTTON;
+	}
+	
+	private static boolean hasRedstoneOnly(final int x, final int y, final int z, BlockContext world, RawChunk chunk)
+	{
+		final int id = world.getBlockId(chunk.getChunkCoord(), x, y, z);
+		
+		return id == BlockIds.REDSTONE_WIRE;
 	}
 }
