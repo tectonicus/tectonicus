@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -74,6 +74,7 @@ import tectonicus.util.Vector3l;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.filter.ExploredCaveFilter;
+import tectonicus.world.subset.CircularWorldSubsetFactory;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubsetFactory;
 
@@ -246,16 +247,16 @@ public class TileRenderer
 			outputCompass(new File(mapDir, "Compass.png"), map, world.getBlockTypeRegistry(), world.getTexturePack());
 			
 			// Output signs
-			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
+			outputSigns(new File(mapDir, "signs.js"), signsFile, map, world.getSpawnPosition());
 			
 			// Output players
 			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler);
 			
 			// Output beds
-			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null));
+			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null), world.getSpawnPosition());
 			
 			// Output portals
-			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
+			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map, world.getSpawnPosition())));
 			
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
@@ -1490,7 +1491,7 @@ public class TileRenderer
 		System.out.println("Outputted "+numOutput+" players");
 	}
 	
-	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players)
+	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, Vector3l mapSpawn)
 	{
 		File bedsFile = new File(exportDir, "beds.js");
 		if (bedsFile.exists())
@@ -1504,6 +1505,22 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(bedsFile, map.getId()+"_bedData");
+			
+			long radius = 0;
+			long originX = mapSpawn.x;
+			long originZ = mapSpawn.z;
+			
+			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
+			{
+				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+
+				radius = subset.getRadius();
+				if(subset.getOrigin() != null)
+				{
+					originX = subset.getOrigin().x;
+					originZ = subset.getOrigin().z;
+				}
+			}
 			
 			if (map.getDimension() == Dimension.Terra) // Beds only exist in the terra dimension for now
 			{
@@ -1522,7 +1539,14 @@ public class TileRenderer
 						String posStr = "new WorldCoord("+spawn.x+", "+spawn.y+", "+spawn.z+")";
 						args.put("worldPos", posStr);
 						
-						jsWriter.write(args);
+						if (radius != 0 && Math.pow((spawn.x - originX), 2) + Math.pow((spawn.z - originZ), 2) < Math.pow(radius,2))
+						{
+							jsWriter.write(args);
+						}
+						else if (radius == 0)
+						{
+							jsWriter.write(args);
+						}
 						
 						numOutput++;
 					}
@@ -1705,13 +1729,13 @@ public class TileRenderer
 		return worldVectors;
 	}
 	
-	private void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map)
+	private void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map, Vector3l spawn)
 	{
 		HddObjectListReader<Sign> signsIn = null;
 		try
 		{
 			signsIn = new HddObjectListReader<Sign>(signListFile);
-			outputSigns(outputFile, signsIn, map);
+			outputSigns(outputFile, signsIn, map, spawn);
 		}
 		catch (Exception e)
 		{
@@ -1724,7 +1748,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map)
+	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map, Vector3l spawn)
 	{
 		System.out.println("Writing signs to "+signFile.getAbsolutePath());
 		
@@ -1735,6 +1759,22 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(signFile, map.getId()+"_signData");
+			
+			long radius = 0;
+			long originX = spawn.x;
+			long originZ = spawn.z;
+			
+			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
+			{
+				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+
+				radius = subset.getRadius();
+				if(subset.getOrigin() != null)
+				{
+					originX = subset.getOrigin().x;
+					originZ = subset.getOrigin().z;
+				}
+			}
 			
 			Sign sign = new Sign();
 			while (signs.hasNext())
@@ -1773,7 +1813,14 @@ public class TileRenderer
 					args.put("text4", "\"" + jsEscape(sign.getText(3)) + "\"");
 				}
 				
-				jsWriter.write(args);
+				if (radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
+				{
+					jsWriter.write(args);
+				}
+				else if (radius == 0)
+				{
+					jsWriter.write(args);
+				}
 			}
 		}
 		catch (Exception e)
@@ -1787,14 +1834,14 @@ public class TileRenderer
 		}
 	}
 	
-	private int outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map)
+	private int outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map, Vector3l spawn)
 	{
 		int numPortals = 0;
 		
 		try
 		{
 			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<Portal>(portalListFile);
-			numPortals = outputPortals(outFile, portalsIn, map);
+			numPortals = outputPortals(outFile, portalsIn, map, spawn);
 			portalsIn.close();
 		}
 		catch (Exception e)
@@ -1805,7 +1852,7 @@ public class TileRenderer
 		return numPortals;
 	}
 	
-	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map)
+	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map, Vector3l spawn)
 	{
 		System.out.println("Writing portals...");
 		
@@ -1817,6 +1864,22 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(portalFile, map.getId()+"_portalData");
+			
+			long radius = 0;
+			long originX = spawn.x;
+			long originZ = spawn.z;
+			
+			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
+			{
+				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+
+				radius = subset.getRadius();
+				if(subset.getOrigin() != null)
+				{
+					originX = subset.getOrigin().x;
+					originZ = subset.getOrigin().z;
+				}
+			}
 			
 			ArrayList<Portal> portals = new ArrayList<Portal>();
 			
@@ -1867,7 +1930,14 @@ public class TileRenderer
 					String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 					args.put("worldPos", posStr);
 					
-					jsWriter.write(args);
+					if (radius != 0 && Math.pow((p.getX() - originX), 2) + Math.pow((p.getZ() - originZ), 2) < Math.pow(radius,2))
+					{
+						jsWriter.write(args);
+					}
+					else if (radius == 0)
+					{
+						jsWriter.write(args);
+					}
 				}
 			}
 		}
