@@ -13,6 +13,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,6 +34,8 @@ import tectonicus.blockTypes.BlockVariant;
 import tectonicus.blockTypes.BlockVariant.VariantModel;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
+import tectonicus.texture.ZipStack;
+import tectonicus.texture.ZipStack.ZipStackEntry;
 import tectonicus.util.Vector3f;
 
 public class BlockVariantTests
@@ -74,7 +77,10 @@ public class BlockVariantTests
 		BufferedReader reader = null;
 		try
 		{
-			reader = new BufferedReader(new FileReader("C:\\Users\\Steven\\AppData\\Roaming\\.minecraft\\versions\\1.8.8\\1.8.8\\assets\\minecraft\\blockstates\\grass.json"));
+			ZipStack zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+			ZipStackEntry modelFile = zips.getEntry("assets/minecraft/blockstates/grass.json");
+
+			reader = new BufferedReader(new InputStreamReader(modelFile.getInputStream()));
             StringBuilder builder = new StringBuilder();
 			
             String line = null;
@@ -170,7 +176,10 @@ public class BlockVariantTests
 		BufferedReader reader = null;
 		try
 		{
-			reader = new BufferedReader(new FileReader("C:\\Users\\Steven\\AppData\\Roaming\\.minecraft\\versions\\1.8.8\\1.8.8\\assets\\minecraft\\models\\" + modelPath +".json"));
+			ZipStack zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+			ZipStackEntry modelFile = zips.getEntry("assets/minecraft/models/" + modelPath + ".json");
+
+			reader = new BufferedReader(new InputStreamReader(modelFile.getInputStream()));
             StringBuilder builder = new StringBuilder();
 			
             String line = null;
