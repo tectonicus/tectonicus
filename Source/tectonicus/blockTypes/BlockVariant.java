@@ -9,6 +9,7 @@
 
 package tectonicus.blockTypes;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +38,9 @@ public class BlockVariant
 		}
 	}
 	
-	public String getName()	{ return name; }	
-	public Map<String, String> getStates() { return states;	}
-	public List<VariantModel> getModels() {	return models; }
+	public String getName() { return name; }
+	public Map<String, String> getStates() { return Collections.unmodifiableMap(states); }
+	public List<VariantModel> getModels() { return Collections.unmodifiableList(models); }
 	
 	
 	public static class VariantModel 

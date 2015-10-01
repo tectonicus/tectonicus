@@ -9,6 +9,7 @@
 
 package tectonicus.blockTypes;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -60,7 +61,7 @@ public class BlockModel
 		public float getRotationAngle() { return rotationAngle; }
 		public boolean isScaled() { return scaled; }
 		public boolean isShaded() { return shaded; }
-		public Map<String, ElementFace> getFaces() { return faces; }
+		public Map<String, ElementFace> getFaces() { return Collections.unmodifiableMap(faces); }
 		
 		
 		public static class ElementFace

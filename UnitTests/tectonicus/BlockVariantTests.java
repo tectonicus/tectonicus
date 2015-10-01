@@ -9,29 +9,45 @@
 
 package tectonicus;
 
-import static org.junit.Assert.assertTrue;
-
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.zip.ZipEntry;
+
+import javax.imageio.ImageIO;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
+import org.lwjgl.LWJGLException;
+import org.lwjgl.opengl.Display;
+import org.lwjgl.opengl.DisplayMode;
+
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
+import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockVariant;
 import tectonicus.blockTypes.BlockVariant.VariantModel;
+import tectonicus.rasteriser.Texture;
+import tectonicus.rasteriser.TextureFilter;
+import tectonicus.rasteriser.lwjgl.LwjglTexture;
+import tectonicus.rasteriser.lwjgl.LwjglTextureUtils;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -41,7 +57,29 @@ import tectonicus.util.Vector3f;
 public class BlockVariantTests
 {
 	private TexturePack texturePack;
+	private Map<String, BlockModel> blockModels;
+	private int modelTotal;
+	private ZipStack zips;
 	
+	@Before
+	public void setUp()
+	{
+		try {
+			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		modelTotal = 0;
+		
+//		try {
+//			Thread.sleep(20 * 1000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+	}
+
 	@Test
 	public void createSingleStateMap()
 	{
@@ -68,258 +106,55 @@ public class BlockVariantTests
 		
 		assertTrue(states.equals(testStates));
 	}
+//	
+//	@Test
+//	public void createModelVariants() throws Exception
+//	{
+//		List<Map<String, BlockVariant>> blockStates = new ArrayList<>();  //List of all blockstates
+//		Map<String, BlockVariant> vMap = new HashMap<>();  //Map of variants of a single blockstate
+//		blockModels = new HashMap<>();
+//		
+//		Enumeration<? extends ZipEntry> entries = zips.getBaseEntries();
+//		while(entries.hasMoreElements())
+//		{
+//			ZipEntry entry = entries.nextElement();
+//			if(entry.getName().contains("blockstates"))
+//			{
+//				ZipStackEntry zse = zips.getEntry(entry.getName());
+//				vMap = loadVariants(loadJSON(zse.getInputStream()));
+//				blockStates.add(vMap);
+//				//System.out.println(entry.getName());
+//			}
+//		}
+//		System.out.println(modelTotal);
+//		System.out.println(blockStates.size());
+//		System.out.println(blockModels.size());
+//		//BlockVariant bv = vMap.get("snowy=false");
+//		//assertTrue(bv.getModels() != null);
+//	}	
 	
-	@Test
-	public void createModelVariants() throws Exception
-	{
-		Map<String, BlockVariant> vMap = new HashMap<>();
+//	@Test
+//	public void testGetModel() throws Exception
+//	{
+//		org.lwjgl.opengl.Display.create();
+//		blockModels = new HashMap<>();
+//		JSONObject model = new JSONObject( "{ \"model\": \"tripwire_hook_attached_suspended\", \"y\": 180 }");
+//		VariantModel vm = getModel(model);
+//		assertThat(vm.getModelPath(), equalTo("tripwire_hook_attached_suspended"));
+//	}
+
+//	@Test
+//	public void testLoadModel() throws Exception
+//	{
+//		//texturePack = new TexturePack(null, Minecraft.findMinecraftJar(), null, null);
+//		Map<String, String> textureMap = new HashMap<>();
+//		//zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+//		BlockModel bm = loadModel("block/tripwire_hook", zips, textureMap);
+//		assertThat(bm.getElements().size(), equalTo(7));
+//		bm = loadModel("block/anvil_undamaged", zips, textureMap);
+//		assertThat(bm.getElements().size(), equalTo(4));
+//	}
 		
-		BufferedReader reader = null;
-		try
-		{
-			ZipStack zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
-			ZipStackEntry modelFile = zips.getEntry("assets/minecraft/blockstates/grass.json");
-
-			reader = new BufferedReader(new InputStreamReader(modelFile.getInputStream()));
-            StringBuilder builder = new StringBuilder();
-			
-            String line = null;
-            while ((line = reader.readLine()) != null)
-            {
-            	builder.append(line + "\n");
-            }
-            reader.close();
-
-			JSONObject obj = new JSONObject(builder.toString());
-			JSONObject variants = obj.getJSONObject("variants");
-			
-			Iterator<?> keys = variants.keys();
-			while(keys.hasNext()) 
-			{
-			    String key = (String)keys.next();
-			    Object variant = variants.get(key);
-			    List<VariantModel> models = new ArrayList<>();
-			    
-				try {
-					if (variant instanceof JSONObject) {  // If only a single model
-						JSONObject model = (JSONObject) variant;
-						models.add(getModel(model));
-					} else { // if more than one model
-						JSONArray array = (JSONArray) variant;
-						for (int i = 0; i < array.length(); i++) {
-							JSONObject model = array.getJSONObject(i);
-							models.add(getModel(model));
-						}
-					}
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-			    
-			    BlockVariant bv = new BlockVariant(key, models);
-			    vMap.put(key, bv);
-			}
-		}
-		finally
-		{
-			if (reader != null)
-				reader.close();
-		}
-		
-		BlockVariant bv = vMap.get("snowy=false");
-		assertTrue(bv.getModels() != null);
-	}
-	
-	// Get a single model
-	private VariantModel getModel(JSONObject model) throws JSONException
-	{
-		String modelPath = "";
-		int x = 0;
-		int y = 0;
-		int weight = 1;
-		boolean uvlock = false;
-		
-		Iterator<?> keys = model.keys();
-		while (keys.hasNext()) 
-		{
-			String key = (String) keys.next();
-
-			if (key.equals("model")) {
-				modelPath = model.getString(key);
-				//loadModel(modelPath);
-			} else if (key.equals("x"))	{
-				x = model.getInt(key);
-			} else if (key.equals("y")) {
-				y = model.getInt(key);
-			} else if (key.equals("uvlock")) {
-				uvlock = model.getBoolean(key);
-			} else if (key.equals("weight")) {
-				weight = model.getInt(key);
-			}
-		}
-		
-		return new VariantModel(modelPath, x, y, uvlock, weight);
-	}
-	
-	
-	@Test
-	public void modelTest() throws Exception
-	{
-		//texturePack = new TexturePack(null, Minecraft.findMinecraftJar(), null, null);
-		Map<String, String> textureMap = new HashMap<>();
-		BlockModel bm = loadModel("block/fire_u1", textureMap);
-		assertThat(bm.getElements().size(), equalTo(2));
-	}
-	
-	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
-	public BlockModel loadModel(String modelPath, Map<String, String> textureMap) throws Exception
-	{
-		BufferedReader reader = null;
-		try
-		{
-			ZipStack zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
-			ZipStackEntry modelFile = zips.getEntry("assets/minecraft/models/" + modelPath + ".json");
-
-			reader = new BufferedReader(new InputStreamReader(modelFile.getInputStream()));
-            StringBuilder builder = new StringBuilder();
-			
-            String line = null;
-            while ((line = reader.readLine()) != null)
-            {
-            	builder.append(line + "\n");
-            }
-            reader.close();
-
-			JSONObject obj = new JSONObject(builder.toString());
-			String parent = "";
-			if(obj.has("parent")) // Get texture information and then load parent file
-			{
-				parent = obj.getString("parent");
-
-				Map<String, String> newTexMap = new HashMap<>();
-				JSONObject textures = obj.getJSONObject("textures");
-				
-				Iterator<?> keys = textures.keys();
-				while(keys.hasNext())
-				{
-					String key = (String)keys.next();
-				    StringBuilder tex = new StringBuilder((String) textures.get(key));
-				    if(tex.charAt(0) == '#')
-				    {
-				    	newTexMap.put(key, textureMap.get(tex.deleteCharAt(0).toString()));
-				    }
-				    else
-				    {
-				    	newTexMap.put(key, tex.toString());
-				    }
-				}
-				return loadModel(parent, newTexMap);
-			}
-			else  //Load all elements
-			{
-				List<BlockElement> elementsList = new ArrayList<>();
-				
-				boolean ao = true;
-				if (obj.has("ambientocclusion"))
-					ao = false;
-				
-				JSONArray elements = obj.getJSONArray("elements");				
-				for (int i = 0; i < elements.length(); i++)
-				{
-					Map<String, ElementFace> elementFaces = new HashMap<>();
-					
-					JSONObject element = elements.getJSONObject(i);
-					
-					JSONArray from = element.getJSONArray("from");
-					Vector3f fromVector = new Vector3f((float)from.getDouble(0), (float)from.getDouble(1), (float)from.getDouble(2));
-					JSONArray to = element.getJSONArray("to");
-					Vector3f toVector = new Vector3f((float)to.getDouble(0), (float)to.getDouble(1), (float)to.getDouble(2));
-					
-					Vector3f rotationOrigin = new Vector3f(8.0f, 8.0f, 8.0f);
-					String rotationAxis = "y";
-					float rotationAngle = 0;
-					boolean rotationScale = false;
-					
-					if(element.has("rotation"))
-					{
-						JSONObject rot = element.getJSONObject("rotation");
-						JSONArray rotOrigin = rot.getJSONArray("origin");
-						rotationOrigin = new Vector3f((float)rotOrigin.getDouble(0), (float)rotOrigin.getDouble(1), (float)rotOrigin.getDouble(2));
-
-						rotationAxis = rot.getString("axis");
-						
-						rotationAngle = (float) rot.getDouble("angle");
-						
-						if(element.has("rescale"))
-							rotationScale = true;
-					}
-					
-					boolean shaded = true;
-					if(element.has("shade"))
-						shaded = false;						
-					
-					JSONObject faces = element.getJSONObject("faces");
-					
-					Iterator<?> keys = faces.keys();
-					while(keys.hasNext())
-					{
-						String key = (String)keys.next();
-						JSONObject face = (JSONObject) faces.get(key);
-						
-						float u0 = fromVector.x();
-						float v0 = fromVector.y();
-						float u1 = toVector.x();
-						float v1 = toVector.y();
-						
-						if(face.has("uv"))
-						{
-							JSONArray uv = face.getJSONArray("uv");
-							u0 = (float)uv.getDouble(0);
-							v0 = (float)uv.getDouble(1);
-							u1 = (float)uv.getDouble(2);
-							v1 = (float)uv.getDouble(3);
-						}
-						
-						StringBuilder tex = new StringBuilder(face.getString("texture"));
-					    if(tex.charAt(0) == '#')
-					    {
-					    	String texture = tex.deleteCharAt(0).toString();
-					    	//System.out.println(textureMap.get(texture));
-					    	// TODO: Need to convert UV coords to numbers between 0 and 1, account for animated textures, etc.
-					    	//SubTexture subTexture = texturePack.findTexture(texture);
-					    }
-					    
-					    SubTexture texture = new SubTexture(null, u0, v0, u1, v1);
-					    
-					    boolean cullFace = false;
-					    if(face.has("cullface"))
-					    	cullFace = true;
-					    
-					    int rotation = 0;
-					    if(face.has("rotation"))
-					    	rotation = face.getInt("rotation");
-					    
-					    boolean tintIndex = false;
-					    if(face.has("tintindex"))
-					    	tintIndex = true;
-					    
-					    ElementFace ef = new ElementFace(texture, cullFace, rotation, tintIndex);
-					    elementFaces.put(key, ef);
-					}
-					//System.out.println(elementFaces);
-					BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotationAxis, rotationAngle, rotationScale, shaded, elementFaces);
-					elementsList.add(be);
-				}
-
-				return new BlockModel(modelPath, ao, elementsList);
-			}
-		}
-		finally
-		{			
-			if (reader != null)
-				reader.close();
-		}
-	}
-	
 	//TODO:  Move and rewrite this test once we start parsing the block variants
 	@Test
 	public void createBlockVariantMap()
@@ -343,5 +178,18 @@ public class BlockVariantTests
 		BlockModel bm = new BlockModel("", false, null);
 		BlockElement test = new BlockElement(null, null, null, "", 0, false, false, new HashMap<String, ElementFace>());
 		test.getFrom();
+	}
+	
+	@Test
+	public void testLoadEverything()
+	{
+		try {
+			Display.setDisplayMode(new DisplayMode(300, 300));
+			Display.create();
+		} catch (LWJGLException e) {
+			e.printStackTrace();
+		}
+		BlockRegistry test = new BlockRegistry();
+		test.deserialize();
 	}
 }

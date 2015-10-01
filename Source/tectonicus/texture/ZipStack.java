@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -113,6 +113,16 @@ public class ZipStack
 			return new ZipStackEntry(zip, entry);
 		
 		return null;
+	}
+	
+	public Enumeration<? extends ZipEntry> getBaseEntries()
+	{
+		return base.entries();
+	}
+	
+	public Enumeration<? extends ZipEntry> getOverrideEntries()  //TODO: need to return mod jar entries as well
+	{	
+		return  override != null ? override.entries() :  null;
 	}
 	
 	public static class ZipStackEntry
