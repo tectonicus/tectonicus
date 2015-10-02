@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,12 +9,13 @@
 
 package tectonicus.raw;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Scanner;
 import org.json.JSONArray;
+
+import tectonicus.util.FileUtils;
 
 public class PlayerList
 {
@@ -38,31 +39,12 @@ public class PlayerList
 		if (index > 0)
 			ext = playerFile.getAbsolutePath().substring(index+1);
 		if (ext.equals("json"))
-		{
-			BufferedReader reader = null;
-			try
+		{			
+			JSONArray array = new JSONArray(FileUtils.loadJSON(new FileInputStream(playerFile)));
+			for (int i=0; i<array.length(); i++)
 			{
-				reader = new BufferedReader(new FileReader(playerFile));
-	            StringBuilder builder = new StringBuilder();
-				
-	            String line = null;
-	            while ((line = reader.readLine()) != null)
-	            {
-	            	builder.append(line + "\n");
-	            }
-	            reader.close();
-	
-				JSONArray array = new JSONArray(builder.toString());
-				for (int i=0; i<array.length(); i++)
-				{
-					String name = array.getJSONObject(i).getString("name");
-					playerNames.add(name);
-				}
-			}
-			finally
-			{
-				if (reader != null)
-					reader.close();
+				String name = array.getJSONObject(i).getString("name");
+				playerNames.add(name.toLowerCase());
 			}
 		}
 		else if (ext.equals("txt"))
@@ -78,7 +60,7 @@ public class PlayerList
 					{
 						String line = scanner.nextLine();
 						if (line != null)
-							playerNames.add( line.trim() );
+							playerNames.add( line.trim().toLowerCase() );
 					}
 				}
 				
@@ -99,11 +81,6 @@ public class PlayerList
 	
 	public boolean contains(String playerName)
 	{
-		for (String name : playerNames)
-		{
-			if (name.equalsIgnoreCase(playerName))
-				return true;
-		}
-		return false;
+		return playerNames.contains(playerName.toLowerCase()) ? true : false;
 	}
 }

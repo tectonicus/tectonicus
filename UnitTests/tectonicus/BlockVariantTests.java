@@ -35,8 +35,10 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.Is.*;
 
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -133,27 +135,30 @@ public class BlockVariantTests
 //		//assertTrue(bv.getModels() != null);
 //	}	
 	
-//	@Test
-//	public void testGetModel() throws Exception
-//	{
-//		org.lwjgl.opengl.Display.create();
-//		blockModels = new HashMap<>();
-//		JSONObject model = new JSONObject( "{ \"model\": \"tripwire_hook_attached_suspended\", \"y\": 180 }");
-//		VariantModel vm = getModel(model);
-//		assertThat(vm.getModelPath(), equalTo("tripwire_hook_attached_suspended"));
-//	}
+	@Test
+	public void testDeserializeVariantModel() throws Exception
+	{
+		JSONObject model = new JSONObject( "{ \"model\": \"tripwire_hook_attached_suspended\", \"y\": 180 }");
+		VariantModel vm = VariantModel.deserializeVariantModel(model);
+		assertThat(vm.getModelPath(), equalTo("tripwire_hook_attached_suspended"));
+	}
 
-//	@Test
-//	public void testLoadModel() throws Exception
-//	{
-//		//texturePack = new TexturePack(null, Minecraft.findMinecraftJar(), null, null);
-//		Map<String, String> textureMap = new HashMap<>();
-//		//zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
-//		BlockModel bm = loadModel("block/tripwire_hook", zips, textureMap);
-//		assertThat(bm.getElements().size(), equalTo(7));
-//		bm = loadModel("block/anvil_undamaged", zips, textureMap);
-//		assertThat(bm.getElements().size(), equalTo(4));
-//	}
+	@Test
+	public void testLoadModel() throws Exception
+	{
+		try {
+			Display.setDisplayMode(new DisplayMode(300, 300));
+			Display.create();
+		} catch (LWJGLException e) {
+			e.printStackTrace();
+		}
+		BlockRegistry br = new BlockRegistry();
+		Map<String, String> textureMap = new HashMap<>();
+		BlockModel bm = br.loadModel("block/tripwire_hook", zips, textureMap);
+		assertThat(bm.getElements().size(), equalTo(7));
+		bm = br.loadModel("block/anvil_undamaged", zips, textureMap);
+		assertThat(bm.getElements().size(), equalTo(4));
+	}
 		
 	//TODO:  Move and rewrite this test once we start parsing the block variants
 	@Test
@@ -181,15 +186,15 @@ public class BlockVariantTests
 	}
 	
 	@Test
-	public void testLoadEverything()
+	public void testDeserializeBlockStates()
 	{
-		try {
-			Display.setDisplayMode(new DisplayMode(300, 300));
-			Display.create();
-		} catch (LWJGLException e) {
-			e.printStackTrace();
-		}
 		BlockRegistry test = new BlockRegistry();
-		test.deserialize();
+		test.deserializeBlockstates();
+		
+		Map<String, List<BlockVariant>> blockStates = test.getBlockStates();
+		
+		assertFalse(blockStates.isEmpty());
+		assertThat(blockStates.size(), is(equalTo(340)));
+		assertThat(blockStates.containsKey("minecraft:acacia_door"), is(equalTo(true)));
 	}
 }

@@ -11,8 +11,12 @@ package tectonicus.blockTypes;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class BlockVariant
 {
@@ -64,5 +68,33 @@ public class BlockVariant
 		public boolean isUVlocked() { return uvlocked; }	
 		public int getWeight() { return weight;	}
 		
+		public static VariantModel deserializeVariantModel(JSONObject model) throws JSONException
+		{
+			String modelPath = "";
+			int x = 0;
+			int y = 0;
+			int weight = 1;
+			boolean uvlock = false;
+			
+			Iterator<?> keys = model.keys();
+			while (keys.hasNext()) 
+			{
+				String key = (String) keys.next();
+
+				if (key.equals("model")) {
+					modelPath = model.getString(key);
+				} else if (key.equals("x"))	{
+					x = model.getInt(key);
+				} else if (key.equals("y")) {
+					y = model.getInt(key);
+				} else if (key.equals("uvlock")) {
+					uvlock = model.getBoolean(key);
+				} else if (key.equals("weight")) {
+					weight = model.getInt(key);
+				}
+			}
+			
+			return new VariantModel(modelPath, x, y, uvlock, weight);
+		}
 	}
 }
