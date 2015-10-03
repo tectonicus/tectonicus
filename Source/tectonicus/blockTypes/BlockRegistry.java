@@ -9,9 +9,8 @@
 
 package tectonicus.blockTypes;
 
-import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -22,8 +21,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.zip.ZipEntry;
 
-import javax.imageio.ImageIO;
-
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,10 +29,7 @@ import org.json.JSONObject;
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
-import tectonicus.rasteriser.Texture;
-import tectonicus.rasteriser.TextureFilter;
-import tectonicus.rasteriser.lwjgl.LwjglTexture;
-import tectonicus.rasteriser.lwjgl.LwjglTextureUtils;
+import tectonicus.rasteriser.Rasteriser;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -47,10 +41,21 @@ public class BlockRegistry
 {
 	private Map<String, List<BlockVariant>> blockStates = new HashMap<>();
 	private Map<String, BlockModel> blockModels = new HashMap<>();
+	private TexturePack texturePack;
 	private ZipStack zips;
 	
 	public BlockRegistry()
 	{
+		try {
+			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public BlockRegistry(Rasteriser rasteriser)
+	{
+		texturePack = new TexturePack(rasteriser, Minecraft.findMinecraftJar(), null, Collections.<File>emptyList());
 		try {
 			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
 		} catch (IOException e) {
@@ -200,21 +205,17 @@ public class BlockRegistry
 				    //System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
 				    // TODO: Need to test more texture packs
 					SubTexture subTexture = new SubTexture(null, u0*(1.0f/16.0f), v0*(1.0f/16.0f), u1*(1.0f/16.0f), v1*(1.0f/16.0f));
-					//SubTexture subTexture = new SubTexture(null, u0, v0, u1, v1);
 					
 					StringBuilder tex = new StringBuilder(face.getString("texture"));
 				    if(tex.charAt(0) == '#')
 				    {
 				    	String texture = tex.deleteCharAt(0).toString();
-				    	//System.out.println(textureMap.get(texture));
-				    	BufferedImage img = loadTexture("assets/minecraft/textures/" + combineMap.get(texture) + ".png", zips);
-				    	if(img != null)
-				    		System.out.println("img loaded");
 				    	
-				    	Texture test = createTexture(img, TextureFilter.NEAREST);
-				    	final float texHeight = test.getHeight();
-						final float texWidth = test.getWidth();
-				    	final int numTiles = test.getHeight()/test.getWidth();
+				    	SubTexture te = texturePack.findTexture(StringUtils.removeStart(combineMap.get(texture), "blocks/")+ ".png");
+				    	
+				    	final float texHeight = te.texture.getHeight();
+						final float texWidth = te.texture.getWidth();
+				    	final int numTiles = te.texture.getHeight()/te.texture.getWidth();
 				    	
 				    	u0 = fromVector.x()/texWidth;
 						v0 = fromVector.y()/texWidth;
@@ -231,15 +232,15 @@ public class BlockRegistry
 							v1 = (float)(uv.getDouble(3)/16.0f) / numTiles;
 						}
 				    	
-				    	System.out.println(test.getWidth() + " x " + test.getHeight());
+				    	System.out.println(texWidth + " x " + texHeight);
 				    	int frame = 1;
 				    	if(numTiles > 1)
 						{
 							Random rand = new Random();
 							frame = rand.nextInt(numTiles)+1;
 						}
-				    	// TODO: Only load each texture once (use TexturePack)
-				    	subTexture = new SubTexture(test, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
+
+				    	subTexture = new SubTexture(te.texture, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
 				    	//subTexture = new SubTexture(test, u0, v0, u1, v1);
 				    	//System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
 				    }
@@ -283,69 +284,5 @@ public class BlockRegistry
 		    }
 		}
 		return newTexMap;
-	}
-	
-	private BufferedImage loadTexture(String path, ZipStack stack)
-	{
-		InputStream in = null;
-		
-		try
-		{
-			// Check texture pack and minecraft jar
-			ZipStack.ZipStackEntry entry = stack.getEntry(path);
-			if (entry != null)
-			{
-				in = entry.getInputStream();
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		
-//		if (in == null)
-//		{
-//			try
-//			{
-//				// Check classpath
-//				in = getClass().getClassLoader().getResourceAsStream(path);
-//			}
-//			catch (Exception e)
-//			{
-//				e.printStackTrace();
-//			}
-//		}
-		
-		BufferedImage img = null;
-		
-		if (in != null)
-		{
-			try
-			{
-		
-				img = ImageIO.read(in);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-			finally
-			{
-				try
-				{
-					in.close();
-				}
-				catch (Exception e) {}
-			}
-		}
-		
-		return TexturePack.copy( img );
-	}
-	
-	private Texture createTexture(BufferedImage image, TextureFilter filter)
-	{
-		final int id = LwjglTextureUtils.createTexture(image, filter);
-		Texture texture = new LwjglTexture(id, image.getWidth(), image.getHeight());
-		return texture;
 	}
 }

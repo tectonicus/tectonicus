@@ -33,6 +33,10 @@ import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockVariant;
 import tectonicus.blockTypes.BlockVariant.VariantModel;
+import tectonicus.configuration.Configuration.RasteriserType;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory;
+import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.texture.ZipStack;
 
 public class BlockVariantTests
@@ -105,17 +109,14 @@ public class BlockVariantTests
 	@Test
 	public void testLoadModel() throws Exception
 	{
-		Display.setDisplayMode(new DisplayMode(300, 300));
-		Display.create();
-		
 		ZipStack zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
-
-		BlockRegistry br = new BlockRegistry();
+		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.Lwjgl, DisplayType.Window, 300, 300, 24, 8, 24, 4);
+		BlockRegistry br = new BlockRegistry(rasteriser);
 		Map<String, String> textureMap = new HashMap<>();
 		BlockModel bm = br.loadModel("block/tripwire_hook", zips, textureMap);
 		assertThat(bm.getElements().size(), equalTo(7));
 		bm = br.loadModel("block/anvil_undamaged", zips, textureMap);
-		Display.destroy();
+		rasteriser.destroy();
 		assertThat(bm.getElements().size(), equalTo(4));
 	}
 	
@@ -132,9 +133,8 @@ public class BlockVariantTests
 	{
 		BlockRegistry test = new BlockRegistry();
 		test.deserializeBlockstates();
-		
 		Map<String, List<BlockVariant>> blockStates = test.getBlockStates();
-		
+
 		assertFalse(blockStates.isEmpty());
 		assertThat(blockStates.size(), is(equalTo(340)));
 		assertThat(blockStates.containsKey("minecraft:acacia_door"), is(equalTo(true)));
@@ -143,10 +143,9 @@ public class BlockVariantTests
 	@Test
 	public void testLoadModels() throws Exception
 	{
-		Display.setDisplayMode(new DisplayMode(300, 300));
-		Display.create();
-		
-		BlockRegistry test = new BlockRegistry();
+		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.Lwjgl, DisplayType.Window, 300, 300, 24, 8, 24, 4);
+	
+		BlockRegistry test = new BlockRegistry(rasteriser);
 		test.deserializeBlockstates();
 		
 		try {
@@ -154,7 +153,7 @@ public class BlockVariantTests
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		Display.destroy();
+		rasteriser.destroy();
 		Map<String, BlockModel> models = test.getBlockModels();
 		
 		assertThat(models.size(), is(equalTo(937)));

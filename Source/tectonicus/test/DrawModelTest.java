@@ -10,12 +10,10 @@
 package tectonicus.test;
 
 import org.junit.Test;
-import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 
 import static org.lwjgl.util.glu.GLU.gluPerspective;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -23,21 +21,23 @@ import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.PixelFormat;
 import org.lwjgl.util.vector.Vector3f;
 
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory;
+import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.lwjgl.LwjglMesh;
 import tectonicus.rasteriser.lwjgl.LwjglTexture;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.ZipStack;
 import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.configuration.Configuration.RasteriserType;
 
 public class DrawModelTest 
 {
@@ -58,19 +58,19 @@ public class DrawModelTest
 	{	
 		Map<Texture, Mesh> meshList = new HashMap<>();
 		
-		try
-		{
-			Display.setDisplayMode(new DisplayMode(640, 640));
-			Display.setTitle("Test!");
-			Display.setResizable(true);
-			Display.create(new PixelFormat(8,24,0,8));
-		} catch(LWJGLException e) {
-			e.printStackTrace();
-		}		
-		
-		BlockRegistry br = new BlockRegistry();
+//		try
+//		{
+//			Display.setDisplayMode(new DisplayMode(640, 640));
+//			Display.setTitle("Test!");
+//			Display.setResizable(true);
+//			Display.create(new PixelFormat(8,24,0,8));
+//		} catch(LWJGLException e) {
+//			e.printStackTrace();
+//		}		
+		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.Lwjgl, DisplayType.Window, 800, 800, 24, 8, 24, 4);
+		BlockRegistry br = new BlockRegistry(rasteriser);
 		Map<String, String> textureMap = new HashMap<>();
-		BlockModel bm = br.loadModel("block/comparator_lit_subtract", zips, textureMap);
+		BlockModel bm = br.loadModel("block/tripwire_hook", zips, textureMap);
 		List<BlockElement> elements = bm.getElements();
 		
 		for(BlockElement element : elements)
@@ -230,6 +230,18 @@ public class DrawModelTest
 					GL11.glEnable(GL11.GL_TEXTURE_2D);
 					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
 					glColor3f(1.0f, 1.0f, 1.0f);
+					
+//					glBegin(GL_QUADS);
+//					glTexCoord2f(tex.u0, tex.v1);
+//					glVertex3f(x2, y2, z1);
+//					glTexCoord2f(tex.u0, tex.v0);
+//					glVertex3f(x1, y2, z1);
+//					glTexCoord2f(tex.u1, tex.v0);
+//					glVertex3f(x1, y1, z1);
+//					glTexCoord2f(tex.u1, tex.v1);
+//					glVertex3f(x2, y1, z1);
+//					glEnd();
+					
 					glBegin(GL_QUADS);
 					glTexCoord2f(tex.u0, tex.v0);
 					glVertex3f(x2, y2, z1);
@@ -302,7 +314,6 @@ public class DrawModelTest
 	        }
 			// Restore transformations
 			//glPopMatrix();
-
 
 			Display.update();
 			Display.sync(60);
