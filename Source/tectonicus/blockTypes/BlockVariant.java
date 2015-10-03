@@ -9,12 +9,14 @@
 
 package tectonicus.blockTypes;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,6 +47,32 @@ public class BlockVariant
 	public String getName() { return name; }
 	public Map<String, String> getStates() { return Collections.unmodifiableMap(states); }
 	public List<VariantModel> getModels() { return Collections.unmodifiableList(models); }
+	
+	public static BlockVariant deserializeVariant(String key, Object variant)
+	{
+		List<VariantModel> models = new ArrayList<>();
+	    
+		try {
+			if (variant instanceof JSONObject) //If only a single model
+			{  
+				JSONObject model = (JSONObject) variant;
+				models.add(VariantModel.deserializeVariantModel(model));
+			} 
+			else //if more than one model
+			{ 
+				JSONArray array = (JSONArray) variant;
+				for (int i = 0; i < array.length(); i++) 
+				{
+					JSONObject model = array.getJSONObject(i);
+					models.add(VariantModel.deserializeVariantModel(model));
+				}
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		return new BlockVariant(key, models);
+	}
 	
 	
 	public static class VariantModel 

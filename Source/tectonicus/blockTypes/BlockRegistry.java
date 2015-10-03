@@ -32,7 +32,6 @@ import org.json.JSONObject;
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
-import tectonicus.blockTypes.BlockVariant.VariantModel;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
 import tectonicus.rasteriser.lwjgl.LwjglTexture;
@@ -65,7 +64,7 @@ public class BlockRegistry
 	
 	public void deserializeBlockstates()
 	{
-		List<BlockVariant> variants = new ArrayList<>();
+		List<BlockVariant> blockVariants = new ArrayList<>();
 		
 		Enumeration<? extends ZipEntry> entries = zips.getBaseEntries();
 		while(entries.hasMoreElements())
@@ -77,7 +76,17 @@ public class BlockRegistry
 				ZipStackEntry zse = zips.getEntry(entryName);
 				try 
 				{
-					variants = deserializeVariants(new JSONObject(FileUtils.loadJSON(zse.getInputStream())));
+					JSONObject obj = new JSONObject(FileUtils.loadJSON(zse.getInputStream()));
+					JSONObject variants = obj.getJSONObject("variants");
+					
+					Iterator<?> keys = variants.keys();
+					while(keys.hasNext()) 
+					{
+					    String key = (String)keys.next();
+					    Object variant = variants.get(key);
+
+					    blockVariants.add(BlockVariant.deserializeVariant(key, variant));
+					}
 				}
 				catch (Exception e) 
 				{
@@ -85,62 +94,29 @@ public class BlockRegistry
 				}
 				
 				String name = "minecraft:" + StringUtils.removeEnd(entryName.substring(entryName.lastIndexOf("/")+1), ".json");
-				blockStates.put(name, variants);
+				blockStates.put(name, blockVariants);
 			}
 		}
 	}
-	
-	private List<BlockVariant> deserializeVariants(JSONObject obj) throws JSONException
-	{
-		List<BlockVariant> blockVariants = new ArrayList<>();
 
-		JSONObject variants = obj.getJSONObject("variants");
-		
-		Iterator<?> keys = variants.keys();
-		while(keys.hasNext()) 
+	public void loadModels() throws Exception
+	{
+		for (Map.Entry<String, List<BlockVariant>> blockState : blockStates.entrySet())
 		{
-		    String key = (String)keys.next();
-		    Object variant = variants.get(key);
-		    List<VariantModel> models = new ArrayList<>();
-		    
-			try {
-				if (variant instanceof JSONObject) //If only a single model
-				{  
-					JSONObject model = (JSONObject) variant;
-					models.add(VariantModel.deserializeVariantModel(model));
-				} 
-				else //if more than one model
-				{ 
-					JSONArray array = (JSONArray) variant;
-					for (int i = 0; i < array.length(); i++) 
+			for(BlockVariant variant : blockState.getValue())
+			{
+				for(BlockVariant.VariantModel model : variant.getModels())
+				{
+					String modelPath = model.getModelPath();
+					if(!blockModels.containsKey(modelPath))
 					{
-						JSONObject model = array.getJSONObject(i);
-						models.add(VariantModel.deserializeVariantModel(model));
+						Map<String, String> textureMap = new HashMap<>();
+						blockModels.put(modelPath, loadModel("block/" + modelPath, zips, textureMap));
 					}
 				}
-			} catch (JSONException e) {
-				e.printStackTrace();
 			}
-		    
-		    BlockVariant bv = new BlockVariant(key, models);
-		    blockVariants.add(bv);
-		}
-		return blockVariants;
+		}		
 	}
-	
-//	public void loadModels()
-//	{
-//		for(Map<String, BlockVariant> blockState : blockStates)
-//		{
-//			if(!blockModels.containsKey(modelPath))
-//			{
-//				//System.out.println(modelPath + ".json");
-//				Map<String, String> textureMap = new HashMap<>();
-//				blockModels.put(modelPath, loadModel("block/" + modelPath, zips, textureMap));  //TODO: Should we load all the models here or do it later?
-//			}
-//		}
-//		
-//	}
 	
 	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
 	public BlockModel loadModel(String modelPath, ZipStack zips, Map<String, String> textureMap) throws Exception
@@ -217,8 +193,6 @@ public class BlockRegistry
 					float u1 = toVector.x();
 					float v1 = toVector.y();
 					
-					
-					
 					int rotation = 0;
 				    if(face.has("rotation"))
 				    	rotation = face.getInt("rotation");
@@ -249,13 +223,12 @@ public class BlockRegistry
 				    	
 				    	if(face.has("uv"))
 						{
-				    		System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
+				    		//System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
 							JSONArray uv = face.getJSONArray("uv");
 							u0 = (float)(uv.getDouble(0)/16.0f);
 							v0 = (float)(uv.getDouble(1)/16.0f) / numTiles;
 							u1 = (float)(uv.getDouble(2)/16.0f);
 							v1 = (float)(uv.getDouble(3)/16.0f) / numTiles;
-							System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
 						}
 				    	
 				    	System.out.println(test.getWidth() + " x " + test.getHeight());
@@ -268,7 +241,7 @@ public class BlockRegistry
 				    	// TODO: Only load each texture once (use TexturePack)
 				    	subTexture = new SubTexture(test, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
 				    	//subTexture = new SubTexture(test, u0, v0, u1, v1);
-				    	System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
+				    	//System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
 				    }
 
 				    boolean cullFace = false;

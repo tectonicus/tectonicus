@@ -9,28 +9,15 @@
 
 package tectonicus;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.zip.ZipEntry;
-
-import javax.imageio.ImageIO;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
@@ -46,38 +33,16 @@ import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockVariant;
 import tectonicus.blockTypes.BlockVariant.VariantModel;
-import tectonicus.rasteriser.Texture;
-import tectonicus.rasteriser.TextureFilter;
-import tectonicus.rasteriser.lwjgl.LwjglTexture;
-import tectonicus.rasteriser.lwjgl.LwjglTextureUtils;
-import tectonicus.texture.SubTexture;
-import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
-import tectonicus.texture.ZipStack.ZipStackEntry;
-import tectonicus.util.Vector3f;
 
 public class BlockVariantTests
-{
-	private TexturePack texturePack;
-	private Map<String, BlockModel> blockModels;
-	private int modelTotal;
-	private ZipStack zips;
-	
+{	
 	@Before
 	public void setUp()
-	{
-		try {
-			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		modelTotal = 0;
-		
+	{	
 //		try {
 //			Thread.sleep(20 * 1000);
 //		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
 	}
@@ -108,32 +73,26 @@ public class BlockVariantTests
 		
 		assertTrue(states.equals(testStates));
 	}
-//	
-//	@Test
-//	public void createModelVariants() throws Exception
-//	{
-//		List<Map<String, BlockVariant>> blockStates = new ArrayList<>();  //List of all blockstates
-//		Map<String, BlockVariant> vMap = new HashMap<>();  //Map of variants of a single blockstate
-//		blockModels = new HashMap<>();
-//		
-//		Enumeration<? extends ZipEntry> entries = zips.getBaseEntries();
-//		while(entries.hasMoreElements())
-//		{
-//			ZipEntry entry = entries.nextElement();
-//			if(entry.getName().contains("blockstates"))
-//			{
-//				ZipStackEntry zse = zips.getEntry(entry.getName());
-//				vMap = loadVariants(loadJSON(zse.getInputStream()));
-//				blockStates.add(vMap);
-//				//System.out.println(entry.getName());
-//			}
-//		}
-//		System.out.println(modelTotal);
-//		System.out.println(blockStates.size());
-//		System.out.println(blockModels.size());
-//		//BlockVariant bv = vMap.get("snowy=false");
-//		//assertTrue(bv.getModels() != null);
-//	}	
+	
+	@Test
+	public void testDeserializeVariantSingleModel() throws JSONException
+	{
+		JSONObject variant = new JSONObject("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
+		BlockVariant bv = BlockVariant.deserializeVariant("east=true,north=false,south=false,west=false", variant);
+		
+		assertThat(bv.getModels().size(), is(equalTo(1)));
+		assertThat(bv.getModels().get(0).getModelPath(), is(equalTo("acacia_fence_n")));
+	}
+	
+	@Test
+	public void testDeserializeVariantMultipleModels() throws JSONException
+	{
+		JSONArray variant = new JSONArray("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
+		BlockVariant bv = BlockVariant.deserializeVariant("snowy=false", variant);
+		
+		assertThat(bv.getModels().size(), is(equalTo(4)));
+		assertThat(bv.getModels().get(2).getModelPath(), is(equalTo("grass_normal")));
+	}
 	
 	@Test
 	public void testDeserializeVariantModel() throws Exception
@@ -146,35 +105,18 @@ public class BlockVariantTests
 	@Test
 	public void testLoadModel() throws Exception
 	{
-		try {
-			Display.setDisplayMode(new DisplayMode(300, 300));
-			Display.create();
-		} catch (LWJGLException e) {
-			e.printStackTrace();
-		}
+		Display.setDisplayMode(new DisplayMode(300, 300));
+		Display.create();
+		
+		ZipStack zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+
 		BlockRegistry br = new BlockRegistry();
 		Map<String, String> textureMap = new HashMap<>();
 		BlockModel bm = br.loadModel("block/tripwire_hook", zips, textureMap);
 		assertThat(bm.getElements().size(), equalTo(7));
 		bm = br.loadModel("block/anvil_undamaged", zips, textureMap);
+		Display.destroy();
 		assertThat(bm.getElements().size(), equalTo(4));
-	}
-		
-	//TODO:  Move and rewrite this test once we start parsing the block variants
-	@Test
-	public void createBlockVariantMap()
-	{
-		Map<String, BlockVariant> variants = new HashMap<>();
-		
-		BlockVariant bv1 = new BlockVariant("attached=true,facing=south,powered=false,suspended=false", null);
-		BlockVariant bv2 = new BlockVariant("attached=true,facing=south,powered=true,suspended=false", null);
-		BlockVariant bv3 = new BlockVariant("attached=true,facing=west,powered=true,suspended=true", null);
-		
-		variants.put(bv1.getName(), bv1);
-		variants.put(bv2.getName(), bv2);
-		variants.put(bv3.getName(), bv3);
-		
-		assertTrue(variants.containsKey("attached=true,facing=west,powered=true,suspended=true"));
 	}
 	
 	@Test
@@ -196,5 +138,25 @@ public class BlockVariantTests
 		assertFalse(blockStates.isEmpty());
 		assertThat(blockStates.size(), is(equalTo(340)));
 		assertThat(blockStates.containsKey("minecraft:acacia_door"), is(equalTo(true)));
+	}
+	
+	@Test
+	public void testLoadModels() throws Exception
+	{
+		Display.setDisplayMode(new DisplayMode(300, 300));
+		Display.create();
+		
+		BlockRegistry test = new BlockRegistry();
+		test.deserializeBlockstates();
+		
+		try {
+			test.loadModels();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Display.destroy();
+		Map<String, BlockModel> models = test.getBlockModels();
+		
+		assertThat(models.size(), is(equalTo(937)));
 	}
 }
