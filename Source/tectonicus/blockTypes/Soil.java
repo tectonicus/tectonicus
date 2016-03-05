@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -35,8 +35,12 @@ public class Soil implements BlockType
 		
 		this.topTexture = topTexture;
 		
-		final float texelSize = 1.0f / 16.0f / 16.0f;
-		final float offset = texelSize * 1;
+		final float texel;
+		if (topTexture.texturePackVersion == "1.4")
+			texel = 1.0f / 16.0f / 16.0f;
+		else
+			texel = 1.0f / 16.0f;
+		final float offset = texel * 1;
 		this.sideTexture = new SubTexture(sideTexture.texture, sideTexture.u0, sideTexture.v0 + offset, sideTexture.u1, sideTexture.v1);
 	}
 	

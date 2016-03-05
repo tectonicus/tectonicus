@@ -204,7 +204,7 @@
 								trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
 								xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
-	<RedstoneWire id="55" name="Redstone Wire" offJunction="redstone_dust_cross.png" onJunction="redstone_dust_cross.png" offLine="redstone_dust_line.png" onLine="redstone_dust_line.png" />
+	<RedstoneWire id="55" name="Redstone Wire" offJunction="redstone_dust_dot.png" onJunction="redstone_dust_dot.png" offLine="redstone_dust_line0.png" onLine="redstone_dust_line0.png" />
 
 	<Solid id="56" name="Diamond Ore" texture="diamond_ore.png" />
 	
@@ -401,7 +401,7 @@
 	
 	<Stairs id="136" name="Jungle Wood Stairs" texture="planks_jungle.png" />
 	
-	<Solid id="137" name="Command Block" texture="command_block.png" />
+	<Solid id="137" name="Command Block" texture="command_block_side.png" />
 	
 	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" beam="assets/minecraft/textures/entity/beacon_beam.png" />
 	
@@ -605,8 +605,30 @@
 	
 	<Door id="197" stringId="minecraft:dark_oak_door" name="Dark Oak Door" top="door_dark_oak_upper.png" bottom="door_dark_oak_lower.png" />
 	
+	<Solid id="201" stringId="minecraft:purpur_block" name="Purpur Block"  texture="purpur_block.png" />
+	
+	<Solid id="202" stringId="minecraft:purpur_pillar" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />
+	
+	<Stairs id="203" stringId="minecraft:purpur_stairs" name="Purpur Stairs" texture="purpur_block.png" />
+	
+	<Solid id="204" stringId="minecraft:purpur_double_slab" name="Purpur Double Slab"  texture="purpur_block.png" />
+	
+	<Slab id="205" strindId="minecraft:purpur_slab" name="Purpur Slab" texture="purpur_block.png" />
+	
+	<Solid id="206" stringId="minecraft:end_bricks" name="End Stone Bricks"  texture="end_bricks.png" />
+	
+	<Soil id="208" stringId="minecraft:grass_path" name="Grass Path" top="grass_path_top.png" side="grass_path_side.png" />
+	
+	<Solid id="210" stringId="minecraft:repeating_command_block" name="Repeating Command Block" texture="repeating_command_block_side.png" />
+	
+	<Solid id="211" stringId="minecraft:chain_command_block" name="Chain Command Block" texture="chain_command_block_side.png" />
+	
 	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
 	
 	<ItemFrame id="-2" name="ItemFrame" background="itemframe_background.png" border="planks_birch.png" map="assets/minecraft/textures/map/map_background.png" />
+	
+	<!-- <Furnace id="1122" name="Computer" top="assets/computercraft/textures/blocks/computerTop.png" side="assets/computercraft/textures/blocks/computerSide.png" front="assets/computercraft/textures/blocks/computerFrontOn.png" />-->
+	
+	<Block id="2" stringId="minecraft:grass" name="Grass" />
 	
 </blockConfig>
