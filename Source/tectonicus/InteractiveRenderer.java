@@ -58,7 +58,7 @@ public class InteractiveRenderer
 	
 	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight) throws LWJGLException
 	{
-		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Window, displayWidth, displayHeight, 24, 8, 8, 4);
+		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Window, displayWidth, displayHeight, 24, 8, 24, 4);
 		System.out.println("Using rasteriser: "+rasteriser);
 		rasteriser.printInfo();
 		

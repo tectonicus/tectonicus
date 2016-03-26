@@ -120,7 +120,7 @@ public class OrthoCamera implements Camera
 		final float size = this.zoom / 2;
 		
 		// Create own ortho matrix
-		projectionMatrix = MatrixUtil.createOrthoMatrix(-size, size, -size, size, -10000, 10000);
+		projectionMatrix = MatrixUtil.createOrthoMatrix(-size, size, -size, size, 1000, 2000);
 		
 		// Create a lookat matrix
 		cameraMatrix = MatrixUtil.createLookAt(eye, lookAt, up);

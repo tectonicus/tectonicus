@@ -189,7 +189,7 @@ public class LwjglRasteriser implements Rasteriser
 			Display.setTitle("Tectonicus");
 			
 			// TODO: Use same pixel formats from above here
-			Display.create( new PixelFormat(32, 0, 16, 0, 4) );
+			Display.create( new PixelFormat(32, 0, depthBits, 0, 4) );
 		}
 		else
 		{
