@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="Source"/>
+	<classpathentry kind="src" path="Data"/>
 	<classpathentry kind="src" path="UnitTests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="Libs/Jars/BiomeExtractor.jar"/>
@@ -13,6 +14,10 @@
 	<classpathentry kind="lib" path="Libs/Jars/seaglass.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="Libs/Jars/commons-lang3-3.4.jar"/>
-	<classpathentry kind="lib" path="Libs/Jars/lwjgl.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/lwjgl.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="tectonicus/Data/Native"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="Binary"/>
 </classpath>
