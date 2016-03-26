@@ -629,6 +629,6 @@
 	
 	<!-- <Furnace id="1122" name="Computer" top="assets/computercraft/textures/blocks/computerTop.png" side="assets/computercraft/textures/blocks/computerSide.png" front="assets/computercraft/textures/blocks/computerFrontOn.png" />-->
 	
-	<Block id="2" stringId="minecraft:grass" name="Grass" />
+	<!-- <Block id="2" stringId="minecraft:grass" name="Grass" /> -->
 	
 </blockConfig>
