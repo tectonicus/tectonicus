@@ -536,3 +536,22 @@ Tripwire, Item Frames(empty, no items), and Banners(no patterns yet)
 - switched to using correct Nether Portal texture, using better End Portal texture
 - fixed bug with views always pointing north
 - fixed bug with mutiple portal icons appearing on large portals
+
+Version 2.21
+- added Purpur blocks, End Stone Bricks, Grass Path block, new Command Blocks for Minecraft 1.9
+- Beacon beams now detect stained glass and change color
+- buttons can now render on top or bottom of blocks
+- Tectonicus can search mod jar files for textures by using the new <mods> tag, see fullConfig.xml for usage
+- the FOV for Views can now be set globally in the config file (again see fullConfig.xml for usage) or on individual signs using the letter "f" (e.g., "#a75 h3 f60")
+- fixed retrieving block Add values
+- special characters on signs now display correctly
+- sign, portal, and bed icons no longer appear outside subset boundaries on the map
+- numerous blocks now deal with high-res and animated textures better, by default a random frame of animated textures will be used
+- fixed Redstone color and behavior for <1.8 texture packs
+- separated JavaScript and CSS from map html file, should help make future changes easier
+- attempted to fix a z-buffer precision problem that was causing jagged edges on blocks
+- did a whole bunch of work on implementing a new rendering system that uses the Minecraft BlockState and BlockModel files, a lot more work still needs to be done
+  Known Issues
+- End Rod, Chaos Plant/Flower, Frosted Ice, Dragon Head are not supported yet, they probably won't be supported until the new rendering system is complete
+- Redstone wire rendering is broken when using Minecraft 1.9 because the textures changed, this will be fixed with the new rendering system or you can work around
+  it if necessary by using a customBlockConfig that points to the 1.8 textures
