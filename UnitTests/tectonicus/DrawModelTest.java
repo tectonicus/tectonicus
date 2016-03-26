@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus.test;
+package tectonicus;
 
 import org.junit.Test;
 import org.lwjgl.input.Keyboard;
