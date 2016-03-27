@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -120,7 +120,7 @@ public class OrthoCamera implements Camera
 		final float size = this.zoom / 2;
 		
 		// Create own ortho matrix
-		projectionMatrix = MatrixUtil.createOrthoMatrix(-size, size, -size, size, 1000, 2000);
+		projectionMatrix = MatrixUtil.createOrthoMatrix(-size, size, -size, size, 1000, 7000);
 		
 		// Create a lookat matrix
 		cameraMatrix = MatrixUtil.createLookAt(eye, lookAt, up);
