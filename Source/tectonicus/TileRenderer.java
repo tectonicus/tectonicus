@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -1539,11 +1539,7 @@ public class TileRenderer
 						String posStr = "new WorldCoord("+spawn.x+", "+spawn.y+", "+spawn.z+")";
 						args.put("worldPos", posStr);
 						
-						if (radius != 0 && Math.pow((spawn.x - originX), 2) + Math.pow((spawn.z - originZ), 2) < Math.pow(radius,2))
-						{
-							jsWriter.write(args);
-						}
-						else if (radius == 0)
+						if (radius == 0 || radius != 0 && Math.pow((spawn.x - originX), 2) + Math.pow((spawn.z - originZ), 2) < Math.pow(radius,2))
 						{
 							jsWriter.write(args);
 						}
@@ -1783,7 +1779,7 @@ public class TileRenderer
 				
 				String message = "";
 				
-				if (Float.parseFloat(Minecraft.minecraftVersion) >= 1.8f)
+				if (Float.parseFloat(Minecraft.minecraftVersion) == 1.8f)
 					message = "\"" +sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
 				else
 					message = "\"" + jsEscape(sign.getText(0)) + "\\n" + jsEscape(sign.getText(1)) + "\\n" + jsEscape(sign.getText(2)) + "\\n" + jsEscape(sign.getText(3)) + "\"";
@@ -1798,7 +1794,7 @@ public class TileRenderer
 				args.put("worldPos", posStr);
 				
 				args.put("message", message);
-				if (Float.parseFloat(Minecraft.minecraftVersion) >= 1.8f)
+				if (Float.parseFloat(Minecraft.minecraftVersion) == 1.8f)
 				{
 					args.put("text1", "\"" + sign.getText(0) + "\"");
 					args.put("text2", "\"" + sign.getText(1) + "\"");
@@ -1813,11 +1809,7 @@ public class TileRenderer
 					args.put("text4", "\"" + jsEscape(sign.getText(3)) + "\"");
 				}
 				
-				if (radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
-				{
-					jsWriter.write(args);
-				}
-				else if (radius == 0)
+				if (radius == 0 || radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
 				{
 					jsWriter.write(args);
 				}
@@ -1930,11 +1922,7 @@ public class TileRenderer
 					String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 					args.put("worldPos", posStr);
 					
-					if (radius != 0 && Math.pow((p.getX() - originX), 2) + Math.pow((p.getZ() - originZ), 2) < Math.pow(radius,2))
-					{
-						jsWriter.write(args);
-					}
-					else if (radius == 0)
+					if (radius == 0 || radius != 0 && Math.pow((p.getX() - originX), 2) + Math.pow((p.getZ() - originZ), 2) < Math.pow(radius,2))
 					{
 						jsWriter.write(args);
 					}

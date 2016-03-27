@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -280,22 +280,39 @@ public class RawChunk
 										StringTag text2Tag = NbtUtil.getChild(entity, "Text2", StringTag.class);
 										StringTag text3Tag = NbtUtil.getChild(entity, "Text3", StringTag.class);
 										StringTag text4Tag = NbtUtil.getChild(entity, "Text4", StringTag.class);
-
-										String text1 = text1Tag.getValue().replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
-										if (text1 == null || text1.equals("null"))
-											text1 = "";
 										
-										String text2 = text2Tag.getValue().replaceAll("^\"|\"$", "");
-										if (text2 == null || text2.equals("null"))
-											text2 = "";
-										
-										String text3 = text3Tag.getValue().replaceAll("^\"|\"$", "");
-										if (text3 == null || text3.equals("null"))
-											text3 = "";
-										
-										String text4 = text4Tag.getValue().replaceAll("^\"|\"$", "");
-										if (text4 == null || text4.equals("null"))
-											text4 = "";
+										String text1, text2, text3, text4;
+										if (text1Tag.getValue().charAt(0) == '{') // It's probably JSON
+										{
+											JSONObject obj = new JSONObject(text1Tag.getValue());
+											text1 = obj.getString("text");
+											
+											obj = new JSONObject(text2Tag.getValue());
+											text2 = obj.getString("text");
+											
+											obj = new JSONObject(text3Tag.getValue());
+											text3 = obj.getString("text");
+											
+											obj = new JSONObject(text4Tag.getValue());
+											text4 = obj.getString("text");
+										}
+										else{
+											text1 = text1Tag.getValue().replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
+											if (text1 == null || text1.equals("null"))
+												text1 = "";
+											
+											text2 = text2Tag.getValue().replaceAll("^\"|\"$", "");
+											if (text2 == null || text2.equals("null"))
+												text2 = "";
+											
+											text3 = text3Tag.getValue().replaceAll("^\"|\"$", "");
+											if (text3 == null || text3.equals("null"))
+												text3 = "";
+											
+											text4 = text4Tag.getValue().replaceAll("^\"|\"$", "");
+											if (text4 == null || text4.equals("null"))
+												text4 = "";
+										}
 										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
@@ -408,6 +425,8 @@ public class RawChunk
 									else if (id.equals("Banner"))
 									{
 										IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
+										ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
+										
 										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
@@ -417,7 +436,26 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, 0, 0));
+										String patterns = "";
+										final int numPatterns = patternList.getValue().size();
+										if (numPatterns > 0)
+										{
+											//System.out.println(patternList + "\n");
+											patterns += "{";
+											for(int i=0; i<numPatterns; i++)
+											{
+												CompoundTag p = NbtUtil.getChild(patternList, i, CompoundTag.class);
+												StringTag pattern = NbtUtil.getChild(p, "Pattern", StringTag.class);
+												IntTag color = NbtUtil.getChild(p, "Color", IntTag.class);
+												patterns += "\"" + pattern.getValue() + "\"" + ": " + color.getValue().toString();
+												if(i < numPatterns-1)
+													patterns += ", ";
+											}
+											patterns += "}";
+											//System.out.println(patterns);
+										}
+										banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, patterns, 0));
+										//banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, 0, 0));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
