@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -25,9 +25,9 @@ public class DataSolid implements BlockType
 	private SubTexture[] sideTextures;
 	private SubTexture[] topTextures;
 	
-	private boolean alphaTest;
+	private boolean alphaTest, transparent;
 	
-	public DataSolid(String name, SubTexture[] sideTexture, SubTexture[] topTextures, boolean alphaTest)
+	public DataSolid(String name, SubTexture[] sideTexture, SubTexture[] topTextures, boolean alphaTest, boolean transparent)
 	{
 		this.name = name;
 	
@@ -35,6 +35,7 @@ public class DataSolid implements BlockType
 		this.topTextures = topTextures;
 		
 		this.alphaTest = alphaTest;
+		this.transparent = transparent;
 	}
 	
 	@Override
@@ -73,6 +74,9 @@ public class DataSolid implements BlockType
 		
 		Geometry.MeshType type = alphaTest ? Geometry.MeshType.AlphaTest : Geometry.MeshType.Solid;
 		
+		if (transparent)
+			type = Geometry.MeshType.Transparent;
+		
 		Mesh topMesh = geometry.getMesh(topTexture.texture, type);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, type);
 		
@@ -106,6 +110,9 @@ public class DataSolid implements BlockType
 		SubTexture topTexture = topTextures[topIndex];
 		
 		Geometry.MeshType type = alphaTest ? Geometry.MeshType.AlphaTest : Geometry.MeshType.Solid;
+		
+		if (transparent)
+			type = Geometry.MeshType.Transparent;
 		
 		Mesh topMesh = geometry.getMesh(topTexture.texture, type);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, type);

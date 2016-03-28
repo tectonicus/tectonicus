@@ -243,7 +243,10 @@ public class BlockRegistryParser
 			String alphaTestStr = element.getAttribute("alphaTest");
 			final boolean alphaTest = (alphaTestStr != null && alphaTestStr.equalsIgnoreCase("true"));
 			
-			blockType = new DataSolid(name, sides.toArray(new SubTexture[0]), tops.toArray(new SubTexture[0]), alphaTest);
+			String transparentStr = element.getAttribute("transparent");
+			final boolean transparent = (transparentStr != null && transparentStr.equalsIgnoreCase("true"));
+			
+			blockType = new DataSolid(name, sides.toArray(new SubTexture[0]), tops.toArray(new SubTexture[0]), alphaTest, transparent);
 		}
 		else if (nodeName.equals("air"))
 		{

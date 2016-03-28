@@ -629,9 +629,23 @@
 	
 	<Soil id="208" stringId="minecraft:grass_path" name="Grass Path" top="grass_path_top.png" side="grass_path_side.png" />
 	
+	<Solid id="209" stringId="minecraft:end_gateway" name="End Gateway" texture="Images/end_gateway.png" />
+	
 	<Solid id="210" stringId="minecraft:repeating_command_block" name="Repeating Command Block" texture="repeating_command_block_side.png" />
 	
 	<Solid id="211" stringId="minecraft:chain_command_block" name="Chain Command Block" texture="chain_command_block_side.png" />
+	
+	<DataSolid id="212" stringId="minecraft:frosted_ice" name="Frosted Ice" 
+						side0="frosted_ice_0.png" top0="frosted_ice_0.png"
+						side1="frosted_ice_1.png" top1="frosted_ice_1.png"
+						side2="frosted_ice_2.png" top2="frosted_ice_2.png"
+						side3="frosted_ice_3.png" top3="frosted_ice_3.png" transparent="true" />
+						
+	<DataSolid id="255" stringId="minecraft:structure_block" name="Structure Block" 
+						side0="structure_block_save.png" top0="structure_block_save.png"
+						side1="structure_block_load.png" top1="structure_block_load.png"
+						side2="structure_block_corner.png" top2="structure_block_corner.png"
+						side3="structure_block_data.png" top3="structure_block_data.png" />
 	
 	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
 	
