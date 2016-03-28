@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -110,6 +110,8 @@ public class Skull implements BlockType
 				else if (te.blockId == 3)
 					currentTexture = texture;
 				else if (te.blockId == 4)
+					currentTexture = ctexture;
+				else
 					currentTexture = ctexture;
 				
 				Player player = new Player(te.text1, te.text2, te.text3);
