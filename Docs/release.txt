@@ -560,3 +560,7 @@ Version 2.21
   Version 2.21.01
   - fixed a problem with reading signs in Minecraft 1.9 worlds that caused maps not to load in browser
   - fixed a problem with clipping planes that was causing geometry to be clipped at certain camera elevation angles
+  
+  Version 2.21.02
+  - fixed a problem where manually specifying the Minecraft jar location caused a NullPointerException when trying to output signs to file
+  - fixed a problem with special characters on signs not being escaped correctly
