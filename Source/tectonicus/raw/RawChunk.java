@@ -305,11 +305,6 @@ public class RawChunk
 										if (text4 == null || text4.equals("null"))
 											text4 = "";
 										
-										System.out.println(text1);
-										System.out.println(text2);
-										System.out.println(text3);
-										System.out.println(text4);
-										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
 										final int z = zTag.getValue();
