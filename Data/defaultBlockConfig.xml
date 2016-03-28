@@ -607,7 +607,9 @@
 	
 	<Solid id="201" stringId="minecraft:purpur_block" name="Purpur Block"  texture="purpur_block.png" />
 	
-	<Solid id="202" stringId="minecraft:purpur_pillar" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />
+	<Log id="202:0" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />
+	<Log id="202:8" name="Purpur Pillar North/South" side="purpur_pillar.png" top="purpur_pillar_top.png" />
+	<Log id="202:4" name="Purpur Pillar East/West" side="purpur_pillar.png" top="purpur_pillar_top.png" />
 	
 	<Stairs id="203" stringId="minecraft:purpur_stairs" name="Purpur Stairs" texture="purpur_block.png" />
 	
