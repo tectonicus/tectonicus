@@ -617,6 +617,8 @@
 	
 	<Solid id="206" stringId="minecraft:end_bricks" name="End Stone Bricks"  texture="end_bricks.png" />
 	
+	<Crops id="207" stringId="minecraft:beetroots" name="Beetroots" tex0="beetroots_stage_0.png" tex1="beetroots_stage_1.png" tex2="beetroots_stage_2.png" tex3="beetroots_stage_3.png" tex4="beetroots_stage_3.png" tex5="beetroots_stage_3.png" tex6="beetroots_stage_3.png" tex7="beetroots_stage_3.png" />
+	
 	<Soil id="208" stringId="minecraft:grass_path" name="Grass Path" top="grass_path_top.png" side="grass_path_side.png" />
 	
 	<Solid id="210" stringId="minecraft:repeating_command_block" name="Repeating Command Block" texture="repeating_command_block_side.png" />
