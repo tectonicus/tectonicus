@@ -65,7 +65,6 @@ public class ChorusPlant implements BlockType
 		Vector4f colour = new Vector4f(lightVal, lightVal, lightVal, 1.0f);
 	
 		final int data = rawChunk.getBlockData(x, y, z);
-		System.out.println(data);
 		
 		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
