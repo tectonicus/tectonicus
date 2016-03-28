@@ -607,6 +607,10 @@
 	
 	<EndRod id="198" stringId="minecraft:end_rod" name="End Rod"  texture="end_rod.png" />
 	
+	<ChorusPlant id="199" stringId="minecraft:chorus_plant" name="Chorus Plant"  texture="chorus_plant.png" />
+	
+	<ChorusFlower id="200" stringId="minecraft:chorus_flower" name="Chorus Flower"  alive="chorus_flower.png" dead="chorus_flower_dead.png" />
+	
 	<Solid id="201" stringId="minecraft:purpur_block" name="Purpur Block"  texture="purpur_block.png" />
 	
 	<Log id="202:0" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />

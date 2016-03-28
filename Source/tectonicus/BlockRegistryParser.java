@@ -36,6 +36,8 @@ import tectonicus.blockTypes.Cake;
 import tectonicus.blockTypes.Carpet;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
+import tectonicus.blockTypes.ChorusFlower;
+import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
 import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.DaylightSensor;
@@ -795,6 +797,19 @@ public class BlockRegistryParser
 			SubTexture tex = parseTexture(element, "texture", null);
 		 	
 		 	blockType = new EndRod(name, tex);
+		}
+		else if (nodeName.equals("chorusflower"))
+		{
+			SubTexture alive = parseTexture(element, "alive", null);
+			SubTexture dead = parseTexture(element, "dead", null);
+		 	
+		 	blockType = new ChorusFlower(name, alive, dead);
+		}
+		else if (nodeName.equals("chorusplant"))
+		{
+			SubTexture tex = parseTexture(element, "texture", null);
+		 	
+		 	blockType = new ChorusPlant(name, tex);
 		}
 		else
 		{
