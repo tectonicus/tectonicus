@@ -605,6 +605,8 @@
 	
 	<Door id="197" stringId="minecraft:dark_oak_door" name="Dark Oak Door" top="door_dark_oak_upper.png" bottom="door_dark_oak_lower.png" />
 	
+	<EndRod id="198" stringId="minecraft:end_rod" name="End Rod"  texture="end_rod.png" />
+	
 	<Solid id="201" stringId="minecraft:purpur_block" name="Purpur Block"  texture="purpur_block.png" />
 	
 	<Log id="202:0" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />

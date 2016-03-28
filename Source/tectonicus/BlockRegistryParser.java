@@ -44,6 +44,7 @@ import tectonicus.blockTypes.Door;
 import tectonicus.blockTypes.DoubleSlab;
 import tectonicus.blockTypes.DragonEgg;
 import tectonicus.blockTypes.EnchantmentTable;
+import tectonicus.blockTypes.EndRod;
 import tectonicus.blockTypes.EnderPortal;
 import tectonicus.blockTypes.EnderPortalFrame;
 import tectonicus.blockTypes.Fence;
@@ -788,6 +789,12 @@ public class BlockRegistryParser
 			SubTexture map = parseTexture(element, "map", null);
 		 	
 		 	blockType = new ItemFrame(name, background, border, map);
+		}
+		else if (nodeName.equals("endrod"))
+		{
+			SubTexture tex = parseTexture(element, "texture", null);
+		 	
+		 	blockType = new EndRod(name, tex);
 		}
 		else
 		{
