@@ -276,43 +276,39 @@ public class RawChunk
 									String id = idTag.getValue();
 									if (id.equals("Sign"))
 									{
-										StringTag text1Tag = NbtUtil.getChild(entity, "Text1", StringTag.class);
-										StringTag text2Tag = NbtUtil.getChild(entity, "Text2", StringTag.class);
-										StringTag text3Tag = NbtUtil.getChild(entity, "Text3", StringTag.class);
-										StringTag text4Tag = NbtUtil.getChild(entity, "Text4", StringTag.class);
+										String text1 = NbtUtil.getChild(entity, "Text1", StringTag.class).getValue();
+										String text2 = NbtUtil.getChild(entity, "Text2", StringTag.class).getValue();
+										String text3 = NbtUtil.getChild(entity, "Text3", StringTag.class).getValue();
+										String text4 = NbtUtil.getChild(entity, "Text4", StringTag.class).getValue();
 										
-										String text1, text2, text3, text4;
-										if (text1Tag.getValue().charAt(0) == '{') // It's probably JSON
+										if (text1.charAt(0) == '{') // It's probably JSON
 										{
-											JSONObject obj = new JSONObject(text1Tag.getValue());
-											text1 = obj.getString("text");
-											
-											obj = new JSONObject(text2Tag.getValue());
-											text2 = obj.getString("text");
-											
-											obj = new JSONObject(text3Tag.getValue());
-											text3 = obj.getString("text");
-											
-											obj = new JSONObject(text4Tag.getValue());
-											text4 = obj.getString("text");
+											text1 = text1.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
+											text2 = text2.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
+											text3 = text3.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
+											text4 = text4.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
 										}
-										else{
-											text1 = text1Tag.getValue().replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
-											if (text1 == null || text1.equals("null"))
-												text1 = "";
-											
-											text2 = text2Tag.getValue().replaceAll("^\"|\"$", "");
-											if (text2 == null || text2.equals("null"))
-												text2 = "";
-											
-											text3 = text3Tag.getValue().replaceAll("^\"|\"$", "");
-											if (text3 == null || text3.equals("null"))
-												text3 = "";
-											
-											text4 = text4Tag.getValue().replaceAll("^\"|\"$", "");
-											if (text4 == null || text4.equals("null"))
-												text4 = "";
-										}
+
+										text1 = text1.replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
+										if (text1 == null || text1.equals("null"))
+											text1 = "";
+										
+										text2 = text2.replaceAll("^\"|\"$", "");
+										if (text2 == null || text2.equals("null"))
+											text2 = "";
+										
+										text3 = text3.replaceAll("^\"|\"$", "");
+										if (text3 == null || text3.equals("null"))
+											text3 = "";
+										
+										text4 = text4.replaceAll("^\"|\"$", "");
+										if (text4 == null || text4.equals("null"))
+											text4 = "";
+										
+										System.out.println(text1);
+										System.out.println(text2);
+										System.out.println(text3);
+										System.out.println(text4);
 										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();

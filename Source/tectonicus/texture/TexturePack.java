@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import tectonicus.Minecraft;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
@@ -68,12 +69,27 @@ public class TexturePack
 		}
 		
 		//ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
+		//TODO: Clean up this version stuff
 		if (zipStack.getEntry("terrain.png") != null)
+		{
 			this.version = "1.4";
+			Minecraft.setMinecraftVersion(1.4f);
+		}
 		else if(zipStack.getEntry("textures/blocks/activatorRail.png") != null)
+		{
 			this.version = "1.5";
+			Minecraft.setMinecraftVersion(1.5f);
+		}
+		else if(zipStack.getEntry("assets/minecraft/textures/blocks/redstone_dust_cross.png") != null)
+		{
+			this.version = "1.678";
+			Minecraft.setMinecraftVersion(1.6f);
+		}
 		else
-			this.version = "1.6+";
+		{
+			this.version = "1.9+";
+			Minecraft.setMinecraftVersion(1.9f);
+		}
 		
 		try
 		{
@@ -137,7 +153,7 @@ public class TexturePack
 			}
 		*/
 			String path;
-			if(version == "1.6+")
+			if(Minecraft.getMinecraftVersion() >= 1.6f)
 				path = "assets/minecraft/textures/";
 			else
 				path = "";
@@ -321,7 +337,7 @@ public class TexturePack
 			path = "terrain.png";
 		else if (!path.contains("/") && !path.contains("\\") && version == "1.5") //MC 1.5 texture packs
 			path = "textures/blocks/" + path;
-		else if (!path.contains("/") && !path.contains("\\") && version == "1.6+") //MC 1.6+ texture packs
+		else if (!path.contains("/") && !path.contains("\\") && Minecraft.getMinecraftVersion() >= 1.6f) //MC 1.6+ texture packs
 			path = "assets/minecraft/textures/blocks/" + path;
 		
 		return new TextureRequest(path, params);

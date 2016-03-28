@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -95,6 +95,7 @@ import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
+import tectonicus.texture.ZipStack;
 
 public class BlockRegistryParser
 {
@@ -173,7 +174,24 @@ public class BlockRegistryParser
 		
 		String nodeName = element.getTagName().toLowerCase();
 		
-		if (nodeName.equals("solid"))
+		if(nodeName.equals("block"))
+		{
+			String values[] = stringId.split(":");
+			System.out.println(values[1]);
+			
+			try
+			{
+				ZipStack zips = new ZipStack(new File("C:\\Users\\Steven\\AppData\\Roaming\\.minecraft\\versions\\1.8.8\\1.8.8.jar"), null, null);
+				
+				zips.getEntry("assets/minecraft/textures/blocks/rail_activator.png");
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+			
+		}
+		else if (nodeName.equals("solid"))
 		{
 			SubTexture tex = parseTexture(element, "texture", null);
 			SubTexture side = parseTexture(element, "side", tex);
@@ -385,7 +403,7 @@ public class BlockRegistryParser
 			SubTexture xmassmall = null;
 			SubTexture xmaslarge = null;
 			
-			if(texturePack.getVersion() == "1.5" || texturePack.getVersion() == "1.6+")
+			if(Minecraft.getMinecraftVersion() >= 1.5f)
 			{
 				trappedsmall = parseTexture(element, "trappedsmall", null);
 				trappedlarge = parseTexture(element, "trappedlarge", null);

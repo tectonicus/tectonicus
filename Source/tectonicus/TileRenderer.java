@@ -1779,7 +1779,7 @@ public class TileRenderer
 				
 				String message = "";
 				
-				if (Float.parseFloat(Minecraft.minecraftVersion) == 1.8f)
+				if (Minecraft.getMinecraftVersion() >= 1.8f)
 					message = "\"" +sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
 				else
 					message = "\"" + jsEscape(sign.getText(0)) + "\\n" + jsEscape(sign.getText(1)) + "\\n" + jsEscape(sign.getText(2)) + "\\n" + jsEscape(sign.getText(3)) + "\"";
@@ -1794,7 +1794,7 @@ public class TileRenderer
 				args.put("worldPos", posStr);
 				
 				args.put("message", message);
-				if (Float.parseFloat(Minecraft.minecraftVersion) == 1.8f)
+				if (Minecraft.getMinecraftVersion() >= 1.8f)
 				{
 					args.put("text1", "\"" + sign.getText(0) + "\"");
 					args.put("text2", "\"" + sign.getText(1) + "\"");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,7 +18,17 @@ import tectonicus.util.OsDetect;
 
 public class Minecraft
 {
-	static String minecraftVersion;
+	static float minecraftVersion;
+	
+	public static float getMinecraftVersion()
+	{
+		return minecraftVersion;
+	}
+	
+	public static void setMinecraftVersion(float version)
+	{
+		minecraftVersion = version;
+	}
 	
 	public static File findMinecraftDir()
 	{
@@ -100,8 +110,6 @@ public class Minecraft
 					System.out.println("Skipping directory with invalid version number: " + directory);
 				}
 			}
-			
-			minecraftVersion = major + "." + minor;
 			
 			String version;
 			if(patch.equals("0"))
