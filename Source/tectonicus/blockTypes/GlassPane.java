@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,8 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.SubMesh;
+import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -80,7 +82,17 @@ public class GlassPane implements BlockType
 		
 		if ((!hasNorth && !hasSouth && !hasEast && !hasWest) && (!north.isSolid() && !south.isSolid() && !east.isSolid() && !west.isSolid()))
 		{
-			hasNorth = hasSouth = hasEast = hasWest = true;
+			if (texture.texturePackVersion == "1.9+")
+			{
+				final float offSet = 1.0f / 16.0f;
+				SubMesh glassMesh = new SubMesh();
+				SubMesh.addBlock(glassMesh, offSet*8, 0, offSet*8, offSet*2, 1, offSet*2, new Vector4f(topLight, topLight, topLight, 1), texture, texture, texture);
+				glassMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Transparent), x, y, z, Rotation.None, 0);
+			}
+			else
+			{
+				hasNorth = hasSouth = hasEast = hasWest = true;
+			}
 		}
 		
 		if (hasNorth || north.isSolid())
