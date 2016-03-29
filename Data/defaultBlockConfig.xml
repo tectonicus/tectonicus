@@ -401,7 +401,9 @@
 	
 	<Stairs id="136" name="Jungle Wood Stairs" texture="planks_jungle.png" />
 	
-	<Solid id="137" name="Command Block" texture="command_block_side.png" />
+	<Dispenser id="137" stringId="minecraft:command_block" name="Command Block" 
+						top="command_block_conditional.png" topBottom="command_block_back.png" 
+						side="command_block_side.png" front="command_block_front.png" />
 	
 	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" beam="assets/minecraft/textures/entity/beacon_beam.png" />
 	
@@ -422,9 +424,11 @@
 	<FlowerPot id="140:10" name="Flower Pot Dead Bush" texture="flower_pot.png" dirt="dirt.png" plant="deadbush.png"/>
 	<FlowerPot id="140:11" name="Flower Pot Fern" texture="flower_pot.png" dirt="dirt.png" plant="fern.png"/>
 	
-	<Crops id="141" name="Carrots" tex0="carrots_stage_0.png" tex1="carrots_stage_0.png" tex2="carrots_stage_1.png" tex3="carrots_stage_1.png" tex4="carrots_stage_2.png" tex5="carrots_stage_2.png" tex6="carrots_stage_2.png" tex7="carrots_stage_3.png" />
+	<Crops id="141" name="Carrots" tex0="carrots_stage_0.png" tex1="carrots_stage_0.png" tex2="carrots_stage_1.png" tex3="carrots_stage_1.png" 
+									tex4="carrots_stage_2.png" tex5="carrots_stage_2.png" tex6="carrots_stage_2.png" tex7="carrots_stage_3.png" />
 	
-	<Crops id="142" name="Potatoes" tex0="potatoes_stage_0.png" tex1="potatoes_stage_0.png" tex2="potatoes_stage_1.png" tex3="potatoes_stage_1.png" tex4="potatoes_stage_2.png" tex5="potatoes_stage_2.png" tex6="potatoes_stage_2.png" tex7="potatoes_stage_3.png" />
+	<Crops id="142" name="Potatoes" tex0="potatoes_stage_0.png" tex1="potatoes_stage_0.png" tex2="potatoes_stage_1.png" tex3="potatoes_stage_1.png" 
+									tex4="potatoes_stage_2.png" tex5="potatoes_stage_2.png" tex6="potatoes_stage_2.png" tex7="potatoes_stage_3.png" />
 	
 	<Button id="143" name="Wooden Button" texture="planks_oak.png" />
 	
@@ -625,15 +629,21 @@
 	
 	<Solid id="206" stringId="minecraft:end_bricks" name="End Stone Bricks"  texture="end_bricks.png" />
 	
-	<Crops id="207" stringId="minecraft:beetroots" name="Beetroots" tex0="beetroots_stage_0.png" tex1="beetroots_stage_1.png" tex2="beetroots_stage_2.png" tex3="beetroots_stage_3.png" tex4="beetroots_stage_3.png" tex5="beetroots_stage_3.png" tex6="beetroots_stage_3.png" tex7="beetroots_stage_3.png" />
+	<Crops id="207" stringId="minecraft:beetroots" name="Beetroots" 
+					tex0="beetroots_stage_0.png" tex1="beetroots_stage_1.png" tex2="beetroots_stage_2.png" tex3="beetroots_stage_3.png"
+					tex4="beetroots_stage_3.png" tex5="beetroots_stage_3.png" tex6="beetroots_stage_3.png" tex7="beetroots_stage_3.png" />
 	
 	<Soil id="208" stringId="minecraft:grass_path" name="Grass Path" top="grass_path_top.png" side="grass_path_side.png" />
 	
 	<Solid id="209" stringId="minecraft:end_gateway" name="End Gateway" texture="Images/end_gateway.png" />
 	
-	<Solid id="210" stringId="minecraft:repeating_command_block" name="Repeating Command Block" texture="repeating_command_block_side.png" />
+	<Dispenser id="210" stringId="minecraft:repeating_command_block" name="Repeating Command Block" 
+						top="repeating_command_block_conditional.png" topBottom="repeating_command_block_back.png" 
+						side="repeating_command_block_side.png" front="repeating_command_block_front.png" />
 	
-	<Solid id="211" stringId="minecraft:chain_command_block" name="Chain Command Block" texture="chain_command_block_side.png" />
+	<Dispenser id="211" stringId="minecraft:chain_command_block" name="Chain Command Block" 
+						top="chain_command_block_conditional.png" topBottom="chain_command_block_back.png" 
+						side="chain_command_block_side.png" front="chain_command_block_front.png" />
 	
 	<DataSolid id="212" stringId="minecraft:frosted_ice" name="Frosted Ice" 
 						side0="frosted_ice_0.png" top0="frosted_ice_0.png"

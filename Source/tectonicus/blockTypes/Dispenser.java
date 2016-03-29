@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,6 +10,7 @@
 package tectonicus.blockTypes;
 
 import tectonicus.BlockContext;
+import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.Mesh;
@@ -76,6 +77,8 @@ public class Dispenser implements BlockType
 
 		Colour4f colour = new Colour4f(1, 1, 1, 1);
 
+		final int id = world.getBlockId(chunk.getChunkCoord(), x, y, z);
+		final boolean commandBlock = (id == BlockIds.COMMAND_BLOCK || id == BlockIds.CHAIN_COMMAND_BLOCK || id == BlockIds.REPEATING_COMMAND_BLOCK) ? true : false;
 		final int data = chunk.getBlockData(x, y, z);
 		
 		// 0x2: Facing north
@@ -93,32 +96,96 @@ public class Dispenser implements BlockType
 		Mesh eastMesh;
 		Mesh westMesh;
 		
-		if (data == 0x0)
+		final boolean conditional = (data & 0x8) > 0;
+		if (commandBlock && conditional)
+			sideMesh = topMesh;
+
+		if (data == 0 || data == 8)
 		{
-			northTex = southTex = eastTex = westTex = sideTexture;
-			northMesh = southMesh = eastMesh = westMesh = topMesh;
-			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-			BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+			if (commandBlock)
+			{
+				BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+				northTex = southTex = eastTex = westTex = sideTexture;
+				northMesh = southMesh = eastMesh = westMesh = sideMesh;
+				BlockUtil.addBottom(world, chunk, frontMesh, x, y, z, colour, frontTexture, registry);
+			}
+			else
+			{
+				BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+				northTex = southTex = eastTex = westTex = topTexture;
+				northMesh = southMesh = eastMesh = westMesh = topMesh;
+				BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+			}
 		}
-		else if(data == 0x1)
-		{
-			northTex = southTex = eastTex = westTex = sideTexture;
-			northMesh = southMesh = eastMesh = westMesh = topMesh;
-			BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
-			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+		else if(data == 1 || data == 9)
+		{			
+			if (commandBlock)
+			{
+				BlockUtil.addTop(world, chunk, frontMesh, x, y, z, colour, frontTexture, registry);
+				northTex = southTex = eastTex = westTex = sideTexture;
+				northMesh = southMesh = eastMesh = westMesh = sideMesh;
+				BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+			}
+			else
+			{
+				BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+				northTex = southTex = eastTex = westTex = topTexture;
+				northMesh = southMesh = eastMesh = westMesh = topMesh;
+				BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+			}
+			
 		}
-		else
+		else if (data == 2 || data == 10)
 		{
-			northTex = data == 0x2 ? frontTexture : sideTexture;
-			southTex = data == 0x3 ? frontTexture : sideTexture;
-			eastTex = data == 0x5 ? frontTexture : sideTexture;
-			westTex = data == 0x4 ? frontTexture : sideTexture;
-			northMesh = data == 0x2 ? frontMesh : sideMesh;
-			southMesh = data == 0x3 ? frontMesh : sideMesh;
-			eastMesh = data == 0x5 ? frontMesh : sideMesh;
-			westMesh = data == 0x4 ? frontMesh : sideMesh;
-			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+			northTex = frontTexture;
+			northMesh = frontMesh;
+			southTex = commandBlock ? topBottomTexture : sideTexture;
+			southMesh = commandBlock ? topBottomMesh : sideMesh;
+			eastTex = westTex = sideTexture;
+			eastMesh = westMesh = sideMesh;
+			if (commandBlock)
+				topMesh = sideMesh;
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+		}
+		else if (data == 3 || data == 11)
+		{
+			northTex = commandBlock ? topBottomTexture : sideTexture;
+			northMesh = commandBlock ? topBottomMesh : sideMesh;
+			southTex = frontTexture;
+			southMesh = frontMesh;
+			eastTex = westTex = sideTexture;
+			eastMesh = westMesh = sideMesh;
+			if (commandBlock)
+				topMesh = sideMesh;
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+		}
+		else if (data == 4 || data == 12)
+		{
+			northTex = southTex = sideTexture;
+			northMesh = southMesh = sideMesh;
+			eastTex = commandBlock ? topBottomTexture : sideTexture;
+			eastMesh = commandBlock ? topBottomMesh : sideMesh;
+			westTex = frontTexture;
+			westMesh = frontMesh;
+			if (commandBlock)
+				topMesh = sideMesh;
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+		}
+		else //if (data == 5 || data == 13)
+		{
+			northTex = southTex = sideTexture;
+			northMesh = southMesh = sideMesh;
+			eastTex = frontTexture;
+			eastMesh = frontMesh;
+			westTex = commandBlock ? topBottomTexture : sideTexture;
+			westMesh = commandBlock ? topBottomMesh : sideMesh;
+			if (commandBlock)
+				topMesh = sideMesh;
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
 		}
 		BlockUtil.addNorth(world, chunk, westMesh, x, y, z, colour, westTex, registry);
 		BlockUtil.addSouth(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);

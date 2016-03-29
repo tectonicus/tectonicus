@@ -108,11 +108,14 @@ public class BlockIds
 	//public static final int REDSTONE_REPEATER_OFF	= 93;
 	//public static final int REDSTONE_REPEATER_ON	= 94;
 	public static final int END_STONE				= 121;
+	public static final int COMMAND_BLOCK			= 137;
 	public static final int WOOD_BUTTON				= 143;
 	public static final int TRAPPED_CHEST			= 146;
 	public static final int LARGE_FLOWERS			= 175;
 	public static final int CHORUS_PLANT			= 199;
 	public static final int CHORUS_FLOWER			= 200;
+	public static final int REPEATING_COMMAND_BLOCK	= 210;
+	public static final int CHAIN_COMMAND_BLOCK		= 211;
 	
 
 	// Enum thoughts:
