@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -28,10 +28,12 @@ public class RedstoneWire implements BlockType
 {
 	private final SubTexture junction;
 	private final SubTexture line;
+	private final String version;
 	
 	public RedstoneWire(SubTexture offJunction, SubTexture onJunction, SubTexture offLine, SubTexture onLine)
 	{
-		if (offJunction.texturePackVersion != "1.4")
+		version = offJunction.texturePackVersion;
+		if (version != "1.4")
 		{
 			final float tile = offJunction.texture.getWidth()/offJunction.texture.getHeight();
 			this.junction = new SubTexture(offJunction.texture, offJunction.u0, offJunction.v0, offJunction.u1, offJunction.v0+tile);
@@ -113,26 +115,58 @@ public class RedstoneWire implements BlockType
 									new Vector3f(x+1,	actualY, z),
 									new Vector3f(x+1,	actualY, z+1),
 									new Vector3f(x,		actualY, z+1), colour, junction);
+			
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
+											new Vector3f(x+1,	actualY, z),
+											new Vector3f(x+1,	actualY, z+1),
+											new Vector3f(x,		actualY, z+1), colour, line);
+				
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z+1),
+											new Vector3f(x,		actualY, z),
+											new Vector3f(x+1,	actualY, z),
+											new Vector3f(x+1,	actualY, z+1), colour, line);
+			}
 		}
 		else if ( (hasNorth && hasSouth && !hasEast && !hasWest)		// North and south
 					|| ((hasNorth ^ hasSouth) && !hasEast && !hasWest))	// Just north or south
 		{
 			// Single line north-south
-			
-			MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
-									new Vector3f(x+1,	actualY, z),
-									new Vector3f(x+1,	actualY, z+1),
-									new Vector3f(x,		actualY, z+1), colour, line);
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z+1),
+											new Vector3f(x,		actualY, z),
+											new Vector3f(x+1,	actualY, z),
+											new Vector3f(x+1,	actualY, z+1), colour, line);
+			}
+			else
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
+											new Vector3f(x+1,	actualY, z),
+											new Vector3f(x+1,	actualY, z+1),
+											new Vector3f(x,		actualY, z+1), colour, line);
+			}
 		}
 		else if ((hasEast && hasWest && !hasNorth && !hasSouth) // east and west
 				|| ((hasEast ^ hasWest) && !hasNorth && !hasSouth)) // just east or just west
 		{
 			// Single line east-west
 			
-			MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z+1),
-									new Vector3f(x,		actualY, z),
-									new Vector3f(x+1,	actualY, z),
-									new Vector3f(x+1,	actualY, z+1), colour, line);
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
+											new Vector3f(x+1,	actualY, z),
+											new Vector3f(x+1,	actualY, z+1),
+											new Vector3f(x,		actualY, z+1), colour, line);
+			}
+			else
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z+1),
+											new Vector3f(x,		actualY, z),
+											new Vector3f(x+1,	actualY, z),
+											new Vector3f(x+1,	actualY, z+1), colour, line);
+			}
 		}
 		else
 		{
@@ -154,100 +188,192 @@ public class RedstoneWire implements BlockType
 			
 			Mesh centerMesh = geometry.getMesh(center.texture, Geometry.MeshType.AlphaTest);
 			
-			MeshUtil.addQuad(centerMesh,	new Vector3f(x + leftOffset,	actualY, z + rightOffset),
-									new Vector3f(x + leftOffset,	actualY, z + leftOffset),
-									new Vector3f(x + rightOffset,	actualY, z + leftOffset),
-									new Vector3f(x + rightOffset,	actualY, z + rightOffset), colour, center);
+			MeshUtil.addQuad(centerMesh,	new Vector3f(x + leftOffset,	actualY, z + leftOffset),
+											new Vector3f(x + rightOffset,	actualY, z + leftOffset),
+											new Vector3f(x + rightOffset,	actualY, z + rightOffset), 
+											new Vector3f(x + leftOffset,	actualY, z + rightOffset), colour, center);
 			
-			if (hasNorth)
+			if (hasNorth) //Actually West
 			{
-				SubTexture northTex = new SubTexture(junction.texture,
-						junction.u0, junction.v0,
-						junction.u0 + leftTexOffset, junction.v1);
-				
-				Mesh northMesh = geometry.getMesh(northTex.texture, Geometry.MeshType.AlphaTest);
-				
-				MeshUtil.addQuad(northMesh,	new Vector3f(x,	actualY, z),
-										new Vector3f(x + leftOffset,	actualY, z),
-										new Vector3f(x + leftOffset,	actualY, z + 1),
-										new Vector3f(x,	actualY, z + 1), colour, northTex);
+				if (version == "1.9+")
+				{
+					SubTexture northTex = new SubTexture(line.texture,
+							line.u0, line.v0,
+							line.u1, line.v0 + leftTexOffset);
+					
+					Mesh northMesh = geometry.getMesh(northTex.texture, Geometry.MeshType.AlphaTest);
+					
+					MeshUtil.addQuad(northMesh, new Vector3f(x,	actualY, z + 1),	
+												new Vector3f(x,	actualY, z),
+												new Vector3f(x + leftOffset,	actualY, z),
+												new Vector3f(x + leftOffset,	actualY, z + 1), colour, northTex);
+				}
+				else
+				{
+					SubTexture northTex = new SubTexture(junction.texture,
+							junction.u0, junction.v0,
+							junction.u0 + leftTexOffset, junction.v1);
+					
+					Mesh northMesh = geometry.getMesh(northTex.texture, Geometry.MeshType.AlphaTest);
+					
+					MeshUtil.addQuad(northMesh,	new Vector3f(x,	actualY, z),
+												new Vector3f(x + leftOffset,	actualY, z),
+												new Vector3f(x + leftOffset,	actualY, z + 1),
+												new Vector3f(x,	actualY, z + 1), colour, northTex);
+				}
 			}
 			
-			if (hasSouth)
+			if (hasSouth) //Actually East
 			{
-				SubTexture southTex = new SubTexture(junction.texture,
-						junction.u1 - leftTexOffset, junction.v0,
-						junction.u1, junction.v1);
-				
-				Mesh southMesh = geometry.getMesh(southTex.texture, Geometry.MeshType.AlphaTest);
-				
-				MeshUtil.addQuad(southMesh,	new Vector3f(x + 1 - leftOffset,	actualY, z),
-										new Vector3f(x + 1,	actualY, z),
-										new Vector3f(x + 1,	actualY, z + 1),
-										new Vector3f(x + 1 - leftOffset,	actualY, z + 1), colour, southTex);
+				if (version == "1.9+")
+				{
+					SubTexture southTex = new SubTexture(line.texture,
+							line.u0, line.v1 - leftTexOffset,
+							line.u1, line.v1);
+					
+					Mesh southMesh = geometry.getMesh(southTex.texture, Geometry.MeshType.AlphaTest);
+					
+					MeshUtil.addQuad(southMesh,	new Vector3f(x + 1 - leftOffset,	actualY, z + 1),
+												new Vector3f(x + 1 - leftOffset,	actualY, z),
+												new Vector3f(x + 1,	actualY, z),
+												new Vector3f(x + 1,	actualY, z + 1), colour, southTex);
+				}
+				else
+				{
+					SubTexture southTex = new SubTexture(junction.texture,
+							junction.u1 - leftTexOffset, junction.v0,
+							junction.u1, junction.v1);
+					
+					Mesh southMesh = geometry.getMesh(southTex.texture, Geometry.MeshType.AlphaTest);
+					
+					MeshUtil.addQuad(southMesh,	new Vector3f(x + 1 - leftOffset,	actualY, z),
+												new Vector3f(x + 1,	actualY, z),
+												new Vector3f(x + 1,	actualY, z + 1),
+												new Vector3f(x + 1 - leftOffset,	actualY, z + 1), colour, southTex);
+				}
 			}
 			
-			if (hasEast)
+			if (hasEast)  //Actually North
 			{
-				SubTexture eastTex = new SubTexture(junction.texture,
-						junction.u0, junction.v0,
-						junction.u1, junction.v0 + leftTexOffset);
+				SubTexture eastTex = null;
+				if (version == "1.9+")
+				{
+					eastTex = new SubTexture(line.texture,
+							line.u0, line.v0,
+							line.u1, line.v0 + leftTexOffset);
+				}
+				else
+				{
+					eastTex = new SubTexture(junction.texture,
+							junction.u0, junction.v0,
+							junction.u1, junction.v0 + leftTexOffset);
+				}
 				
 				Mesh eastMesh = geometry.getMesh(eastTex.texture, Geometry.MeshType.AlphaTest);
 				
 				MeshUtil.addQuad(eastMesh,	new Vector3f(x,	actualY, z),
-										new Vector3f(x + 1,	actualY, z),
-										new Vector3f(x + 1,	actualY, z + leftOffset),
-										new Vector3f(x,	actualY, z + leftOffset), colour, eastTex);
+											new Vector3f(x + 1,	actualY, z),
+											new Vector3f(x + 1,	actualY, z + leftOffset),
+											new Vector3f(x,	actualY, z + leftOffset), colour, eastTex);
 			}
 			
-			if (hasWest)
+			if (hasWest)  //Actually South
 			{
-				SubTexture westTex = new SubTexture(junction.texture,
-						junction.u0, junction.v1 - leftTexOffset,
-						junction.u1, junction.v1);
+				SubTexture westTex = null;
+				if (version == "1.9+")
+				{
+					westTex = new SubTexture(line.texture,
+							line.u0, line.v1 - leftTexOffset,
+							line.u1, line.v1);
+				}
+				else
+				{
+					westTex = new SubTexture(junction.texture,
+							junction.u0, junction.v1 - leftTexOffset,
+							junction.u1, junction.v1);
+				}
 				
 				Mesh westMesh = geometry.getMesh(westTex.texture, Geometry.MeshType.AlphaTest);
 				
 				MeshUtil.addQuad(westMesh,	new Vector3f(x,	actualY, z + 1 - leftOffset),
-										new Vector3f(x + 1,	actualY, z + 1 - leftOffset),
-										new Vector3f(x + 1,	actualY, z + 1),
-										new Vector3f(x,	actualY, z + 1), colour, westTex);
+											new Vector3f(x + 1,	actualY, z + 1 - leftOffset),
+											new Vector3f(x + 1,	actualY, z + 1),
+											new Vector3f(x,	actualY, z + 1), colour, westTex);
 			}			
 		}
 		
 		// On the sides
 		
-		if (hasNorthAbove)
+		if (hasNorthAbove) //Actually West
 		{
-			MeshUtil.addQuad(lineMesh,	new Vector3f(x + nudge,	y,		z+1),
-									new Vector3f(x + nudge,	y+1,	z+1),
-									new Vector3f(x + nudge,	y+1,	z),
-									new Vector3f(x + nudge,	y,		z), colour, line);
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x + nudge,	y,		z),
+											new Vector3f(x + nudge,	y,		z+1),
+											new Vector3f(x + nudge,	y+1,	z+1),
+											new Vector3f(x + nudge,	y+1,	z), colour, line);
+			}
+			else
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x + nudge,	y,		z+1),
+											new Vector3f(x + nudge,	y+1,	z+1),
+											new Vector3f(x + nudge,	y+1,	z),
+											new Vector3f(x + nudge,	y,		z), colour, line);
+			}
 		}
 		
-		if (hasSouthAbove)
+		if (hasSouthAbove) //Actually East
 		{
-			MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1 - nudge,	y,		z),
-									new Vector3f(x + 1 - nudge,	y+1,	z),
-									new Vector3f(x + 1 - nudge,	y+1,	z+1),
-									new Vector3f(x + 1 - nudge,	y,		z+1), colour, line);
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1 - nudge,	y,		z+1),
+											new Vector3f(x + 1 - nudge,	y,		z),
+											new Vector3f(x + 1 - nudge,	y+1,	z),
+											new Vector3f(x + 1 - nudge,	y+1,	z+1), colour, line);
+			}
+			else
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1 - nudge,	y,		z),
+											new Vector3f(x + 1 - nudge,	y+1,	z),
+											new Vector3f(x + 1 - nudge,	y+1,	z+1),
+											new Vector3f(x + 1 - nudge,	y,		z+1), colour, line);
+			}
 		}
 		
-		if (hasEastAbove)
+		if (hasEastAbove)  //Actually North
 		{
-			MeshUtil.addQuad(lineMesh,	new Vector3f(x,		y,		z + nudge),
-									new Vector3f(x,		y+1,	z + nudge),
-									new Vector3f(x+1,	y+1,	z + nudge),
-									new Vector3f(x+1,	y,		z + nudge), colour, line);
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x+1,	y,		z + nudge),
+											new Vector3f(x,		y,		z + nudge),
+											new Vector3f(x,		y+1,	z + nudge),
+											new Vector3f(x+1,	y+1,	z + nudge), colour, line);
+			}
+			else
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		y,		z + nudge),
+											new Vector3f(x,		y+1,	z + nudge),
+											new Vector3f(x+1,	y+1,	z + nudge),
+											new Vector3f(x+1,	y,		z + nudge), colour, line);
+			}
 		}
 		
-		if (hasWestAbove)
+		if (hasWestAbove) //Actually South
 		{
-			MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1,	y,		z + 1 - nudge),
-									new Vector3f(x + 1,	y + 1,	z + 1 - nudge),
-									new Vector3f(x,		y + 1,	z + 1 - nudge),
-									new Vector3f(x,		y,		z + 1 - nudge), colour, line);
+			if(version == "1.9+")
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		y,		z + 1 - nudge),
+											new Vector3f(x + 1,	y,		z + 1 - nudge),
+											new Vector3f(x + 1,	y + 1,	z + 1 - nudge),
+											new Vector3f(x,		y + 1,	z + 1 - nudge), colour, line);
+			}
+			else
+			{
+				MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1,	y,		z + 1 - nudge),
+											new Vector3f(x + 1,	y + 1,	z + 1 - nudge),
+											new Vector3f(x,		y + 1,	z + 1 - nudge),
+											new Vector3f(x,		y,		z + 1 - nudge), colour, line);
+			}
 		}
 	}
 	
