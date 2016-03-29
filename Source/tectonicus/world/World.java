@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -204,6 +204,8 @@ public class World implements BlockContext
 			parser.parse("defaultBlockConfigMC1.4.xml", registry);
 		else if (useDefaultBlocks && this.textureVersion == "1.5")
 			parser.parse("defaultBlockConfigMC1.5.xml", registry);
+		else if (useDefaultBlocks && this.textureVersion == "1.678")
+			parser.parse("defaultBlockConfigMC1.8.xml", registry);
 		else if (useDefaultBlocks)
 			parser.parse("defaultBlockConfig.xml", registry);
 		
@@ -212,6 +214,11 @@ public class World implements BlockContext
 		
 		flushChunkCache();
 		flushGeometryCache();
+	}
+	
+	public WorldSubset getWorldSubset()
+	{
+		return worldSubset;
 	}
 	
 	public BiomeCache getBiomeCache()
@@ -534,7 +541,7 @@ public class World implements BlockContext
 			if (c != null)
 				visibleChunks.add(c);
 		}
-		
+		//System.out.println("Num visible chunks: " + visibleChunks.size());
 		rasteriser.enableDepthTest(true);
 		rasteriser.setBlendFunc(BlendFunc.Regular);
 		
@@ -592,7 +599,7 @@ public class World implements BlockContext
 		
 		// Transparency pass
 		
-		rasteriser.enableDepthWriting(false);
+		rasteriser.enableDepthWriting(false);  //TODO: This is the cause of the weirdness involving ice as well as glass blocks in a beam
 		rasteriser.enableBlending(true);
 		rasteriser.enableAlphaTest(false);
 		
