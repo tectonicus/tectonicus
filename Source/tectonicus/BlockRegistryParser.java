@@ -769,8 +769,9 @@ public class BlockRegistryParser
 			SubTexture stexture = parseTexture(element, "stexture", null);
 			SubTexture wtexture = parseTexture(element, "wtexture", null);
 			SubTexture ztexture = parseTexture(element, "ztexture", null);
+			SubTexture dtexture = parseTexture(element, "dtexture", null);
 		 	
-		 	blockType = new Skull(name, texture, ctexture, stexture, wtexture, ztexture);
+		 	blockType = new Skull(name, texture, ctexture, stexture, wtexture, ztexture, dtexture);
 		}
 		else if (nodeName.equals("tripwire"))
 		{

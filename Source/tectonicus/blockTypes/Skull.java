@@ -35,10 +35,11 @@ public class Skull implements BlockType
 	private final SubTexture stexture;
 	private final SubTexture wtexture;
 	private final SubTexture ztexture;
+	private final SubTexture dtexture;
 
 	private Colour4f colour;
 
-	public Skull(String name, SubTexture texture, SubTexture ctexture, SubTexture stexture, SubTexture wtexture, SubTexture ztexture) 
+	public Skull(String name, SubTexture texture, SubTexture ctexture, SubTexture stexture, SubTexture wtexture, SubTexture ztexture, SubTexture dtexture) 
 	{
 		this.name = name;
 		
@@ -47,6 +48,7 @@ public class Skull implements BlockType
 		this.stexture = stexture;
 		this.wtexture = wtexture;
 		this.ztexture = ztexture;
+		this.dtexture = dtexture;
 		
 		colour = new Colour4f(1, 1, 1, 1);
 	}
@@ -83,6 +85,7 @@ public class Skull implements BlockType
 		
 		final int data = rawChunk.getBlockData(x, y, z);
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final Vector4f light = new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a);
 		
 		final float offSet = 1.0f / 16.0f;
 		float xOffset = x;
@@ -91,6 +94,8 @@ public class Skull implements BlockType
 		
 		Rotation rotation = Rotation.None;
 		float angle = 0;
+		
+		boolean dragonHead = false;
 		
 		SubTexture currentTexture = null;
 		
@@ -111,8 +116,10 @@ public class Skull implements BlockType
 					currentTexture = texture;
 				else if (te.blockId == 4)
 					currentTexture = ctexture;
-				else
-					currentTexture = ctexture;
+				else if (te.blockId == 5)
+					currentTexture = dtexture;
+				
+				dragonHead = te.blockId == 5 ? true : false;
 				
 				Player player = new Player(te.text1, te.text2, te.text3);
 				if(!player.getSkinURL().equals(""))
@@ -124,8 +131,8 @@ public class Skull implements BlockType
 			}
 		}
 		
-		final float widthTexel;
-		final float heightTexel;
+		 float widthTexel;
+		 float heightTexel;
 		if (currentTexture.texture.getWidth() == currentTexture.texture.getHeight())
 		{
 			widthTexel = 1.0f / 64.0f;
@@ -143,6 +150,26 @@ public class Skull implements BlockType
 		SubTexture rearTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*24, texture.v0+heightTexel*8, texture.u0+widthTexel*32, texture.v0+heightTexel*16);
 		SubTexture rightSideTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*16, texture.v0+heightTexel*8, texture.u0+widthTexel*24, texture.v0+heightTexel*16);
 		SubTexture leftSideTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+heightTexel*8, texture.u0+widthTexel*8, texture.v0+heightTexel*16);
+		
+		SubTexture mouthTexture = null;
+		SubTexture earTexture = null;
+		SubTexture nostrilTexture = null;
+		
+		if(dragonHead)
+		{
+			widthTexel = heightTexel = 1.0f / 16.0f;
+			float texel = 1.0f / 16.0f / 16.0f;
+			topTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0+(heightTexel*2-texel*2), texture.u0+widthTexel*9, texture.v0+(heightTexel*3-texel*2));
+			bottomTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*9, texture.v0+(heightTexel*2-texel*2), texture.u0+widthTexel*10, texture.v0+(heightTexel*3-texel*2));
+			faceTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0+(heightTexel*3-texel*2), texture.u0+widthTexel*9, texture.v0+(heightTexel*4-texel*2));
+			rearTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*10, texture.v0+(heightTexel*3-texel*2), texture.u0+widthTexel*11, texture.v0+(heightTexel*4-texel*2));
+			rightSideTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*9, texture.v0+(heightTexel*3-texel*2), texture.u0+widthTexel*10, texture.v0+(heightTexel*4-texel*2));
+			leftSideTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*7, texture.v0+(heightTexel*3-texel*2), texture.u0+widthTexel*8, texture.v0+(heightTexel*4-texel*2));
+			
+			earTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+texel*6, texture.u0+texel*16, texture.v0+texel*12);
+			mouthTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+texel*16, texture.u0+texel*16, texture.v0+texel*35); // Not the actual texture, but it looks close enough
+		}
+		
 		
 		if (data > 1)
 		{  
@@ -176,61 +203,115 @@ public class Skull implements BlockType
 		}
 		
 		
-		//Top
-		subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
-						new Vector3f(offSet*12,	offSet*8,	offSet*4),
-						new Vector3f(offSet*12,	offSet*8,	offSet*12),
-						new Vector3f(offSet*4,	offSet*8,	offSet*12),
-						new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-						topTexture);
-
-		
-		//Bottom
-		subMesh.addQuad(new Vector3f(offSet*4,	0,	offSet*12),
-						new Vector3f(offSet*12,	0,	offSet*12),
-						new Vector3f(offSet*12,	0,	offSet*4),
-						new Vector3f(offSet*4,	0,	offSet*4),
-						new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-						bottomTexture);
-
-	
-		//North
-		subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*4),
-						new Vector3f(offSet*4,	offSet*8,	offSet*4),
-						new Vector3f(offSet*4,	0,			offSet*4),
-						new Vector3f(offSet*12,	0,			offSet*4),
-						new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-						rearTexture);
-
-		
-		//South
-		subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*12),
-						new Vector3f(offSet*12,	offSet*8,	offSet*12),
-						new Vector3f(offSet*12,	0,			offSet*12),
-						new Vector3f(offSet*4,	0,			offSet*12),
-						new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-						faceTexture);
-		
-		//East
-		subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*12),
-						new Vector3f(offSet*12,	offSet*8,	offSet*4),
-						new Vector3f(offSet*12,	0,			offSet*4),
-						new Vector3f(offSet*12,	0,			offSet*12),
-						new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-						rightSideTexture);
+		if (dragonHead)
+		{
+			//Top
+			subMesh.addQuad(new Vector3f(offSet*2,	offSet*12,	offSet*3),
+							new Vector3f(offSet*14,	offSet*12,	offSet*3),
+							new Vector3f(offSet*14,	offSet*12,	offSet*15),
+							new Vector3f(offSet*2,	offSet*12,	offSet*15),
+							light, topTexture);
 			
-		//West
-		subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
-						new Vector3f(offSet*4,	offSet*8,	offSet*12),
-						new Vector3f(offSet*4,		0,		offSet*12),
-						new Vector3f(offSet*4,		0,		offSet*4),
-						new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-						leftSideTexture);
+			//Bottom
+			subMesh.addQuad(new Vector3f(offSet*2,	0,	offSet*15),
+							new Vector3f(offSet*14,	0,	offSet*15),
+							new Vector3f(offSet*14,	0,	offSet*3),
+							new Vector3f(offSet*2,	0,	offSet*3),
+							light, bottomTexture);
+			
+			//North
+			subMesh.addQuad(new Vector3f(offSet*14,	offSet*12,	offSet*3),
+							new Vector3f(offSet*2,	offSet*12,	offSet*3),
+							new Vector3f(offSet*2,	0,			offSet*3),
+							new Vector3f(offSet*14,	0,			offSet*3),
+							light, rearTexture);
+
+			
+			//South
+			subMesh.addQuad(new Vector3f(offSet*2,	offSet*12,	offSet*15),
+							new Vector3f(offSet*14,	offSet*12,	offSet*15),
+							new Vector3f(offSet*14,	0,			offSet*15),
+							new Vector3f(offSet*2,	0,			offSet*15),
+							light, faceTexture);
+			
+			//East
+			subMesh.addQuad(new Vector3f(offSet*14,	offSet*12,	offSet*15),
+							new Vector3f(offSet*14,	offSet*12,	offSet*3),
+							new Vector3f(offSet*14,	0,			offSet*3),
+							new Vector3f(offSet*14,	0,			offSet*15),
+							light, rightSideTexture);
+				
+			//West
+			subMesh.addQuad(new Vector3f(offSet*2,	offSet*12,	offSet*3),
+							new Vector3f(offSet*2,	offSet*12,	offSet*15),
+							new Vector3f(offSet*2,		0,		offSet*15),
+							new Vector3f(offSet*2,		0,		offSet*3),
+							light, leftSideTexture);
+			
+			SubMesh.addBlock(subMesh, offSet*4.25f, offSet*12, offSet*6, offSet*1.5f, offSet*3.25f, offSet*4.25f, light, earTexture, earTexture, earTexture); // Left ear
+			SubMesh.addBlock(subMesh, offSet*10.25f, offSet*12, offSet*6, offSet*1.5f, offSet*3.25f, offSet*4.25f, light, earTexture, earTexture, earTexture); // Right ear			
+			SubMesh.addBlock(subMesh, offSet*3, offSet*3, offSet*15, offSet*10, offSet*4, offSet*11, light, mouthTexture, mouthTexture, mouthTexture); //Mouth
+			SubMesh.addBlock(subMesh, offSet*3, 0, offSet*15, offSet*10, offSet, offSet*11, light, mouthTexture, mouthTexture, mouthTexture); // Mouth
+			SubMesh.addBlock(subMesh, offSet*4, offSet*7, offSet*21, offSet*2, offSet*2, offSet*3.5f, light, rightSideTexture, rightSideTexture, rightSideTexture); // Left nostril
+			SubMesh.addBlock(subMesh, offSet*10, offSet*7, offSet*21, offSet*2, offSet*2, offSet*3.5f, light, rightSideTexture, rightSideTexture, rightSideTexture); // Right nostril
+		}
+		else
+		{
+			//Top
+			subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
+							new Vector3f(offSet*12,	offSet*8,	offSet*4),
+							new Vector3f(offSet*12,	offSet*8,	offSet*12),
+							new Vector3f(offSet*4,	offSet*8,	offSet*12),
+							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+							topTexture);
+	
+			
+			//Bottom
+			subMesh.addQuad(new Vector3f(offSet*4,	0,	offSet*12),
+							new Vector3f(offSet*12,	0,	offSet*12),
+							new Vector3f(offSet*12,	0,	offSet*4),
+							new Vector3f(offSet*4,	0,	offSet*4),
+							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+							bottomTexture);
+	
 		
+			//North
+			subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*4),
+							new Vector3f(offSet*4,	offSet*8,	offSet*4),
+							new Vector3f(offSet*4,	0,			offSet*4),
+							new Vector3f(offSet*12,	0,			offSet*4),
+							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+							rearTexture);
+	
+			
+			//South
+			subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*12),
+							new Vector3f(offSet*12,	offSet*8,	offSet*12),
+							new Vector3f(offSet*12,	0,			offSet*12),
+							new Vector3f(offSet*4,	0,			offSet*12),
+							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+							faceTexture);
+			
+			//East
+			subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*12),
+							new Vector3f(offSet*12,	offSet*8,	offSet*4),
+							new Vector3f(offSet*12,	0,			offSet*4),
+							new Vector3f(offSet*12,	0,			offSet*12),
+							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+							rightSideTexture);
+				
+			//West
+			subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
+							new Vector3f(offSet*4,	offSet*8,	offSet*12),
+							new Vector3f(offSet*4,		0,		offSet*12),
+							new Vector3f(offSet*4,		0,		offSet*4),
+							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+							leftSideTexture);
+		}
+
 		if(data > 1)
 			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4, zOffset, rotation, angle);
 		else
-			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y, z, rotation, angle);
-			
+			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y, z, rotation, angle);			
 	}
 }

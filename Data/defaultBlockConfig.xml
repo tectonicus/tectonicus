@@ -434,7 +434,7 @@
 	
 	<Skull id="144" name="Mob Head" texture="assets/minecraft/textures/entity/steve.png" ctexture="assets/minecraft/textures/entity/creeper/creeper.png" 
 									stexture="assets/minecraft/textures/entity/skeleton/skeleton.png" wtexture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png"
-									ztexture="assets/minecraft/textures/entity/zombie/zombie.png" />
+									ztexture="assets/minecraft/textures/entity/zombie/zombie.png" dtexture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
 	
 	<Anvil id="145" name="Anvil" base="anvil_base.png" top0="anvil_top_damaged_0.png" top1="anvil_top_damaged_1.png" top2="anvil_top_damaged_2.png" />
 	
