@@ -564,3 +564,10 @@ Version 2.21
   Version 2.21.02
   - fixed a problem where manually specifying the Minecraft jar location caused a NullPointerException when trying to output signs to file
   - fixed a problem with special characters on signs not being escaped correctly
+  
+  Version 2.22 03-29-2016
+  - added Beetroots, End Rod, Chorus Plant/Flower, Frosted Ice, End Gateway, Dragon Head, Structure Blocks
+  - fixed Redstone wire and Glass pane for Minecraft 1.9
+  - Purpur Pillars now render correctly based on block orientation
+  - Command Blocks are now textured correctly
+  
