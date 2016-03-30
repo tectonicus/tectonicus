@@ -24,7 +24,8 @@ public class SubMesh
 	{
 		None,
 		Clockwise,
-		AntiClockwise
+		AntiClockwise,
+		Flip
 	};
 	
 	private ArrayList<Vector3f> positions;
