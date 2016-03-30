@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,6 +20,7 @@ import tectonicus.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
+import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -45,6 +46,52 @@ public class BlockUtil
 		}
 	}
 	
+	public static void addTop(BlockContext world, RawChunk rawChunk, Mesh mesh, final int blockX, final int blockY, final int blockZ, Colour4f colour, SubTexture texture, BlockTypeRegistry registry, Rotation rotation)
+	{
+		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), blockX, blockY+1, blockZ);
+		if (!above.isSolid())
+		{
+			final float lightness = world.getLight(rawChunk.getChunkCoord(), blockX, blockY+1, blockZ, LightFace.Top);
+			
+			if(rotation == Rotation.AntiClockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX,	blockY+1,	blockZ+1),
+										new Vector3f(blockX,	blockY+1,	blockZ),
+										new Vector3f(blockX+1,	blockY+1,	blockZ),
+										new Vector3f(blockX+1,	blockY+1,	blockZ+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Clockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX+1,	blockY+1,	blockZ),
+										new Vector3f(blockX+1,	blockY+1,	blockZ+1),
+										new Vector3f(blockX,	blockY+1,	blockZ+1),
+										new Vector3f(blockX,	blockY+1,	blockZ),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Flip)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX+1,	blockY+1,	blockZ+1),
+										new Vector3f(blockX,	blockY+1,	blockZ+1),
+										new Vector3f(blockX,	blockY+1,	blockZ),
+										new Vector3f(blockX+1,	blockY+1,	blockZ),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX,	blockY+1,	blockZ),
+										new Vector3f(blockX+1,	blockY+1,	blockZ),
+										new Vector3f(blockX+1,	blockY+1,	blockZ+1),
+										new Vector3f(blockX,	blockY+1,	blockZ+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+		}
+	}
+	
 	public static void addBottom(BlockContext world, RawChunk rawChunk, Mesh mesh, final int blockX, final int blockY, final int blockZ, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
 	//	final int belowId = world.getBlockId(rawChunk.getChunkCoord(), blockX, blockY-1, blockZ);
@@ -64,6 +111,53 @@ public class BlockUtil
 		}
 	}
 	
+	public static void addBottom(BlockContext world, RawChunk rawChunk, Mesh mesh, final int blockX, final int blockY, final int blockZ, Colour4f colour, SubTexture texture, BlockTypeRegistry registry, Rotation rotation)
+	{
+		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), blockX, blockY-1, blockZ);
+		if (!below.isSolid())
+		{
+			final float lightness = world.getLight(rawChunk.getChunkCoord(), blockX, blockY-1, blockZ, LightFace.Top);
+			
+			if(rotation == Rotation.AntiClockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX,	blockY,		blockZ),
+										new Vector3f(blockX,	blockY,		blockZ+1),
+										new Vector3f(blockX+1,	blockY,		blockZ+1),
+										new Vector3f(blockX+1,	blockY,		blockZ),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Clockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX+1,	blockY,		blockZ+1),
+										new Vector3f(blockX+1,	blockY,		blockZ),
+										new Vector3f(blockX,	blockY,		blockZ),
+										new Vector3f(blockX,	blockY,		blockZ+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Flip)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX+1,	blockY,		blockZ),
+										new Vector3f(blockX,	blockY,		blockZ),
+										new Vector3f(blockX,	blockY,		blockZ+1),
+										new Vector3f(blockX+1,	blockY,		blockZ+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(blockX,	blockY,		blockZ+1),
+										new Vector3f(blockX+1,	blockY,		blockZ+1),
+										new Vector3f(blockX+1,	blockY,		blockZ),
+										new Vector3f(blockX,	blockY,		blockZ),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+		}
+	}
+	
+	//Actually West
 	public static void addNorth(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
 	//	final int northId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
@@ -82,6 +176,53 @@ public class BlockUtil
 		}
 	}
 	
+	public static void addWest(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry, Rotation rotation)
+	{
+		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
+		if (!west.isSolid())
+		{
+			final float lightness = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
+			
+			if (rotation == Rotation.AntiClockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z),
+										new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Clockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y,		z),
+										new Vector3f(x,		y+1,	z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Flip)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y,		z),						
+										new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y,		z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+		}
+	}
+	
+	//Actually East
 	public static void addSouth(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
 	//	final int southId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
@@ -100,6 +241,53 @@ public class BlockUtil
 		}
 	}
 	
+	public static void addEast(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry, Rotation rotation)
+	{
+		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
+		if (!east.isSolid())
+		{
+			final float lightness = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.NorthSouth);
+			
+			if (rotation == Rotation.AntiClockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y,		z+1),
+										new Vector3f(x+1,		y+1,	z+1),
+										new Vector3f(x+1,		y+1,	z),
+										new Vector3f(x+1,		y,		z),										
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Clockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,	z),
+										new Vector3f(x+1,		y,		z),
+										new Vector3f(x+1,		y,		z+1),
+										new Vector3f(x+1,		y+1,	z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Flip)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y,		z),
+										new Vector3f(x+1,		y,		z+1),
+										new Vector3f(x+1,		y+1,	z+1),
+										new Vector3f(x+1,		y+1,	z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,	z+1),
+										new Vector3f(x+1,		y+1,	z),
+										new Vector3f(x+1,		y,		z),
+										new Vector3f(x+1,		y,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+		}
+	}
+	
+	//Actually North
 	public static void addEast(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
 	//	final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
@@ -118,6 +306,53 @@ public class BlockUtil
 		}
 	}
 	
+	public static void addNorth(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry, Rotation rotation)
+	{
+		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
+		if (!north.isSolid())
+		{
+			final float lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
+			
+			if (rotation == Rotation.AntiClockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z),
+										new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y,		z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Clockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y,		z),
+										new Vector3f(x+1,	y,		z),
+										new Vector3f(x+1,	y+1,	z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Flip)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z),
+										new Vector3f(x+1,	y,		z),
+										new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x,		y+1,	z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
+										new Vector3f(x,		y+1,	z),
+										new Vector3f(x,		y,		z),
+										new Vector3f(x+1,	y,		z),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+		}
+	}
+	
+	//Actually South
 	public static void addWest(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
 	//	final int westId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
@@ -133,6 +368,52 @@ public class BlockUtil
 									new Vector3f(x,		y,		z+1),
 									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
 									texture);
+		}
+	}
+	
+	public static void addSouth(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry, Rotation rotation)
+	{
+		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
+		if (!south.isSolid())
+		{
+			final float lightness = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
+			
+			if (rotation == Rotation.AntiClockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x+1,	y,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Clockwise)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x+1,	y,		z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else if (rotation == Rotation.Flip)
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
+			else
+			{
+				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
+										new Vector3f(x+1,	y+1,	z+1),
+										new Vector3f(x+1,	y,		z+1),
+										new Vector3f(x,		y,		z+1),
+										new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+										texture);
+			}
 		}
 	}
 	
