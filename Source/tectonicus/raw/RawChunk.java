@@ -164,27 +164,40 @@ public class RawChunk
 									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
 									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
 									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
+									ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
 									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
+									if (oldDir != null && dir == null){
+										dir = oldDir;
+									}
+
 									boolean is18 = false;
 									if (dir == null){
 										dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
 										is18 = true;
 									}
 									
+									int direction = dir.getValue();  // Have to reverse 0 and 2 for the old Dir tag
+									if (oldDir != null && direction == 0){
+										direction = 2;
+									}
+									else if (oldDir != null && direction == 2){
+										direction = 0;
+									}
+									
 									int x = xTag.getValue();
 									final int y = yTag.getValue();
 									int z = zTag.getValue();
 									
-									if (is18 && dir.getValue() == 0){
+									if (is18 && direction == 0){
 										z = zTag.getValue() - 1;
 									}
-									else if (is18 && dir.getValue() == 1){
+									else if (is18 && direction == 1){
 										x = xTag.getValue() + 1;
 									}
-									else if (is18 && dir.getValue() == 2){
+									else if (is18 && direction == 2){
 										z = zTag.getValue() + 1;
 									}
-									else if (is18 && dir.getValue() == 3){
+									else if (is18 && direction == 3){
 										x = xTag.getValue() - 1;
 									}
 									
@@ -194,7 +207,7 @@ public class RawChunk
 									
 									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
 											//", " + localY + ", " + localZ);
-									paintings.add(new TileEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), dir.getValue()));
+									paintings.add(new TileEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
 								}
 								else if (idTag.getValue().equals("ItemFrame"))
 								{
