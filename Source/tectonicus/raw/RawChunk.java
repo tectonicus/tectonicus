@@ -31,9 +31,9 @@ import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import org.json.JSONObject;
-
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
+import tectonicus.util.FileUtils;
 
 public class RawChunk
 {
@@ -281,7 +281,7 @@ public class RawChunk
 										String text3 = NbtUtil.getChild(entity, "Text3", StringTag.class).getValue();
 										String text4 = NbtUtil.getChild(entity, "Text4", StringTag.class).getValue();
 										
-										if (text1.charAt(0) == '{') // It's probably JSON
+										if (!text1.isEmpty() && FileUtils.isJSONValid(text1))
 										{
 											text1 = text1.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
 											text2 = text2.replaceAll("^[{]|[}]$", "").split(":", 2)[1];

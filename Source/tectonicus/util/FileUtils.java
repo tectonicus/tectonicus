@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.util.Set;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import tectonicus.TectonicusApp;
 
@@ -202,6 +203,19 @@ public class FileUtils
 			if (reader != null)
 				reader.close();
 		}
+	}
+	
+	public static boolean isJSONValid(String test)
+	{
+		try
+		{
+			new JSONObject(test);
+		}
+		catch (JSONException ex)
+		{
+			return false;
+		}
+		return true;
 	}
 	
 	/*
