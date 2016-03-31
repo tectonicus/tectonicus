@@ -375,10 +375,6 @@ public class TexturePack
 			
 			loadedPackTextures.put(path, tex);
 		}
-		else
-		{
-			System.err.println("Error: Couldn't load "+path);
-		}
 		
 		return tex.getFullTexture();
 	}
