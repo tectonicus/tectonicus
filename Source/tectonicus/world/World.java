@@ -169,6 +169,11 @@ public class World implements BlockContext
 			throw new RuntimeException(e);
 		}
 		
+		if (dimension == Dimension.Ender)
+		{
+			levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
+		}
+		
 		System.out.println("Loading textures");
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars);
 		this.textureVersion = texturePack.getVersion();

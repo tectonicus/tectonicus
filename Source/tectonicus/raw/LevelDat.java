@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -107,6 +107,14 @@ public class LevelDat
 	public Vector3l getSpawnPosition()
 	{
 		return new Vector3l(spawnPosition);
+	}
+	
+	public void setSpawnPosition(long x, long y, long z)
+	{
+		spawnPosition.x = x;
+		if (y != 0)
+			spawnPosition.y = y;
+		spawnPosition.z = z;
 	}
 	
 	public long getSizeOnDisk()
