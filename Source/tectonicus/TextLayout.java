@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -31,7 +31,7 @@ public class TextLayout
 		subMesh = new SubMesh();
 	}
 	
-	public void setText(String text, final float baseX, final float baseY, final float baseZ, final boolean center)
+	public void setText(String text, final float baseX, final float baseY, final float baseZ, final boolean center, Vector4f color)
 	{
 		// TODO: Kerning is slightly different from minecraft here, but it'll do for now.
 		
@@ -61,7 +61,7 @@ public class TextLayout
 			if (subTex != null)
 			{
 				subMesh.addQuad(new Vector3f(x, y+height, z), new Vector3f(x+width, y+height, z), new Vector3f(x+width, y, z), new Vector3f(x, y, z),
-								new Vector4f(0, 0, 0, 1), subTex);
+								color, subTex);
 			}
 			
 			x += width + space;

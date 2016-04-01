@@ -82,7 +82,7 @@ public class GlassPane implements BlockType
 		
 		if ((!hasNorth && !hasSouth && !hasEast && !hasWest) && (!north.isSolid() && !south.isSolid() && !east.isSolid() && !west.isSolid()))
 		{
-			if (texture.texturePackVersion == "1.9+")
+			if (texture.texturePackVersion == "1.9+" || texture.texturePackVersion == "1.RV")
 			{
 				final float offSet = 1.0f / 16.0f;
 				SubMesh glassMesh = new SubMesh();

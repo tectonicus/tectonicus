@@ -96,6 +96,7 @@ import tectonicus.blockTypes.Water;
 import tectonicus.blockTypes.Crops;
 import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
+import tectonicus.configuration.SignFilter;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -104,11 +105,13 @@ public class BlockRegistryParser
 {
 	private final TexturePack texturePack;
 	private final BiomeCache biomeCache;
+	private final SignFilter signFilter;
 	
-	public BlockRegistryParser(TexturePack texturePack, BiomeCache biomeCache)
+	public BlockRegistryParser(TexturePack texturePack, BiomeCache biomeCache, SignFilter signFilter)
 	{
 		this.texturePack = texturePack;
 		this.biomeCache = biomeCache;
+		this.signFilter = signFilter;
 	}
 	
 	public void parse(final String resName, BlockTypeRegistry registry)
@@ -467,11 +470,18 @@ public class BlockRegistryParser
 		else if (nodeName.equals("sign"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
+			SubTexture obeyTexture = parseTexture(element, "obey", null);
+			
+			boolean obey = signFilter == SignFilter.Obey ? true : false;
+			if(signFilter == SignFilter.Obey)
+			{
+				texture = obeyTexture;
+			}
 			
 			String hasPostStr = element.getAttribute("hasPost");
 			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));
 			
-			blockType = new Sign(name, texture, hasPost);
+			blockType = new Sign(name, texture, hasPost, obey);
 		}
 		else if (nodeName.equals("door"))
 		{

@@ -52,6 +52,7 @@ import tectonicus.cache.PlayerSkinCache.CacheEntry;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.configuration.SignFilter;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
@@ -112,9 +113,12 @@ public class World implements BlockContext
 	
 	private Geometry daySkybox, nightSkybox;
 	
-	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache)
+	private SignFilter signFilter;
+	
+	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache, SignFilter signFilter)
 	{
 		this.rasteriser = rasteriser;
+		this.signFilter = signFilter;
 		
 		this.defaultBlockId = BlockIds.AIR;
 		this.blockFilter = new NullBlockFilter();
@@ -203,7 +207,7 @@ public class World implements BlockContext
 		registry = new BlockTypeRegistry();
 		registry.setDefaultBlock(new Air());
 		
-		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache);
+		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
 		
 		if (useDefaultBlocks && this.textureVersion == "1.4")
 			parser.parse("defaultBlockConfigMC1.4.xml", registry);

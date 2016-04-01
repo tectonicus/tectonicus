@@ -107,6 +107,7 @@ public class RedstoneWire implements BlockType
 		
 		final float nudge = 0.001f;
 		final float actualY = y + nudge;
+		final boolean newTexture = version == "1.9+" || version == "1.RV";
 		
 		if ( (hasNorth && hasSouth && hasEast && hasWest))
 		{
@@ -116,7 +117,7 @@ public class RedstoneWire implements BlockType
 									new Vector3f(x+1,	actualY, z+1),
 									new Vector3f(x,		actualY, z+1), colour, junction);
 			
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
 											new Vector3f(x+1,	actualY, z),
@@ -133,7 +134,7 @@ public class RedstoneWire implements BlockType
 					|| ((hasNorth ^ hasSouth) && !hasEast && !hasWest))	// Just north or south
 		{
 			// Single line north-south
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z+1),
 											new Vector3f(x,		actualY, z),
@@ -153,7 +154,7 @@ public class RedstoneWire implements BlockType
 		{
 			// Single line east-west
 			
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		actualY, z),
 											new Vector3f(x+1,	actualY, z),
@@ -195,7 +196,7 @@ public class RedstoneWire implements BlockType
 			
 			if (hasNorth) //Actually West
 			{
-				if (version == "1.9+")
+				if (newTexture)
 				{
 					SubTexture northTex = new SubTexture(line.texture,
 							line.u0, line.v0,
@@ -225,7 +226,7 @@ public class RedstoneWire implements BlockType
 			
 			if (hasSouth) //Actually East
 			{
-				if (version == "1.9+")
+				if (newTexture)
 				{
 					SubTexture southTex = new SubTexture(line.texture,
 							line.u0, line.v1 - leftTexOffset,
@@ -256,7 +257,7 @@ public class RedstoneWire implements BlockType
 			if (hasEast)  //Actually North
 			{
 				SubTexture eastTex = null;
-				if (version == "1.9+")
+				if (newTexture)
 				{
 					eastTex = new SubTexture(line.texture,
 							line.u0, line.v0,
@@ -280,7 +281,7 @@ public class RedstoneWire implements BlockType
 			if (hasWest)  //Actually South
 			{
 				SubTexture westTex = null;
-				if (version == "1.9+")
+				if (newTexture)
 				{
 					westTex = new SubTexture(line.texture,
 							line.u0, line.v1 - leftTexOffset,
@@ -306,7 +307,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasNorthAbove) //Actually West
 		{
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x + nudge,	y,		z),
 											new Vector3f(x + nudge,	y,		z+1),
@@ -324,7 +325,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasSouthAbove) //Actually East
 		{
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x + 1 - nudge,	y,		z+1),
 											new Vector3f(x + 1 - nudge,	y,		z),
@@ -342,7 +343,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasEastAbove)  //Actually North
 		{
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x+1,	y,		z + nudge),
 											new Vector3f(x,		y,		z + nudge),
@@ -360,7 +361,7 @@ public class RedstoneWire implements BlockType
 		
 		if (hasWestAbove) //Actually South
 		{
-			if(version == "1.9+")
+			if(newTexture)
 			{
 				MeshUtil.addQuad(lineMesh,	new Vector3f(x,		y,		z + 1 - nudge),
 											new Vector3f(x + 1,	y,		z + 1 - nudge),

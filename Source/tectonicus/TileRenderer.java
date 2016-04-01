@@ -221,7 +221,7 @@ public class TileRenderer
 			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache);
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter());
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -354,7 +354,7 @@ public class TileRenderer
 			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache);
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter());
 			
 			// TODO: Load custom blocks here
 			
@@ -544,7 +544,17 @@ public class TileRenderer
 		{
 			for (RawSign s : chunk.getSigns())
 			{
-				if (passesFilter(s, filter))
+				if (filter == SignFilter.Obey)
+				{
+					s.text1 = "";
+					s.text2 = "OBEY";
+					s.text3 = "";
+					s.text4 = "";
+					
+					Sign sign = new Sign(s);
+					signs.add(sign);
+				}	
+				else if (filter != SignFilter.Obey && passesFilter(s, filter))
 				{
 					Sign sign = new Sign(s);
 					signs.add(sign);
@@ -2088,7 +2098,7 @@ public class TileRenderer
 		{
 			return false;
 		}
-		else if (filter == SignFilter.All)
+		else if (filter == SignFilter.All || filter == SignFilter.Obey)
 		{
 			return true;
 		}

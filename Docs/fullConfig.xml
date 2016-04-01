@@ -62,7 +62,7 @@
 		<!-- Markers to display on this layer -->
 
 		<signs
-			filter="special / all / none"
+			filter="special / all / none / obey"
 		/>
 
 		<views

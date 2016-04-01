@@ -85,6 +85,11 @@ public class TexturePack
 			this.version = "1.678";
 			Minecraft.setMinecraftVersion(1.6f);
 		}
+		else if(zipStack.getEntry("assets/minecraft/textures/blocks/usb_charger_side.png") != null)
+		{
+			this.version = "1.RV";
+			Minecraft.setMinecraftVersion(1.9f);
+		}
 		else
 		{
 			this.version = "1.9+";
