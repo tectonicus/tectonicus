@@ -182,9 +182,6 @@ public class World implements BlockContext
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars);
 		this.textureVersion = texturePack.getVersion();
 		
-		System.out.println("Creating block registry");
-		loadBlockRegistry(null, true);
-		
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir, playerSkinCache);
 		
