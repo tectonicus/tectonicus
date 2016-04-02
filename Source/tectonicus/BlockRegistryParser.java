@@ -141,8 +141,7 @@ public class BlockRegistryParser
 				}
 				catch (Exception e)
 				{
-					System.err.println("Error while parsing "+n);
-					e.printStackTrace();
+					System.err.println("Error while parsing blockConfig element: "+n+"\n");
 				}
 			}
 		}
@@ -470,12 +469,11 @@ public class BlockRegistryParser
 		else if (nodeName.equals("sign"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
-			SubTexture obeyTexture = parseTexture(element, "obey", null);
 			
 			boolean obey = signFilter == SignFilter.Obey ? true : false;
 			if(signFilter == SignFilter.Obey)
 			{
-				texture = obeyTexture;
+				texture = parseTexture(element, "obey", null);
 			}
 			
 			String hasPostStr = element.getAttribute("hasPost");

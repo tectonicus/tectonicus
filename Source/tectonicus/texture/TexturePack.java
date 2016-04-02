@@ -14,6 +14,7 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -354,16 +355,16 @@ public class TexturePack
 		
 		if (tex == null)
 		{
-			BufferedImage img = loadTexture(request.path);
-			if (img != null)
+			BufferedImage img;
+			try 
 			{
+				img = loadTexture(request.path);
 				tex = new PackTexture(rasteriser, request.path, img);
-			
 				loadedPackTextures.put(request.path, tex);
-			}
-			else
+			} 
+			catch (FileNotFoundException e)
 			{
-				System.err.println("Error: Couldn't load "+request.path);
+				System.err.println("\nThe texture file '" + request.path + "' could not be found.");
 			}
 		}
 		
@@ -384,7 +385,7 @@ public class TexturePack
 		return tex.getFullTexture();
 	}
 	
-	private BufferedImage loadTexture(String path)
+	private BufferedImage loadTexture(String path) throws FileNotFoundException
 	{
 		InputStream in = null;
 		
@@ -417,15 +418,7 @@ public class TexturePack
 		
 		if (in == null)
 		{
-			try
-			{
-				// Check local file system
-				in = new FileInputStream(new File(path));
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
+			in = new FileInputStream(new File(path));
 		}
 		
 		BufferedImage img = null;
@@ -487,7 +480,12 @@ public class TexturePack
 	public BufferedImage getItem(String fileName)
 	{
 		// in MC 1.5 items are already separate images, we load them so we can resize them
-		return loadTexture(fileName);
+		try {
+			return loadTexture(fileName);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 	public BufferedImage getIcon(final int virtualX, final int virtualY, final int width, final int height)
