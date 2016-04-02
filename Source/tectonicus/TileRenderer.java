@@ -273,7 +273,7 @@ public class TileRenderer
 			TileCoordBounds bounds = null;
 			
 			if (map.getLayers().isEmpty())
-				System.err.println("\nNo layers found!!! At least one layer is required.\n");
+				System.out.println("No layers found!!!");
 			
 			for (Layer layer : map.getLayers())
 			{
@@ -386,8 +386,7 @@ public class TileRenderer
 	
 	public static void setupWorldForLayer(Layer layer, World world)
 	{
-		System.out.println("Creating block registry");
-		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());
+		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());  // Why is this here? Is it necessary?
 		
 		world.setLightStyle(layer.getLightStyle());
 		world.setDefaultBlockId(BlockIds.AIR);
