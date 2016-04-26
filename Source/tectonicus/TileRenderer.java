@@ -301,7 +301,7 @@ public class TileRenderer
 			}
 			
 			// Output world vectors for this camera config
-			outputWorldVectors( new File(mapDir, "worldVectors.js"), map.getId(), worldVectors, bounds, world.getLevelDat(), worldStats.numChunks(), world.numPlayers());
+			outputWorldVectors( new File(mapDir, "worldVectors.js"), map.getId(), worldVectors, bounds, world.getLevelDat(), worldStats.numChunks(), world.numPlayers(), map);
 		}
 		
 		// Output html resources
@@ -1284,7 +1284,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputWorldVectors(File vectorsFile, String varNamePrefix, WorldVectors worldVectors, TileCoordBounds bounds, LevelDat levelDat, final int numChunks, final int numPlayers)
+	private void outputWorldVectors(File vectorsFile, String varNamePrefix, WorldVectors worldVectors, TileCoordBounds bounds, LevelDat levelDat, final int numChunks, final int numPlayers, tectonicus.configuration.Map map)
 	{
 		if (vectorsFile.exists())
 			vectorsFile.delete();
@@ -1296,6 +1296,7 @@ public class TileRenderer
 		final int surfaceAreaM = numChunks * RawChunk.WIDTH * RawChunk.DEPTH;
 		final DecimalFormat formatter = new DecimalFormat("####.#");
 		final String surfaceArea = formatter.format(surfaceAreaM / 1000.0f / 1000.0f);
+		
 		
 		JsonWriter json = null;
 		try
@@ -1314,6 +1315,35 @@ public class TileRenderer
 			// Spawn point
 			json.writeWorldCoord("spawnPosition", levelDat.getSpawnPosition());
 			
+			// Start view
+			
+			Vector3l startView = new Vector3l();
+			
+			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
+			{
+				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+
+				
+				if(subset.getOrigin() != null)
+				{
+					startView.x = subset.getOrigin().x;
+					startView.y = 64;  //sealevel
+					startView.z = subset.getOrigin().z;
+				}
+				else
+				{
+					startView.x = 0;
+					startView.y = 64;  //sealevel
+					startView.z = 0;
+				}
+			}
+			else
+			{
+				startView=levelDat.getSpawnPosition();
+			}
+			
+			json.writeWorldCoord("startView", startView);
+						
 			Vector2f origin = new Vector2f();
 			origin.x = (worldVectors.origin.x / scale);
 			origin.y = (worldVectors.origin.y / scale);
