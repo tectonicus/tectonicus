@@ -4,7 +4,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.RV" />
+	<property name="Version"			value="2.RV.2016-04-26" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />

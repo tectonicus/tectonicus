@@ -98,7 +98,7 @@ function main()
 			map.mapTypes.set(layer.id, minecraftMapType);
 			
 			// Set the starting lat-long pos
-			var startPoint = minecraftMapType.projection.worldToMap(tecMap.worldVectors.spawnPosition);
+			var startPoint = minecraftMapType.projection.worldToMap(tecMap.worldVectors.startView);
 			var startLatLong = minecraftMapType.projection.fromPointToLatLng(startPoint);
 			tecMap.viewLatLong = startLatLong; // 'viewLatLong' stores view pos for a given map, so we don't end up looking at nothing when we toggle between terra and nether
 		}
@@ -117,9 +117,9 @@ function main()
 	// Try and get a starting view from the fragment params, query params, or fall back to default
 	var startView;
 	if (size(fragmentParams) > 0)
-		startView = findStartView(fragmentParams, startLayer.id, startMap.worldVectors.spawnPosition);
+		startView = findStartView(fragmentParams, startLayer.id, startMap.worldVectors.startView);
 	else
-		startView = findStartView(queryParams, startLayer.id, startMap.worldVectors.spawnPosition);
+		startView = findStartView(queryParams, startLayer.id, startMap.worldVectors.startView);
 	
 	// Set the starting view
 	map.setMapTypeId(startView.layerId);
