@@ -1349,7 +1349,7 @@ public class TileRenderer
 			origin.y = (worldVectors.origin.y / scale);
 			json.writeMapsPoint("origin", origin);
 			
-			// Axies
+			// Axes
 			Vector2f xAxis = new Vector2f(worldVectors.xAxis.x / scale, worldVectors.xAxis.y / scale);
 			json.writeMapsPoint("xAxis", xAxis);
 			
@@ -2028,7 +2028,12 @@ public class TileRenderer
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
 				
-				String text = sign.getText(1) + " " + sign.getText(2) + " " + sign.getText(3);
+				String text = "";
+				for(int i=1; i<4;i++){
+					if (!sign.getText(i).startsWith("#")){
+						text=text+sign.getText(i);
+					}
+				}
 				text = text.trim();
 				args.put("text", "\'" + jsEscape(text) + "\'");
 				
@@ -2092,10 +2097,13 @@ public class TileRenderer
 	
 	public static String jsEscape(String text)
 	{
-		text = text.replace("\\", "\\\\");	// Replace \ with \\
+		// This is already done in raw.RawChunk.init
+		// Replace spaces only!
+		
+		//text = text.replace("\\", "\\\\");	// Replace \ with \\
 		text = text.replace(" ", "&nbsp;");	// Replace spaces with &nbsp;
-		text = text.replace("\"", "\\\"");	// Replace " with \"
-		text = text.replace("\'", "\\\'");	// Replace ' with \'
+		//text = text.replace("\"", "\\\"");	// Replace " with \"
+		//text = text.replace("\'", "\\\'");	// Replace ' with \'
 		
 		return text;
 	}

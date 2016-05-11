@@ -50,11 +50,14 @@ public class ViewUtil
 	{
 		String toParse = sign.getText(0);
 		
-		if (sign.getText(1).startsWith("#"))
-			toParse += " " + sign.getText(1);
+		if (sign.getText(1).startsWith("#") && sign.getText(1).length()>1)
+			toParse += " " + sign.getText(1).substring(1);
 		
-		if (sign.getText(2).startsWith("#"))
-			toParse += " " + sign.getText(2);
+		if (sign.getText(2).startsWith("#") && sign.getText(2).length()>1)
+			toParse += " " + sign.getText(2).substring(1);
+		
+		if (sign.getText(3).startsWith("#") && sign.getText(3).length()>1)
+			toParse += " " + sign.getText(3).substring(1);
 		
 		Set<String> settings = new HashSet<String>();
 		

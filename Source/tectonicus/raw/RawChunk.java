@@ -112,7 +112,7 @@ public class RawChunk
 	private void init(InputStream in, Compression compression) throws Exception
 	{
 		clear();
-		
+
 		NBTInputStream nbtIn = null;
 		try
 		{
@@ -293,30 +293,31 @@ public class RawChunk
 										String text2 = NbtUtil.getChild(entity, "Text2", StringTag.class).getValue();
 										String text3 = NbtUtil.getChild(entity, "Text3", StringTag.class).getValue();
 										String text4 = NbtUtil.getChild(entity, "Text4", StringTag.class).getValue();
+
 										
 										if (!text1.isEmpty() && FileUtils.isJSONValid(text1))
 										{
-											text1 = text1.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
-											text2 = text2.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
-											text3 = text3.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
-											text4 = text4.replaceAll("^[{]|[}]$", "").split(":", 2)[1];
+											text1=textFromJSON(text1);
+											text2=textFromJSON(text2);
+											text3=textFromJSON(text3);
+											text4=textFromJSON(text4);
 										}
+										else{ 
 
-										text1 = text1.replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
-										if (text1 == null || text1.equals("null"))
-											text1 = "";
+											text1 = text1.replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
+											if (text1 == null || text1.equals("null"))
+												text1 = "";
+											text2 = text2.replaceAll("^\"|\"$", "");
+											if (text2 == null || text2.equals("null"))
+												text2 = "";
+											text3 = text3.replaceAll("^\"|\"$", "");
+											if (text3 == null || text3.equals("null"))
+												text3 = "";
+											text4 = text4.replaceAll("^\"|\"$", "");
+											if (text4 == null || text4.equals("null"))
+												text4 = "";
+										}
 										
-										text2 = text2.replaceAll("^\"|\"$", "");
-										if (text2 == null || text2.equals("null"))
-											text2 = "";
-										
-										text3 = text3.replaceAll("^\"|\"$", "");
-										if (text3 == null || text3.equals("null"))
-											text3 = "";
-										
-										text4 = text4.replaceAll("^\"|\"$", "");
-										if (text4 == null || text4.equals("null"))
-											text4 = "";
 										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
@@ -1045,6 +1046,42 @@ public class RawChunk
 			skylight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blocklight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 		}
+	}
+	
+	private static String textFromJSON(String rawMessage){
+		String result="";
+		String searchString = "\"text\":\"";
+		int pos=0;
+		int left=0;
+		int right=0;
+		while(pos != -1){
+			pos=rawMessage.indexOf(searchString, pos);
+			left=pos+8;
+			if(pos != -1){
+				int nBackslash=0;
+				// Find right delimiting ". Problem: \\\" is escaped, \\\\" is not.
+				for(int i=left; i<rawMessage.length(); i++){ 
+					if(rawMessage.charAt(i)=='\\'){
+						nBackslash++;
+					}
+					else if(rawMessage.charAt(i)=='"' && nBackslash % 2 == 0){
+						right=i;
+						break;
+					}
+					else{
+						nBackslash=0;
+					}
+	
+				}
+
+				result=result+rawMessage.substring(left, right);
+				pos=left;
+			}
+			
+		}
+		
+		
+		return result;
 	}
 
 }
