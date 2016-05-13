@@ -85,6 +85,8 @@ public class TexturePack
 		{
 			this.version = "1.678";
 			Minecraft.setMinecraftVersion(1.6f);
+			if(zipStack.getEntry("assets/minecraft/textures/blocks/stone_andesite.png") != null)
+				Minecraft.setMinecraftVersion(1.8f);
 		}
 		else if(zipStack.getEntry("assets/minecraft/textures/blocks/usb_charger_side.png") != null)
 		{

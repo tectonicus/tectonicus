@@ -1349,7 +1349,7 @@ public class TileRenderer
 			origin.y = (worldVectors.origin.y / scale);
 			json.writeMapsPoint("origin", origin);
 			
-			// Axies
+			// Axes
 			Vector2f xAxis = new Vector2f(worldVectors.xAxis.x / scale, worldVectors.xAxis.y / scale);
 			json.writeMapsPoint("xAxis", xAxis);
 			
@@ -2028,9 +2028,19 @@ public class TileRenderer
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
 				
-				String text = sign.getText(1) + " " + sign.getText(2) + " " + sign.getText(3);
+				String text = "";
+				for(int i=0; i<4; i++)
+				{
+					if (!sign.getText(i).startsWith("#"))
+					{
+						text = text + sign.getText(i) + " ";
+					}
+				}
 				text = text.trim();
-				args.put("text", "\'" + jsEscape(text) + "\'");
+				if (Minecraft.getMinecraftVersion() >= 1.8f)
+					args.put("text", "\'" + text + "\'");
+				else
+					args.put("text", "\'" + jsEscape(text) + "\'");
 				
 				String filename = map.getId()+"/Views/View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension();
 				args.put("imageFile", "\'" + filename + "\'");
@@ -2121,8 +2131,10 @@ public class TileRenderer
 			return false;
 		
 		// Always skip view signs
-		if (s.text1.startsWith("#view"))
+		if (s.text1.startsWith("#view") || s.text2.startsWith("#view") || s.text3.startsWith("#view") || s.text4.startsWith("#view"))
+		{
 			return false;
+		}
 		
 		if (filter == SignFilter.None)
 		{
