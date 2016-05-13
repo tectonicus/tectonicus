@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -29,8 +29,12 @@ public class ViewFilter
 	{
 		if (type == ViewFilterType.All)
 		{
-			String start = sign.text1.trim();
-			return start.startsWith("#view");
+			String text1 = sign.text1.trim();
+			String text2 = sign.text2.trim();
+			String text3 = sign.text3.trim();
+			String text4 = sign.text4.trim();
+			
+			return (text1.startsWith("#view") || text2.startsWith("#view") || text3.startsWith("#view") || text4.startsWith("#view")) ? true : false;
 		}
 		else
 			return false;

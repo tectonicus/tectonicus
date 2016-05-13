@@ -2029,9 +2029,11 @@ public class TileRenderer
 				args.put("worldPos", posStr);
 				
 				String text = "";
-				for(int i=1; i<4;i++){
-					if (!sign.getText(i).startsWith("#")){
-						text=text+sign.getText(i);
+				for(int i=0; i<4; i++)
+				{
+					if (!sign.getText(i).startsWith("#"))
+					{
+						text = text + sign.getText(i) + " ";
 					}
 				}
 				text = text.trim();
@@ -2129,8 +2131,10 @@ public class TileRenderer
 			return false;
 		
 		// Always skip view signs
-		if (s.text1.startsWith("#view"))
+		if (s.text1.startsWith("#view") || s.text2.startsWith("#view") || s.text3.startsWith("#view") || s.text4.startsWith("#view"))
+		{
 			return false;
+		}
 		
 		if (filter == SignFilter.None)
 		{
