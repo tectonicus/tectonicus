@@ -2037,7 +2037,10 @@ public class TileRenderer
 					}
 				}
 				text = text.trim();
-				args.put("text", "\'" + jsEscape(text) + "\'");
+				if (Minecraft.getMinecraftVersion() >= 1.8f)
+					args.put("text", "\'" + text + "\'");
+				else
+					args.put("text", "\'" + jsEscape(text) + "\'");
 				
 				String filename = map.getId()+"/Views/View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension();
 				args.put("imageFile", "\'" + filename + "\'");
@@ -2099,13 +2102,10 @@ public class TileRenderer
 	
 	public static String jsEscape(String text)
 	{
-		// This is already done in raw.RawChunk.init
-		// Replace spaces only!
-		
-		//text = text.replace("\\", "\\\\");	// Replace \ with \\
+		text = text.replace("\\", "\\\\");	// Replace \ with \\
 		text = text.replace(" ", "&nbsp;");	// Replace spaces with &nbsp;
-		//text = text.replace("\"", "\\\"");	// Replace " with \"
-		//text = text.replace("\'", "\\\'");	// Replace ' with \'
+		text = text.replace("\"", "\\\"");	// Replace " with \"
+		text = text.replace("\'", "\\\'");	// Replace ' with \'
 		
 		return text;
 	}

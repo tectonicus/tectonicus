@@ -33,6 +33,7 @@ import org.jnbt.Tag;
 import org.json.JSONObject;
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
+import tectonicus.Minecraft;
 import tectonicus.util.FileUtils;
 
 public class RawChunk
@@ -302,22 +303,28 @@ public class RawChunk
 											text3=textFromJSON(text3);
 											text4=textFromJSON(text4);
 										}
-										else{ 
-
-											text1 = text1.replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
+										else 
+										{ 
+											if (Minecraft.getMinecraftVersion() >= 1.8f)
+											{
+												text1 = text1.replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
+												text2 = text2.replaceAll("^\"|\"$", "");
+												text3 = text3.replaceAll("^\"|\"$", "");
+												text4 = text4.replaceAll("^\"|\"$", "");
+											}
+											
 											if (text1 == null || text1.equals("null"))
 												text1 = "";
-											text2 = text2.replaceAll("^\"|\"$", "");
+											
 											if (text2 == null || text2.equals("null"))
 												text2 = "";
-											text3 = text3.replaceAll("^\"|\"$", "");
+											
 											if (text3 == null || text3.equals("null"))
 												text3 = "";
-											text4 = text4.replaceAll("^\"|\"$", "");
+											
 											if (text4 == null || text4.equals("null"))
 												text4 = "";
 										}
-										
 										
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
