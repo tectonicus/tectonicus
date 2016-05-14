@@ -296,7 +296,7 @@ public class RawChunk
 										String text4 = NbtUtil.getChild(entity, "Text4", StringTag.class).getValue();
 
 										
-										if (!text1.isEmpty() && FileUtils.isValidJSON(text1))
+										if (!text1.isEmpty() && FileUtils.isJSONValid(text1))
 										{
 											text1=textFromJSON(text1);
 											text2=textFromJSON(text2);
@@ -311,13 +311,6 @@ public class RawChunk
 												text2 = text2.replaceAll("^\"|\"$", "");
 												text3 = text3.replaceAll("^\"|\"$", "");
 												text4 = text4.replaceAll("^\"|\"$", "");
-											}
-											else
-											{
-												text1 = jsEscape(text1);
-												text2 = jsEscape(text2);
-												text3 = jsEscape(text3);
-												text4 = jsEscape(text4);
 											}
 											
 											if (text1 == null || text1.equals("null"))
@@ -1062,8 +1055,7 @@ public class RawChunk
 		}
 	}
 	
-	private static String textFromJSON(String rawMessage)
-	{
+	private static String textFromJSON(String rawMessage){
 		String result="";
 		String searchString = "\"text\":\"";
 		int pos=0;
@@ -1098,14 +1090,5 @@ public class RawChunk
 		
 		return result;
 	}
-	
-	public static String jsEscape(String text)
-	{
-		text = text.replace("\\", "\\\\");	// Replace \ with \\
-		text = text.replace(" ", "&nbsp;");	// Replace spaces with &nbsp;
-		text = text.replace("\"", "\\\"");	// Replace " with \"
-		text = text.replace("\'", "\\\'");	// Replace ' with \'
-		
-		return text;
-	}
+
 }

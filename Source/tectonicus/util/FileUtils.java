@@ -205,7 +205,7 @@ public class FileUtils
 		}
 	}
 	
-	public static boolean isValidJSON(String test)
+	public static boolean isJSONValid(String test)
 	{
 		try
 		{
