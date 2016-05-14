@@ -1817,12 +1817,7 @@ public class TileRenderer
 			{				
 				signs.read(sign);
 				
-				String message = "";
-				
-				if (Minecraft.getMinecraftVersion() >= 1.8f)
-					message = "\"" +sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
-				else
-					message = "\"" + jsEscape(sign.getText(0)) + "\\n" + jsEscape(sign.getText(1)) + "\\n" + jsEscape(sign.getText(2)) + "\\n" + jsEscape(sign.getText(3)) + "\"";
+				String message = "\"" +sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
 				
 				HashMap<String, String> args = new HashMap<String, String>();
 				
@@ -1832,22 +1827,11 @@ public class TileRenderer
 				
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
-				
 				args.put("message", message);
-				if (Minecraft.getMinecraftVersion() >= 1.8f)
-				{
-					args.put("text1", "\"" + sign.getText(0) + "\"");
-					args.put("text2", "\"" + sign.getText(1) + "\"");
-					args.put("text3", "\"" + sign.getText(2) + "\"");
-					args.put("text4", "\"" + sign.getText(3) + "\"");
-				}
-				else
-				{
-					args.put("text1", "\"" + jsEscape(sign.getText(0)) + "\"");
-					args.put("text2", "\"" + jsEscape(sign.getText(1)) + "\"");
-					args.put("text3", "\"" + jsEscape(sign.getText(2)) + "\"");
-					args.put("text4", "\"" + jsEscape(sign.getText(3)) + "\"");
-				}
+				args.put("text1", "\"" + sign.getText(0) + "\"");
+				args.put("text2", "\"" + sign.getText(1) + "\"");
+				args.put("text3", "\"" + sign.getText(2) + "\"");
+				args.put("text4", "\"" + sign.getText(3) + "\"");
 				
 				if (radius == 0 || radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
 				{
@@ -2037,10 +2021,7 @@ public class TileRenderer
 					}
 				}
 				text = text.trim();
-				if (Minecraft.getMinecraftVersion() >= 1.8f)
-					args.put("text", "\'" + text + "\'");
-				else
-					args.put("text", "\'" + jsEscape(text) + "\'");
+				args.put("text", "\'" + text + "\'");
 				
 				String filename = map.getId()+"/Views/View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension();
 				args.put("imageFile", "\'" + filename + "\'");
