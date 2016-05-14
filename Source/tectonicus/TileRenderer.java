@@ -2081,16 +2081,6 @@ public class TileRenderer
 		return new Point(x, y);
 	}
 	
-	public static String jsEscape(String text)
-	{
-		text = text.replace("\\", "\\\\");	// Replace \ with \\
-		text = text.replace(" ", "&nbsp;");	// Replace spaces with &nbsp;
-		text = text.replace("\"", "\\\"");	// Replace " with \"
-		text = text.replace("\'", "\\\'");	// Replace ' with \'
-		
-		return text;
-	}
-	
 	public static class Result
 	{
 		public final boolean aborted;
