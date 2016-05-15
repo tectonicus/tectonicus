@@ -20,6 +20,8 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -31,9 +33,12 @@ import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import org.json.JSONObject;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
-import tectonicus.Minecraft;
 import tectonicus.util.FileUtils;
 
 public class RawChunk
@@ -290,42 +295,35 @@ public class RawChunk
 									String id = idTag.getValue();
 									if (id.equals("Sign"))
 									{
-										String text1 = NbtUtil.getChild(entity, "Text1", StringTag.class).getValue();
-										String text2 = NbtUtil.getChild(entity, "Text2", StringTag.class).getValue();
-										String text3 = NbtUtil.getChild(entity, "Text3", StringTag.class).getValue();
-										String text4 = NbtUtil.getChild(entity, "Text4", StringTag.class).getValue();
+										List<String> textLines = new ArrayList<String>();
 
-										
-										if (!text1.isEmpty() && FileUtils.isJSONValid(text1))
+										for (int i=1; i<=4; i++)
 										{
-											text1=textFromJSON(text1);
-											text2=textFromJSON(text2);
-											text3=textFromJSON(text3);
-											text4=textFromJSON(text4);
-										}
-										else 
-										{ 
-											if (Minecraft.getMinecraftVersion() >= 1.8f)
+											String text = NbtUtil.getChild(entity, "Text"+i, StringTag.class).getValue();
+
+											if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
 											{
-												text1 = text1.replaceAll("^\"|\"$", "");  //This regex removes begin and end double quotes
-												text2 = text2.replaceAll("^\"|\"$", "");
-												text3 = text3.replaceAll("^\"|\"$", "");
-												text4 = text4.replaceAll("^\"|\"$", "");
+												textLines.add(textFromJSON(text));
 											}
-											
-											if (text1 == null || text1.equals("null"))
-												text1 = "";
-											
-											if (text2 == null || text2.equals("null"))
-												text2 = "";
-											
-											if (text3 == null || text3.equals("null"))
-												text3 = "";
-											
-											if (text4 == null || text4.equals("null"))
-												text4 = "";
+											else if (!StringUtils.isEmpty(text) && text.charAt(0) == '"' && text.charAt(text.length()-1) == '"' && text.length()>2) // 1.8 or older sign text
+											{
+												text = text.replaceAll("^\"|\"$", "");  //This removes begin and end double quotes
+												text = StringEscapeUtils.unescapeJava(text);
+												Gson gson = new GsonBuilder().create();
+										        textLines.add(gson.toJson(text).replaceAll("^\"|\"$", ""));
+											}
+											else if (!StringUtils.isBlank(text)) // 1.7 or older sign text
+											{
+												text = text.replaceAll("^\"|\"$", "");
+												Gson gson = new GsonBuilder().create();
+												textLines.add(gson.toJson(text).replaceAll("^\"|\"$", ""));
+											}
+											else
+											{
+												textLines.add("");
+											}
 										}
-										
+
 										final int x = xTag.getValue();
 										final int y = yTag.getValue();
 										final int z = zTag.getValue();
@@ -340,7 +338,7 @@ public class RawChunk
 										signs.add( new RawSign( blockId, data,
 																x, y, z,
 																localX, localY, localZ,
-																text1, text2, text3, text4) );
+																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3)) );
 									}
 									else if (id.equals("FlowerPot"))
 									{

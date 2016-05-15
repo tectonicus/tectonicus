@@ -8,6 +8,7 @@
 	<classpathentry kind="lib" path="Libs/Jars/jnbt.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jpct.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/json.jar"/>
+	<classpathentry kind="lib" path="Libs/Jars/gson-2.6.2.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lzma.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/ProcessingCore.jar"/>

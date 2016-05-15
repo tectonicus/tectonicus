@@ -19,8 +19,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Set;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonParser;
 
 import tectonicus.TectonicusApp;
 
@@ -181,7 +180,7 @@ public class FileUtils
 		}
 	}
 	
-	public static String loadJSON(InputStream iStream) throws IOException, JSONException 
+	public static String loadJSON(InputStream iStream) throws IOException 
 	{
 		BufferedReader reader = null;
 		try
@@ -207,15 +206,15 @@ public class FileUtils
 	
 	public static boolean isJSONValid(String test)
 	{
-		try
+		try 
 		{
-			new JSONObject(test);
+			new JsonParser().parse(test).getAsJsonObject();
+			return true;
 		}
-		catch (JSONException ex)
-		{
+		catch(Exception ex)
+		{ 
 			return false;
 		}
-		return true;
 	}
 	
 	/*

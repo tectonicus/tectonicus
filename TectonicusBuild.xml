@@ -4,7 +4,7 @@
 	
 	<property name="ProjectName" 		value="Tectonicus" />
 	
-	<property name="Version"			value="2.RV.2016-04-26" />
+	<property name="Version"			value="2.23" />
 	
 	<property name="Source"				location="Source" />
 	<property name="Data"				location="Data" />
@@ -32,7 +32,7 @@
 				destdir="${FactoryFloor}/Binary"
 				source="1.7"
 				target="1.7"
-				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/json.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar;${Jars}/commons-lang3-3.4.jar;"
+				classpath="${Jars}/lwjgl.jar;${Jars}/lwjgl_util.jar;${Jars}/BiomeExtractor.jar;${Jars}/ProcessingCore.jar;${Jars}/jpct.jar;${Jars}/json.jar;${Jars}/gson-2.6.2.jar;${Jars}/jnbt.jar;${java.home}/lib/jfxrt.jar;${Jars}/commons-lang3-3.4.jar;"
 				debug="true"
 				debuglevel="lines,source"
 				verbose="false"
@@ -65,6 +65,8 @@
 		<unjar src="${Jars}/lwjgl_util.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<unjar src="${Jars}/json.jar" dest="${FactoryFloor}/Temp"/>
+		
+		<unjar src="${Jars}/gson-2.6.2.jar" dest="${FactoryFloor}/Temp"/>
 		
 		<unjar src="${Jars}/jpct.jar" dest="${FactoryFloor}/Temp"/>
 		
