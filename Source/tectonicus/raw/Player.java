@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,10 +9,16 @@
 
 package tectonicus.raw;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -22,6 +28,9 @@ import org.jnbt.ListTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.ShortTag;
 import org.jnbt.Tag;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.util.Vector3d;
@@ -174,6 +183,50 @@ public class Player
 					}
 				}
 			}
+		}
+	}
+	
+	public void requestPlayerInfo() throws Exception
+	{
+		if (this.getUUID().equals(this.getName()))
+		{
+			this.setSkinURL("http://www.minecraft.net/skin/"+this.getName()+".png");
+		}
+		else
+		{
+			String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+this.getUUID();
+			URL url = new URL(urlString);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.addRequestProperty("Content-Type", "application/json");
+			connection.setReadTimeout(15*1000);
+			connection.connect();
+			int responseCode = connection.getResponseCode();
+			if (responseCode == 204)
+				System.err.println("ERROR: Unrecognized UUID");
+			else if (responseCode == 429)
+				System.err.println("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			StringBuilder builder = new StringBuilder();
+			
+			String line = null;
+			while ((line = reader.readLine()) != null)
+			{
+				builder.append(line + "\n");
+			}
+			reader.close();
+			
+			JsonObject obj = new JsonParser().parse(builder.toString()).getAsJsonObject();
+			this.setName(obj.get("name").getAsString());
+			JsonObject textures = obj.get("properties").getAsJsonArray().get(0).getAsJsonObject();
+			byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").getAsString());
+			obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
+			boolean hasSkin = obj.get("textures").getAsJsonObject().has("SKIN");
+			String textureUrl = null;
+			if (hasSkin == true)
+				textureUrl = obj.get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
+			this.setSkinURL(textureUrl);
 		}
 	}
 	

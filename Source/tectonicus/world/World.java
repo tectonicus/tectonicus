@@ -11,11 +11,7 @@ package tectonicus.world;
 
 import java.awt.Color;
 import java.awt.Point;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -25,9 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONObject;
 import org.lwjgl.util.vector.Vector3f;
 
 import tectonicus.BlockContext;
@@ -925,43 +918,15 @@ public class World implements BlockContext
 								player.setName(ce.playerName);
 								player.setSkinURL(ce.skinURL);
 							}
+							else
+							{
+								//refresh name and skin
+								player.requestPlayerInfo();
+							}
 						}
 						else
 						{
-							if (player.getUUID().equals(player.getName()))
-							{
-								player.setSkinURL("http://www.minecraft.net/skin/"+player.getName()+".png");
-							}
-							else
-							{
-								String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+player.getUUID();
-								URL url = new URL(urlString);
-					            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					            connection.setRequestMethod("GET");
-					            connection.addRequestProperty("Content-Type", "application/json");
-					            connection.setReadTimeout(15*1000);
-					            connection.connect();
-					            
-					            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-					            StringBuilder builder = new StringBuilder();
-								
-					            String line = null;
-					            while ((line = reader.readLine()) != null)
-					            {
-					            	builder.append(line + "\n");
-					            }
-					            reader.close();
-					            JSONObject obj = new JSONObject(builder.toString());
-					            player.setName(obj.getString("name"));
-					            JSONObject textures = obj.getJSONArray("properties").getJSONObject(0);
-					            byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").toString());
-					            obj = new JSONObject(new String(decoded, "UTF-8"));
-					            boolean hasSkin = obj.getJSONObject("textures").has("SKIN");
-					            String textureUrl = null;
-					            if (hasSkin == true)
-					            	textureUrl = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
-					            player.setSkinURL(textureUrl);
-							}
+							player.requestPlayerInfo();
 						}			            
 			            
 						players.add(player);
@@ -970,8 +935,6 @@ public class World implements BlockContext
 					catch (Exception e)
 					{
 						System.err.println("Couldn't load player info from "+playerFile.getName());
-						System.err.println("You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
-						//e.printStackTrace();
 					}
 				}
 			}
