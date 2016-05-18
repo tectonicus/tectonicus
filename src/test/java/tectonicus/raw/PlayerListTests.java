@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -32,7 +32,7 @@ public class PlayerListTests
 	@Test
 	public void testJSONPlayerList() throws Exception
 	{
-		PlayerList pl = new PlayerList(new File("UnitTestData/whitelist.json"));
+		PlayerList pl = new PlayerList(new File("src/test/resources/whitelist.json"));
 		assertThat(pl.contains("androidz"), is(equalTo(true)));
 		assertThat(pl.contains("Ricola"), is(equalTo(true)));
 	}
@@ -40,7 +40,7 @@ public class PlayerListTests
 	@Test
 	public void testTextPlayerList() throws Exception
 	{
-		PlayerList pl = new PlayerList(new File("UnitTestData/whitelist.txt"));
+		PlayerList pl = new PlayerList(new File("src/test/resources/whitelist.txt"));
 		assertThat(pl.contains("androidz"), is(equalTo(true)));
 		assertThat(pl.contains("Ricola"), is(equalTo(true)));
 	}

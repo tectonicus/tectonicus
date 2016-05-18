@@ -6,11 +6,6 @@ sourceSets {
 			srcDir 'Source'
 		}
 	}
-	test {
-		java {
-			srcDir 'UnitTests'
-		}
-	}
 }
 
 repositories {
