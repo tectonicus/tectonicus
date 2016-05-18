@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus;
+package tectonicus.raw;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;

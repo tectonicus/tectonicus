@@ -7,9 +7,8 @@
  *
  */
 
-package tectonicus;
+package tectonicus.test;
 
-import org.junit.Test;
 import org.lwjgl.input.Keyboard;
 
 import static org.lwjgl.util.glu.GLU.gluPerspective;
@@ -53,7 +52,16 @@ public class DrawModelTest
 		}
 	}
 	
-	@Test
+	public static void main(String[] args)
+	{
+		DrawModelTest test = new DrawModelTest();
+		try {
+			test.testDrawModel();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void testDrawModel() throws Exception
 	{	
 		Map<Texture, Mesh> meshList = new HashMap<>();

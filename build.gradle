@@ -1,0 +1,28 @@
+apply plugin: 'java'
+
+sourceSets {
+	main {
+		java {
+			srcDir 'Source'
+		}
+	}
+	test {
+		java {
+			srcDir 'UnitTests'
+		}
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile('org.lwjgl.lwjgl:lwjgl:2.9.3',
+			'org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
+			'org.apache.commons:commons-lang3:3.4@jar',
+			'com.google.code.gson:gson:2.6.2@jar')
+	compile files ('Libs/Jars/json.jar', 'Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	
+	testCompile 'junit:junit:4.12'
+}

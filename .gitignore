@@ -1,2 +1,6 @@
 /Binary
 /Dist
+.settings
+/build
+.gradle
+gradle-app.setting

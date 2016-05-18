@@ -1,4 +1,13 @@
-package tectonicus;
+/*
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ *
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution.  The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
+ *
+ */
+
+package tectonicus.cache.swap;
 
 import java.io.File;
 import java.util.HashSet;
@@ -6,23 +15,31 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import tectonicus.TileCoord;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 
 
 public class HddTileListTests
 {
-	@Test
-	public void createList()
-	{
-		File dataDir = new File("UnitTestData");
+	HddTileList list;
+	
+	@Before
+	public void setUp()
+	{	
+		File dataDir = new File("build/tmp");
 		File workingDir = new File(dataDir, "HddTileList");
 		
 		HddTileListFactory factory = new HddTileListFactory(workingDir);
-		HddTileList list = factory.createList("basic");
-		
+		list = factory.createList("basic");
+	}
+	
+	@Test
+	public void createList()
+	{		
 		list.add(new TileCoord(  0,   0));
 		list.add(new TileCoord(  1,   1));
 		list.add(new TileCoord( 20,   0));
@@ -40,12 +57,6 @@ public class HddTileListTests
 	@Test
 	public void emptyIterate()
 	{
-		File dataDir = new File("UnitTestData");
-		File workingDir = new File(dataDir, "HddTileList");
-		
-		HddTileListFactory factory = new HddTileListFactory(workingDir);
-		HddTileList list = factory.createList("basic");
-		
 		int count = 0;
 		for (TileCoord coord : list)
 		{
@@ -59,12 +70,6 @@ public class HddTileListTests
 	@Test
 	public void singleIterate()
 	{
-		File dataDir = new File("UnitTestData");
-		File workingDir = new File(dataDir, "HddTileList");
-		
-		HddTileListFactory factory = new HddTileListFactory(workingDir);
-		HddTileList list = factory.createList("basic");
-		
 		Set<TileCoord> coords = new HashSet<TileCoord>();
 		coords.add( new TileCoord( 0,  0) );
 		
@@ -87,12 +92,6 @@ public class HddTileListTests
 	@Test
 	public void iterate()
 	{
-		File dataDir = new File("UnitTestData");
-		File workingDir = new File(dataDir, "HddTileList");
-		
-		HddTileListFactory factory = new HddTileListFactory(workingDir);
-		HddTileList list = factory.createList("basic");
-		
 		Set<TileCoord> coords = new HashSet<TileCoord>();
 		coords.add( new TileCoord( 0,  0) );
 		coords.add( new TileCoord( 1,  1) );
