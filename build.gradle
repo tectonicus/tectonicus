@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 archivesBaseName = 'Tectonicus'
-version = 'v2.23'
+version = '2.23'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
@@ -12,16 +12,42 @@ repositories {
 }
 
 dependencies {
-	compile('org.lwjgl.lwjgl:lwjgl:2.9.3',
-			'org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
+	compile('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
 			'org.apache.commons:commons-lang3:3.4@jar',
-			'com.google.code.gson:gson:2.6.2@jar')
+			'com.google.code.gson:gson:2.6.2@jar') 
+	compile('org.lwjgl.lwjgl:lwjgl:2.9.3') {
+				exclude module: 'jinput'
+			}
 	compile files ('Libs/Jars/json.jar', 'Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
 	
 	testCompile 'junit:junit:4.12'
 }
 
+build.doFirst {
+	def props = new Properties()
+	props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
+	props.setProperty('buildTime', new Date().format('hhmm'))
+	props.setProperty('version', "${version}")
+	def writer = new FileWriter(file('build/tectonicus.buildInfo'))
+	props.store(writer, 'Tectonicus build info')
+	writer.flush()
+	writer.close()
+}
+
+jar {
+	from files(sourceSets.main.output.classesDir, 'build/tectonicus.buildinfo')
+	from configurations.runtime.asFileTree.files.collect { zipTree(it) }
+	from fileTree('Data')
+	exclude ('OpenAL*.dll', 'openal.dylib', 'libopenal*.so', 'processing/**')
+
+	manifest {
+		attributes 'Main-Class': 'tectonicus.TectonicusApp'
+	}
+}
+
 task createPackage(type: Zip, dependsOn: 'build', group: build, description: 'Create release zip file') {
-	from('Data/defaultBlockConfig.xml', 'Docs', "build/libs/tectonicus-${version}.jar")
-	include('*.xml', '*.txt', '*.jar')
+	from files('Data/defaultBlockConfig.xml', "build/libs/tectonicus-${version}.jar")
+	from('Docs') {
+		include('*.xml', '*.txt')
+	}
 }
