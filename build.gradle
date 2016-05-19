@@ -1,12 +1,11 @@
 apply plugin: 'java'
 
-sourceSets {
-	main {
-		java {
-			srcDir 'Source'
-		}
-	}
-}
+archivesBaseName = 'Tectonicus'
+version = 'v2.23'
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+sourceSets.main.java.srcDirs = ['Source']
 
 repositories {
 	mavenCentral()
@@ -20,4 +19,9 @@ dependencies {
 	compile files ('Libs/Jars/json.jar', 'Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
 	
 	testCompile 'junit:junit:4.12'
+}
+
+task createPackage(type: Zip, dependsOn: 'build', group: build, description: 'Create release zip file') {
+	from('Data/defaultBlockConfig.xml', 'Docs', "build/libs/tectonicus-${version}.jar")
+	include('*.xml', '*.txt', '*.jar')
 }
