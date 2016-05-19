@@ -7,6 +7,10 @@ targetCompatibility = 1.7
 
 sourceSets.main.java.srcDirs = ['Source']
 
+compileJava {
+	options.debug = false
+}
+
 repositories {
 	mavenCentral()
 }
