@@ -225,7 +225,7 @@ public class MinecartTracks implements BlockType
 		}
 		else if(isPowered)
 		{
-			MeshUtil.addQuad(poweredMesh,	new Vector3f(x,		p0Height,	z),
+			MeshUtil.addDoubleSidedQuad(poweredMesh,	new Vector3f(x,		p0Height,	z),
 					new Vector3f(x+1,	p1Height,	z),
 					new Vector3f(x+1,	p2Height,	z+1),
 					new Vector3f(x,		p3Height,	z+1),
@@ -234,7 +234,7 @@ public class MinecartTracks implements BlockType
 		}
 		else
 		{
-			MeshUtil.addQuad(straightMesh,	new Vector3f(x,		p0Height,	z),
+			MeshUtil.addDoubleSidedQuad(straightMesh,	new Vector3f(x,		p0Height,	z),
 								new Vector3f(x+1,	p1Height,	z),
 								new Vector3f(x+1,	p2Height,	z+1),
 								new Vector3f(x,		p3Height,	z+1),

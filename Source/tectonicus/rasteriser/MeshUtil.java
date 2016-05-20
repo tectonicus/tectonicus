@@ -98,6 +98,21 @@ public class MeshUtil
 		mesh.addVertex(p2, colour, texture.u1, texture.v1);
 		mesh.addVertex(p1, colour, texture.u1, texture.v0);
 	}
+	
+	public static void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, Vector2f uv0, Vector2f uv1, Vector2f uv2, Vector2f uv3)
+	{
+		// Clockwise
+		mesh.addVertex(p0, colour, uv0.x, uv0.y);
+		mesh.addVertex(p1, colour, uv1.x, uv1.y);
+		mesh.addVertex(p2, colour, uv2.x, uv2.y);
+		mesh.addVertex(p3, colour, uv3.x, uv3.y);
+		
+		// Anticlockwise
+		mesh.addVertex(p0, colour, uv0.x, uv0.y);
+		mesh.addVertex(p3, colour, uv3.x, uv3.y);
+		mesh.addVertex(p2, colour, uv2.x, uv2.y);
+		mesh.addVertex(p1, colour, uv1.x, uv1.y);
+	}
 
 	public static void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, Vector2f uv0, Vector2f uv1, Vector2f uv2, Vector2f uv3)
 	{
