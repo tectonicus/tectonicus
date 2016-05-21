@@ -19,7 +19,7 @@ function createPlayerMarker(map, player, pos, signWindow)
 	      		position: pos,
 				map: map, 
 				title: player.name,
-				icon: 'Images/'+player.name+'.png',
+				icon: player.icon,
 				optimized: false
 			});
 			marker.player = player;
@@ -64,7 +64,7 @@ function getPlayerHtml(player)
 						
 			+ '<div class=\"playerName\" style=\"text-align:center; font-size:110%\" >' + player.name + '</div>'
 			+ '<div style=\"width:300px; margin:4px;\" >'
-			+ 	'<img style=\"float:left; margin:4px;\" src=\"Images/' + player.name + '.png\" width=\"32\" height=\"64\" />'
+			+ 	'<img style=\"float:left; margin:4px;\" src=\"' + player.icon + '\" width=\"32\" height=\"64\" />'
 			+	'<div>'
 			+		'<div>' + getHealthHtml(player) + '</div>'
 			+		'<div>' + getFoodHtml(player) + '</div>'

@@ -136,7 +136,7 @@ function main()
 
 	viewToggleControl = CreateMarkerToggle(map, 'show views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);	
 	signToggleControl = CreateMarkerToggle(map, 'show signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
-	playerToggleControl = CreateMarkerToggle(map, 'show players', 'Images/DefaultPlayer.png', playerMarkers, playersInitiallyVisible);
+	playerToggleControl = CreateMarkerToggle(map, 'show players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
 	bedToggleControl = CreateMarkerToggle(map, 'show beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
 	portalToggleControl = CreateMarkerToggle(map, 'show portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
 	spawnToggleControl = CreateMarkerToggle(map, 'show spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);	
@@ -395,6 +395,13 @@ function refreshPlayerMarkers(markersVisible)
 	for (i in tecMap.players)
 	{
 		var player = tecMap.players[i];
+		
+		player.icon = "Images/PlayerIcons/Tectonicus_Default_Player_Icon.png"
+		var image = new Image();
+		image.onload = function() {
+			player.icon = "Images/PlayerIcons/"+player.name+".png"
+		}
+		image.src = player.name + ".png";
 		
 		player.donation = '';
 		

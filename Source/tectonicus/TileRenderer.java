@@ -253,7 +253,7 @@ public class TileRenderer
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map, world.getSpawnPosition());
 			
 			// Output players
-			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler);
+			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler);
 			
 			// Output beds
 			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null), world.getSpawnPosition());
@@ -1700,7 +1700,7 @@ public class TileRenderer
 		writeImage(texturePack.getIcon(25, 18, 9, 9), 18, 18, new File(imagesDir, "EmptyAir.png"));
 		
 		// Write default player icon
-		playerIconAssembler.writeDefaultIcon(new File(imagesDir, "DefaultPlayer.png"));
+		playerIconAssembler.writeDefaultIcon(new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		
 		// And pull out the jQuery code
 		File scriptsDir = new File(exportDir, "Scripts");

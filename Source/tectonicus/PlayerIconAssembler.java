@@ -60,11 +60,14 @@ public class PlayerIconAssembler
 	{
 		try
 		{
-			BufferedImage skin = fetchSkin(player);
-			BufferedImage icon = generateIcon(skin);
-			if (icon != null)
+			BufferedImage skin = skinCache.fetchSkin(player);
+			if (skin != null)
 			{
-				ImageIO.write(icon, "png", file);
+				BufferedImage icon = generateIcon(skin);
+				if (icon != null)
+				{
+					ImageIO.write(icon, "png", file);
+				}
 			}
 		}
 		catch (Exception e)
@@ -95,15 +98,6 @@ public class PlayerIconAssembler
 		g.drawImage(leg, 8, 20, null);
 		
 		return icon;
-	}
-
-	private BufferedImage fetchSkin(Player player)
-	{
-		BufferedImage customSkin = skinCache.fetchSkin(player);
-		if (customSkin != null)
-			return customSkin;
-		else
-			return defaultSkin;
 	}
 	
 	public class WriteIconTask implements Callable<Void>

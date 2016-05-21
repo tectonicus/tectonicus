@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -108,7 +108,7 @@ public class PlayerSkinCache
 		else
 		{
 			// Wipe cache dir
-			System.out.println("Player skin cache is old or corrupt, cleaning...");
+			System.out.println("Player skin cache is corrupt, cleaning...");
 			
 			FileUtils.deleteDirectory(cacheDir);
 			cacheDir.mkdirs();
@@ -181,7 +181,7 @@ public class PlayerSkinCache
 			{
 				try
 				{
-					return ImageIO.read( new File(cacheDir, existing.skinFile) );
+					return ImageIO.read( new File(cacheDir, existing.playerName + ".png") );
 				}
 				catch (Exception e)
 				{
@@ -193,6 +193,7 @@ public class PlayerSkinCache
 		// Not in cache, or cache stale so refetch from network
 		skinCache.remove(player.getUUID());
 		
+		CacheEntry newEntry = new CacheEntry();
 		BufferedImage newSkin = fetchSkinFromNetwork(player.getSkinURL());
 		File skinFile = null;
 		if (newSkin != null)
@@ -206,17 +207,17 @@ public class PlayerSkinCache
 			{
 				e.printStackTrace();
 			}
+			newEntry.skinFile = player.getName() + ".png";
 		}
 		else
 		{
-			System.out.println("No skin for player "+player.getName());
+			newEntry.skinFile = "Tectonicus_Default_Player_Skin.png";
+			System.out.println("No custom skin found for player "+player.getName());
 		}
 		
-		CacheEntry newEntry = new CacheEntry();
 		newEntry.playerName = player.getName();
 		newEntry.playerUUID = player.getUUID();
 		newEntry.skinURL = player.getSkinURL();
-		newEntry.skinFile = player.getName() + ".png";
 		newEntry.fetchedTime = System.currentTimeMillis();
 		
 		skinCache.put(player.getUUID(), newEntry);
