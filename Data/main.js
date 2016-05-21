@@ -383,6 +383,31 @@ function refreshViewMarkers(markersVisible)
 	}
 }
 
+function loadIcon(src, player, pos, markersVisible) 
+{
+	var icon = new Image();
+	icon.onload = function() {
+		player.icon = src;
+		var marker = createPlayerMarker(map, player, pos, signWindow);
+		
+		// Disable this marker if we don't want signs initially visible						
+		if (!markersVisible)
+			marker.setMap(null);
+			
+		playerMarkers.push(marker);
+    };
+	icon.onerror = function() {
+		player.icon = player.icon = "Images/PlayerIcons/Tectonicus_Default_Player_Icon.png";
+		var marker = createPlayerMarker(map, player, pos, signWindow);
+		
+		// Disable this marker if we don't want signs initially visible						
+		if (!markersVisible)
+			marker.setMap(null);
+			
+		playerMarkers.push(marker);
+	};
+    icon.src = src;
+}
 
 function refreshPlayerMarkers(markersVisible)
 {
@@ -396,25 +421,12 @@ function refreshPlayerMarkers(markersVisible)
 	{
 		var player = tecMap.players[i];
 		
-		player.icon = "Images/PlayerIcons/Tectonicus_Default_Player_Icon.png"
-		var image = new Image();
-		image.onload = function() {
-			player.icon = "Images/PlayerIcons/"+player.name+".png"
-		}
-		image.src = player.name + ".png";
-		
 		player.donation = '';
 		
 		var point = projection.worldToMap(player.worldPos);
 		var pos = projection.fromPointToLatLng(point);
 			
-		var marker = createPlayerMarker(map, player, pos, signWindow);
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-			
-		playerMarkers.push(marker);
+		loadIcon("Images/PlayerIcons/"+player.name+".png", player, pos, markersVisible);
 	}	
 }
 
