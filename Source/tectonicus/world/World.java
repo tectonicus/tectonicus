@@ -20,6 +20,8 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.lwjgl.util.vector.Vector3f;
 
@@ -53,6 +55,7 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BiomeIds;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
+import tectonicus.raw.Player.RequestPlayerInfoTask;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.RawSign;
 import tectonicus.renderer.Camera;
@@ -901,6 +904,7 @@ public class World implements BlockContext
 		File[] playerFiles = playersDir.listFiles();
 		if (playerFiles != null)
 		{
+			ExecutorService executor = Executors.newCachedThreadPool();
 			for (File playerFile : playerFiles)
 			{
 				if (playerFile.getName().endsWith(".dat"))
@@ -921,16 +925,17 @@ public class World implements BlockContext
 							else
 							{
 								//refresh name and skin
-								player.requestPlayerInfo();
+								RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
+								executor.submit(task);
 							}
 						}
 						else
 						{
-							player.requestPlayerInfo();
+							RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
+							executor.submit(task);
 						}			            
 			            
 						players.add(player);
-						System.out.println("Loaded " + player.getName());
 					}
 					catch (Exception e)
 					{
@@ -938,6 +943,7 @@ public class World implements BlockContext
 					}
 				}
 			}
+			executor.shutdown();
 		}
 		
 		System.out.println("\tloaded "+players.size()+" players");

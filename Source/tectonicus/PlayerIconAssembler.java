@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.concurrent.Callable;
 
 import javax.imageio.ImageIO;
 
@@ -103,5 +104,24 @@ public class PlayerIconAssembler
 			return customSkin;
 		else
 			return defaultSkin;
+	}
+	
+	public class WriteIconTask implements Callable<Void>
+	{
+		Player player;
+		File iconFile;
+		
+		public WriteIconTask(Player player, File iconFile)
+		{
+			this.player = player;
+			this.iconFile = iconFile;
+		}
+
+		@Override
+		public Void call() throws Exception
+		{
+			writeIcon(player, iconFile);
+			return null;
+		}
 	}
 }

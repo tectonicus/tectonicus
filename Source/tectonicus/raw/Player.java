@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -186,50 +187,6 @@ public class Player
 		}
 	}
 	
-	public void requestPlayerInfo() throws Exception
-	{
-		if (this.getUUID().equals(this.getName()))
-		{
-			this.setSkinURL("http://www.minecraft.net/skin/"+this.getName()+".png");
-		}
-		else
-		{
-			String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+this.getUUID();
-			URL url = new URL(urlString);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("GET");
-			connection.addRequestProperty("Content-Type", "application/json");
-			connection.setReadTimeout(15*1000);
-			connection.connect();
-			int responseCode = connection.getResponseCode();
-			if (responseCode == 204)
-				System.err.println("ERROR: Unrecognized UUID");
-			else if (responseCode == 429)
-				System.err.println("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			StringBuilder builder = new StringBuilder();
-			
-			String line = null;
-			while ((line = reader.readLine()) != null)
-			{
-				builder.append(line + "\n");
-			}
-			reader.close();
-			
-			JsonObject obj = new JsonParser().parse(builder.toString()).getAsJsonObject();
-			this.setName(obj.get("name").getAsString());
-			JsonObject textures = obj.get("properties").getAsJsonArray().get(0).getAsJsonObject();
-			byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").getAsString());
-			obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
-			boolean hasSkin = obj.get("textures").getAsJsonObject().has("SKIN");
-			String textureUrl = null;
-			if (hasSkin == true)
-				textureUrl = obj.get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
-			this.setSkinURL(textureUrl);
-		}
-	}
-	
 	public String getName()
 	{
 		return name;
@@ -294,5 +251,55 @@ public class Player
 	public Vector3l getSpawnPosition()
 	{
 		return spawnPos;
+	}
+	
+	public class RequestPlayerInfoTask implements Callable<Void>
+	{
+		@Override
+		public Void call() throws Exception
+		{
+			if (Player.this.getUUID().equals(Player.this.getName()))
+			{
+				Player.this.setSkinURL("http://www.minecraft.net/skin/"+Player.this.getName()+".png");
+			}
+			else
+			{
+				String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/"+Player.this.getUUID();
+				URL url = new URL(urlString);
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.addRequestProperty("Content-Type", "application/json");
+				connection.setReadTimeout(15*1000);
+				connection.connect();
+				int responseCode = connection.getResponseCode();
+				if (responseCode == 204)
+					System.err.println("ERROR: Unrecognized UUID");
+				else if (responseCode == 429)
+					System.err.println("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
+	
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				StringBuilder builder = new StringBuilder();
+				
+				String line = null;
+				while ((line = reader.readLine()) != null)
+				{
+					builder.append(line + "\n");
+				}
+				reader.close();
+				
+				JsonObject obj = new JsonParser().parse(builder.toString()).getAsJsonObject();
+				Player.this.setName(obj.get("name").getAsString());
+				JsonObject textures = obj.get("properties").getAsJsonArray().get(0).getAsJsonObject();
+				byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").getAsString());
+				obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
+				boolean hasSkin = obj.get("textures").getAsJsonObject().has("SKIN");
+				String textureUrl = null;
+				if (hasSkin == true)
+					textureUrl = obj.get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
+				Player.this.setSkinURL(textureUrl);
+			}
+			System.out.println("Loaded " + Player.this.getName());
+			return null;
+		}
 	}
 }

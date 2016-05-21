@@ -28,12 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.util.vector.Vector3f;
 
+import tectonicus.PlayerIconAssembler.WriteIconTask;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
@@ -1482,12 +1485,12 @@ public class TileRenderer
 		System.out.println("Outputting players to "+playersFile.getAbsolutePath());
 		
 		int numOutput = 0;
-		
+		ExecutorService executor = Executors.newCachedThreadPool();
 		JsArrayWriter jsWriter = null;
 		try
 		{
 			jsWriter = new JsArrayWriter(playersFile, map.getId()+"_playerData");
-			
+						
 			for (Player player : players)
 			{
 				if (filter.passesFilter(player))
@@ -1512,7 +1515,8 @@ public class TileRenderer
 					jsWriter.write(args);
 					
 					File iconFile = new File(imagesDir, player.getName()+".png");
-					playerIconAssembler.writeIcon(player, iconFile);
+					WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
+					executor.submit(task);
 					
 					numOutput++;
 				}
@@ -1524,10 +1528,11 @@ public class TileRenderer
 		}
 		finally
 		{
+			executor.shutdown();
+			
 			if (jsWriter != null)
 				jsWriter.close();
 		}
-		
 		System.out.println("Outputted "+numOutput+" players");
 	}
 	
