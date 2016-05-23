@@ -1641,6 +1641,8 @@ public class TileRenderer
 			writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
+			// Write default player icon
+			playerIconAssembler.writeDefaultIcon(texturePack.getItem("mob/char.png"), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
 		else if (texturePack.getVersion() == "1.5")
 		{
@@ -1650,6 +1652,8 @@ public class TileRenderer
 			writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+			// Write default player icon
+			playerIconAssembler.writeDefaultIcon(texturePack.getItem("mob/char.png"), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
 		else //assume version is 1.6+
 		{
@@ -1659,6 +1663,8 @@ public class TileRenderer
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+			// Write default player icon
+			playerIconAssembler.writeDefaultIcon(texturePack.getItem("assets/minecraft/textures/entity/steve.png"), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
 		
 		// Hearts need composing so they get the outline
@@ -1698,9 +1704,6 @@ public class TileRenderer
 		// Air just comes out direct
 		writeImage(texturePack.getIcon(16, 18, 9, 9), 18, 18, new File(imagesDir, "FullAir.png"));
 		writeImage(texturePack.getIcon(25, 18, 9, 9), 18, 18, new File(imagesDir, "EmptyAir.png"));
-		
-		// Write default player icon
-		playerIconAssembler.writeDefaultIcon(new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		
 		// And pull out the jQuery code
 		File scriptsDir = new File(exportDir, "Scripts");

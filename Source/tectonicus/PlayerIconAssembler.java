@@ -21,30 +21,19 @@ import tectonicus.cache.PlayerSkinCache;
 import tectonicus.raw.Player;
 
 public class PlayerIconAssembler
-{
-	private BufferedImage defaultSkin;
-	
+{	
 	private final PlayerSkinCache skinCache;
 	
 	public PlayerIconAssembler(PlayerSkinCache skinCache)
 	{
 		this.skinCache = skinCache;
-		
-		try
-		{
-			defaultSkin = ImageIO.read( getClass().getClassLoader().getResource("Images/DefaultSkin.png") );
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
 	}
 
-	public void writeDefaultIcon(File file)
+	public void writeDefaultIcon(BufferedImage skin, File file)
 	{
 		try
 		{
-			BufferedImage icon = generateIcon(defaultSkin);
+			BufferedImage icon = generateIcon(skin);
 			if (icon != null)
 			{
 				ImageIO.write(icon, "png", file);
