@@ -309,7 +309,7 @@ public class TileRenderer
 		
 		// Output html resources
 		// TODO: Should only load texture pack once and share between this and world loading
-		outputHtmlResources( new TexturePack(rasteriser, args.minecraftJar(), args.texturePack(), args.getMap(0).getModJars()), playerIconAssembler );
+		outputHtmlResources( new TexturePack(rasteriser, args.minecraftJar(), args.texturePack(), args.getMap(0).getModJars()), playerIconAssembler, args.getDefaultSkin() );
 		
 		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), args);
 		
@@ -1622,7 +1622,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler)
+	private void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, String defaultSkin)
 	{
 		File imagesDir = new File(exportDir, "Images");
 		imagesDir.mkdirs();
@@ -1636,13 +1636,12 @@ public class TileRenderer
 		{
 			writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
 			writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
-			
 			writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));
 			writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
-			// Write default player icon
-			playerIconAssembler.writeDefaultIcon(texturePack.getItem("mob/char.png"), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			if (defaultSkin == "steve")
+				defaultSkin = "mob/char.png";
 		}
 		else if (texturePack.getVersion() == "1.5")
 		{
@@ -1652,8 +1651,8 @@ public class TileRenderer
 			writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
-			// Write default player icon
-			playerIconAssembler.writeDefaultIcon(texturePack.getItem("mob/char.png"), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			if (defaultSkin == "steve")
+				defaultSkin = "mob/char.png";
 		}
 		else //assume version is 1.6+
 		{
@@ -1663,8 +1662,8 @@ public class TileRenderer
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
-			// Write default player icon
-			playerIconAssembler.writeDefaultIcon(texturePack.getItem("assets/minecraft/textures/entity/steve.png"), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			if (defaultSkin == "steve")
+				defaultSkin = "assets/minecraft/textures/entity/steve.png";
 		}
 		
 		// Hearts need composing so they get the outline
@@ -1704,6 +1703,9 @@ public class TileRenderer
 		// Air just comes out direct
 		writeImage(texturePack.getIcon(16, 18, 9, 9), 18, 18, new File(imagesDir, "FullAir.png"));
 		writeImage(texturePack.getIcon(25, 18, 9, 9), 18, 18, new File(imagesDir, "EmptyAir.png"));
+		
+		// Write default player icon
+		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		
 		// And pull out the jQuery code
 		File scriptsDir = new File(exportDir, "Scripts");

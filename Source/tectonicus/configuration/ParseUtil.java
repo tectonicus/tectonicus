@@ -433,6 +433,14 @@ public class ParseUtil
 		return name;
 	}
 	
+	public static String parseDefaultSkin(String skin)
+	{
+		if (skin == null || skin.equals(""))
+			return "steve";
+		
+		return skin;
+	}
+	
 	public static File parseLogFile(String logFileStr)
 	{
 		if (logFileStr == null || logFileStr.length() == 0)

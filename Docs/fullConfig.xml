@@ -13,6 +13,7 @@
 		texturePack=""
 		outputDir="."
 		outputHtmlName="map.html"
+		defaultSkin="steve"
 		numZoomLevels="8"
 		singlePlayerName=""
 		numDownsampleThreads="(num of CPU/cores)"

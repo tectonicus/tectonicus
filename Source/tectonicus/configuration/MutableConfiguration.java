@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -36,6 +36,7 @@ public class MutableConfiguration implements Configuration
 	private File texturePack;
 	
 	private String outputHtmlName;
+	private String defaultSkin;
 	
 	private boolean signsInitiallyVisible;
 	private boolean playersInitiallyVisible;
@@ -88,6 +89,7 @@ public class MutableConfiguration implements Configuration
 		viewsInitiallyVisible = true;
 		logFile = new File("./TectonicusLog.txt");
 		outputHtmlName = "map.html";
+		defaultSkin = "steve";
 		numDownsampleThreads = 1;
 		singlePlayerName = "Player";
 		maps = new ArrayList<MutableMap>();
@@ -387,6 +389,9 @@ public class MutableConfiguration implements Configuration
 		this.outputHtmlName = name;
 	}
 	public String getOutputHtmlName() { return outputHtmlName; }
+	
+	public void setDefaultSkin(String skin) { this.defaultSkin = skin; }
+	public String getDefaultSkin()	{ return defaultSkin; }
 	
 	public void setNumDownsampleThreads(final int num)
 	{
