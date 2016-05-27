@@ -172,10 +172,12 @@ public class PlayerSkinCache
 		{
 			existing = skinCache.get(player.getUUID());
 			
-			// If file is null that means this player has no custom skin
-			if (existing.skinFile == null)
+			if (existing.skinFile.equals("Tectonicus_Default_Player_Skin.png"))
 				return null;
 			
+			
+			/* TODO:  Player icons should be stored in the cache too.  We don't need to regenerate the icon every run if the skin refresh
+			 * time hasn't expired yet */
 			final long age = System.currentTimeMillis() - existing.fetchedTime;
 			if (age < MAX_AGE_BEFORE_REFRESH)
 			{
