@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,6 +22,7 @@ import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel;
@@ -108,11 +109,13 @@ public class DrawModelTest
 		        float x2 = element.getTo().x();
 		        float y2 = element.getTo().y();
 		        float z2 = element.getTo().z();
-
-				result.addVertex(new Vector3f(x1, y2, z1), tex.u0, tex.v0);
-				result.addVertex(new Vector3f(x2, y2, z1), tex.u1, tex.v0);
-				result.addVertex(new Vector3f(x2, y2, z2), tex.u1, tex.v1);
-				result.addVertex(new Vector3f(x1, y2, z2), tex.u0, tex.v1);
+		        
+		        Vector4f color = new Vector4f(1,1,1,1);
+		        
+				result.addVertex(new Vector3f(x1, y2, z1), color, tex.u0, tex.v0);
+				result.addVertex(new Vector3f(x2, y2, z1), color, tex.u1, tex.v0);
+				result.addVertex(new Vector3f(x2, y2, z2), color, tex.u1, tex.v1);
+				result.addVertex(new Vector3f(x1, y2, z2), color, tex.u0, tex.v1);
 	        }
 		}
 		
