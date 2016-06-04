@@ -650,6 +650,16 @@
 						side1="frosted_ice_1.png" top1="frosted_ice_1.png"
 						side2="frosted_ice_2.png" top2="frosted_ice_2.png"
 						side3="frosted_ice_3.png" top3="frosted_ice_3.png" transparent="true" />
+						
+	<Solid id="213" stringId="minecraft:magma_block" name="Magma Block" texture="magma.png" />
+	
+	<Solid id="214" stringId="minecraft:nether_wart_block" name="Nether Wart Block" texture="nether_wart_block.png" />
+	
+	<Solid id="215" stringId="minecraft:red_nether_brick" name="Red Nether Brick" texture="red_nether_brick.png" />
+	
+	<Solid id="216" stringId="minecraft:bone_block" name="Bone Block" side="bone_block_side.png" top="bone_block_top.png" />
+	
+	<Plant id="217" stringId="minecraft:structure_void" name="Structure Void" texture="assets/minecraft/textures/items/structure_void.png" />
 				
 	<Solid id="250" stringId="minecraft:usb_charger" name="USB Charger" side="usb_charger_side.png" top="usb_charger_top.png" />
 						
