@@ -70,6 +70,7 @@ public class RawChunk
 	private ArrayList<TileEntity> beacons;
 	private ArrayList<TileEntity> banners;
 	private ArrayList<TileEntity> itemFrames;
+	private ArrayList<TileEntity> chests;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -111,6 +112,7 @@ public class RawChunk
 		beacons = new ArrayList<TileEntity>();
 		banners = new ArrayList<TileEntity>();
 		itemFrames = new ArrayList<TileEntity>();
+		chests = new ArrayList<TileEntity>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -467,15 +469,34 @@ public class RawChunk
 										banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, patterns, 0));
 										//banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, 0, 0));
 									}
+									else if (id.equals("Chest"))
+									{
+										final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
+										String name = "Chest";
+										if (customName != null)
+											name = customName.getValue();
+										
+										final StringTag lootTable = NbtUtil.getChild(entity, "LootTable", StringTag.class);
+										
+										int unopenedChestFlag = 0;
+										if (lootTable != null)
+											unopenedChestFlag = 1;
+										
+										final int x = xTag.getValue();
+										final int y = yTag.getValue();
+										final int z = zTag.getValue();
+										
+										final int localX = x-(blockX*WIDTH);
+										final int localY  = y-(blockY*HEIGHT);
+										final int localZ = z-(blockZ*DEPTH);
+										
+										chests.add(new TileEntity(0, unopenedChestFlag, x, y, z, localX, localY, localZ, name, 0));
+									}
 								//	else if (id.equals("Furnace"))
 								//	{
 								//		
 								//	}
 								//	else if (id.equals("MobSpawner"))
-								//	{
-								//		
-								//	}
-								//	else if (id.equals("Chest"))
 								//	{
 								//		
 								//	}
@@ -809,7 +830,7 @@ public class RawChunk
 		s.blockIds[x][localY][z] = blockId;
 	}
 	
-	private void setBlockData(final int x, final int y, final int z, final byte val)
+	public void setBlockData(final int x, final int y, final int z, final byte val)
 	{
 		final int sectionY = y / MAX_SECTIONS;
 		final int localY = y % SECTION_HEIGHT;
@@ -863,7 +884,7 @@ public class RawChunk
 			return MAX_LIGHT-1;
 	}
 	
-	private void setBlockLight(final int x, final int y, final int z, final byte val)
+	public void setBlockLight(final int x, final int y, final int z, final byte val)
 	{
 		final int sectionY = y / MAX_SECTIONS;
 		final int localY = y % SECTION_HEIGHT;
@@ -961,6 +982,11 @@ public class RawChunk
 	public ArrayList<TileEntity> getItemFrames()
 	{
 		return new ArrayList<TileEntity>(itemFrames);
+	}
+	
+	public ArrayList<TileEntity> getChests()
+	{
+		return new ArrayList<TileEntity>(chests);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

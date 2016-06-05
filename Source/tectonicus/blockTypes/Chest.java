@@ -117,7 +117,8 @@ public class Chest implements BlockType
 	{
 		final int data = chunk.getBlockData(x, y, z);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
+		final float lightness = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
+		//final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
 		
 		SubMesh smallMesh = new SubMesh();

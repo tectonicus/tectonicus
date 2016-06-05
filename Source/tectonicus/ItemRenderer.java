@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -141,6 +141,37 @@ public class ItemRenderer
 		}
 		
 		BoundingBox bounds = new BoundingBox(new Vector3l(0, 0, 0), 4, 5, 1);
+		
+		Map placeholderMap = config.getMap(0);
+		
+		ItemGeometry item = new ItemGeometry(geometry, bounds);
+		renderItem(placeholderMap, item, outFile, 4);
+	}
+	
+	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
+	{
+		System.out.println("Generating block image...");
+		
+		ItemContext context = new ItemContext(texturePack, registry);
+		
+		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		
+		RawChunk rawChunk = new RawChunk();
+		
+		rawChunk.setBlockId(0, 0, 0, (byte)BlockIds.CHEST);
+		rawChunk.setBlockData(0, 0, 0, (byte)4);
+		rawChunk.setBlockLight(0, 0, 0, (byte)1);
+		
+		final int blockId = rawChunk.getBlockId(0, 0, 0);
+		final int blockData = rawChunk.getBlockData(0, 0, 0);
+		
+		BlockType type = registry.find(blockId, blockData);
+		if (type != null)
+		{
+			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
+		}
+		
+		BoundingBox bounds = new BoundingBox(new Vector3l(0, 1, 0), 1, 1, 1);
 		
 		Map placeholderMap = config.getMap(0);
 		

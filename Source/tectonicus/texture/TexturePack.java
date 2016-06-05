@@ -39,6 +39,7 @@ public class TexturePack
 	
 	private BufferedImage itemSheet;
 	private BufferedImage iconSheet;
+	private BufferedImage chestImage;
 	
 	private BufferedImage grassLookupImage;
 	private BufferedImage foliageLookupImage;
@@ -195,6 +196,16 @@ public class TexturePack
 			else
 			{
 				throw new RuntimeException("Couldn't find icons.png in "+formatPaths(minecraftJar, texturePack));
+			}
+			
+			ZipStackEntry chestEntry = zipStack.getEntry(path + "gui/container/generic_54.png");
+			if (chestEntry != null)
+			{
+				chestImage = copy( ImageIO.read( chestEntry.getInputStream() ) );
+			}
+			else
+			{
+				throw new RuntimeException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
 			ZipStackEntry grassEntry;
@@ -496,6 +507,19 @@ public class TexturePack
 		Point size = iconVirtualToActual(width, height);
 		
 		return iconSheet.getSubimage(actual.x, actual.y, size.x, size.y);
+	}
+	
+	public BufferedImage getChestImage()
+	{
+		System.out.println("width: "+ chestImage.getWidth());
+		System.out.println("height: "+ chestImage.getHeight());
+		BufferedImage top = chestImage.getSubimage(0, 0, 176, 71);
+		BufferedImage bottom = chestImage.getSubimage(0, 215, 176, 7);
+		
+		BufferedImage finalImg = new BufferedImage(176, 78, BufferedImage.TYPE_INT_ARGB);
+		finalImg.getGraphics().drawImage(top, 0, 0, null);
+		finalImg.getGraphics().drawImage(bottom, 0, 71, null);
+		return finalImg;
 	}
 	
 	public Font getFont()

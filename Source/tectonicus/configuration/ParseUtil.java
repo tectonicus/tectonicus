@@ -266,6 +266,19 @@ public class ParseUtil
 		return portalFilterType;
 	}
 	
+	public static ChestFilterType parseChestFilter(String chestFilterStr)
+	{
+		chestFilterStr = chestFilterStr.toLowerCase();
+		
+		ChestFilterType chestFilterType = ChestFilterType.All;
+		if (chestFilterStr.equalsIgnoreCase("none"))
+			chestFilterType = ChestFilterType.None;
+		else if (chestFilterStr.equalsIgnoreCase("player"))
+			chestFilterType = ChestFilterType.Player;
+		
+		return chestFilterType;
+	}
+	
 	/** Caution: can return null */
 	public static LightStyle parseLightStyle(String lightingStr)
 	{

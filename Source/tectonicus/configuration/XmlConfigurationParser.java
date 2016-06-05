@@ -203,6 +203,14 @@ public class XmlConfigurationParser
 				map.setPortalFilter( new PortalFilter(portalFilterType) );
 			}
 			
+			// Chest filter
+			Element chestsNode = getChild(mapElement, "chests");
+			if (chestsNode != null)
+			{
+				ChestFilterType chestFilterType = parseChestFilter( getString(chestsNode, "filter") );
+				map.setChestFilter( new ChestFilter(chestFilterType) );
+			}
+			
 			Element modsElement = getChild(mapElement, "mods");
 			if (modsElement != null)
 			{

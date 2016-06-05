@@ -29,7 +29,7 @@ function createTileUrlFunc(mapId, layerId, imageFormatWithoutDot)
 	return urlFunc;
 }
 
-// Only use a fraction of the lattitude range so we stay clear of the date line (where things wrap and going weird)
+// Only use a fraction of the latitude range so we stay clear of the date line (where things wrap and going weird)
 var lattitudeRange = 10;
 var compassControl = null;
 
@@ -39,6 +39,7 @@ var playerToggleControl = null;
 var bedToggleControl = null;
 var portalToggleControl = null;
 var spawnToggleControl = null;
+var chestToggleControl = null;
 
 function main()
 {
@@ -75,7 +76,6 @@ function main()
 	map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 	
 	
-	
 	for (i in contents)
 	{
 		var tecMap = contents[i];
@@ -110,6 +110,10 @@ function main()
 		maxWidth: 1500
 	});
 	
+	google.maps.event.addListener(map, 'click', function() {
+        signWindow.close();
+    });
+	
 	// Find a default start layer
 	var startMap = contents[0];
 	var startLayer = startMap.layers[0];
@@ -140,7 +144,8 @@ function main()
 	bedToggleControl = CreateMarkerToggle(map, 'show beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
 	portalToggleControl = CreateMarkerToggle(map, 'show portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
 	spawnToggleControl = CreateMarkerToggle(map, 'show spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);	
-
+	chestToggleControl = CreateMarkerToggle(map, 'show chests', 'Images/Chest.png', chestMarkers, true);
+	
 	CreateLinkControl(map);
 	
 	// Add controls to the map
@@ -148,6 +153,7 @@ function main()
 	map.controls[google.maps.ControlPosition.TOP_LEFT].push( compassControl.getDiv() );
 	map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
 	
+	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(chestToggleControl);
 	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(portalToggleControl);
 	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(bedToggleControl);
 	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(playerToggleControl);
@@ -173,6 +179,7 @@ viewMarkers = [];
 playerMarkers = [];
 portalMarkers = [];
 bedMarkers = [];
+chestMarkers = [];
 
 function onMapTypeChanged()
 {
@@ -185,6 +192,7 @@ function onMapTypeChanged()
 	refreshPlayerMarkers( playerToggleControl.checked );
 	refreshBedMarkers( bedToggleControl.checked );
 	refreshPortalMarkers( portalToggleControl.checked );
+	refreshChestMarkers( chestToggleControl.checked );
 	
 	if (compassControl)
 		compassControl.setCompassImage( mapType.tectonicusMap.id + '/Compass.png' );
@@ -517,6 +525,51 @@ function refreshPortalMarkers(markersVisible)
 			marker.setMap(null);
 			
 		portalMarkers.push(marker);
+	}
+}
+
+function refreshChestMarkers(markersVisible)
+{
+	destroyMarkers(chestMarkers);
+
+	var tecMap = getActiveMap();
+	var projection = getActiveProjection();
+	
+	// Chest markers
+	for (i in tecMap.chests)
+	{
+		var chest = tecMap.chests[i];
+		
+		var point = projection.worldToMap(chest.worldPos);
+		var pos = projection.fromPointToLatLng(point);
+			
+		var marker = new google.maps.Marker(
+		{		
+			position: pos,
+			map: map, 
+			title: "Chest",
+			icon: 'Images/Chest.png',
+			optimized: false
+		});
+
+		// Disable this marker if we don't want chests initially visible						
+		if (!markersVisible)
+			marker.setMap(null);
+		
+		marker.chest = chest; // save this ref in the marker so we can fetch it in the bound function below
+		
+		google.maps.event.addListener(marker, 'click', function()
+		{
+			var options =
+			{
+				content: '<img width="300" height="131" src="Images/SmallChest.png"/>'
+			};
+			signWindow.close();
+			signWindow.setOptions(options);
+			signWindow.open(map, this);
+		});
+		
+		chestMarkers.push(marker);
 	}
 }
 

@@ -49,6 +49,7 @@ import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
+import tectonicus.configuration.ChestFilter;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.ImageFormat;
@@ -65,6 +66,7 @@ import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.RawSign;
+import tectonicus.raw.TileEntity;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
@@ -74,6 +76,7 @@ import tectonicus.util.TempArea;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
+import tectonicus.world.Chest;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.filter.ExploredCaveFilter;
@@ -235,8 +238,9 @@ public class TileRenderer
 			File portalsFile = tempArea.generateTempFile("portals", ".list");
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
+			File chestsFile = tempArea.generateTempFile("chests", ".list");
 			
-			WorldStats worldStats = preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), portalsFile, signsFile, viewsFile);
+			WorldStats worldStats = preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile, chestsFile);
 			
 			// Find visible tiles
 			HddTileList visibleTiles = findVisibleTiles(world, camera, worldStats.numChunks());
@@ -263,6 +267,8 @@ public class TileRenderer
 			
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
+			
+			outputChests(new File(mapDir, "chests.js"), chestsFile, map, world.getSpawnPosition(), world.getBlockTypeRegistry(), world.getTexturePack());
 			
 			// Output world stats
 			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
@@ -365,8 +371,9 @@ public class TileRenderer
 			File portalsFile = tempArea.generateTempFile("portals", ".list");
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
+			File chestsFile = tempArea.generateTempFile("chests", ".list");
 			
-			preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), portalsFile, signsFile, viewsFile);
+			preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile, chestsFile);
 			
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
@@ -411,23 +418,26 @@ public class TileRenderer
 		}	
 	}
 
-	private WorldStats preProcess(World world, Dimension dimension, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, File portalsFile, File signsFile, File viewsFile)
+	private WorldStats preProcess(World world, Dimension dimension, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, File portalsFile, File signsFile, File viewsFile, File chestsFile)
 	{
 		WorldStats stats = null;
 		
 		HddObjectListWriter<Portal> portals = null;
 		HddObjectListWriter<Sign> signs = null;
 		HddObjectListWriter<Sign> views = null;
+		HddObjectListWriter<Chest> chests = null;
 		
 		try
 		{
 			portals = new HddObjectListWriter<Portal>(portalsFile, true);
 			signs = new HddObjectListWriter<Sign>(signsFile, true);
 			views = new HddObjectListWriter<Sign>(viewsFile, true);
+			chests = new HddObjectListWriter<Chest>(chestsFile, true);
 			
-			stats = preProcess(world, signFilter, portalFilter, viewFilter, portals, signs, views);
+			stats = preProcess(world, signFilter, portalFilter, viewFilter, chestFilter, portals, signs, views, chests);
 			
 			System.out.println("Found "+views.size()+" views");
+			System.out.println("Found "+chests.size()+" chests");
 		}
 		catch (Exception e)
 		{
@@ -441,6 +451,8 @@ public class TileRenderer
 				signs.close();
 			if (views != null)
 				views.close();
+			if (chests != null)
+				chests.close();
 		}
 		
 		final int numPlayers = world.players(dimension).size();
@@ -449,7 +461,7 @@ public class TileRenderer
 		return stats;
 	}
 	
-	private WorldStats preProcess(World world, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
+	private WorldStats preProcess(World world, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, HddObjectListWriter<Chest> chests)
 	{
 		// Pre-render pass - calc chunk hashes and project signs
 		if (progressListener != null)
@@ -508,6 +520,8 @@ public class TileRenderer
 							findPortals(c.getRawChunk(), portals, portalFilter, worldStats);
 							
 							findViews(c.getRawChunk(), views, viewFilter);
+							
+							findChests(c.getRawChunk(), chests, chestFilter);
 							
 							if (worldStats.numChunks() % 100 == 0)
 								System.out.print("\tfound "+worldStats.numChunks()+" chunks so far\r"); //prints a carraige return after line
@@ -624,6 +638,25 @@ public class TileRenderer
 				{
 					Sign sign = new Sign(s);
 					views.add(sign);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private static void findChests(RawChunk chunk, HddObjectListWriter<Chest> chests, ChestFilter filter)
+	{
+		try
+		{
+			for (TileEntity te : chunk.getChests())
+			{
+				if (filter.passesFilter(te.blockData))
+				{
+					Chest chest = new Chest(te);
+					chests.add(chest);
 				}
 			}
 		}
@@ -1132,6 +1165,10 @@ public class TileRenderer
 								outLine += templateEnd;
 								
 								outLine += templateStart;
+								outLine += map.getId()+"/chests.js";
+								outLine += templateEnd;
+								
+								outLine += templateStart;
 								outLine += map.getId()+"/worldVectors.js";
 								outLine += templateEnd;
 								
@@ -1431,6 +1468,7 @@ public class TileRenderer
 				writer.println("\t\tsigns: "+m.getId()+"_signData,");
 				writer.println("\t\tportals: "+m.getId()+"_portalData,");
 				writer.println("\t\tviews: "+m.getId()+"_viewData,");
+				writer.println("\t\tchests: "+m.getId()+"_chestData,");
 				writer.println("\t\tblockStats: "+m.getId()+"_blockStats,");
 				writer.println("\t\tworldStats: "+m.getId()+"_worldStats,");
 				writer.println("\t\tworldVectors: "+m.getId()+"_worldVectors,");
@@ -1703,6 +1741,8 @@ public class TileRenderer
 		// Air just comes out direct
 		writeImage(texturePack.getIcon(16, 18, 9, 9), 18, 18, new File(imagesDir, "FullAir.png"));
 		writeImage(texturePack.getIcon(25, 18, 9, 9), 18, 18, new File(imagesDir, "EmptyAir.png"));
+		
+		writeImage(texturePack.getChestImage(), 176, 77, new File(imagesDir, "SmallChest.png"));
 		
 		// Write default player icon
 		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
@@ -2037,6 +2077,87 @@ public class TileRenderer
 				args.put("imageFile", "\'" + filename + "\'");
 				
 				jsWriter.write(args);
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (jsWriter != null)
+				jsWriter.close();
+		}
+	}
+	
+	private void outputChests(File outputFile, File chestListFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack)
+	{
+		HddObjectListReader<Chest> chestsIn = null;
+		try
+		{
+			ItemRenderer itemRenderer = new ItemRenderer(args, rasteriser);
+			itemRenderer.renderBlock(new File(args.outputDir(), "Images/Chest.png"), registry, texturePack);
+			
+			chestsIn = new HddObjectListReader<Chest>(chestListFile);
+			outputChests(outputFile, chestsIn, map, spawn);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (chestsIn != null)
+				chestsIn.close();
+		}
+	}
+	
+	private void outputChests(File chestFile, HddObjectListReader<Chest> chests, tectonicus.configuration.Map map, Vector3l spawn)
+	{
+		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
+		
+		if (chestFile.exists())
+			chestFile.delete();
+		
+		JsArrayWriter jsWriter = null;
+		try
+		{
+			jsWriter = new JsArrayWriter(chestFile, map.getId()+"_chestData");
+			
+			long radius = 0;
+			long originX = spawn.x;
+			long originZ = spawn.z;
+			
+			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
+			{
+				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+
+				radius = subset.getRadius();
+				if(subset.getOrigin() != null)
+				{
+					originX = subset.getOrigin().x;
+					originZ = subset.getOrigin().z;
+				}
+			}
+			
+			Chest chest = new Chest();
+			while (chests.hasNext())
+			{				
+				chests.read(chest);
+
+				HashMap<String, String> args = new HashMap<String, String>();
+				
+				final float worldX = chest.getX() + 0.5f;
+				final float worldY = chest.getY();
+				final float worldZ = chest.getZ() + 0.5f;				
+				
+				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
+				args.put("worldPos", posStr);
+				
+				if (radius == 0 || radius != 0 && Math.pow((chest.getX() - originX), 2) + Math.pow((chest.getZ() - originZ), 2) < Math.pow(radius,2))
+				{
+					jsWriter.write(args);
+				}
 			}
 		}
 		catch (Exception e)
