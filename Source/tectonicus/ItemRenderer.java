@@ -168,7 +168,7 @@ public class ItemRenderer
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3l(0, 1, 0), 1, 1, 1);
+		BoundingBox bounds = new BoundingBox(new Vector3l(0, 0, 0), 1, 1, 1);
 		
 		Map placeholderMap = config.getMap(0);
 		
@@ -193,8 +193,10 @@ public class ItemRenderer
 		final float lookY = bounds.getCenterY();
 		final float lookZ = bounds.getCenterZ();
 		final float size = (float)Math.sqrt(bounds.getWidth()*bounds.getWidth() + bounds.getHeight()*bounds.getHeight());
+		final float cameraAngle = getAngleRad(45);
+		final float cameraElevationAngle = getAngleRad(30);
 		
-		camera.lookAt(lookX, lookY, lookZ, size, map.getCameraAngleRad(), map.getCameraElevationRad());
+		camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
 		ArrayList<Vector2f> corners = new ArrayList<Vector2f>();
@@ -229,7 +231,7 @@ public class ItemRenderer
 		final float ySize = Vector3f.sub(topLeftWorld, bottomLeftWorld, null).length();
 		float longest = Math.max(xSize, ySize);
 		
-		camera.lookAt(lookX, lookY, lookZ, longest, map.getCameraAngleRad(), map.getCameraElevationRad());
+		camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
 		geometry.finalise();
@@ -273,6 +275,13 @@ public class ItemRenderer
 		}
 		
 		Screenshot.write(outFile, outImg, ImageFormat.Png, 1.0f);
+	}
+	
+	private float getAngleRad(int angle)
+	{
+		final float normalised = (float)angle / 360.0f;
+		final float rad = normalised * (float)Math.PI * 2.0f;
+		return rad;
 	}
 	
 	private static ItemGeometry createCompassGeometry(Rasteriser rasteriser, NorthDirection dir, BufferedImage img)

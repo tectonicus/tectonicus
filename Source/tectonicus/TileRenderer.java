@@ -2096,7 +2096,7 @@ public class TileRenderer
 		try
 		{
 			ItemRenderer itemRenderer = new ItemRenderer(args, rasteriser);
-			itemRenderer.renderBlock(new File(args.outputDir(), "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 4);
+			itemRenderer.renderBlock(new File(args.outputDir(), "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
 			
 			chestsIn = new HddObjectListReader<Chest>(chestListFile);
 			outputChests(outputFile, chestsIn, map, spawn);
