@@ -805,6 +805,9 @@ public class RawChunk
 	
 	public int getBlockId(final int x, final int y, final int z)
 	{
+		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+			return 0;
+		
 		final int sectionY = y / MAX_SECTIONS;
 		final int localY = y % SECTION_HEIGHT;
 		
@@ -847,6 +850,9 @@ public class RawChunk
 	
 	public int getBlockData(final int x, final int y, final int z)
 	{
+		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+			return 0;
+		
 		final int sectionY = y / MAX_SECTIONS;
 		final int localY = y % SECTION_HEIGHT;
 		

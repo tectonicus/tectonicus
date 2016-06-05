@@ -148,7 +148,7 @@ public class ItemRenderer
 		renderItem(placeholderMap, item, outFile, 4);
 	}
 	
-	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
+	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
 	{
 		System.out.println("Generating block image...");
 		
@@ -158,12 +158,9 @@ public class ItemRenderer
 		
 		RawChunk rawChunk = new RawChunk();
 		
-		rawChunk.setBlockId(0, 0, 0, (byte)BlockIds.CHEST);
-		rawChunk.setBlockData(0, 0, 0, (byte)4);
+		rawChunk.setBlockId(0, 0, 0, (byte)blockId);
+		rawChunk.setBlockData(0, 0, 0, (byte)blockData);
 		rawChunk.setBlockLight(0, 0, 0, (byte)1);
-		
-		final int blockId = rawChunk.getBlockId(0, 0, 0);
-		final int blockData = rawChunk.getBlockData(0, 0, 0);
 		
 		BlockType type = registry.find(blockId, blockData);
 		if (type != null)
