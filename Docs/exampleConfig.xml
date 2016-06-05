@@ -52,6 +52,7 @@
 		<views filter="all" />
 		<players filter="all" />
 		<portals filter="all" />
+		<chests filter="player" />
 		
 		<mods>
 			<mod name="AwesomeMod" path="/Users/xxx/AppData/roaming/.minecraft/mods/AwesomeMod1.8.jar" />

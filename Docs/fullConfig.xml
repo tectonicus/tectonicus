@@ -83,6 +83,10 @@
 			filter="all / none"
 		/>
 
+		<chests
+			filter="none / all / player"
+		/>
+
 		<!-- A generated map layer (can be more than one per map) -->
 		<layer
 			name=""
