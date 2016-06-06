@@ -76,7 +76,6 @@ import tectonicus.util.TempArea;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
-import tectonicus.world.Chest;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.filter.ExploredCaveFilter;
@@ -238,9 +237,8 @@ public class TileRenderer
 			File portalsFile = tempArea.generateTempFile("portals", ".list");
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
-			File chestsFile = tempArea.generateTempFile("chests", ".list");
 			
-			WorldStats worldStats = preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile, chestsFile);
+			WorldStats worldStats = preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile);
 			
 			// Find visible tiles
 			HddTileList visibleTiles = findVisibleTiles(world, camera, worldStats.numChunks());
@@ -268,7 +266,7 @@ public class TileRenderer
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
 			
-			outputChests(new File(mapDir, "chests.js"), chestsFile, map, world.getSpawnPosition(), world.getBlockTypeRegistry(), world.getTexturePack());
+			outputChests(new File(mapDir, "chests.js"), map, world.getSpawnPosition(), world.getBlockTypeRegistry(), world.getTexturePack(), world.getChests());
 			
 			// Output world stats
 			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
@@ -371,9 +369,8 @@ public class TileRenderer
 			File portalsFile = tempArea.generateTempFile("portals", ".list");
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
-			File chestsFile = tempArea.generateTempFile("chests", ".list");
 			
-			preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile, chestsFile);
+			preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile);
 			
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
@@ -418,26 +415,23 @@ public class TileRenderer
 		}	
 	}
 
-	private WorldStats preProcess(World world, Dimension dimension, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, File portalsFile, File signsFile, File viewsFile, File chestsFile)
+	private WorldStats preProcess(World world, Dimension dimension, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, File portalsFile, File signsFile, File viewsFile)
 	{
 		WorldStats stats = null;
 		
 		HddObjectListWriter<Portal> portals = null;
 		HddObjectListWriter<Sign> signs = null;
 		HddObjectListWriter<Sign> views = null;
-		HddObjectListWriter<Chest> chests = null;
 		
 		try
 		{
 			portals = new HddObjectListWriter<Portal>(portalsFile, true);
 			signs = new HddObjectListWriter<Sign>(signsFile, true);
 			views = new HddObjectListWriter<Sign>(viewsFile, true);
-			chests = new HddObjectListWriter<Chest>(chestsFile, true);
 			
-			stats = preProcess(world, signFilter, portalFilter, viewFilter, chestFilter, portals, signs, views, chests);
+			stats = preProcess(world, signFilter, portalFilter, viewFilter, chestFilter, portals, signs, views);
 			
 			System.out.println("Found "+views.size()+" views");
-			System.out.println("Found "+chests.size()+" chests");
 		}
 		catch (Exception e)
 		{
@@ -451,8 +445,6 @@ public class TileRenderer
 				signs.close();
 			if (views != null)
 				views.close();
-			if (chests != null)
-				chests.close();
 		}
 		
 		final int numPlayers = world.players(dimension).size();
@@ -461,7 +453,7 @@ public class TileRenderer
 		return stats;
 	}
 	
-	private WorldStats preProcess(World world, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, HddObjectListWriter<Chest> chests)
+	private WorldStats preProcess(World world, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
 	{
 		// Pre-render pass - calc chunk hashes and project signs
 		if (progressListener != null)
@@ -521,7 +513,7 @@ public class TileRenderer
 							
 							findViews(c.getRawChunk(), views, viewFilter);
 							
-							findChests(c.getRawChunk(), chests, chestFilter);
+							findChests(c.getRawChunk(), chestFilter, world.getChests());
 							
 							if (worldStats.numChunks() % 100 == 0)
 								System.out.print("\tfound "+worldStats.numChunks()+" chunks so far\r"); //prints a carraige return after line
@@ -647,7 +639,7 @@ public class TileRenderer
 		}
 	}
 	
-	private static void findChests(RawChunk chunk, HddObjectListWriter<Chest> chests, ChestFilter filter)
+	private static void findChests(RawChunk chunk, ChestFilter filter, ArrayList<TileEntity> chests)
 	{
 		try
 		{
@@ -655,8 +647,7 @@ public class TileRenderer
 			{
 				if (filter.passesFilter(te.blockData))
 				{
-					Chest chest = new Chest(te);
-					chests.add(chest);
+					chests.add(te);
 				}
 			}
 		}
@@ -2090,29 +2081,22 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File outputFile, File chestListFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack)
+	private void outputChests(File outputFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack, ArrayList<TileEntity> chestList)
 	{
-		HddObjectListReader<Chest> chestsIn = null;
 		try
 		{
 			ItemRenderer itemRenderer = new ItemRenderer(args, rasteriser);
 			itemRenderer.renderBlock(new File(args.outputDir(), "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
 			
-			chestsIn = new HddObjectListReader<Chest>(chestListFile);
-			outputChests(outputFile, chestsIn, map, spawn);
+			outputChests(outputFile, map, spawn, chestList);
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
-		finally
-		{
-			if (chestsIn != null)
-				chestsIn.close();
-		}
 	}
 	
-	private void outputChests(File chestFile, HddObjectListReader<Chest> chests, tectonicus.configuration.Map map, Vector3l spawn)
+	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, ArrayList<TileEntity> chestList)
 	{
 		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
 		
@@ -2139,22 +2123,39 @@ public class TileRenderer
 					originZ = subset.getOrigin().z;
 				}
 			}
-			
-			Chest chest = new Chest();
-			while (chests.hasNext())
+			ArrayList<TileEntity> removeList = new ArrayList<TileEntity>();
+			for (TileEntity te : chestList)
 			{				
-				chests.read(chest);
-
+				for (TileEntity t : chestList)
+				{
+					if (t.x == te.x + 1 && t.y == te.y && t.z == te.z) //north south chest
+					{
+						te.x = t.x;
+						if (!removeList.contains(te))
+							removeList.add(t);
+					}
+					else if (t.z == te.z + 1 && t.y == te.y && t.x == te.x) //east west chest
+					{
+						te.z = t.z;
+						if (!removeList.contains(te))
+							removeList.add(t);
+					}
+				}
+			}
+			
+			chestList.removeAll(removeList);
+			
+			for (TileEntity te : chestList)
+			{
+				float worldX = te.x + 0.5f;
+				float worldY = te.y;
+				float worldZ = te.z + 0.5f;
 				HashMap<String, String> args = new HashMap<String, String>();
-				
-				final float worldX = chest.getX() + 0.5f;
-				final float worldY = chest.getY();
-				final float worldZ = chest.getZ() + 0.5f;				
-				
+
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
 				
-				if (radius == 0 || radius != 0 && Math.pow((chest.getX() - originX), 2) + Math.pow((chest.getZ() - originZ), 2) < Math.pow(radius,2))
+				if (radius == 0 || radius != 0 && Math.pow((te.x - originX), 2) + Math.pow((te.z - originZ), 2) < Math.pow(radius,2))
 				{
 					jsWriter.write(args);
 				}
