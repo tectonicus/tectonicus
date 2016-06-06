@@ -449,7 +449,9 @@ public class RawChunk
 										final int localZ = z-(blockZ*DEPTH);
 										
 										String patterns = "";
-										final int numPatterns = patternList.getValue().size();
+										int numPatterns = 0;
+										if (patternList != null)
+											numPatterns = patternList.getValue().size();
 										if (numPatterns > 0)
 										{
 											//System.out.println(patternList + "\n");
