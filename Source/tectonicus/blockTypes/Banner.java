@@ -16,7 +16,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -122,6 +124,7 @@ public class Banner implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		int baseColor = 0;
+		String[] patternStrings = null;
 		for (TileEntity te : rawChunk.getBanners())
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
@@ -132,10 +135,11 @@ public class Banner implements BlockType
 					try
 					{
 						JSONObject p = new JSONObject(te.motive);
-						String[] patterns = JSONObject.getNames(p);
-						for(String pattern : patterns)
+						System.out.println(te.motive);
+						patternStrings = JSONObject.getNames(p);
+						for(String pattern : patternStrings)
 						{
-							
+							System.out.println(pattern);
 						}
 						//System.out.println(p);
 					} catch (JSONException e)
@@ -147,39 +151,7 @@ public class Banner implements BlockType
 			}
 		}
 		
-		Colour4f color;
-		if (baseColor == 0)
-			color = new Colour4f(25f/255f, 25f/255f, 25f/255f, 1);  // Black
-		else if (baseColor == 1)
-			color = new Colour4f(153f/255f, 51f/255f, 51f/255f, 1); // Red
-		else if (baseColor == 2)
-			color = new Colour4f(102f/255f, 127f/255f, 51f/255f, 1); // Green
-		else if (baseColor == 3)
-			color = new Colour4f(102f/255f, 76f/255f, 51f/255f, 1); // Brown
-		else if (baseColor == 4)
-			color = new Colour4f(51f/255f, 76f/255f, 178f/255f, 1); // Blue
-		else if (baseColor == 5)
-			color = new Colour4f(127f/255f, 63f/255f, 178f/255f, 1); // Purple
-		else if (baseColor == 6)
-			color = new Colour4f(76f/255f, 127f/255f, 153f/255f, 1); // Cyan
-		else if (baseColor == 7)
-			color = new Colour4f(153f/255f, 153f/255f, 153f/255f, 1); // Light Gray
-		else if (baseColor == 8)
-			color = new Colour4f(76f/255f, 76f/255f, 76f/255f, 1); // Gray
-		else if (baseColor == 9)
-			color = new Colour4f(242f/255f, 127f/255f, 165f/255f, 1); // Pink
-		else if (baseColor == 10)
-			color = new Colour4f(127f/255f, 204f/255f, 25f/255f, 1); // Lime
-		else if (baseColor == 11)
-			color = new Colour4f(229f/255f, 229f/255f, 51f/255f, 1); // Yellow
-		else if (baseColor == 12)
-			color = new Colour4f(102f/255f, 153f/255f, 216f/255f, 1); // Light Blue
-		else if (baseColor == 13)
-			color = new Colour4f(178f/255f, 76f/255f, 216f/255f, 1); // Magenta
-		else if (baseColor == 14)
-			color = new Colour4f(216f/255f, 127f/255f, 51f/255f, 1); // Orange
-		else
-			color = new Colour4f(1, 1, 1, 1); // White
+		HashMap<String, BufferedImage> patterns = world.getTexturePack().loadPatterns();
 		
 		SubTexture testTexture = null;
 		try 
@@ -197,6 +169,13 @@ public class Banner implements BlockType
 			Color currentColor = colors.get(1);
 			
 			addPattern(base, basePattern, colors.get(baseColor), g);
+			if (patternStrings != null)
+			{
+				for (String singlePattern : patternStrings)
+				{
+					addPattern(base, patterns.get(singlePattern), colors.get(15), g);
+				}
+			}
 			//addPattern(base, pattern, currentColor, g);
 			//addPattern(base, pattern2, colors.get(0), g);
 			

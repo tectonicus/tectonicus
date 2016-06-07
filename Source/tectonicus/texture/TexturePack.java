@@ -16,9 +16,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.imageio.ImageIO;
 
@@ -398,7 +402,7 @@ public class TexturePack
 		return tex.getFullTexture();
 	}
 	
-	private BufferedImage loadTexture(String path) throws FileNotFoundException
+	public BufferedImage loadTexture(String path) throws FileNotFoundException
 	{
 		InputStream in = null;
 		
@@ -458,6 +462,76 @@ public class TexturePack
 		}
 		
 		return copy( img );
+	}
+	
+	public HashMap<String, BufferedImage> loadPatterns()
+	{
+		HashMap<String, BufferedImage> patterns = new HashMap<String, BufferedImage>();
+		HashMap<String, String> codes = new HashMap<String, String>();
+		codes.put("base.png", "base");
+		codes.put("border.png", "bo");
+		codes.put("bricks.png", "bri");
+		codes.put("circle.png", "mc");
+		codes.put("creeper.png", "cre");
+		codes.put("cross.png", "cr");
+		codes.put("curly_border.png", "cbo");
+		codes.put("diagonal_left.png", "ld");
+		codes.put("diagonal_right.png", "rd");
+		codes.put("diagonal_up_left.png", "lud");
+		codes.put("diagonal_up_right.png", "rud");
+		codes.put("flower.png", "flo");
+		codes.put("gradient.png", "gra");
+		codes.put("gradient_up.png", "gru");
+		codes.put("half_horizontal.png", "hh");
+		codes.put("half_horizontal_bottom.png", "hhb");
+		codes.put("half_vertical.png", "vh");
+		codes.put("half_vertical_right.png", "vhr");
+		codes.put("mojang.png", "moj");
+		codes.put("rhombus.png", "mr");
+		codes.put("skull.png", "sku");
+		codes.put("small_stripes.png", "ss");
+		codes.put("square_bottom_left.png", "bl");
+		codes.put("square_bottom_right.png", "br");
+		codes.put("square_top_left.png", "tl");
+		codes.put("square_top_right.png", "tr");
+		codes.put("straight_cross.png", "sc");
+		codes.put("stripe_bottom.png", "bs");
+		codes.put("stripe_center.png", "cs");
+		codes.put("stripe_downleft.png", "dls");
+		codes.put("stripe_downright.png", "drs");
+		codes.put("stripe_left.png", "ls");
+		codes.put("stripe_middle.png", "ms");
+		codes.put("stripe_right.png", "rs");
+		codes.put("stripe_top.png", "ts");
+		codes.put("triangle_bottom.png", "bt");
+		codes.put("triangle_top.png", "tt");
+		codes.put("triangles_bottom.png", "bts");
+		codes.put("triangles_top.png", "tts");
+		
+		
+		ZipFile jarFile;
+		try 
+		{
+			jarFile = new ZipFile(Minecraft.findMinecraftJar());
+			
+			ZipEntry ze = null;
+			for (Enumeration<? extends ZipEntry> e = jarFile.entries(); e.hasMoreElements();)
+			{
+				ze = e.nextElement();
+				
+				if (ze.getName().contains("assets/minecraft/textures/entity/banner/"))
+				{
+					String fileName = Paths.get(ze.getName()).getFileName().toString();					
+					patterns.put(codes.get(fileName), loadTexture(ze.getName()));
+				}
+			}
+			System.out.println("Number of patterns loaded: " + patterns.size());
+		} 
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return patterns;
 	}
 	
 	public String getVersion()
