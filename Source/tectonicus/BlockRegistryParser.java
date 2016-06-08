@@ -10,10 +10,12 @@
 package tectonicus;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -790,11 +792,12 @@ public class BlockRegistryParser
 		else if (nodeName.equals("banner"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
+			HashMap<String, BufferedImage> patternImages = texturePack.loadPatterns();
 			
 			String hasPostStr = element.getAttribute("hasPost");
 			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));
 			
-			blockType = new Banner(name, texture, hasPost);
+			blockType = new Banner(name, texture, hasPost, patternImages);
 		}
 		else if (nodeName.equals("itemframe"))
 		{

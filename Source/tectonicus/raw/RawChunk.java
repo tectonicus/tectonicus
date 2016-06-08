@@ -39,6 +39,7 @@ import com.google.gson.GsonBuilder;
 
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
+import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.util.FileUtils;
 
 public class RawChunk
@@ -448,28 +449,22 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										String patterns = "";
+										List<Pattern> patterns = new ArrayList<Pattern>();
+										
 										int numPatterns = 0;
 										if (patternList != null)
 											numPatterns = patternList.getValue().size();
 										if (numPatterns > 0)
 										{
-											//System.out.println(patternList + "\n");
-											patterns += "{";
 											for(int i=0; i<numPatterns; i++)
 											{
 												CompoundTag p = NbtUtil.getChild(patternList, i, CompoundTag.class);
 												StringTag pattern = NbtUtil.getChild(p, "Pattern", StringTag.class);
 												IntTag color = NbtUtil.getChild(p, "Color", IntTag.class);
-												patterns += "\"" + pattern.getValue() + "\"" + ": " + color.getValue().toString();
-												if(i < numPatterns-1)
-													patterns += ", ";
+												patterns.add(new Pattern(pattern.getValue(), color.getValue()));
 											}
-											patterns += "}";
-											//System.out.println(patterns);
 										}
-										banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, patterns, 0));
-										//banners.add(new TileEntity(0, base.getValue(), x, y, z, localX, localY, localZ, 0, 0));
+										banners.add(new TileEntity(base.getValue(), x, y, z, localX, localY, localZ, patterns));
 									}
 									else if (id.equals("Chest"))
 									{

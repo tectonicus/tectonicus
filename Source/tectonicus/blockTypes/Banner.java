@@ -13,19 +13,10 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
-import org.jnbt.CompoundTag;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -40,7 +31,6 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.TileEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
-import tectonicus.util.Colour4f;
 
 public class Banner implements BlockType
 {
@@ -51,28 +41,31 @@ public class Banner implements BlockType
 	
 	private final String name;
 	
+	private final HashMap<String, BufferedImage> patternImages;
 	private final List<Color> colors;
 	
-	private SubTexture frontTexture, bannerSideTexture;
+	private SubTexture bannerSideTexture;
 	private SubTexture sideTexture, sideTexture2;
 	private SubTexture edgeTexture;
 	private SubTexture topTexture;
 	
 	private final boolean hasPost;
 	
-	public Banner(String name, SubTexture texture, final boolean hasPost)
+	public Banner(String name, SubTexture texture, final boolean hasPost, HashMap<String, BufferedImage> patternImages)
 	{
 		this.name = name;
 		this.hasPost = hasPost;
 		
 		final float texel = 1.0f / 64.0f;
 		
-		this.frontTexture = new SubTexture(texture.texture, texture.u0+texel, texture.v0+texel, texture.u0+texel*21, texture.v0+texel*41);
+		//this.frontTexture = new SubTexture(texture.texture, texture.u0+texel, texture.v0+texel, texture.u0+texel*21, texture.v0+texel*41);
 		this.bannerSideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel, texture.u0+texel, texture.v0+texel*41);
 		this.sideTexture = new SubTexture(texture.texture, texture.u0+texel*50, texture.v0+texel*2, texture.u0+texel*52, texture.v0+texel*43);
 		this.sideTexture2 = new SubTexture(texture.texture, texture.u0+texel*48, texture.v0+texel*2, texture.u0+texel*50, texture.v0+texel*43);
 		this.topTexture = new SubTexture(texture.texture, texture.u0+texel*2, texture.v0+texel*42, texture.u0+texel*22, texture.v0+texel*44);
 		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel*44, texture.u0+texel*2, texture.v0+texel*46);
+		
+		this.patternImages = patternImages;
 		
 		final Color black = new Color(25, 25, 25, 255);
 		final Color red = new Color(153, 51, 51, 255);
@@ -124,73 +117,43 @@ public class Banner implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		int baseColor = 0;
-		String[] patternStrings = null;
+		List<Pattern> patterns = null;
 		for (TileEntity te : rawChunk.getBanners())
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
 			{
 				baseColor = te.blockData;
-				if(!te.motive.equals(""))
+				if(!te.patterns.isEmpty())
 				{
-					try
-					{
-						JSONObject p = new JSONObject(te.motive);
-						System.out.println(te.motive);
-						patternStrings = JSONObject.getNames(p);
-						for(String pattern : patternStrings)
-						{
-							System.out.println(pattern);
-						}
-						//System.out.println(p);
-					} catch (JSONException e)
-					{
-						e.printStackTrace();
-					}
+					patterns = te.patterns;
 				}
 				break;
 			}
 		}
+
+		final BufferedImage base = patternImages.get("base");
+		BufferedImage finalImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
 		
-		HashMap<String, BufferedImage> patterns = world.getTexturePack().loadPatterns();
+		Graphics2D g = finalImage.createGraphics();
+		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
+		g.drawImage(base, 0, 0, null);
+
+		String identifier = "banner_base_" + baseColor;
 		
-		SubTexture testTexture = null;
-		try 
+		addPattern(base, patternImages.get("baseMask"), colors.get(baseColor), g);
+		if (patterns != null)
 		{
-			BufferedImage pattern = world.getTexturePack().loadTexture("assets/minecraft/textures/entity/banner/creeper.png");
-			BufferedImage pattern2 = world.getTexturePack().loadTexture("assets/minecraft/textures/entity/banner/triangles_bottom.png");
-			BufferedImage basePattern = world.getTexturePack().loadTexture("assets/minecraft/textures/entity/banner/base.png");
-			final BufferedImage base = world.getTexturePack().loadTexture("assets/minecraft/textures/entity/banner_base.png");
-			BufferedImage finalImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-			
-			Graphics2D g = finalImage.createGraphics();
-			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-			g.drawImage(base, 0, 0, null);
-			
-			Color currentColor = colors.get(1);
-			
-			addPattern(base, basePattern, colors.get(baseColor), g);
-			if (patternStrings != null)
+			for (Pattern pattern : patterns)
 			{
-				for (String singlePattern : patternStrings)
-				{
-					addPattern(base, patterns.get(singlePattern), colors.get(15), g);
-				}
+				addPattern(base, patternImages.get(pattern.pattern), colors.get(pattern.color), g);
+				identifier += pattern.toString();
 			}
-			//addPattern(base, pattern, currentColor, g);
-			//addPattern(base, pattern2, colors.get(0), g);
-			
-			ImageIO.write(finalImage, "png", new File("E:/testworld/Images/finalImage.png"));
-			
-			testTexture = world.getTexturePack().findTexture(finalImage, "banner_base_"+baseColor);
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
 		}
 		
+		SubTexture texture = world.getTexturePack().findTexture(finalImage, identifier);
 		final float texel2 = 1.0f / 64.0f;
-		final SubTexture frontTexture = new SubTexture(testTexture.texture, testTexture.u0+texel2, testTexture.v0+texel2, testTexture.u0+texel2*21, testTexture.v0+texel2*41);
-		final SubTexture backTexture = new SubTexture(testTexture.texture, testTexture.u0+texel2*22, testTexture.v0+texel2, testTexture.u0+texel2*42, testTexture.v0+texel2*41);
+		final SubTexture frontTexture = new SubTexture(texture.texture, texture.u0+texel2, texture.v0+texel2, texture.u0+texel2*21, texture.v0+texel2*41);
+		final SubTexture backTexture = new SubTexture(texture.texture, texture.u0+texel2*22, texture.v0+texel2, texture.u0+texel2*42, texture.v0+texel2*41);
 		
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
@@ -304,7 +267,7 @@ public class Banner implements BlockType
 		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);
 	}
 
-	private void addPattern(BufferedImage base, BufferedImage pattern, Color currentColor, Graphics2D g) throws IOException
+	private void addPattern(BufferedImage base, BufferedImage pattern, Color currentColor, Graphics2D g)
 	{
 		BufferedImage maskedImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
 		
@@ -318,12 +281,26 @@ public class Banner implements BlockType
 		    	maskedImage.setRGB(x, y, maskedColor.getRGB());
 		    }
 		}
-		
-		ImageIO.write(maskedImage, "png", new File("E:/testworld/Images/maskedImage.png"));
-		
-//		Graphics2D g = base.createGraphics();
-//		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
+
 		g.drawImage(maskedImage, 0, 0, null);
+	}
+	
+	public static class Pattern
+	{
+		String pattern;
+		int color;
+		
+		public Pattern(String pattern, int color)
+		{
+			this.pattern = pattern;
+			this.color = color;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return this.pattern + this.color;
+		}
 	}
 }
 

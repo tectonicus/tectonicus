@@ -468,7 +468,8 @@ public class TexturePack
 	{
 		HashMap<String, BufferedImage> patterns = new HashMap<String, BufferedImage>();
 		HashMap<String, String> codes = new HashMap<String, String>();
-		codes.put("base.png", "base");
+		codes.put("banner_base.png", "base");
+		codes.put("base.png", "baseMask");
 		codes.put("border.png", "bo");
 		codes.put("bricks.png", "bri");
 		codes.put("circle.png", "mc");
@@ -512,14 +513,14 @@ public class TexturePack
 		ZipFile jarFile;
 		try 
 		{
-			jarFile = new ZipFile(Minecraft.findMinecraftJar());
+			jarFile = new ZipFile(Minecraft.getMinecraftJarLocation());
 			
 			ZipEntry ze = null;
 			for (Enumeration<? extends ZipEntry> e = jarFile.entries(); e.hasMoreElements();)
 			{
 				ze = e.nextElement();
 				
-				if (ze.getName().contains("assets/minecraft/textures/entity/banner/"))
+				if (ze.getName().contains("assets/minecraft/textures/entity/banner/") || ze.getName().equals("assets/minecraft/textures/entity/banner_base.png"))
 				{
 					String fileName = Paths.get(ze.getName()).getFileName().toString();					
 					patterns.put(codes.get(fileName), loadTexture(ze.getName()));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,10 @@
  */
 
 package tectonicus.raw;
+
+import java.util.List;
+
+import tectonicus.blockTypes.Banner.Pattern;
 
 public class TileEntity
 {
@@ -22,13 +26,21 @@ public class TileEntity
 	public int dir;
 	
 	public String text1, text2, text3, text4, motive;
+	
+	public List<Pattern> patterns;
 
+	public TileEntity(int blockData, int x, int y, int z, //Constructor for banners
+			  int localX, int localY, int localZ, List<Pattern> patterns)
+	{
+		init(0, blockData, x, y, z, localX, localY, localZ, 0, 0, null, null, null, null, null, 0, patterns);
+	}
+	
 	public TileEntity(int blockId, int blockData,  //Constructor for paintings
 			  int x, int y, int z,
 			  int localX, int localY, int localZ,
 			  String motive, int dir)
 	{
-		init(blockId, blockData, x, y, z, localX, localY, localZ, 0, 0, null, null, null, null, motive, dir);
+		init(blockId, blockData, x, y, z, localX, localY, localZ, 0, 0, null, null, null, null, motive, dir, null);
 	}
 	
 	public TileEntity(int blockId, int blockData,  //Constructor for flower pots
@@ -36,7 +48,7 @@ public class TileEntity
 					  int localX, int localY, int localZ,
 					  int data, int item)
 	{
-		init(blockId, blockData, x, y, z, localX, localY, localZ, data, item, null, null, null, null, null, 0);
+		init(blockId, blockData, x, y, z, localX, localY, localZ, data, item, null, null, null, null, null, 0, null);
 	}
 	
 	public TileEntity(int blockId, int data,  //Constructor for signs
@@ -44,14 +56,14 @@ public class TileEntity
 					int localX, int localY, int localZ,
 					String text1, String text2, String text3, String text4)
 	{
-		init(blockId, data, x, y, z, localX, localY, localZ, 0, 0, text1, text2, text3, text4, null, 0);
+		init(blockId, data, x, y, z, localX, localY, localZ, 0, 0, text1, text2, text3, text4, null, 0, null);
 	}
 	
 	private void init(int blockId, int blockData,
 					int x, int y, int z,
 					int localX, int localY, int localZ,
 					int data, int item,
-					String text1, String text2, String text3, String text4, String motive, int dir)
+					String text1, String text2, String text3, String text4, String motive, int dir, List<Pattern> patterns)
 	{
 		this.blockId = blockId;
 		this.blockData = blockData;
@@ -75,5 +87,7 @@ public class TileEntity
 		this.text4 = text4;
 		
 		this.motive = motive;
+		
+		this.patterns = patterns;
 	}
 }
