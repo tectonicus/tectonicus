@@ -28,9 +28,11 @@ import tectonicus.configuration.CommandLineParser;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
+import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
 import tectonicus.world.World;
@@ -948,7 +950,14 @@ public class TectonicusApp
 					
 					File imagesDir = new File(args.outputDir(), "Images");
 					
-					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, iconAssembler);
+					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir()), "");
+					
+					if (map.getDimension() == Dimension.Ender)
+					{
+						levelDat.setSpawnPosition(100, 49, 0);
+					}
+					
+					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, iconAssembler, levelDat.getSpawnPosition());
 				}
 				
 				skinCache.destroy();

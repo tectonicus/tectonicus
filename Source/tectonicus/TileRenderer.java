@@ -255,7 +255,7 @@ public class TileRenderer
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map, world.getSpawnPosition());
 			
 			// Output players
-			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler);
+			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler, world.getSpawnPosition());
 			
 			// Output beds
 			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null), world.getSpawnPosition());
@@ -1504,7 +1504,7 @@ public class TileRenderer
 		}
 	}
 	
-	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, PlayerIconAssembler playerIconAssembler)
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, PlayerIconAssembler playerIconAssembler, Vector3l spawn)
 	{
 		if (playersFile.exists())
 			playersFile.delete();
@@ -1519,35 +1519,55 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(playersFile, map.getId()+"_playerData");
-						
+			
+			long radius = 0;
+			long originX = spawn.x;
+			long originZ = spawn.z;
+			
+			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
+			{
+				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+
+				radius = subset.getRadius();
+				if(subset.getOrigin() != null)
+				{
+					originX = subset.getOrigin().x;
+					originZ = subset.getOrigin().z;
+				}
+			}
+			
 			for (Player player : players)
 			{
 				if (filter.passesFilter(player))
 				{
-					System.out.println("\toutputting "+player.getName());
-					
-					HashMap<String, String> args = new HashMap<String, String>();
-					
-					Vector3d pos = player.getPosition();
-					args.put("name", "\"" + player.getName() + "\"");
-					
-					String posStr = "new WorldCoord("+pos.x+", "+pos.y+", "+pos.z+")";
-					args.put("worldPos", posStr);
-					
-					args.put("health", ""+player.getHealth());
-					args.put("food", ""+player.getFood());
-					args.put("air", ""+player.getAir());
-					
-					args.put("xpLevel", ""+player.getXpLevel());
-					args.put("xpTotal", ""+player.getXpTotal());
-					
-					jsWriter.write(args);
-					
-					File iconFile = new File(imagesDir, player.getName()+".png");
-					WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
-					executor.submit(task);
-					
-					numOutput++;
+					Vector3d position = player.getPosition();
+					if (radius == 0 || radius != 0 && Math.pow((position.x - originX), 2) + Math.pow((position.z - originZ), 2) < Math.pow(radius,2))
+					{
+						System.out.println("\toutputting "+player.getName());
+						
+						HashMap<String, String> args = new HashMap<String, String>();
+						
+						Vector3d pos = player.getPosition();
+						args.put("name", "\"" + player.getName() + "\"");
+						
+						String posStr = "new WorldCoord("+pos.x+", "+pos.y+", "+pos.z+")";
+						args.put("worldPos", posStr);
+						
+						args.put("health", ""+player.getHealth());
+						args.put("food", ""+player.getFood());
+						args.put("air", ""+player.getAir());
+						
+						args.put("xpLevel", ""+player.getXpLevel());
+						args.put("xpTotal", ""+player.getXpTotal());
+						
+						jsWriter.write(args);
+						
+						File iconFile = new File(imagesDir, player.getName()+".png");
+						WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
+						executor.submit(task);
+						
+						numOutput++;
+					}
 				}
 			}
 		}
@@ -1616,9 +1636,8 @@ public class TileRenderer
 						if (radius == 0 || radius != 0 && Math.pow((spawn.x - originX), 2) + Math.pow((spawn.z - originZ), 2) < Math.pow(radius,2))
 						{
 							jsWriter.write(args);
+							numOutput++;
 						}
-						
-						numOutput++;
 					}
 				}
 			}
