@@ -108,12 +108,15 @@ public class BlockRegistryParser
 	private final TexturePack texturePack;
 	private final BiomeCache biomeCache;
 	private final SignFilter signFilter;
+	private final HashMap<String, BufferedImage> patternImages;
 	
 	public BlockRegistryParser(TexturePack texturePack, BiomeCache biomeCache, SignFilter signFilter)
 	{
 		this.texturePack = texturePack;
 		this.biomeCache = biomeCache;
 		this.signFilter = signFilter;
+		
+		patternImages = texturePack.loadPatterns();
 	}
 	
 	public void parse(final String resName, BlockTypeRegistry registry)
@@ -792,7 +795,6 @@ public class BlockRegistryParser
 		else if (nodeName.equals("banner"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
-			HashMap<String, BufferedImage> patternImages = texturePack.loadPatterns();
 			
 			String hasPostStr = element.getAttribute("hasPost");
 			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));

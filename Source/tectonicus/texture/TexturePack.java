@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import javax.imageio.ImageIO;
 
@@ -509,24 +508,19 @@ public class TexturePack
 		codes.put("triangles_bottom.png", "bts");
 		codes.put("triangles_top.png", "tts");
 		
-		
-		ZipFile jarFile;
 		try 
 		{
-			jarFile = new ZipFile(Minecraft.getMinecraftJarLocation());
-			
 			ZipEntry ze = null;
-			for (Enumeration<? extends ZipEntry> e = jarFile.entries(); e.hasMoreElements();)
+			for (Enumeration<? extends ZipEntry> e = zipStack.getBaseEntries(); e.hasMoreElements();)
 			{
 				ze = e.nextElement();
 				
 				if (ze.getName().contains("assets/minecraft/textures/entity/banner/") || ze.getName().equals("assets/minecraft/textures/entity/banner_base.png"))
 				{
-					String fileName = Paths.get(ze.getName()).getFileName().toString();					
+					String fileName = Paths.get(ze.getName()).getFileName().toString();
 					patterns.put(codes.get(fileName), loadTexture(ze.getName()));
 				}
 			}
-			System.out.println("Number of patterns loaded: " + patterns.size());
 		} 
 		catch (Exception e)
 		{
