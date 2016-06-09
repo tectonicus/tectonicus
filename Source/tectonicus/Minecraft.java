@@ -19,7 +19,6 @@ import tectonicus.util.OsDetect;
 public class Minecraft
 {
 	static float minecraftVersion;
-	static File minecraftJar;
 	
 	public static float getMinecraftVersion()
 	{
@@ -29,16 +28,6 @@ public class Minecraft
 	public static void setMinecraftVersion(float version)
 	{
 		minecraftVersion = version;
-	}
-	
-	public static File getMinecraftJarLocation()
-	{
-		return minecraftJar;
-	}
-	
-	public static void setMinecraftJarLocation(File location)
-	{
-		minecraftJar = location;
 	}
 	
 	public static File findMinecraftDir()
@@ -127,7 +116,7 @@ public class Minecraft
 				version = major + "." + minor;
 			else
 				version = major + "." + minor + "." + patch;
-			Minecraft.setMinecraftJarLocation(new File(findMinecraftDir(), "versions/" + version + "/" + version + ".jar"));
+
 			return new File(findMinecraftDir(), "versions/" + version + "/" + version + ".jar");
 		}
 		else	

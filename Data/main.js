@@ -153,16 +153,21 @@ function main()
 	map.controls[google.maps.ControlPosition.TOP_LEFT].push( compassControl.getDiv() );
 	map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
 	
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(chestToggleControl);
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(portalToggleControl);
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(bedToggleControl);
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(playerToggleControl);
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(viewToggleControl);	
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(signToggleControl);	
+	if (tecMap.chests.length != 0)
+		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(chestToggleControl);
+	if (tecMap.portals.length != 0)
+		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(portalToggleControl);
+	if (tecMap.beds.length != 0)
+		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(bedToggleControl);
+	if (tecMap.players.length != 0)
+		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(playerToggleControl);
+	if (tecMap.views.length != 0)
+		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(viewToggleControl);
+	if (tecMap.signs.length != 0)
+		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(signToggleControl);	
 	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(spawnToggleControl);
 
-
-	// Register these last so that they don't get called while we're still initialising	
+	// Register these last so that they don't get called while we're still initialising
 	google.maps.event.addListener(map, 'projection_changed', onProjectionChanged);
 	google.maps.event.addListener(map, 'maptypeid_changed', onMapTypeChanged);
 	
