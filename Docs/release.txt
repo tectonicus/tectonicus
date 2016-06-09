@@ -575,8 +575,27 @@ Version 2.RV 04-01-2016
 Amazing and Exciting New Features!
 - Added new USB Charger block!
 - Add <signs filter="obey" /> to the map node of your config file and use a Minecraft 1.RV jar file to have all your signs turn into OBEY signs and all the sign map markers say OBEY
+- you can now ignore any error messages you see, they're meaningless and your maps will render just fine!
 Boring Features
 - signs use actual sign texture file now
 - fixed some backwards compatibility issues with signs and paintings
 - fixed a problem with The End dimension not rendering correctly if the Overworld spawn point was set far from (0,0)
   
+Version 2.23 06-08-2016
+- compatible with Minecraft 1.10
+- added Bone, Nether Wart, Red Nether Brick, Magma, and Structure Void blocks
+- Banner patterns now render on Banners
+- Chest map markers can now be generated; by default they are off, add a filter e.g. <chests filter="all"> to your config file to have them appear on the map
+- added "defaultSkin" attribute to the config node, this takes a path to a skin for use in creating icons for players who have no custom skin; by default the "Steve" skin is used
+- player icons no longer appear outside map subset boundaries
+- player load and output methods now run concurrently; creating player icons for hundreds or thousands of players now takes seconds instead of minutes
+- player name and skin should now actually be refreshed after player skin cache timestamp expires
+- view signs can now have parameters placed on any line, order is unimportant; a space between '#' and parameters is no longer necessary
+- sign text is now handled much better, special characters are finally escaped correctly and unsupported JSON elements are ignored
+- when a CircularSubset is used, the initial view now points to the center of the subset instead of the spawn position
+- clicking anywhere on the map now closes any open map marker info window
+- map marker toggle buttons now only appear if there are actually markers to toggle, e.g. the portal marker toggle only appears if there are portals on the map
+- error messages for missing textures are now less verbose and easier to understand
+- fixed issue with parsing Minecraft jar version numbers
+Known Issues
+- chests do not show inventory, this is planned for later
