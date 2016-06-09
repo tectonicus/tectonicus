@@ -132,7 +132,7 @@ public class Banner implements BlockType
 		}
 
 		final BufferedImage base = patternImages.get("base");
-		BufferedImage finalImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage finalImage = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = finalImage.createGraphics();
 		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
@@ -269,17 +269,29 @@ public class Banner implements BlockType
 
 	private void addPattern(BufferedImage base, BufferedImage pattern, Color currentColor, Graphics2D g)
 	{
-		BufferedImage maskedImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage maskedImage = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		
-		for (int y = 0; y < 41; y++)
+		final float heightRatio = 41.0f/64.0f;
+		final float widthRatio = 42.0f/64.0f;
+		final int height = (int) (base.getHeight() * heightRatio);
+		final int width = (int) (base.getWidth() * widthRatio);
+		
+		try 
 		{
-		    for (int x = 0; x < 42; x++)
-		    {
-		    	Color baseColor = new Color(base.getRGB(x, y));
-		    	Color maskColor = new Color(pattern.getRGB(x, y));
-		    	Color maskedColor = new Color((baseColor.getRed()*currentColor.getRed())/255, (baseColor.getGreen()*currentColor.getGreen())/255, (baseColor.getBlue()*currentColor.getBlue())/255, maskColor.getRed());
-		    	maskedImage.setRGB(x, y, maskedColor.getRGB());
-		    }
+			for (int y = 0; y < height; y++)
+			{
+			    for (int x = 0; x < width; x++)
+			    {
+			    	Color baseColor = new Color(base.getRGB(x, y));
+			    	Color maskColor = new Color(pattern.getRGB(x, y));
+			    	Color maskedColor = new Color((baseColor.getRed()*currentColor.getRed())/255, (baseColor.getGreen()*currentColor.getGreen())/255, (baseColor.getBlue()*currentColor.getBlue())/255, maskColor.getRed());
+			    	maskedImage.setRGB(x, y, maskedColor.getRGB());
+			    }
+			}
+		} 
+		catch (ArrayIndexOutOfBoundsException e) 
+		{
+			e.printStackTrace();
 		}
 
 		g.drawImage(maskedImage, 0, 0, null);
