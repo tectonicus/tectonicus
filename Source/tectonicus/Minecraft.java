@@ -101,8 +101,10 @@ public class Minecraft
 							minor = version[1];
 							patch = "0";
 						}
-						if(Integer.parseInt(patch) < Integer.parseInt(version[2]))
+						if(Integer.parseInt(minor) == Integer.parseInt(version[1]) && Integer.parseInt(patch) < Integer.parseInt(version[2]))
+						{
 							patch = version[2];
+						}
 					}
 				}
 				catch(NumberFormatException e)

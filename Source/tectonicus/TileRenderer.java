@@ -1622,19 +1622,20 @@ public class TileRenderer
 				{
 					if (filter.passesFilter(player) && player.getSpawnPosition() != null)
 					{
-						System.out.println("\toutputting "+player.getName()+"'s bed");
-						
 						HashMap<String, String> args = new HashMap<String, String>();
 						
 						Vector3l spawn = player.getSpawnPosition();
 						
-						args.put("playerName", "\"" + player.getName() + "\"");
-						
-						String posStr = "new WorldCoord("+spawn.x+", "+spawn.y+", "+spawn.z+")";
-						args.put("worldPos", posStr);
-						
 						if (radius == 0 || radius != 0 && Math.pow((spawn.x - originX), 2) + Math.pow((spawn.z - originZ), 2) < Math.pow(radius,2))
 						{
+							System.out.println("\toutputting "+player.getName()+"'s bed");
+							
+							args.put("playerName", "\"" + player.getName() + "\"");
+							
+							String posStr = "new WorldCoord("+spawn.x+", "+spawn.y+", "+spawn.z+")";
+							args.put("worldPos", posStr);
+						
+						
 							jsWriter.write(args);
 							numOutput++;
 						}

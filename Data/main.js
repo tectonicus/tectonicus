@@ -144,7 +144,7 @@ function main()
 	bedToggleControl = CreateMarkerToggle(map, 'show beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
 	portalToggleControl = CreateMarkerToggle(map, 'show portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
 	spawnToggleControl = CreateMarkerToggle(map, 'show spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);	
-	chestToggleControl = CreateMarkerToggle(map, 'show chests', 'Images/Chest.png', chestMarkers, true);
+	chestToggleControl = CreateMarkerToggle(map, 'show chests', 'Images/Chest.png', chestMarkers, false);
 	
 	CreateLinkControl(map);
 	
