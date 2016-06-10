@@ -153,6 +153,8 @@ function main()
 	map.controls[google.maps.ControlPosition.TOP_LEFT].push( compassControl.getDiv() );
 	map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
 	
+	var tecMap = getActiveMap();
+	
 	if (tecMap.chests.length != 0)
 		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(chestToggleControl);
 	if (tecMap.portals.length != 0)
