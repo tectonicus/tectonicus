@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,7 +20,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.TileEntity;
+import tectonicus.raw.BlockEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
@@ -117,7 +117,7 @@ public class Painting implements BlockType
 		
 		final float texel = 1.0f/16.0f;
 			
-		for (TileEntity p : rawChunk.getPaintings())
+		for (BlockEntity p : rawChunk.getPaintings())
 		{
 			int tempX = p.localX;
 			int tempY = p.localY;

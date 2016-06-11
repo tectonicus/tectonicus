@@ -21,7 +21,7 @@ import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.TileEntity;
+import tectonicus.raw.BlockEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -99,7 +99,7 @@ public class Skull implements BlockType
 		
 		SubTexture currentTexture = null;
 		
-		for (TileEntity te : rawChunk.getSkulls())
+		for (BlockEntity te : rawChunk.getSkulls())
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z)
 			{

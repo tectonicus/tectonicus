@@ -66,7 +66,7 @@ import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.RawSign;
-import tectonicus.raw.TileEntity;
+import tectonicus.raw.BlockEntity;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
@@ -639,11 +639,11 @@ public class TileRenderer
 		}
 	}
 	
-	private static void findChests(RawChunk chunk, ChestFilter filter, ArrayList<TileEntity> chests)
+	private static void findChests(RawChunk chunk, ChestFilter filter, ArrayList<BlockEntity> chests)
 	{
 		try
 		{
-			for (TileEntity te : chunk.getChests())
+			for (BlockEntity te : chunk.getChests())
 			{
 				if (filter.passesFilter(te.blockData))
 				{
@@ -2101,7 +2101,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File outputFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack, ArrayList<TileEntity> chestList)
+	private void outputChests(File outputFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack, ArrayList<BlockEntity> chestList)
 	{
 		try
 		{
@@ -2116,7 +2116,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, ArrayList<TileEntity> chestList)
+	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, ArrayList<BlockEntity> chestList)
 	{
 		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
 		
@@ -2143,10 +2143,10 @@ public class TileRenderer
 					originZ = subset.getOrigin().z;
 				}
 			}
-			ArrayList<TileEntity> removeList = new ArrayList<TileEntity>();
-			for (TileEntity te : chestList)
+			ArrayList<BlockEntity> removeList = new ArrayList<BlockEntity>();
+			for (BlockEntity te : chestList)
 			{				
-				for (TileEntity t : chestList)
+				for (BlockEntity t : chestList)
 				{
 					if (t.x == te.x + 1 && t.y == te.y && t.z == te.z) //north south chest
 					{
@@ -2165,7 +2165,7 @@ public class TileRenderer
 			
 			chestList.removeAll(removeList);
 			
-			for (TileEntity te : chestList)
+			for (BlockEntity te : chestList)
 			{
 				float worldX = te.x + 0.5f;
 				float worldY = te.y;

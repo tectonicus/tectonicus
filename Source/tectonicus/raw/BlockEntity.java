@@ -13,7 +13,7 @@ import java.util.List;
 
 import tectonicus.blockTypes.Banner.Pattern;
 
-public class TileEntity
+public class BlockEntity
 {
 	public int blockId;
 	public int blockData;
@@ -29,13 +29,13 @@ public class TileEntity
 	
 	public List<Pattern> patterns;
 
-	public TileEntity(int blockData, int x, int y, int z, //Constructor for banners
+	public BlockEntity(int blockData, int x, int y, int z, //Constructor for banners
 			  int localX, int localY, int localZ, List<Pattern> patterns)
 	{
 		init(0, blockData, x, y, z, localX, localY, localZ, 0, 0, null, null, null, null, null, 0, patterns);
 	}
 	
-	public TileEntity(int blockId, int blockData,  //Constructor for paintings
+	public BlockEntity(int blockId, int blockData,  //Constructor for paintings
 			  int x, int y, int z,
 			  int localX, int localY, int localZ,
 			  String motive, int dir)
@@ -43,7 +43,7 @@ public class TileEntity
 		init(blockId, blockData, x, y, z, localX, localY, localZ, 0, 0, null, null, null, null, motive, dir, null);
 	}
 	
-	public TileEntity(int blockId, int blockData,  //Constructor for flower pots
+	public BlockEntity(int blockId, int blockData,  //Constructor for flower pots
 					  int x, int y, int z,
 					  int localX, int localY, int localZ,
 					  int data, int item)
@@ -51,7 +51,7 @@ public class TileEntity
 		init(blockId, blockData, x, y, z, localX, localY, localZ, data, item, null, null, null, null, null, 0, null);
 	}
 	
-	public TileEntity(int blockId, int data,  //Constructor for signs
+	public BlockEntity(int blockId, int data,  //Constructor for signs
 					int x, int y, int z,
 					int localX, int localY, int localZ,
 					String text1, String text2, String text3, String text4)

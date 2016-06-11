@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,7 +17,7 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.TileEntity;
+import tectonicus.raw.BlockEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -83,7 +83,7 @@ public class Beacon implements BlockType
 		SubMesh.addBlock(beaconMesh, offSet*3, offSet*3, offSet*3, offSet*10, offSet*10, offSet*10, colour, beacon, beacon, beacon);
 		SubMesh.addBlock(obsidianMesh, offSet*2, offSet*0.5f, offSet*2, offSet*12, offSet*3, offSet*12, colour, obsidian, obsidian, obsidian);
 		
-		for (TileEntity te : rawChunk.getBeacons())  
+		for (BlockEntity te : rawChunk.getBeacons())  
 		{
 			if (te.localX == x && te.localY == y && te.localZ == z && te.blockData > 0)
 			{

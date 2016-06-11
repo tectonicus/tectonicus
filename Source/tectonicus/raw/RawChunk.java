@@ -65,13 +65,13 @@ public class RawChunk
 	private int blockX, blockY, blockZ;
 	
 	private ArrayList<RawSign> signs;
-	private ArrayList<TileEntity> flowerPots;
-	private ArrayList<TileEntity> paintings;
-	private ArrayList<TileEntity> skulls;
-	private ArrayList<TileEntity> beacons;
-	private ArrayList<TileEntity> banners;
-	private ArrayList<TileEntity> itemFrames;
-	private ArrayList<TileEntity> chests;
+	private ArrayList<BlockEntity> flowerPots;
+	private ArrayList<BlockEntity> paintings;
+	private ArrayList<BlockEntity> skulls;
+	private ArrayList<BlockEntity> beacons;
+	private ArrayList<BlockEntity> banners;
+	private ArrayList<BlockEntity> itemFrames;
+	private ArrayList<BlockEntity> chests;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -107,13 +107,13 @@ public class RawChunk
 	private void clear()
 	{
 		signs = new ArrayList<RawSign>();
-		flowerPots = new ArrayList<TileEntity>();
-		paintings = new ArrayList<TileEntity>();
-		skulls = new ArrayList<TileEntity>();
-		beacons = new ArrayList<TileEntity>();
-		banners = new ArrayList<TileEntity>();
-		itemFrames = new ArrayList<TileEntity>();
-		chests = new ArrayList<TileEntity>();
+		flowerPots = new ArrayList<BlockEntity>();
+		paintings = new ArrayList<BlockEntity>();
+		skulls = new ArrayList<BlockEntity>();
+		beacons = new ArrayList<BlockEntity>();
+		banners = new ArrayList<BlockEntity>();
+		itemFrames = new ArrayList<BlockEntity>();
+		chests = new ArrayList<BlockEntity>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -216,7 +216,7 @@ public class RawChunk
 									
 									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
 											//", " + localY + ", " + localZ);
-									paintings.add(new TileEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
+									paintings.add(new BlockEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
 								}
 								else if (idTag.getValue().equals("ItemFrame"))
 								{
@@ -273,7 +273,7 @@ public class RawChunk
 									//System.out.println(" Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
 											//", " + localY + ", " + localZ);
 									
-									itemFrames.add(new TileEntity(-2, 0, x, y, z, localX, localY, localZ, item, dir.getValue()));
+									itemFrames.add(new BlockEntity(-2, 0, x, y, z, localX, localY, localZ, item, dir.getValue()));
 								}
 							}
 						}
@@ -375,7 +375,7 @@ public class RawChunk
 										
 										final int itemData = dataTag.getValue();
 										
-										flowerPots.add(new TileEntity(0, blockData, x, y, z, localX, localY, localZ, itemData, item));
+										flowerPots.add(new BlockEntity(0, blockData, x, y, z, localX, localY, localZ, itemData, item));
 									}
 									else if (id.equals("Skull"))
 									{
@@ -419,7 +419,7 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										skulls.add(new TileEntity( skullType.getValue(), rot.getValue(), x, y, z, localX, localY, localZ, name, UUID, textureURL, null));
+										skulls.add(new BlockEntity( skullType.getValue(), rot.getValue(), x, y, z, localX, localY, localZ, name, UUID, textureURL, null));
 									}
 									else if (id.equals("Beacon"))
 									{
@@ -433,7 +433,7 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										beacons.add(new TileEntity(0, levels.getValue(), x, y, z, localX, localY, localZ, 0, 0));
+										beacons.add(new BlockEntity(0, levels.getValue(), x, y, z, localX, localY, localZ, 0, 0));
 									}
 									else if (id.equals("Banner"))
 									{
@@ -464,7 +464,7 @@ public class RawChunk
 												patterns.add(new Pattern(pattern.getValue(), color.getValue()));
 											}
 										}
-										banners.add(new TileEntity(base.getValue(), x, y, z, localX, localY, localZ, patterns));
+										banners.add(new BlockEntity(base.getValue(), x, y, z, localX, localY, localZ, patterns));
 									}
 									else if (id.equals("Chest"))
 									{
@@ -487,7 +487,7 @@ public class RawChunk
 										final int localY  = y-(blockY*HEIGHT);
 										final int localZ = z-(blockZ*DEPTH);
 										
-										chests.add(new TileEntity(0, unopenedChestFlag, x, y, z, localX, localY, localZ, name, 0));
+										chests.add(new BlockEntity(0, unopenedChestFlag, x, y, z, localX, localY, localZ, name, 0));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -957,39 +957,39 @@ public class RawChunk
 		return new ArrayList<RawSign>(signs);
 	}
 	
-	public ArrayList<TileEntity> getFlowerPots()
+	public ArrayList<BlockEntity> getFlowerPots()
 	{
-		return new ArrayList<TileEntity>(flowerPots);
+		return new ArrayList<BlockEntity>(flowerPots);
 	}
 	
-	public ArrayList<TileEntity> getPaintings()
+	public ArrayList<BlockEntity> getPaintings()
 	{
-		return new ArrayList<TileEntity>(paintings);
+		return new ArrayList<BlockEntity>(paintings);
 	}
 	
-	public ArrayList<TileEntity> getSkulls()
+	public ArrayList<BlockEntity> getSkulls()
 	{
-		return new ArrayList<TileEntity>(skulls);
+		return new ArrayList<BlockEntity>(skulls);
 	}
 	
-	public ArrayList<TileEntity> getBeacons()
+	public ArrayList<BlockEntity> getBeacons()
 	{
-		return new ArrayList<TileEntity>(beacons);
+		return new ArrayList<BlockEntity>(beacons);
 	}
 	
-	public ArrayList<TileEntity> getBanners()
+	public ArrayList<BlockEntity> getBanners()
 	{
-		return new ArrayList<TileEntity>(banners);
+		return new ArrayList<BlockEntity>(banners);
 	}
 	
-	public ArrayList<TileEntity> getItemFrames()
+	public ArrayList<BlockEntity> getItemFrames()
 	{
-		return new ArrayList<TileEntity>(itemFrames);
+		return new ArrayList<BlockEntity>(itemFrames);
 	}
 	
-	public ArrayList<TileEntity> getChests()
+	public ArrayList<BlockEntity> getChests()
 	{
-		return new ArrayList<TileEntity>(chests);
+		return new ArrayList<BlockEntity>(chests);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)
