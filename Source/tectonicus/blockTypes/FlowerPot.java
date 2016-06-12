@@ -180,18 +180,17 @@ public class FlowerPot implements BlockType
 								   colour, side);
 		
 		
-		// Some flowerpots use a Tile Entity to store which plant they contain
-		for (BlockEntity te : rawChunk.getFlowerPots())
+		// Flowerpots use a Block Entity to store which plant they contain
+		for (BlockEntity entity : rawChunk.getFlowerPots())
 		{
-			if (te.localX == x && te.localY == y && te.localZ == z)
+			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
-				BlockType type = registry.find(te.item, te.data);
+				BlockType type = registry.find(entity.item, entity.data);
 				if(type instanceof Plant)
 				{
 					Plant p = (Plant)type;
 					plantMesh = geometry.getMesh(p.getTexture().texture, Geometry.MeshType.AlphaTest);
 					Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
-					//System.out.println("Name: " + p.getName() + " Item: " + te.item + " Data: " + te.data);
 				}
 				
 				break;

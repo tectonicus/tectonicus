@@ -182,7 +182,7 @@ public class Sign implements BlockType
 		{
 			for (RawSign s : rawChunk.getSigns())
 			{
-				if (s.localX == x && s.localY == y && s.localZ == z)
+				if (s.getLocalX() == x && s.getLocalY() == y && s.getLocalZ() == z)
 				{
 					Mesh textMesh = geometry.getMesh(world.getTexturePack().getFont().getTexture(), Geometry.MeshType.AlphaTest);
 					

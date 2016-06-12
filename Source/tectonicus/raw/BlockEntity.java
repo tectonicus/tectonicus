@@ -18,8 +18,8 @@ public class BlockEntity
 	public int blockId;
 	public int blockData;
 	
-	public int x, y, z;
-	public int localX, localY, localZ;
+	private int x, y, z;
+	private int localX, localY, localZ;
 	
 	public int data, item;
 	
@@ -90,4 +90,13 @@ public class BlockEntity
 		
 		this.patterns = patterns;
 	}
+	
+	public int getX() {	return x; }
+	public int getY() {	return y; }
+	public int getZ() {	return z; }
+	public int getLocalX() { return localX; }
+	public int getLocalY() { return localY; }
+	public int getLocalZ() { return localZ; }
+	public void setX(int x) { this.x = x; }
+	public void setZ(int z) { this.z = z; }
 }

@@ -118,14 +118,14 @@ public class Banner implements BlockType
 		SubMesh subMesh = new SubMesh();
 		int baseColor = 0;
 		List<Pattern> patterns = null;
-		for (BlockEntity te : rawChunk.getBanners())
+		for (BlockEntity entity : rawChunk.getBanners())
 		{
-			if (te.localX == x && te.localY == y && te.localZ == z)
+			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
-				baseColor = te.blockData;
-				if(!te.patterns.isEmpty())
+				baseColor = entity.blockData;
+				if(!entity.patterns.isEmpty())
 				{
-					patterns = te.patterns;
+					patterns = entity.patterns;
 				}
 				break;
 			}

@@ -1014,9 +1014,9 @@ public class RawChunk
 		
 		for (RawSign sign : signs)
 		{
-			hashAlgorithm.update(Integer.toString(sign.x).getBytes());
-			hashAlgorithm.update(Integer.toString(sign.y).getBytes());
-			hashAlgorithm.update(Integer.toString(sign.z).getBytes());
+			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
+			hashAlgorithm.update(Integer.toString(sign.getY()).getBytes());
+			hashAlgorithm.update(Integer.toString(sign.getZ()).getBytes());
 			hashAlgorithm.update(sign.text1.getBytes());
 			hashAlgorithm.update(sign.text2.getBytes());
 			hashAlgorithm.update(sign.text3.getBytes());

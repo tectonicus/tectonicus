@@ -2144,38 +2144,46 @@ public class TileRenderer
 				}
 			}
 			ArrayList<BlockEntity> removeList = new ArrayList<BlockEntity>();
-			for (BlockEntity te : chestList)
-			{				
-				for (BlockEntity t : chestList)
+			for (BlockEntity entity : chestList)
+			{
+				final int x = entity.getX();
+				final int y = entity.getY();
+				final int z = entity.getZ();
+				
+				for (BlockEntity newEntity : chestList)
 				{
-					if (t.x == te.x + 1 && t.y == te.y && t.z == te.z) //north south chest
+					final int newX = newEntity.getX();
+					final int newY = newEntity.getY();
+					final int newZ = newEntity.getZ();
+					
+					if (newX == x + 1 && newY == y && newZ == z) //north south chest
 					{
-						te.x = t.x;
-						if (!removeList.contains(te))
-							removeList.add(t);
+						entity.setX(newX);
+						if (!removeList.contains(entity))
+							removeList.add(newEntity);
 					}
-					else if (t.z == te.z + 1 && t.y == te.y && t.x == te.x) //east west chest
+					else if (newZ == z + 1 && newY == y && newX == x) //east west chest
 					{
-						te.z = t.z;
-						if (!removeList.contains(te))
-							removeList.add(t);
+						entity.setZ(z);
+						if (!removeList.contains(entity))
+							removeList.add(newEntity);
 					}
 				}
 			}
 			
 			chestList.removeAll(removeList);
 			
-			for (BlockEntity te : chestList)
+			for (BlockEntity entity : chestList)
 			{
-				float worldX = te.x + 0.5f;
-				float worldY = te.y;
-				float worldZ = te.z + 0.5f;
+				float worldX = entity.getX() + 0.5f;
+				float worldY = entity.getY();
+				float worldZ = entity.getZ() + 0.5f;
 				HashMap<String, String> args = new HashMap<String, String>();
 
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
 				
-				if (radius == 0 || radius != 0 && Math.pow((te.x - originX), 2) + Math.pow((te.z - originZ), 2) < Math.pow(radius,2))
+				if (radius == 0 || radius != 0 && Math.pow((entity.getX() - originX), 2) + Math.pow((entity.getZ() - originZ), 2) < Math.pow(radius,2))
 				{
 					jsWriter.write(args);
 				}

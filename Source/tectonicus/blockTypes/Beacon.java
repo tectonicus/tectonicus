@@ -83,18 +83,19 @@ public class Beacon implements BlockType
 		SubMesh.addBlock(beaconMesh, offSet*3, offSet*3, offSet*3, offSet*10, offSet*10, offSet*10, colour, beacon, beacon, beacon);
 		SubMesh.addBlock(obsidianMesh, offSet*2, offSet*0.5f, offSet*2, offSet*12, offSet*3, offSet*12, colour, obsidian, obsidian, obsidian);
 		
-		for (BlockEntity te : rawChunk.getBeacons())  
+		for (BlockEntity entity : rawChunk.getBeacons())  
 		{
-			if (te.localX == x && te.localY == y && te.localZ == z && te.blockData > 0)
+			final int localY = entity.getLocalY();
+			if (entity.getLocalX() == x && localY == y && entity.getLocalZ() == z && entity.blockData > 0)
 			{
 				Colour4f color = new Colour4f(1, 1, 1, 1);
-				for (int i=1; i<256-te.localY; i++)  
+				for (int i=1; i<256-localY; i++)
 				{
-					final int blockID = world.getBlockId(rawChunk.getChunkCoord(), x, te.localY+i, z);
+					final int blockID = world.getBlockId(rawChunk.getChunkCoord(), x, localY+i, z);
 					
 					if (blockID == 95)
 					{
-						final int colorID = rawChunk.getBlockData(x, te.localY+i, z);
+						final int colorID = rawChunk.getBlockData(x, localY+i, z);
 						
 						Colour4f newColor = new Colour4f(1, 1, 1, 1);
 						

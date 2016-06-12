@@ -117,11 +117,11 @@ public class Painting implements BlockType
 		
 		final float texel = 1.0f/16.0f;
 			
-		for (BlockEntity p : rawChunk.getPaintings())
+		for (BlockEntity entity : rawChunk.getPaintings())
 		{
-			int tempX = p.localX;
-			int tempY = p.localY;
-			int tempZ = p.localZ;
+			int tempX = entity.getLocalX();
+			int tempY = entity.getLocalY();
+			int tempZ = entity.getLocalZ();
 			
 			if (tempZ < 0)
 				tempZ = 0;
@@ -132,7 +132,7 @@ public class Painting implements BlockType
 			int numTilesY = 1;
 			SubTexture painting = backing;
 			
-			String motive = p.motive.toLowerCase();
+			String motive = entity.motive.toLowerCase();
 
 			// 16x16 paintings
 			if (motive.equals("kebab"))
@@ -275,12 +275,16 @@ public class Painting implements BlockType
 				numTilesX = numTilesY = 4;
 				dim1 = dim2 = numTilesX * 16;
 			}
-
-			if (p.dir == 0) // Facing South
+			
+			final int localX = entity.getLocalX();
+			final int localY = entity.getLocalY();
+			final int localZ = entity.getLocalZ();
+			
+			if (entity.dir == 0) // Facing South
 			{
-				x = numTilesX > 2 ? p.localX-1 : p.localX;
-				y = numTilesY > 2 ? p.localY-1 : p.localY;
-				z = tempZ = p.localZ+1;
+				x = numTilesX > 2 ? localX-1 : localX;
+				y = numTilesY > 2 ? localY-1 : localY;
+				z = tempZ = localZ+1;
 				
 				if (tempZ < 0)
 					tempZ++;
@@ -299,11 +303,11 @@ public class Painting implements BlockType
 				MeshUtil.addQuad(mesh, new Vector3f(x, y+numTilesY, z+texel), new Vector3f(x+numTilesX, y+numTilesY, z+texel), 
 										new Vector3f(x+numTilesX, y, z+texel), new Vector3f(x, y, z+texel), colour, painting);
 			}
-			else if (p.dir == 1) // Facing West
+			else if (entity.dir == 1) // Facing West
 			{
-				x = tempX = p.localX-1;
-				y = numTilesY > 2 ? p.localY-1 : p.localY;
-				z = numTilesX > 2 ? p.localZ-1 : p.localZ;
+				x = tempX = localX-1;
+				y = numTilesY > 2 ? localY-1 : localY;
+				z = numTilesX > 2 ? localZ-1 : localZ;
 				
 				if (tempX < 0)
 					tempX++;
@@ -322,12 +326,12 @@ public class Painting implements BlockType
 				MeshUtil.addQuad(mesh, new Vector3f(x+texel*15, y+numTilesY, z), new Vector3f(x+texel*15, y+numTilesY, z+numTilesX), 
 										new Vector3f(x+texel*15, y, z+numTilesX), new Vector3f(x+texel*15, y, z), colour, painting);
 			}
-			else if (p.dir == 2) // Facing North
+			else if (entity.dir == 2) // Facing North
 			{
-				x = numTilesX > 1 ? p.localX-1 : p.localX;
+				x = numTilesX > 1 ? localX-1 : localX;
 				x = numTilesX > 2 ? x-1 : x;
-				y = numTilesY > 2 ? p.localY-1 : p.localY;
-				z = tempZ = p.localZ-1;
+				y = numTilesY > 2 ? localY-1 : localY;
+				z = tempZ = localZ-1;
 				
 				if (tempZ < 0)
 					tempZ++;
@@ -346,11 +350,11 @@ public class Painting implements BlockType
 				MeshUtil.addQuad(mesh, new Vector3f(x+numTilesX, y+numTilesY, z+texel*15), new Vector3f(x, y+numTilesY, z+texel*15), 
 										new Vector3f(x, y, z+texel*15), new Vector3f(x+numTilesX, y, z+texel*15), colour, painting);
 			}
-			else if (p.dir == 3) // Facing East
+			else if (entity.dir == 3) // Facing East
 			{
-				x = tempX = p.localX+1;
-				y = numTilesY > 2 ? p.localY-1 : p.localY;
-				z = numTilesX > 1 ? p.localZ-1 : p.localZ;
+				x = tempX = localX+1;
+				y = numTilesY > 2 ? localY-1 : localY;
+				z = numTilesX > 1 ? localZ-1 : localZ;
 				z = numTilesX > 2 ? z-1 : z;
 				
 				if (tempX < 0)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -198,9 +198,9 @@ public class InteractiveRenderer
 					
 					Vector3f eye = orthoCamera.getEyePosition();
 					
-					final float dx = eye.x - s.x;
-					final float dy = eye.y - s.y;
-					final float dz = eye.z - s.z;
+					final float dx = eye.x - s.getX();
+					final float dy = eye.y - s.getY();
+					final float dz = eye.z - s.getZ();
 					final float dist = (float)Math.sqrt(dx*dx + dy*dy + dz*dz);
 					
 					if (dist < currentDist)

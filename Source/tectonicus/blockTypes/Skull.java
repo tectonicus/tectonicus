@@ -99,32 +99,32 @@ public class Skull implements BlockType
 		
 		SubTexture currentTexture = null;
 		
-		for (BlockEntity te : rawChunk.getSkulls())
+		for (BlockEntity entity : rawChunk.getSkulls())
 		{
-			if (te.localX == x && te.localY == y && te.localZ == z)
+			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
 				rotation = Rotation.AntiClockwise;
-				angle = 90 / 4.0f * te.blockData + 180;
+				angle = 90 / 4.0f * entity.blockData + 180;
 				
-				if (te.blockId == 0)
+				if (entity.blockId == 0)
 					currentTexture = stexture;
-				else if (te.blockId == 1)
+				else if (entity.blockId == 1)
 					currentTexture = wtexture;
-				else if (te.blockId == 2)
+				else if (entity.blockId == 2)
 					currentTexture = ztexture;
-				else if (te.blockId == 3)
+				else if (entity.blockId == 3)
 					currentTexture = texture;
-				else if (te.blockId == 4)
+				else if (entity.blockId == 4)
 					currentTexture = ctexture;
-				else if (te.blockId == 5)
+				else if (entity.blockId == 5)
 					currentTexture = dtexture;
 				
-				dragonHead = te.blockId == 5 ? true : false;
+				dragonHead = entity.blockId == 5 ? true : false;
 				
-				Player player = new Player(te.text1, te.text2, te.text3);
+				Player player = new Player(entity.text1, entity.text2, entity.text3);
 				if(!player.getSkinURL().equals(""))
 				{
-					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+te.text1);
+					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.text1);
 				}
 				
 				break;
