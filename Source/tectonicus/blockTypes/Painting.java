@@ -132,7 +132,7 @@ public class Painting implements BlockType
 			int numTilesY = 1;
 			SubTexture painting = backing;
 			
-			String motive = entity.motive.toLowerCase();
+			String motive = entity.getMotive().toLowerCase();
 
 			// 16x16 paintings
 			if (motive.equals("kebab"))
@@ -279,8 +279,9 @@ public class Painting implements BlockType
 			final int localX = entity.getLocalX();
 			final int localY = entity.getLocalY();
 			final int localZ = entity.getLocalZ();
+			final int direction = entity.getDirection();
 			
-			if (entity.dir == 0) // Facing South
+			if (direction == 0) // Facing South
 			{
 				x = numTilesX > 2 ? localX-1 : localX;
 				y = numTilesY > 2 ? localY-1 : localY;
@@ -303,7 +304,7 @@ public class Painting implements BlockType
 				MeshUtil.addQuad(mesh, new Vector3f(x, y+numTilesY, z+texel), new Vector3f(x+numTilesX, y+numTilesY, z+texel), 
 										new Vector3f(x+numTilesX, y, z+texel), new Vector3f(x, y, z+texel), colour, painting);
 			}
-			else if (entity.dir == 1) // Facing West
+			else if (direction == 1) // Facing West
 			{
 				x = tempX = localX-1;
 				y = numTilesY > 2 ? localY-1 : localY;
@@ -326,7 +327,7 @@ public class Painting implements BlockType
 				MeshUtil.addQuad(mesh, new Vector3f(x+texel*15, y+numTilesY, z), new Vector3f(x+texel*15, y+numTilesY, z+numTilesX), 
 										new Vector3f(x+texel*15, y, z+numTilesX), new Vector3f(x+texel*15, y, z), colour, painting);
 			}
-			else if (entity.dir == 2) // Facing North
+			else if (direction == 2) // Facing North
 			{
 				x = numTilesX > 1 ? localX-1 : localX;
 				x = numTilesX > 2 ? x-1 : x;
@@ -350,7 +351,7 @@ public class Painting implements BlockType
 				MeshUtil.addQuad(mesh, new Vector3f(x+numTilesX, y+numTilesY, z+texel*15), new Vector3f(x, y+numTilesY, z+texel*15), 
 										new Vector3f(x, y, z+texel*15), new Vector3f(x+numTilesX, y, z+texel*15), colour, painting);
 			}
-			else if (entity.dir == 3) // Facing East
+			else if (direction == 3) // Facing East
 			{
 				x = tempX = localX+1;
 				y = numTilesY > 2 ? localY-1 : localY;

@@ -555,10 +555,10 @@ public class TileRenderer
 			{
 				if (filter == SignFilter.Obey)
 				{
-					s.text1 = "";
-					s.text2 = "OBEY";
-					s.text3 = "";
-					s.text4 = "";
+					s.setText1("");
+					s.setText2("OBEY");
+					s.setText3("");
+					s.setText4("");
 					
 					Sign sign = new Sign(s);
 					signs.add(sign);
@@ -643,11 +643,11 @@ public class TileRenderer
 	{
 		try
 		{
-			for (BlockEntity te : chunk.getChests())
+			for (BlockEntity entity : chunk.getChests())
 			{
-				if (filter.passesFilter(te.blockData))
+				if (filter.passesFilter(entity.getBlockData()))
 				{
-					chests.add(te);
+					chests.add(entity);
 				}
 			}
 		}
@@ -2266,13 +2266,18 @@ public class TileRenderer
 	
 	private static boolean passesFilter(RawSign s, SignFilter filter)
 	{
+		final String text1 = s.getText1();
+		final String text2 = s.getText2();
+		final String text3 = s.getText3();
+		final String text4 = s.getText4();
+		
 		// Empty signs (those with no text) are used for asthetic reasons, like building chairs
 		// Always skip these
-		if (s.text1.trim().isEmpty() && s.text2.trim().isEmpty() && s.text3.trim().isEmpty() && s.text4.trim().isEmpty())
+		if (text1.trim().isEmpty() && text2.trim().isEmpty() && text3.trim().isEmpty() && text4.trim().isEmpty())
 			return false;
 		
 		// Always skip view signs
-		if (s.text1.startsWith("#view") || s.text2.startsWith("#view") || s.text3.startsWith("#view") || s.text4.startsWith("#view"))
+		if (text1.startsWith("#view") || text2.startsWith("#view") || text3.startsWith("#view") || text4.startsWith("#view"))
 		{
 			return false;
 		}
@@ -2287,7 +2292,7 @@ public class TileRenderer
 		}
 		else if (filter == SignFilter.Special)
 		{
-			String line = "" + s.text1 + s.text2 + s.text3 + s.text4;
+			String line = "" + text1 + text2 + text3 + text4;
 			line = line.trim();
 			if (line.length() > 0)
 			{

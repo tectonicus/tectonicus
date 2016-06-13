@@ -185,7 +185,7 @@ public class FlowerPot implements BlockType
 		{
 			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
-				BlockType type = registry.find(entity.item, entity.data);
+				BlockType type = registry.find(entity.getItem(), entity.getData());
 				if(type instanceof Plant)
 				{
 					Plant p = (Plant)type;

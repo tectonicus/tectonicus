@@ -29,10 +29,10 @@ public class ViewFilter
 	{
 		if (type == ViewFilterType.All)
 		{
-			String text1 = sign.text1.trim();
-			String text2 = sign.text2.trim();
-			String text3 = sign.text3.trim();
-			String text4 = sign.text4.trim();
+			String text1 = sign.getText1().trim();
+			String text2 = sign.getText2().trim();
+			String text3 = sign.getText3().trim();
+			String text4 = sign.getText4().trim();
 			
 			return (text1.startsWith("#view") || text2.startsWith("#view") || text3.startsWith("#view") || text4.startsWith("#view")) ? true : false;
 		}

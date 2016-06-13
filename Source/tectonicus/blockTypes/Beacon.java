@@ -86,7 +86,7 @@ public class Beacon implements BlockType
 		for (BlockEntity entity : rawChunk.getBeacons())  
 		{
 			final int localY = entity.getLocalY();
-			if (entity.getLocalX() == x && localY == y && entity.getLocalZ() == z && entity.blockData > 0)
+			if (entity.getLocalX() == x && localY == y && entity.getLocalZ() == z && entity.getBlockData() > 0)
 			{
 				Colour4f color = new Colour4f(1, 1, 1, 1);
 				for (int i=1; i<256-localY; i++)

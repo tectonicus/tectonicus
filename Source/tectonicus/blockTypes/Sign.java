@@ -196,16 +196,16 @@ public class Sign implements BlockType
 						color = new Vector4f(0, 0, 0, 1);
 					
 					TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
-					text1.setText(unescapeJava(s.text1), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true, color);
+					text1.setText(unescapeJava(s.getText1()), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true, color);
 					
 					TextLayout text2 = new TextLayout(world.getTexturePack().getFont());
-					text2.setText(unescapeJava(s.text2), width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true, color);
+					text2.setText(unescapeJava(s.getText2()), width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true, color);
 					
 					TextLayout text3 = new TextLayout(world.getTexturePack().getFont());
-					text3.setText(unescapeJava(s.text3), width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true, color);
+					text3.setText(unescapeJava(s.getText3()), width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true, color);
 					
 					TextLayout text4 = new TextLayout(world.getTexturePack().getFont());
-					text4.setText(unescapeJava(s.text4), width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true, color);
+					text4.setText(unescapeJava(s.getText4()), width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true, color);
 					
 					text1.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
 					text2.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);

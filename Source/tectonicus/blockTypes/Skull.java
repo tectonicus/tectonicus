@@ -104,27 +104,29 @@ public class Skull implements BlockType
 			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
 				rotation = Rotation.AntiClockwise;
-				angle = 90 / 4.0f * entity.blockData + 180;
+				angle = 90 / 4.0f * entity.getBlockData() + 180;
 				
-				if (entity.blockId == 0)
+				final int blockId = entity.getBlockId();
+				
+				if (blockId == 0)
 					currentTexture = stexture;
-				else if (entity.blockId == 1)
+				else if (blockId == 1)
 					currentTexture = wtexture;
-				else if (entity.blockId == 2)
+				else if (blockId == 2)
 					currentTexture = ztexture;
-				else if (entity.blockId == 3)
+				else if (blockId == 3)
 					currentTexture = texture;
-				else if (entity.blockId == 4)
+				else if (blockId == 4)
 					currentTexture = ctexture;
-				else if (entity.blockId == 5)
+				else if (blockId == 5)
 					currentTexture = dtexture;
 				
-				dragonHead = entity.blockId == 5 ? true : false;
+				dragonHead = blockId == 5 ? true : false;
 				
-				Player player = new Player(entity.text1, entity.text2, entity.text3);
+				Player player = new Player(entity.getText1(), entity.getText2(), entity.getText3());
 				if(!player.getSkinURL().equals(""))
 				{
-					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.text1);
+					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.getText1());
 				}
 				
 				break;

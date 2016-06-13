@@ -88,8 +88,10 @@ public class ItemFrame implements BlockType
 			final int localX = entity.getLocalX();
 			final int localY = entity.getLocalY();
 			final int localZ = entity.getLocalZ();
+			final int direction = entity.getDirection();
+			final String motive = entity.getMotive();
 			
-			if (entity.dir == 0) // Facing South
+			if (direction == 0) // Facing South
 			{
 				x = localX;
 				y = localY;
@@ -104,7 +106,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1);
-				if (entity.motive.equals("minecraft:filled_map"))
+				if (motive.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 16, 16, 1, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x, y+1, z+texel*1.01f), new Vector3f(x+1, y+1, z+texel*1.01f), 
@@ -121,7 +123,7 @@ public class ItemFrame implements BlockType
 											new Vector3f(x+texel*13.9f, y+texel*2.1f, z+texel/2), new Vector3f(x+texel*2.1f, y+texel*2.1f, z+texel/2), color, background);
 				}
 			}
-			else if (entity.dir == 1) // Facing West
+			else if (direction == 1) // Facing West
 			{
 				x = tempX = localX-1;
 				y = localY;
@@ -136,7 +138,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1);
-				if (entity.motive.equals("minecraft:filled_map"))
+				if (motive.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 15, 0, 0, 1, 16, 16, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x+texel*14.99f, y+1, z), new Vector3f(x+texel*14.99f, y+1, z+1), 
@@ -153,7 +155,7 @@ public class ItemFrame implements BlockType
 										new Vector3f(x+texel*15.5f, y+texel*2.1f, z+texel*13.9f), new Vector3f(x+texel*15.5f, y+texel*2.1f, z+texel*2.1f), color, background);
 				}
 			}
-			else if (entity.dir == 2) // Facing North
+			else if (direction == 2) // Facing North
 			{
 				x = localX;
 				y = localY;
@@ -168,7 +170,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1);
-				if (entity.motive.equals("minecraft:filled_map"))
+				if (motive.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 0, 0, 15, 16, 16, 1, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x+1, y+1, z+texel*14.99f), new Vector3f(x, y+1, z+texel*14.99f), 
@@ -185,7 +187,7 @@ public class ItemFrame implements BlockType
 										new Vector3f(x+texel*2.1f, y+texel*2.1f, z+texel*15.5f), new Vector3f(x+texel*13.9f, y+texel*2.1f, z+texel*15.5f),  color, background);
 				}
 			}
-			else if (entity.dir == 3) // Facing East
+			else if (direction == 3) // Facing East
 			{
 				x = tempX = localX+1;
 				y = localY;
@@ -200,7 +202,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1);
-				if (entity.motive.equals("minecraft:filled_map"))
+				if (motive.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 1, 16, 16, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x+texel*1.01f, y+1, z+1), new Vector3f(x+texel*1.01f, y+1, z),  

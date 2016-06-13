@@ -14,6 +14,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -117,16 +118,13 @@ public class Banner implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		int baseColor = 0;
-		List<Pattern> patterns = null;
+		List<Pattern> patterns = Collections.emptyList();
 		for (BlockEntity entity : rawChunk.getBanners())
 		{
 			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
-				baseColor = entity.blockData;
-				if(!entity.patterns.isEmpty())
-				{
-					patterns = entity.patterns;
-				}
+				baseColor = entity.getBlockData();
+				patterns = entity.getPatterns();
 				break;
 			}
 		}
@@ -141,7 +139,7 @@ public class Banner implements BlockType
 		String identifier = "banner_base_" + baseColor;
 		
 		addPattern(base, patternImages.get("baseMask"), colors.get(baseColor), g);
-		if (patterns != null)
+		if (!patterns.isEmpty())
 		{
 			for (Pattern pattern : patterns)
 			{

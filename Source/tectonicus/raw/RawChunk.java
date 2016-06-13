@@ -1017,10 +1017,10 @@ public class RawChunk
 			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getY()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getZ()).getBytes());
-			hashAlgorithm.update(sign.text1.getBytes());
-			hashAlgorithm.update(sign.text2.getBytes());
-			hashAlgorithm.update(sign.text3.getBytes());
-			hashAlgorithm.update(sign.text4.getBytes());
+			hashAlgorithm.update(sign.getText1().getBytes());
+			hashAlgorithm.update(sign.getText2().getBytes());
+			hashAlgorithm.update(sign.getText3().getBytes());
+			hashAlgorithm.update(sign.getText4().getBytes());
 		}
 		
 		return hashAlgorithm.digest();

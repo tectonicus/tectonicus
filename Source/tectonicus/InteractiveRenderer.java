@@ -178,7 +178,7 @@ public class InteractiveRenderer
 				RawSign[] signs = world.getLoadedSigns();
 				for (RawSign s : signs)
 				{
-					if (s.text1.trim().startsWith("#view"))
+					if (s.getText1().trim().startsWith("#view"))
 					{
 						views.add(s);
 					}
