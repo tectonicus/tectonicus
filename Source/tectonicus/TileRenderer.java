@@ -554,17 +554,7 @@ public class TileRenderer
 		{
 			for (SignEntity s : chunk.getSigns())
 			{
-				if (filter == SignFilter.Obey)
-				{
-					s.setText1("");
-					s.setText2("OBEY");
-					s.setText3("");
-					s.setText4("");
-					
-					Sign sign = new Sign(s);
-					signs.add(sign);
-				}	
-				else if (filter != SignFilter.Obey && passesFilter(s, filter))
+				if (passesFilter(s, filter))
 				{
 					Sign sign = new Sign(s);
 					signs.add(sign);
@@ -1878,8 +1868,9 @@ public class TileRenderer
 			while (signs.hasNext())
 			{				
 				signs.read(sign);
-				
 				String message = "\"" +sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
+				if (map.getSignFilter() == SignFilter.Obey)
+					message = "\"\\nOBEY\\n\\n\"";
 				
 				HashMap<String, String> args = new HashMap<String, String>();
 				
@@ -1890,10 +1881,20 @@ public class TileRenderer
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				args.put("worldPos", posStr);
 				args.put("message", message);
-				args.put("text1", "\"" + sign.getText(0) + "\"");
-				args.put("text2", "\"" + sign.getText(1) + "\"");
-				args.put("text3", "\"" + sign.getText(2) + "\"");
-				args.put("text4", "\"" + sign.getText(3) + "\"");
+				if (map.getSignFilter() == SignFilter.Obey)
+				{
+					args.put("text1", "\"\"");
+					args.put("text2", "\"OBEY\"");
+					args.put("text3", "\"\"");
+					args.put("text4", "\"\"");
+				}
+				else
+				{
+					args.put("text1", "\"" + sign.getText(0) + "\"");
+					args.put("text2", "\"" + sign.getText(1) + "\"");
+					args.put("text3", "\"" + sign.getText(2) + "\"");
+					args.put("text4", "\"" + sign.getText(3) + "\"");
+				}
 				
 				if (radius == 0 || radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
 				{

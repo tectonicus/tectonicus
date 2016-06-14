@@ -883,7 +883,7 @@ public class RawChunk
 
 	public List<SignEntity> getSigns()
 	{
-		return new ArrayList<SignEntity>(signs);
+		return Collections.unmodifiableList(signs);
 	}
 	
 	public List<FlowerPotEntity> getFlowerPots()
