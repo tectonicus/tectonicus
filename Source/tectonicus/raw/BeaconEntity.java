@@ -9,13 +9,15 @@
 
 package tectonicus.raw;
 
-public class RawSign extends BlockEntity
+public class BeaconEntity extends BlockEntity
 {
-	public RawSign(int blockId, int data, int x, int y, int z, int localX,
-			int localY, int localZ, String text1, String text2, String text3,
-			String text4)
+	private final int levels;
+	
+	public BeaconEntity(int x, int y, int z, int localX, int localY, int localZ, int levels)
 	{
-		super(blockId, data, x, y, z, localX, localY, localZ, text1, text2, text3,
-				text4);
+		super(x, y, z, localX, localY, localZ);
+		this.levels = levels;
 	}
+	
+	public int getLevels() { return levels; }
 }

@@ -29,7 +29,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.BlockEntity;
+import tectonicus.raw.BannerEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
@@ -119,11 +119,11 @@ public class Banner implements BlockType
 		SubMesh subMesh = new SubMesh();
 		int baseColor = 0;
 		List<Pattern> patterns = Collections.emptyList();
-		for (BlockEntity entity : rawChunk.getBanners())
+		for (BannerEntity entity : rawChunk.getBanners())
 		{
 			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
-				baseColor = entity.getBlockData();
+				baseColor = entity.getBaseColor();
 				patterns = entity.getPatterns();
 				break;
 			}

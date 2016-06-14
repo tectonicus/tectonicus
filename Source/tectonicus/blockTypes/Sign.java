@@ -23,7 +23,7 @@ import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.RawSign;
+import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
@@ -180,7 +180,7 @@ public class Sign implements BlockType
 		// Add the text
 		if (!obey)
 		{
-			for (RawSign s : rawChunk.getSigns())
+			for (SignEntity s : rawChunk.getSigns())
 			{
 				if (s.getLocalX() == x && s.getLocalY() == y && s.getLocalZ() == z)
 				{

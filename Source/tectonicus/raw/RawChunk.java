@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,14 +65,14 @@ public class RawChunk
 	
 	private int blockX, blockY, blockZ;
 	
-	private ArrayList<RawSign> signs;
-	private ArrayList<BlockEntity> flowerPots;
-	private ArrayList<BlockEntity> paintings;
-	private ArrayList<BlockEntity> skulls;
-	private ArrayList<BlockEntity> beacons;
-	private ArrayList<BlockEntity> banners;
-	private ArrayList<BlockEntity> itemFrames;
-	private ArrayList<BlockEntity> chests;
+	private List<SignEntity> signs;
+	private List<FlowerPotEntity> flowerPots;
+	private List<PaintingEntity> paintings;
+	private List<SkullEntity> skulls;
+	private List<BeaconEntity> beacons;
+	private List<BannerEntity> banners;
+	private List<PaintingEntity> itemFrames;
+	private List<ContainerEntity> chests;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -106,14 +107,14 @@ public class RawChunk
 	
 	private void clear()
 	{
-		signs = new ArrayList<RawSign>();
-		flowerPots = new ArrayList<BlockEntity>();
-		paintings = new ArrayList<BlockEntity>();
-		skulls = new ArrayList<BlockEntity>();
-		beacons = new ArrayList<BlockEntity>();
-		banners = new ArrayList<BlockEntity>();
-		itemFrames = new ArrayList<BlockEntity>();
-		chests = new ArrayList<BlockEntity>();
+		signs = new ArrayList<SignEntity>();
+		flowerPots = new ArrayList<FlowerPotEntity>();
+		paintings = new ArrayList<PaintingEntity>();
+		skulls = new ArrayList<SkullEntity>();
+		beacons = new ArrayList<BeaconEntity>();
+		banners = new ArrayList<BannerEntity>();
+		itemFrames = new ArrayList<PaintingEntity>();
+		chests = new ArrayList<ContainerEntity>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -167,14 +168,16 @@ public class RawChunk
 								CompoundTag entity = (CompoundTag)t;
 								
 								StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
-								if (idTag.getValue().endsWith("Painting"))
+								boolean painting = idTag.getValue().endsWith("Painting");
+								boolean itemFrame = idTag.getValue().equals("ItemFrame");
+								if (painting || itemFrame)
 								{
-									StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
 									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
 									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
 									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
 									ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
 									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
+									
 									if (oldDir != null && dir == null){
 										dir = oldDir;
 									}
@@ -213,67 +216,35 @@ public class RawChunk
 									final int localX = x-(blockX*WIDTH);
 									final int localY  = y-(blockY*HEIGHT);
 									final int localZ = z-(blockZ*DEPTH);
-									
-									//System.out.println("Motive: " + motiveTag.getValue() + " Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
-											//", " + localY + ", " + localZ);
-									paintings.add(new BlockEntity(-1, 0, x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
-								}
-								else if (idTag.getValue().equals("ItemFrame"))
-								{
-									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
-									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
-									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
-									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
-									boolean is18 = false;
-									if (dir == null){
-										dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
-										is18 = true;
-									}
-									
-									String item = "";
-									Map<String, Tag> map = entity.getValue();
-									CompoundTag itemTag = (CompoundTag) map.get("Item");
-									if(itemTag != null)
-									{
-										ShortTag itemIdTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
-										if (itemIdTag == null)
-										{
-											StringTag stringItemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-											item = stringItemIdTag.getValue();
-										}
-										else
-										{
-											if (itemIdTag.getValue() == 358)
-												item = "minecraft:filled_map";
-										}
-									}
-									
 
-									int x = xTag.getValue();
-									final int y = yTag.getValue();
-									int z = zTag.getValue();
 									
-									if (is18 && dir.getValue() == 0){
-										z = zTag.getValue() - 1;
+									if (painting)
+									{
+										StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
+										paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
 									}
-									else if (is18 && dir.getValue() == 1){
-										x = xTag.getValue() + 1;
+									else if (itemFrame)
+									{
+										String item = "";
+										Map<String, Tag> map = entity.getValue();
+										CompoundTag itemTag = (CompoundTag) map.get("Item");
+										if(itemTag != null)
+										{
+											ShortTag itemIdTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
+											if (itemIdTag == null)
+											{
+												StringTag stringItemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
+												item = stringItemIdTag.getValue();
+											}
+											else
+											{
+												if (itemIdTag.getValue() == 358)
+													item = "minecraft:filled_map";
+											}
+										}
+										
+										itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, item, direction));
 									}
-									else if (is18 && dir.getValue() == 2){
-										z = zTag.getValue() + 1;
-									}
-									else if (is18 && dir.getValue() == 3){
-										x = xTag.getValue() - 1;
-									}
-									
-									final int localX = x-(blockX*WIDTH);
-									final int localY  = y-(blockY*HEIGHT);
-									final int localZ = z-(blockZ*DEPTH);
-									
-									//System.out.println(" Direction: " + dir.getValue() + " XYZ: " + x + ", " + y + ", " + z + " Local XYZ: " + localX +
-											//", " + localY + ", " + localZ);
-									
-									itemFrames.add(new BlockEntity(-2, 0, x, y, z, localX, localY, localZ, item, dir.getValue()));
 								}
 							}
 						}
@@ -285,7 +256,7 @@ public class RawChunk
 						for (Tag t : tileEntitiesTag.getValue())
 						{
 							if (t instanceof CompoundTag)
-							{
+							{								
 								CompoundTag entity = (CompoundTag)t;
 								
 								StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
@@ -295,7 +266,16 @@ public class RawChunk
 								
 								if (idTag != null && xTag != null && yTag != null && zTag != null)
 								{
-									String id = idTag.getValue();
+									final String id = idTag.getValue();
+									
+									final int x = xTag.getValue();
+									final int y = yTag.getValue();
+									final int z = zTag.getValue();
+									
+									final int localX = x-(blockX*WIDTH);
+									final int localY  = y-(blockY*HEIGHT);
+									final int localZ = z-(blockZ*DEPTH);
+									
 									if (id.equals("Sign"))
 									{
 										List<String> textLines = new ArrayList<String>();
@@ -326,22 +306,11 @@ public class RawChunk
 												textLines.add("");
 											}
 										}
-
-										final int x = xTag.getValue();
-										final int y = yTag.getValue();
-										final int z = zTag.getValue();
 										
-										final int localX = x-(blockX*WIDTH);
-										final int localY  = y-(blockY*HEIGHT);
-										final int localZ = z-(blockZ*DEPTH);
-										
-										final int blockId = getBlockId(localX, localY, localZ);
 										final int data = getBlockData(localX, localY, localZ);
 										
-										signs.add( new RawSign( blockId, data,
-																x, y, z,
-																localX, localY, localZ,
-																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3)) );
+										signs.add( new SignEntity(x, y, z, localX, localY, localZ,
+																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data) );
 									}
 									else if (id.equals("FlowerPot"))
 									{
@@ -363,19 +332,7 @@ public class RawChunk
 											item = itemTag.getValue();
 										}
 										
-										final int x = xTag.getValue();
-										final int y = yTag.getValue();
-										final int z = zTag.getValue();
-										
-										final int localX = x-(blockX*WIDTH);
-										final int localY  = y-(blockY*HEIGHT);
-										final int localZ = z-(blockZ*DEPTH);
-
-										final int blockData = getBlockData(localX, localY, localZ);
-										
-										final int itemData = dataTag.getValue();
-										
-										flowerPots.add(new BlockEntity(0, blockData, x, y, z, localX, localY, localZ, itemData, item));
+										flowerPots.add(new FlowerPotEntity(x, y, z, localX, localY, localZ, item, dataTag.getValue()));
 									}
 									else if (id.equals("Skull"))
 									{
@@ -411,43 +368,18 @@ public class RawChunk
 											textureURL = "http://www.minecraft.net/skin/"+extraType.getValue()+".png";
 										}
 										
-										final int x = xTag.getValue();
-										final int y = yTag.getValue();
-										final int z = zTag.getValue();
-										
-										final int localX = x-(blockX*WIDTH);
-										final int localY  = y-(blockY*HEIGHT);
-										final int localZ = z-(blockZ*DEPTH);
-										
-										skulls.add(new BlockEntity( skullType.getValue(), rot.getValue(), x, y, z, localX, localY, localZ, name, UUID, textureURL, null));
+										skulls.add(new SkullEntity(x, y, z, localX, localY, localZ, skullType.getValue(), rot.getValue(), name, UUID, textureURL));
 									}
 									else if (id.equals("Beacon"))
 									{
 										IntTag levels = NbtUtil.getChild(entity, "Levels", IntTag.class);
 										
-										final int x = xTag.getValue();
-										final int y = yTag.getValue();
-										final int z = zTag.getValue();
-										
-										final int localX = x-(blockX*WIDTH);
-										final int localY  = y-(blockY*HEIGHT);
-										final int localZ = z-(blockZ*DEPTH);
-										
-										beacons.add(new BlockEntity(0, levels.getValue(), x, y, z, localX, localY, localZ, 0, 0));
+										beacons.add(new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue()));
 									}
 									else if (id.equals("Banner"))
 									{
 										IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
 										ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
-										
-										
-										final int x = xTag.getValue();
-										final int y = yTag.getValue();
-										final int z = zTag.getValue();
-										
-										final int localX = x-(blockX*WIDTH);
-										final int localY  = y-(blockY*HEIGHT);
-										final int localZ = z-(blockZ*DEPTH);
 										
 										List<Pattern> patterns = new ArrayList<Pattern>();
 										
@@ -464,7 +396,7 @@ public class RawChunk
 												patterns.add(new Pattern(pattern.getValue(), color.getValue()));
 											}
 										}
-										banners.add(new BlockEntity(base.getValue(), x, y, z, localX, localY, localZ, patterns));
+										banners.add(new BannerEntity(x, y, z, localX, localY, localZ, base.getValue(), patterns));
 									}
 									else if (id.equals("Chest"))
 									{
@@ -473,21 +405,18 @@ public class RawChunk
 										if (customName != null)
 											name = customName.getValue();
 										
+										final StringTag lock = NbtUtil.getChild(entity, "Lock", StringTag.class);
+										String lockStr = "";
+										if (lock != null)
+											lockStr = lock.getValue();
+										
 										final StringTag lootTable = NbtUtil.getChild(entity, "LootTable", StringTag.class);
 										
-										int unopenedChestFlag = 0;
+										boolean unopenedChest = false;
 										if (lootTable != null)
-											unopenedChestFlag = 1;
+											unopenedChest = true;
 										
-										final int x = xTag.getValue();
-										final int y = yTag.getValue();
-										final int z = zTag.getValue();
-										
-										final int localX = x-(blockX*WIDTH);
-										final int localY  = y-(blockY*HEIGHT);
-										final int localZ = z-(blockZ*DEPTH);
-										
-										chests.add(new BlockEntity(0, unopenedChestFlag, x, y, z, localX, localY, localZ, name, 0));
+										chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -952,44 +881,44 @@ public class RawChunk
 		return blockIdTotal + blockDataTotal + skyLightTotal + blockLightTotal;
 	}
 
-	public ArrayList<RawSign> getSigns()
+	public List<SignEntity> getSigns()
 	{
-		return new ArrayList<RawSign>(signs);
+		return new ArrayList<SignEntity>(signs);
 	}
 	
-	public ArrayList<BlockEntity> getFlowerPots()
+	public List<FlowerPotEntity> getFlowerPots()
 	{
-		return new ArrayList<BlockEntity>(flowerPots);
+		return Collections.unmodifiableList(flowerPots);
 	}
 	
-	public ArrayList<BlockEntity> getPaintings()
+	public List<PaintingEntity> getPaintings()
 	{
-		return new ArrayList<BlockEntity>(paintings);
+		return Collections.unmodifiableList(paintings);
 	}
 	
-	public ArrayList<BlockEntity> getSkulls()
+	public List<SkullEntity> getSkulls()
 	{
-		return new ArrayList<BlockEntity>(skulls);
+		return Collections.unmodifiableList(skulls);
 	}
 	
-	public ArrayList<BlockEntity> getBeacons()
+	public List<BeaconEntity> getBeacons()
 	{
-		return new ArrayList<BlockEntity>(beacons);
+		return Collections.unmodifiableList(beacons);
 	}
 	
-	public ArrayList<BlockEntity> getBanners()
+	public List<BannerEntity> getBanners()
 	{
-		return new ArrayList<BlockEntity>(banners);
+		return Collections.unmodifiableList(banners);
 	}
 	
-	public ArrayList<BlockEntity> getItemFrames()
+	public List<PaintingEntity> getItemFrames()
 	{
-		return new ArrayList<BlockEntity>(itemFrames);
+		return Collections.unmodifiableList(itemFrames);
 	}
 	
-	public ArrayList<BlockEntity> getChests()
+	public List<ContainerEntity> getChests()
 	{
-		return new ArrayList<BlockEntity>(chests);
+		return Collections.unmodifiableList(chests);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)
@@ -1012,7 +941,7 @@ public class RawChunk
 			}
 		}
 		
-		for (RawSign sign : signs)
+		for (SignEntity sign : signs)
 		{
 			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getY()).getBytes());

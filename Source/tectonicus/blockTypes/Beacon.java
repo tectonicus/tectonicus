@@ -17,7 +17,7 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.BlockEntity;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -83,10 +83,10 @@ public class Beacon implements BlockType
 		SubMesh.addBlock(beaconMesh, offSet*3, offSet*3, offSet*3, offSet*10, offSet*10, offSet*10, colour, beacon, beacon, beacon);
 		SubMesh.addBlock(obsidianMesh, offSet*2, offSet*0.5f, offSet*2, offSet*12, offSet*3, offSet*12, colour, obsidian, obsidian, obsidian);
 		
-		for (BlockEntity entity : rawChunk.getBeacons())  
+		for (BeaconEntity entity : rawChunk.getBeacons())  
 		{
 			final int localY = entity.getLocalY();
-			if (entity.getLocalX() == x && localY == y && entity.getLocalZ() == z && entity.getBlockData() > 0)
+			if (entity.getLocalX() == x && localY == y && entity.getLocalZ() == z && entity.getLevels() > 0)
 			{
 				Colour4f color = new Colour4f(1, 1, 1, 1);
 				for (int i=1; i<256-localY; i++)

@@ -20,7 +20,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.BlockEntity;
+import tectonicus.raw.PaintingEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
@@ -117,7 +117,7 @@ public class Painting implements BlockType
 		
 		final float texel = 1.0f/16.0f;
 			
-		for (BlockEntity entity : rawChunk.getPaintings())
+		for (PaintingEntity entity : rawChunk.getPaintings())
 		{
 			int tempX = entity.getLocalX();
 			int tempY = entity.getLocalY();

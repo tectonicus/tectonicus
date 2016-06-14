@@ -21,6 +21,7 @@ import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
+import tectonicus.raw.SkullEntity;
 import tectonicus.raw.BlockEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -99,14 +100,14 @@ public class Skull implements BlockType
 		
 		SubTexture currentTexture = null;
 		
-		for (BlockEntity entity : rawChunk.getSkulls())
+		for (SkullEntity entity : rawChunk.getSkulls())
 		{
 			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{
 				rotation = Rotation.AntiClockwise;
-				angle = 90 / 4.0f * entity.getBlockData() + 180;
+				angle = 90 / 4.0f * entity.getRotation() + 180;
 				
-				final int blockId = entity.getBlockId();
+				final int blockId = entity.getSkullType();
 				
 				if (blockId == 0)
 					currentTexture = stexture;
@@ -123,10 +124,10 @@ public class Skull implements BlockType
 				
 				dragonHead = blockId == 5 ? true : false;
 				
-				Player player = new Player(entity.getText1(), entity.getText2(), entity.getText3());
+				Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
 				if(!player.getSkinURL().equals(""))
 				{
-					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.getText1());
+					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.getName());
 				}
 				
 				break;

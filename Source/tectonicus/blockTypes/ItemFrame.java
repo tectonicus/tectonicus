@@ -19,7 +19,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.BlockEntity;
+import tectonicus.raw.PaintingEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
@@ -76,7 +76,7 @@ public class ItemFrame implements BlockType
 		
 		final float texel = 1.0f/16.0f;
 			
-		for (BlockEntity entity : rawChunk.getItemFrames())
+		for (PaintingEntity entity : rawChunk.getItemFrames())
 		{
 			int tempX = entity.getLocalX();
 			int tempY = entity.getLocalY();
@@ -89,7 +89,7 @@ public class ItemFrame implements BlockType
 			final int localY = entity.getLocalY();
 			final int localZ = entity.getLocalZ();
 			final int direction = entity.getDirection();
-			final String motive = entity.getMotive();
+			final String item = entity.getMotive();
 			
 			if (direction == 0) // Facing South
 			{
@@ -106,7 +106,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1);
-				if (motive.equals("minecraft:filled_map"))
+				if (item.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 16, 16, 1, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x, y+1, z+texel*1.01f), new Vector3f(x+1, y+1, z+texel*1.01f), 
@@ -138,7 +138,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1);
-				if (motive.equals("minecraft:filled_map"))
+				if (item.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 15, 0, 0, 1, 16, 16, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x+texel*14.99f, y+1, z), new Vector3f(x+texel*14.99f, y+1, z+1), 
@@ -170,7 +170,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1);
-				if (motive.equals("minecraft:filled_map"))
+				if (item.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 0, 0, 15, 16, 16, 1, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x+1, y+1, z+texel*14.99f), new Vector3f(x, y+1, z+texel*14.99f), 
@@ -202,7 +202,7 @@ public class ItemFrame implements BlockType
 				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
 				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
 				Vector4f color = new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1);
-				if (motive.equals("minecraft:filled_map"))
+				if (item.equals("minecraft:filled_map"))
 				{
 					BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 1, 16, 16, color, border, topLight, northSouthLight, eastWestLight);
 					MeshUtil.addQuad(mapMesh, new Vector3f(x+texel*1.01f, y+1, z+1), new Vector3f(x+texel*1.01f, y+1, z),  

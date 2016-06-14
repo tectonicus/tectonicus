@@ -23,18 +23,15 @@ public class ChestFilter
 		this.type = type;
 	}
 	
-	public boolean passesFilter(int blockData)
+	public boolean passesFilter(boolean unopenedChest)
 	{
 		if (type == ChestFilterType.All)
 		{
 			return true;
 		}
-		else if (type == ChestFilterType.Player)
+		else if (type == ChestFilterType.Player && !unopenedChest)
 		{
-			if(blockData == 0)
-				return true;
-			else
-				return false;
+			return true;
 		}	
 		else
 		{

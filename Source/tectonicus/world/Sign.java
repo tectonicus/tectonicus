@@ -13,12 +13,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 import tectonicus.cache.swap.Swappable;
-import tectonicus.raw.RawSign;
+import tectonicus.raw.SignEntity;
 import tectonicus.util.Vector3l;
 
 public class Sign implements Swappable
 {
-	private int blockId;
 	private int blockData;
 	
 	private Vector3l position;
@@ -31,9 +30,8 @@ public class Sign implements Swappable
 		text = new String[4];
 	}
 	
-	public Sign(RawSign rawSign)
+	public Sign(SignEntity rawSign)
 	{
-		blockId = rawSign.getBlockId();
 		blockData = rawSign.getBlockData();
 
 		position = new Vector3l(rawSign.getX(), rawSign.getY(), rawSign.getZ());
@@ -74,7 +72,6 @@ public class Sign implements Swappable
 	@Override
 	public void writeTo(DataOutputStream dest) throws Exception
 	{
-		dest.writeInt(blockId);
 		dest.writeInt(blockData);
 		
 		dest.writeLong(position.x);
@@ -88,7 +85,6 @@ public class Sign implements Swappable
 	@Override
 	public void readFrom(DataInputStream source) throws Exception
 	{
-		blockId = source.readInt();
 		blockData = source.readInt();
 		
 		position.x = source.readLong();

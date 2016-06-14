@@ -25,7 +25,7 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.RawSign;
+import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.renderer.PerspectiveCamera;
@@ -51,9 +51,9 @@ public class InteractiveRenderer
 	private float orthoAngleOffset;
 	private float cameraElevation;
 	
-	private RawSign perspectiveSign;
+	private SignEntity perspectiveSign;
 	
-	private ArrayList<RawSign> views;
+	private ArrayList<SignEntity> views;
 	private int currentViewIndex;
 	
 	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight) throws LWJGLException
@@ -69,7 +69,7 @@ public class InteractiveRenderer
 		orthoCamera = new OrthoCamera(rasteriser, displayWidth, displayHeight);
 		perspectiveCamera = new PerspectiveCamera(rasteriser, displayWidth, displayHeight);
 		
-		views = new ArrayList<RawSign>();
+		views = new ArrayList<SignEntity>();
 	}
 	
 	public void destroy()
@@ -175,8 +175,8 @@ public class InteractiveRenderer
 			{
 				// Find all views
 				views.clear();
-				RawSign[] signs = world.getLoadedSigns();
-				for (RawSign s : signs)
+				SignEntity[] signs = world.getLoadedSigns();
+				for (SignEntity s : signs)
 				{
 					if (s.getText1().trim().startsWith("#view"))
 					{
@@ -184,7 +184,7 @@ public class InteractiveRenderer
 					}
 				}
 				
-				RawSign nearest = null;
+				SignEntity nearest = null;
 				float currentDist = Float.MAX_VALUE;
 				
 				if (views.size() > 0)
@@ -194,7 +194,7 @@ public class InteractiveRenderer
 				}
 				for (int i=0; i<views.size(); i++)
 				{
-					RawSign s = views.get(i);
+					SignEntity s = views.get(i);
 					
 					Vector3f eye = orthoCamera.getEyePosition();
 					

@@ -65,8 +65,9 @@ import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.RawSign;
+import tectonicus.raw.SignEntity;
 import tectonicus.raw.BlockEntity;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
@@ -551,7 +552,7 @@ public class TileRenderer
 	{
 		try
 		{
-			for (RawSign s : chunk.getSigns())
+			for (SignEntity s : chunk.getSigns())
 			{
 				if (filter == SignFilter.Obey)
 				{
@@ -624,7 +625,7 @@ public class TileRenderer
 	{
 		try
 		{
-			for (RawSign s : chunk.getSigns())
+			for (SignEntity s : chunk.getSigns())
 			{
 				if (filter.passesFilter(s))
 				{
@@ -639,13 +640,13 @@ public class TileRenderer
 		}
 	}
 	
-	private static void findChests(RawChunk chunk, ChestFilter filter, ArrayList<BlockEntity> chests)
+	private static void findChests(RawChunk chunk, ChestFilter filter, List<ContainerEntity> chests)
 	{
 		try
 		{
-			for (BlockEntity entity : chunk.getChests())
+			for (ContainerEntity entity : chunk.getChests())
 			{
-				if (filter.passesFilter(entity.getBlockData()))
+				if (filter.passesFilter(entity.isUnopenedContainer()))
 				{
 					chests.add(entity);
 				}
@@ -2101,7 +2102,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File outputFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack, ArrayList<BlockEntity> chestList)
+	private void outputChests(File outputFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack, List<ContainerEntity> chestList)
 	{
 		try
 		{
@@ -2116,7 +2117,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, ArrayList<BlockEntity> chestList)
+	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, List<ContainerEntity> chestList)
 	{
 		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
 		
@@ -2264,7 +2265,7 @@ public class TileRenderer
 		}
 	}
 	
-	private static boolean passesFilter(RawSign s, SignFilter filter)
+	private static boolean passesFilter(SignEntity s, SignFilter filter)
 	{
 		final String text1 = s.getText1();
 		final String text2 = s.getText2();

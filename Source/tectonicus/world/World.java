@@ -57,8 +57,8 @@ import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.Player.RequestPlayerInfoTask;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.RawSign;
-import tectonicus.raw.BlockEntity;
+import tectonicus.raw.SignEntity;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.TexturePack;
@@ -89,7 +89,7 @@ public class World implements BlockContext
 	private ArrayList<Player> players;
 	private PlayerSkinCache playerSkinCache;
 	
-	private ArrayList<BlockEntity> chests;
+	private List<ContainerEntity> chests;
 	
 	private TexturePack texturePack;
 	
@@ -187,7 +187,7 @@ public class World implements BlockContext
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir, playerSkinCache);
 		
-		chests = new ArrayList<BlockEntity>();
+		chests = new ArrayList<ContainerEntity>();
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(dimensionDir, biomeCache, regionCache);
@@ -321,7 +321,7 @@ public class World implements BlockContext
 		return players.size();
 	}
 	
-	public ArrayList<BlockEntity> getChests()
+	public List<ContainerEntity> getChests()
 	{
 		return chests;
 	}
@@ -976,16 +976,16 @@ public class World implements BlockContext
 		return dimensionDir;
 	}
 	
-	public RawSign[] getLoadedSigns()
+	public SignEntity[] getLoadedSigns()
 	{
-		ArrayList<RawSign> result = new ArrayList<RawSign>();
+		ArrayList<SignEntity> result = new ArrayList<SignEntity>();
 		
 		for (Chunk c : rawLoadedChunks.values())
 		{
 			result.addAll( c.getSigns() );
 		}
 		
-		return result.toArray(new RawSign[0]);
+		return result.toArray(new SignEntity[0]);
 	}
 	
 	@Override

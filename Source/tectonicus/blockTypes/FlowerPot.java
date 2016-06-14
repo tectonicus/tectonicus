@@ -20,7 +20,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.BlockEntity;
+import tectonicus.raw.FlowerPotEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -181,7 +181,7 @@ public class FlowerPot implements BlockType
 		
 		
 		// Flowerpots use a Block Entity to store which plant they contain
-		for (BlockEntity entity : rawChunk.getFlowerPots())
+		for (FlowerPotEntity entity : rawChunk.getFlowerPots())
 		{
 			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
 			{

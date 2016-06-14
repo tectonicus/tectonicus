@@ -12,6 +12,7 @@ package tectonicus;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.jnbt.NBTInputStream.Compression;
 import org.lwjgl.util.vector.Vector3f;
@@ -21,7 +22,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.RawSign;
+import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
@@ -347,11 +348,11 @@ public class Chunk
 		geometry.printGeometryStats();
 	}
 
-	public ArrayList<RawSign> getSigns()
+	public List<SignEntity> getSigns()
 	{
 		if (rawChunk == null)
 		{
-			return new ArrayList<RawSign>();
+			return new ArrayList<SignEntity>();
 		}
 		else
 		{

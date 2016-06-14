@@ -9,7 +9,7 @@
 
 package tectonicus.configuration;
 
-import tectonicus.raw.RawSign;
+import tectonicus.raw.SignEntity;
 
 public class ViewFilter
 {
@@ -25,7 +25,7 @@ public class ViewFilter
 		this.type = type;
 	}
 	
-	public boolean passesFilter(RawSign sign)
+	public boolean passesFilter(SignEntity sign)
 	{
 		if (type == ViewFilterType.All)
 		{
