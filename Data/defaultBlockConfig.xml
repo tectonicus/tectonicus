@@ -529,9 +529,7 @@
 	
 	<Solid id="169" stringId="minecraft:sea_lantern" name="Sea Lantern"  texture="sea_lantern.png" />
 	
-	<Log id="170:0" name="Hay Block" side="hay_block_side.png" top="hay_block_top.png" />
-	<Log id="170:8" name="Hay Block North/South" side="hay_block_side.png" top="hay_block_top.png" />
-	<Log id="170:4" name="Hay Block East/West" side="hay_block_side.png" top="hay_block_top.png" />
+	<Log id="170" name="Hay Block" side="hay_block_side.png" top="hay_block_top.png" />
 	
 	<Carpet id="171:0" name="White Carpet"  texture="wool_colored_white.png" />
 	<Carpet id="171:1" name="Orange Carpet"  texture="wool_colored_orange.png" />
@@ -617,9 +615,7 @@
 	
 	<Solid id="201" stringId="minecraft:purpur_block" name="Purpur Block"  texture="purpur_block.png" />
 	
-	<Log id="202:0" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />
-	<Log id="202:8" name="Purpur Pillar North/South" side="purpur_pillar.png" top="purpur_pillar_top.png" />
-	<Log id="202:4" name="Purpur Pillar East/West" side="purpur_pillar.png" top="purpur_pillar_top.png" />
+	<Log id="202" stringId="minecraft:purpur_pillar" name="Purpur Pillar" side="purpur_pillar.png" top="purpur_pillar_top.png" />
 	
 	<Stairs id="203" stringId="minecraft:purpur_stairs" name="Purpur Stairs" texture="purpur_block.png" />
 	
@@ -657,7 +653,7 @@
 	
 	<Solid id="215" stringId="minecraft:red_nether_brick" name="Red Nether Brick" texture="red_nether_brick.png" />
 	
-	<Solid id="216" stringId="minecraft:bone_block" name="Bone Block" side="bone_block_side.png" top="bone_block_top.png" />
+	<Log id="216" stringId="minecraft:bone_block" name="Bone Block" side="bone_block_side.png" top="bone_block_top.png" />
 	
 	<Plant id="217" stringId="minecraft:structure_void" name="Structure Void" texture="assets/minecraft/textures/items/structure_void.png" />
 				
