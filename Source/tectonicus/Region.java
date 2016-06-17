@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -257,7 +257,7 @@ public class Region
 		public int numSectors;
 	}
 	
-	public Chunk loadChunk(ChunkCoord chunkCoord, BiomeCache biomeCache, BlockFilter filter)
+	public Chunk loadChunk(ChunkCoord chunkCoord, BiomeCache biomeCache, BlockFilter filter, WorldStats worldStats)
 	{
 		if (!containsChunk(chunkCoord))
 			return null;
@@ -295,7 +295,7 @@ public class Region
 			in = new ByteArrayInputStream(chunkData, 0, chunkData.length);
 			
 			chunk = new Chunk(chunkCoord, biomeCache);
-			chunk.loadRaw(in, compression, filter);
+			chunk.loadRaw(in, compression, filter, worldStats);
 		}
 		catch (Exception e)
 		{

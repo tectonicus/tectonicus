@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,17 +16,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.mutable.MutableLong;
+
 public class WorldStats
 {
 	private int numChunks;
 	private int numPortals;
 	private int numPlayers;
 	
-	private Map<IdDataPair, Long> blockIdCounts;
+	private Map<IdDataPair, MutableLong> blockIdCounts;
 	
 	public WorldStats()
 	{
-		blockIdCounts = new HashMap<IdDataPair, Long>();
+		blockIdCounts = new HashMap<IdDataPair, MutableLong>();
 	}
 	
 	public void setNumPlayers(final int numPlayers)
@@ -52,13 +54,12 @@ public class WorldStats
 	public void incBlockId(final int blockId, final int data)
 	{
 		IdDataPair key = new IdDataPair(blockId, data);
-		
-		if (!blockIdCounts.containsKey(key))
-			blockIdCounts.put(key, 0L);
-		
-		Long count = blockIdCounts.get(key);
-		count = count + 1;
-		blockIdCounts.put(key, count);
+
+		MutableLong count = blockIdCounts.get(key);
+		if (count != null)
+			count.increment();
+		else
+			blockIdCounts.put(key, new MutableLong(1L));
 	}
 	
 //	public Map<Integer, Long> getStats()
@@ -95,7 +96,7 @@ public class WorldStats
 				
 				// Get the existing count
 				long count = nameCounts.get(name);
-				count += blockIdCounts.get(id);
+				count += blockIdCounts.get(id).toLong();
 				
 				// Update the count
 				nameCounts.put(name, count);

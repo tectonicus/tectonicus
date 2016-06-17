@@ -76,11 +76,11 @@ public class Chunk
 		return rawChunk;
 	}
 	
-	public void loadRaw(InputStream in, Compression compression, BlockFilter filter) throws Exception
+	public void loadRaw(InputStream in, Compression compression, BlockFilter filter, WorldStats worldStats) throws Exception
 	{
 		if (rawChunk == null)
 		{
-			rawChunk = new RawChunk(in, compression);
+			rawChunk = new RawChunk(in, compression, worldStats);
 			filter.filter(rawChunk);
 		}
 		

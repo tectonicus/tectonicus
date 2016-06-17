@@ -40,6 +40,7 @@ import com.google.gson.GsonBuilder;
 
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
+import tectonicus.WorldStats;
 import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.util.FileUtils;
 
@@ -84,12 +85,12 @@ public class RawChunk
 	public RawChunk(File file) throws Exception
 	{
 		FileInputStream fileIn = new FileInputStream(file);
-		init(fileIn, Compression.Gzip);
+		init(fileIn, Compression.Gzip, null);
 	}
 	
-	public RawChunk(InputStream in, Compression compression) throws Exception
+	public RawChunk(InputStream in, Compression compression, WorldStats worldStats) throws Exception
 	{
-		init(in, compression);
+		init(in, compression, worldStats);
 	}
 	
 	public void setFilterMetadata(String id, Object data)
@@ -119,7 +120,7 @@ public class RawChunk
 		sections = new Section[MAX_SECTIONS];
 	}
 	
-	private void init(InputStream in, Compression compression) throws Exception
+	private void init(InputStream in, Compression compression, WorldStats worldStats) throws Exception
 	{
 		clear();
 
@@ -150,7 +151,7 @@ public class RawChunk
 					if (sections != null)
 					{
 						// Parse as anvil format
-						parseAnvilData(level);
+						parseAnvilData(level, worldStats);
 					}
 					else
 					{
@@ -462,7 +463,7 @@ public class RawChunk
 	}
 	
 	
-	private void parseAnvilData(CompoundTag level)
+	private void parseAnvilData(CompoundTag level, WorldStats worldStats)
 	{
 		ListTag sectionsList = NbtUtil.getChild(level, "Sections", ListTag.class);
 		// sections shouldn't be null here
@@ -484,82 +485,35 @@ public class RawChunk
 			sections[sectionY] = newSection;
 			
 			ByteArrayTag blocksTag = NbtUtil.getChild(compound, "Blocks", ByteArrayTag.class);
-			if (blocksTag != null)
+			ByteArrayTag addTag = NbtUtil.getChild(compound, "Add", ByteArrayTag.class);
+			ByteArrayTag dataTag = NbtUtil.getChild(compound, "Data", ByteArrayTag.class);
+			ByteArrayTag skylightTag = NbtUtil.getChild(compound, "SkyLight", ByteArrayTag.class);
+			ByteArrayTag blocklightTag = NbtUtil.getChild(compound, "BlockLight", ByteArrayTag.class);
+
+			for (int x=0; x<SECTION_WIDTH; x++)
 			{
-				for (int x=0; x<SECTION_WIDTH; x++)
+				for (int y=0; y<SECTION_HEIGHT; y++)
 				{
-					for (int y=0; y<SECTION_HEIGHT; y++)
+					for (int z=0; z<SECTION_DEPTH; z++)
 					{
-						for (int z=0; z<SECTION_DEPTH; z++)
+						final int index = calcAnvilIndex(x, y, z);
+						int id = blocksTag.getValue()[index] & 0xFF;
+						newSection.blockIds[x][y][z] = id;
+						
+						if (addTag != null)
 						{
-							final int index = calcAnvilIndex(x, y, z);
-							final int id = blocksTag.getValue()[index] & 0xFF;
+							id = id | (getAnvil4Bit(addTag, x, y, z) << 8);
 							newSection.blockIds[x][y][z] = id;
 						}
-					}
-				}
-			}
-			
-			ByteArrayTag addTag = NbtUtil.getChild(compound, "Add", ByteArrayTag.class);
-			if (addTag != null)
-			{
-				for (int x=0; x<SECTION_WIDTH; x++)
-				{
-					for (int y=0; y<SECTION_HEIGHT; y++)
-					{
-						for (int z=0; z<SECTION_DEPTH; z++)
-						{
-							final int addValue = getAnvil4Bit(addTag, x, y, z);
-							newSection.blockIds[x][y][z] = newSection.blockIds[x][y][z] | (addValue << 8);
-						}
-					}
-				}
-			}
-			
-			ByteArrayTag dataTag = NbtUtil.getChild(compound, "Data", ByteArrayTag.class);
-			if (dataTag != null)
-			{
-				for (int x=0; x<SECTION_WIDTH; x++)
-				{
-					for (int y=0; y<SECTION_HEIGHT; y++)
-					{
-						for (int z=0; z<SECTION_DEPTH; z++)
-						{
-							final byte half = getAnvil4Bit(dataTag, x, y, z);
-							newSection.blockData[x][y][z] = half;
-						}
-					}
-				}
-			}
-			
-			ByteArrayTag skylightTag = NbtUtil.getChild(compound, "SkyLight", ByteArrayTag.class);
-			if (skylightTag != null)
-			{
-				for (int x=0; x<SECTION_WIDTH; x++)
-				{
-					for (int y=0; y<SECTION_HEIGHT; y++)
-					{
-						for (int z=0; z<SECTION_DEPTH; z++)
-						{
-							final byte half = getAnvil4Bit(skylightTag, x, y, z);
-							newSection.skylight[x][y][z] = half;
-						}
-					}
-				}
-			}
-			
-			ByteArrayTag blocklightTag = NbtUtil.getChild(compound, "BlockLight", ByteArrayTag.class);
-			if (blocklightTag != null)
-			{
-				for (int x=0; x<SECTION_WIDTH; x++)
-				{
-					for (int y=0; y<SECTION_HEIGHT; y++)
-					{
-						for (int z=0; z<SECTION_DEPTH; z++)
-						{
-							final byte half = getAnvil4Bit(blocklightTag, x, y, z);
-							newSection.blocklight[x][y][z] = half;
-						}
+						
+						final byte data = getAnvil4Bit(dataTag, x, y, z);
+						newSection.blockData[x][y][z] = data;
+						
+						if (worldStats != null)
+							worldStats.incBlockId(id, data);
+
+						newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
+						newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
 					}
 				}
 			}

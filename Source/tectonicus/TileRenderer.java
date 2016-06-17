@@ -472,7 +472,7 @@ public class TileRenderer
 		RegionIterator it = world.createRegionIterator();
 		
 		System.out.println("Looking for chunks in "+it.getBaseDir().getAbsolutePath());
-		
+		final Date beginTime = new Date();
 		while (it.hasNext())
 		{
 			File regionFile = it.next();
@@ -498,11 +498,9 @@ public class TileRenderer
 					{
 						// For every chunk coord...
 						
-						Chunk c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter());
+						Chunk c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats);
 						if (c != null)
 						{
-							c.collectStats(worldStats);
-							
 							c.calculateHash(hashAlgorithm);
 							regionHashStore.addHash(c.getCoord(), c.getHash());
 							
@@ -526,7 +524,11 @@ public class TileRenderer
 			}
 		}
 		
+		final Date endTime = new Date();
+		final String searchTime = Util.getElapsedTime(beginTime, endTime);
+		
 		System.out.println("\nFound "+worldStats.numChunks()+" chunks in total");
+		System.out.println("Chunk search took: " + searchTime);
 		
 		if (worldStats.numChunks() == 0)
 		{
