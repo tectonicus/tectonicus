@@ -169,8 +169,8 @@ public class RawChunk
 								CompoundTag entity = (CompoundTag)t;
 								
 								StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
-								boolean painting = idTag.getValue().endsWith("Painting");
-								boolean itemFrame = idTag.getValue().equals("ItemFrame");
+								boolean painting = idTag.getValue().endsWith("Painting") || idTag.getValue().equals("minecraft:painting");
+								boolean itemFrame = idTag.getValue().equals("ItemFrame") || idTag.getValue().equals("minecraft:item_frame");
 								if (painting || itemFrame)
 								{
 									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
@@ -277,7 +277,7 @@ public class RawChunk
 									final int localY  = y-(blockY*HEIGHT);
 									final int localZ = z-(blockZ*DEPTH);
 									
-									if (id.equals("Sign"))
+									if (id.equals("Sign") || id.equals("minecraft:sign"))
 									{
 										List<String> textLines = new ArrayList<String>();
 
@@ -313,7 +313,7 @@ public class RawChunk
 										signs.add( new SignEntity(x, y, z, localX, localY, localZ,
 																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data) );
 									}
-									else if (id.equals("FlowerPot"))
+									else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot"))
 									{
 										IntTag dataTag = NbtUtil.getChild(entity, "Data", IntTag.class);
 										IntTag itemTag = NbtUtil.getChild(entity, "Item", IntTag.class);
@@ -335,7 +335,7 @@ public class RawChunk
 										
 										flowerPots.add(new FlowerPotEntity(x, y, z, localX, localY, localZ, item, dataTag.getValue()));
 									}
-									else if (id.equals("Skull"))
+									else if (id.equals("Skull") || id.equals("minecraft:skull"))
 									{
 										ByteTag skullType = NbtUtil.getChild(entity, "SkullType", ByteTag.class);
 										ByteTag rot = NbtUtil.getChild(entity, "Rot", ByteTag.class);
@@ -371,13 +371,13 @@ public class RawChunk
 										
 										skulls.add(new SkullEntity(x, y, z, localX, localY, localZ, skullType.getValue(), rot.getValue(), name, UUID, textureURL));
 									}
-									else if (id.equals("Beacon"))
+									else if (id.equals("Beacon") || id.equals("minecraft:beacon"))
 									{
 										IntTag levels = NbtUtil.getChild(entity, "Levels", IntTag.class);
 										
 										beacons.add(new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue()));
 									}
-									else if (id.equals("Banner"))
+									else if (id.equals("Banner") || id.equals("minecraft:banner"))
 									{
 										IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
 										ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
@@ -399,7 +399,7 @@ public class RawChunk
 										}
 										banners.add(new BannerEntity(x, y, z, localX, localY, localZ, base.getValue(), patterns));
 									}
-									else if (id.equals("Chest"))
+									else if (id.equals("Chest") || id.equals("minecraft:chest"))
 									{
 										final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
 										String name = "Chest";
