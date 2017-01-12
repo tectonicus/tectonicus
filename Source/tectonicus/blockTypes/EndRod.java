@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -72,10 +72,66 @@ public class EndRod implements BlockType
 		
 		final float offSet = 1.0f / 16.0f;
 		
+		final int data = rawChunk.getBlockData(x, y, z);
+		final int direction = data & 0x7;
+		
 		SubMesh rodMesh = new SubMesh();
 		SubMesh.addBlock(rodMesh, offSet*7, offSet*1, offSet*7, offSet*2, offSet*15, offSet*2, colour, rod, rod, rod);
 		SubMesh.addBlock(rodMesh, offSet*6, 0, offSet*6, offSet*4, offSet*1, offSet*4, colour, base, base, base);
 		
-		rodMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.None, 0);
+		
+		Rotation horizRotation = Rotation.Clockwise;
+		float horizAngle = 0;
+		
+		Rotation vertRotation = Rotation.None;
+		float vertAngle = 0;
+	
+		// Set angle/rotation from block data flags
+		if (direction == 0)
+		{
+			// down
+			vertRotation = Rotation.Clockwise;
+			vertAngle = 180;
+		}
+		else if (direction == 1)
+		{
+			// up
+			// ...unchanged
+		}
+		else if (direction == 2)
+		{
+			// north
+			vertRotation = Rotation.Clockwise;
+			vertAngle = 90;
+			
+			horizRotation = Rotation.AntiClockwise;
+			horizAngle = 90;
+		}
+		else if (direction == 3)
+		{
+			// south
+			vertRotation = Rotation.Clockwise;
+			vertAngle = 90;
+			
+			horizRotation = Rotation.Clockwise;
+			horizAngle = 90;
+		}
+		else if (direction == 4)
+		{
+			// west
+			vertRotation = Rotation.Clockwise;
+			vertAngle = 90;
+		}
+		else if (direction == 5)
+		{
+			// east
+			vertRotation = Rotation.Clockwise;
+			vertAngle = 90;
+			
+			horizRotation = Rotation.Clockwise;
+			horizAngle = 180;
+		}
+		
+		rodMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, vertRotation, vertAngle);
 	}
 }
