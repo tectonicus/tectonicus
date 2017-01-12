@@ -27,6 +27,8 @@ dependencies {
 	testCompile 'junit:junit:4.12'
 }
 
+build.mustRunAfter clean
+
 build.doFirst {
 	def props = new Properties()
 	props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
@@ -49,7 +51,7 @@ jar {
 	}
 }
 
-task createPackage(type: Zip, dependsOn: 'build', group: build, description: 'Create release zip file') {
+task createPackage(type: Zip, dependsOn: ['clean', 'build'], group: 'build', description: 'Create release zip file') {
 	from files('Data/defaultBlockConfig.xml', "build/libs/tectonicus-${version}.jar")
 	from('Docs') {
 		include('*.xml', '*.txt')
