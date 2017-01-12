@@ -599,3 +599,12 @@ Version 2.23 06-08-2016
 - fixed issue with parsing Minecraft jar version numbers
 Known Issues
 - chests do not show inventory, this is planned for later
+
+Version 2.24 01-11-2017
+- Handle new ids used in Entity and TileEntity NBT in Minecraft 1.11
+- Chunk discovery should run up to 50% faster than previously
+- Bone Block and End Rod should now render with correct orientation
+- Fixed toggle buttons not showing up sometimes with multiple maps
+- Fixed missing version number
+Known Issues
+- Observer and Shulker Box blocks are not supported yet
