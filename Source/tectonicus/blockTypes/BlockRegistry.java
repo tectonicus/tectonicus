@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,15 +11,19 @@ package tectonicus.blockTypes;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.zip.ZipEntry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
@@ -33,7 +37,6 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
-import tectonicus.texture.ZipStack.ZipStackEntry;
 import tectonicus.util.FileUtils;
 import tectonicus.util.Vector3f;
 
@@ -65,42 +68,37 @@ public class BlockRegistry
 	
 	public Map<String, List<BlockVariant>> getBlockStates() { return Collections.unmodifiableMap(blockStates); }
 	public Map<String, BlockModel> getBlockModels() { return Collections.unmodifiableMap(blockModels); }
+	public List<BlockVariant> getVariants(String blockID) { return blockStates.get(blockID); }
+	public BlockModel getModel(String model) { return blockModels.get(model); }
 	
 	
 	public void deserializeBlockstates()
 	{
 		List<BlockVariant> blockVariants = new ArrayList<>();
 		
-		Enumeration<? extends ZipEntry> entries = zips.getBaseEntries();
-		while(entries.hasMoreElements())
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
+			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"));)
 		{
-			ZipEntry entry = entries.nextElement();
-			String entryName = entry.getName();
-			if(entryName.contains("blockstates"))
+			for (Path entry : entries)
 			{
-				ZipStackEntry zse = zips.getEntry(entryName);
-				try 
-				{
-					JSONObject obj = new JSONObject(FileUtils.loadJSON(zse.getInputStream()));
-					JSONObject variants = obj.getJSONObject("variants");
-					
-					Iterator<?> keys = variants.keys();
-					while(keys.hasNext()) 
-					{
-					    String key = (String)keys.next();
-					    Object variant = variants.get(key);
-
-					    blockVariants.add(BlockVariant.deserializeVariant(key, variant));
-					}
-				}
-				catch (Exception e) 
-				{
-					e.printStackTrace();
-				}
+				JSONObject obj = new JSONObject(FileUtils.loadJSON(Files.newInputStream(entry))); //TODO: Use Gson library to replace this
+				JSONObject variants = obj.getJSONObject("variants");
 				
-				String name = "minecraft:" + StringUtils.removeEnd(entryName.substring(entryName.lastIndexOf("/")+1), ".json");
+				Iterator<?> keys = variants.keys();
+				while(keys.hasNext()) 
+				{
+				    String key = (String)keys.next();
+				    Object variant = variants.get(key);
+
+				    blockVariants.add(BlockVariant.deserializeVariant(key, variant));
+				}
+			
+				String name = "minecraft:" + StringUtils.removeEnd(entry.getFileName().toString(), ".json");
 				blockStates.put(name, blockVariants);
-			}
+			}				
+		} catch (Exception e)
+		{
+			e.printStackTrace();
 		}
 	}
 
@@ -126,9 +124,7 @@ public class BlockRegistry
 	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
 	public BlockModel loadModel(String modelPath, ZipStack zips, Map<String, String> textureMap) throws Exception
 	{
-		ZipStackEntry modelFile = zips.getEntry("assets/minecraft/models/" + modelPath + ".json");
-
-		JSONObject obj = new JSONObject(FileUtils.loadJSON(modelFile.getInputStream()));
+		JSONObject obj = new JSONObject(FileUtils.loadJSON(zips.getStream("assets/minecraft/models/" + modelPath + ".json")));
 		String parent = "";
 		if(obj.has("parent")) // Get texture information and then load parent file
 		{
@@ -143,126 +139,135 @@ public class BlockRegistry
 			{
 				combineMap.putAll(populateTextureMap(textureMap, obj.getJSONObject("textures")));
 			}
-			
-			List<BlockElement> elementsList = new ArrayList<>();
-			
+
 			boolean ao = true;
 			if (obj.has("ambientocclusion"))
 				ao = false;
 			
 			JSONArray elements = obj.getJSONArray("elements");				
-			for (int i = 0; i < elements.length(); i++)
-			{
-				Map<String, ElementFace> elementFaces = new HashMap<>();
-				
-				JSONObject element = elements.getJSONObject(i);
-				
-				JSONArray from = element.getJSONArray("from");
-				Vector3f fromVector = new Vector3f((float)from.getDouble(0), (float)from.getDouble(1), (float)from.getDouble(2));
-				JSONArray to = element.getJSONArray("to");
-				Vector3f toVector = new Vector3f((float)to.getDouble(0), (float)to.getDouble(1), (float)to.getDouble(2));
-				
-				Vector3f rotationOrigin = new Vector3f(8.0f, 8.0f, 8.0f);
-				String rotationAxis = "y";
-				float rotationAngle = 0;
-				boolean rotationScale = false;
-				
-				if(element.has("rotation"))
-				{
-					JSONObject rot = element.getJSONObject("rotation");
-					JSONArray rotOrigin = rot.getJSONArray("origin");
-					rotationOrigin = new Vector3f((float)rotOrigin.getDouble(0), (float)rotOrigin.getDouble(1), (float)rotOrigin.getDouble(2));
-
-					rotationAxis = rot.getString("axis");
-					
-					rotationAngle = (float) rot.getDouble("angle");
-					
-					if(element.has("rescale"))
-						rotationScale = true;
-				}
-				
-				boolean shaded = true;
-				if(element.has("shade"))
-					shaded = false;						
-				
-				JSONObject faces = element.getJSONObject("faces");
-				
-				Iterator<?> keys = faces.keys();
-				while(keys.hasNext())
-				{
-					String key = (String)keys.next();
-					JSONObject face = (JSONObject) faces.get(key);
-					
-					float u0 = fromVector.x();
-					float v0 = fromVector.y();
-					float u1 = toVector.x();
-					float v1 = toVector.y();
-					
-					int rotation = 0;
-				    if(face.has("rotation"))
-				    	rotation = face.getInt("rotation");
-					
-				    //System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
-				    // TODO: Need to test more texture packs
-					SubTexture subTexture = new SubTexture(null, u0*(1.0f/16.0f), v0*(1.0f/16.0f), u1*(1.0f/16.0f), v1*(1.0f/16.0f));
-					
-					StringBuilder tex = new StringBuilder(face.getString("texture"));
-				    if(tex.charAt(0) == '#')
-				    {
-				    	String texture = tex.deleteCharAt(0).toString();
-				    	
-				    	SubTexture te = texturePack.findTexture(StringUtils.removeStart(combineMap.get(texture), "blocks/")+ ".png");
-				    	
-				    	final float texHeight = te.texture.getHeight();
-						final float texWidth = te.texture.getWidth();
-				    	final int numTiles = te.texture.getHeight()/te.texture.getWidth();
-				    	
-				    	u0 = fromVector.x()/texWidth;
-						v0 = fromVector.y()/texWidth;
-						u1 = toVector.x()/texWidth;
-						v1 = toVector.y()/texWidth;
-				    	
-				    	if(face.has("uv"))
-						{
-				    		//System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
-							JSONArray uv = face.getJSONArray("uv");
-							u0 = (float)(uv.getDouble(0)/16.0f);
-							v0 = (float)(uv.getDouble(1)/16.0f) / numTiles;
-							u1 = (float)(uv.getDouble(2)/16.0f);
-							v1 = (float)(uv.getDouble(3)/16.0f) / numTiles;
-						}
-				    	
-				    	System.out.println(texWidth + " x " + texHeight);
-				    	int frame = 1;
-				    	if(numTiles > 1)
-						{
-							Random rand = new Random();
-							frame = rand.nextInt(numTiles)+1;
-						}
-
-				    	subTexture = new SubTexture(te.texture, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
-				    	//subTexture = new SubTexture(test, u0, v0, u1, v1);
-				    	//System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
-				    }
-
-				    boolean cullFace = false;
-				    if(face.has("cullface"))
-				    	cullFace = true;
-
-				    boolean tintIndex = false;
-				    if(face.has("tintindex"))
-				    	tintIndex = true;
-				    
-				    ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex);
-				    elementFaces.put(key, ef);
-				}
-
-				BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotationAxis, rotationAngle, rotationScale, shaded, elementFaces);
-				elementsList.add(be);
-			}
-
-			return new BlockModel(modelPath, ao, elementsList);
+			
+			return new BlockModel(modelPath, ao, deserializeBlockElements(combineMap, elements));
 		}
+	}
+
+	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap,	JSONArray elements) throws JSONException 
+	{
+		List<BlockElement> elementsList = new ArrayList<>();
+		
+		for (int i = 0; i < elements.length(); i++)
+		{
+			JSONObject element = elements.getJSONObject(i);
+			
+			JSONArray from = element.getJSONArray("from");
+			Vector3f fromVector = new Vector3f((float)from.getDouble(0), (float)from.getDouble(1), (float)from.getDouble(2));
+			JSONArray to = element.getJSONArray("to");
+			Vector3f toVector = new Vector3f((float)to.getDouble(0), (float)to.getDouble(1), (float)to.getDouble(2));
+			
+			Vector3f rotationOrigin = new Vector3f(8.0f, 8.0f, 8.0f);
+			String rotationAxis = "y";
+			float rotationAngle = 0;
+			boolean rotationScale = false;
+			
+			if(element.has("rotation"))
+			{
+				JSONObject rot = element.getJSONObject("rotation");
+				JSONArray rotOrigin = rot.getJSONArray("origin");
+				rotationOrigin = new Vector3f((float)rotOrigin.getDouble(0), (float)rotOrigin.getDouble(1), (float)rotOrigin.getDouble(2));
+
+				rotationAxis = rot.getString("axis");
+				
+				rotationAngle = (float) rot.getDouble("angle");
+				
+				if(element.has("rescale"))
+					rotationScale = true;
+			}
+			
+			boolean shaded = true;
+			if(element.has("shade"))
+				shaded = false;						
+			
+			JSONObject faces = element.getJSONObject("faces");
+			SubTexture subTexture = new SubTexture(null, fromVector.x(), fromVector.y(), toVector.x(), toVector.y());
+			BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotationAxis, rotationAngle, rotationScale, shaded, deserializeElementFaces(combineMap, subTexture, faces));
+			elementsList.add(be);
+		}
+		return elementsList;
+	}
+
+	private Map<String, ElementFace> deserializeElementFaces(Map<String, String> combineMap, SubTexture texCoords, JSONObject faces) throws JSONException
+	{
+		Map<String, ElementFace> elementFaces = new HashMap<>();
+		
+		Iterator<?> keys = faces.keys();
+		while(keys.hasNext())
+		{
+			String key = (String)keys.next();
+			JSONObject face = (JSONObject) faces.get(key);
+			
+			float u0 = texCoords.u0;
+			float v0 = texCoords.v0;
+			float u1 = texCoords.u1;
+			float v1 = texCoords.v1;
+			
+			int rotation = 0;
+		    if(face.has("rotation"))
+		    	rotation = face.getInt("rotation");
+			
+		    //System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
+		    // TODO: Need to test more texture packs
+			SubTexture subTexture = new SubTexture(null, u0*(1.0f/16.0f), v0*(1.0f/16.0f), u1*(1.0f/16.0f), v1*(1.0f/16.0f));
+			
+			StringBuilder tex = new StringBuilder(face.getString("texture"));
+		    if(tex.charAt(0) == '#')
+		    {
+		    	String texture = tex.deleteCharAt(0).toString();
+		    	
+		    	SubTexture te = texturePack.findTexture(StringUtils.removeStart(combineMap.get(texture), "blocks/")+ ".png");
+		    	
+		    	final float texHeight = te.texture.getHeight();
+				final float texWidth = te.texture.getWidth();
+		    	final int numTiles = te.texture.getHeight()/te.texture.getWidth();
+		    	
+		    	u0 /= texWidth;
+				v0 /= texWidth;
+				u1 /= texWidth;
+				v1 /= texWidth;
+		    	
+		    	if(face.has("uv"))
+				{
+		    		//System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
+					JSONArray uv = face.getJSONArray("uv");
+					u0 = (float)(uv.getDouble(0)/16.0f);
+					v0 = (float)(uv.getDouble(1)/16.0f) / numTiles;
+					u1 = (float)(uv.getDouble(2)/16.0f);
+					v1 = (float)(uv.getDouble(3)/16.0f) / numTiles;
+				}
+		    	
+		    	System.out.println(texWidth + " x " + texHeight);
+		    	int frame = 1;
+		    	if(numTiles > 1)
+				{
+					Random rand = new Random();
+					frame = rand.nextInt(numTiles)+1;
+				}
+
+		    	subTexture = new SubTexture(te.texture, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
+		    	//subTexture = new SubTexture(test, u0, v0, u1, v1);
+		    	//System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
+		    }
+
+		    boolean cullFace = false;
+		    if(face.has("cullface"))
+		    	cullFace = true;
+
+		    boolean tintIndex = false;
+		    if(face.has("tintindex"))
+		    	tintIndex = true;
+		    
+		    ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex);
+		    elementFaces.put(key, ef);
+		}
+		return elementFaces;
 	}
 	
 	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JSONObject textures) throws JSONException

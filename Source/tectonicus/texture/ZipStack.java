@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,27 +12,29 @@ package tectonicus.texture;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class ZipStack
 {
-	private ZipFile base;
-	private ZipFile override;
 	private List<File> modJars;
+	private String baseFileName;
+	private FileSystem base, override;
 	
 	public ZipStack(File baseFile, File overrideFile, List<File> modJars) throws IOException
 	{
-		base = new ZipFile(baseFile);
+		baseFileName = baseFile.getPath();
+		base = FileSystems.newFileSystem(Paths.get(baseFileName), null);
 		
 		if (overrideFile != null)
 		{
 			if (overrideFile.exists())
-				override = new ZipFile(overrideFile);
+			{
+				override = FileSystems.newFileSystem(Paths.get(overrideFile.getPath()), null);
+			}
 			else
 				System.out.println("Couldn't open \""+overrideFile.getAbsolutePath()+"\"");
 		}
@@ -40,110 +42,44 @@ public class ZipStack
 		this.modJars = modJars;
 	}
 	
-	public ZipStackEntry getEntry(String path)
+	public InputStream getStream(String path) throws IOException
 	{
-		ZipStackEntry entry = getEntry(override, path);
-		if (entry != null)
+		if (override != null && hasFileFS(path, override))
 		{
-			return entry;
+			return Files.newInputStream(override.getPath(path));
+		}
+		else if (hasFileFS(path, base))
+		{
+			return Files.newInputStream(base.getPath(path));
 		}
 		else
 		{
-			entry = getEntry(base, path);
-			if (entry != null)
+			for (File jar : modJars)
 			{
-				return entry;
+				FileSystem fs = FileSystems.newFileSystem(Paths.get(jar.getPath()), null);
+				if (hasFileFS(path, fs))
+					return Files.newInputStream(fs.getPath(path));
 			}
-			else
-			{
-				Path p = Paths.get(path);
-				String fileName = p.getFileName().toString();
-
-				for (File jar : modJars)
-				{				
-					ZipFile jarFile;
-					try 
-					{
-						jarFile = new ZipFile(jar);
-						entry = getEntry(jarFile, path);
-						if (entry != null)
-							return entry;
-						
-						ZipEntry ze = null;
-						for (Enumeration<? extends ZipEntry> e = jarFile.entries(); e.hasMoreElements();)
-						{
-							ze = e.nextElement();
-							p = Paths.get(ze.getName());
-							if (p.getFileName().toString().equalsIgnoreCase(fileName))
-								return getEntry(jarFile, ze.getName());
-						}
-					} 
-					catch (Exception e)
-					{
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-		
-		return null;
-	}
-	
-	public ZipStackEntry getEntry(ZipFile zip, String path)
-	{
-		if (zip == null)
-			return null;
-		
-		// Strip off any leading slashes
-		if (path.charAt(0) == '\\' || path.charAt(0) == '/')
-			path = path.substring(1);
-		
-		ZipEntry entry;
-		
-		entry = zip.getEntry(path);
-		if (entry != null)
-			return new ZipStackEntry(zip, entry);
-		
-		entry = zip.getEntry("/"+path);
-		if (entry != null)
-			return new ZipStackEntry(zip, entry);
-		
-		entry = zip.getEntry("\\"+path);
-		if (entry != null)
-			return new ZipStackEntry(zip, entry);
-		
-		return null;
-	}
-	
-	public Enumeration<? extends ZipEntry> getBaseEntries()
-	{
-		return base.entries();
-	}
-	
-	public Enumeration<? extends ZipEntry> getOverrideEntries()  //TODO: need to return mod jar entries as well
-	{	
-		return  override != null ? override.entries() :  null;
-	}
-	
-	public static class ZipStackEntry
-	{
-		public final ZipFile file;
-		public final ZipEntry entry;
-		
-		public ZipStackEntry(ZipFile f, ZipEntry e)
-		{
-			if (f == null)
-				throw new RuntimeException("file cannot be null");
-			if (e == null)
-				throw new RuntimeException("entry cannot be null");
 			
-			this.file = f;
-			this.entry = e;
+			return null;
 		}
-		
-		public InputStream getInputStream() throws IOException
-		{
-			return file.getInputStream(entry);
-		}
+	}
+	
+	public boolean hasFile(String file)
+	{
+		return hasFileFS(file, override) || hasFileFS(file, base);  //TODO: Maybe need to check mod jar files too?
+	}
+	
+	public boolean hasFileFS(String file, FileSystem fs)
+	{
+		if (fs == null)
+			return false;
+		else
+			return Files.exists(fs.getPath(file));
+	}
+	
+	public String getBaseFileName()
+	{
+		return baseFileName;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,13 +15,17 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
 
 import javax.imageio.ImageIO;
 
@@ -30,7 +34,6 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
 import tectonicus.renderer.Font;
-import tectonicus.texture.ZipStack.ZipStackEntry;
 
 public class TexturePack
 {
@@ -62,8 +65,6 @@ public class TexturePack
 		
 		loadedPackTextures = new HashMap<String, PackTexture>();
 		
-		//this.version = Minecraft.getTexturePackVersion(minecraftJar);
-		
 		try
 		{
 			zipStack = new ZipStack(minecraftJar, texturePack, modJars);
@@ -73,26 +74,25 @@ public class TexturePack
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 		
-		//ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
 		//TODO: Clean up this version stuff
-		if (zipStack.getEntry("terrain.png") != null)
+		if (zipStack.hasFile("terrain.png"))
 		{
 			this.version = "1.4";
 			Minecraft.setMinecraftVersion(1.4f);
 		}
-		else if(zipStack.getEntry("textures/blocks/activatorRail.png") != null)
+		else if(zipStack.hasFile("textures/blocks/activatorRail.png"))
 		{
 			this.version = "1.5";
 			Minecraft.setMinecraftVersion(1.5f);
 		}
-		else if(zipStack.getEntry("assets/minecraft/textures/blocks/redstone_dust_cross.png") != null)
+		else if(zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png"))
 		{
 			this.version = "1.678";
 			Minecraft.setMinecraftVersion(1.6f);
-			if(zipStack.getEntry("assets/minecraft/textures/blocks/stone_andesite.png") != null)
+			if(zipStack.hasFile("assets/minecraft/textures/blocks/stone_andesite.png"))
 				Minecraft.setMinecraftVersion(1.8f);
 		}
-		else if(zipStack.getEntry("assets/minecraft/textures/blocks/usb_charger_side.png") != null)
+		else if(zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png"))
 		{
 			this.version = "1.RV";
 			Minecraft.setMinecraftVersion(1.9f);
@@ -170,95 +170,68 @@ public class TexturePack
 			else
 				path = "";
 			
-			ZipStackEntry vignetteEntry = zipStack.getEntry(path + "misc/vignette.png");
-			if (vignetteEntry != null)
-			{
-				BufferedImage vignetteImage = copy( ImageIO.read(vignetteEntry.getInputStream()) );
+			try {
+				BufferedImage vignetteImage = copy( ImageIO.read(zipStack.getStream(path + "misc/vignette.png")) );
 				vignetteTexture = rasteriser.createTexture(vignetteImage, TextureFilter.LINEAR);
+			} catch (Exception e) {
+				
 			}
+//			ZipStackEntry vignetteEntry = zipStack.getEntry(path + "misc/vignette.png");
+//			if (vignetteEntry != null)
+//			{
+//				BufferedImage vignetteImage = copy( ImageIO.read(vignetteEntry.getInputStream()) );
+//				vignetteTexture = rasteriser.createTexture(vignetteImage, TextureFilter.LINEAR);
+//			}
 			
 			//TODO: For MC 1.5, do we need to load each individual item into the TexturePack object?
-			if (version == "1.4")
-			{
-				ZipStackEntry itemsEntry = zipStack.getEntry("gui/items.png");
-				if (itemsEntry != null)
-				{
-					itemSheet = copy( ImageIO.read( itemsEntry.getInputStream() ) );
-				}
-				else
-				{
-					throw new RuntimeException("Couldn't find items.png in "+formatPaths(minecraftJar, texturePack));
-				}
+			try {
+				itemSheet = copy( ImageIO.read( zipStack.getStream(path + "gui/items.png") ) );
+			} catch (IllegalArgumentException e) {
+				System.out.println("Could not find items.png.  This is only required if using a Minecraft 1.4 or older jar file.");
 			}
-				
-			ZipStackEntry iconsEntry = zipStack.getEntry(path + "gui/icons.png");
-			if (iconsEntry != null)
-			{
-				iconSheet = copy( ImageIO.read( iconsEntry.getInputStream() ) );
-			}
-			else
-			{
+
+			try {
+				iconSheet = copy( ImageIO.read( zipStack.getStream(path + "gui/icons.png") ) );
+			} catch (IllegalArgumentException e) {
 				throw new RuntimeException("Couldn't find icons.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
-			ZipStackEntry chestEntry = zipStack.getEntry(path + "gui/container/generic_54.png");
-			if (chestEntry != null)
-			{
-				chestImage = copy( ImageIO.read( chestEntry.getInputStream() ) );
-			}
-			else
-			{
+			try {
+				InputStream imgStream = zipStack.getStream(path + "gui/container.png");
+				if (imgStream == null)
+					imgStream = zipStack.getStream(path + "gui/container/generic_54.png");
+				chestImage = copy( ImageIO.read( imgStream ) );
+			} catch (IllegalArgumentException e) {
 				throw new RuntimeException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, texturePack));
 			}
-			
-			ZipStackEntry grassEntry;
-			if (version == "1.4" || version == "1.5")
-				grassEntry = zipStack.getEntry(path + "misc/grasscolor.png");
-			else
-				grassEntry = zipStack.getEntry(path + "colormap/grass.png");
-			
-			if (grassEntry != null)
-			{
-				grassLookupImage = copy( ImageIO.read( grassEntry.getInputStream() ) );
-			//	ImageIO.write(grassLookupImage, "png", new File("/Users/John/grass.png"));
-			}
-			else
-			{
+
+			try {
+				InputStream imgStream = zipStack.getStream(path + "misc/grasscolor.png");
+				if (imgStream == null)
+					imgStream = zipStack.getStream(path + "colormap/grass.png");
+				grassLookupImage = copy( ImageIO.read( imgStream ) );
+			} catch (IllegalArgumentException e) {
 				throw new RuntimeException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
-			ZipStackEntry foliageEntry;
-			if (version == "1.4" || version == "1.5")
-				foliageEntry = zipStack.getEntry(path + "misc/foliagecolor.png");
-			else
-				foliageEntry = zipStack.getEntry(path + "colormap/foliage.png");
-			
-			if (foliageEntry != null)
-			{
-				foliageLookupImage = copy( ImageIO.read( foliageEntry.getInputStream() ) );
-			}
-			else
-			{
+			try {
+				InputStream imgStream = zipStack.getStream(path + "misc/foliagecolor.png");
+				if (imgStream == null)
+					imgStream = zipStack.getStream(path + "colormap/foliage.png");
+				foliageLookupImage = copy( ImageIO.read( imgStream ) );
+			} catch (IllegalArgumentException e) {
 				throw new RuntimeException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
-			ZipStackEntry fontEntry;
-			if (version == "1.4" || version == "1.5")
-				fontEntry = zipStack.getEntry(path + "font/default.png");
-			else
-				fontEntry = zipStack.getEntry(path + "font/ascii.png");
-			//ZipStackEntry fontTextEntry = zipStack.getEntry("font.txt");
-			InputStream textIn = this.getClass().getResourceAsStream("/font.txt");
-			
-			if (fontEntry != null && textIn != null)
-			{
-				BufferedImage fontSheet = ImageIO.read( fontEntry.getInputStream() );
-				//InputStream textIn = fontTextEntry.getInputStream();
-				
+			//TODO: The font stuff needs some work
+			try {
+				InputStream imgStream = zipStack.getStream(path + "font/default.png");
+				if (imgStream == null)
+					imgStream = zipStack.getStream(path + "font/ascii.png");
+				InputStream textIn = this.getClass().getResourceAsStream("/font.txt");
+				BufferedImage fontSheet = ImageIO.read( imgStream );
 				font = new Font(rasteriser, fontSheet, textIn);
-			}
-			else
-			{
+			} catch (IllegalArgumentException e) {
 				throw new RuntimeException("Couldn't find font resources in "+formatPaths(minecraftJar, texturePack));
 			}
 		}
@@ -408,10 +381,11 @@ public class TexturePack
 		try
 		{
 			// Check texture pack and minecraft jar
-			ZipStack.ZipStackEntry entry = zipStack.getEntry(path);
-			if (entry != null)
+			//ZipStack.ZipStackEntry entry = zipStack.getEntry(path);
+			InputStream stream = zipStack.getStream(path);
+			if (stream != null)
 			{
-				in = entry.getInputStream();
+				in = stream;
 			}
 		}
 		catch (Exception e)
@@ -466,7 +440,7 @@ public class TexturePack
 	public HashMap<String, BufferedImage> loadPatterns()
 	{
 		HashMap<String, BufferedImage> patterns = new HashMap<String, BufferedImage>();
-		HashMap<String, String> codes = new HashMap<String, String>();
+		HashMap<String, String> codes = new HashMap<String, String>();  // TODO: Maybe populate this map from defaultBlockConfig file?
 		codes.put("banner_base.png", "base");
 		codes.put("base.png", "baseMask");
 		codes.put("border.png", "bo");
@@ -507,25 +481,21 @@ public class TexturePack
 		codes.put("triangle_top.png", "tt");
 		codes.put("triangles_bottom.png", "bts");
 		codes.put("triangles_top.png", "tts");
-		
-		try 
+			
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner"));)
 		{
-			ZipEntry ze = null;
-			for (Enumeration<? extends ZipEntry> e = zipStack.getBaseEntries(); e.hasMoreElements();)
-			{
-				ze = e.nextElement();
-				
-				if (ze.getName().contains("assets/minecraft/textures/entity/banner/") || ze.getName().equals("assets/minecraft/textures/entity/banner_base.png"))
-				{
-					String fileName = Paths.get(ze.getName()).getFileName().toString();
-					patterns.put(codes.get(fileName), loadTexture(ze.getName()));
-				}
-			}
-		} 
-		catch (Exception e)
-		{
-			e.printStackTrace();
+			for (Path entry : entries)
+				patterns.put(codes.get(entry.getFileName().toString()), loadTexture(entry.toString()));
+			
+			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
+			patterns.put(codes.get(basePattern.getFileName().toString()), loadTexture(basePattern.toString()));
 		}
+		catch (IOException e)
+		{
+			System.out.println("No banner patterns found. You may be using an older Minecraft jar file");
+		}
+
 		return patterns;
 	}
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,7 +22,6 @@ import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
-import tectonicus.raw.BlockEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
@@ -49,7 +48,10 @@ public class Skull implements BlockType
 		this.stexture = stexture;
 		this.wtexture = wtexture;
 		this.ztexture = ztexture;
-		this.dtexture = dtexture;
+		if(dtexture != null)
+			this.dtexture = dtexture;
+		else
+			this.dtexture = texture;
 		
 		colour = new Colour4f(1, 1, 1, 1);
 	}
@@ -156,7 +158,7 @@ public class Skull implements BlockType
 		
 		SubTexture mouthTexture = null;
 		SubTexture earTexture = null;
-		SubTexture nostrilTexture = null;
+		//SubTexture nostrilTexture = null;
 		
 		if(dragonHead)
 		{

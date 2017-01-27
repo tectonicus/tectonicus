@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 
 import tectonicus.texture.ZipStack;
-import tectonicus.texture.ZipStack.ZipStackEntry;
 import tectonicus.util.OsDetect;
 
 public class Minecraft
@@ -142,7 +141,7 @@ public class Minecraft
 		return levelDat.exists();
 	}
 	
-	public static boolean isValidMinecraftJar(File minecraftJar)
+	public static boolean isValidMinecraftJar(File minecraftJar) //TODO:  This is only used by the old Swing GUI, refactor to remove it
 	{
 		if (minecraftJar == null)
 			return false;
@@ -154,9 +153,7 @@ public class Minecraft
 		{
 			ZipStack zips = new ZipStack(minecraftJar, null, null);
 			
-			//ZipStackEntry terrainEntry = zips.getEntry("terrain.png");
-			
-			return (zips.getEntry("terrain.png") != null || zips.getEntry("textures/blocks/activatorRail.png") != null || zips.getEntry("assets/minecraft/textures/blocks/rail_activator.png") != null);
+			return zips.hasFile("terrain.png") || zips.hasFile("textures/blocks/activatorRail.png") || zips.hasFile("assets/minecraft/textures/blocks/rail_activator.png");
 		}
 		catch (Exception e)
 		{
@@ -164,26 +161,6 @@ public class Minecraft
 		}
 		
 		return false;
-	}
-	
-	public static String getTexturePackVersion(File minecraftJar)
-	{
-		ZipStack zipStack;
-		
-		try
-		{
-			zipStack = new ZipStack(minecraftJar, null, null);
-		}
-		catch (Exception e)
-		{
-			throw new RuntimeException("Couldn't open jar files for texture reading", e);
-		}
-		
-		ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
-		if (terrainEntry != null)
-			return "1.4";
-		else
-			return "1.5";
 	}
 
 	public static File findLevelDat(File worldDir)
