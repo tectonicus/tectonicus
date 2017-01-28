@@ -76,12 +76,14 @@ public class BlockRegistry
 	{
 		List<BlockVariant> blockVariants = new ArrayList<>();
 		
+		//TODO: need to use override pack blockstate files first
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
 			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"));)
 		{
 			for (Path entry : entries)
 			{
-				JSONObject obj = new JSONObject(FileUtils.loadJSON(Files.newInputStream(entry))); //TODO: Use Gson library to replace this
+				//TODO: Use Gson library to replace this
+				JSONObject obj = new JSONObject(new String(Files.readAllBytes(entry))); 
 				JSONObject variants = obj.getJSONObject("variants");
 				
 				Iterator<?> keys = variants.keys();

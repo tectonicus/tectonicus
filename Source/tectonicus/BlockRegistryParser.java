@@ -101,7 +101,6 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.configuration.SignFilter;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
-import tectonicus.texture.ZipStack;
 
 public class BlockRegistryParser
 {
@@ -191,9 +190,7 @@ public class BlockRegistryParser
 			
 			try
 			{
-				ZipStack zips = new ZipStack(new File("C:\\Users\\Steven\\AppData\\Roaming\\.minecraft\\versions\\1.8.8\\1.8.8.jar"), null, null);
 				
-				//zips.getEntry("assets/minecraft/textures/blocks/rail_activator.png");
 			}
 			catch (Exception e)
 			{

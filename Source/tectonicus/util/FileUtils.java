@@ -11,12 +11,11 @@ package tectonicus.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
 import com.google.gson.JsonParser;
@@ -107,21 +106,9 @@ public class FileUtils
 			if (!excludeExtensions.contains(extension))
 			{
 				// This was not a directory, so lets just copy the file
-				FileInputStream fin = null;
-				FileOutputStream fout = null;
-				byte[] buffer = new byte[4096]; // Buffer 4K at a time
-				
-				int bytesRead;
 				try
 				{
-					// open the files for input and output
-					fin = new FileInputStream(src);
-					fout = new FileOutputStream(dest);
-					// while bytesRead indicates a successful read, lets write...
-					while ((bytesRead = fin.read(buffer)) >= 0)
-					{
-						fout.write(buffer, 0, bytesRead);
-					}
+					Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				}
 				catch (IOException e)
 				{
@@ -132,18 +119,6 @@ public class FileUtils
 					wrapper.initCause(e);
 					wrapper.setStackTrace(e.getStackTrace());
 					throw wrapper;
-				}
-				finally
-				{
-					// Ensure that the files are closed (if they were open).
-					if (fin != null)
-					{
-						fin.close();
-					}
-					if (fout != null)
-					{
-						fout.close();
-					}
 				}
 			}
 			else
@@ -157,22 +132,7 @@ public class FileUtils
 	{
 		try
 		{
-			if (outputFile.exists())
-				outputFile.delete();
-			
-			InputStream mcmapIn = TectonicusApp.class.getClassLoader().getResourceAsStream(resource);
-			OutputStream out = new FileOutputStream(outputFile);
-			
-			byte[] buffer = new byte[1024];
-			while (true)
-			{
-				int count = mcmapIn.read(buffer);
-				if (count == -1)
-					break;
-				out.write(buffer, 0, count);
-			}
-			
-			out.close();
+			Files.copy(TectonicusApp.class.getClassLoader().getResourceAsStream(resource), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 		catch (Exception e)
 		{
@@ -216,89 +176,6 @@ public class FileUtils
 			return false;
 		}
 	}
-	
-	/*
-	public static void zipDir(File inputDir, File outputArchive)
-	{
-		FileOutputStream fOut = null;
-		ZipOutputStream zipOut= null;
-		try
-		{
-			fOut = new FileOutputStream(outputArchive);
-			zipOut = new ZipOutputStream(fOut);
-			zipDir(inputDir.getAbsolutePath(), inputDir.getAbsolutePath(), zipOut);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			try
-			{
-				if (zipOut != null)
-					zipOut.close();
-				if (fOut != null)
-					fOut.close();
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-		}	
-	}
-	
-	private static void zipDir(String baseDir, String dir2zip, ZipOutputStream zos)
-	{
-		try
-		{
-			// create a new File object based on the directory we have to zip
-			File zipDir = new File(dir2zip);
-			
-			// get a listing of the directory content
-			String[] dirList = zipDir.list();
-			byte[] readBuffer = new byte[2156];
-			int bytesIn = 0;
-			// loop through dirList, and zip the files
-			for (int i = 0; i < dirList.length; i++)
-			{
-				File f = new File(zipDir, dirList[i]);
-				if (f.isDirectory())
-				{
-					// if the File object is a directory, call this
-					// function again to add its content recursively
-					String filePath = f.getPath();
-					zipDir(baseDir, filePath, zos);
-					// loop again
-					continue;
-				}
-				// if we reached here, the File object f was not a directory
-				// create a FileInputStream on top of f
-				FileInputStream fis = new FileInputStream(f);
-				
-				// create a new zip entry
-				String entryPath = f.getPath();
-				entryPath = entryPath.substring(baseDir.length());
-				
-				ZipEntry anEntry = new ZipEntry(entryPath);
-				
-				// place the zip entry in the ZipOutputStream object
-				zos.putNextEntry(anEntry);
-				// now write the content of the file to the ZipOutputStream
-				while ((bytesIn = fis.read(readBuffer)) != -1)
-				{
-					zos.write(readBuffer, 0, bytesIn);
-				}
-				// close the Stream
-				fis.close();
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	*/
 	
 	public static String getExtension(String file)
 	{

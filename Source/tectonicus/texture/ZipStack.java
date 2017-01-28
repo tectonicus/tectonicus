@@ -44,11 +44,11 @@ public class ZipStack
 	
 	public InputStream getStream(String path) throws IOException
 	{
-		if (override != null && hasFileFS(path, override))
+		if (override != null && hasFile(path, override))
 		{
 			return Files.newInputStream(override.getPath(path));
 		}
-		else if (hasFileFS(path, base))
+		else if (hasFile(path, base))
 		{
 			return Files.newInputStream(base.getPath(path));
 		}
@@ -57,7 +57,7 @@ public class ZipStack
 			for (File jar : modJars)
 			{
 				FileSystem fs = FileSystems.newFileSystem(Paths.get(jar.getPath()), null);
-				if (hasFileFS(path, fs))
+				if (hasFile(path, fs))
 					return Files.newInputStream(fs.getPath(path));
 			}
 			
@@ -67,10 +67,10 @@ public class ZipStack
 	
 	public boolean hasFile(String file)
 	{
-		return hasFileFS(file, override) || hasFileFS(file, base);  //TODO: Maybe need to check mod jar files too?
+		return hasFile(file, override) || hasFile(file, base);  //TODO: Maybe need to check mod jar files too?
 	}
 	
-	public boolean hasFileFS(String file, FileSystem fs)
+	private boolean hasFile(String file, FileSystem fs)
 	{
 		if (fs == null)
 			return false;

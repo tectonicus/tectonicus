@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,11 +13,13 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 import tectonicus.cache.BiomeCache;
@@ -1059,40 +1061,13 @@ public class TectonicusApp
 		for (String f : files)
 		{
 			File outFile = new File(cacheDir, f);
+			//FileUtils.extractResource(f, outFile);
 			FileUtils.extractResource("Native/"+f, outFile);
-			 
-			/*
-			Disabled this because it was causing out-of-memory (due to the large fork) in some cases
-			and I'm not sure if it's actually required
-			if (!OsDetect.isWindows())
-			{
-				// Make the new file executable by calling chmod
-				try
-				{
-					ArrayList<String> args = new ArrayList<String>();
-					args.add("chmod");
-					args.add("+x");
-					ProcessUtil.addFilePath(args, outFile);
-					
-					ProcessBuilder builder = new ProcessBuilder(args);
-					builder.directory(outFile.getParentFile());
-					
-					Process process = builder.start();
-					
-					process.waitFor();
-					process.destroy();
-				}
-				catch (Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-			*/
 		}
 		
 		try  // Mac hack
 		{
-			FileUtils.copyFiles(new File(cacheDir, "liblwjgl.dylib"), new File(cacheDir, "liblwjgl.jnilib"), new HashSet<String>());
+			Files.copy(Paths.get(cacheDir.getPath(), "liblwjgl.dylib"), Paths.get(cacheDir.getPath(), "liblwjgl.jnilib"), StandardCopyOption.REPLACE_EXISTING);
 		}
 		catch (Exception e)
 		{
@@ -1114,13 +1089,9 @@ public class TectonicusApp
 		{
 			for (String src : renameMap.keySet())
 			{
-				File srcFile = new File(cacheDir, src);
-				File destFile = new File(cacheDir, renameMap.get(src));
-				
-				destFile.delete();
 				try
 				{
-					FileUtils.copyFiles(srcFile, destFile, new HashSet<String>());
+					Files.copy(Paths.get(cacheDir.getPath(), src), Paths.get(cacheDir.getPath(), renameMap.get(src)), StandardCopyOption.REPLACE_EXISTING);
 				}
 				catch (Exception e)
 				{

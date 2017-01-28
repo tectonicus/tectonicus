@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,12 +10,10 @@
 package tectonicus.raw;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Scanner;
 import org.json.JSONArray;
-
-import tectonicus.util.FileUtils;
 
 public class PlayerList
 {
@@ -39,8 +37,8 @@ public class PlayerList
 		if (index > 0)
 			ext = playerFile.getAbsolutePath().substring(index+1);
 		if (ext.equals("json"))
-		{			
-			JSONArray array = new JSONArray(FileUtils.loadJSON(new FileInputStream(playerFile)));
+		{	
+			JSONArray array = new JSONArray(new String(Files.readAllBytes(playerFile.toPath())));
 			for (int i=0; i<array.length(); i++)
 			{
 				String name = array.getJSONObject(i).getString("name");
