@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,6 +20,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -79,31 +83,23 @@ public class BlockVariantTests
 	}
 	
 	@Test
-	public void testDeserializeVariantSingleModel() throws JSONException
+	public void testDeserializeVariantSingleModel() throws JsonSyntaxException
 	{
-		JSONObject variant = new JSONObject("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
+		JsonElement variant = new JsonParser().parse("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
 		BlockVariant bv = BlockVariant.deserializeVariant("east=true,north=false,south=false,west=false", variant);
 		
 		assertThat(bv.getModels().size(), is(equalTo(1)));
-		assertThat(bv.getModels().get(0).getModelPath(), is(equalTo("acacia_fence_n")));
+		assertThat(bv.getModels().get(0).getModel(), is(equalTo("acacia_fence_n")));
 	}
 	
 	@Test
-	public void testDeserializeVariantMultipleModels() throws JSONException
+	public void testDeserializeVariantMultipleModels() throws JsonSyntaxException
 	{
-		JSONArray variant = new JSONArray("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
+		JsonElement variant = new JsonParser().parse("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
 		BlockVariant bv = BlockVariant.deserializeVariant("snowy=false", variant);
 		
 		assertThat(bv.getModels().size(), is(equalTo(4)));
-		assertThat(bv.getModels().get(2).getModelPath(), is(equalTo("grass_normal")));
-	}
-	
-	@Test
-	public void testDeserializeVariantModel() throws Exception
-	{
-		JSONObject model = new JSONObject( "{ \"model\": \"tripwire_hook_attached_suspended\", \"y\": 180 }");
-		VariantModel vm = VariantModel.deserializeVariantModel(model);
-		assertThat(vm.getModelPath(), equalTo("tripwire_hook_attached_suspended"));
+		assertThat(bv.getModels().get(2).getModel(), is(equalTo("grass_normal")));
 	}
 
 	//TODO: Fix this test once we've switched to using Gson

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,13 +12,14 @@ package tectonicus.blockTypes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 public class BlockVariant
 {
@@ -48,26 +49,17 @@ public class BlockVariant
 	public Map<String, String> getStates() { return Collections.unmodifiableMap(states); }
 	public List<VariantModel> getModels() { return Collections.unmodifiableList(models); }
 	
-	public static BlockVariant deserializeVariant(String key, Object variant)
+	public static BlockVariant deserializeVariant(String key, JsonElement variant)
 	{
 		List<VariantModel> models = new ArrayList<>();
-	    
+		Gson gson = new Gson();
+
 		try {
-			if (variant instanceof JSONObject) //If only a single model
-			{  
-				JSONObject model = (JSONObject) variant;
-				models.add(VariantModel.deserializeVariantModel(model));
-			} 
-			else //if more than one model
-			{ 
-				JSONArray array = (JSONArray) variant;
-				for (int i = 0; i < array.length(); i++) 
-				{
-					JSONObject model = array.getJSONObject(i);
-					models.add(VariantModel.deserializeVariantModel(model));
-				}
-			}
-		} catch (JSONException e) {
+			if (variant.isJsonObject()) //If only a single model
+				variant = new JsonParser().parse("[" + variant.toString() + "]");
+			
+			models = gson.fromJson(variant.getAsJsonArray(), new TypeToken<List<VariantModel>>(){}.getType());
+		} catch (JsonSyntaxException e) {
 			e.printStackTrace();
 		}
 		
@@ -77,52 +69,16 @@ public class BlockVariant
 	
 	public static class VariantModel 
 	{
-		final private String modelPath;
-		final private int x, y, weight;
-		final private boolean uvlocked;
+		private String model = "";
+		private int x = 0; 
+		private int y = 0;
+		private int weight = 1;
+		private boolean uvlock = false;
 		
-		public VariantModel(String modelPath, int x, int y, boolean uvlocked, int weight)
-		{
-			this.modelPath = modelPath;
-			this.x = x;
-			this.y = y;
-			this.uvlocked = uvlocked;
-			this.weight = weight;
-		}
-		
-		public String getModelPath() { return modelPath; }	
+		public String getModel() { return model; }	
 		public int getXRot() { return x; }	
 		public int getYRot() { return y; }	
-		public boolean isUVlocked() { return uvlocked; }	
+		public boolean isUVlocked() { return uvlock; }	
 		public int getWeight() { return weight;	}
-		
-		public static VariantModel deserializeVariantModel(JSONObject model) throws JSONException
-		{
-			String modelPath = "";
-			int x = 0;
-			int y = 0;
-			int weight = 1;
-			boolean uvlock = false;
-			
-			Iterator<?> keys = model.keys();
-			while (keys.hasNext()) 
-			{
-				String key = (String) keys.next();
-
-				if (key.equals("model")) {
-					modelPath = model.getString(key);
-				} else if (key.equals("x"))	{
-					x = model.getInt(key);
-				} else if (key.equals("y")) {
-					y = model.getInt(key);
-				} else if (key.equals("uvlock")) {
-					uvlock = model.getBoolean(key);
-				} else if (key.equals("weight")) {
-					weight = model.getInt(key);
-				}
-			}
-			
-			return new VariantModel(modelPath, x, y, uvlock, weight);
-		}
 	}
 }

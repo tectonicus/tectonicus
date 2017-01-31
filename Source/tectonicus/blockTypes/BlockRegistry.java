@@ -23,12 +23,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -82,17 +88,14 @@ public class BlockRegistry
 		{
 			for (Path entry : entries)
 			{
-				//TODO: Use Gson library to replace this
-				JSONObject obj = new JSONObject(new String(Files.readAllBytes(entry))); 
-				JSONObject variants = obj.getJSONObject("variants");
+				JsonObject json = new JsonParser().parse(Files.newBufferedReader(entry)).getAsJsonObject();
+				JsonObject variants = json.get("variants").getAsJsonObject();
 				
-				Iterator<?> keys = variants.keys();
-				while(keys.hasNext()) 
+				Set<Entry<String, JsonElement>> entrySet = variants.entrySet();
+				for(Map.Entry<String,JsonElement> e : entrySet)
 				{
-				    String key = (String)keys.next();
-				    Object variant = variants.get(key);
-
-				    blockVariants.add(BlockVariant.deserializeVariant(key, variant));
+					String key = e.getKey();
+					blockVariants.add(BlockVariant.deserializeVariant(key, variants.get(key)));
 				}
 			
 				String name = "minecraft:" + StringUtils.removeEnd(entry.getFileName().toString(), ".json");
@@ -112,7 +115,7 @@ public class BlockRegistry
 			{
 				for(BlockVariant.VariantModel model : variant.getModels())
 				{
-					String modelPath = model.getModelPath();
+					String modelPath = model.getModel();
 					if(!blockModels.containsKey(modelPath))
 					{
 						Map<String, String> textureMap = new HashMap<>();
