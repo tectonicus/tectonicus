@@ -11,6 +11,7 @@ package tectonicus.blockTypes;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -88,7 +89,7 @@ public class BlockRegistry
 		{
 			for (Path entry : entries)
 			{
-				JsonObject json = new JsonParser().parse(Files.newBufferedReader(entry)).getAsJsonObject();
+				JsonObject json = new JsonParser().parse(Files.newBufferedReader(entry, StandardCharsets.UTF_8)).getAsJsonObject();
 				JsonObject variants = json.get("variants").getAsJsonObject();
 				
 				Set<Entry<String, JsonElement>> entrySet = variants.entrySet();
