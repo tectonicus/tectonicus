@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -49,5 +49,13 @@ public class Vector3f implements ImmutableVector3f
 		final float dz = lhs.z - rhs.z;
 		
 		return (float)Math.sqrt( dx*dx + dy*dy + dz*dz );
+	}
+	
+	public static Vector3f fromArray(float[] array)
+	{
+		if (array.length == 3)
+			return new Vector3f(array[0], array[1], array[2]);
+		else
+			throw new IllegalArgumentException("Array length must be 3");
 	}
 }
