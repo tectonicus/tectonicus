@@ -10,7 +10,6 @@
 package tectonicus.configuration;
 
 import static org.junit.Assert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.Is.*;
 
 import java.nio.file.Paths;
@@ -24,8 +23,8 @@ public class PlayerFilterTests
 	@Test
 	public void testCreatePlayerFilter() throws Exception
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned.basic"));
-		assertThat(pf.toString(), is(equalTo("Whitelist: src\\test\\resources\\whitelist.json")));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
+		assertThat(pf.toString(), is("Whitelist: src\\test\\resources\\whitelist.json"));
 	}
 	
 	@Test
@@ -33,30 +32,30 @@ public class PlayerFilterTests
 	{
 		PlayerFilter pf = new PlayerFilter();
 		boolean pass = pf.passesFilter(new Player("", "", ""));
-		assertThat(pass, is(equalTo(true)));
+		assertThat(pass, is(true));
 	}
 	
 	@Test
 	public void passesFilterWithJsonWhitelist() throws Exception
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned.basic"));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
 		boolean pass = pf.passesFilter(new Player("androidz", "", ""));
-		assertThat(pass, is(equalTo(true)));
+		assertThat(pass, is(true));
 	}
 	
 	@Test
 	public void passesFilterWithTxtWhitelist() throws Exception
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.txt"), Paths.get("src/test/resources/Canned.basic"));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.txt"), Paths.get("src/test/resources/Canned"));
 		boolean pass = pf.passesFilter(new Player("androidz", "", ""));
-		assertThat(pass, is(equalTo(true)));
+		assertThat(pass, is(true));
 	}
 	
 	@Test
 	public void createPlayerFilterWithDefaultWhitelist() throws Exception
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("."), Paths.get("src/test/resources/Canned.basic"));
-		assertThat(pf.toString(), is(equalTo("Whitelist: .")));
-		assertThat(pf.passesFilter(new Player("androidz", "", "")), is(equalTo(true)));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("."), Paths.get("src/test/resources/Canned"));
+		assertThat(pf.toString(), is("Whitelist: ."));
+		assertThat(pf.passesFilter(new Player("androidz", "", "")), is(true));
 	}
 }
