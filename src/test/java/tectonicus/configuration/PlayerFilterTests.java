@@ -11,6 +11,7 @@ package tectonicus.configuration;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.Is.*;
+import static org.hamcrest.core.StringContains.*;
 
 import java.nio.file.Paths;
 
@@ -24,7 +25,7 @@ public class PlayerFilterTests
 	public void testCreatePlayerFilter() throws Exception
 	{
 		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
-		assertThat(pf.toString(), is("Whitelist: src\\test\\resources\\whitelist.json"));
+		assertThat(pf.toString(), containsString("whitelist.json"));
 	}
 	
 	@Test
