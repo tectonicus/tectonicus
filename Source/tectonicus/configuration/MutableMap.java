@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -42,7 +42,7 @@ public class MutableMap implements Map
 	
 	private List<File> modJars;
 	
-	private ArrayList<Layer> layers;
+	private List<Layer> layers;
 	
 	private NorthDirection northDirection;
 	private String compassRoseFile;
@@ -54,7 +54,7 @@ public class MutableMap implements Map
 		this.worldDir = new File(".");
 		this.dimension = Dimension.Terra;
 		
-		this.playerFilter = new PlayerFilter(PlayerFilterType.All);
+		this.playerFilter = new PlayerFilter();
 		this.signFilter = SignFilter.All;
 		this.portalFilter = new PortalFilter(PortalFilterType.All);
 		this.viewFilter = new ViewFilter(ViewFilterType.All);

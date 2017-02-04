@@ -11,6 +11,8 @@ package tectonicus;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import tectonicus.texture.ZipStack;
 import tectonicus.util.OsDetect;
@@ -183,29 +185,29 @@ public class Minecraft
 			return new File(worldDir, "players");
 	}
 
-	public static File findServerPlayerFile(File worldDir, String name)
-	{
+	public static Path findServerPlayerFile(Path worldDir, String name)
+	{	
 		if (worldDir == null)
 			return null;
-		
-		File json = new File(worldDir.getParentFile(), name+".json");
-		File txt = null;
+		Path json = worldDir.getParent().resolve(name + ".json");
+
+		Path txt = null;
 		if (name.equals("whitelist"))
-			txt = new File(worldDir.getParentFile(), "white-list.txt");
+			txt = worldDir.getParent().resolve("white-list.txt");
 		else
-			txt = new File(worldDir.getParentFile(), name+".txt");
+			txt = worldDir.getParent().resolve(name + ".txt");
 		
-		if (json.exists() && !json.isDirectory())
+		if (Files.exists(json) && !Files.isDirectory(json))
 		{
 			return json;
 		}
-		else if (txt.exists() && !txt.isDirectory())
+		else if (Files.exists(txt) && !Files.isDirectory(txt))
 		{		
 			return txt;
 		}
 		else
 		{
-			return worldDir.getParentFile();
+			return worldDir.getParent();
 		}
 	}
 

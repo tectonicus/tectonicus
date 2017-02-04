@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,77 +9,90 @@
 
 package tectonicus.configuration;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 
 import tectonicus.Minecraft;
-import tectonicus.raw.PlayerList;
 import tectonicus.raw.Player;
 
 public class PlayerFilter
 {
 	private final PlayerFilterType filter;
-	
-	private File filterFile;
-	
-	private PlayerList playerList;
+	private Path filterFile;
+	private List<String> playerList;
 	
 	public PlayerFilter()
 	{
 		this.filter = PlayerFilterType.All;
 	}
 	
-	public PlayerFilter(final PlayerFilterType type)
-	{
-		this.filter = type;
-	}
-	
-	public PlayerFilter(final PlayerFilterType type, File playersFile, File worldDir) throws Exception
+	public PlayerFilter(final PlayerFilterType type, Path playersFile, Path worldDir) throws Exception
 	{
 		this.filter = type;
 		this.filterFile = playersFile;
 		
-		if ((filter == PlayerFilterType.Whitelist || filter == PlayerFilterType.Blacklist || filter == PlayerFilterType.Ops) && (playersFile.exists() && !playersFile.isDirectory()))
+		if ((filter == PlayerFilterType.Whitelist || filter == PlayerFilterType.Blacklist || filter == PlayerFilterType.Ops) && (Files.exists(playersFile) && !Files.isDirectory(playersFile)))
 		{
-			try
-			{
-				playerList = new PlayerList(playersFile);
-			}
-			catch (Exception e)
-			{
-				System.err.println("Couldn't load player filter file: "+e);
-				throw e;
-			}
+			loadPlayerList(playersFile);
 		}
 		else
 		{
 			if (filter == PlayerFilterType.Ops)
 			{
-				File opsFile = Minecraft.findServerPlayerFile(worldDir, "ops");
+				Path opsFile = Minecraft.findServerPlayerFile(worldDir, "ops");
 				loadPlayerList(opsFile);
 			}
 			else if (filter == PlayerFilterType.Whitelist)
 			{
-				File whitelist = Minecraft.findServerPlayerFile(worldDir, "whitelist");
+				Path whitelist = Minecraft.findServerPlayerFile(worldDir, "whitelist");
 				loadPlayerList(whitelist);
 			}
 			else if (filter == PlayerFilterType.Blacklist)
 			{
-				File blacklist = Minecraft.findServerPlayerFile(worldDir, "banned-players");
+				Path blacklist = Minecraft.findServerPlayerFile(worldDir, "banned-players");
 				loadPlayerList(blacklist);
 			}
 		}
 	}
 	
-	private void loadPlayerList(File playerFile)
+	private void loadPlayerList(Path playerFile)
 	{
-		System.out.println("Loading players from "+playerFile.getAbsolutePath());
+		System.out.println("Loading players from " + playerFile);
+		
+		playerList = new ArrayList<String>();
+		
 		try
 		{
-			playerList = new PlayerList(playerFile);
+			if (playerFile.toString().toLowerCase().endsWith(".json"))
+			{	
+				JsonArray array = new JsonParser().parse(new String(Files.readAllBytes(playerFile))).getAsJsonArray();
+				
+				for (int i=0; i<array.size(); i++)
+				{
+					String name = array.get(i).getAsJsonObject().get("name").getAsString();
+					playerList.add(name.toLowerCase());
+				}
+			}
+			else if (playerFile.toString().toLowerCase().endsWith(".txt"))
+			{
+				if (Files.exists(playerFile))
+				{
+					List<String> lines = Files.readAllLines(playerFile);
+					for (String line : lines)
+						playerList.add( line.trim().toLowerCase() );
+				}
+			}
+			
+			System.out.println("\tfound " + playerList.size() + " players");
 		}
 		catch (Exception e)
 		{
-			System.out.println("Error while loading players from "+playerFile.getAbsolutePath());
+			System.out.println("Error while loading players from " + playerFile);
 			e.printStackTrace();
 		}
 	}
@@ -94,11 +107,7 @@ public class PlayerFilter
 		{
 			return true;
 		}
-		else if (filter == PlayerFilterType.Ops)
-		{
-			return playerList.contains(player.getName());
-		}
-		else if (filter == PlayerFilterType.Whitelist)
+		else if (filter == PlayerFilterType.Ops || filter == PlayerFilterType.Whitelist)
 		{
 			return playerList.contains(player.getName());
 		}
@@ -115,18 +124,15 @@ public class PlayerFilter
 	@Override
 	public String toString()
 	{
-		// We need to override this so that MutableConfiguration.printActive works
-		
-		String result = "";
-		
-		result += filter;
+		// We override this so that MutableConfiguration.printActive works
+		StringBuilder result = new StringBuilder(filter.toString());
 		
 		if (filterFile != null)
 		{
-			result += " + ";
-			result += filterFile.getAbsolutePath();
+			result.append(": ");
+			result.append(filterFile);
 		}
 		
-		return result;
+		return result.toString();
 	}
 }

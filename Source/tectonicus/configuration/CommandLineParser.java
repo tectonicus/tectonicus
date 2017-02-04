@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,6 +10,7 @@
 package tectonicus.configuration;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import static tectonicus.configuration.ParseUtil.*;
 
@@ -114,8 +115,8 @@ public class CommandLineParser
 		config.setShowPlayerSpawn( parseShowSpawn( parser.getString("showSpawn", "") ) );
 		
 		PlayerFilterType playerFilterType = parsePlayerFilterType( parser.getString("players", "") );
-		File playerFilterFile = parsePlayerFilterFile( parser.getString("playerFilterFile", "") );
-		PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir());
+		Path playerFilterFile = parsePlayerFilterFile( parser.getString("playerFilterFile", "") );
+		PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir().toPath());
 		map.setPlayerFilter(playerFilter);
 		
 		PortalFilterType portalFilterType = parsePortalFilter( parser.getString("portals", "") );
