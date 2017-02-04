@@ -11,6 +11,7 @@ package tectonicus.blockTypes;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
@@ -21,7 +22,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,13 +29,14 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -44,7 +45,6 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
-import tectonicus.util.FileUtils;
 import tectonicus.util.Vector3f;
 
 public class BlockRegistry
@@ -90,7 +90,7 @@ public class BlockRegistry
 			for (Path entry : entries)
 			{
 				JsonObject json = new JsonParser().parse(Files.newBufferedReader(entry, StandardCharsets.UTF_8)).getAsJsonObject();
-				JsonObject variants = json.get("variants").getAsJsonObject();
+				JsonObject variants = json.getAsJsonObject("variants");
 				
 				Set<Entry<String, JsonElement>> entrySet = variants.entrySet();
 				for(Map.Entry<String,JsonElement> e : entrySet)
@@ -116,11 +116,11 @@ public class BlockRegistry
 			{
 				for(BlockVariant.VariantModel model : variant.getModels())
 				{
-					String modelPath = model.getModel();
-					if(!blockModels.containsKey(modelPath))
+					String modelName = model.getModel();
+					if(!blockModels.containsKey(modelName))
 					{
 						Map<String, String> textureMap = new HashMap<>();
-						blockModels.put(modelPath, loadModel("block/" + modelPath, zips, textureMap));
+						blockModels.put(modelName, loadModel("block/" + modelName, zips, textureMap));
 					}
 				}
 			}
@@ -130,44 +130,53 @@ public class BlockRegistry
 	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
 	public BlockModel loadModel(String modelPath, ZipStack zips, Map<String, String> textureMap) throws Exception
 	{
-		JSONObject obj = new JSONObject(FileUtils.loadJSON(zips.getStream("assets/minecraft/models/" + modelPath + ".json")));
+		JsonObject json = new JsonParser().parse(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json"))).getAsJsonObject();
+		
 		String parent = "";
-		if(obj.has("parent")) // Get texture information and then load parent file
+		if(json.has("parent")) // Get texture information and then load parent file
 		{
-			parent = obj.getString("parent");
+			parent = json.get("parent").getAsString();
 
-			return loadModel(parent, zips, populateTextureMap(textureMap, obj.getJSONObject("textures")));
+			return loadModel(parent, zips, populateTextureMap(textureMap, json.getAsJsonObject("textures")));
 		}
 		else  //Load all elements
 		{
 			Map<String, String> combineMap = new HashMap<>(textureMap);
-			if(obj.has("textures"))
+			if(json.has("textures"))
 			{
-				combineMap.putAll(populateTextureMap(textureMap, obj.getJSONObject("textures")));
+				combineMap.putAll(populateTextureMap(textureMap, json.getAsJsonObject("textures")));
 			}
 
 			boolean ao = true;
-			if (obj.has("ambientocclusion"))
+			if (json.has("ambientocclusion"))
 				ao = false;
 			
-			JSONArray elements = obj.getJSONArray("elements");				
+			JsonArray elements = json.getAsJsonArray("elements");				
 			
 			return new BlockModel(modelPath, ao, deserializeBlockElements(combineMap, elements));
 		}
 	}
 
-	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap,	JSONArray elements) throws JSONException 
+	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap,	JsonArray elements) throws JsonSyntaxException 
 	{
 		List<BlockElement> elementsList = new ArrayList<>();
+		List<BlockElement> testList;
+		Gson gson = new Gson();
+		System.out.println(elements);
+		testList = gson.fromJson(elements.getAsJsonArray(), new TypeToken<List<Element>>(){}.getType());
 		
-		for (int i = 0; i < elements.length(); i++)
+		for(JsonElement e : elements)
+		//for (int i = 0; i < elements.size(); i++)
 		{
-			JSONObject element = elements.getJSONObject(i);
+			Element testElement = gson.fromJson(e, Element.class);
+			//testElement.getFaces().getUp().getTexture()
 			
-			JSONArray from = element.getJSONArray("from");
-			Vector3f fromVector = new Vector3f((float)from.getDouble(0), (float)from.getDouble(1), (float)from.getDouble(2));
-			JSONArray to = element.getJSONArray("to");
-			Vector3f toVector = new Vector3f((float)to.getDouble(0), (float)to.getDouble(1), (float)to.getDouble(2));
+			JsonObject element = e.getAsJsonObject();
+			
+			JsonArray from = element.getAsJsonArray("from");
+			Vector3f fromVector = new Vector3f(from.get(0).getAsFloat(), from.get(1).getAsFloat(), from.get(2).getAsFloat());
+			JsonArray to = element.getAsJsonArray("to");
+			Vector3f toVector = new Vector3f(to.get(0).getAsFloat(), to.get(1).getAsFloat(), to.get(2).getAsFloat());
 			
 			Vector3f rotationOrigin = new Vector3f(8.0f, 8.0f, 8.0f);
 			String rotationAxis = "y";
@@ -176,13 +185,13 @@ public class BlockRegistry
 			
 			if(element.has("rotation"))
 			{
-				JSONObject rot = element.getJSONObject("rotation");
-				JSONArray rotOrigin = rot.getJSONArray("origin");
-				rotationOrigin = new Vector3f((float)rotOrigin.getDouble(0), (float)rotOrigin.getDouble(1), (float)rotOrigin.getDouble(2));
+				JsonObject rot = element.getAsJsonObject("rotation");
+				JsonArray rotOrigin = rot.getAsJsonArray("origin");
+				rotationOrigin = new Vector3f(rotOrigin.get(0).getAsFloat(), rotOrigin.get(1).getAsFloat(), rotOrigin.get(2).getAsFloat());
 
-				rotationAxis = rot.getString("axis");
+				rotationAxis = rot.get("axis").getAsString();
 				
-				rotationAngle = (float) rot.getDouble("angle");
+				rotationAngle = rot.get("angle").getAsFloat();
 				
 				if(element.has("rescale"))
 					rotationScale = true;
@@ -192,7 +201,7 @@ public class BlockRegistry
 			if(element.has("shade"))
 				shaded = false;						
 			
-			JSONObject faces = element.getJSONObject("faces");
+			JsonObject faces = element.getAsJsonObject("faces");
 			SubTexture subTexture = new SubTexture(null, fromVector.x(), fromVector.y(), toVector.x(), toVector.y());
 			BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotationAxis, rotationAngle, rotationScale, shaded, deserializeElementFaces(combineMap, subTexture, faces));
 			elementsList.add(be);
@@ -200,15 +209,15 @@ public class BlockRegistry
 		return elementsList;
 	}
 
-	private Map<String, ElementFace> deserializeElementFaces(Map<String, String> combineMap, SubTexture texCoords, JSONObject faces) throws JSONException
+	private Map<String, ElementFace> deserializeElementFaces(Map<String, String> combineMap, SubTexture texCoords, JsonObject faces) throws JsonSyntaxException
 	{
 		Map<String, ElementFace> elementFaces = new HashMap<>();
 		
-		Iterator<?> keys = faces.keys();
-		while(keys.hasNext())
+		Set<Entry<String, JsonElement>> entrySet = faces.entrySet();
+		for(Map.Entry<String,JsonElement> e : entrySet)
 		{
-			String key = (String)keys.next();
-			JSONObject face = (JSONObject) faces.get(key);
+			String key = e.getKey();
+			JsonObject face = faces.getAsJsonObject(key);
 			
 			float u0 = texCoords.u0;
 			float v0 = texCoords.v0;
@@ -217,13 +226,13 @@ public class BlockRegistry
 			
 			int rotation = 0;
 		    if(face.has("rotation"))
-		    	rotation = face.getInt("rotation");
+		    	rotation = face.get("rotation").getAsInt();
 			
 		    //System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
 		    // TODO: Need to test more texture packs
 			SubTexture subTexture = new SubTexture(null, u0*(1.0f/16.0f), v0*(1.0f/16.0f), u1*(1.0f/16.0f), v1*(1.0f/16.0f));
 			
-			StringBuilder tex = new StringBuilder(face.getString("texture"));
+			StringBuilder tex = new StringBuilder(face.get("texture").getAsString());
 		    if(tex.charAt(0) == '#')
 		    {
 		    	String texture = tex.deleteCharAt(0).toString();
@@ -242,11 +251,11 @@ public class BlockRegistry
 		    	if(face.has("uv"))
 				{
 		    		//System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
-					JSONArray uv = face.getJSONArray("uv");
-					u0 = (float)(uv.getDouble(0)/16.0f);
-					v0 = (float)(uv.getDouble(1)/16.0f) / numTiles;
-					u1 = (float)(uv.getDouble(2)/16.0f);
-					v1 = (float)(uv.getDouble(3)/16.0f) / numTiles;
+					JsonArray uv = face.getAsJsonArray("uv");
+					u0 = (float)(uv.get(0).getAsFloat()/16.0f);
+					v0 = (float)(uv.get(1).getAsFloat()/16.0f) / numTiles;
+					u1 = (float)(uv.get(2).getAsFloat()/16.0f);
+					v1 = (float)(uv.get(3).getAsFloat()/16.0f) / numTiles;
 				}
 		    	
 		    	System.out.println(texWidth + " x " + texHeight);
@@ -276,16 +285,17 @@ public class BlockRegistry
 		return elementFaces;
 	}
 	
-	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JSONObject textures) throws JSONException
+	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonObject textures) throws JsonSyntaxException
 	{
 		Map<String, String> newTexMap = new HashMap<>();
 		
-		Iterator<?> keys = textures.keys();
-		while(keys.hasNext())
+		Set<Entry<String, JsonElement>> entrySet = textures.entrySet();
+		for(Map.Entry<String,JsonElement> e : entrySet)
 		{
-			String key = (String)keys.next();
-		    StringBuilder tex = new StringBuilder((String) textures.get(key));
-		    if(tex.charAt(0) == '#')
+			String key = e.getKey();
+			StringBuilder tex = new StringBuilder(textures.get(key).getAsString());
+			
+			if(tex.charAt(0) == '#')
 		    {
 		    	newTexMap.put(key, textureMap.get(tex.deleteCharAt(0).toString()));
 		    }
@@ -294,6 +304,7 @@ public class BlockRegistry
 		    	newTexMap.put(key, tex.toString());
 		    }
 		}
+		
 		return newTexMap;
 	}
 }
