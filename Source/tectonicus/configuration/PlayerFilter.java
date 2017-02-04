@@ -9,6 +9,7 @@
 
 package tectonicus.configuration;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class PlayerFilter
 			{
 				if (Files.exists(playerFile))
 				{
-					List<String> lines = Files.readAllLines(playerFile);
+					List<String> lines = Files.readAllLines(playerFile, StandardCharsets.UTF_8);
 					for (String line : lines)
 						playerList.add( line.trim().toLowerCase() );
 				}
