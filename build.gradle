@@ -22,7 +22,7 @@ dependencies {
 	compile('org.lwjgl.lwjgl:lwjgl:2.9.3') {
 				exclude module: 'jinput'
 			}
-	compile files ('Libs/Jars/json.jar', 'Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	compile files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
 	
 	testCompile 'junit:junit:4.12'
 }

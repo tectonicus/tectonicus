@@ -16,11 +16,11 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="Data"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
 	<classpathentry kind="lib" path="Libs/Jars/BiomeExtractor.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jnbt.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jpct.jar"/>
-	<classpathentry kind="lib" path="Libs/Jars/json.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/gson-2.6.2.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lzma.jar"/>
