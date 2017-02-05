@@ -21,13 +21,11 @@
 	<classpathentry kind="lib" path="Libs/Jars/BiomeExtractor.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jnbt.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jpct.jar"/>
-	<classpathentry kind="lib" path="Libs/Jars/gson-2.6.2.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lzma.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/ProcessingCore.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/seaglass.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="Libs/Jars/commons-lang3-3.4.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/lwjgl.jar">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="tectonicus/Data/Native"/>
