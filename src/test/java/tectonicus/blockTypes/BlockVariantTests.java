@@ -13,9 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.lwjgl.opengl.Display;
@@ -89,7 +86,7 @@ public class BlockVariantTests
 		BlockVariant bv = BlockVariant.deserializeVariant("east=true,north=false,south=false,west=false", variant);
 		
 		assertThat(bv.getModels().size(), is(equalTo(1)));
-		assertThat(bv.getModels().get(0).getModel(), is(equalTo("acacia_fence_n")));
+		assertThat(bv.getModels().get(0).getModel(), is("acacia_fence_n"));
 	}
 	
 	@Test
@@ -99,7 +96,7 @@ public class BlockVariantTests
 		BlockVariant bv = BlockVariant.deserializeVariant("snowy=false", variant);
 		
 		assertThat(bv.getModels().size(), is(equalTo(4)));
-		assertThat(bv.getModels().get(2).getModel(), is(equalTo("grass_normal")));
+		assertThat(bv.getModels().get(2).getModel(), is("grass_normal"));
 	}
 
 	//TODO: Fix this test once we've switched to using Gson
