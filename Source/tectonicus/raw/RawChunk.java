@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -33,10 +33,11 @@ import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
-import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
@@ -360,8 +361,8 @@ public class RawChunk
 											CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
 											StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
 											byte[] decoded = DatatypeConverter.parseBase64Binary(value.getValue());
-								            JSONObject obj = new JSONObject(new String(decoded, "UTF-8"));
-								            textureURL = obj.getJSONObject("textures").getJSONObject("SKIN").getString("url");
+								            JsonObject obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
+								            textureURL = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
 										}
 										else if (extraType != null && !(extraType.getValue().equals("")))
 										{
