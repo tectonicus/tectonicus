@@ -45,6 +45,16 @@ public class BlockVariant
 		}
 	}
 	
+	
+	public void drawVariant(int x, int y, int z, BlockRegistry registry)
+	{
+		//TODO: get randomized index based on weight for variant model choice
+		VariantModel vm = models.get(0);
+		BlockModel bm = registry.getModel(vm.model);
+		
+		bm.drawModel(x, y, z, vm.getXRot(), vm.getYRot(), vm.isUVlocked());
+	}
+	
 	public String getName() { return name; }
 	public Map<String, String> getStates() { return Collections.unmodifiableMap(states); }
 	public List<VariantModel> getModels() { return Collections.unmodifiableList(models); }
@@ -52,13 +62,12 @@ public class BlockVariant
 	public static BlockVariant deserializeVariant(String key, JsonElement variant)
 	{
 		List<VariantModel> models = new ArrayList<>();
-		Gson gson = new Gson();
 
 		try {
 			if (variant.isJsonObject()) //If only a single model
 				variant = new JsonParser().parse("[" + variant.toString() + "]");
 			
-			models = gson.fromJson(variant.getAsJsonArray(), new TypeToken<List<VariantModel>>(){}.getType());
+			models = new Gson().fromJson(variant.getAsJsonArray(), new TypeToken<List<VariantModel>>(){}.getType());
 		} catch (JsonSyntaxException e) {
 			e.printStackTrace();
 		}
