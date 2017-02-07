@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -32,6 +32,11 @@ public class BlockModel
 	public String getName()	{ return name; }	
 	public boolean isAmbientlyOccluded() { return ambientlyOccluded; }
 	public List<BlockElement> getElements()	{ return elements; }
+	
+	public void drawModel(int x, int y, int z, int rotX, int rotY, boolean uvlock)
+	{
+		
+	}
 	
 	
 	public static class BlockElement

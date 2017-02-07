@@ -21,9 +21,7 @@
 	<classpathentry kind="lib" path="Libs/Jars/BiomeExtractor.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jnbt.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/jpct.jar"/>
-	<classpathentry kind="lib" path="Libs/Jars/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="Libs/Jars/ProcessingCore.jar"/>
-	<classpathentry kind="lib" path="Libs/Jars/seaglass.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="Libs/Jars/lwjgl.jar">
 		<attributes>
