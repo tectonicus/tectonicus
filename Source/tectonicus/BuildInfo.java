@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,10 +9,30 @@
 
 package tectonicus;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Properties;
+
 public class BuildInfo
 {
-
-	private static PropertyFile info;
+	private static final Properties info;
+	
+	static
+	{
+		info = new Properties();
+		
+		final URL url = BuildInfo.class.getClassLoader().getResource("tectonicus.buildInfo");
+		if (url != null)
+		{
+			try(final InputStream in = url.openStream())
+			{
+				info.load(in);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	/*
 	 / \ 
@@ -22,52 +42,36 @@ public class BuildInfo
 	\ | /
 	 \|/
 	 */
+	
+	public static void print()
 	{
-		info = new PropertyFile("tectonicus.buildInfo");
-		
 		System.out.println(" + + + + + + + + + + + + + + + + + + + + + + +");
 		System.out.println("                  Tectonicus");
 		System.out.println("   Version: "+getVersion());
 		System.out.println("   Build "+getBuildNumber());
 		System.out.println("   Constructed on "+getBuildDate()+" at "+getBuildTime());
-	//	System.out.println();
-	//	System.out.println("   www.triangularpixels.com/Tectonicus  ");
+		System.out.println();
+		System.out.println("   www.github.com/tectonicus/tectonicus  ");
 		System.out.println(" + + + + + + + + + + + + + + + + + + + + + + +");
 	}
 	
-	public static BuildInfo print()
-	{
-		return new BuildInfo();
-	}
 	public static String getBuildNumber()
-	{
-		if (info == null)
-			new BuildInfo();
-		
-		return info.get("buildNumber");
+	{		
+		return info.getProperty("buildNumber");
 	}
 	
 	public static String getVersion()
-	{
-		if (info == null)
-			new BuildInfo();
-		
-		return info.get("version");
+	{		
+		return info.getProperty("version");
 	}
 	
 	public static String getBuildDate()
-	{
-		if (info == null)
-			new BuildInfo();
-		
-		return info.get("buildDate");
+	{		
+		return info.getProperty("buildDate");
 	}
 	
 	public static String getBuildTime()
 	{
-		if (info == null)
-			new BuildInfo();
-		
-		return info.get("buildTime");
+		return info.getProperty("buildTime");
 	}
 }

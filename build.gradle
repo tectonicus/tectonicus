@@ -1,3 +1,7 @@
+plugins {
+	id 'org.ajoberstar.grgit' version '1.6.0'
+}
+
 apply plugin: 'java'
 
 archivesBaseName = 'Tectonicus'
@@ -33,6 +37,7 @@ build.doFirst {
 	def props = new Properties()
 	props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
 	props.setProperty('buildTime', new Date().format('hhmm'))
+	props.setProperty('buildNumber', grgit.log().size().toString())
 	props.setProperty('version', "${version}")
 	def writer = new FileWriter(file('build/tectonicus.buildInfo'))
 	props.store(writer, 'Tectonicus build info')
