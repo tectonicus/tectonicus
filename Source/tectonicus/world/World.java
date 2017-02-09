@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -150,8 +150,8 @@ public class World implements BlockContext
 		this.playerSkinCache = playerSkinCache;
 		
 		// Check that this looks like a world dir
-		if (!Minecraft.isValidWorldDir(baseDir))
-			throw new RuntimeException("Invalid world dir! No level.dat found at "+Minecraft.findLevelDat(baseDir).getAbsolutePath());
+		if (!Minecraft.isValidWorldDir(baseDir.toPath()))
+			throw new RuntimeException("Invalid world dir! No level.dat found at "+Minecraft.findLevelDat(baseDir.toPath()));
 		if (!Minecraft.isValidDimensionDir(dimensionDir))
 			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 		
@@ -160,9 +160,9 @@ public class World implements BlockContext
 		try
 		{
 			System.out.println("Loading level.dat");
-			levelDat = new LevelDat(Minecraft.findLevelDat(baseDir), singlePlayerName);
+			levelDat = new LevelDat(Minecraft.findLevelDat(baseDir.toPath()), singlePlayerName);
 			
-			if (levelDat.getVersion() == LevelDat.UNKNOWN_VERSION)
+			if (levelDat.getVersion() == 0)
 			{
 				throw new RuntimeException("Error: Alpha map format no longer supported");
 			}
@@ -921,7 +921,7 @@ public class World implements BlockContext
 				{
 					try
 					{
-						Player player = new Player(playerFile);
+						Player player = new Player(playerFile.toPath());
 						
 						CacheEntry ce = playerSkinCache.getCacheEntry(player.getUUID());
 						if (ce != null)

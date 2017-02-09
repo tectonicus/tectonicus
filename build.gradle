@@ -22,7 +22,8 @@ repositories {
 dependencies {
 	compile('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
 			'org.apache.commons:commons-lang3:3.5@jar',
-			'com.google.code.gson:gson:2.8.0@jar') 
+			'com.google.code.gson:gson:2.8.0@jar',
+			'xyz.nickr:nbt:1.0.1')
 	compile('org.lwjgl.lwjgl:lwjgl:2.9.3') {
 				exclude module: 'jinput'
 			}

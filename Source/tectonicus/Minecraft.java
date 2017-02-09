@@ -134,13 +134,12 @@ public class Minecraft
 		return new File(Minecraft.findMinecraftDir(), "saves/World"+(index+1));
 	}
 
-	public static boolean isValidWorldDir(File worldDir)
+	public static boolean isValidWorldDir(Path worldDir)
 	{
 		if (worldDir == null)
 			return false;
 		
-		File levelDat =  findLevelDat(worldDir);
-		return levelDat.exists();
+		return Files.exists(findLevelDat(worldDir));
 	}
 	
 	public static boolean isValidMinecraftJar(File minecraftJar) //TODO:  This is only used by the old Swing GUI, refactor to remove it
@@ -165,12 +164,12 @@ public class Minecraft
 		return false;
 	}
 
-	public static File findLevelDat(File worldDir)
+	public static Path findLevelDat(Path worldDir)
 	{
 		if (worldDir == null)
 			return null;
 		
-		return new File(worldDir, "level.dat");
+		return worldDir.resolve("level.dat");
 	}
 	
 	public static File findPlayersDir(File worldDir)

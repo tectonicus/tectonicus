@@ -952,7 +952,7 @@ public class TectonicusApp
 					
 					File imagesDir = new File(args.outputDir(), "Images");
 					
-					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir()), "");
+					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), "");
 					
 					if (map.getDimension() == Dimension.Ender)
 					{

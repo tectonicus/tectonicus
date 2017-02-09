@@ -10,7 +10,6 @@
 package tectonicus;
 
 import static org.junit.Assert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.Is.*;
 
 import java.nio.file.Path;
@@ -23,7 +22,22 @@ public class MinecraftTests
 	@Test
 	public void findServerPlayerFileFindsWhitelistJson()
 	{
-		Path p = Minecraft.findServerPlayerFile(Paths.get("src/test/resources/Canned.basic"), "whitelist");
-		assertThat(p, is(equalTo(Paths.get("src/test/resources/whitelist.json"))));
+		Path p = Minecraft.findServerPlayerFile(Paths.get("src/test/resources/Canned"), "whitelist");
+		assertThat(p, is(Paths.get("src/test/resources/whitelist.json")));
+	}
+	
+	@Test
+	public void testIsValidWorldDir()
+	{
+		assertThat(Minecraft.isValidWorldDir(Paths.get("src/test/resources")), is(true));
+		assertThat(Minecraft.isValidWorldDir(Paths.get("src/test")), is(false));
+		assertThat(Minecraft.isValidWorldDir(null), is(false));
+	}
+	
+	@Test
+	public void testFindLevelDat()
+	{
+		Path p = Minecraft.findLevelDat(Paths.get("src/test/resources"));
+		assertThat(p, is(Paths.get("src/test/resources/level.dat")));
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -31,7 +31,7 @@ public class WorldBrowserLine
 		for (int i=0; i<5; i++)
 		{
 			File dir = Minecraft.findWorldDir(i);
-			if (Minecraft.isValidWorldDir(dir))
+			if (Minecraft.isValidWorldDir(dir.toPath()))
 			{
 				worldDir = dir;
 				break;
@@ -62,7 +62,7 @@ public class WorldBrowserLine
 	public boolean isOk()
 	{
 		File worldDir = line.getFile();
-		return Minecraft.isValidWorldDir(worldDir);
+		return Minecraft.isValidWorldDir(worldDir.toPath());
 	}
 	
 	public void apply(MutableConfiguration config)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,25 +10,17 @@
 package tectonicus.raw;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
 import javax.xml.bind.DatatypeConverter;
-
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.DoubleTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.ShortTag;
-import org.jnbt.Tag;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -36,6 +28,11 @@ import com.google.gson.JsonParser;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
+import xyz.nickr.nbt.NBTCodec;
+import xyz.nickr.nbt.NBTCompression;
+import xyz.nickr.nbt.tags.CompoundTag;
+import xyz.nickr.nbt.tags.ListTag;
+import xyz.nickr.nbt.tags.NBTTag;
 
 public class Player
 {
@@ -61,15 +58,15 @@ public class Player
 	
 	private ArrayList<Item> inventory;
 	
-	public Player(File playerFile) throws Exception
+	public Player(Path playerFile) throws Exception
 	{
-		System.out.println("Loading raw player from "+playerFile.getAbsolutePath());
+		System.out.println("Loading raw player from "+playerFile);
 		
 		dimension = Dimension.Terra;
 		position = new Vector3d();
 		inventory = new ArrayList<Item>();
 		
-		UUID = playerFile.getName();
+		UUID = playerFile.getFileName().toString();
 		
 		final int dotPos = UUID.lastIndexOf('.');
 		if (UUID.contains("-"))
@@ -82,36 +79,25 @@ public class Player
 		}
 		
 		skinURL = null;
-		
-		InputStream in = null;
-		NBTInputStream nbtIn = null;
-		try
+
+		try(InputStream in = Files.newInputStream(playerFile))
 		{
-			in = new FileInputStream(playerFile);
-			nbtIn = new NBTInputStream(in);
-			
-			Tag tag = nbtIn.readTag();
-			if (tag instanceof CompoundTag)
-			{
-				CompoundTag root = (CompoundTag)tag;
-				parse(root);
-			}
-		}
-		finally
-		{
-			if (nbtIn != null)
-				nbtIn.close();
-			
-			if (in != null)
-				in.close();
+			NBTCodec codec = new NBTCodec(ByteOrder.BIG_ENDIAN);
+			CompoundTag root = codec.decode(in, NBTCompression.GZIP).getAsCompoundTag();
+
+			parse(root);
 		}
 	}
 	
-	public Player(String playerName, CompoundTag tag) throws Exception
+	public Player(String playerName, CompoundTag tag)
 	{
 		this.name = playerName;
 		
-		parse(tag);
+		try {
+			parse(tag);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public Player(String name, String UUID, String skinURL)
@@ -127,11 +113,11 @@ public class Player
 		position = new Vector3d();
 		inventory = new ArrayList<Item>();	
 		
-		health = NbtUtil.getShort(root, "Health", (short)0);
-		air = NbtUtil.getShort(root, "Air", (short)0);
-		food = NbtUtil.getInt(root, "foodLevel", 0);
+		health = root.getAsNumber("Health").shortValue();
+		air = root.getAsNumber("Air").shortValue();
+		food = root.getAsNumber("foodLevel").intValue();
 		
-		final int dimensionVal = NbtUtil.getInt(root, "Dimension", 0);
+		final int dimensionVal = root.getAsNumber("Dimension").intValue();
 		if (dimensionVal == 0)
 			dimension = Dimension.Terra;
 		else if (dimensionVal == 1)
@@ -139,49 +125,41 @@ public class Player
 		else if (dimensionVal == -1)
 			dimension = Dimension.Nether;
 		
-		ListTag posList = NbtUtil.getChild(root, "Pos", ListTag.class);
+		ListTag posList = root.getAsListTag("Pos");
 		if (posList != null)
 		{
-			DoubleTag xTag = NbtUtil.getChild(posList, 0, DoubleTag.class);
-			DoubleTag yTag = NbtUtil.getChild(posList, 1, DoubleTag.class);
-			DoubleTag zTag = NbtUtil.getChild(posList, 2, DoubleTag.class);
+			double x = posList.get(0).getAsNumber().doubleValue();
+			double y = posList.get(1).getAsNumber().doubleValue();
+			double z = posList.get(2).getAsNumber().doubleValue();
 			
-			if (xTag != null && yTag != null && zTag != null)
-			{
-				position.set(xTag.getValue(), yTag.getValue(), zTag.getValue());
-			}
+			position.set(x, y, z);
 		}
 		
-		IntTag spawnXTag = NbtUtil.getChild(root, "SpawnX", IntTag.class);
-		IntTag spawnYTag = NbtUtil.getChild(root, "SpawnY", IntTag.class);
-		IntTag spawnZTag = NbtUtil.getChild(root, "SpawnZ", IntTag.class);
-		if (spawnXTag != null && spawnYTag != null && spawnZTag != null)
-		{
-			spawnPos = new Vector3l(spawnXTag.getValue(), spawnYTag.getValue(), spawnZTag.getValue());
-		}
+		int spawnX = root.getAsNumber("SpawnX").intValue();
+		int spawnY = root.getAsNumber("SpawnY").intValue();
+		int spawnZ = root.getAsNumber("SpawnZ").intValue();
 		
-		xpLevel = NbtUtil.getInt(root, "XpLevel", 0);
-		xpTotal = NbtUtil.getInt(root, "XpTotal", 0);
+		spawnPos = new Vector3l(spawnX, spawnY, spawnZ);
+		
+		xpLevel = root.getAsNumber("XpLevel").intValue();
+		xpTotal = root.getAsNumber("XpTotal").intValue();
 		
 		// Parse inventory items (both inventory items and worn items)
-		ListTag inventoryList = NbtUtil.getChild(root, "Inventory", ListTag.class);
+		ListTag inventoryList = root.getAsListTag("Inventory");
 		if (inventoryList != null)
 		{
-			for (Tag t : inventoryList.getValue())
+			for (NBTTag t : inventoryList)
 			{
-				if (t instanceof CompoundTag)
+				if (t.isCompoundTag())
 				{
 					CompoundTag itemTag = (CompoundTag)t;
 					
-					ShortTag idTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
-					ShortTag damageTag = NbtUtil.getChild(itemTag, "Damage", ShortTag.class);
-					ByteTag countTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
-					ByteTag slotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
+					short id = itemTag.getAsNumber("id").shortValue();
+					short damage = itemTag.getAsNumber("Damage").shortValue();
+					byte count = itemTag.getAsNumber("Count").byteValue();
+					byte slot = itemTag.getAsNumber("Slot").byteValue();
 					
-					if (idTag != null && damageTag != null && countTag != null && slotTag != null)
-					{
-						inventory.add( new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue()) );
-					}
+					inventory.add( new Item(id, damage, count, slot) );
 				}
 			}
 		}

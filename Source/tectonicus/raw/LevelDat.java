@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,24 +9,21 @@
 
 package tectonicus.raw;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
-
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.Tag;
+import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import tectonicus.util.Vector3l;
+import xyz.nickr.nbt.NBTCodec;
+import xyz.nickr.nbt.NBTCompression;
+import xyz.nickr.nbt.tags.CompoundTag;
 
 public class LevelDat
 {
-	public static final int UNKNOWN_VERSION = 0;
+	private String worldName = "";
 	
-	private String worldName;
-	
-	private int version;
+	private int version = 0;
 	
 	private Vector3l spawnPosition;
 	
@@ -34,63 +31,40 @@ public class LevelDat
 	
 	private Player player;
 	
-	public LevelDat(File datFile, String singlePlayerName) throws Exception
-	{
-		worldName = "";
-		
+	public LevelDat(Path datFile, String singlePlayerName) throws Exception
+	{	
 		spawnPosition = new Vector3l();
 		
-		InputStream in = null;
-		NBTInputStream nbtIn = null;
-		try
-		{
-			in = new FileInputStream(datFile);
-			nbtIn = new NBTInputStream(in);
+		try(InputStream in = Files.newInputStream(datFile))
+		{			
+			NBTCodec codec = new NBTCodec(ByteOrder.BIG_ENDIAN);
+			CompoundTag tag = codec.decode(in, NBTCompression.GZIP).getAsCompoundTag();
 			
-			Tag tag = nbtIn.readTag();
-			if (tag instanceof CompoundTag)
+			CompoundTag data = tag.getAsCompoundTag("Data");
+
+			version = data.getAsNumber("version").intValue();
+
+			spawnPosition.x = data.getAsNumber("SpawnX").intValue();
+			spawnPosition.y = data.getAsNumber("SpawnY").intValue();
+			spawnPosition.z = data.getAsNumber("SpawnZ").intValue();
+			
+			sizeOnDisk = data.getAsNumber("SizeOnDisk").longValue();
+			
+			worldName = data.getAsString("LevelName");
+			
+			CompoundTag playerTag = data.getAsCompoundTag("Player");
+			if (playerTag != null)
 			{
-				CompoundTag data = NbtUtil.getChild((CompoundTag)tag, "Data", CompoundTag.class);
-				
-				version = NbtUtil.getInt(data, "version", UNKNOWN_VERSION);
-				
-				IntTag spawnXTag = NbtUtil.getChild(data, "SpawnX", IntTag.class);
-				IntTag spawnYTag = NbtUtil.getChild(data, "SpawnY", IntTag.class);
-				IntTag spawnZTag = NbtUtil.getChild(data, "SpawnZ", IntTag.class);
-				
-				if (spawnXTag != null && spawnYTag != null && spawnZTag != null)
+				try
 				{
-					spawnPosition.x = spawnXTag.getValue();
-					spawnPosition.y = spawnYTag.getValue();
-					spawnPosition.z = spawnZTag.getValue();
+					player = new Player(singlePlayerName, playerTag);
 				}
-				
-				sizeOnDisk = NbtUtil.getLong(data, "SizeOnDisk", 0);
-				
-				worldName = NbtUtil.getString(data, "LevelName", "");
-				
-				CompoundTag playerTag = NbtUtil.getChild((CompoundTag)data, "Player", CompoundTag.class);
-				if (playerTag != null)
+				catch (Exception e)
 				{
-					try
-					{
-						player = new Player(singlePlayerName, playerTag);
-					}
-					catch (Exception e)
-					{
-						System.err.println("Couldn't parse single player from level.dat: "+e);
-						e.printStackTrace();
-					}
+					System.err.println("Couldn't parse single player from level.dat: "+e);
+					e.printStackTrace();
 				}
 			}
-		}
-		finally
-		{
-			if (nbtIn != null)
-				nbtIn.close();
-			
-			if (in != null)
-				in.close();
 		}
 	}
 	
