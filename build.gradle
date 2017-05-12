@@ -16,14 +16,15 @@ compileJava {
 }
 
 repositories {
-	mavenCentral()
+	jcenter()
 }
 
 dependencies {
 	compile('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
 			'org.apache.commons:commons-lang3:3.5@jar',
 			'com.google.code.gson:gson:2.8.0@jar',
-			'xyz.nickr:nbt:1.0.1')
+			'org.joml:joml:1.9.3',
+			'xyz.nickr:nbt:1.1.1')
 	compile('org.lwjgl.lwjgl:lwjgl:2.9.3') {
 				exclude module: 'jinput'
 			}
@@ -32,21 +33,19 @@ dependencies {
 	testCompile 'junit:junit:4.12'
 }
 
-build.mustRunAfter clean
-
-build.doFirst {
-	def props = new Properties()
-	props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
-	props.setProperty('buildTime', new Date().format('hhmm'))
-	props.setProperty('buildNumber', grgit.log().size().toString())
-	props.setProperty('version', "${version}")
-	def writer = new FileWriter(file('build/tectonicus.buildInfo'))
-	props.store(writer, 'Tectonicus build info')
-	writer.flush()
-	writer.close()
-}
-
 jar {
+	doFirst {
+		def props = new Properties()
+		props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
+		props.setProperty('buildTime', new Date().format('hhmm'))
+		props.setProperty('buildNumber', grgit.log().size().toString())
+		props.setProperty('version', "${version}")
+		def writer = new FileWriter(file('build/tectonicus.buildInfo'))
+		props.store(writer, 'Tectonicus build info')
+		writer.flush()
+		writer.close()
+	}
+	
 	from files('build/tectonicus.buildinfo')
 	from configurations.runtime.asFileTree.files.collect { zipTree(it) }
 	from fileTree('Data')
@@ -57,7 +56,7 @@ jar {
 	}
 }
 
-task createPackage(type: Zip, dependsOn: ['clean', 'build'], group: 'build', description: 'Create release zip file') {
+task createPackage(type: Zip, dependsOn: 'build', group: 'build', description: 'Create release zip file') {
 	from files('Data/defaultBlockConfig.xml', "build/libs/tectonicus-${version}.jar")
 	from('Docs') {
 		include('*.xml', '*.txt')
