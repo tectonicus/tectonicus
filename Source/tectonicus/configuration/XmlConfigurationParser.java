@@ -112,7 +112,7 @@ public class XmlConfigurationParser
 		Element rasteriserNode = getChild(root, "rasteriser");
 		if (rasteriserNode != null)
 		{
-			RasteriserType rasteriser = parseRasteriserType( getString(configNode, "rasteriser") );
+			RasteriserType rasteriser = parseRasteriserType( getString(rasteriserNode, "type") );
 			config.setRasteriserType(rasteriser);
 			
 			config.setColourDepth( parseColourDepth( getString(rasteriserNode, "colourDepth") ) );

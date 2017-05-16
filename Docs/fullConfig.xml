@@ -31,7 +31,7 @@
 
 	<!-- Rasteriser config applies to all maps/layers -->
 	<rasteriser
-		type="lwjgl / processing"
+		type="lwjgl"
 		colourDepth="24"
 		alphaBits="8"
 		numSamples="4"
