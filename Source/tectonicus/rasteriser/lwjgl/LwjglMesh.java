@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -97,6 +97,38 @@ public class LwjglMesh implements Mesh
 		colours.put((byte)255);
 		colours.put((byte)255);
 		colours.put((byte)255);
+		
+		texCoords.put(u);
+		texCoords.put(v);
+		
+		numVertices++;
+		assert(numVertices < maxVertices);
+	}
+	
+	@Override
+	public void addVertex(org.joml.Vector3f position, org.joml.Vector4f color, final float u, final float v)
+	{
+		assert(!isFinalised);
+		
+		if (numVertices + 3 > maxVertices)
+		{
+			final int newMax = maxVertices + 2000;
+			
+			vertices = realloc(vertices, maxVertices * 3, newMax * 3);
+			colours = realloc(colours, maxVertices * 4, newMax * 4);
+			texCoords = realloc(texCoords, maxVertices * 2, newMax * 2);
+			
+			maxVertices = newMax;
+		}
+		
+		vertices.put(position.x);
+		vertices.put(position.y);
+		vertices.put(position.z);
+		
+		colours.put( (byte)(color.x * 255) );
+		colours.put( (byte)(color.y * 255) );
+		colours.put( (byte)(color.z * 255) );
+		colours.put( (byte)(color.w * 255) );
 		
 		texCoords.put(u);
 		texCoords.put(v);

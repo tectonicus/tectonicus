@@ -41,13 +41,14 @@ public class BlockModel
 	
 	public static class BlockElement
 	{
-		final private Vector3f from, to, rotationOrigin;
-		final private String rotationAxis;
+		final private Vector3f from, to;
+		final private org.joml.Vector3f rotationOrigin;
+		final private org.joml.Vector3f rotationAxis;
 		final private float rotationAngle;
 		final private boolean scaled, shaded;
 		final private Map<String, ElementFace> faces;
 		
-		public BlockElement(Vector3f from, Vector3f to, Vector3f rotationOrigin, String rotationAxis, float rotationAngle, boolean scaled, boolean shaded, Map<String, ElementFace> faces)
+		public BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, org.joml.Vector3f rotationAxis, float rotationAngle, boolean scaled, boolean shaded, Map<String, ElementFace> faces)
 		{
 			this.from = from;
 			this.to = to;
@@ -61,8 +62,8 @@ public class BlockModel
 		
 		public Vector3f getFrom() {	return from; }
 		public Vector3f getTo() { return to; }
-		public Vector3f getRotationOrigin() { return rotationOrigin; }
-		public String getRotationAxis() { return rotationAxis; }
+		public org.joml.Vector3f getRotationOrigin() { return rotationOrigin; }
+		public org.joml.Vector3f getRotationAxis() { return rotationAxis; }
 		public float getRotationAngle() { return rotationAngle; }
 		public boolean isScaled() { return scaled; }
 		public boolean isShaded() { return shaded; }

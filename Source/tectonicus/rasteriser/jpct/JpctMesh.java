@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -140,6 +140,12 @@ public class JpctMesh implements Mesh
 	public void addVertex(Vector3f position, float u, float v)
 	{
 		addVertex(position, new Vector4f(1, 1, 1, 1), u, v);
+	}
+	
+	@Override
+	public void addVertex(org.joml.Vector3f position, org.joml.Vector4f color, final float u, final float v)
+	{
+		
 	}
 	
 	public Object3D getObject3D()

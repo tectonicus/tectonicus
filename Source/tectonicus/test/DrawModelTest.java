@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -21,12 +21,17 @@ import java.util.Map;
 import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+
+import com.google.gson.JsonArray;
 
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
+import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
@@ -79,43 +84,103 @@ public class DrawModelTest
 		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.Lwjgl, DisplayType.Window, 800, 800, 24, 8, 24, 4);
 		BlockRegistry br = new BlockRegistry(rasteriser);
 		Map<String, String> textureMap = new HashMap<>();
-		BlockModel bm = br.loadModel("block/tripwire_hook", zips, textureMap);
+		JsonArray jsonElements = null;
+		BlockModel bm = br.loadModel("block/cauldron_level3", zips, textureMap, jsonElements);
 		List<BlockElement> elements = bm.getElements();
 		
 		for(BlockElement element : elements)
 		{
-			SubTexture tex = null;
-	        LwjglTexture texture = null;
+			Vector3f rotationOrigin = element.getRotationOrigin();
+			Vector3f rotationAxis = element.getRotationAxis();
+			
+			Matrix4f rotationTransform = null;
+			if (element.getRotationAngle() != 0)
+			{
+				rotationTransform = new Matrix4f().translate(rotationOrigin)
+									              .rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
+									              .translate(rotationOrigin.negate());
+			}
+			
+			float x1 = element.getFrom().x();
+	        float y1 = element.getFrom().y();
+	        float z1 = element.getFrom().z();
+	        
+	        float x2 = element.getTo().x();
+	        float y2 = element.getTo().y();
+	        float z2 = element.getTo().z();
+
 			if (element.getFaces().containsKey("up"))
 	        {
-	        	//int rotation = element.getFaces().get("up").getTextureRotation();
-	        	
-				tex = element.getFaces().get("up").getTexture();
+				ElementFace face = element.getFaces().get("up");
+
 				//System.out.println("u0="+tex.u0+" v0="+tex.v0+" u1="+tex.u1+" v1="+tex.v1);
-				texture = (LwjglTexture) tex.texture;
 				
-				Mesh result = null;
-				result = meshList.get(texture);
-				if (result == null)
-				{
-					result = new LwjglMesh(texture);
-					meshList.put(texture, result);
-				}
+				Vector3f topLeft = new Vector3f(x1, y2, z1);
+		        Vector3f topRight = new Vector3f(x2, y2, z1);
+		        Vector3f bottomRight = new Vector3f(x2, y2, z2);
+		        Vector3f bottomLeft = new Vector3f(x1, y2, z2);
+
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform);
+	        }
+			
+			if (element.getFaces().containsKey("down"))
+	        {
+				ElementFace face = element.getFaces().get("down");
 				
-		        float x1 = element.getFrom().x();
-		        //float y1 = element.getFrom().y();
-		        float z1 = element.getFrom().z();
+				Vector3f topLeft = new Vector3f(x1, y1, z2);
+		        Vector3f topRight = new Vector3f(x2, y1, z2);
+		        Vector3f bottomRight = new Vector3f(x2, y1, z1);
+		        Vector3f bottomLeft = new Vector3f(x1, y1, z1);
+
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform);
+	        }
+			
+			if (element.getFaces().containsKey("north"))
+	        {
+				ElementFace face = element.getFaces().get("north");
+				
+				Vector3f topLeft = new Vector3f(x2, y2, z1);
+		        Vector3f topRight = new Vector3f(x1, y2, z1);
+		        Vector3f bottomRight = new Vector3f(x1, y1, z1);
+		        Vector3f bottomLeft = new Vector3f(x2, y1, z1);
 		        
-		        float x2 = element.getTo().x();
-		        float y2 = element.getTo().y();
-		        float z2 = element.getTo().z();
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform);
+	        }
+			
+			if (element.getFaces().containsKey("south"))
+	        {
+				ElementFace face = element.getFaces().get("south");
+				
+				Vector3f topLeft = new Vector3f(x1, y2, z2);
+		        Vector3f topRight = new Vector3f(x2, y2, z2);
+		        Vector3f bottomRight = new Vector3f(x2, y1, z2);
+		        Vector3f bottomLeft = new Vector3f(x1, y1, z2);
 		        
-		        Vector4f color = new Vector4f(1,1,1,1);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform);
+	        }
+			
+			if (element.getFaces().containsKey("east"))
+	        {
+				ElementFace face = element.getFaces().get("east");
+				
+				Vector3f topLeft = new Vector3f(x2, y2, z2);
+		        Vector3f topRight = new Vector3f(x2, y2, z1);
+		        Vector3f bottomRight = new Vector3f(x2, y1, z1);
+		        Vector3f bottomLeft = new Vector3f(x2, y1, z2);
 		        
-				result.addVertex(new Vector3f(x1, y2, z1), color, tex.u0, tex.v0);
-				result.addVertex(new Vector3f(x2, y2, z1), color, tex.u1, tex.v0);
-				result.addVertex(new Vector3f(x2, y2, z2), color, tex.u1, tex.v1);
-				result.addVertex(new Vector3f(x1, y2, z2), color, tex.u0, tex.v1);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform);
+	        }
+			
+			if (element.getFaces().containsKey("west"))
+	        {
+				ElementFace face = element.getFaces().get("west");
+				
+				Vector3f topLeft = new Vector3f(x1, y2, z1);
+		        Vector3f topRight = new Vector3f(x1, y2, z2);
+		        Vector3f bottomRight = new Vector3f(x1, y1, z2);
+		        Vector3f bottomLeft = new Vector3f(x1, y1, z1);
+		        
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform);
 	        }
 		}
 		
@@ -148,181 +213,15 @@ public class DrawModelTest
 			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	        for(BlockElement element : elements)
-	        {
-	        	float originX = element.getRotationOrigin().x();
-	        	float originY = element.getRotationOrigin().y();
-	        	float originZ = element.getRotationOrigin().z();
-	        	
-	        	glPushMatrix();
-				if(element.getRotationAxis().equals("x"))
-				{
-					glTranslatef(originX, originY, originZ);
-					glRotatef(element.getRotationAngle(), 1.0f, 0, 0);
-					glTranslatef(-originX, -originY, -originZ);
-				}
-				else if(element.getRotationAxis().equals("y"))
-				{
-					glTranslatef(originX, originY, originZ);
-					glRotatef(element.getRotationAngle(), 0, 1.0f, 0);
-					glTranslatef(-originX, -originY, -originZ);
-				}
-				else if(element.getRotationAxis().equals("z"))
-				{
-					glTranslatef(originX, originY, originZ);
-					glRotatef(element.getRotationAngle(), 0, 0, 1.0f);
-					glTranslatef(-originX, -originY, -originZ);
-				}
-				
-		        float x1 = element.getFrom().x();
-		        float y1 = element.getFrom().y();
-		        float z1 = element.getFrom().z();
-		        
-		        float x2 = element.getTo().x();
-		        float y2 = element.getTo().y();
-		        float z2 = element.getTo().z();
-		        
-		        //Top face
-		        SubTexture tex = null;
-		        LwjglTexture texture = null;
-		        if (element.getFaces().containsKey("up"))
-		        {
-		        	//int rotation = element.getFaces().get("up").getTextureRotation();
-		        	
-					tex = element.getFaces().get("up").getTexture();
-					//System.out.println("u0="+tex.u0+" v0="+tex.v0+" u1="+tex.u1+" v1="+tex.v1);
-					texture = (LwjglTexture) tex.texture;
-					//System.out.println(texture.getId());
-					GL11.glEnable(GL11.GL_TEXTURE_2D);
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-					glColor3f(1.0f, 1.0f, 1.0f);
-					glBegin(GL_QUADS);
-					glTexCoord2f(tex.u0, tex.v0);
-					glVertex3f(x1, y2, z1);
-					glTexCoord2f(tex.u1, tex.v0);
-					glVertex3f(x2, y2, z1);
-					glTexCoord2f(tex.u1, tex.v1);
-					glVertex3f(x2, y2, z2);
-					glTexCoord2f(tex.u0, tex.v1);
-					glVertex3f(x1, y2, z2);
-					glEnd();
-				}
-		        
-//		        for (Mesh m : meshList.values())
-//				{
-//					m.bind();
-//					m.draw(0, 0, 0);
-//				}
-		        
-				if (element.getFaces().containsKey("down")) {
-					//Bottom face
-					tex = element.getFaces().get("down").getTexture();
-					texture = (LwjglTexture) element.getFaces().get("down").getTexture().texture;
-					//System.out.println(texture.getId());
-					GL11.glEnable(GL11.GL_TEXTURE_2D);
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-					glColor3f(1.0f, 1.0f, 1.0f);
-					glBegin(GL_QUADS);
-					glTexCoord2f(tex.u0, tex.v0);
-					glVertex3f(x2, y1, z1);
-					glTexCoord2f(tex.u1, tex.v0);
-					glVertex3f(x1, y1, z1);
-					glTexCoord2f(tex.u1, tex.v1);
-					glVertex3f(x1, y1, z2);
-					glTexCoord2f(tex.u0, tex.v1);
-					glVertex3f(x2, y1, z2);
-					glEnd();
-				}
-				if (element.getFaces().containsKey("north")) {
-					//North face
-					tex = element.getFaces().get("north").getTexture();
-					texture = (LwjglTexture) element.getFaces().get("north").getTexture().texture;
-					//System.out.println(texture.getId());
-					GL11.glEnable(GL11.GL_TEXTURE_2D);
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-					glColor3f(1.0f, 1.0f, 1.0f);
-					
-//					glBegin(GL_QUADS);
-//					glTexCoord2f(tex.u0, tex.v1);
-//					glVertex3f(x2, y2, z1);
-//					glTexCoord2f(tex.u0, tex.v0);
-//					glVertex3f(x1, y2, z1);
-//					glTexCoord2f(tex.u1, tex.v0);
-//					glVertex3f(x1, y1, z1);
-//					glTexCoord2f(tex.u1, tex.v1);
-//					glVertex3f(x2, y1, z1);
-//					glEnd();
-					
-					glBegin(GL_QUADS);
-					glTexCoord2f(tex.u0, tex.v0);
-					glVertex3f(x2, y2, z1);
-					glTexCoord2f(tex.u1, tex.v0);
-					glVertex3f(x1, y2, z1);
-					glTexCoord2f(tex.u1, tex.v1);
-					glVertex3f(x1, y1, z1);
-					glTexCoord2f(tex.u0, tex.v1);
-					glVertex3f(x2, y1, z1);
-					glEnd();
-				}
-				if (element.getFaces().containsKey("south")) {
-					//South face
-					tex = element.getFaces().get("south").getTexture();
-					texture = (LwjglTexture) element.getFaces().get("south").getTexture().texture;
-					//System.out.println(texture.getId());
-					GL11.glEnable(GL11.GL_TEXTURE_2D);
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-					glColor3f(1.0f, 1.0f, 1.0f);
-					glBegin(GL_QUADS);
-					glTexCoord2f(tex.u0, tex.v0);
-					glVertex3f(x1, y2, z2);
-					glTexCoord2f(tex.u1, tex.v0);
-					glVertex3f(x2, y2, z2);
-					glTexCoord2f(tex.u1, tex.v1);
-					glVertex3f(x2, y1, z2);
-					glTexCoord2f(tex.u0, tex.v1);
-					glVertex3f(x1, y1, z2);
-					glEnd();
-				}
-				if (element.getFaces().containsKey("east")) {
-					//East face
-					tex = element.getFaces().get("east").getTexture();
-					texture = (LwjglTexture) element.getFaces().get("east").getTexture().texture;
-					//System.out.println(texture.getId());
-					GL11.glEnable(GL11.GL_TEXTURE_2D);
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-					glColor3f(1.0f, 1.0f, 1.0f);
-					glBegin(GL_QUADS);
-					glTexCoord2f(tex.u0, tex.v0);
-					glVertex3f(x2, y2, z2);
-					glTexCoord2f(tex.u1, tex.v0);
-					glVertex3f(x2, y2, z1);
-					glTexCoord2f(tex.u1, tex.v1);
-					glVertex3f(x2, y1, z1);
-					glTexCoord2f(tex.u0, tex.v1);
-					glVertex3f(x2, y1, z2);
-					glEnd();
-				}
-				if (element.getFaces().containsKey("west")) {
-					//West face
-					tex = element.getFaces().get("west").getTexture();
-					texture = (LwjglTexture) element.getFaces().get("west").getTexture().texture;
-					//System.out.println(texture.getId());
-					GL11.glEnable(GL11.GL_TEXTURE_2D);
-					GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-					glColor3f(1.0f, 1.0f, 1.0f);
-					glBegin(GL_QUADS);
-					glTexCoord2f(tex.u0, tex.v0);
-					glVertex3f(x1, y2, z1);
-					glTexCoord2f(tex.u1, tex.v0);
-					glVertex3f(x1, y2, z2);
-					glTexCoord2f(tex.u1, tex.v1);
-					glVertex3f(x1, y1, z2);
-					glTexCoord2f(tex.u0, tex.v1);
-					glVertex3f(x1, y1, z1);
-					glEnd();
-				}
-				glPopMatrix();
-	        }
+	        
+			for (Mesh m : meshList.values())
+			{
+				m.bind();
+				m.draw(0, 0, 0);
+			}
+			
+			//oldDraw(elements);
+			
 			// Restore transformations
 			//glPopMatrix();
 
@@ -330,6 +229,301 @@ public class DrawModelTest
 			Display.sync(60);
 		}
 		Display.destroy();
+	}
+
+	private void oldDraw(List<BlockElement> elements) {
+		for(BlockElement element : elements)
+		{
+			float originX = element.getRotationOrigin().x();
+			float originY = element.getRotationOrigin().y();
+			float originZ = element.getRotationOrigin().z();
+			Vector3f rotationAxis = element.getRotationAxis();
+			
+			glPushMatrix();
+			glTranslatef(originX, originY, originZ);
+			glRotatef(element.getRotationAngle(), rotationAxis.x, rotationAxis.y, rotationAxis.z);
+			glTranslatef(-originX, -originY, -originZ);
+			
+		    float x1 = element.getFrom().x();
+		    float y1 = element.getFrom().y();
+		    float z1 = element.getFrom().z();
+		    
+		    float x2 = element.getTo().x();
+		    float y2 = element.getTo().y();
+		    float z2 = element.getTo().z();
+		    
+		    //Top face
+		    SubTexture tex = null;
+		    LwjglTexture texture = null;
+		    if (element.getFaces().containsKey("up"))
+		    {
+		    	//int rotation = element.getFaces().get("up").getTextureRotation();
+		    	
+				tex = element.getFaces().get("up").getTexture();
+				//System.out.println("u0="+tex.u0+" v0="+tex.v0+" u1="+tex.u1+" v1="+tex.v1);
+				texture = (LwjglTexture) tex.texture;
+				//System.out.println(texture.getId());
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				glColor3f(1.0f, 1.0f, 1.0f);
+				glBegin(GL_QUADS);
+				glTexCoord2f(tex.u0, tex.v0);
+				glVertex3f(x1, y2, z1);
+				glTexCoord2f(tex.u1, tex.v0);
+				glVertex3f(x2, y2, z1);
+				glTexCoord2f(tex.u1, tex.v1);
+				glVertex3f(x2, y2, z2);
+				glTexCoord2f(tex.u0, tex.v1);
+				glVertex3f(x1, y2, z2);
+				glEnd();
+			}
+		    
+		    
+		    
+			if (element.getFaces().containsKey("down")) {
+				//Bottom face
+				tex = element.getFaces().get("down").getTexture();
+				texture = (LwjglTexture) element.getFaces().get("down").getTexture().texture;
+				//System.out.println(texture.getId());
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				glColor3f(1.0f, 1.0f, 1.0f);
+				glBegin(GL_QUADS);
+				glTexCoord2f(tex.u0, tex.v0);
+				glVertex3f(x2, y1, z1);
+				glTexCoord2f(tex.u1, tex.v0);
+				glVertex3f(x1, y1, z1);
+				glTexCoord2f(tex.u1, tex.v1);
+				glVertex3f(x1, y1, z2);
+				glTexCoord2f(tex.u0, tex.v1);
+				glVertex3f(x2, y1, z2);
+				glEnd();
+			}
+			if (element.getFaces().containsKey("north")) {
+				//North face
+				ElementFace northFace = element.getFaces().get("north");
+				tex = northFace.getTexture();
+				int rotation = northFace.getTextureRotation();
+				
+				tex = element.getFaces().get("north").getTexture();
+				texture = (LwjglTexture) element.getFaces().get("north").getTexture().texture;
+				//System.out.println(texture.getId());
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				glColor3f(1.0f, 1.0f, 1.0f);
+				
+				if(rotation == 0)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x2, y2, z1);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x1, y2, z1);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x1, y1, z1);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x2, y1, z1);
+					glEnd();
+				}
+				else if(rotation == 90)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x2, y2, z1);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x1, y2, z1);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x1, y1, z1);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x2, y1, z1);
+					glEnd();
+				}
+				else if (rotation == 180)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x2, y2, z1);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x1, y2, z1);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x1, y1, z1);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x2, y1, z1);
+					glEnd();
+				}
+				else if (rotation == 270)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x2, y2, z1);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x1, y2, z1);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x1, y1, z1);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x2, y1, z1);
+					glEnd();
+				}
+			}
+			if (element.getFaces().containsKey("south")) {
+				//South face
+				ElementFace southFace = element.getFaces().get("south");
+				tex = southFace.getTexture();
+				int rotation = southFace.getTextureRotation();
+				
+				texture = (LwjglTexture) southFace.getTexture().texture;
+				//System.out.println(texture.getId());
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				glColor3f(1.0f, 1.0f, 1.0f);
+				
+				if(rotation == 0)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x1, y2, z2);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x2, y2, z2);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x2, y1, z2);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x1, y1, z2);
+					glEnd();
+				}
+				else if(rotation == 90)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x1, y2, z2);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x2, y2, z2);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x2, y1, z2);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x1, y1, z2);
+					glEnd();
+				}
+				else if (rotation == 180)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x1, y2, z2);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x2, y2, z2);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x2, y1, z2);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x1, y1, z2);
+					glEnd();
+				}
+				else if (rotation == 270)
+				{
+					glBegin(GL_QUADS);
+					glTexCoord2f(tex.u1, tex.v0);
+					glVertex3f(x1, y2, z2);
+					glTexCoord2f(tex.u1, tex.v1);
+					glVertex3f(x2, y2, z2);
+					glTexCoord2f(tex.u0, tex.v1);
+					glVertex3f(x2, y1, z2);
+					glTexCoord2f(tex.u0, tex.v0);
+					glVertex3f(x1, y1, z2);
+					glEnd();
+				}
+			}
+			if (element.getFaces().containsKey("east")) {
+				//East face
+				tex = element.getFaces().get("east").getTexture();
+				texture = (LwjglTexture) element.getFaces().get("east").getTexture().texture;
+				//System.out.println(texture.getId());
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				glColor3f(1.0f, 1.0f, 1.0f);
+				glBegin(GL_QUADS);
+				glTexCoord2f(tex.u0, tex.v0);
+				glVertex3f(x2, y2, z2);
+				glTexCoord2f(tex.u1, tex.v0);
+				glVertex3f(x2, y2, z1);
+				glTexCoord2f(tex.u1, tex.v1);
+				glVertex3f(x2, y1, z1);
+				glTexCoord2f(tex.u0, tex.v1);
+				glVertex3f(x2, y1, z2);
+				glEnd();
+			}
+			if (element.getFaces().containsKey("west")) {
+				//West face
+				tex = element.getFaces().get("west").getTexture();
+				texture = (LwjglTexture) element.getFaces().get("west").getTexture().texture;
+				//System.out.println(texture.getId());
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				glColor3f(1.0f, 1.0f, 1.0f);
+				glBegin(GL_QUADS);
+				glTexCoord2f(tex.u0, tex.v0);
+				glVertex3f(x1, y2, z1);
+				glTexCoord2f(tex.u1, tex.v0);
+				glVertex3f(x1, y2, z2);
+				glTexCoord2f(tex.u1, tex.v1);
+				glVertex3f(x1, y1, z2);
+				glTexCoord2f(tex.u0, tex.v1);
+				glVertex3f(x1, y1, z1);
+				glEnd();
+			}
+			glPopMatrix();
+		}
+	}
+
+	private void addVertices(Map<Texture, Mesh> meshList, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f rotationTransform)
+	{
+		if(rotationTransform != null)
+        {
+	        rotationTransform.transformPosition(topLeft);
+	        rotationTransform.transformPosition(topRight);
+	        rotationTransform.transformPosition(bottomRight);
+	        rotationTransform.transformPosition(bottomLeft);
+        }
+		
+		SubTexture tex = face.getTexture();
+		int texRotation = face.getTextureRotation();
+		LwjglTexture texture = (LwjglTexture) tex.texture;
+		
+		Mesh result = null;
+		result = meshList.get(texture);
+		if (result == null)
+		{
+			result = new LwjglMesh(texture);
+			meshList.put(texture, result);
+		}
+		
+		Vector4f color = new Vector4f(1,1,1,1);
+
+		if(texRotation == 0)
+		{
+			result.addVertex(topLeft, color, tex.u0, tex.v0);
+			result.addVertex(topRight, color, tex.u1, tex.v0);
+			result.addVertex(bottomRight, color, tex.u1, tex.v1);
+			result.addVertex(bottomLeft, color, tex.u0, tex.v1);
+		}
+		else if (texRotation == 90)
+		{
+			result.addVertex(topLeft, color, tex.u0, tex.v1);
+			result.addVertex(topRight, color, tex.u0, tex.v0);
+			result.addVertex(bottomRight, color, tex.u1, tex.v0);
+			result.addVertex(bottomLeft, color, tex.u1, tex.v1);
+		}
+		else if (texRotation == 180)
+		{
+			result.addVertex(topLeft, color, tex.u1, tex.v1);
+			result.addVertex(topRight, color, tex.u0, tex.v1);
+			result.addVertex(bottomRight, color, tex.u0, tex.v0);
+			result.addVertex(bottomLeft, color, tex.u1, tex.v0);
+		}
+		else if (texRotation == 270)
+		{
+			result.addVertex(topLeft, color, tex.u1, tex.v0);
+			result.addVertex(topRight, color, tex.u1, tex.v1);
+			result.addVertex(bottomRight, color, tex.u0, tex.v1);
+			result.addVertex(bottomLeft, color, tex.u0, tex.v0);
+		}
 	}
 	
 	private void getKeys() {
