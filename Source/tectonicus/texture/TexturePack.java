@@ -92,15 +92,20 @@ public class TexturePack
 			if(zipStack.hasFile("assets/minecraft/textures/blocks/stone_andesite.png"))
 				Minecraft.setMinecraftVersion(1.8f);
 		}
-		else if(zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png"))
+//		else if(zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png"))
+//		{
+//			this.version = "1.RV";
+//			Minecraft.setMinecraftVersion(1.9f);
+//		}
+		else if(zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png"))
 		{
-			this.version = "1.RV";
+			this.version = "1.9+";
 			Minecraft.setMinecraftVersion(1.9f);
 		}
 		else
 		{
-			this.version = "1.9+";
-			Minecraft.setMinecraftVersion(1.9f);
+			this.version = "1.12+";
+			Minecraft.setMinecraftVersion(12f);
 		}
 		
 		try
