@@ -119,11 +119,8 @@ public class PlayerSkinCache
 	{
 		System.out.println("Writing player skin cache info ("+skinCache.size()+" skin"+ (skinCache.size()>1?"s":"") + " to write)");
 		
-		PrintWriter writer = null;
-		try
+		try (PrintWriter writer = new PrintWriter(new File(cacheDir, "skins.cache")))
 		{
-			writer = new PrintWriter(new File(cacheDir, "skins.cache"));
-			
 			writer.println("<skinCache version=\""+INDEX_VERSION+"\">");
 			writer.println("\t<entries>");
 			
@@ -149,11 +146,6 @@ public class PlayerSkinCache
 		catch (Exception e)
 		{
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (writer != null)
-				writer.close();
 		}
 		
 		System.out.println("Player skin cache written");
@@ -238,7 +230,7 @@ public class PlayerSkinCache
                 BufferedImage skin = ImageIO.read(skinStream);
                 if(skin != null)
 				return skin;
-		}
+            }
             finally
             {
                 skinStream.close();

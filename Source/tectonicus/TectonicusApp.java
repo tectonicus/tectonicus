@@ -897,7 +897,7 @@ public class TectonicusApp
 		{
 			MessageDigest hashAlgorithm = MessageDigest.getInstance("sha1");
 			
-			if (args.mode() == Mode.Interactive)
+			if (args.getMode() == Mode.Interactive)
 			{
 				interactiveRenderer = new InteractiveRenderer(args, 512, 512);
 				
@@ -914,7 +914,7 @@ public class TectonicusApp
 				
 				interactiveRenderer.destroy();
 			}
-			else if (args.mode() == Mode.CommandLine)
+			else if (args.getMode() == Mode.CommandLine)
 			{
 				// Do this first before we attempt to load any caches
 				if (args.eraseOutputDir())
@@ -928,13 +928,13 @@ public class TectonicusApp
 				
 				tileRenderer.output();
 			}
-			else if (args.mode() == Mode.RenderViews)
+			else if (args.getMode() == Mode.RenderViews)
 			{
 				tileRenderer = new TileRenderer(args, new CommandLineOutput(), hashAlgorithm);
 				
 				tileRenderer.outputViews();				
 			}
-			else if (args.mode() == Mode.ExportPlayers)
+			else if (args.getMode() == Mode.ExportPlayers)
 			{
 				final Date startTime = new Date();
 				
@@ -968,12 +968,12 @@ public class TectonicusApp
 				String time = Util.getElapsedTime(startTime, endTime);
 				System.out.println("Player export took "+time);
 			}
-			else if (args.mode() == Mode.Gui)
+			else if (args.getMode() == Mode.Gui)
 			{
 				Gui gui = new Gui(hashAlgorithm);
 				gui.display();
 			}
-			else if (args.mode() == Mode.Profile)
+			else if (args.getMode() == Mode.Profile)
 			{
 				/*
 				BiomeCache biomeCache = new NullBiomeCache();

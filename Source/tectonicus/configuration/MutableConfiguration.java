@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -99,7 +99,7 @@ public class MutableConfiguration implements Configuration
 	public void printActive()
 	{
 		System.out.println("Settings:");
-		System.out.println("\tmode:"+mode());
+		System.out.println("\tmode:"+getMode());
 		System.out.println("\trasteriser:"+getRasteriserType());
 		System.out.println("\toutputDir:"+outputDir.getAbsolutePath());
 		System.out.println("\tuseCache:"+useCache());
@@ -224,7 +224,7 @@ public class MutableConfiguration implements Configuration
 	{
 		this.mode = mode;
 	}
-	public Mode mode() { return mode; }
+	public Mode getMode() { return mode; }
 	
 	public void setRasteriserType(RasteriserType type)
 	{

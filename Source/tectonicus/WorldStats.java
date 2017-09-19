@@ -183,7 +183,7 @@ public class WorldStats
 		System.out.println("Outputted world stats");
 	}
 
-	private static class IdDataPair
+	private static class IdDataPair implements Comparable<IdDataPair>
 	{
 		public final int id;
 		public final int data;
@@ -192,6 +192,16 @@ public class WorldStats
 		{
 			this.id = id;
 			this.data = data;
+		}
+		
+		@Override
+		public int compareTo(IdDataPair o)
+		{
+			final int idDiff = id - o.id;
+			if (idDiff != 0)
+				return idDiff;
+			
+			return data - o.data;
 		}
 		
 		@Override
