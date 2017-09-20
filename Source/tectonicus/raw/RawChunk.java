@@ -75,6 +75,7 @@ public class RawChunk
 	private List<BannerEntity> banners;
 	private List<PaintingEntity> itemFrames;
 	private List<ContainerEntity> chests;
+	private List<BedEntity> beds;
 	
 	private Map<String, Object> filterData = new HashMap<String, Object>();
 	
@@ -117,6 +118,7 @@ public class RawChunk
 		banners = new ArrayList<BannerEntity>();
 		itemFrames = new ArrayList<PaintingEntity>();
 		chests = new ArrayList<ContainerEntity>();
+		beds = new ArrayList<BedEntity>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -400,7 +402,7 @@ public class RawChunk
 										}
 										banners.add(new BannerEntity(x, y, z, localX, localY, localZ, base.getValue(), patterns));
 									}
-									else if (id.equals("Chest") || id.equals("minecraft:chest"))
+									else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box"))
 									{
 										final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
 										String name = "Chest";
@@ -418,7 +420,23 @@ public class RawChunk
 										if (lootTable != null)
 											unopenedChest = true;
 										
-										chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest));
+										if (id.equals("Chest") || id.equals("minecraft:chest"))
+										{
+											chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest));
+										}
+//										else if (id.equals("EnderChest") || id.equals("minecraft:ender_chest"))
+//										{
+//											
+//										}
+										else if (id.equals("minecraft:shulker_box"))
+										{
+											
+										}
+									}
+									else if (id.equals("minecraft:bed"))
+									{
+										final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
+										beds.add(new BedEntity(x, y, z, localX, localY, localZ, color.getValue()));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -874,6 +892,11 @@ public class RawChunk
 	public List<ContainerEntity> getChests()
 	{
 		return Collections.unmodifiableList(chests);
+	}
+	
+	public List<BedEntity> getBeds()
+	{
+		return Collections.unmodifiableList(beds);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

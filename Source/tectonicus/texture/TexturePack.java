@@ -504,6 +504,28 @@ public class TexturePack
 		return patterns;
 	}
 	
+	public HashMap<String, BufferedImage> loadBedTextures()
+	{
+		HashMap<String, BufferedImage> bedTextures = new HashMap<String, BufferedImage>();
+		
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/bed"));)
+		{
+			for (Path entry : entries)
+			{
+				String filename = entry.getFileName().toString();
+				String color = filename.substring(0, filename.lastIndexOf('.'));
+				bedTextures.put(color, loadTexture(entry.toString()));
+			}
+		}
+		catch (IOException e)
+		{
+			System.out.println("No bed textures found. You may be using an older Minecraft jar file");
+		}
+		
+		return bedTextures;
+	}
+	
 	public String getVersion()
 	{
 		return version;

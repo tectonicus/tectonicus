@@ -104,9 +104,7 @@
 
 	<Solid id="25" name="Note Block" texture="noteblock.png" />
 	
-	<!-- <Bed id="26" name="Bed"	headTop="bed_head_top.png" footTop="bed_feet_top.png"
-				headSide="bed_head_end.png" footSide="bed_feet_end.png"
-				headEdge="bed_head_side.png" footEdge="bed_feet_side.png" />-->
+	<BedNew id="26" name="Bed" />
 	
 	<MinecartTracks id="27" name="Powered rails" straight="rail_golden.png" corner="rail_golden.png" powered="rail_golden_powered.png" isStraightOnly="true" />
 

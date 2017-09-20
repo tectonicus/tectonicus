@@ -14,6 +14,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -31,6 +37,7 @@ import tectonicus.blockTypes.Anvil;
 import tectonicus.blockTypes.Banner;
 import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
+import tectonicus.blockTypes.BedNew;
 import tectonicus.blockTypes.BrewingStand;
 import tectonicus.blockTypes.Button;
 import tectonicus.blockTypes.Cactus;
@@ -314,6 +321,12 @@ public class BlockRegistryParser
 			SubTexture footEdge = parseTexture(element, "footEdge", null);
 			
 			blockType = new Bed(headTop, footTop, headSide, footSide, headEdge, footEdge);
+		}
+		else if (nodeName.equals("bednew"))
+		{
+			final HashMap<String, BufferedImage> bedTextures = texturePack.loadBedTextures();
+			
+			blockType = new BedNew(name, bedTextures);
 		}
 		else if (nodeName.equals("dispenser"))
 		{
