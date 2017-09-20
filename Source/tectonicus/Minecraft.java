@@ -20,6 +20,7 @@ import tectonicus.util.OsDetect;
 public class Minecraft
 {
 	static float minecraftVersion;
+	static boolean useOldColorPalette = false;
 	
 	public static float getMinecraftVersion()
 	{
@@ -29,6 +30,16 @@ public class Minecraft
 	public static void setMinecraftVersion(float version)
 	{
 		minecraftVersion = version;
+	}
+	
+	public static boolean useOldColorPalette()
+	{
+		return useOldColorPalette;
+	}
+	
+	public static void setUseOldColorPalette(boolean b)
+	{
+		useOldColorPalette = b;
 	}
 	
 	public static File findMinecraftDir()

@@ -27,7 +27,7 @@ import tectonicus.raw.BedEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
-import tectonicus.world.Color;
+import tectonicus.world.Colors;
 
 public class BedNew implements BlockType
 {
@@ -82,7 +82,7 @@ public class BedNew implements BlockType
 		}
 		
 		final float texel = 1.0f / 64.0f;
-		String color = Color.byId(colorId).getName();
+		String color = Colors.byId(colorId).getName();
 		SubTexture texture = world.getTexturePack().findTexture(bedTextures.get(color), "bed_"+color);
 		SubTexture headTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*6, texture.u0+texel*22, texture.v0+texel*21.8f);
 		SubTexture footTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*28.2f, texture.u0+texel*22, texture.v0+texel*43.9f);

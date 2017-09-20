@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,6 +17,7 @@ import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Chunk;
+import tectonicus.Minecraft;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
@@ -107,7 +108,7 @@ public class RedstoneWire implements BlockType
 		
 		final float nudge = 0.001f;
 		final float actualY = y + nudge;
-		final boolean newTexture = version == "1.9+" || version == "1.RV";
+		final boolean newTexture = Minecraft.getMinecraftVersion() >= 1.9f;
 		
 		if ( (hasNorth && hasSouth && hasEast && hasWest))
 		{

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,7 +13,6 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +31,7 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.BannerEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.world.Colors;
 
 public class Banner implements BlockType
 {
@@ -43,7 +43,6 @@ public class Banner implements BlockType
 	private final String name;
 	
 	private final HashMap<String, BufferedImage> patternImages;
-	private final List<Color> colors;
 	
 	private SubTexture bannerSideTexture;
 	private SubTexture sideTexture, sideTexture2;
@@ -58,8 +57,7 @@ public class Banner implements BlockType
 		this.hasPost = hasPost;
 		
 		final float texel = 1.0f / 64.0f;
-		
-		//this.frontTexture = new SubTexture(texture.texture, texture.u0+texel, texture.v0+texel, texture.u0+texel*21, texture.v0+texel*41);
+
 		this.bannerSideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel, texture.u0+texel, texture.v0+texel*41);
 		this.sideTexture = new SubTexture(texture.texture, texture.u0+texel*50, texture.v0+texel*2, texture.u0+texel*52, texture.v0+texel*43);
 		this.sideTexture2 = new SubTexture(texture.texture, texture.u0+texel*48, texture.v0+texel*2, texture.u0+texel*50, texture.v0+texel*43);
@@ -67,24 +65,6 @@ public class Banner implements BlockType
 		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel*44, texture.u0+texel*2, texture.v0+texel*46);
 		
 		this.patternImages = patternImages;
-		
-		final Color black = new Color(25, 25, 25, 255);
-		final Color red = new Color(153, 51, 51, 255);
-		final Color green = new Color(102, 127, 51, 255);
-		final Color brown = new Color(102, 76, 51, 255);
-		final Color blue = new Color(51, 76, 178, 255);
-		final Color purple = new Color(127, 63, 178, 255);
-		final Color cyan = new Color(76, 127, 153, 255);
-		final Color lightGray = new Color(153, 153, 153, 255);
-		final Color gray = new Color(76, 76, 76, 255);
-		final Color pink = new Color(242, 127, 165, 255);
-		final Color lime = new Color(127, 204, 25, 255);
-		final Color yellow = new Color(229, 229, 51, 255);
-		final Color lightBlue = new Color(102, 153, 216, 255);
-		final Color magenta = new Color(178, 76, 216, 255);
-		final Color orange = new Color(216, 127, 51, 255);
-		final Color white = new Color(255, 255, 255, 255);
-		this.colors = Arrays.asList(black, red, green, brown, blue, purple, cyan, lightGray, gray, pink, lime, yellow, lightBlue, magenta, orange, white);
 	}
 	
 	@Override
@@ -138,12 +118,12 @@ public class Banner implements BlockType
 
 		String identifier = "banner_base_" + baseColor;
 		
-		addPattern(base, patternImages.get("baseMask"), colors.get(baseColor), g);
+		addPattern(base, patternImages.get("baseMask"), Colors.byId(15-baseColor).getColor(), g);
 		if (!patterns.isEmpty())
 		{
 			for (Pattern pattern : patterns)
 			{
-				addPattern(base, patternImages.get(pattern.pattern), colors.get(pattern.color), g);
+				addPattern(base, patternImages.get(pattern.pattern), Colors.byId(15-pattern.color).getColor(), g);
 				identifier += pattern.toString();
 			}
 		}
@@ -159,7 +139,6 @@ public class Banner implements BlockType
 		final float texel = 1.0f / 16.0f;
 		final float signBottom = 1.0f / 16.0f * POST_HEIGHT;
 
-		//final float signBottom = hasPost ? 1.0f / 16.0f * POST_HEIGHT : 0;
 		final float signDepth = hasPost ? 1.0f / 16.0f * 7 : 0;
 		final float width = 1.0f / 16.0f * WIDTH;
 		final float height = 1.0f / 16.0f * HEIGHT;
