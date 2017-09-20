@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -90,24 +90,6 @@ public class Lilly implements BlockType
 		
 		if(rotation == 0)
 		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z+1),
-									new Vector3f(x,		y,		z+1),
-									new Vector3f(x,		y,		z),
-									new Vector3f(x+1,	y,		z),
-									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-									texture);
-		}
-		else if(rotation == 1)
-		{
-			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z),
-									new Vector3f(x+1,	y,		z+1),
-									new Vector3f(x,		y,		z+1),
-									new Vector3f(x,		y,		z),
-									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-									texture);
-		}
-		else if(rotation == 2)
-		{
 			MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z),
 									new Vector3f(x+1,	y,		z),
 									new Vector3f(x+1,	y,		z+1),
@@ -115,12 +97,30 @@ public class Lilly implements BlockType
 									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
 									texture);
 		}
-		else if(rotation == 3)
+		else if(rotation == 1)
 		{
 			MeshUtil.addQuad(mesh,	new Vector3f(x,		y,		z+1),
 									new Vector3f(x,		y,		z),
 									new Vector3f(x+1,	y,		z),
 									new Vector3f(x+1,	y,		z+1),
+									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+									texture);
+		}
+		else if(rotation == 2)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector3f(x,		y,		z),
+									new Vector3f(x+1,	y,		z),
+									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+									texture);
+		}
+		else if(rotation == 3)
+		{
+			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y,		z),
+									new Vector3f(x+1,	y,		z+1),
+									new Vector3f(x,		y,		z+1),
+									new Vector3f(x,		y,		z),
 									new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
 									texture);
 		}
