@@ -661,22 +661,22 @@
 						top="observer_top.png" topBottom="observer_back.png" 
 						side="observer_side.png" front="observer_front.png" />
 	
-	<Solid id="219" stringId="minecraft:white_shulker_box" name="White Shulker Box" texture="shulker_top_white.png" />
-	<Solid id="220" stringId="minecraft:orange_shulker_box" name="Orange Shulker Box" texture="shulker_top_orange.png" />
-	<Solid id="221" stringId="minecraft:magenta_shulker_box" name="Magenta Shulker Box" texture="shulker_top_magenta.png" />
-	<Solid id="222" stringId="minecraft:light_blue_shulker_box" name="Light Blue Shulker Box" texture="shulker_top_light_blue.png" />
-	<Solid id="223" stringId="minecraft:yellow_shulker_box" name="Yellow Shulker Box" texture="shulker_top_yellow.png" />
-	<Solid id="224" stringId="minecraft:lime_shulker_box" name="Lime Shulker Box" texture="shulker_top_lime.png" />
-	<Solid id="225" stringId="minecraft:pink_shulker_box" name="Pink Shulker Box" texture="shulker_top_pink.png" />
-	<Solid id="226" stringId="minecraft:gray_shulker_box" name="Gray Shulker Box" texture="shulker_top_gray.png" />
-	<Solid id="227" stringId="minecraft:silver_shulker_box" name="Light Gray Shulker Box" texture="shulker_top_silver.png" />
-	<Solid id="228" stringId="minecraft:cyan_shulker_box" name="Cyan Shulker Box" texture="shulker_top_cyan.png" />
-	<Solid id="229" stringId="minecraft:purple_shulker_box" name="Purple Shulker Box" texture="shulker_top_purple.png" />
-	<Solid id="230" stringId="minecraft:blue_shulker_box" name="Blue Shulker Box" texture="shulker_top_blue.png" />
-	<Solid id="231" stringId="minecraft:brown_shulker_box" name="Brown Shulker Box" texture="shulker_top_brown.png" />
-	<Solid id="232" stringId="minecraft:green_shulker_box" name="Green Shulker Box" texture="shulker_top_green.png" />
-	<Solid id="233" stringId="minecraft:red_shulker_box" name="Red Shulker Box" texture="shulker_top_red.png" />
-	<Solid id="234" stringId="minecraft:black_shulker_box" name="Black Shulker Box" texture="shulker_top_black.png" />
+	<ShulkerBox id="219" stringId="minecraft:white_shulker_box" name="White Shulker Box" />
+	<ShulkerBox id="220" stringId="minecraft:orange_shulker_box" name="Orange Shulker Box" />
+	<ShulkerBox id="221" stringId="minecraft:magenta_shulker_box" name="Magenta Shulker Box" />
+	<ShulkerBox id="222" stringId="minecraft:light_blue_shulker_box" name="Light Blue Shulker Box" />
+	<ShulkerBox id="223" stringId="minecraft:yellow_shulker_box" name="Yellow Shulker Box" />
+	<ShulkerBox id="224" stringId="minecraft:lime_shulker_box" name="Lime Shulker Box" />
+	<ShulkerBox id="225" stringId="minecraft:pink_shulker_box" name="Pink Shulker Box" />
+	<ShulkerBox id="226" stringId="minecraft:gray_shulker_box" name="Gray Shulker Box" />
+	<ShulkerBox id="227" stringId="minecraft:silver_shulker_box" name="Light Gray Shulker Box" />
+	<ShulkerBox id="228" stringId="minecraft:cyan_shulker_box" name="Cyan Shulker Box" />
+	<ShulkerBox id="229" stringId="minecraft:purple_shulker_box" name="Purple Shulker Box" />
+	<ShulkerBox id="230" stringId="minecraft:blue_shulker_box" name="Blue Shulker Box" />
+	<ShulkerBox id="231" stringId="minecraft:brown_shulker_box" name="Brown Shulker Box" />
+	<ShulkerBox id="232" stringId="minecraft:green_shulker_box" name="Green Shulker Box" />
+	<ShulkerBox id="233" stringId="minecraft:red_shulker_box" name="Red Shulker Box" />
+	<ShulkerBox id="234" stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
 				
 	<Solid id="250" stringId="minecraft:usb_charger" name="USB Charger" side="usb_charger_side.png" top="usb_charger_top.png" />
 						

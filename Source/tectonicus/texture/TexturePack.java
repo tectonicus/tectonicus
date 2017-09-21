@@ -10,6 +10,7 @@
 package tectonicus.texture;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -187,6 +188,9 @@ public class TexturePack
 //				BufferedImage vignetteImage = copy( ImageIO.read(vignetteEntry.getInputStream()) );
 //				vignetteTexture = rasteriser.createTexture(vignetteImage, TextureFilter.LINEAR);
 //			}
+			
+			loadBedTextures();
+			loadShulkerTextures();
 			
 			//TODO: For MC 1.5, do we need to load each individual item into the TexturePack object?
 			try {
@@ -504,10 +508,8 @@ public class TexturePack
 		return patterns;
 	}
 	
-	public HashMap<String, BufferedImage> loadBedTextures()
-	{
-		HashMap<String, BufferedImage> bedTextures = new HashMap<String, BufferedImage>();
-		
+	private void loadBedTextures()
+	{		
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
 				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/bed"));)
 		{
@@ -515,15 +517,42 @@ public class TexturePack
 			{
 				String filename = entry.getFileName().toString();
 				String color = filename.substring(0, filename.lastIndexOf('.'));
-				bedTextures.put(color, loadTexture(entry.toString()));
+				findTexture(loadTexture(entry.toString()), "bed_"+color);
 			}
 		}
 		catch (IOException e)
 		{
 			System.out.println("No bed textures found. You may be using an older Minecraft jar file");
 		}
-		
-		return bedTextures;
+	}
+	
+	private void loadShulkerTextures()
+	{		
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/shulker"));)
+		{
+			for (Path entry : entries)
+			{
+				String filename = entry.getFileName().toString();
+				if (filename.contains("shulker"))
+				{
+					String color = filename.substring(0, filename.lastIndexOf('.')).replace("shulker_", "");
+					BufferedImage img = loadTexture(entry.toString());
+					findTexture(img, "shulker_"+color);
+					
+					//Create side texture
+					BufferedImage finalImage = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+					Graphics2D g = finalImage.createGraphics();
+					g.drawImage(img.getSubimage(0, 16, 16, 16), 0, 0, null);
+					g.drawImage(img.getSubimage(0, 36, 16, 16), 0, 0, null);
+					findTexture(finalImage, "shulker_side_"+color);
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			System.out.println("No shulker textures found. You may be using an older Minecraft jar file");
+		}
 	}
 	
 	public String getVersion()

@@ -14,12 +14,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -87,6 +81,7 @@ import tectonicus.blockTypes.Portal;
 import tectonicus.blockTypes.PressurePlate;
 import tectonicus.blockTypes.RedstoneRepeater;
 import tectonicus.blockTypes.RedstoneWire;
+import tectonicus.blockTypes.ShulkerBox;
 import tectonicus.blockTypes.Sign;
 import tectonicus.blockTypes.Skull;
 import tectonicus.blockTypes.Slab;
@@ -324,9 +319,7 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("bednew"))
 		{
-			final HashMap<String, BufferedImage> bedTextures = texturePack.loadBedTextures();
-			
-			blockType = new BedNew(name, bedTextures);
+			blockType = new BedNew(name);
 		}
 		else if (nodeName.equals("dispenser"))
 		{
@@ -837,6 +830,10 @@ public class BlockRegistryParser
 			SubTexture tex = parseTexture(element, "texture", null);
 		 	
 		 	blockType = new ChorusPlant(name, tex);
+		}
+		else if (nodeName.equals("shulkerbox"))
+		{
+			blockType = new ShulkerBox(name, stringId);
 		}
 		else
 		{
