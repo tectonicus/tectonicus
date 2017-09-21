@@ -11,6 +11,7 @@
 		mode="cmd / gui / interactive / players / views"
 		minecraftJar="(auto-find)"
 		texturePack=""
+		useOldColorPalette="false / true"
 		outputDir="."
 		outputHtmlName="map.html"
 		defaultSkin="steve"

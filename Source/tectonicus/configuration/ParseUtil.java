@@ -423,6 +423,14 @@ public class ParseUtil
 		return string.equalsIgnoreCase("true");
 	}
 	
+	public static boolean parseUseOldColorPalette(String string)
+	{
+		if (string == null || string.length() == 0)
+			return false; // default
+		
+		return string.equalsIgnoreCase("true");
+	}
+	
 	public static File parseOutputDir(String outputDirStr)
 	{
 		if (outputDirStr == null || outputDirStr.equals(""))

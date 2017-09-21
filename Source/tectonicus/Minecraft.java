@@ -20,7 +20,7 @@ import tectonicus.util.OsDetect;
 public class Minecraft
 {
 	static float minecraftVersion;
-	static boolean useOldColorPalette = false;
+	static boolean useOldColorPalette;
 	
 	public static float getMinecraftVersion()
 	{

@@ -35,6 +35,8 @@ public class MutableConfiguration implements Configuration
 	private File minecraftJar;
 	private File texturePack;
 	
+	private boolean useOldColorPalette;
+	
 	private String outputHtmlName;
 	private String defaultSkin;
 	
@@ -89,6 +91,7 @@ public class MutableConfiguration implements Configuration
 		viewsInitiallyVisible = true;
 		logFile = new File("./TectonicusLog.txt");
 		outputHtmlName = "map.html";
+		useOldColorPalette = false;
 		defaultSkin = "steve";
 		numDownsampleThreads = 1;
 		singlePlayerName = "Player";
@@ -106,6 +109,7 @@ public class MutableConfiguration implements Configuration
 		System.out.println("\tcacheDir:"+cacheDir.getAbsolutePath());
 		System.out.println("\tminecraftJar:"+minecraftJar.getAbsolutePath());
 		System.out.println("\ttexturePack:"+(texturePack != null ? texturePack.getAbsolutePath() : "none"));
+		System.out.println("\tuseOldColorPalette:"+useOldColorPalette());
 		System.out.println("\tcolourDepth:"+colourDepth());
 		System.out.println("\talphaBits:"+alphaBits());
 		System.out.println("\tnumSamples:"+numSamples());
@@ -273,6 +277,12 @@ public class MutableConfiguration implements Configuration
 		this.texturePack = texturePack;
 	}
 	public File texturePack() { return texturePack; }
+	
+	public void setUseOldColorPalette(boolean useOldColorPalette)
+	{
+		this.useOldColorPalette = useOldColorPalette;
+	}
+	public boolean useOldColorPalette() { return useOldColorPalette; }
 	
 	public void setShowPlayerSpawn(final boolean showSpawn)
 	{

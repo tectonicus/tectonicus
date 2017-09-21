@@ -76,6 +76,14 @@ public class XmlConfigurationParser
 			}
 			config.setTexturePack(texturePack);
 			
+			boolean useOldColorPalette = false;
+			if (configNode.hasAttribute("useOldColorPalette"))
+			{
+				useOldColorPalette = parseUseOldColorPalette(getString(configNode, "useOldColorPalette"));
+			}
+			config.setUseOldColorPalette(useOldColorPalette);
+			Minecraft.setUseOldColorPalette(useOldColorPalette);
+			
 			File outputDir = parseOutputDir( getString(configNode, "outputDir") );
 			config.setOutputDir(outputDir);
 			
