@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -61,7 +61,6 @@ public class ItemRenderer
 		BufferedImage compassImage = null;
 		try
 		{
-		//	File compassFile = new File("/Users/John/TectonicusTests/SmallCompassRose.png");
 			File compassFile = map.getCustomCompassRose();
 			if (compassFile != null)
 			{
@@ -80,7 +79,7 @@ public class ItemRenderer
 		
 		ItemGeometry item = createCompassGeometry(rasteriser, map.getNorthDirection(), compassImage);
 		
-		renderItem(map, item, outFile, 2);
+		renderItem(map, item, outFile, 2, true);
 	}
 	
 	public void renderPortal(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
@@ -145,7 +144,7 @@ public class ItemRenderer
 		Map placeholderMap = config.getMap(0);
 		
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(placeholderMap, item, outFile, 4);
+		renderItem(placeholderMap, item, outFile, 4, false);
 	}
 	
 	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
@@ -173,10 +172,10 @@ public class ItemRenderer
 		Map placeholderMap = config.getMap(0);
 		
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(placeholderMap, item, outFile, 4);
+		renderItem(placeholderMap, item, outFile, 4, false);
 	}
 	
-	private void renderItem(Map map, ItemGeometry item, File outFile, final int numDownsamples)
+	private void renderItem(Map map, ItemGeometry item, File outFile, final int numDownsamples, boolean isCompass)
 	{	
 		Geometry geometry = item.geometry;
 		BoundingBox bounds = item.bounds;
@@ -196,7 +195,11 @@ public class ItemRenderer
 		final float cameraAngle = getAngleRad(45);
 		final float cameraElevationAngle = getAngleRad(30);
 		
-		camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
+		if (isCompass)
+			camera.lookAt(lookX, lookY, lookZ, size, map.getCameraAngleRad(), map.getCameraElevationRad());
+		else
+			camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
+		
 		camera.apply();
 		
 		ArrayList<Vector2f> corners = new ArrayList<Vector2f>();
@@ -231,7 +234,11 @@ public class ItemRenderer
 		final float ySize = Vector3f.sub(topLeftWorld, bottomLeftWorld, null).length();
 		float longest = Math.max(xSize, ySize);
 		
-		camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
+		if(isCompass)
+			camera.lookAt(lookX, lookY, lookZ, size, map.getCameraAngleRad(), map.getCameraElevationRad());
+		else
+			camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
+		
 		camera.apply();
 		
 		geometry.finalise();

@@ -23,14 +23,10 @@ public class ShulkerBox implements BlockType
 	private final String name;
 	private final String stringId;
 	
-	//private final HashMap<String, BufferedImage> shulkerTextures;
-	
 	public ShulkerBox(String name, String stringId)
 	{
 		this.name = name;
 		this.stringId = stringId;
-		
-		//this.shulkerTextures = shulkerTextures;
 	}
 	
 	@Override
