@@ -345,22 +345,18 @@ public class ItemRenderer
 			}
 		}
 		
-		float compassRotation = 0;
-		if (dir == NorthDirection.PlusX)
+		float compassRotation = 0;  //NorthDirection.PlusX
+		if (dir == NorthDirection.MinusX)
 		{
 			compassRotation = 180;
 		}
-		else if (dir == NorthDirection.MinusX)
-		{
-			compassRotation = 0;
-		}
 		else if (dir == NorthDirection.PlusZ)
 		{
-			compassRotation = 90;
+			compassRotation = 270;
 		}
 		else if (dir == NorthDirection.MinusZ)
 		{
-			compassRotation = 270;
+			compassRotation = 90;
 		}
 		
 		mesh.pushTo(geometry.getBaseMesh(), 0, 0, 0, Rotation.Clockwise, compassRotation);
