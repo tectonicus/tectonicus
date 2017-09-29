@@ -21,6 +21,7 @@ import javax.imageio.ImageIO;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
+import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
@@ -499,6 +500,12 @@ public class ItemRenderer
 		
 		@Override
 		public PlayerSkinCache getPlayerSkinCache()
+		{
+			return null;
+		}
+		
+		@Override
+		public BlockRegistry getModelRegistry()
 		{
 			return null;
 		}

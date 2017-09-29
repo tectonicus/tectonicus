@@ -555,6 +555,11 @@ public class TexturePack
 		}
 	}
 	
+	public ZipStack getZipStack()
+	{
+		return zipStack;
+	}
+
 	public String getVersion()
 	{
 		return version;

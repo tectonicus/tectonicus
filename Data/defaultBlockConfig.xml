@@ -655,9 +655,7 @@
 	
 	<Plant id="217" stringId="minecraft:structure_void" name="Structure Void" texture="assets/minecraft/textures/items/structure_void.png" />
 	
-	<Dispenser id="218" stringId="minecraft:observer" name="Observer" 
-						top="observer_top.png" topBottom="observer_back.png" 
-						side="observer_side.png" front="observer_front.png" />
+	<Observer id="218" stringId="minecraft:observer" name="Observer" />
 	
 	<ShulkerBox id="219" stringId="minecraft:white_shulker_box" name="White Shulker Box" />
 	<ShulkerBox id="220" stringId="minecraft:orange_shulker_box" name="Orange Shulker Box" />
@@ -676,22 +674,22 @@
 	<ShulkerBox id="233" stringId="minecraft:red_shulker_box" name="Red Shulker Box" />
 	<ShulkerBox id="234" stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
 						
-	<Solid id="235" stringId="minecraft:white_glazed_terracotta" name="White Glazed Terracotta" texture="glazed_terracotta_white.png" />
-	<Solid id="236" stringId="minecraft:orange_glazed_terracotta" name="Orange Glazed Terracotta" texture="glazed_terracotta_orange.png" />
-	<Solid id="237" stringId="minecraft:magenta_glazed_terracotta" name="Magenta Glazed Terracotta" texture="glazed_terracotta_magenta.png" />
-	<Solid id="238" stringId="minecraft:light_blue_glazed_terracotta" name="Light Blue Glazed Terracotta" texture="glazed_terracotta_light_blue.png" />
-	<Solid id="239" stringId="minecraft:yellow_glazed_terracotta" name="Yellow Glazed Terracotta" texture="glazed_terracotta_yellow.png" />
-	<Solid id="240" stringId="minecraft:lime_glazed_terracotta" name="Lime Glazed Terracotta" texture="glazed_terracotta_lime.png" />
-	<Solid id="241" stringId="minecraft:pink_glazed_terracotta" name="Pink Glazed Terracotta" texture="glazed_terracotta_pink.png" />
-	<Solid id="242" stringId="minecraft:gray_glazed_terracotta" name="Gray Glazed Terracotta" texture="glazed_terracotta_gray.png" />
-	<Solid id="243" stringId="minecraft:silver_glazed_terracotta" name="Light Gray Glazed Terracotta" texture="glazed_terracotta_silver.png" />
-	<Solid id="244" stringId="minecraft:cyan_glazed_terracotta" name="Cyan Glazed Terracotta" texture="glazed_terracotta_cyan.png" />
-	<Solid id="245" stringId="minecraft:purple_glazed_terracotta" name="Purple Glazed Terracotta" texture="glazed_terracotta_purple.png" />
-	<Solid id="246" stringId="minecraft:blue_glazed_terracotta" name="Blue Glazed Terracotta" texture="glazed_terracotta_blue.png" />
-	<Solid id="247" stringId="minecraft:brown_glazed_terracotta" name="Brown Glazed Terracotta" texture="glazed_terracotta_brown.png" />
-	<Solid id="248" stringId="minecraft:green_glazed_terracotta" name="Green Glazed Terracotta" texture="glazed_terracotta_green.png" />
-	<Solid id="249" stringId="minecraft:red_glazed_terracotta" name="Red Glazed Terracotta" texture="glazed_terracotta_red.png" />
-	<Solid id="250" stringId="minecraft:black_glazed_terracotta" name="Black Glazed Terracotta" texture="glazed_terracotta_black.png" />
+	<GlazedTerracotta id="235" stringId="minecraft:white_glazed_terracotta" name="White Glazed Terracotta" />
+	<GlazedTerracotta id="236" stringId="minecraft:orange_glazed_terracotta" name="Orange Glazed Terracotta" />
+	<GlazedTerracotta id="237" stringId="minecraft:magenta_glazed_terracotta" name="Magenta Glazed Terracotta" />
+	<GlazedTerracotta id="238" stringId="minecraft:light_blue_glazed_terracotta" name="Light Blue Glazed Terracotta" />
+	<GlazedTerracotta id="239" stringId="minecraft:yellow_glazed_terracotta" name="Yellow Glazed Terracotta" />
+	<GlazedTerracotta id="240" stringId="minecraft:lime_glazed_terracotta" name="Lime Glazed Terracotta" />
+	<GlazedTerracotta id="241" stringId="minecraft:pink_glazed_terracotta" name="Pink Glazed Terracotta" />
+	<GlazedTerracotta id="242" stringId="minecraft:gray_glazed_terracotta" name="Gray Glazed Terracotta" />
+	<GlazedTerracotta id="243" stringId="minecraft:silver_glazed_terracotta" name="Light Gray Glazed Terracotta" />
+	<GlazedTerracotta id="244" stringId="minecraft:cyan_glazed_terracotta" name="Cyan Glazed Terracotta" />
+	<GlazedTerracotta id="245" stringId="minecraft:purple_glazed_terracotta" name="Purple Glazed Terracotta" />
+	<GlazedTerracotta id="246" stringId="minecraft:blue_glazed_terracotta" name="Blue Glazed Terracotta" />
+	<GlazedTerracotta id="247" stringId="minecraft:brown_glazed_terracotta" name="Brown Glazed Terracotta" />
+	<GlazedTerracotta id="248" stringId="minecraft:green_glazed_terracotta" name="Green Glazed Terracotta" />
+	<GlazedTerracotta id="249" stringId="minecraft:red_glazed_terracotta" name="Red Glazed Terracotta" />
+	<GlazedTerracotta id="250" stringId="minecraft:black_glazed_terracotta" name="Black Glazed Terracotta" />
 				
 	<Solid id="251:0" name="White Concrete"  texture="concrete_white.png" />
 	<Solid id="251:1" name="Orange Concrete"  texture="concrete_orange.png" />

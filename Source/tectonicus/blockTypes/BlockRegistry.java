@@ -30,13 +30,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -73,6 +71,12 @@ public class BlockRegistry
 		}
 	}
 	
+	public BlockRegistry(TexturePack texturePack)
+	{
+		this.texturePack = texturePack;
+		this.zips = texturePack.getZipStack();
+	}
+	
 	public Map<String, List<BlockVariant>> getBlockStates() { return Collections.unmodifiableMap(blockStates); }
 	public Map<String, BlockModel> getBlockModels() { return Collections.unmodifiableMap(blockModels); }
 	public List<BlockVariant> getVariants(String blockID) { return blockStates.get(blockID); }
@@ -107,7 +111,7 @@ public class BlockRegistry
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void loadModels() throws Exception
 	{
 		for (Map.Entry<String, List<BlockVariant>> blockState : blockStates.entrySet())
@@ -121,15 +125,20 @@ public class BlockRegistry
 					{
 						Map<String, String> textureMap = new HashMap<>();
 						JsonArray elements = null;
-						blockModels.put(modelName, loadModel("block/" + modelName, zips, textureMap, elements));
+						blockModels.put(modelName, loadModel("block/" + modelName, textureMap, elements));
 					}
 				}
 			}
 		}		
 	}
 	
+	public void loadModel(String modelName) throws Exception
+	{
+		blockModels.put(modelName, loadModel("block/"+modelName, new HashMap<String, String>(), null));
+	}
+	
 	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
-	public BlockModel loadModel(String modelPath, ZipStack zips, Map<String, String> textureMap, JsonArray elements) throws Exception
+	public BlockModel loadModel(String modelPath, Map<String, String> textureMap, JsonArray elements) throws Exception
 	{
 		JsonObject json = new JsonParser().parse(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json"))).getAsJsonObject();
 		//JsonArray elements = null;
@@ -146,11 +155,11 @@ public class BlockRegistry
 			
 			if(json.has("textures"))
 			{
-				return loadModel(parent, zips, populateTextureMap(textureMap, json.getAsJsonObject("textures")), elements);
+				return loadModel(parent, populateTextureMap(textureMap, json.getAsJsonObject("textures")), elements);
 			}
 			else
 			{
-				return loadModel(parent, zips, textureMap, elements);
+				return loadModel(parent, textureMap, elements);
 			}
 		}
 		else  //Load all elements
@@ -177,15 +186,15 @@ public class BlockRegistry
 	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap,	JsonArray elements) throws JsonSyntaxException 
 	{
 		List<BlockElement> elementsList = new ArrayList<>();
-		List<BlockElement> testList;
-		Gson gson = new Gson();
-		System.out.println(elements);
-		testList = gson.fromJson(elements.getAsJsonArray(), new TypeToken<List<Element>>(){}.getType());
+		//List<BlockElement> testList;
+		//Gson gson = new Gson();
+		//System.out.println(elements);
+		//testList = gson.fromJson(elements.getAsJsonArray(), new TypeToken<List<Element>>(){}.getType());
 		
 		for(JsonElement e : elements)
 		//for (int i = 0; i < elements.size(); i++)
 		{
-			Element testElement = gson.fromJson(e, Element.class);
+			//Element testElement = gson.fromJson(e, Element.class);
 			//testElement.getFaces().getUp().getTexture()
 			
 			JsonObject element = e.getAsJsonObject();
@@ -302,7 +311,7 @@ public class BlockRegistry
 					v1 = (float)(uv.get(3).getAsFloat()/16.0f) / numTiles;
 				}
 		    	
-		    	System.out.println(texWidth + " x " + texHeight);
+		    	//System.out.println(texWidth + " x " + texHeight);
 		    	int frame = 1;
 		    	if(numTiles > 1)
 				{

@@ -12,6 +12,8 @@ package tectonicus.rasteriser;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
+import tectonicus.util.Colour4f;
+
 public interface Mesh
 {
 
@@ -34,7 +36,7 @@ public interface Mesh
 	public void addVertex(Vector3f position, Vector4f colour, final float u, final float v);
 	
 	public void addVertex(Vector3f position, final float u, final float v);
-	
-	public void addVertex(org.joml.Vector3f position, org.joml.Vector4f color, final float u, final float v);
+
+	public void addVertex(org.joml.Vector3f position, Colour4f color, float u, float v);
 	
 }

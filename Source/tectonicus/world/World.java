@@ -12,6 +12,13 @@ package tectonicus.world;
 import java.awt.Color;
 import java.awt.Point;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -41,6 +48,7 @@ import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
 import tectonicus.Util;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
@@ -83,6 +91,7 @@ public class World implements BlockContext
 	private final File dimensionDir;
 	
 	private BlockTypeRegistry registry;
+	private BlockRegistry modelRegistry;
 	
 	private LevelDat levelDat;
 	
@@ -207,6 +216,29 @@ public class World implements BlockContext
 	{
 		registry = new BlockTypeRegistry();
 		registry.setDefaultBlock(new Air());
+		
+		modelRegistry = new BlockRegistry(texturePack);
+		//Only load Glazed Terracotta and Observer block models for now  	TODO: Load all block models
+		DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
+				@Override
+				public boolean accept(Path entry) throws IOException {
+					return entry.getFileName().toString().contains("_glazed_terracotta") || entry.getFileName().toString().contains("observer");
+				}
+		    };
+		
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()), null);
+				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/models/block"), filter);)
+		{
+			for (Path entry : entries)
+			{
+				String filename = entry.getFileName().toString();
+				modelRegistry.loadModel(filename.substring(0, filename.lastIndexOf('.')));
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println("Problem loading block models");
+		}
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
 		
@@ -336,6 +368,11 @@ public class World implements BlockContext
 	public TexturePack getTexturePack()
 	{
 		return texturePack;
+	}
+	
+	public BlockRegistry getModelRegistry()
+	{
+		return modelRegistry;
 	}
 	
 	/* New, optimised version.

@@ -21,6 +21,7 @@ import com.threed.jpct.World;
 
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
+import tectonicus.util.Colour4f;
 
 public class JpctMesh implements Mesh
 {
@@ -143,7 +144,7 @@ public class JpctMesh implements Mesh
 	}
 	
 	@Override
-	public void addVertex(org.joml.Vector3f position, org.joml.Vector4f color, final float u, final float v)
+	public void addVertex(org.joml.Vector3f position, Colour4f color, final float u, final float v)
 	{
 		
 	}

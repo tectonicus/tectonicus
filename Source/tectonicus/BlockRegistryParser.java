@@ -60,6 +60,7 @@ import tectonicus.blockTypes.FruitStem;
 import tectonicus.blockTypes.Furnace;
 import tectonicus.blockTypes.Glass;
 import tectonicus.blockTypes.GlassPane;
+import tectonicus.blockTypes.GlazedTerracotta;
 import tectonicus.blockTypes.Grass;
 import tectonicus.blockTypes.Hopper;
 import tectonicus.blockTypes.HugeMushroom;
@@ -73,6 +74,7 @@ import tectonicus.blockTypes.Lilly;
 import tectonicus.blockTypes.Log;
 import tectonicus.blockTypes.MinecartTracks;
 import tectonicus.blockTypes.NetherWart;
+import tectonicus.blockTypes.Observer;
 import tectonicus.blockTypes.Painting;
 import tectonicus.blockTypes.PistonBase;
 import tectonicus.blockTypes.PistonExtension;
@@ -834,6 +836,14 @@ public class BlockRegistryParser
 		else if (nodeName.equals("shulkerbox"))
 		{
 			blockType = new ShulkerBox(name, stringId);
+		}
+		else if (nodeName.equals("glazedterracotta"))
+		{
+			blockType = new GlazedTerracotta(name, stringId);
+		}
+		else if (nodeName.equals("observer"))
+		{
+			blockType = new Observer(name, stringId);
 		}
 		else
 		{

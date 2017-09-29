@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
@@ -32,4 +33,6 @@ public interface BlockContext
 	public Colour4f getGrassColour(ChunkCoord chunkCoord, final int x, final int y, final int z);
 	
 	public PlayerSkinCache getPlayerSkinCache();
+	
+	public BlockRegistry getModelRegistry();
 }

@@ -19,6 +19,7 @@ import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
+import tectonicus.util.Colour4f;
 
 public class LwjglMesh implements Mesh
 {
@@ -106,7 +107,7 @@ public class LwjglMesh implements Mesh
 	}
 	
 	@Override
-	public void addVertex(org.joml.Vector3f position, org.joml.Vector4f color, final float u, final float v)
+	public void addVertex(org.joml.Vector3f position, Colour4f color, final float u, final float v)
 	{
 		assert(!isFinalised);
 		
@@ -125,10 +126,10 @@ public class LwjglMesh implements Mesh
 		vertices.put(position.y);
 		vertices.put(position.z);
 		
-		colours.put( (byte)(color.x * 255) );
-		colours.put( (byte)(color.y * 255) );
-		colours.put( (byte)(color.z * 255) );
-		colours.put( (byte)(color.w * 255) );
+		colours.put( (byte)(color.r * 255) );
+		colours.put( (byte)(color.g * 255) );
+		colours.put( (byte)(color.b * 255) );
+		colours.put( (byte)(color.a * 255) );
 		
 		texCoords.put(u);
 		texCoords.put(v);
