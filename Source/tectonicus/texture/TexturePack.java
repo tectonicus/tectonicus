@@ -540,11 +540,17 @@ public class TexturePack
 					BufferedImage img = loadTexture(entry.toString());
 					findTexture(img, "shulker_"+color);
 					
+					int height = img.getHeight();
+					int textureSize = height/4;
+					int topTileHeight = (int) (height*(12.0f/64.0f));
+					int bottomImgX = (int) (height*(48.0f/64.0f));
+					int bottomImgY = (int) (height*(36.0f/64.0f));
+					
 					//Create side texture
-					BufferedImage finalImage = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+					BufferedImage finalImage = new BufferedImage(textureSize, textureSize, BufferedImage.TYPE_INT_ARGB);
 					Graphics2D g = finalImage.createGraphics();
-					g.drawImage(img.getSubimage(0, 16, 16, 16), 0, 0, null);
-					g.drawImage(img.getSubimage(0, 36, 16, 16), 0, 0, null);
+					g.drawImage(img.getSubimage(0, textureSize, textureSize, topTileHeight), 0, 0, null);
+					g.drawImage(img.getSubimage(bottomImgX, bottomImgY, textureSize, textureSize), 0, 0, null);
 					findTexture(finalImage, "shulker_side_"+color);
 				}
 			}

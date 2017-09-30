@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -67,24 +67,27 @@ public class PlayerIconAssembler
 	
 	private BufferedImage generateIcon(BufferedImage skin)
 	{
-		BufferedImage icon = new BufferedImage(16, 32, BufferedImage.TYPE_4BYTE_ABGR);
+		int imgSize = skin.getWidth();
+		int factor = (int) (imgSize / 64.0f);
 		
-		BufferedImage head = skin.getSubimage(8, 8, 8, 8);
-		BufferedImage body = skin.getSubimage(20, 20, 8, 12);
-		BufferedImage leftArm = skin.getSubimage(48, 20, 4, 12);
-		BufferedImage rightArm = skin.getSubimage(40, 20, 4, 12);
-		BufferedImage leg = skin.getSubimage(4, 20, 4, 12);
+		BufferedImage icon = new BufferedImage(factor*16, factor*32, BufferedImage.TYPE_4BYTE_ABGR);
+		
+		BufferedImage head = skin.getSubimage(factor*8, factor*8, factor*8, factor*8);
+		BufferedImage body = skin.getSubimage(factor*20, factor*20, factor*8, factor*12);
+		BufferedImage leftArm = skin.getSubimage(factor*48, factor*20, factor*4, factor*12);
+		BufferedImage rightArm = skin.getSubimage(factor*40, factor*20, factor*4, factor*12);
+		BufferedImage leg = skin.getSubimage(factor*4, factor*20, factor*4, factor*12);
 		
 		Graphics2D g = (Graphics2D)icon.getGraphics();
 		g.setColor(new Color(0, 0, 0, 0));
 		g.fillRect(0, 0, icon.getWidth(), icon.getHeight());
 		
-		g.drawImage(head, 4, 0, null);
-		g.drawImage(body, 4, 8, null);
-		g.drawImage(leftArm, 0, 9, 4, 21,   4, 0, 0, 12, null); // flip the left arm
-		g.drawImage(rightArm, 12, 9, null);
-		g.drawImage(leg, 4, 20, null);
-		g.drawImage(leg, 8, 20, null);
+		g.drawImage(head, factor*4, 0, null);
+		g.drawImage(body, factor*4, factor*8, null);
+		g.drawImage(leftArm, 0, factor*9, factor*4, factor*21,   factor*4, 0, 0, factor*12, null); // flip the left arm
+		g.drawImage(rightArm, factor*12, factor*9, null);
+		g.drawImage(leg, factor*4, factor*20, null);
+		g.drawImage(leg, factor*8, factor*20, null);
 		
 		return icon;
 	}

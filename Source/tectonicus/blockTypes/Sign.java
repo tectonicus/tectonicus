@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -53,8 +53,8 @@ public class Sign implements BlockType
 		this.obey = obey;
 		this.texturePackVersion = texture.texturePackVersion;
 		
-		final float widthTexel = 1.0f / texture.texture.getWidth();
-		final float heightTexel = 1.0f / texture.texture.getHeight();
+		final float widthTexel = 1.0f / 64.0f;
+		final float heightTexel = 1.0f / 32.0f;
 		
 		this.frontTexture = new SubTexture(texture.texture, texture.u0+widthTexel*2, texture.v0+heightTexel*2, texture.u0+widthTexel*26, texture.v0+heightTexel*14);
 		this.backTexture = new SubTexture(texture.texture, texture.u0+widthTexel*28, texture.v0+heightTexel*2, texture.u0+widthTexel*52, texture.v0+heightTexel*14);
