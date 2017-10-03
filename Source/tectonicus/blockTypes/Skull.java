@@ -95,49 +95,37 @@ public class Skull implements BlockType
 		float yOffset = y;
 		float zOffset = z;
 		
-		Rotation rotation = Rotation.None;
-		float angle = 0;
+		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		SkullEntity entity = rawChunk.getSkulls().get(xyz);
+		Rotation rotation = Rotation.AntiClockwise;
+		float angle = 90 / 4.0f * entity.getRotation() + 180;
 		
-		boolean dragonHead = false;
+		final int blockId = entity.getSkullType();
 		
 		SubTexture currentTexture = null;
+		if (blockId == 0)
+			currentTexture = stexture;
+		else if (blockId == 1)
+			currentTexture = wtexture;
+		else if (blockId == 2)
+			currentTexture = ztexture;
+		else if (blockId == 3)
+			currentTexture = texture;
+		else if (blockId == 4)
+			currentTexture = ctexture;
+		else if (blockId == 5)
+			currentTexture = dtexture;
 		
-		for (SkullEntity entity : rawChunk.getSkulls())
+		boolean dragonHead = blockId == 5 ? true : false;
+		
+		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
+		if(!player.getSkinURL().equals(""))
 		{
-			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
-			{
-				rotation = Rotation.AntiClockwise;
-				angle = 90 / 4.0f * entity.getRotation() + 180;
-				
-				final int blockId = entity.getSkullType();
-				
-				if (blockId == 0)
-					currentTexture = stexture;
-				else if (blockId == 1)
-					currentTexture = wtexture;
-				else if (blockId == 2)
-					currentTexture = ztexture;
-				else if (blockId == 3)
-					currentTexture = texture;
-				else if (blockId == 4)
-					currentTexture = ctexture;
-				else if (blockId == 5)
-					currentTexture = dtexture;
-				
-				dragonHead = blockId == 5 ? true : false;
-				
-				Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
-				if(!player.getSkinURL().equals(""))
-				{
-					currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.getName());
-				}
-				
-				break;
-			}
+			currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.getName());
 		}
 		
-		 float widthTexel;
-		 float heightTexel;
+		float widthTexel;
+		float heightTexel;
 		if (currentTexture.texture.getWidth() == currentTexture.texture.getHeight())
 		{
 			widthTexel = 1.0f / 64.0f;

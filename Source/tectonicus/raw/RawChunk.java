@@ -67,17 +67,18 @@ public class RawChunk
 	
 	private int blockX, blockY, blockZ;
 	
-	private List<SignEntity> signs;
-	private List<FlowerPotEntity> flowerPots;
+	private Map<String, SignEntity> signs;
+	private Map<String, FlowerPotEntity> flowerPots;
+	private Map<String, SkullEntity> skulls;
+	private Map<String, BeaconEntity> beacons;
+	private Map<String, BannerEntity> banners;
+	private Map<String, BedEntity> beds;
+	
 	private List<PaintingEntity> paintings;
-	private List<SkullEntity> skulls;
-	private List<BeaconEntity> beacons;
-	private List<BannerEntity> banners;
 	private List<PaintingEntity> itemFrames;
 	private List<ContainerEntity> chests;
-	private List<BedEntity> beds;
 	
-	private Map<String, Object> filterData = new HashMap<String, Object>();
+	private Map<String, Object> filterData = new HashMap<>();
 	
 	public RawChunk()
 	{
@@ -110,15 +111,16 @@ public class RawChunk
 	
 	private void clear()
 	{
-		signs = new ArrayList<SignEntity>();
-		flowerPots = new ArrayList<FlowerPotEntity>();
-		paintings = new ArrayList<PaintingEntity>();
-		skulls = new ArrayList<SkullEntity>();
-		beacons = new ArrayList<BeaconEntity>();
-		banners = new ArrayList<BannerEntity>();
-		itemFrames = new ArrayList<PaintingEntity>();
-		chests = new ArrayList<ContainerEntity>();
-		beds = new ArrayList<BedEntity>();
+		signs = new HashMap<>();
+		flowerPots = new HashMap<>();
+		skulls = new HashMap<>();
+		beacons = new HashMap<>();
+		banners = new HashMap<>();
+		beds = new HashMap<>();
+		
+		paintings = new ArrayList<>();
+		itemFrames = new ArrayList<>();
+		chests = new ArrayList<>();
 		
 		sections = new Section[MAX_SECTIONS];
 	}
@@ -313,7 +315,7 @@ public class RawChunk
 										
 										final int data = getBlockData(localX, localY, localZ);
 										
-										signs.add( new SignEntity(x, y, z, localX, localY, localZ,
+										signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
 																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data) );
 									}
 									else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot"))
@@ -336,7 +338,7 @@ public class RawChunk
 											item = itemTag.getValue();
 										}
 										
-										flowerPots.add(new FlowerPotEntity(x, y, z, localX, localY, localZ, item, dataTag.getValue()));
+										flowerPots.put(createKey(localX, localY, localZ), new FlowerPotEntity(x, y, z, localX, localY, localZ, item, dataTag.getValue()));
 									}
 									else if (id.equals("Skull") || id.equals("minecraft:skull"))
 									{
@@ -372,13 +374,13 @@ public class RawChunk
 											textureURL = "http://www.minecraft.net/skin/"+extraType.getValue()+".png";
 										}
 										
-										skulls.add(new SkullEntity(x, y, z, localX, localY, localZ, skullType.getValue(), rot.getValue(), name, UUID, textureURL));
+										skulls.put(createKey(localX, localY, localZ), new SkullEntity(x, y, z, localX, localY, localZ, skullType.getValue(), rot.getValue(), name, UUID, textureURL));
 									}
 									else if (id.equals("Beacon") || id.equals("minecraft:beacon"))
 									{
 										IntTag levels = NbtUtil.getChild(entity, "Levels", IntTag.class);
 										
-										beacons.add(new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue()));
+										beacons.put(createKey(localX, localY, localZ), new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue()));
 									}
 									else if (id.equals("Banner") || id.equals("minecraft:banner"))
 									{
@@ -400,7 +402,7 @@ public class RawChunk
 												patterns.add(new Pattern(pattern.getValue(), color.getValue()));
 											}
 										}
-										banners.add(new BannerEntity(x, y, z, localX, localY, localZ, base.getValue(), patterns));
+										banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, base.getValue(), patterns));
 									}
 									else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box"))
 									{
@@ -436,7 +438,7 @@ public class RawChunk
 									else if (id.equals("minecraft:bed"))
 									{
 										final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
-										beds.add(new BedEntity(x, y, z, localX, localY, localZ, color.getValue()));
+										beds.put(createKey(localX, localY, localZ), new BedEntity(x, y, z, localX, localY, localZ, color.getValue()));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
@@ -481,6 +483,10 @@ public class RawChunk
 		*/
 	}
 	
+	private String createKey(int x, int y, int z)
+	{
+		return "x" + x + "y" + y + "z" + z;
+	}
 	
 	private void parseAnvilData(CompoundTag level, WorldStats worldStats)
 	{
@@ -854,14 +860,14 @@ public class RawChunk
 		return blockIdTotal + blockDataTotal + skyLightTotal + blockLightTotal;
 	}
 
-	public List<SignEntity> getSigns()
+	public Map<String, SignEntity> getSigns()
 	{
-		return Collections.unmodifiableList(signs);
+		return Collections.unmodifiableMap(signs);
 	}
 	
-	public List<FlowerPotEntity> getFlowerPots()
+	public Map<String, FlowerPotEntity> getFlowerPots()
 	{
-		return Collections.unmodifiableList(flowerPots);
+		return Collections.unmodifiableMap(flowerPots);
 	}
 	
 	public List<PaintingEntity> getPaintings()
@@ -869,19 +875,19 @@ public class RawChunk
 		return Collections.unmodifiableList(paintings);
 	}
 	
-	public List<SkullEntity> getSkulls()
+	public Map<String, SkullEntity> getSkulls()
 	{
-		return Collections.unmodifiableList(skulls);
+		return Collections.unmodifiableMap(skulls);
 	}
 	
-	public List<BeaconEntity> getBeacons()
+	public Map<String, BeaconEntity> getBeacons()
 	{
-		return Collections.unmodifiableList(beacons);
+		return Collections.unmodifiableMap(beacons);
 	}
 	
-	public List<BannerEntity> getBanners()
+	public Map<String, BannerEntity> getBanners()
 	{
-		return Collections.unmodifiableList(banners);
+		return Collections.unmodifiableMap(banners);
 	}
 	
 	public List<PaintingEntity> getItemFrames()
@@ -894,9 +900,9 @@ public class RawChunk
 		return Collections.unmodifiableList(chests);
 	}
 	
-	public List<BedEntity> getBeds()
+	public Map<String, BedEntity> getBeds()
 	{
-		return Collections.unmodifiableList(beds);
+		return Collections.unmodifiableMap(beds);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)
@@ -919,8 +925,10 @@ public class RawChunk
 			}
 		}
 		
-		for (SignEntity sign : signs)
+		for (String key : signs.keySet())
 		{
+			SignEntity sign = signs.get(key);
+			
 			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getY()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getZ()).getBytes());

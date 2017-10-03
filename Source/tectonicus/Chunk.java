@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,7 +12,8 @@ package tectonicus;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jnbt.NBTInputStream.Compression;
 import org.lwjgl.util.vector.Vector3f;
@@ -348,11 +349,11 @@ public class Chunk
 		geometry.printGeometryStats();
 	}
 
-	public List<SignEntity> getSigns()
+	public Map<String, SignEntity> getSigns()
 	{
 		if (rawChunk == null)
 		{
-			return new ArrayList<SignEntity>();
+			return new HashMap<String, SignEntity>();
 		}
 		else
 		{

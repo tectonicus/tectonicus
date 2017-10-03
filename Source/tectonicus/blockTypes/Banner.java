@@ -13,7 +13,6 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -97,18 +96,13 @@ public class Banner implements BlockType
 		final int data = rawChunk.getBlockData(x, y, z);
 		
 		SubMesh subMesh = new SubMesh();
-		int baseColor = 0;
-		List<Pattern> patterns = Collections.emptyList();
-		for (BannerEntity entity : rawChunk.getBanners())
-		{
-			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
-			{
-				baseColor = entity.getBaseColor();
-				patterns = entity.getPatterns();
-				break;
-			}
-		}
+		int baseColor = 0;		
+		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		BannerEntity entity = rawChunk.getBanners().get(xyz);
+		baseColor = entity.getBaseColor();
+		List<Pattern> patterns = entity.getPatterns();
 
+		//TODO: Only run this code if texture has not already been created
 		final BufferedImage base = patternImages.get("base");
 		BufferedImage finalImage = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		

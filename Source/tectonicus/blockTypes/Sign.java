@@ -180,41 +180,35 @@ public class Sign implements BlockType
 		// Add the text
 		if (!obey)
 		{
-			for (SignEntity s : rawChunk.getSigns())
-			{
-				if (s.getLocalX() == x && s.getLocalY() == y && s.getLocalZ() == z)
-				{
-					Mesh textMesh = geometry.getMesh(world.getTexturePack().getFont().getTexture(), Geometry.MeshType.AlphaTest);
-					
-					final float epsilon = 0.001f;
-					final float lineHeight = 1.0f / 16.0f * 2.6f;
-					
-					final Vector4f color;
-					if (texturePackVersion == "1.RV")
-						color = new Vector4f(50f/255f, 183f/255f, 50f/255f, 1);
-					else
-						color = new Vector4f(0, 0, 0, 1);
-					
-					TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
-					text1.setText(unescapeJava(s.getText1()), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true, color);
-					
-					TextLayout text2 = new TextLayout(world.getTexturePack().getFont());
-					text2.setText(unescapeJava(s.getText2()), width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true, color);
-					
-					TextLayout text3 = new TextLayout(world.getTexturePack().getFont());
-					text3.setText(unescapeJava(s.getText3()), width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true, color);
-					
-					TextLayout text4 = new TextLayout(world.getTexturePack().getFont());
-					text4.setText(unescapeJava(s.getText4()), width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true, color);
-					
-					text1.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-					text2.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-					text3.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-					text4.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
-					
-					break;
-				}
-			}
+			String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+			SignEntity s = rawChunk.getSigns().get(xyz);
+			Mesh textMesh = geometry.getMesh(world.getTexturePack().getFont().getTexture(), Geometry.MeshType.AlphaTest);
+			
+			final float epsilon = 0.001f;
+			final float lineHeight = 1.0f / 16.0f * 2.6f;
+			
+			final Vector4f color;
+			if (texturePackVersion == "1.RV")
+				color = new Vector4f(50f/255f, 183f/255f, 50f/255f, 1);
+			else
+				color = new Vector4f(0, 0, 0, 1);
+			
+			TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
+			text1.setText(unescapeJava(s.getText1()), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true, color);
+			
+			TextLayout text2 = new TextLayout(world.getTexturePack().getFont());
+			text2.setText(unescapeJava(s.getText2()), width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true, color);
+			
+			TextLayout text3 = new TextLayout(world.getTexturePack().getFont());
+			text3.setText(unescapeJava(s.getText3()), width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true, color);
+			
+			TextLayout text4 = new TextLayout(world.getTexturePack().getFont());
+			text4.setText(unescapeJava(s.getText4()), width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true, color);
+			
+			text1.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
+			text2.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
+			text3.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
+			text4.pushTo(textMesh, xOffset, yOffset, zOffset, rotation, angle);
 		}
 		
 		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);

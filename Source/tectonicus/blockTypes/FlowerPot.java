@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -179,42 +179,39 @@ public class FlowerPot implements BlockType
 								   new Vector3f(x+1-width,	y,   z+1-offset),
 								   colour, side);
 		
-		
-		// Flowerpots use a Block Entity to store which plant they contain
-		for (FlowerPotEntity entity : rawChunk.getFlowerPots())
+		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		FlowerPotEntity entity = rawChunk.getFlowerPots().get(xyz);
+		if (entity != null)
 		{
-			if (entity.getLocalX() == x && entity.getLocalY() == y && entity.getLocalZ() == z)
+			BlockType type = registry.find(entity.getItem(), entity.getData());
+			if(type instanceof Plant)
 			{
-				BlockType type = registry.find(entity.getItem(), entity.getData());
-				if(type instanceof Plant)
-				{
-					Plant p = (Plant)type;
-					plantMesh = geometry.getMesh(p.getTexture().texture, Geometry.MeshType.AlphaTest);
-					Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
-				}
-				
-				break;
+				Plant p = (Plant)type;
+				plantMesh = geometry.getMesh(p.getTexture().texture, Geometry.MeshType.AlphaTest);
+				Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
 			}
 		}
-		
-		if(plantMesh == null && data > 0 && data != 9 && data != 11)
+		else
 		{
-			plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
-			Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
-		}
-		else if(plantMesh == null && data == 9)
-		{
-			plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
-			BlockUtil.addBlock(plantMesh, x, y, z, 6, 4, 6, 4, 16, 4, colour, plant, lightness, lightness, lightness);
-		}
-		else if(plantMesh == null && data == 11)
-		{
-			plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
-			Colour4f baseColour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
-			final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-			colour = new Vector4f(baseColour.r * lightVal, baseColour.g * lightVal, baseColour.b * lightVal, baseColour.a);
-			
-			Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
+			if(data > 0 && data != 9 && data != 11)
+			{
+				plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
+				Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
+			}
+			else if(data == 9)
+			{
+				plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
+				BlockUtil.addBlock(plantMesh, x, y, z, 6, 4, 6, 4, 16, 4, colour, plant, lightness, lightness, lightness);
+			}
+			else if(data == 11)
+			{
+				plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
+				Colour4f baseColour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
+				final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
+				colour = new Vector4f(baseColour.r * lightVal, baseColour.g * lightVal, baseColour.b * lightVal, baseColour.a);
+				
+				Plant.addPlantGeometry(x, y, z, dirtLevel, plantMesh, colour, plant);
+			}
 		}
 	}
 }

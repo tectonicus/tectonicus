@@ -86,30 +86,30 @@ public class Beacon implements BlockType
 		SubMesh.addBlock(beaconMesh, offSet*3, offSet*3, offSet*3, offSet*10, offSet*10, offSet*10, colour, beacon, beacon, beacon);
 		SubMesh.addBlock(obsidianMesh, offSet*2, offSet*0.5f, offSet*2, offSet*12, offSet*3, offSet*12, colour, obsidian, obsidian, obsidian);
 		
-		for (BeaconEntity entity : rawChunk.getBeacons())  
+		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		BeaconEntity entity = rawChunk.getBeacons().get(xyz);
+		if (entity.getLevels() > 0)
 		{
 			final int localY = entity.getLocalY();
-			if (entity.getLocalX() == x && localY == y && entity.getLocalZ() == z && entity.getLevels() > 0)
+			
+			Colour4f color = new Colour4f(1, 1, 1, 1);
+			for (int i=1; i<256-localY; i++)
 			{
-				Colour4f color = new Colour4f(1, 1, 1, 1);
-				for (int i=1; i<256-localY; i++)
+				final int blockID = world.getBlockId(rawChunk.getChunkCoord(), x, localY+i, z);
+				
+				if (blockID == 95)
 				{
-					final int blockID = world.getBlockId(rawChunk.getChunkCoord(), x, localY+i, z);
+					final int colorID = rawChunk.getBlockData(x, localY+i, z);
+					Color c = Colors.byId(colorID).getColor();
+					Colour4f newColor = new Colour4f(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, 1);
 					
-					if (blockID == 95)
-					{
-						final int colorID = rawChunk.getBlockData(x, localY+i, z);
-						Color c = Colors.byId(colorID).getColor();
-						Colour4f newColor = new Colour4f(c.getRed()/255f, c.getGreen()/255f, c.getBlue()/255f, 1);
-						
-						color.average(newColor);
-					}
-					
-					SubMesh.addBlockSimple(beamMesh, offSet*5, offSet*(16*i), offSet*5, offSet*5, 1, offSet*5, 
-													new Vector4f(color.r, color.g, color.b, 1), beam, null, null);  //Beacon beam
-					SubMesh.addBlockSimple(beamMesh, offSet*3, offSet*(16*i), offSet*3, offSet*10, 1, offSet*10, 
-													new Vector4f(color.r, color.g, color.b, 0.4f), beam, null, null);
+					color.average(newColor);
 				}
+				
+				SubMesh.addBlockSimple(beamMesh, offSet*5, offSet*(16*i), offSet*5, offSet*5, 1, offSet*5, 
+												new Vector4f(color.r, color.g, color.b, 1), beam, null, null);  //Beacon beam
+				SubMesh.addBlockSimple(beamMesh, offSet*3, offSet*(16*i), offSet*3, offSet*10, 1, offSet*10, 
+												new Vector4f(color.r, color.g, color.b, 0.4f), beam, null, null);
 			}
 		}
 		
