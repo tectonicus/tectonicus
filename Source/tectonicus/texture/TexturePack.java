@@ -617,14 +617,13 @@ public class TexturePack
 	
 	public BufferedImage getChestImage()
 	{
-		System.out.println("width: "+ chestImage.getWidth());
-		System.out.println("height: "+ chestImage.getHeight());
-		BufferedImage top = chestImage.getSubimage(0, 0, 176, 71);
-		BufferedImage bottom = chestImage.getSubimage(0, 215, 176, 7);
+		int factor = (int) (chestImage.getWidth() / 256.0f);
+		BufferedImage top = chestImage.getSubimage(0, 0, factor*176, factor*71);
+		BufferedImage bottom = chestImage.getSubimage(0, factor*215, factor*176, factor*7);
 		
-		BufferedImage finalImg = new BufferedImage(176, 78, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage finalImg = new BufferedImage(factor*176, factor*78, BufferedImage.TYPE_INT_ARGB);
 		finalImg.getGraphics().drawImage(top, 0, 0, null);
-		finalImg.getGraphics().drawImage(bottom, 0, 71, null);
+		finalImg.getGraphics().drawImage(bottom, 0, factor*71, null);
 		return finalImg;
 	}
 	

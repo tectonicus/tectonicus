@@ -249,9 +249,6 @@ public class TileRenderer
 			System.out.println("Finding changed tiles since last render...");
 			progressListener.onTaskStarted(Task.FindChangedTiles.toString());
 			
-			// Output compass
-			outputCompass(new File(mapDir, "Compass.png"), map, world.getBlockTypeRegistry(), world.getTexturePack());
-			
 			// Output signs
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map, world.getSpawnPosition());
 			
@@ -267,11 +264,7 @@ public class TileRenderer
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
 			
-			outputChests(new File(mapDir, "chests.js"), map, world.getSpawnPosition(), world.getBlockTypeRegistry(), world.getTexturePack(), world.getChests());
-			
-			// Output world stats
-			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
-			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getId());
+			outputChests(new File(mapDir, "chests.js"), map, world.getSpawnPosition(), world.getChests());
 			
 			// Render views
 			FileViewCache viewCache = createViewCache(args.cacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
@@ -307,6 +300,12 @@ public class TileRenderer
 				// Create downsampled layers
 				bounds = downsample(changedTiles, exportDir, layer, baseTilesDir, tileCache);
 			}
+			
+			outputIcons(map, world.getBlockTypeRegistry(), world.getTexturePack());			
+			
+			// Output world stats
+			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
+			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getId());
 			
 			// Output world vectors for this camera config
 			outputWorldVectors( new File(mapDir, "worldVectors.js"), map.getId(), worldVectors, bounds, world.getLevelDat(), worldStats.numChunks(), world.numPlayers(), map);
@@ -394,7 +393,8 @@ public class TileRenderer
 	
 	public static void setupWorldForLayer(Layer layer, World world)
 	{
-		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());  // Why is this here? Is it necessary?
+		System.out.println("Creating block registry");
+		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());
 		
 		world.setLightStyle(layer.getLightStyle());
 		world.setDefaultBlockId(BlockIds.AIR);
@@ -814,7 +814,7 @@ public class TileRenderer
 				{
 					if (coord != null && world.contains(coord))
 					{
-						BoundingBox bounds = new BoundingBox(new Vector3l(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
+						BoundingBox bounds = new BoundingBox(new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
 						ArrayList<Vector3f> cornerPoints = bounds.getCornerPoints();
 						
 						int minX = Integer.MAX_VALUE;
@@ -1582,7 +1582,7 @@ public class TileRenderer
 		System.out.println("Outputted "+numOutput+" players");
 	}
 	
-	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, Vector3l mapSpawn)
+	public void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, Vector3l mapSpawn)
 	{
 		File bedsFile = new File(exportDir, "beds.js");
 		if (bedsFile.exists())
@@ -1653,21 +1653,6 @@ public class TileRenderer
 		System.out.println("Outputted "+numOutput+" beds");
 	}
 	
-	private void outputCompass(File compassFile, tectonicus.configuration.Map map, BlockTypeRegistry registry, TexturePack texturePack)
-	{
-		try
-		{
-			ItemRenderer itemRenderer = new ItemRenderer(args, rasteriser);
-			
-			itemRenderer.renderCompass(map, compassFile);
-			itemRenderer.renderPortal(new File(args.outputDir(), "Images/Portal.png"), registry, texturePack);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
 	private void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, String defaultSkin)
 	{
 		File imagesDir = new File(exportDir, "Images");
@@ -1702,12 +1687,15 @@ public class TileRenderer
 		}
 		else //assume version is 1.6+
 		{
-			writeImage(texturePack.getItem("assets/minecraft/textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+			if (!texturePack.getVersion().equals("1.12+"))
+			{
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+			}
+			
 			if (defaultSkin == "steve")
 				defaultSkin = "assets/minecraft/textures/entity/steve.png";
 		}
@@ -1773,7 +1761,7 @@ public class TileRenderer
 		outputMergedJs(new File(scriptsDir, "tectonicus.js"), scriptResources);
 	}
 	
-	private static void writeImage(BufferedImage img, final int width, final int height, File file)
+	public static void writeImage(BufferedImage img, final int width, final int height, File file)
 	{
 		try
 		{
@@ -2109,21 +2097,6 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File outputFile, tectonicus.configuration.Map map, Vector3l spawn, BlockTypeRegistry registry, TexturePack texturePack, List<ContainerEntity> chestList)
-	{
-		try
-		{
-			ItemRenderer itemRenderer = new ItemRenderer(args, rasteriser);
-			itemRenderer.renderBlock(new File(args.outputDir(), "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
-			
-			outputChests(outputFile, map, spawn, chestList);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
 	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, List<ContainerEntity> chestList)
 	{
 		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
@@ -2205,6 +2178,23 @@ public class TileRenderer
 		{
 			if (jsWriter != null)
 				jsWriter.close();
+		}
+	}
+	
+	private void outputIcons(tectonicus.configuration.Map map, BlockTypeRegistry registry, TexturePack texturePack)
+	{
+		try
+		{
+			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
+			itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
+			itemRenderer.renderSign(new File(exportDir, "Images/Sign.png"), registry, texturePack, BlockIds.SIGN_POST, 14);
+			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registry, texturePack);
+			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
+			itemRenderer.renderPortal(new File(args.outputDir(), "Images/Portal.png"), registry, texturePack);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
 		}
 	}
 	

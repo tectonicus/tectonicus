@@ -15,6 +15,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
@@ -23,7 +24,6 @@ import org.lwjgl.util.vector.Vector4f;
 
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.PlayerSkinCache;
-import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
@@ -32,7 +32,9 @@ import tectonicus.configuration.NorthDirection;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BedEntity;
 import tectonicus.raw.RawChunk;
+import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.SubTexture;
@@ -40,18 +42,13 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
 import tectonicus.util.Vector2f;
-import tectonicus.util.Vector3l;
 
 public class ItemRenderer
-{
-	private final Configuration config;
-	
+{	
 	private final Rasteriser rasteriser;
 	
-	public ItemRenderer(Configuration config, Rasteriser rasteriser) throws Exception
-	{
-		this.config = config;
-		
+	public ItemRenderer(Rasteriser rasteriser) throws Exception
+	{	
 		this.rasteriser = rasteriser;
 	}
 	
@@ -80,7 +77,7 @@ public class ItemRenderer
 		
 		ItemGeometry item = createCompassGeometry(rasteriser, map.getNorthDirection(), compassImage);
 		
-		renderItem(map, item, outFile, 2, true);
+		renderItem(item, outFile, 2, map.getCameraAngleRad(), map.getCameraElevationRad());
 	}
 	
 	public void renderPortal(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
@@ -140,17 +137,40 @@ public class ItemRenderer
 			}
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3l(0, 0, 0), 4, 5, 1);
-		
-		Map placeholderMap = config.getMap(0);
-		
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 4, 5, 1);
+
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(placeholderMap, item, outFile, 4, false);
+		renderItem(item, outFile, 4, getAngleRad(55), getAngleRad(35));
 	}
 	
 	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
-	{
-		System.out.println("Generating block image...");
+	{		
+		ItemContext context = new ItemContext(texturePack, registry);
+		
+		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		
+		RawChunk rawChunk = new RawChunk();
+		
+		rawChunk.setBlockId(0, 0, 0, (byte)blockId);
+		rawChunk.setBlockData(0, 0, 0, (byte)blockData);
+		rawChunk.setBlockLight(0, 0, 0, (byte)16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+		
+		BlockType type = registry.find(blockId, blockData);
+		if (type != null)
+		{
+			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
+		}
+		
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.1f, 0), 1, 1, 1);
+
+		ItemGeometry item = new ItemGeometry(geometry, bounds);
+		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
+	}
+	
+	public void renderSign(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
+	{		
+		System.out.println("Generating sign icon...");
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
@@ -160,7 +180,11 @@ public class ItemRenderer
 		
 		rawChunk.setBlockId(0, 0, 0, (byte)blockId);
 		rawChunk.setBlockData(0, 0, 0, (byte)blockData);
-		rawChunk.setBlockLight(0, 0, 0, (byte)1);
+		rawChunk.setBlockLight(0, 0, 0, (byte)16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+		HashMap<String, SignEntity> signs = new HashMap<>();
+		signs.put("x0y0z0", new SignEntity(0, 0, 0, 0, 0, 0, "", "Tectonicus", "", "", blockData));
+		rawChunk.setSigns(signs);
 		
 		BlockType type = registry.find(blockId, blockData);
 		if (type != null)
@@ -168,15 +192,49 @@ public class ItemRenderer
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3l(0, 0, 0), 1, 1, 1);
-		
-		Map placeholderMap = config.getMap(0);
-		
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.4f, 0), 1, 1, 0);
+
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(placeholderMap, item, outFile, 4, false);
+		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
 	}
 	
-	private void renderItem(Map map, ItemGeometry item, File outFile, final int numDownsamples, boolean isCompass)
+	public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
+	{
+		System.out.println("Generating bed icon...");
+		
+		ItemContext context = new ItemContext(texturePack, registry);
+		
+		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		
+		RawChunk rawChunk = new RawChunk();
+		
+		rawChunk.setBlockId(0, 0, 0, (byte)BlockIds.BED);
+		rawChunk.setBlockData(0, 0, 0, (byte)10);
+		rawChunk.setBlockLight(0, 0, 0, (byte)16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+		rawChunk.setBlockId(0, 0, 1, (byte)BlockIds.BED);
+		rawChunk.setBlockData(0, 0, 1, (byte)6);
+		rawChunk.setBlockLight(0, 0, 1, (byte)16);
+		rawChunk.setSkyLight(0, 0, 1, (byte) 16);
+		HashMap<String, BedEntity> beds = new HashMap<>();
+		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, 14));
+		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, 14));
+		rawChunk.setBeds(beds);
+		
+		BlockType type = registry.find(BlockIds.BED, 10);
+		if (type != null)
+		{
+			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
+			type.addInteriorGeometry(0, 0, 1, context, registry, rawChunk, geometry);
+		}
+		
+		BoundingBox bounds = new BoundingBox(new Vector3f(-1, -0.5f, 0), 2, 1, 0);
+				
+		ItemGeometry item = new ItemGeometry(geometry, bounds);
+		renderItem(item, outFile, 4, getAngleRad(65), getAngleRad(35));
+	}
+	
+	private void renderItem(ItemGeometry item, File outFile, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
 	{	
 		Geometry geometry = item.geometry;
 		BoundingBox bounds = item.bounds;
@@ -193,14 +251,8 @@ public class ItemRenderer
 		final float lookY = bounds.getCenterY();
 		final float lookZ = bounds.getCenterZ();
 		final float size = (float)Math.sqrt(bounds.getWidth()*bounds.getWidth() + bounds.getHeight()*bounds.getHeight());
-		final float cameraAngle = getAngleRad(45);
-		final float cameraElevationAngle = getAngleRad(30);
 		
-		if (isCompass)
-			camera.lookAt(lookX, lookY, lookZ, size, map.getCameraAngleRad(), map.getCameraElevationRad());
-		else
-			camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
-		
+		camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
 		ArrayList<Vector2f> corners = new ArrayList<Vector2f>();
@@ -235,11 +287,7 @@ public class ItemRenderer
 		final float ySize = Vector3f.sub(topLeftWorld, bottomLeftWorld, null).length();
 		float longest = Math.max(xSize, ySize);
 		
-		if(isCompass)
-			camera.lookAt(lookX, lookY, lookZ, size, map.getCameraAngleRad(), map.getCameraElevationRad());
-		else
-			camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
-		
+		camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
 		geometry.finalise();
@@ -366,7 +414,7 @@ public class ItemRenderer
 		
 		mesh.pushTo(geometry.getBaseMesh(), 0, 0, 0, Rotation.Clockwise, compassRotation);
 		
-		BoundingBox bounds = new BoundingBox(new Vector3l(-img.getHeight()/2, 0, -img.getWidth()/2), img.getHeight()+1, 1, img.getWidth()+1);
+		BoundingBox bounds = new BoundingBox(new Vector3f(-img.getHeight()/2, 0, -img.getWidth()/2), img.getHeight()+1, 1, img.getWidth()+1);
 		
 		return new ItemGeometry(geometry, bounds);
 	}

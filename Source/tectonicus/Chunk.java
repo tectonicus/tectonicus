@@ -29,7 +29,6 @@ import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
-import tectonicus.util.Vector3l;
 import tectonicus.world.World;
 import tectonicus.world.filter.BlockFilter;
 
@@ -53,7 +52,7 @@ public class Chunk
 		this.coord = new ChunkCoord(coord);
 		this.biomeCache = biomeCache;
 		
-		Vector3l origin = new Vector3l(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH);
+		Vector3f origin = new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH);
 		this.bounds = new BoundingBox(origin, RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
 	}
 	

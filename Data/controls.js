@@ -105,7 +105,6 @@ function CreateToggleControl(text, image, startChecked)
 	
 	var imageElement = document.createElement('IMG');
 	imageElement.src = image;
-	imageElement.height = "32";
 	
 	controlUI.appendChild(imageElement);
 	

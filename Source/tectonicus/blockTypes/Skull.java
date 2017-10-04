@@ -9,6 +9,8 @@
 
 package tectonicus.blockTypes;
 
+import java.awt.image.BufferedImage;
+
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -121,7 +123,11 @@ public class Skull implements BlockType
 		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
 		if(!player.getSkinURL().equals(""))
 		{
-			currentTexture = world.getTexturePack().findTexture(world.getPlayerSkinCache().fetchSkin(player), "ph/"+entity.getName());
+			BufferedImage skin = world.getPlayerSkinCache().fetchSkin(player);
+			if (skin != null)
+				currentTexture = world.getTexturePack().findTexture(skin, "ph/"+entity.getName());
+			else
+				currentTexture = texture;
 		}
 		
 		float widthTexel;

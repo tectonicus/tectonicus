@@ -865,6 +865,11 @@ public class RawChunk
 		return Collections.unmodifiableMap(signs);
 	}
 	
+	public void setSigns(Map<String, SignEntity> signs)
+	{
+		this.signs = signs;
+	}
+	
 	public Map<String, FlowerPotEntity> getFlowerPots()
 	{
 		return Collections.unmodifiableMap(flowerPots);
@@ -903,6 +908,11 @@ public class RawChunk
 	public Map<String, BedEntity> getBeds()
 	{
 		return Collections.unmodifiableMap(beds);
+	}
+	
+	public void setBeds(Map<String, BedEntity> beds)
+	{
+		this.beds = beds;
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm)

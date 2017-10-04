@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -75,13 +75,13 @@ public class BlockIds
 	//public static final int SOIL					= 60;
 	//public static final int FURNACE				= 61;
 	//public static final int BURNING_FURNACE		= 62;
-	//public static final int SIGN_POST				= 63;
+	public static final int SIGN_POST				= 63;
 	//public static final int WOODEN_DOOR			= 64;
 	//public static final int LADDER				= 65;
 	public static final int MINECART_TRACKS			= 66;
 	//public static final int COBBLESTONE_STAIRS	= 67;
 	//public static final int WALL_SIGN				= 68;
-	public static final int LEVER					= 69; // NOT IMPLEMENTED
+	public static final int LEVER					= 69;
 	public static final int STONE_PRESSURE_PLATE	= 70;
 	//public static final int IRON_DOOR				= 71;
 	public static final int WOOD_PRESSURE_PLATE		= 72;

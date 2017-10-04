@@ -15,8 +15,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-import javax.imageio.ImageIO;
-
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.raw.Player;
 
@@ -36,7 +34,7 @@ public class PlayerIconAssembler
 			BufferedImage icon = generateIcon(skin);
 			if (icon != null)
 			{
-				ImageIO.write(icon, "png", file);
+				TileRenderer.writeImage(icon, 16, 32, file);
 			}
 		}
 		catch (Exception e)
@@ -55,7 +53,7 @@ public class PlayerIconAssembler
 				BufferedImage icon = generateIcon(skin);
 				if (icon != null)
 				{
-					ImageIO.write(icon, "png", file);
+					TileRenderer.writeImage(icon, 16, 32, file);
 				}
 			}
 		}

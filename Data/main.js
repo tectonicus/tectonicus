@@ -272,7 +272,7 @@ function refreshSpawnMarker(markersVisible)
 			statsHtml += 'Portals: ' + tecMap.worldStats.numPortals + '<br/>';
 			statsHtml += 'Views: ' + tecMap.views.length + '<br/>';
 			statsHtml += 'Signs: ' + tecMap.signs.length + '<br/>';
-			statsHtml += 'Beds: ' + tecMap.beds.length + '<br/>';
+			statsHtml += 'Player Beds: ' + tecMap.beds.length + '<br/>';
 			statsHtml += '<br/>';
 			
 			statsHtml += '<div><center>Blocks</center></div>';

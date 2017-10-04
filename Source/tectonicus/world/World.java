@@ -192,9 +192,6 @@ public class World implements BlockContext
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars);
 		this.textureVersion = texturePack.getVersion();
 		
-		System.out.println("Creating block registry");
-		loadBlockRegistry(null, true);
-		
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir, playerSkinCache);
 		
@@ -406,7 +403,7 @@ public class World implements BlockContext
 		{
 			for (long regionZ=minZ; regionZ<=maxZ; regionZ++)
 			{
-				BoundingBox regionBounds = new BoundingBox(new Vector3l(regionX*RegionCoord.REGION_WIDTH*RawChunk.WIDTH, 0, regionZ*RegionCoord.REGION_HEIGHT*RawChunk.DEPTH),
+				BoundingBox regionBounds = new BoundingBox(new Vector3f(regionX*RegionCoord.REGION_WIDTH*RawChunk.WIDTH, 0, regionZ*RegionCoord.REGION_HEIGHT*RawChunk.DEPTH),
 																RawChunk.WIDTH*RegionCoord.REGION_WIDTH, RawChunk.HEIGHT,
 																RawChunk.DEPTH*RegionCoord.REGION_HEIGHT);
 				if (regionBounds.isVisible(camera))
@@ -422,7 +419,7 @@ public class World implements BlockContext
 							
 							if (worldSubset.contains(chunkCoord))
 							{
-								BoundingBox chunkBounds = new BoundingBox(new Vector3l(chunkCoord.x*RawChunk.WIDTH, 0, chunkCoord.z*RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
+								BoundingBox chunkBounds = new BoundingBox(new Vector3f(chunkCoord.x*RawChunk.WIDTH, 0, chunkCoord.z*RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
 								if (chunkBounds.isVisible(camera))
 								{
 									if (chunkLocator.exists(chunkCoord))

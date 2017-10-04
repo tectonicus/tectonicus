@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,12 +17,12 @@ import tectonicus.renderer.Camera;
 
 public class BoundingBox
 {
-	private Vector3l origin;
+	private Vector3f origin;
 	private long width, height, depth;
 	
-	public BoundingBox(Vector3l origin, final long width, final long height, final long depth)
+	public BoundingBox(Vector3f origin, final long width, final long height, final long depth)
 	{
-		this.origin = new Vector3l(origin);
+		this.origin = new Vector3f(origin);
 		this.width = width;
 		this.height = height;
 		this.depth = depth;
@@ -126,9 +126,9 @@ public class BoundingBox
 				&& other.origin.z + other.depth <= this.origin.z + this.depth;
 	}
 
-	public Vector3l getOrigin()
+	public Vector3f getOrigin()
 	{
-		return new Vector3l(origin);
+		return new Vector3f(origin);
 	}
 	
 	public long getWidth() { return width; }
