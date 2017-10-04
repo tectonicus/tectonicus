@@ -608,3 +608,15 @@ Version 2.24 01-11-2017
 - Fixed missing version number
 Known Issues
 - Observer and Shulker Box blocks are not supported yet
+
+Version 2.25 10-04-2017
+- compatible with Minecraft 1.12
+- added Observer, Shulker Box, Concrete, Concrete Powder, and Glazed Terracotta blocks, and colored Beds
+- Banners and Beacon beams now use the new color palette by default
+- added configuration option to use the old color palette: add attribute useOldColorPalette="true" on the config node
+- improved new block model system (parsing block model json files from minecraft jar or resource packs); Observer and Glazed Terracotta blocks are created using the new system
+- fixed missing bed map toggle icon
+- fixed compass image not changing based on map camera angles
+- fixed parsing of rasteriser type in config file (only lwjgl rasteriser actually works)
+- fixed some issues with high-res textures
+- lots of internal code cleanup and refactoring
