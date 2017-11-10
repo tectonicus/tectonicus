@@ -20,6 +20,7 @@ import tectonicus.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BedEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -67,7 +68,11 @@ public class BedNew implements BlockType
 		final float texel = 1.0f / 64.0f;
 		
 		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
-		String color = Colors.byId(rawChunk.getBeds().get(xyz).getColor()).getName();
+		BedEntity be = rawChunk.getBeds().get(xyz);
+		String color = "red";
+		if (be != null)
+			color = Colors.byId(be.getColor()).getName();
+
 		SubTexture texture = world.getTexturePack().findTexture(null, "bed_"+color);
 		SubTexture headTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*6, texture.u0+texel*22, texture.v0+texel*21.8f);
 		SubTexture footTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*28.2f, texture.u0+texel*22, texture.v0+texel*43.9f);
