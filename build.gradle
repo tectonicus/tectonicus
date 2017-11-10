@@ -5,7 +5,7 @@ plugins {
 apply plugin: 'java'
 
 archivesBaseName = 'Tectonicus'
-version = '2.25'
+version = '2.25.01'
 sourceCompatibility = 1.7
 targetCompatibility = 1.8
 

@@ -620,3 +620,6 @@ Version 2.25 10-04-2017
 - fixed parsing of rasteriser type in config file (only lwjgl rasteriser actually works)
 - fixed some issues with high-res textures
 - lots of internal code cleanup and refactoring
+
+Version 2.25.01 11-09-2017
+- fixed issue with beds placed before 1.12 causing NullPointerException
