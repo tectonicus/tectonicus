@@ -80,7 +80,7 @@ public class MutableConfiguration implements Configuration
 		tileSize = 512;
 		maxTiles = -1;
 		colourDepth = 16;
-		alphaBits = 0;
+		alphaBits = 8;
 		numSamples = 0;
 		numZoomLevels = 8;
 		signsInitiallyVisible = true;

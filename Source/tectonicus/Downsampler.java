@@ -146,12 +146,16 @@ public class Downsampler
 			
 			Log.logDebug("\tDownsampling to create meta tile at "+tile.x+","+tile.y);
 			
-			final int pixelFormat = state.imageFormat.hasAlpha() ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;
+			final boolean hasAlpha = state.imageFormat.hasAlpha();
+			final int pixelFormat = hasAlpha ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;
 			BufferedImage outImg = new BufferedImage(state.tileWidth, state.tileHeight, pixelFormat);
 			Graphics2D g = (Graphics2D)outImg.getGraphics();
 			
-			g.setColor(state.backgroundColor);
-			g.fillRect(0, 0, state.tileWidth, state.tileHeight);
+			if (!hasAlpha)
+			{
+				g.setColor(state.backgroundColor);
+				g.fillRect(0, 0, state.tileWidth, state.tileHeight);
+			}
 			
 			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 			g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
