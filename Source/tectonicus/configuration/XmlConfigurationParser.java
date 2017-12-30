@@ -250,6 +250,7 @@ public class XmlConfigurationParser
 				
 				layer.setImageFormat( parseImageFormat(getString(layerElement, "imageFormat")));
 				layer.setImageCompressionLevel( parseImageCompression(getString(layerElement, "imageCompressionLevel")));
+				layer.setBackgroundColor( parseBackgroundColor( getString(layerElement, "backgroundColor"), dimension ) );
 				
 				layer.setUseDefaultBlockConfig( parseUseDefaultBlockConfig( getString(layerElement, "useDefaultBlocks")));
 				

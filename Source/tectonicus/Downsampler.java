@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -23,6 +24,7 @@ import javax.imageio.ImageIO;
 
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
+import tectonicus.configuration.Layer;
 
 public class Downsampler
 {
@@ -41,11 +43,11 @@ public class Downsampler
 		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(64), new ResubmitHandler());
 	}
 	
-	public void downsample(File inputDir, File outputDir, HddTileList tiles, ImageFormat format, float compressionLevel, final int tileWidth, final int tileHeight, ProgressListener progressListener)
+	public void downsample(File inputDir, File outputDir, HddTileList tiles, Layer layer, final int tileWidth, final int tileHeight, ProgressListener progressListener)
 	{
 		int count = 0;
 		
-		Shared state = new Shared(inputDir, outputDir, format, compressionLevel, tileWidth, tileHeight);
+		Shared state = new Shared(inputDir, outputDir, layer.getImageFormat(), layer.getImageCompressionLevel(), layer.getBackgroundColorRGB(), tileWidth, tileHeight);
 		
 		for (TileCoord tile : tiles)
 		{
@@ -101,8 +103,9 @@ public class Downsampler
 		
 		public final ImageFormat imageFormat;
 		public final float imageCompressionLevel;
+		public final Color backgroundColor;
 		
-		public Shared(File inputDir, File outputDir, ImageFormat format, float compressionLevel, final int tileWidth, final int tileHeight)
+		public Shared(File inputDir, File outputDir, ImageFormat format, float compressionLevel, Color backgroundColor, final int tileWidth, final int tileHeight)
 		{
 			this.inputDir = inputDir;
 			this.outputDir = outputDir;
@@ -112,6 +115,7 @@ public class Downsampler
 			
 			this.imageFormat = format;
 			this.imageCompressionLevel = compressionLevel;
+			this.backgroundColor = backgroundColor;
 		}
 	}
 	
@@ -146,7 +150,7 @@ public class Downsampler
 			BufferedImage outImg = new BufferedImage(state.tileWidth, state.tileHeight, pixelFormat);
 			Graphics2D g = (Graphics2D)outImg.getGraphics();
 			
-			g.setColor(TileRenderer.clearColour);
+			g.setColor(state.backgroundColor);
 			g.fillRect(0, 0, state.tileWidth, state.tileHeight);
 			
 			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);

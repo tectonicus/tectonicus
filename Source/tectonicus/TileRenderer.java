@@ -295,7 +295,7 @@ public class TileRenderer
 				changedTiles = trimTileList(changedTiles, args.maxTiles());
 				
 				// Render base tiles
-				renderBaseTiles(world, map, layer.getImageFormat(), layer.getImageCompressionLevel(), baseTilesDir, changedTiles, tileCache);
+				renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
 				
 				// Create downsampled layers
 				bounds = downsample(changedTiles, exportDir, layer, baseTilesDir, tileCache);
@@ -654,7 +654,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void renderBaseTiles(World world, tectonicus.configuration.Map map, ImageFormat imageFormat, final float imageCompressionLevel, File layerDir, HddTileList tiles, TileCache tileCache)
+	private void renderBaseTiles(World world, tectonicus.configuration.Map map, Layer layer, File layerDir, HddTileList tiles, TileCache tileCache)
 	{
 		if (abort)
 			return;
@@ -662,6 +662,7 @@ public class TileRenderer
 		progressListener.onTaskStarted(Task.RenderBaseTiles.toString());
 		
 		final int zoom = map.getClosestZoomSize();
+		final ImageFormat imageFormat = layer.getImageFormat();
 		
 		System.out.println("Base render is at zoom "+zoom+" with "+tileWidth+"x"+tileHeight+" tiles");
 		
@@ -681,7 +682,7 @@ public class TileRenderer
 			setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
 
 			rasteriser.resetState();
-			rasteriser.clear(clearColour);
+			rasteriser.clear(layer.getBackgroundColorRGB());
 			
 			world.draw(camera, false, true);
 			
@@ -689,7 +690,7 @@ public class TileRenderer
 			BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, tileWidth, tileHeight, imageFormat);
 			if (tileImage != null)
 			{
-				imageWriteQueue.write(outputFile, tileImage, imageFormat, imageCompressionLevel);
+				imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel());
 			}
 			else
 			{
@@ -918,7 +919,7 @@ public class TileRenderer
 			System.out.println("\tDownsampling "+prevTiles.size()+" tiles into "+nextTiles.size()+" tiles");
 			
 			Downsampler downsampler = new Downsampler(args.getNumDownsampleThreads(), changedFileList);
-			downsampler.downsample(prevDir, nextDir, nextTiles, layer.getImageFormat(), layer.getImageCompressionLevel(), tileWidth, tileHeight, progressListener);
+			downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener);
 			
 			zoomLevel--;
 			prevDir = nextDir;
@@ -1472,6 +1473,7 @@ public class TileRenderer
 					writer.println("\t\t\t\tid: \""+l.getId()+"\",");
 					writer.println("\t\t\t\tname: \""+l.getName()+"\",");
 					
+					writer.println("\t\t\t\tbackgroundColor: \""+l.getBackgroundColor()+"\",");
 					writer.println("\t\t\t\timageFormat: \""+l.getImageFormat().getExtension()+"\",");
 					writer.println("\t\t\t\tisPng: \""+l.getImageFormat().isPng()+"\"");
 					

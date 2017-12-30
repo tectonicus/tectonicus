@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,8 @@
  */
 
 package tectonicus.configuration;
+
+import java.awt.Color;
 
 import tectonicus.configuration.Configuration.RenderStyle;
 
@@ -22,6 +24,7 @@ public class MutableLayer implements Layer
 	
 	private ImageFormat imageFormat;
 	private float imageCompressionLevel;
+	private String backgroundColor;
 	
 	private String customBlockConfig;
 	private boolean useDefaultBlockConfig;
@@ -122,5 +125,19 @@ public class MutableLayer implements Layer
 	public void setUseDefaultBlockConfig(final boolean use)
 	{
 		this.useDefaultBlockConfig = use;
+	}
+
+	@Override
+	public Color getBackgroundColorRGB() {
+		return Color.decode(backgroundColor);
+	}
+	
+	@Override
+	public String getBackgroundColor() {
+		return backgroundColor;
+	}
+
+	public void setBackgroundColor(String backgroundColor) {
+		this.backgroundColor = backgroundColor;
 	}
 }

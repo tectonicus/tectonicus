@@ -65,6 +65,7 @@ function main()
 		mapTypeControl: mapIds.length > 1,				// Only display the map type control if we have multiple maps
 		streetViewControl: false,
 		overviewMapControl: true,
+		backgroundColor: 'none',
 		mapTypeControlOptions:
 		{
 			mapTypeIds: mapIds,
@@ -192,6 +193,8 @@ function onMapTypeChanged()
 {
 	var mapType = map.mapTypes.get( map.getMapTypeId() );
 	map.setCenter(mapType.tectonicusMap.viewLatLong);
+	
+	$("#map_canvas").css({"background-color" : mapType.layer.backgroundColor});
 	
 	refreshSpawnMarker( spawnToggleControl.checked );
 	refreshSignMarkers( signToggleControl.checked );

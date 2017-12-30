@@ -95,6 +95,7 @@
 			renderStyle="normal / cave / nether / exploredcaves"
 			imageFormat="png / jpg / gif"
 			imageCompressionLevel="0.95 / 0.1 - 1.0"
+			backgroundColor="#e5e3df / #281932" <!-- Any hex color value works. The two defaults shown are for Terra/Nether and End dimensions respectively-->
 			useDefaultBlocks="true / false"
 			customBlocks="."
 		/>

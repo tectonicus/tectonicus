@@ -569,6 +569,19 @@ public class ParseUtil
 		return string.equalsIgnoreCase("true");
 	}
 	
+	public static String parseBackgroundColor (String string, Dimension dimension)
+	{
+		if (StringUtils.isEmpty(string))
+		{
+			if (dimension == Dimension.Terra || dimension == Dimension.Nether)
+				return "#e5e3df";
+			else if (dimension == Dimension.Ender)
+				return "#281932";
+		}
+		
+		return string;
+	}
+	
 	public static boolean parseExtractLwjglNatives(String string)
 	{
 		if (string == null || string.length() == 0)
