@@ -615,7 +615,7 @@ public class RawChunk
 				}
 			}
 		}
-		else if (intBiomeDataTag != null)
+		else if (intBiomeDataTag != null && intBiomeDataTag.getValue().length > 0)
 		{
 			// 1.13+
 			biomes = new byte[SECTION_WIDTH][SECTION_DEPTH]; //TODO: use int
