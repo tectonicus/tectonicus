@@ -221,6 +221,9 @@ public class World implements BlockContext
 		DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
 				@Override
 				public boolean accept(Path entry) throws IOException {
+					if (entry.getFileName().toString().contains("template_glazed_terracotta"))
+						return false;
+
 					return entry.getFileName().toString().contains("_glazed_terracotta") || entry.getFileName().toString().contains("observer");
 				}
 		    };
