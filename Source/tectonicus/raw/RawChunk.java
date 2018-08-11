@@ -387,6 +387,11 @@ public class RawChunk
 									else if (id.equals("Banner") || id.equals("minecraft:banner"))
 									{
 										IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
+										int baseVal = 0;
+
+										if (base != null)
+											baseVal = base.getValue();
+
 										ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
 										
 										List<Pattern> patterns = new ArrayList<Pattern>();
@@ -404,7 +409,7 @@ public class RawChunk
 												patterns.add(new Pattern(pattern.getValue(), color.getValue()));
 											}
 										}
-										banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, base.getValue(), patterns));
+										banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
 									}
 									else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box"))
 									{
