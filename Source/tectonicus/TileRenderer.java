@@ -1687,7 +1687,17 @@ public class TileRenderer
 			if (defaultSkin == "steve")
 				defaultSkin = "mob/char.png";
 		}
-		else //assume version is 1.6+
+		else if (texturePack.getVersion() == "1.13+")
+		{
+			writeImage(texturePack.getItem("assets/minecraft/textures/item/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+			writeImage(texturePack.getItem("assets/minecraft/textures/item/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+			writeImage(texturePack.getItem("assets/minecraft/textures/item/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+			writeImage(texturePack.getItem("assets/minecraft/textures/item/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+
+			if (defaultSkin == "steve")
+				defaultSkin = "assets/minecraft/textures/entity/steve.png";
+		}
+		else //assume version is 1.6-1.12
 		{
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
 			writeImage(texturePack.getItem("assets/minecraft/textures/items/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
