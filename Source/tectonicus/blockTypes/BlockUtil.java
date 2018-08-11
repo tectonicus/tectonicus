@@ -419,9 +419,7 @@ public class BlockUtil
 	
 	public static void addInteriorTop(BlockContext world, RawChunk rawChunk, Mesh mesh, final int blockX, final int blockY, final int blockZ, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
-		final int aboveId = rawChunk.getBlockId(blockX, blockY+1, blockZ);
-		final int aboveData = rawChunk.getBlockData(blockX, blockY+1, blockZ);
-		BlockType above = registry.find(aboveId, aboveData);		
+		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), blockX, blockY+1, blockZ);
 		if (!above.isSolid())
 		{
 			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, blockX, blockY+1, blockZ);
@@ -437,9 +435,7 @@ public class BlockUtil
 	
 	public static void addInteriorBottom(BlockContext world, RawChunk rawChunk, Mesh mesh, final int blockX, final int blockY, final int blockZ, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
-		final int belowId = rawChunk.getBlockId(blockX, blockY-1, blockZ);
-		final int belowData = rawChunk.getBlockData(blockX, blockY-1, blockZ);
-		BlockType below = registry.find(belowId, belowData);
+		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), blockX, blockY-1, blockZ);
 		if (!below.isSolid())
 		{
 			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, blockX, blockY-1, blockZ);
@@ -455,9 +451,7 @@ public class BlockUtil
 	
 	public static void addInteriorNorth(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
-		final int northId = rawChunk.getBlockId(x-1, y, z);
-		final int northData = rawChunk.getBlockData(x-1, y, z);
-		BlockType north = registry.find(northId, northData);
+		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		if (!north.isSolid())
 		{
 			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x-1, y, z);
@@ -473,9 +467,7 @@ public class BlockUtil
 	
 	public static void addInteriorSouth(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
-		final int southId = rawChunk.getBlockId(x+1, y, z);
-		final int southData = rawChunk.getBlockData(x+1, y, z);
-		BlockType south = registry.find(southId, southData);
+		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		if (!south.isSolid())
 		{
 			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x+1, y, z);
@@ -491,9 +483,7 @@ public class BlockUtil
 	
 	public static void addInteriorEast(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
-		final int eastId = rawChunk.getBlockId(x, y, z-1);
-		final int eastData = rawChunk.getBlockData(x, y, z-1);
-		BlockType east = registry.find(eastId, eastData);
+		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 		if (!east.isSolid())
 		{
 			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z-1);
@@ -509,9 +499,7 @@ public class BlockUtil
 	
 	public static void addInteriorWest(BlockContext world, RawChunk rawChunk, Mesh mesh, final int x, final int y, final int z, Colour4f colour, SubTexture texture, BlockTypeRegistry registry)
 	{
-		final int westId = rawChunk.getBlockId(x, y, z+1);
-		final int westData = rawChunk.getBlockData(x, y, z+1);
-		BlockType west = registry.find(westId, westData);
+		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 		if (!west.isSolid())
 		{
 			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z+1);
