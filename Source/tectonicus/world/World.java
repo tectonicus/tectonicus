@@ -762,6 +762,11 @@ public class World implements BlockContext
 		}
 		else
 		{
+			final String name = c.getRawChunk().getBlockName(loc.x, loc.y, loc.z);
+
+			if (name != null)
+				return registry.find(name);
+
 			final int id = c.getBlockId(loc.x, loc.y, loc.z, defaultBlockId);
 			final int data = c.getRawChunk().getBlockData(loc.x, loc.y, loc.z);
 			return registry.find(id, data);
