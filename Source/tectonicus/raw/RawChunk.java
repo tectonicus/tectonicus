@@ -440,7 +440,10 @@ public class RawChunk
 									else if (id.equals("minecraft:bed"))
 									{
 										final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
-										beds.put(createKey(localX, localY, localZ), new BedEntity(x, y, z, localX, localY, localZ, color.getValue()));
+										int colorVal = 0;
+										if (color != null)
+											colorVal = color.getValue();
+										beds.put(createKey(localX, localY, localZ), new BedEntity(x, y, z, localX, localY, localZ, colorVal));
 									}
 								//	else if (id.equals("Furnace"))
 								//	{
