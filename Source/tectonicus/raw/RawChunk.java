@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
+import org.jnbt.IntArrayTag;
 import org.jnbt.IntTag;
 import org.jnbt.ListTag;
 import org.jnbt.NBTInputStream;
@@ -546,6 +547,8 @@ public class RawChunk
 		
 		// Parse "Biomes" data (16x16)
 		ByteArrayTag biomeDataTag = NbtUtil.getChild(level, "Biomes", ByteArrayTag.class);
+		IntArrayTag intBiomeDataTag = NbtUtil.getChild(level, "Biomes", IntArrayTag.class);
+
 		if (biomeDataTag != null)
 		{
 			biomes = new byte[SECTION_WIDTH][SECTION_DEPTH];
@@ -556,6 +559,20 @@ public class RawChunk
 				{
 					final int index = x * SECTION_WIDTH + z;
 					biomes[x][z] = biomeDataTag.getValue()[index];
+				}
+			}
+		}
+		else if (intBiomeDataTag != null)
+		{
+			// 1.13+
+			biomes = new byte[SECTION_WIDTH][SECTION_DEPTH]; //TODO: use int
+
+			for (int x=0; x<SECTION_WIDTH; x++)
+			{
+				for (int z=0; z<SECTION_DEPTH; z++)
+				{
+					final int index = x * SECTION_WIDTH + z;
+					biomes[x][z] = (byte)intBiomeDataTag.getValue()[index];
 				}
 			}
 		}
