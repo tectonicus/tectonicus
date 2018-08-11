@@ -29,6 +29,7 @@ import org.jnbt.CompoundTag;
 import org.jnbt.IntArrayTag;
 import org.jnbt.IntTag;
 import org.jnbt.ListTag;
+import org.jnbt.LongArrayTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.ShortTag;
@@ -516,6 +517,21 @@ public class RawChunk
 			ByteArrayTag skylightTag = NbtUtil.getChild(compound, "SkyLight", ByteArrayTag.class);
 			ByteArrayTag blocklightTag = NbtUtil.getChild(compound, "BlockLight", ByteArrayTag.class);
 
+			// 1.13+ block data
+			LongArrayTag blockStatesTag = NbtUtil.getChild(compound, "BlockStates", LongArrayTag.class);
+			ListTag paletteTag = NbtUtil.getChild(compound, "Palette", ListTag.class);
+			int bitsPerBlock = 0;
+			int blockBitMask = 0;
+			List<Tag> paletteList = null;
+
+			if (blockStatesTag != null)
+			{
+				bitsPerBlock = blockStatesTag.getValue().length * 64 / (SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH);
+				blockBitMask = (1 << bitsPerBlock) - 1;
+
+				paletteList = paletteTag.getValue();
+			}
+
 			for (int x=0; x<SECTION_WIDTH; x++)
 			{
 				for (int y=0; y<SECTION_HEIGHT; y++)
@@ -523,20 +539,49 @@ public class RawChunk
 					for (int z=0; z<SECTION_DEPTH; z++)
 					{
 						final int index = calcAnvilIndex(x, y, z);
-						int id = blocksTag.getValue()[index] & 0xFF;
-						newSection.blockIds[x][y][z] = id;
-						
-						if (addTag != null)
+
+						if (blocksTag != null)
 						{
-							id = id | (getAnvil4Bit(addTag, x, y, z) << 8);
+							int id = blocksTag.getValue()[index] & 0xFF;
 							newSection.blockIds[x][y][z] = id;
+
+							if (addTag != null)
+							{
+								id = id | (getAnvil4Bit(addTag, x, y, z) << 8);
+								newSection.blockIds[x][y][z] = id;
+							}
+
+							final byte data = getAnvil4Bit(dataTag, x, y, z);
+							newSection.blockData[x][y][z] = data;
+
+							if (worldStats != null)
+								worldStats.incBlockId(id, data);
 						}
-						
-						final byte data = getAnvil4Bit(dataTag, x, y, z);
-						newSection.blockData[x][y][z] = data;
-						
-						if (worldStats != null)
-							worldStats.incBlockId(id, data);
+						else
+						{
+							// 1.13+ format
+							int bitIndex = index * bitsPerBlock;
+							int longIndex = bitIndex / 64;
+							int bitOffset = bitIndex % 64;
+
+							long paletteIndex = (blockStatesTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
+
+							// overflow
+							if (bitOffset + bitsPerBlock > 64)
+							{
+								int carryBits = bitOffset + bitsPerBlock - 64;
+								int carryMask = (1 << carryBits) - 1;
+								int carryShift = (bitsPerBlock - carryBits);
+
+								paletteIndex |= (blockStatesTag.getValue()[longIndex + 1] & carryMask) << carryShift;
+							}
+
+							CompoundTag paletteEntry = (CompoundTag)paletteList.get((int)paletteIndex);
+
+							String blockName = NbtUtil.getChild(paletteEntry, "Name", StringTag.class).getValue();
+
+							newSection.blockNames[x][y][z] = blockName;
+						}
 
 						newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
 						newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
@@ -753,6 +798,7 @@ public class RawChunk
 		}
 		
 		s.blockIds[x][localY][z] = blockId;
+		s.blockNames[x][localY][z] = null;
 	}
 	
 	public void setBlockData(final int x, final int y, final int z, final byte val)
@@ -784,7 +830,37 @@ public class RawChunk
 		else
 			return 0;
 	}
-	
+
+	public String getBlockName(final int x, final int y, final int z)
+	{
+		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+			return null;
+
+		final int sectionY = y / MAX_SECTIONS;
+		final int localY = y % SECTION_HEIGHT;
+
+		Section s = sections[sectionY];
+		if (s != null)
+			return s.blockNames[x][localY][z];
+		else
+			return null;
+	}
+
+	public void setBlockName(final int x, final int y, final int z, final String blockName)
+	{
+		final int sectionY = y / MAX_SECTIONS;
+		final int localY = y % SECTION_HEIGHT;
+
+		Section s = sections[sectionY];
+		if (s == null)
+		{
+			s = new Section();
+			sections[sectionY] = s;
+		}
+
+		s.blockNames[x][localY][z] = blockName;
+	}
+
 	public void setSkyLight(final int x, final int y, final int z, final byte val)
 	{
 		final int sectionY = y / MAX_SECTIONS;
@@ -942,6 +1018,8 @@ public class RawChunk
 			{
 				update(hashAlgorithm, s.blockIds);
 				update(hashAlgorithm, s.blockData);
+				update(hashAlgorithm, s.blockNames);
+
 				update(hashAlgorithm, s.skylight);
 				update(hashAlgorithm, s.blocklight);
 			}
@@ -986,7 +1064,22 @@ public class RawChunk
 			}
 		}
 	}
-	
+
+	private static void update(MessageDigest hashAlgorithm, String[][][] data)
+	{
+		for (int x=0; x<data.length; x++)
+		{
+			for (int y=0; y<data[0].length; y++)
+			{
+				for (int z=0; y<data[0][0].length; y++)
+				{
+				    if (data[x][y][z] != null)
+					    hashAlgorithm.update(data[x][y][z].getBytes());
+				}
+			}
+		}
+	}
+
 	private static void update(MessageDigest hashAlgorithm, byte[][][] data)
 	{
 		for (int x=0; x<data.length; x++)
@@ -1010,7 +1103,8 @@ public class RawChunk
 	{
 		public int[][][] blockIds;
 		public byte[][][] blockData;
-		
+		public String[][][] blockNames;
+
 		public byte[][][] skylight;
 		public byte[][][] blocklight;
 		
@@ -1018,7 +1112,8 @@ public class RawChunk
 		{
 			blockIds = new int[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blockData = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
-			
+			blockNames = new String[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+
 			skylight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blocklight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 		}
