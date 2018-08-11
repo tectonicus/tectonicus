@@ -19,6 +19,7 @@ import tectonicus.blockTypes.Air;
 public class BlockTypeRegistry
 {
 	private Map<Integer, BlockType> blocks; // TODO: Implement custom Id object that contains both numeric id and string id
+	private Map<String, BlockType> blocksByName;
 	private Map<IdDataPair, BlockType> boundBlocks;
 	
 	private BlockType defaultBlock;
@@ -27,6 +28,7 @@ public class BlockTypeRegistry
 	{
 		blocks = new HashMap<Integer, BlockType>();
 		boundBlocks = new HashMap<IdDataPair, BlockType>();
+		blocksByName = new HashMap<String, BlockType>();
 		
 		defaultBlock = new Air();
 	}
@@ -52,7 +54,15 @@ public class BlockTypeRegistry
 			
 		boundBlocks.put(key, type);
 	}
-	
+
+	public void register(final String blockName, BlockType type)
+	{
+		if (blocksByName.containsKey(blockName))
+			blocksByName.remove(blockName);
+
+		blocksByName.put(blockName, type);
+	}
+
 	public BlockType find(final int id, final int data) // TODO: Create second find method that takes a string id
 	{
 		BlockType result = null;
@@ -70,7 +80,19 @@ public class BlockTypeRegistry
 		// Not found at all, return default block
 		return defaultBlock;
 	}
-	
+
+	public BlockType find(final String name)
+	{
+		BlockType result = null;
+
+		result = blocksByName.get(name);
+		if (result != null)
+			return result;
+
+		// Not found at all, return default block
+		return defaultBlock;
+	}
+
 	public Set<BlockType> getTypes()
 	{
 		Set<BlockType> allTypes = new HashSet<BlockType>();
