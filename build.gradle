@@ -1,8 +1,7 @@
 plugins {
-	id 'org.ajoberstar.grgit' version '1.6.0'
+	id 'java'
+	id 'org.ajoberstar.grgit' version '3.0.0'
 }
-
-apply plugin: 'java'
 
 archivesBaseName = 'Tectonicus'
 version = '2.25.01'
@@ -20,17 +19,17 @@ repositories {
 }
 
 dependencies {
-	compile('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
-			'org.apache.commons:commons-lang3:3.5@jar',
-			'com.google.code.gson:gson:2.8.0@jar',
-			'org.joml:joml:1.9.3',
-			'xyz.nickr:nbt:1.1.1')
-	compile('org.lwjgl.lwjgl:lwjgl:2.9.3') {
-				exclude module: 'jinput'
-			}
-	compile files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	implementation('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
+				   'org.apache.commons:commons-lang3:3.5@jar',
+				   'com.google.code.gson:gson:2.8.0@jar',
+				   'org.joml:joml:1.9.3',
+				   'xyz.nickr:nbt:1.1.1')
+	implementation('org.lwjgl.lwjgl:lwjgl:2.9.3') {
+					exclude module: 'jinput'
+	}
+	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
 	
-	testCompile 'junit:junit:4.12'
+	testImplementation 'junit:junit:4.12'
 }
 
 jar {
