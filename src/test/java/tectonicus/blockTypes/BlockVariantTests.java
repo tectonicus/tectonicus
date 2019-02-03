@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
@@ -22,11 +22,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.Is.*;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -42,7 +40,7 @@ import tectonicus.texture.ZipStack;
 
 public class BlockVariantTests
 {	
-	@Before
+	@BeforeEach
 	public void setUp()
 	{	
 //		try {
@@ -61,7 +59,7 @@ public class BlockVariantTests
 		Map<Object, Object> testStates = new HashMap<>();
 		testStates.put("normal", "");
 		
-		assertTrue(states.equals(testStates));
+		assertThat(states, is(equalTo(testStates)));
 	}
 	
 	@Test
@@ -76,7 +74,7 @@ public class BlockVariantTests
 		testStates.put("powered", "false");
 		testStates.put("suspended", "false");
 		
-		assertTrue(states.equals(testStates));
+		assertThat(states, is(equalTo(testStates)));
 	}
 	
 	@Test

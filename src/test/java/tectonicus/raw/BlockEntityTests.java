@@ -1,13 +1,21 @@
-package tectonicus.raw;
+/*
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ *
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution.  The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
+ *
+ */
 
-import static org.junit.Assert.*;
+package tectonicus.raw;
 
 import java.util.Arrays;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.Is.*;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import tectonicus.blockTypes.Banner.Pattern;
 

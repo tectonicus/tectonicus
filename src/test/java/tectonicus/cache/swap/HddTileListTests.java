@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,14 +9,17 @@
 
 package tectonicus.cache.swap;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import tectonicus.TileCoord;
 import tectonicus.cache.swap.HddTileList;
@@ -27,7 +30,7 @@ public class HddTileListTests
 {
 	HddTileList list;
 	
-	@Before
+	@BeforeEach
 	public void setUp()
 	{	
 		File dataDir = new File("build/tmp");
@@ -64,7 +67,7 @@ public class HddTileListTests
 			count++;
 		}
 		
-		TestCase.assertEquals(0, count);
+		assertThat(count, is(0));
 	}
 	
 	@Test
@@ -85,7 +88,7 @@ public class HddTileListTests
 		}
 		
 		// Check we got everything
-		assertEquals(coords, foundCoords);
+		assertIsEqual(coords, foundCoords);
 	}
 	
 	
@@ -112,18 +115,17 @@ public class HddTileListTests
 		}
 		
 		// Check we got everything
-		assertEquals(coords, foundCoords);
+		assertIsEqual(coords, foundCoords);
 	}
 	
 	
-	private void assertEquals(Set<TileCoord> lhs, Set<TileCoord> rhs)
+	private void assertIsEqual(Set<TileCoord> lhs, Set<TileCoord> rhs)
 	{
-		TestCase.assertEquals(lhs.size(), rhs.size());
+		assertThat(lhs.size(), is(equalTo(rhs.size())));
 		for (TileCoord lhsCoord : lhs)
 		{
-			TestCase.assertTrue(rhs.contains(lhsCoord));
+			assertThat(rhs, hasItem(lhsCoord));
 		}
 	}
-	
 	
 }
