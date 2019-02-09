@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -1754,6 +1754,11 @@ public class TileRenderer
 		FileUtils.extractResource("styles.css", new File(scriptsDir, "styles.css"));
 		
 		FileUtils.extractResource("math.js", new File(scriptsDir, "math.js"));
+		FileUtils.extractResource("leaflet.js", new File(scriptsDir, "leaflet.js"));
+		FileUtils.extractResource("leaflet.css", new File(scriptsDir, "leaflet.css"));
+		FileUtils.extractResource("leafletMap.js", new File(scriptsDir, "leafletMap.js"));
+		FileUtils.extractResource("leafletStyles.css", new File(scriptsDir, "leafletStyles.css"));
+		FileUtils.extractResource("L.TileLayer.NoGap.js", new File(scriptsDir, "L.TileLayer.NoGap.js"));
 		
 		ArrayList<String> scriptResources = new ArrayList<String>();
 		scriptResources.add("marker.js");
