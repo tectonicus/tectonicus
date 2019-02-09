@@ -1,352 +1,240 @@
-Alpha version:
- - added 'closestZoomSize' command line arg
- - added 'texturePack' command line arg
- - fixed not rendering top of blocks at top of world
- - fixed auto find of minecraft jar in linux
- - dump filename on raw chunk load error
- - added furnace, workbench, pumpkins, jack-o-lanterns, jukebox
- - added wooden and stone stairs
- - added fences
- - added crates
- - added minecart tracks
- - added quadtree and used to find visible chunks for output tile
- - added caching of chunk/tile caches to skip unchanged base tiles
- - added build info output + svn version number
- - added system properties to log output
- - added test forceAwt and forceXXBit options
- - mostly unified lighting
- 
-Version 1.0
- - added white cloth
- - added netherstone
- - added slow sand
- - added lightstone
- - fixed ice transparency bug
- - fixed build info
- - optimised calculation of visible tiles
- - master cache info held as text for manual tinkering if need be.
- - now writes list of updated images to changed.txt in output dir
- - added lighting options (day/night/none)
- 
-Version 1.01
- - added jpeg output (reduces file size of output by about a third)
- - fix array index out of bounds when half steps at top of world
- 
-Version 1.02
- - fixed map.html having wrong case in file extension (.Png not .png)
- 
-Version 1.03
- - fixed inverted logic of CheckForValidMinecraftDir
- 
-Version 1.04
- - added 'writing html' with path to output
- - disabled chmod-ing of extracted natives
- 
-Version 1.05
- - Added sign icons. Use new command line option 'signs=all' (or 'special' for signs beginning and ending with ! - = or ~) Use signs=none to disable
- - Added player icons. Run with 'mode=players' to only update the player positions - use on a multiplayer server to track player movement.
- - Added spawn location icon.
- - render tiles in z-order for optimum cache efficiency
- - clean out output dirs if cache has changed
- 
-Version 1.06
- - added 'players=' option to control players export (none/ops/all)
- - added 'showSpawn=' option (true/false)
- - fixed players without custom skin not appearing on map
- - fixed null pointer when reading players
- - fixed filtering of signs with no text
- 
-Version 1.07
- - sign markers are now click-able and open up an info window with properly formatted sign text
- 
-Version 1.08
- - escape " characters in signs
- - added extra logging for mode=players
- - fixed signs disappearing problem
- - disabled streetview control
- - disabled map type control
- 
-Version 1.09
- - added diamond logo to map output
- - added proper player infowindow, with health and air
- - added signs toggle and players toggle
- 
-Version 1.10
- - fixed 'isPng'
- - fixed blocks at top of world being drawn too dark on top
- - map centers on spawn position when opened
- - added gif output (imageFormat=gif). Reduces my small test map to 205Mb compared to 385Mb png!
- - fixed file handle leak in file cache
- - fixed wrong-directioned slash in player info window
- 
-Version 1.11
- - falls back to non-antialiased if antialiasing not supported
- - added donations / player titles
- - extracted sign/hearts/air/icons from texture pack
- 
-Version 1.12
- - much better fallback testing for pbuffer creation
- - fixed 'unknown image format' exception when exporting html resources
- - fixed missing top face for half steps which have a full block above them
- - made command line keys case-insensitive
- - made command line accept 'yes' and 'on' for boolean values
- - made html validate (does that fix any browser problems?)
- - added player skin cache to drastically speed up players-only export
- 
-Version 1.13
- - fixed biome extractor packaging
- 
-Version 1.14
- - added sandstone
- - added lapis lazuli block
- - added lapis lazuli ore
- - added note block
- 
-Version 1.15
- - added biome colours support. Extracts biome data to a cache directory for reuse between runs
- - added cake! 6 variants for each cake slice removed
- - added wool colours
- - added dispenser block support
- - added redstone torches (off and on)
- - fixed wall torch positions
- - added world stats (on spawn icon popup)
- - fixed crash when unexpected .dat files encountered (eg. 'copy of chunk.0.0.dat')
- - fixed broken 'is this you' image tag
- - added player blacklist / whitelist output modes
- - added 'signsInitiallyVisible' and 'playersInitiallyVisible' options
- 
-Version 1.16
- - Added fallback to default biome colours if biome extractor can't bind to minecraft.jar
- - Added compass overlay
- 
-Version 1.17
- - Added redstone wire
- - Fixed area stat in world statistics
- 
-Version 1.18
- - Cave mode! Use renderStyle=cave argument
- - Urls can now point to specific locations in the world, eg. http://www.example.com/map.html?worldX=0&worldY=0&worldZ=0&zoom=0
- - Added Tectonicus stats to map stats output
- - Fixed crash in Chunk.collectStats if raw chunk couldn't be loaded
- 
-Version 1.19
- - Support for new minecraft region map format
- - fixed integer wrap-around bug with world stats (fixes negative 'air' stat)
- - lots of memory optimisations to reduce memory usage for large worlds.
+Version 2.25.01 11-09-2017
+- fixed issue with beds placed before 1.12 causing NullPointerException
 
- Version 1.20
- - Fix for ArrayIndexOutOfBounds error when discovering chunks
- - Possible fix for signs and player markers not showing up on map
+Version 2.25 10-04-2017
+- compatible with Minecraft 1.12
+- added Observer, Shulker Box, Concrete, Concrete Powder, and Glazed Terracotta blocks, and colored Beds
+- Banners and Beacon beams now use the new color palette by default
+- added configuration option to use the old color palette: add attribute useOldColorPalette="true" on the config node
+- improved new block model system (parsing block model json files from minecraft jar or resource packs); Observer and Glazed Terracotta blocks are created using the new system
+- fixed missing bed map toggle icon
+- fixed compass image not changing based on map camera angles
+- fixed parsing of rasteriser type in config file (only lwjgl rasteriser actually works)
+- fixed some issues with high-res textures
+- lots of internal code cleanup and refactoring
+
+Version 2.24 01-11-2017
+- Handle new ids used in Entity and TileEntity NBT in Minecraft 1.11
+- Chunk discovery should run up to 50% faster than previously
+- Bone Block and End Rod should now render with correct orientation
+- Fixed toggle buttons not showing up sometimes with multiple maps
+- Fixed missing version number
+Known Issues
+- Observer and Shulker Box blocks are not supported yet
+
+Version 2.23 06-08-2016
+- compatible with Minecraft 1.10
+- added Bone, Nether Wart, Red Nether Brick, Magma, and Structure Void blocks
+- Banner patterns now render on Banners
+- Chest map markers can now be generated; by default they are off, add a filter e.g. <chests filter="all"> to your config file to have them appear on the map
+- added "defaultSkin" attribute to the config node, this takes a path to a skin for use in creating icons for players who have no custom skin; by default the "Steve" skin is used
+- player icons no longer appear outside map subset boundaries
+- player load and output methods now run concurrently; creating player icons for hundreds or thousands of players now takes seconds instead of minutes
+- player name and skin should now actually be refreshed after player skin cache timestamp expires
+- view signs can now have parameters placed on any line, order is unimportant; a space between '#' and parameters is no longer necessary
+- sign text is now handled much better, special characters are finally escaped correctly and unsupported JSON elements are ignored
+- when a CircularSubset is used, the initial view now points to the center of the subset instead of the spawn position
+- clicking anywhere on the map now closes any open map marker info window
+- map marker toggle buttons now only appear if there are actually markers to toggle, e.g. the portal marker toggle only appears if there are portals on the map
+- error messages for missing textures are now less verbose and easier to understand
+- fixed issue with parsing Minecraft jar version numbers
+Known Issues
+- chests do not show inventory, this is planned for later
  
-Version 1.21
- - Upgraded to latest version of lwjgl (2.7)
+Version 2.RV 04-01-2016
+Amazing and Exciting New Features!
+- Added new USB Charger block!
+- Add <signs filter="obey" /> to the map node of your config file and use a Minecraft 1.RV jar file to have all your signs turn into OBEY signs and all the sign map markers say OBEY
+- you can now ignore any error messages you see, they're meaningless and your maps will render just fine!
+Boring Features
+- signs use actual sign texture file now
+- fixed some backwards compatibility issues with signs and paintings
+- fixed a problem with The End dimension not rendering correctly if the Overworld spawn point was set far from (0,0)
  
-Version 1.22
- - Added support for new slabs and double slabs
- - Added beds
- - Updated redstone wire for new texture pack layout
- - Added fading for redstone wire colours
- - Added 'imageCompressionLevel' command line argument
- - optimised findVisibleChunks. Should help with rendering speed (now ~2ms instead of ~100ms)
- - added 'show link' to get link to current view position
- - Added redstone repeater (on/off, 4 directions, 4 delay settings)
- - Added wooden door (in 4 directions, each open or closed)
- - Added iron door (in 4 directions, each open or closed)
- - Added 'cameraElevation' command line option. range from 10 to 90 (degrees)
- - Added wooden pressure plates
- - Added stone pressure plates
- - Added redstone buttons
- 
-Version 1.23
- - Added wall signs with text and 4 orientations
- - Added sign posts with text and 16 orientations
- - Changed google maps to always use latest stable version (3.3)
- - Fixed a couple of null pointer exceptions
- - Fixed missing chunk errors! Woo!
- 
-Version 1.24
- - Removed [New/Old]ChunkIterator classes. Now just iterates over all regions and all contained chunks. This is safer and faster, but does mean we no longer support the old map format
- - Made TileRenderer.findVisibleTiles use region cache to improve speed
- - Rewrote chunk hashing (calc ones at preprocess, cache to disk), means FindChangedTiles now *much* quicker.
- - Enabled allowing software opengl by default
- - Added version check to bail cleanly when trying to map old alpha style worlds
- - Added rasteriser info to log
- 
-Version 1.25
- - Fix for Slabs crashing due to bad block data
- - Fixed biome extractor. Not entirely sure biome colours are actually working though.
- 
-Version 1.26
- - Tile coord sets now swapped to hdd for *much* lower memory usage
- - Fixed array out of bounds error when generating Slab geometry
- - Fixed donation html
- - Changed file list now written incrementally for lower memory usage
- - Added peak memory usage stat to map stats
- - Fixed wrong 
-tag in html
- - Test out pbuffer on creation so we bail out early if we've got a bogus pbuffer
- - Default 'useBiomeColours' to off since I don't think it's working correctly other than slowing things down a lot
- 
-Version 1.27
- - Fixed array out of bounds crash with double slab
- - Fixed black rectangle around compass
- - Possibly fixed grid lines appearing in oceans
- 
-Version 1.28
- - Added 'logFile' command line argument
- - Added 'outputHtmlName' command line argument
- - Minor speed increase in loading raw chunks
- 
-Version 1.29
- - made downsampling distribute over multiple threads (use numDownsampleThreads=N to customise num cores used)
- - Fixed misnamed log file
- - Added debug information when no chunks found
- - Always skip empty signs since they're used for asthetic reasons (like building chairs)
- - Fixed pre/center tag ordering problem in html
- - Added missing ';' to javascript
- - Output world/render stats to stats.js (block stats now in blockStats.js)
- 
-Version 1.30
- - fixed hdd tile iterator counting too many tiles (fixes 107% progress bars)
- 
-Version 1.31
- - Added nether rendering. Use dimension=nether and renderStyle=nether
- - Multithreaded base image writing.
- - Optimised takeScreenshot to copy into image files a scanline at a time
- - Optimised chunk loading and geometry creation
- - Added extra debug info when chunks fail to load
- - Added different half-slab material types
- 
-Version 1.32
- - Reduced region cache size from 32 to 16 to fix OSX out of memory bug
- - Re-exposed cacheDir with warning about usage
- - Added toggle box for spawn point, with 'spawnInitiallyVisible' command line option
- - Tweeked nether rendering mode to strip the roof off of nether worlds better
- - Now compiled to java 1.5 rather than 1.6
- - Fixed missing google maps api with no signs html
- - Portals now have markers like players
- - Fixed top-of-world lighting glitch
- - Added detector rails
- - Added powered rails (both off and on states)
- 
-Version 1.33
- - Added wheat blocks
- - Restored tileSize param (min 64, max 1024)
- - Added portal option. portals=All will export portal markers, or portals=None to disable them.
- - More robust handling of region and image file opening/closing
- 
-Version 1.34
- - Added Web block
- - Pointed logo link to proper website rather than forum topic
- - Added coord of current cursor position to map overlay
- - Added bed markers for player's spawn points
- - Fixed odd lighting on stairs
- 
-Version 1.35
- - Fixed vertical fences(!)
- - Fixed bed markers not showing correct owner
- 
-Version 1.36
- - Fixed black grass and leaves with painterly pack
- - Made gui mode work (ish)
- - Possible fix for image writer / "pos < flushedPos" exception
- 
-Version 1.37
- - Added pulling configuration from config xml file.
- 
-Version 1.38
- - Generates mipmaps of terrain atlas for better image quality
- - Fixed bug where portal filter was not parsed correctly from xml config file
- - Fixed bug where player filter was not parsed correctly from xml config file
- - Fixed bug where signs filter was not parsed correctly from xml config file
- - Fixed bug which would cause gui to crash on start
- - Initial pass at circular regions
- - Added 'renderStyle' option to layers node in xml config
- - Now exports player info for single player worlds. Use 'singlePlayerName=' in layers node to set player name
- - Added support for birch and spruce leaves
- - Added support for birch and spruce trunks
- 
-Version 2.00beta 
-- Big layers rewrite
- - Fixed biome colours memory leak
- 
-Version 2.00beta2
- - added cameraAngle and cameraElevation to 'map' settings in xml config
- - added useBiomeColours to map settings
- - added birch and spruce saplings
- - added dead shrubs
- - added tall grass
- - added ferns
- 
-Version 2.00beta3
- - fixed biome colour sampling bug (array out of bounds error)
- - added 'numZoomLevels' to config node
- - fixed tall grass biome colour bug
- 
-Version 2.00beta4
- - added 'singlePlayerName' to config node
- - added initially visible toggles to config node (todo: add to example config)
- - added sign/player/portal filtering to each layer (todo: test this)
- - fixed player skin cache getting wiped all the time
- - fixed image compression level setting
- - added version checked to config file
- - removed old command line arg parsing
- 
-Version 2.00beta5
- - fixed force load 32/64 natives flags
- - fixed initially visible flags
- - compass image now changes when map angle changes
- 
-Version 2.00beta6
- - Re-introduced command line args
- - hide map switch control if only one map type
- - removed 'get link' box, now just changes the url in the browser's address bar (less cluttered and simpler!)
- - redone icon toggle buttons to be smaller
- 
-Version 2.00beta7
- - fixed problem with map selector not appearing on output with one map but multiple layers
- - merged some js files to reduce server requests
- - added players-only mode back in. Either use mode="players" in xml or mode=players on command line
- - made gui work again
- 
-Version 2.00
- - added first person views!
- - added better error messages when terrain.png not found (detects use of server jar or launcher jar)
- - reverted google maps api to 3.3 to fixed unclickable markers bug
- 
-Version 2.01
- - views now default to an angle of 90 degrees (horizontal)
- - removed #view signs from being output in signs=all mode
- - added view files to changed file list
- - added bottom to wool
- - added bottom to log
- - added bottom to cactus
- - added bottom to double slab
- - added bottom to furnace
- - added bottom to leaves
- - added bottom to workbench
- - added bottom to jack-o-lantern
- - added bottom to dispenser
- - added bottom to grass
- - can now set view distance in config file
- - can now set image format for views in config file
- - can now set image compression level for views in config file
- - layers now default to 'day' light style, no longer a required attribute
- 
-Version 2.02
- - fixed bottom of grass blocks
- - fixed too dark biome grass
- - added biome-coloured grass to side of grass blocks
- - fixed night lighting on cake
- - fixed night lighting on pressure plates
- - fixed night lighting on doors
- - fixed night lighting on redstone wire
- - fixed night lighting on redstone repeater
- - added bottom to stairs
- - improved glass rendering (hide internal edges)
- - added bottom to water
- - changed skybox to sky tube for better quality
- - added night option to views (with separate skybox)
+Version 2.22 03-29-2016
+- added Beetroots, End Rod, Chorus Plant/Flower, Frosted Ice, End Gateway, Dragon Head, Structure Blocks
+- fixed Redstone wire and Glass pane for Minecraft 1.9
+- Purpur Pillars now render correctly based on block orientation
+- Command Blocks are now textured correctly
+
+Version 2.21.02
+- fixed a problem where manually specifying the Minecraft jar location caused a NullPointerException when trying to output signs to file
+- fixed a problem with special characters on signs not being escaped correctly
+
+Version 2.21.01
+- fixed a problem with reading signs in Minecraft 1.9 worlds that caused maps not to load in browser
+- fixed a problem with clipping planes that was causing geometry to be clipped at certain camera elevation angles
+
+Version 2.21
+- added Purpur blocks, End Stone Bricks, Grass Path block, new Command Blocks for Minecraft 1.9
+- Beacon beams now detect stained glass and change color
+- buttons can now render on top or bottom of blocks
+- Tectonicus can search mod jar files for textures by using the new <mods> tag, see fullConfig.xml for usage
+- the FOV for Views can now be set globally in the config file (again see fullConfig.xml for usage) or on individual signs using the letter "f" (e.g., "#a75 h3 f60")
+- fixed retrieving block Add values
+- special characters on signs now display correctly
+- sign, portal, and bed icons no longer appear outside subset boundaries on the map
+- numerous blocks now deal with high-res and animated textures better, by default a random frame of animated textures will be used
+- fixed Redstone color and behavior for <=1.8 texture packs
+- separated JavaScript and CSS from map html file, should help make future changes easier
+- attempted to fix a z-buffer precision problem that was causing jagged edges on blocks
+- workaround hack for dealing with LWJGL natives on Mac with Java 8
+- did a whole bunch of work on implementing a new rendering system that uses the Minecraft BlockState and BlockModel files, a lot more work still needs to be done
+  Known Issues
+- End Rod, Chaos Plant/Flower, Frosted Ice, Dragon Head are not supported yet, they probably won't be supported until the new rendering system is complete
+- Redstone wire rendering is broken when using Minecraft 1.9 because the textures changed, this will be fixed with the new rendering system or you can work around
+  it if necessary by using a customBlockConfig that points to the 1.8 textures
+
+Version 2.20
+- compatible with Minecraft 1.8
+- added Diorite, Andesite, and Granite blocks, and respective Polished versions of the same; also added all the new Red sandstone blocks, Prismarine, Prismarine Bricks,
+Dark Prismarine, Sea lantern, Wet sponge, Slime block, Barrier, Iron trapdoor, Inverted daylight detector, new fences and fence gates, new wood doors, Mob Heads(and Player Heads),
+Tripwire, Item Frames(empty, no items), and Banners(no patterns yet)
+- added Beacon beam(no colors yet)
+- doors are now textured correctly based on hinge position and whether the door is open or closed
+- right-hinged doors now rotate correctly
+- player filters are working again, the default server json files can be used (e.g. whitelist.json) or a user specified file
+- some blocks will handle large or high-res textures better (more work to do here)
+- player names and texture urls are now retrieved from the Mojang session server
+- player skin cache is now actually functional
+- switched to using correct Nether Portal texture, using better End Portal texture
+- fixed bug with views always pointing north
+- fixed bug with mutiple portal icons appearing on large portals
+
+Version 2.19.01
+- fixed ArrayIndexOutOfBoundsExceptions caused by paintings
+- initial support for new UUID player data files
+
+Version 2.19
+- compatible with Minecraft 1.7
+- added Acacia and Dark Oak logs, planks, slabs, and stairs, Stained glass blocks and panes, Packed Ice, Podzol, Red sand, New saplings and small flowers, Tall flowers to
+defaultBlockConfig.xml
+- added Paintings
+- fixed FlowerPots so they work with new flowers and saplings
+- changed GlassPane behavior so they work like in-game
+- fixed parsing problem when searching for minecraft jar directory
+- updated LWJGL to 2.9.0
+- switched source and target to Java 1.6 (if this causes any issues we can switch it back)
+
+Version 2.18
+- added support for Minecraft 1.6 resource packs
+- if minecraftJar is not specified in the config, Tectonicus will use the most recent official release or release candidate jar it can find (it ignores weekly builds)
+- added Carpet(all colors), Stained Clay(all colors), Hardened Clay, Hay Block, Coal Block
+- fixed number format problem in block stats for locales that use an apostrophe as the thousands separator (Swizterland, Liechtenstein)
+- removed Wool blocktype (unnecessary redundancy)
+
+Version 2.17.01
+- fixed ArrayIndexOutOfBoundsExceptions when creating stairs
+
+Version 2.17
+- fixed Chests (finally!).  On Dec. 25 all chests will use Christmas textures.
+- added Trapped Chests, Flower Pot, Cocoa Pod, Beacon, Anvil, Daylight Sensor, Redstone Comparator, Levers, Hopper, Tripwire Hook, Corner Stairs
+- added variable snow height
+- added correct Lily Pad rotation
+- Fruit Stems now turn toward nearest fruit
+- fixed 1.5 texture pack problems with Water texture, Water texture in Cauldron, Lava texture, Pressure plate textures
+- Fire now uses texture from 1.5 texture packs
+- fixed a problem with a 1.5 minecraft.jar not being found by the gui
+
+Version 2.16
+- added support for Minecraft 1.5 texture packs while retaining support for Minecraft 1.4 texture packs (1.4 texture packs of course won't support 1.5 blocks).
+- added Weighted Pressure Plates(Gold, Iron), Redstone Block, Nether Quartz Ore, Quartz Blocks(Quartz Block, Chiseled Quartz Block, Pillar Quartz Block), Quartz Stairs, 
+	Quartz Slab, Nether Brick Slab, Dropper, and Activator Rails to defaultBlockConfig.xml
+- fixed a whole bunch of block textures that were not working correctly with 1.5 texture packs
+- tried to make Water block work a little better
+
+Version 2.15
+- added Sandstone Stairs, Spruce Wood Stairs, Birch Wood Stairs, Jungle Wood Stairs, Emerald Ore, Emerald Block, Command Block, and Wooden Button to default block config xml
+- added Carrots and Potatoes
+- added Sideways Logs
+- added Cobblestone and Mossy Cobblestone wall blocks
+- fixed Fence Gates so they render at the correct height when placed in-between wall blocks
+- Trapdoors can now render with the hinge on the top of a block
+- Spruce Leaves, Jungle Leaves, Tall Grass, Ferns, and Vines now attempt to get the correct biome color (still needs work)
+- made pressure plates slightly smaller
+- made water blocks slightly lower
+- player skins will now download correctly again
+
+Version 2.14
+- added fence gates
+- added trapdoor
+- added betterGrass attribute to Grass block type ('fast' or 'fancy')
+- added wooden double slabs (untested)
+- made DoubleSlab block type obsolete, Solid using id:data is sufficient
+- fixed Door edge texture showing more than 3 pixels
+- added reporting of unknown block types
+- fixed pumpkins, furnaces, dispensers, redstone repeaters facing wrong direction
+- fixed furnace top texture
+
+Version 2.13
+- fixed custom block ids >127 not recognized
+
+Version 2.12
+- better validation of region data
+
+Version 2.11
+- changed slabs, wooden planks, wood/log, leaves and saplings to use id:data in block config xml
+- added upside down slabs and stairs
+- added Jungle wood/leaf type
+- added leaves color option to block config xml (overrides any calc'd biome colors, set color="" to use old calculation instead)
+- added sandstone variants
+- added round stone bricks
+- fixed stairs side texture orientation (and maybe a few other blocks)
+
+Version 2.10
+- fixed Nether render mode
+- added Redstone Lamp to default blocks
+- renamed Bedrock, Netherrack, Soul sand, and Glowstone to offical names in default blocks
+
+Version 2.09
+- finished Anvil file format support
+
+Version 2.08
+- initial Anvil file format support only in interactive mode
+
+Version 2.07 
+ - expanded mod support to allow different block types for different data values. See http://www.minecraftwiki.net/wiki/Programs_and_Editors/Tectonicus/Custom_Blocks#Sub_Blocks_.28for_mods.29
+
+Version 2.06
+ - made compass default to new north direction
+ - can set north direction for compass for each map (eg. north="+x")
+ - can use a custom image for the compass rose (compassRose="/path/to/rose.png")
+ - fixed bug where minecart tracks didn't show correct name in block stats
+ - fixed bug where glass wouldn't show up in block stats
+ - added comma separation for 1,000s in block stats
+ - added some world stats
+ - added food display to player info
+ - added XP level to player info
+ - reworked raw chunk and geometry caching for better memory usage
+
+Version 2.05
+ - added support for ender dimension (dimension="ender" instead of dimension="nether")
+ - added Mycelium
+ - added Nether Brick
+ - added Nether Brick Stairs
+ - added Nether Brick Fence
+ - added End Stone
+ - added Lilly Pad
+ - added Dragon Egg
+ - added Nether Wart
+ - added End Portal Frame (with and without eye)
+ - added Cauldron (with different water levels)
+ - added Enchantment Table
+ - added Brewing Stand (with and without bottles in each corner)
+ - fixed lighting on fire block
+ - fixed bug where custom block config wasn't optional
+
+Version 2.04
+ - added mode="views" option. Just renders any changed or new views.
+ - fixed map being cut off past a certain distance above the origin
+ - added fire block
+ - added portal block
+ - supports default + custom block types for each layer
+ - updated to latest stable version of google maps
+ - added cameraAngle= to command line options
+ - added cameraEvevation= to command line options
+ - refactored texture loading
+ - refactored all block types to support custom textures
  
 Version 2.03
  - refactored block registry code
@@ -372,254 +260,356 @@ Version 2.03
  - added huge brown mushroom
  - added regular piston (+extended piston arm)
  - added sticky piston (+extended piston arm) 
-- fixed single quote characters in view signs breaking javascript syntax
+ - fixed single quote characters in view signs breaking javascript syntax
  - disabled google maps marker 'optimisation' that prevents markers being clicked
  
-Version 2.04
+Version 2.02
+ - fixed bottom of grass blocks
+ - fixed too dark biome grass
+ - added biome-coloured grass to side of grass blocks
+ - fixed night lighting on cake
+ - fixed night lighting on pressure plates
+ - fixed night lighting on doors
+ - fixed night lighting on redstone wire
+ - fixed night lighting on redstone repeater
+ - added bottom to stairs
+ - improved glass rendering (hide internal edges)
+ - added bottom to water
+ - changed skybox to sky tube for better quality
+ - added night option to views (with separate skybox)
  
-- added mode="views" option. Just renders any changed or new views.
- - fixed map being cut off past a certain distance above the origin
- - added fire block
- - added portal block
- - supports default + custom block types for each layer
- - updated to latest stable version of google maps
- - added cameraAngle= to command line options
- - added cameraEvevation= to command line options
- - refactored texture loading
- - refactored all block types to support custom textures
+Version 2.01
+ - views now default to an angle of 90 degrees (horizontal)
+ - removed #view signs from being output in signs=all mode
+ - added view files to changed file list
+ - added bottom to wool
+ - added bottom to log
+ - added bottom to cactus
+ - added bottom to double slab
+ - added bottom to furnace
+ - added bottom to leaves
+ - added bottom to workbench
+ - added bottom to jack-o-lantern
+ - added bottom to dispenser
+ - added bottom to grass
+ - can now set view distance in config file
+ - can now set image format for views in config file
+ - can now set image compression level for views in config file
+ - layers now default to 'day' light style, no longer a required attribute
+
+Version 2.00
+ - added first person views!
+ - added better error messages when terrain.png not found (detects use of server jar or launcher jar)
+ - reverted google maps api to 3.3 to fixed unclickable markers bug
+
+Version 2.00beta7
+ - fixed problem with map selector not appearing on output with one map but multiple layers
+ - merged some js files to reduce server requests
+ - added players-only mode back in. Either use mode="players" in xml or mode=players on command line
+ - made gui work again
  
-Version 2.05
+Version 2.00beta6
+ - Re-introduced command line args
+ - hide map switch control if only one map type
+ - removed 'get link' box, now just changes the url in the browser's address bar (less cluttered and simpler!)
+ - redone icon toggle buttons to be smaller
+
+Version 2.00beta5
+ - fixed force load 32/64 natives flags
+ - fixed initially visible flags
+ - compass image now changes when map angle changes
+
+Version 2.00beta4
+ - added 'singlePlayerName' to config node
+ - added initially visible toggles to config node (todo: add to example config)
+ - added sign/player/portal filtering to each layer (todo: test this)
+ - fixed player skin cache getting wiped all the time
+ - fixed image compression level setting
+ - added version checked to config file
+ - removed old command line arg parsing
+
+Version 2.00beta3
+ - fixed biome colour sampling bug (array out of bounds error)
+ - added 'numZoomLevels' to config node
+ - fixed tall grass biome colour bug
+
+Version 2.00beta2
+ - added cameraAngle and cameraElevation to 'map' settings in xml config
+ - added useBiomeColours to map settings
+ - added birch and spruce saplings
+ - added dead shrubs
+ - added tall grass
+ - added ferns
  
-- added support for ender dimension (dimension="ender" instead of dimension="nether")
- - added Mycelium
- - added Nether Brick
- - added Nether Brick Stairs
- - added Nether Brick Fence
- - added End Stone
- - added Lilly Pad
- - added Dragon Egg
- - added Nether Wart
- - added End Portal Frame (with and without eye)
- - added Cauldron (with different water levels)
- - added Enchantment Table
- - added Brewing Stand (with and without bottles in each corner)
- - fixed lighting on fire block
- - fixed bug where custom block config wasn't optional
+Version 2.00beta 
+- Big layers rewrite
+ - Fixed biome colours memory leak
+
+Version 1.38
+ - Generates mipmaps of terrain atlas for better image quality
+ - Fixed bug where portal filter was not parsed correctly from xml config file
+ - Fixed bug where player filter was not parsed correctly from xml config file
+ - Fixed bug where signs filter was not parsed correctly from xml config file
+ - Fixed bug which would cause gui to crash on start
+ - Initial pass at circular regions
+ - Added 'renderStyle' option to layers node in xml config
+ - Now exports player info for single player worlds. Use 'singlePlayerName=' in layers node to set player name
+ - Added support for birch and spruce leaves
+ - Added support for birch and spruce trunks
+
+Version 1.37
+ - Added pulling configuration from config xml file.
+
+Version 1.36
+ - Fixed black grass and leaves with painterly pack
+ - Made gui mode work (ish)
+ - Possible fix for image writer / "pos < flushedPos" exception
  
-Version 2.06
+Version 1.35
+ - Fixed vertical fences(!)
+ - Fixed bed markers not showing correct owner
+
+Version 1.34
+ - Added Web block
+ - Pointed logo link to proper website rather than forum topic
+ - Added coord of current cursor position to map overlay
+ - Added bed markers for player's spawn points
+ - Fixed odd lighting on stairs
+
+Version 1.33
+ - Added wheat blocks
+ - Restored tileSize param (min 64, max 1024)
+ - Added portal option. portals=All will export portal markers, or portals=None to disable them.
+ - More robust handling of region and image file opening/closing
+
+Version 1.32
+ - Reduced region cache size from 32 to 16 to fix OSX out of memory bug
+ - Re-exposed cacheDir with warning about usage
+ - Added toggle box for spawn point, with 'spawnInitiallyVisible' command line option
+ - Tweeked nether rendering mode to strip the roof off of nether worlds better
+ - Now compiled to java 1.5 rather than 1.6
+ - Fixed missing google maps api with no signs html
+ - Portals now have markers like players
+ - Fixed top-of-world lighting glitch
+ - Added detector rails
+ - Added powered rails (both off and on states)
  
-- made compass default to new north direction
- - can set north direction for compass for each map (eg. north="+x")
- - can use a custom image for the compass rose (compassRose="/path/to/rose.png")
- - fixed bug where minecart tracks didn't show correct name in block stats
- - fixed bug where glass wouldn't show up in block stats
- - added comma separation for 1,000s in block stats
- - added some world stats
- - added food display to player info
- - added XP level to player info
- - reworked raw chunk and geometry caching for better memory usage
+Version 1.31
+ - Added nether rendering. Use dimension=nether and renderStyle=nether
+ - Multithreaded base image writing.
+ - Optimised takeScreenshot to copy into image files a scanline at a time
+ - Optimised chunk loading and geometry creation
+ - Added extra debug info when chunks fail to load
+ - Added different half-slab material types
  
-Version 2.07
+Version 1.30
+ - fixed hdd tile iterator counting too many tiles (fixes 107% progress bars)
+
+Version 1.29
+ - made downsampling distribute over multiple threads (use numDownsampleThreads=N to customise num cores used)
+ - Fixed misnamed log file
+ - Added debug information when no chunks found
+ - Always skip empty signs since they're used for asthetic reasons (like building chairs)
+ - Fixed pre/center tag ordering problem in html
+ - Added missing ';' to javascript
+ - Output world/render stats to stats.js (block stats now in blockStats.js)
  
-- expanded mod support to allow different block types for different data values. See http://www.minecraftwiki.net/wiki/Programs_and_Editors/Tectonicus/Custom_Blocks#Sub_Blocks_.28for_mods.29
+Version 1.28
+ - Added 'logFile' command line argument
+ - Added 'outputHtmlName' command line argument
+ - Minor speed increase in loading raw chunks
 
-Version 2.08
+Version 1.27
+ - Fixed array out of bounds crash with double slab
+ - Fixed black rectangle around compass
+ - Possibly fixed grid lines appearing in oceans
 
-- initial Anvil file format support only in interactive mode
+Version 1.26
+ - Tile coord sets now swapped to hdd for *much* lower memory usage
+ - Fixed array out of bounds error when generating Slab geometry
+ - Fixed donation html
+ - Changed file list now written incrementally for lower memory usage
+ - Added peak memory usage stat to map stats
+ - Fixed wrong 
+tag in html
+ - Test out pbuffer on creation so we bail out early if we've got a bogus pbuffer
+ - Default 'useBiomeColours' to off since I don't think it's working correctly other than slowing things down a lot
 
-Version 2.09
+Version 1.25
+ - Fix for Slabs crashing due to bad block data
+ - Fixed biome extractor. Not entirely sure biome colours are actually working though.
 
-- finished Anvil file format support
+Version 1.24
+ - Removed [New/Old]ChunkIterator classes. Now just iterates over all regions and all contained chunks. This is safer and faster, but does mean we no longer support the old map format
+ - Made TileRenderer.findVisibleTiles use region cache to improve speed
+ - Rewrote chunk hashing (calc ones at preprocess, cache to disk), means FindChangedTiles now *much* quicker.
+ - Enabled allowing software opengl by default
+ - Added version check to bail cleanly when trying to map old alpha style worlds
+ - Added rasteriser info to log
+ 
+Version 1.23
+ - Added wall signs with text and 4 orientations
+ - Added sign posts with text and 16 orientations
+ - Changed google maps to always use latest stable version (3.3)
+ - Fixed a couple of null pointer exceptions
+ - Fixed missing chunk errors! Woo!
 
-Version 2.10
+Version 1.22
+ - Added support for new slabs and double slabs
+ - Added beds
+ - Updated redstone wire for new texture pack layout
+ - Added fading for redstone wire colours
+ - Added 'imageCompressionLevel' command line argument
+ - optimised findVisibleChunks. Should help with rendering speed (now ~2ms instead of ~100ms)
+ - added 'show link' to get link to current view position
+ - Added redstone repeater (on/off, 4 directions, 4 delay settings)
+ - Added wooden door (in 4 directions, each open or closed)
+ - Added iron door (in 4 directions, each open or closed)
+ - Added 'cameraElevation' command line option. range from 10 to 90 (degrees)
+ - Added wooden pressure plates
+ - Added stone pressure plates
+ - Added redstone buttons
 
-- fixed Nether render mode
-- added Redstone Lamp to default blocks
-- renamed Bedrock, Netherrack, Soul sand, and Glowstone to offical names in default blocks
+Version 1.21
+ - Upgraded to latest version of lwjgl (2.7)
 
-Version 2.11
+Version 1.20
+ - Fix for ArrayIndexOutOfBounds error when discovering chunks
+ - Possible fix for signs and player markers not showing up on map
+ 
+Version 1.19
+ - Support for new minecraft region map format
+ - fixed integer wrap-around bug with world stats (fixes negative 'air' stat)
+ - lots of memory optimisations to reduce memory usage for large worlds.
 
-- changed slabs, wooden planks, wood/log, leaves and saplings to use id:data in block config xml
-- added upside down slabs and stairs
-- added Jungle wood/leaf type
-- added leaves color option to block config xml (overrides any calc'd biome colors, set color="" to use old calculation instead)
-- added sandstone variants
-- added round stone bricks
-- fixed stairs side texture orientation (and maybe a few other blocks)
+Version 1.18
+ - Cave mode! Use renderStyle=cave argument
+ - Urls can now point to specific locations in the world, eg. http://www.example.com/map.html?worldX=0&worldY=0&worldZ=0&zoom=0
+ - Added Tectonicus stats to map stats output
+ - Fixed crash in Chunk.collectStats if raw chunk couldn't be loaded
 
-Version 2.12
+Version 1.17
+ - Added redstone wire
+ - Fixed area stat in world statistics
 
-- better validation of region data
+Version 1.16
+ - Added fallback to default biome colours if biome extractor can't bind to minecraft.jar
+ - Added compass overlay
 
-Version 2.13
+Version 1.15
+ - added biome colours support. Extracts biome data to a cache directory for reuse between runs
+ - added cake! 6 variants for each cake slice removed
+ - added wool colours
+ - added dispenser block support
+ - added redstone torches (off and on)
+ - fixed wall torch positions
+ - added world stats (on spawn icon popup)
+ - fixed crash when unexpected .dat files encountered (eg. 'copy of chunk.0.0.dat')
+ - fixed broken 'is this you' image tag
+ - added player blacklist / whitelist output modes
+ - added 'signsInitiallyVisible' and 'playersInitiallyVisible' options
+ 
+Version 1.14
+ - added sandstone
+ - added lapis lazuli block
+ - added lapis lazuli ore
+ - added note block
 
-- fixed custom block ids >127 not recognized
+Version 1.13
+ - fixed biome extractor packaging
 
-Version 2.14
+Version 1.12
+ - much better fallback testing for pbuffer creation
+ - fixed 'unknown image format' exception when exporting html resources
+ - fixed missing top face for half steps which have a full block above them
+ - made command line keys case-insensitive
+ - made command line accept 'yes' and 'on' for boolean values
+ - made html validate (does that fix any browser problems?)
+ - added player skin cache to drastically speed up players-only export
 
-- added fence gates
-- added trapdoor
-- added betterGrass attribute to Grass block type ('fast' or 'fancy')
-- added wooden double slabs (untested)
-- made DoubleSlab block type obsolete, Solid using id:data is sufficient
-- fixed Door edge texture showing more than 3 pixels
-- added reporting of unknown block types
-- fixed pumpkins, furnaces, dispensers, restone repeaters facing wrong direction
-- fixed furnace top texture
+Version 1.11
+ - falls back to non-antialiased if antialiasing not supported
+ - added donations / player titles
+ - extracted sign/hearts/air/icons from texture pack
+ 
+Version 1.10
+ - fixed 'isPng'
+ - fixed blocks at top of world being drawn too dark on top
+ - map centers on spawn position when opened
+ - added gif output (imageFormat=gif). Reduces my small test map to 205Mb compared to 385Mb png!
+ - fixed file handle leak in file cache
+ - fixed wrong-directioned slash in player info window
 
-Version 2.15
-- added Sandstone Stairs, Spruce Wood Stairs, Birch Wood Stairs, Jungle Wood Stairs, Emerald Ore, Emerald Block, Command Block, and Wooden Button to default block config xml
-- added Carrots and Potatoes
-- added Sideways Logs
-- added Cobblestone and Mossy Cobblestone wall blocks
-- fixed Fence Gates so they render at the correct height when placed in-between wall blocks
-- Trapdoors can now render with the hinge on the top of a block
-- Spruce Leaves, Jungle Leaves, Tall Grass, Ferns, and Vines now attempt to get the correct biome color (still needs work)
-- made pressure plates slightly smaller
-- made water blocks slightly lower
-- player skins will now download correctly again
+Version 1.09
+ - added diamond logo to map output
+ - added proper player infowindow, with health and air
+ - added signs toggle and players toggle
 
-Version 2.16
-- added support for Minecraft 1.5 texture packs while retaining support for Minecraft 1.4 texture packs (1.4 texture packs of course won't support 1.5 blocks).
-- added Weighted Pressure Plates(Gold, Iron), Redstone Block, Nether Quartz Ore, Quartz Blocks(Quartz Block, Chiseled Quartz Block, Pillar Quartz Block), Quartz Stairs, 
-	Quartz Slab, Nether Brick Slab, Dropper, and Activator Rails to defaultBlockConfig.xml
-- fixed a whole bunch of block textures that were not working correctly with 1.5 texture packs
-- tried to make Water block work a little better
+Version 1.08
+ - escape " characters in signs
+ - added extra logging for mode=players
+ - fixed signs disappearing problem
+ - disabled streetview control
+ - disabled map type control
 
-Version 2.17
-- fixed Chests (finally!).  On Dec. 25 all chests will use Christmas textures.
-- added Trapped Chests, Flower Pot, Cocoa Pod, Beacon, Anvil, Daylight Sensor, Redstone Comparator, Levers, Hopper, Tripwire Hook, Corner Stairs
-- added variable snow height
-- added correct Lily Pad rotation
-- Fruit Stems now turn toward nearest fruit
-- fixed 1.5 texture pack problems with Water texture, Water texture in Cauldron, Lava texture, Pressure plate textures
-- Fire now uses texture from 1.5 texture packs
-- fixed a problem with a 1.5 minecraft.jar not being found by the gui
+Version 1.07
+ - sign markers are now click-able and open up an info window with properly formatted sign text
 
-Version 2.17.01
-- fixed ArrayIndexOutOfBoundsExceptions when creating stairs
+Version 1.06
+ - added 'players=' option to control players export (none/ops/all)
+ - added 'showSpawn=' option (true/false)
+ - fixed players without custom skin not appearing on map
+ - fixed null pointer when reading players
+ - fixed filtering of signs with no text
 
-Version 2.18
-- added support for Minecraft 1.6 resource packs
-- if minecraftJar is not specified in the config, Tectonicus will use the most recent official release or release candidate jar it can find (it ignores weekly builds)
-- added Carpet(all colors), Stained Clay(all colors), Hardened Clay, Hay Block, Coal Block
-- fixed number format problem in block stats for locales that use an apostrophe as the thousands separator (Swizterland, Liechtenstein)
-- removed Wool blocktype (unnecessary redundancy)
+Version 1.05
+ - Added sign icons. Use new command line option 'signs=all' (or 'special' for signs beginning and ending with ! - = or ~) Use signs=none to disable
+ - Added player icons. Run with 'mode=players' to only update the player positions - use on a multiplayer server to track player movement.
+ - Added spawn location icon.
+ - render tiles in z-order for optimum cache efficiency
+ - clean out output dirs if cache has changed
+ 
+Version 1.04
+ - added 'writing html' with path to output
+ - disabled chmod-ing of extracted natives 
+ 
+Version 1.03
+ - fixed inverted logic of CheckForValidMinecraftDir
 
-Version 2.19
-- compatible with Minecraft 1.7
-- added Acacia and Dark Oak logs, planks, slabs, and stairs, Stained glass blocks and panes, Packed Ice, Podzol, Red sand, New saplings and small flowers, Tall flowers to
-defaultBlockConfig.xml
-- added Paintings
-- fixed FlowerPots so they work with new flowers and saplings
-- changed GlassPane behavior so they work like in-game
-- fixed parsing problem when searching for minecraft jar directory
-- updated LWJGL to 2.9.0
-- switched source and target to Java 1.6 (if this causes any issues we can switch it back)
+Version 1.02
+ - fixed map.html having wrong case in file extension (.Png not .png)
 
-Version 2.19.01
-- fixed ArrayIndexOutOfBoundsExceptions caused by paintings
-- initial support for new UUID player data files
+Version 1.01
+ - added jpeg output (reduces file size of output by about a third)
+ - fix array index out of bounds when half steps at top of world
 
-Version 2.20
-- compatible with Minecraft 1.8
-- added Diorite, Andesite, and Granite blocks, and respective Polished versions of the same; also added all the new Red sandstone blocks, Prismarine, Prismarine Bricks,
-Dark Prismarine, Sea lantern, Wet sponge, Slime block, Barrier, Iron trapdoor, Inverted daylight detector, new fences and fence gates, new wood doors, Mob Heads(and Player Heads),
-Tripwire, Item Frames(empty, no items), and Banners(no patterns yet)
-- added Beacon beam(no colors yet)
-- doors are now textured correctly based on hinge position and whether the door is open or closed
-- right-hinged doors now rotate correctly
-- player filters are working again, the default server json files can be used (e.g. whitelist.json) or a user specified file
-- some blocks will handle large or high-res textures better (more work to do here)
-- player names and texture urls are now retrieved from the Mojang session server
-- player skin cache is now actually functional
-- switched to using correct Nether Portal texture, using better End Portal texture
-- fixed bug with views always pointing north
-- fixed bug with mutiple portal icons appearing on large portals
+Version 1.0
+ - added white cloth
+ - added netherstone
+ - added slow sand
+ - added lightstone
+ - fixed ice transparency bug
+ - fixed build info
+ - optimised calculation of visible tiles
+ - master cache info held as text for manual tinkering if need be.
+ - now writes list of updated images to changed.txt in output dir
+ - added lighting options (day/night/none)
 
-Version 2.21
-- added Purpur blocks, End Stone Bricks, Grass Path block, new Command Blocks for Minecraft 1.9
-- Beacon beams now detect stained glass and change color
-- buttons can now render on top or bottom of blocks
-- Tectonicus can search mod jar files for textures by using the new <mods> tag, see fullConfig.xml for usage
-- the FOV for Views can now be set globally in the config file (again see fullConfig.xml for usage) or on individual signs using the letter "f" (e.g., "#a75 h3 f60")
-- fixed retrieving block Add values
-- special characters on signs now display correctly
-- sign, portal, and bed icons no longer appear outside subset boundaries on the map
-- numerous blocks now deal with high-res and animated textures better, by default a random frame of animated textures will be used
-- fixed Redstone color and behavior for <=1.8 texture packs
-- separated JavaScript and CSS from map html file, should help make future changes easier
-- attempted to fix a z-buffer precision problem that was causing jagged edges on blocks
-- workaround hack for dealing with LWJGL natives on Mac with Java 8
-- did a whole bunch of work on implementing a new rendering system that uses the Minecraft BlockState and BlockModel files, a lot more work still needs to be done
-  Known Issues
-- End Rod, Chaos Plant/Flower, Frosted Ice, Dragon Head are not supported yet, they probably won't be supported until the new rendering system is complete
-- Redstone wire rendering is broken when using Minecraft 1.9 because the textures changed, this will be fixed with the new rendering system or you can work around
-  it if necessary by using a customBlockConfig that points to the 1.8 textures
-  
-Version 2.21.01
-- fixed a problem with reading signs in Minecraft 1.9 worlds that caused maps not to load in browser
-- fixed a problem with clipping planes that was causing geometry to be clipped at certain camera elevation angles
-  
-Version 2.21.02
-- fixed a problem where manually specifying the Minecraft jar location caused a NullPointerException when trying to output signs to file
-- fixed a problem with special characters on signs not being escaped correctly
-  
-Version 2.22 03-29-2016
-- added Beetroots, End Rod, Chorus Plant/Flower, Frosted Ice, End Gateway, Dragon Head, Structure Blocks
-- fixed Redstone wire and Glass pane for Minecraft 1.9
-- Purpur Pillars now render correctly based on block orientation
-- Command Blocks are now textured correctly
-  
-Version 2.RV 04-01-2016
-Amazing and Exciting New Features!
-- Added new USB Charger block!
-- Add <signs filter="obey" /> to the map node of your config file and use a Minecraft 1.RV jar file to have all your signs turn into OBEY signs and all the sign map markers say OBEY
-- you can now ignore any error messages you see, they're meaningless and your maps will render just fine!
-Boring Features
-- signs use actual sign texture file now
-- fixed some backwards compatibility issues with signs and paintings
-- fixed a problem with The End dimension not rendering correctly if the Overworld spawn point was set far from (0,0)
-  
-Version 2.23 06-08-2016
-- compatible with Minecraft 1.10
-- added Bone, Nether Wart, Red Nether Brick, Magma, and Structure Void blocks
-- Banner patterns now render on Banners
-- Chest map markers can now be generated; by default they are off, add a filter e.g. <chests filter="all"> to your config file to have them appear on the map
-- added "defaultSkin" attribute to the config node, this takes a path to a skin for use in creating icons for players who have no custom skin; by default the "Steve" skin is used
-- player icons no longer appear outside map subset boundaries
-- player load and output methods now run concurrently; creating player icons for hundreds or thousands of players now takes seconds instead of minutes
-- player name and skin should now actually be refreshed after player skin cache timestamp expires
-- view signs can now have parameters placed on any line, order is unimportant; a space between '#' and parameters is no longer necessary
-- sign text is now handled much better, special characters are finally escaped correctly and unsupported JSON elements are ignored
-- when a CircularSubset is used, the initial view now points to the center of the subset instead of the spawn position
-- clicking anywhere on the map now closes any open map marker info window
-- map marker toggle buttons now only appear if there are actually markers to toggle, e.g. the portal marker toggle only appears if there are portals on the map
-- error messages for missing textures are now less verbose and easier to understand
-- fixed issue with parsing Minecraft jar version numbers
-Known Issues
-- chests do not show inventory, this is planned for later
-
-Version 2.24 01-11-2017
-- Handle new ids used in Entity and TileEntity NBT in Minecraft 1.11
-- Chunk discovery should run up to 50% faster than previously
-- Bone Block and End Rod should now render with correct orientation
-- Fixed toggle buttons not showing up sometimes with multiple maps
-- Fixed missing version number
-Known Issues
-- Observer and Shulker Box blocks are not supported yet
-
-Version 2.25 10-04-2017
-- compatible with Minecraft 1.12
-- added Observer, Shulker Box, Concrete, Concrete Powder, and Glazed Terracotta blocks, and colored Beds
-- Banners and Beacon beams now use the new color palette by default
-- added configuration option to use the old color palette: add attribute useOldColorPalette="true" on the config node
-- improved new block model system (parsing block model json files from minecraft jar or resource packs); Observer and Glazed Terracotta blocks are created using the new system
-- fixed missing bed map toggle icon
-- fixed compass image not changing based on map camera angles
-- fixed parsing of rasteriser type in config file (only lwjgl rasteriser actually works)
-- fixed some issues with high-res textures
-- lots of internal code cleanup and refactoring
-
-Version 2.25.01 11-09-2017
-- fixed issue with beds placed before 1.12 causing NullPointerException
+Alpha version:
+ - added 'closestZoomSize' command line arg
+ - added 'texturePack' command line arg
+ - fixed not rendering top of blocks at top of world
+ - fixed auto find of minecraft jar in linux
+ - dump filename on raw chunk load error
+ - added furnace, workbench, pumpkins, jack-o-lanterns, jukebox
+ - added wooden and stone stairs
+ - added fences
+ - added crates
+ - added minecart tracks
+ - added quadtree and used to find visible chunks for output tile
+ - added caching of chunk/tile caches to skip unchanged base tiles
+ - added build info output + svn version number
+ - added system properties to log output
+ - added test forceAwt and forceXXBit options
+ - mostly unified lighting
+ 
