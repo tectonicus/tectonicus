@@ -48,7 +48,7 @@ jar {
 	}
 	
 	from files('build/tectonicus.buildinfo')
-	from configurations.runtime.asFileTree.files.collect { zipTree(it) }
+	from configurations.runtimeClasspath.asFileTree.files.collect { zipTree(it) }
 	from fileTree('Data')
 	exclude ('OpenAL*.dll', 'openal.dylib', 'libopenal*.so', 'processing/**')
 
