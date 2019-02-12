@@ -1,3 +1,12 @@
+Version 2.26 02-12-2017
+- maps are now displayed using Leaflet.js instead of Google Maps API
+- layer background color can be set in config e.g. <layer backgroundColor="#ffffff" />, end dimension layers default to a dark purple (#281932)
+- fixed an issue preventing png transparency from working
+- now using Java 8
+Known Issues
+- this release is not compatible with Minecraft 1.13
+- map markers and map centering are not implemented with Leaflet yet
+
 Version 2.25.01 11-09-2017
 - fixed issue with beds placed before 1.12 causing NullPointerException
 

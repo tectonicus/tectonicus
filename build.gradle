@@ -4,7 +4,7 @@ plugins {
 }
 
 archivesBaseName = 'Tectonicus'
-version = '2.25.01'
+version = '2.26'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
