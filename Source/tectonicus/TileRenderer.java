@@ -1747,7 +1747,9 @@ public class TileRenderer
 		
 		// And pull out the jQuery code
 		File scriptsDir = new File(exportDir, "Scripts");
+		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptsDir.mkdirs();
+		scriptImagesDir.mkdirs();
 		
 		FileUtils.extractResource("jquery.js", new File(scriptsDir, "jquery.js"));
 		
@@ -1759,6 +1761,11 @@ public class TileRenderer
 		FileUtils.extractResource("leafletMap.js", new File(scriptsDir, "leafletMap.js"));
 		FileUtils.extractResource("leafletStyles.css", new File(scriptsDir, "leafletStyles.css"));
 		FileUtils.extractResource("L.TileLayer.NoGap.js", new File(scriptsDir, "L.TileLayer.NoGap.js"));
+		FileUtils.extractResource("Images/layers.png", new File(scriptImagesDir, "layers.png"));
+		FileUtils.extractResource("Images/layers-2x.png", new File(scriptImagesDir, "layers-2x.png"));
+		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
+		FileUtils.extractResource("Images/marker-icon-2x.png", new File(scriptImagesDir, "marker-icon-2x.png"));
+		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));
 		
 		ArrayList<String> scriptResources = new ArrayList<String>();
 		scriptResources.add("marker.js");
