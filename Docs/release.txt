@@ -1,4 +1,4 @@
-Version 2.26 02-12-2017
+Version 2.26 02-12-2019
 - maps are now displayed using Leaflet.js instead of Google Maps API
 - layer background color can be set in config e.g. <layer backgroundColor="#ffffff" />, end dimension layers default to a dark purple (#281932)
 - fixed an issue preventing png transparency from working
