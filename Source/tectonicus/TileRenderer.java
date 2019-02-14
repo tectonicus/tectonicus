@@ -1751,7 +1751,7 @@ public class TileRenderer
 		scriptsDir.mkdirs();
 		scriptImagesDir.mkdirs();
 		
-		FileUtils.extractResource("jquery.js", new File(scriptsDir, "jquery.js"));
+		FileUtils.extractResource("vue.min.js", new File(scriptsDir, "vue.min.js"));
 		
 		FileUtils.extractResource("styles.css", new File(scriptsDir, "styles.css"));
 		

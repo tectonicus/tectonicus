@@ -8,17 +8,17 @@
 		<link rel="stylesheet" type="text/css" href="Scripts/leaflet.css" />
 		<link rel="stylesheet" type="text/css" href="Scripts/leafletStyles.css" />
 		
-		<script type="text/javascript" src="Scripts/jquery.js"></script>
+		<script type="text/javascript" src="Scripts/vue.min.js"></script>
 		<script type="text/javascript" src="Scripts/leaflet.js"></script>
 		<!--<script type="text/javascript" src="Scripts/L.TileLayer.NoGap.js"></script>-->
 		<script type="text/javascript" src="Scripts/math.js"></script>
 		{{includes}}
 		<script type="text/javascript" src="Scripts/stats.js"></script>
 		<script type="text/javascript" src="Scripts/contents.js"></script>
-		<script type="text/javascript" src="Scripts/leafletMap.js"></script>
 	</head>
 
 	<body>
-		<div id="map_canvas"></div>
+		<div id="map_canvas" :style="{ backgroundColor: bgcolor }"></div>
+		<script type="text/javascript" src="Scripts/leafletMap.js"></script>
 	</body>
 </html>
