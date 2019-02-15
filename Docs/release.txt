@@ -1,3 +1,6 @@
+Version 2.26.01 02-15-2019
+- Leaflet maps are now full-screen in the browser
+
 Version 2.26 02-12-2019
 - maps are now displayed using Leaflet.js instead of Google Maps API
 - layer background color can be set in config e.g. <layer backgroundColor="#ffffff" />, end dimension layers default to a dark purple (#281932)
