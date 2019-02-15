@@ -9,33 +9,7 @@
 
 package tectonicus;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.security.MessageDigest;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.imageio.ImageIO;
-
-import org.lwjgl.LWJGLException;
 import org.lwjgl.util.vector.Vector3f;
-
 import tectonicus.PlayerIconAssembler.WriteIconTask;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
@@ -52,22 +26,22 @@ import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ChestFilter;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.Dimension;
+import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.PlayerFilter;
 import tectonicus.configuration.PortalFilter;
 import tectonicus.configuration.SignFilter;
-import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ViewFilter;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+import tectonicus.raw.BlockEntity;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
-import tectonicus.raw.BlockEntity;
-import tectonicus.raw.ContainerEntity;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
@@ -84,21 +58,46 @@ import tectonicus.world.subset.CircularWorldSubsetFactory;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubsetFactory;
 
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class TileRenderer
 {
 	public enum Task
 	{
-		LoadingWorld,
-		CalculatingChunkHashes,
-		StartingRenderer,
-		FindVisibleTiles,
-		FindChangedTiles,
-		RenderBaseTiles,
-		Downsampling,
-		OutputHtml,
-		OutputChangedList,
-		Finished
-	};
+		LOADING_WORLD,
+		CALCULATING_CHUNK_HASHES,
+		STARTING_RENDERER,
+		FIND_VISIBLE_TILES,
+		FIND_CHANGED_TILES,
+		RENDER_BASE_TILES,
+		DOWNSAMPLING,
+		OUTPUT_HTML,
+		OUTPUT_CHANGED_LIST,
+		FINISHED
+	}
 	
 	public static final Color clearColour = new Color(229, 227, 223);
 	
@@ -106,7 +105,8 @@ public class TileRenderer
 	
 	private final MessageDigest hashAlgorithm;
 	
-	private final int tileWidth, tileHeight;
+	private final int tileWidth;
+	private final int tileHeight;
 	
 	private final int numZoomLevels;
 	
@@ -196,9 +196,9 @@ public class TileRenderer
 		return rasteriser;
 	}
 	
-	public Result output() throws LWJGLException
+	public Result output()
 	{
-		progressListener.onTaskStarted(Task.StartingRenderer.toString());
+		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
 		System.out.println("Starting tile renderer");
 		
 		Date startTime = new Date();
@@ -247,7 +247,7 @@ public class TileRenderer
 			
 			// Figure out which tiles we need to render
 			System.out.println("Finding changed tiles since last render...");
-			progressListener.onTaskStarted(Task.FindChangedTiles.toString());
+			progressListener.onTaskStarted(Task.FIND_CHANGED_TILES.toString());
 			
 			// Output signs
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map, world.getSpawnPosition());
@@ -319,8 +319,13 @@ public class TileRenderer
 		
 		
 		// Output html
-		final File outputHtmlFile = outputHtml();
-		
+		File outputHtmlFile = null;
+		try {
+			outputHtmlFile = outputHtml();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		// ----
 		
 		Date endTime = new Date();
@@ -336,9 +341,9 @@ public class TileRenderer
 	}
 	
 	// Just renders views
-	public Result outputViews() throws LWJGLException
+	public Result outputViews()
 	{
-		progressListener.onTaskStarted(Task.StartingRenderer.toString());
+		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
 		System.out.println("Starting view renderer");
 		
 		Date startTime = new Date();
@@ -426,9 +431,9 @@ public class TileRenderer
 		
 		try
 		{
-			portals = new HddObjectListWriter<Portal>(portalsFile, true);
-			signs = new HddObjectListWriter<Sign>(signsFile, true);
-			views = new HddObjectListWriter<Sign>(viewsFile, true);
+			portals = new HddObjectListWriter<>(portalsFile, true);
+			signs = new HddObjectListWriter<>(signsFile, true);
+			views = new HddObjectListWriter<>(viewsFile, true);
 			
 			stats = preProcess(world, signFilter, portalFilter, viewFilter, chestFilter, portals, signs, views);
 			
@@ -458,7 +463,7 @@ public class TileRenderer
 	{
 		// Pre-render pass - calc chunk hashes and project signs
 		if (progressListener != null)
-			progressListener.onTaskStarted(Task.CalculatingChunkHashes.toString());
+			progressListener.onTaskStarted(Task.CALCULATING_CHUNK_HASHES.toString());
 		
 		WorldStats worldStats = new WorldStats();
 		
@@ -554,10 +559,8 @@ public class TileRenderer
 	{
 		try
 		{
-			Map<String, SignEntity> signMap = chunk.getSigns();
-			for (String key : signMap.keySet())
+			for (SignEntity s : chunk.getSigns().values())
 			{
-				SignEntity s = signMap.get(key);
 				if (passesFilter(s, filter))
 				{
 					Sign sign = new Sign(s);
@@ -619,10 +622,8 @@ public class TileRenderer
 	{
 		try
 		{
-			Map<String, SignEntity> signMap = chunk.getSigns();
-			for (String key : signMap.keySet())
+			for (SignEntity s : chunk.getSigns().values())
 			{
-				SignEntity s = signMap.get(key);
 				if (filter.passesFilter(s))
 				{
 					Sign sign = new Sign(s);
@@ -659,7 +660,7 @@ public class TileRenderer
 		if (abort)
 			return;
 		
-		progressListener.onTaskStarted(Task.RenderBaseTiles.toString());
+		progressListener.onTaskStarted(Task.RENDER_BASE_TILES.toString());
 		
 		final int zoom = map.getClosestZoomSize();
 		final ImageFormat imageFormat = layer.getImageFormat();
@@ -668,7 +669,7 @@ public class TileRenderer
 		
 		setupInitialCamera(map);
 		
-		progressListener.onTaskStarted(Task.RenderBaseTiles.toString());
+		progressListener.onTaskStarted(Task.RENDER_BASE_TILES.toString());
 		
 		int done = 0;
 		
@@ -781,7 +782,7 @@ public class TileRenderer
 			return visible;
 		
 		System.out.println("Finding visible tiles...");
-		progressListener.onTaskStarted(Task.FindVisibleTiles.toString());
+		progressListener.onTaskStarted(Task.FIND_VISIBLE_TILES.toString());
 		
 		// Method:
 		//	for each chunk:
@@ -901,7 +902,7 @@ public class TileRenderer
 				break;
 			
 			System.out.println("Downsampling to create zoom level "+zoomLevel);
-			progressListener.onTaskStarted(Task.Downsampling.toString() + " level " + zoomLevel);
+			progressListener.onTaskStarted(Task.DOWNSAMPLING.toString() + " level " + zoomLevel);
 			
 			HddTileList nextTiles = findNextZoomTiles(prevTiles, hddTileListFactory);
 			File nextDir = DirUtils.getZoomDir(exportDir, layer, zoomLevel);
@@ -954,13 +955,13 @@ public class TileRenderer
 		File viewsCache = new File(cacheDir, "views");
 		File mapViewsCache = new File(viewsCache, map.getId());
 		
-		FileViewCache cache = new FileViewCache(mapViewsCache, tempArea, hashAlgorithm, regionHashStore);
-		return cache;
+		return new FileViewCache(mapViewsCache, tempArea, hashAlgorithm, regionHashStore);
 	}
 	
 	private static class TileCoordBounds
 	{
-		public TileCoord min, max;
+		public TileCoord min;
+		public TileCoord max;
 		
 		public TileCoordBounds(TileCoord min, TileCoord max)
 		{
@@ -993,9 +994,12 @@ public class TileRenderer
 		System.out.println("Exporting stats...");
 		
 		File statsFile = new File(new File(exportDir, "Scripts"), "stats.js");
-		if (statsFile.exists())
-			statsFile.delete();
-		
+		try {
+			Files.deleteIfExists(statsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		System.out.println("Outputting stats to "+statsFile.getAbsolutePath());
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy");
@@ -1008,7 +1012,7 @@ public class TileRenderer
 		{
 			jsWriter = new JsObjectWriter(statsFile);
 			
-			Map<String, Object> stats = new HashMap<String, Object>();
+			Map<String, Object> stats = new HashMap<>();
 			
 			stats.put("tectonicusVersion", BuildInfo.getVersion());
 			
@@ -1030,27 +1034,23 @@ public class TileRenderer
 		}
 	}
 	
-	private File outputHtml()
-	{
+	private File outputHtml() throws IOException {
 		System.out.println("Exporting html...");
-		progressListener.onTaskStarted(Task.OutputHtml.toString());
+		progressListener.onTaskStarted(Task.OUTPUT_HTML.toString());
 		
 		File outputHtmlFile = new File(exportDir, args.getOutputHtmlName());
 		System.out.println("\twriting html to "+outputHtmlFile.getAbsolutePath());
 		
-		InputStream in = null;
-		try
+		URL url = getClass().getClassLoader().getResource("mapWithSigns.html");
+		if (url == null)
+			throw new IOException("resource not found");
+		try (Scanner scanner = new Scanner(url.openStream());
+			 PrintWriter writer = new PrintWriter(new FileOutputStream(outputHtmlFile)))
 		{
-			in = getClass().getClassLoader().getResourceAsStream("mapWithSigns.html");
-			Scanner scanner = new Scanner(in);
-			
-			OutputStream out = new FileOutputStream(outputHtmlFile);
-			PrintWriter writer = new PrintWriter(out);
-			
 			while (scanner.hasNext())
 			{
 				String line = scanner.nextLine();
-				String outLine = "";
+				StringBuilder outLine = new StringBuilder();
 				
 				ArrayList<Util.Token> tokens = Util.split(line);
 				
@@ -1059,73 +1059,6 @@ public class TileRenderer
 					Util.Token first = tokens.remove(0);
 					if (first.isReplaceable)
 					{
-					/*	else if (first.value.equals("mapXMin"))
-						{
-							outLine += mapXMin;
-						}
-						else if (first.value.equals("mapYMin"))
-						{
-							outLine += mapYMin;
-						}
-						else if (first.value.equals("mapWidth"))
-						{
-							outLine += (mapXMax - mapXMin);
-						}
-						else if (first.value.equals("mapHeight"))
-						{
-							outLine += (mapYMax - mapYMin);
-						}
-					*/	
-				/*		else if (first.value.equals("origin"))
-						{
-							outLine += (worldVectors.origin.x / scale);
-							outLine += ", ";
-							outLine += (worldVectors.origin.y / scale);
-						}
-						else if (first.value.equals("xAxis"))
-						{
-							outLine += (worldVectors.xAxis.x / scale);
-							outLine += ", ";
-							outLine += (worldVectors.xAxis.y / scale);
-						}
-						else if (first.value.equals("yAxis"))
-						{
-							outLine += (worldVectors.yAxis.x / scale);
-							outLine += ", ";
-							outLine += (worldVectors.yAxis.y / scale);
-						}
-						else if (first.value.equals("zAxis"))
-						{
-							outLine += (worldVectors.zAxis.x / scale);
-							outLine += ", ";
-							outLine += (worldVectors.zAxis.y / scale);
-						}
-						else if (first.value.equals("mapXUnit"))
-						{
-							outLine += (worldVectors.mapXUnit.x * scale);
-							outLine += ", ";
-							outLine += (worldVectors.mapXUnit.y * scale);
-						}
-						else if (first.value.equals("mapYUnit"))
-						{
-							outLine += (worldVectors.mapYUnit.x * scale);
-							outLine += ", ";
-							outLine += (worldVectors.mapYUnit.y * scale);
-						}
-					*/	
-					/*	else if (first.value.equals("spawnX"))
-						{
-							outLine += levelDat.getSpawnPosition().x;
-						}
-						else if (first.value.equals("spawnY"))
-						{
-							outLine += levelDat.getSpawnPosition().y;
-						}
-						else if (first.value.equals("spawnZ"))
-						{
-							outLine += levelDat.getSpawnPosition().z;
-						}
-					*/
 						if (first.value.equals("includes"))
 						{
 							String templateStart = "		<script type=\"text/javascript\" src=\"";
@@ -1133,41 +1066,41 @@ public class TileRenderer
 							
 							for (tectonicus.configuration.Map map : args.getMaps())
 							{
-								outLine += templateStart;
-								outLine += map.getId()+"/players.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/players.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/beds.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/beds.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/portals.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/portals.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/signs.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/signs.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/views.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/views.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/chests.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/chests.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/worldVectors.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/worldVectors.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/blockStats.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/blockStats.js");
+								outLine.append(templateEnd);
 								
-								outLine += templateStart;
-								outLine += map.getId()+"/worldStats.js";
-								outLine += templateEnd;
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/worldStats.js");
+								outLine.append(templateEnd);
 								
 								// Any per layer includes?
 							}
@@ -1175,29 +1108,18 @@ public class TileRenderer
 					}
 					else
 					{
-						outLine += first.value;
+						outLine.append(first.value);
 					}
 				}
 				
-				writer.write(outLine + "\n");
+				writer.write(outLine.append("\n").toString());
 			}
 			
 			writer.flush();
-			out.close();
-			scanner.close();
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
-		}
-		finally
-		{
-			try
-			{
-				if (in != null)
-					in.close();
-			}
-			catch (Exception e) {}
 		}
 		
 		return outputHtmlFile;
@@ -1206,13 +1128,9 @@ public class TileRenderer
 	private void outputMergedJs(File outFile, ArrayList<String> inputResources)
 	{
 		InputStream in = null;
-		OutputStream out = null;
 		final int scale = (int)Math.pow(2, numZoomLevels);
-		try
+		try (PrintWriter writer = new PrintWriter(new FileOutputStream(outFile)))
 		{
-			out = new FileOutputStream(outFile);
-			PrintWriter writer = new PrintWriter(out);
-			
 			for (String res : inputResources)
 			{
 				in = TileRenderer.class.getClassLoader().getResourceAsStream(res);
@@ -1222,7 +1140,7 @@ public class TileRenderer
 				String line = null;
 				while ((line = reader.readLine()) != null)
 				{
-					String outLine = "";
+					StringBuilder outLine = new StringBuilder();
 					
 					ArrayList<Util.Token> tokens = Util.split(line);
 					
@@ -1233,64 +1151,60 @@ public class TileRenderer
 						{
 							if (first.value.equals("tileWidth"))
 							{
-								outLine += tileWidth;
+								outLine.append(tileWidth);
 							}
 							else if (first.value.equals("tileHeight"))
 							{
-								outLine += tileHeight;
+								outLine.append(tileHeight);
 							}
 							else if (first.value.equals("maxZoom"))
 							{
-								outLine += numZoomLevels;
+								outLine.append(numZoomLevels);
 							}
 							else if (first.value.equals("mapCoordScaleFactor"))
 							{
-								outLine += scale;
-								outLine += ".0"; // Append .0 so that it's treated as float in the javascript
+								outLine.append(scale);
+								outLine.append(".0"); // Append .0 so that it's treated as float in the javascript
 							}
 							else if (first.value.equals("showSpawn"))
 							{
-								outLine += args.showSpawn();
+								outLine.append(args.showSpawn());
 							}
 							else if (first.value.equals("signsInitiallyVisible"))
 							{
-								outLine += args.areSignsInitiallyVisible();
+								outLine.append(args.areSignsInitiallyVisible());
 							}
 							else if (first.value.equals("playersInitiallyVisible"))
 							{
-								outLine += args.arePlayersInitiallyVisible();
+								outLine.append(args.arePlayersInitiallyVisible());
 							}
 							else if (first.value.equals("portalsInitiallyVisible"))
 							{
-								outLine += args.arePortalsInitiallyVisible();
+								outLine.append(args.arePortalsInitiallyVisible());
 							}
 							else if (first.value.equals("bedsInitiallyVisible"))
 							{
-								outLine += args.areBedsInitiallyVisible();
+								outLine.append(args.areBedsInitiallyVisible());
 							}
 							else if (first.value.equals("spawnInitiallyVisible"))
 							{
-								outLine += args.isSpawnInitiallyVisible();
+								outLine.append(args.isSpawnInitiallyVisible());
 							}
 							else if (first.value.equals("viewsInitiallyVisible"))
 							{
-								outLine += args.areViewsInitiallyVisible();
+								outLine.append(args.areViewsInitiallyVisible());
 							}
 						}
 						else
 						{
-							outLine += first.value;
+							outLine.append(first.value);
 						}
 					}
-					writer.write(outLine + "\n");
+					writer.write(outLine.append("\n").toString());
 				}
 				
 				writer.flush();
-				
-				in.close();
-				in = null;
 			}
-			writer.close();
 		}
 		catch (Exception e)
 		{
@@ -1300,14 +1214,9 @@ public class TileRenderer
 		{
 			try
 			{
-				if (in != null)
+				if (in != null) {
 					in.close();
-			}
-			catch (Exception e) {}
-			try
-			{
-				if (out != null)
-					out.close();
+				}
 			}
 			catch (Exception e) {}
 		}
@@ -1315,9 +1224,12 @@ public class TileRenderer
 	
 	private void outputWorldVectors(File vectorsFile, String varNamePrefix, WorldVectors worldVectors, TileCoordBounds bounds, LevelDat levelDat, final int numChunks, final int numPlayers, tectonicus.configuration.Map map)
 	{
-		if (vectorsFile.exists())
-			vectorsFile.delete();
-		
+		try {
+			Files.deleteIfExists(vectorsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		System.out.println("Outputting world vectors to "+vectorsFile.getAbsolutePath());
 		
 		final int scale = (int)Math.pow(2, numZoomLevels);
@@ -1426,16 +1338,16 @@ public class TileRenderer
 	
 	private void outputContents(File outputFile, Configuration config)
 	{
-		if (outputFile.exists())
-			outputFile.delete();
-		
+		try {
+			Files.deleteIfExists(outputFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		System.out.println("Outputting master contents to "+outputFile.getAbsolutePath());
-		
-		PrintWriter writer = null;
-		try
+
+		try (PrintWriter writer = new PrintWriter(outputFile))
 		{
-			writer = new PrintWriter(outputFile);
-			
 			writer.println("tileSize = "+config.tileSize()+";");
 			writer.println("maxZoom = "+config.numZoomLevels()+";");
 			writer.println();
@@ -1496,18 +1408,16 @@ public class TileRenderer
 		{
 			e.printStackTrace();
 		}
-		finally
-		{
-			if (writer != null)
-				writer.close();
-		}
 	}
 	
-	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, PlayerIconAssembler playerIconAssembler, Vector3l spawn)
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, List<Player> players, PlayerIconAssembler playerIconAssembler, Vector3l spawn)
 	{
-		if (playersFile.exists())
-			playersFile.delete();
-		
+		try {
+			Files.deleteIfExists(playersFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		FileUtils.ensureExists(imagesDir);
 		
 		System.out.println("Outputting players to "+playersFile.getAbsolutePath());
@@ -1544,7 +1454,7 @@ public class TileRenderer
 					{
 						System.out.println("\toutputting "+player.getName());
 						
-						HashMap<String, String> args = new HashMap<String, String>();
+						HashMap<String, String> args = new HashMap<>();
 						
 						Vector3d pos = player.getPosition();
 						args.put("name", "\"" + player.getName() + "\"");
@@ -1584,12 +1494,15 @@ public class TileRenderer
 		System.out.println("Outputted "+numOutput+" players");
 	}
 	
-	public void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, ArrayList<Player> players, Vector3l mapSpawn)
+	public void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, List<Player> players, Vector3l mapSpawn)
 	{
 		File bedsFile = new File(exportDir, "beds.js");
-		if (bedsFile.exists())
-			bedsFile.delete();
-		
+		try {
+			Files.deleteIfExists(bedsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		System.out.println("Outputting beds to "+bedsFile.getAbsolutePath());
 		
 		int numOutput = 0;
@@ -1621,7 +1534,7 @@ public class TileRenderer
 				{
 					if (filter.passesFilter(player) && player.getSpawnPosition() != null)
 					{
-						HashMap<String, String> args = new HashMap<String, String>();
+						HashMap<String, String> bedArgs = new HashMap<>();
 						
 						Vector3l spawn = player.getSpawnPosition();
 						
@@ -1629,13 +1542,13 @@ public class TileRenderer
 						{
 							System.out.println("\toutputting "+player.getName()+"'s bed");
 							
-							args.put("playerName", "\"" + player.getName() + "\"");
+							bedArgs.put("playerName", "\"" + player.getName() + "\"");
 							
 							String posStr = "new WorldCoord("+spawn.x+", "+spawn.y+", "+spawn.z+")";
-							args.put("worldPos", posStr);
+							bedArgs.put("worldPos", posStr);
 						
 						
-							jsWriter.write(args);
+							jsWriter.write(bedArgs);
 							numOutput++;
 						}
 					}
@@ -1665,7 +1578,7 @@ public class TileRenderer
 		
 		FileUtils.extractResource("Images/Spacer.png", new File(imagesDir, "Spacer.png"));
 		
-		if (texturePack.getVersion() == "1.4")
+		if (texturePack.getVersion().equals("1.4"))
 		{
 			writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
 			writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
@@ -1673,10 +1586,10 @@ public class TileRenderer
 			writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
-			if (defaultSkin == "steve")
+			if (defaultSkin.equals("steve"))
 				defaultSkin = "mob/char.png";
 		}
-		else if (texturePack.getVersion() == "1.5")
+		else if (texturePack.getVersion().equals("1.5"))
 		{
 			writeImage(texturePack.getItem("textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
 			writeImage(texturePack.getItem("textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
@@ -1684,7 +1597,7 @@ public class TileRenderer
 			writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 			writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 			writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
-			if (defaultSkin == "steve")
+			if (defaultSkin.equals("steve"))
 				defaultSkin = "mob/char.png";
 		}
 		else //assume version is 1.6+
@@ -1698,7 +1611,7 @@ public class TileRenderer
 				writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
 			}
 			
-			if (defaultSkin == "steve")
+			if (defaultSkin.equals("steve"))
 				defaultSkin = "assets/minecraft/textures/entity/steve.png";
 		}
 		
@@ -1767,7 +1680,7 @@ public class TileRenderer
 		FileUtils.extractResource("Images/marker-icon-2x.png", new File(scriptImagesDir, "marker-icon-2x.png"));
 		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));
 		
-		ArrayList<String> scriptResources = new ArrayList<String>();
+		ArrayList<String> scriptResources = new ArrayList<>();
 		scriptResources.add("marker.js");
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
@@ -1810,9 +1723,9 @@ public class TileRenderer
 		Vector2f p001 = camera.projectf( new Vector3f(0, 0, 1) );
 		
 		worldVectors.origin = new Vector2f(originScreenPos.x, originScreenPos.y);
-		worldVectors.xAxis = new Vector2f((float)p100.x - (float)originScreenPos.x, (float)p100.y - (float)originScreenPos.y);
-		worldVectors.yAxis = new Vector2f((float)p010.x - (float)originScreenPos.x, (float)p010.y - (float)originScreenPos.y);
-		worldVectors.zAxis = new Vector2f((float)p001.x - (float)originScreenPos.x, (float)p001.y - (float)originScreenPos.y);
+		worldVectors.xAxis = new Vector2f(p100.x - originScreenPos.x, p100.y - originScreenPos.y);
+		worldVectors.yAxis = new Vector2f(p010.x - originScreenPos.x, p010.y - originScreenPos.y);
+		worldVectors.zAxis = new Vector2f(p001.x - originScreenPos.x, p001.y - originScreenPos.y);
 		
 		// Vectors for map->world projection
 		Vector3f base = camera.unproject(new Vector2f(0, 0));
@@ -1830,7 +1743,7 @@ public class TileRenderer
 		HddObjectListReader<Sign> signsIn = null;
 		try
 		{
-			signsIn = new HddObjectListReader<Sign>(signListFile);
+			signsIn = new HddObjectListReader<>(signListFile);
 			outputSigns(outputFile, signsIn, map, spawn);
 		}
 		catch (Exception e)
@@ -1844,12 +1757,10 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map, Vector3l spawn)
-	{
+	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map, Vector3l spawn) throws IOException {
 		System.out.println("Writing signs to "+signFile.getAbsolutePath());
-		
-		if (signFile.exists())
-			signFile.delete();
+
+		Files.deleteIfExists(signFile.toPath());
 		
 		JsArrayWriter jsWriter = null;
 		try
@@ -1880,33 +1791,33 @@ public class TileRenderer
 				if (map.getSignFilter() == SignFilter.Obey)
 					message = "\"\\nOBEY\\n\\n\"";
 				
-				HashMap<String, String> args = new HashMap<String, String>();
+				HashMap<String, String> signArgs = new HashMap<>();
 				
 				final float worldX = sign.getX() + 0.5f;
 				final float worldY = sign.getY();
 				final float worldZ = sign.getZ() + 0.5f;				
 				
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
-				args.put("worldPos", posStr);
-				args.put("message", message);
+				signArgs.put("worldPos", posStr);
+				signArgs.put("message", message);
 				if (map.getSignFilter() == SignFilter.Obey)
 				{
-					args.put("text1", "\"\"");
-					args.put("text2", "\"OBEY\"");
-					args.put("text3", "\"\"");
-					args.put("text4", "\"\"");
+					signArgs.put("text1", "\"\"");
+					signArgs.put("text2", "\"OBEY\"");
+					signArgs.put("text3", "\"\"");
+					signArgs.put("text4", "\"\"");
 				}
 				else
 				{
-					args.put("text1", "\"" + sign.getText(0) + "\"");
-					args.put("text2", "\"" + sign.getText(1) + "\"");
-					args.put("text3", "\"" + sign.getText(2) + "\"");
-					args.put("text4", "\"" + sign.getText(3) + "\"");
+					signArgs.put("text1", "\"" + sign.getText(0) + "\"");
+					signArgs.put("text2", "\"" + sign.getText(1) + "\"");
+					signArgs.put("text3", "\"" + sign.getText(2) + "\"");
+					signArgs.put("text4", "\"" + sign.getText(3) + "\"");
 				}
 				
 				if (radius == 0 || radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
 				{
-					jsWriter.write(args);
+					jsWriter.write(signArgs);
 				}
 			}
 		}
@@ -1927,7 +1838,7 @@ public class TileRenderer
 		
 		try
 		{
-			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<Portal>(portalListFile);
+			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<>(portalListFile);
 			numPortals = outputPortals(outFile, portalsIn, map, spawn);
 			portalsIn.close();
 		}
@@ -1939,12 +1850,10 @@ public class TileRenderer
 		return numPortals;
 	}
 	
-	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map, Vector3l spawn)
-	{
+	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map, Vector3l spawn) throws IOException {
 		System.out.println("Writing portals...");
-		
-		if (portalFile.exists())
-			portalFile.delete();
+
+		Files.deleteIfExists(portalFile.toPath());
 		
 		int numPortals = 0;
 		JsArrayWriter jsWriter = null;
@@ -1968,11 +1877,16 @@ public class TileRenderer
 				}
 			}
 			
-			ArrayList<Portal> portals = new ArrayList<Portal>();
+			ArrayList<Portal> portals = new ArrayList<>();
 			
 			if (portalPositions.hasNext())
 			{
-				long prevX, prevY, prevZ, firstX, firstZ;
+				long prevX;
+				long prevY;
+				long prevZ;
+				long firstX;
+				long firstZ;
+
 				Portal portal = new Portal();
 				portalPositions.read(portal);
 				firstX = portal.getX();
@@ -2013,13 +1927,13 @@ public class TileRenderer
 					final float worldY = p.getY();
 					final float worldZ = p.getZ();
 					
-					HashMap<String, String> args = new HashMap<String, String>();
+					HashMap<String, String> portalArgs = new HashMap<>();
 					String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
-					args.put("worldPos", posStr);
+					portalArgs.put("worldPos", posStr);
 					
 					if (radius == 0 || radius != 0 && Math.pow((p.getX() - originX), 2) + Math.pow((p.getZ() - originZ), 2) < Math.pow(radius,2))
 					{
-						jsWriter.write(args);
+						jsWriter.write(portalArgs);
 					}
 				}
 			}
@@ -2043,7 +1957,7 @@ public class TileRenderer
 		HddObjectListReader<Sign> viewsIn = null;
 		try
 		{
-			viewsIn = new HddObjectListReader<Sign>(viewsListFile);
+			viewsIn = new HddObjectListReader<>(viewsListFile);
 			outputViews(outputFile, viewsIn, map, imageFormat);
 		}
 		catch (Exception e)
@@ -2057,12 +1971,10 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map, ImageFormat imageFormat)
-	{
+	private void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map, ImageFormat imageFormat) throws IOException {
 		System.out.println("Writing views...");
 		
-		if (viewsFile.exists())
-			viewsFile.delete();
+		Files.deleteIfExists(viewsFile.toPath());
 		
 		JsArrayWriter jsWriter = null;
 		try
@@ -2074,30 +1986,30 @@ public class TileRenderer
 			{				
 				views.read(sign);
 				
-				HashMap<String, String> args = new HashMap<String, String>();
+				HashMap<String, String> viewArgs = new HashMap<>();
 				
 				final float worldX = sign.getX() + 0.5f;
 				final float worldY = sign.getY();
 				final float worldZ = sign.getZ() + 0.5f;				
 				
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
-				args.put("worldPos", posStr);
+				viewArgs.put("worldPos", posStr);
 				
-				String text = "";
+				StringBuilder text = new StringBuilder();
 				for(int i=0; i<4; i++)
 				{
 					if (!sign.getText(i).startsWith("#"))
 					{
-						text = text + sign.getText(i) + " ";
+						text.append(sign.getText(i)).append(" ");
 					}
 				}
-				text = text.trim();
-				args.put("text", "\'" + text + "\'");
+				
+				viewArgs.put("text", "\'" + text.toString().trim() + "\'");
 				
 				String filename = map.getId()+"/Views/View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension();
-				args.put("imageFile", "\'" + filename + "\'");
+				viewArgs.put("imageFile", "\'" + filename + "\'");
 				
-				jsWriter.write(args);
+				jsWriter.write(viewArgs);
 			}
 		}
 		catch (Exception e)
@@ -2114,10 +2026,13 @@ public class TileRenderer
 	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, List<ContainerEntity> chestList)
 	{
 		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
-		
-		if (chestFile.exists())
-			chestFile.delete();
-		
+
+		try {
+			Files.deleteIfExists(chestFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		JsArrayWriter jsWriter = null;
 		try
 		{
@@ -2138,7 +2053,7 @@ public class TileRenderer
 					originZ = subset.getOrigin().z;
 				}
 			}
-			ArrayList<BlockEntity> removeList = new ArrayList<BlockEntity>();
+			ArrayList<BlockEntity> removeList = new ArrayList<>();
 			for (BlockEntity entity : chestList)
 			{
 				final int x = entity.getX();
@@ -2173,14 +2088,14 @@ public class TileRenderer
 				float worldX = entity.getX() + 0.5f;
 				float worldY = entity.getY();
 				float worldZ = entity.getZ() + 0.5f;
-				HashMap<String, String> args = new HashMap<String, String>();
+				HashMap<String, String> chestArgs = new HashMap<>();
 
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
-				args.put("worldPos", posStr);
+				chestArgs.put("worldPos", posStr);
 				
 				if (radius == 0 || radius != 0 && Math.pow((entity.getX() - originX), 2) + Math.pow((entity.getZ() - originZ), 2) < Math.pow(radius,2))
 				{
-					jsWriter.write(args);
+					jsWriter.write(chestArgs);
 				}
 			}
 		}
@@ -2215,13 +2130,13 @@ public class TileRenderer
 	private void outputChangedFile()
 	{
 		System.out.println("Writing changed file list...");
-		progressListener.onTaskStarted(Task.OutputChangedList.toString());
+		progressListener.onTaskStarted(Task.OUTPUT_CHANGED_LIST.toString());
 		
 		changedFileList.close();
 		changedFileList = null;
 	}
 	
-	public TileCoord screenToTile(Point screenPos)
+	private TileCoord screenToTile(Point screenPos)
 	{
 		final float tileX = (float)screenPos.x / (float)tileWidth;
 		final float tileY = (float)screenPos.y / (float)tileHeight;
@@ -2232,7 +2147,7 @@ public class TileRenderer
 		return new TileCoord(wholeTileX, wholeTileY);
 	}
 	
-	public static Point tileToScreen(TileCoord tilePos, final int tileWidth, final int tileHeight)
+	private static Point tileToScreen(TileCoord tilePos, final int tileWidth, final int tileHeight)
 	{
 		return new Point(tilePos.x * tileWidth, tilePos.y * tileHeight);
 	}
@@ -2336,8 +2251,11 @@ public class TileRenderer
 	private static class WorldVectors
 	{
 		Vector2f origin;
-		Vector2f xAxis, yAxis, zAxis;
-		Vector2f mapXUnit, mapYUnit;
+		Vector2f xAxis;
+		Vector2f yAxis;
+		Vector2f zAxis;
+		Vector2f mapXUnit;
+		Vector2f mapYUnit;
 		
 		public WorldVectors()
 		{
