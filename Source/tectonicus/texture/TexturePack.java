@@ -103,6 +103,11 @@ public class TexturePack
 			this.version = "1.9+";
 			Minecraft.setMinecraftVersion(1.9f);
 		}
+		else if(zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png"))
+		{
+			this.version = "1.13+";
+			Minecraft.setMinecraftVersion(13f);
+		}
 		else
 		{
 			this.version = "1.12+";
@@ -341,6 +346,8 @@ public class TexturePack
 			path = "terrain.png";
 		else if (!path.contains("/") && !path.contains("\\") && version == "1.5") //MC 1.5 texture packs
 			path = "textures/blocks/" + path;
+		else if (!path.contains("/") && !path.contains("\\") && Minecraft.getMinecraftVersion() >= 13f) //MC 1.13+ texture packs
+			path = "assets/minecraft/textures/block/" + path;
 		else if (!path.contains("/") && !path.contains("\\") && Minecraft.getMinecraftVersion() >= 1.6f) //MC 1.6+ texture packs
 			path = "assets/minecraft/textures/blocks/" + path;
 		

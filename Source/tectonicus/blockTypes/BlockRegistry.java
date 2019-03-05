@@ -289,8 +289,15 @@ public class BlockRegistry
 		    if(tex.charAt(0) == '#')
 		    {
 		    	String texture = tex.deleteCharAt(0).toString();
-		    	
-		    	SubTexture te = texturePack.findTexture(StringUtils.removeStart(combineMap.get(texture), "blocks/")+ ".png");
+
+				String texturePath;
+
+				if (texturePack.getVersion() == "1.13+")
+					texturePath = StringUtils.removeStart(combineMap.get(texture), "block/") + ".png";
+				else
+					texturePath = StringUtils.removeStart(combineMap.get(texture), "blocks/") + ".png";
+
+		    	SubTexture te = texturePack.findTexture(texturePath);
 		    	
 		    	final float texHeight = te.texture.getHeight();
 				final float texWidth = te.texture.getWidth();

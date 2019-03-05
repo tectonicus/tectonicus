@@ -856,6 +856,9 @@ public class BlockRegistryParser
 				registry.register(id.id, blockType);
 			else
 				registry.register(id.id, id.data, blockType);
+
+			if(stringId != "")
+				registry.register(stringId, blockType);
 		}
 	}
 	

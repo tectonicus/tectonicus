@@ -109,12 +109,23 @@ public class Chunk
 				{
 					if (mask.isVisible(x, y, z))
 					{
-						final int blockId = rawChunk.getBlockId(x, y, z);
-						if (blockId == 0)
-							continue;
-						final int data = rawChunk.getBlockData(x, y, z);
-						
-						BlockType type = registry.find(blockId, data);
+						BlockType type;
+						final String blockName = rawChunk.getBlockName(x, y, z);
+
+						if (blockName != null)
+						{
+							type = registry.find(blockName);
+						}
+						else
+						{
+							final int blockId = rawChunk.getBlockId(x, y, z);
+							if (blockId == 0)
+								continue;
+							final int data = rawChunk.getBlockData(x, y, z);
+
+							type = registry.find(blockId, data);
+						}
+
 						if (type != null)
 						{
 							if (x == 0 || y == 0 || z == 0 || x == RawChunk.WIDTH-1 || y == RawChunk.HEIGHT-1 || z == RawChunk.DEPTH-1)

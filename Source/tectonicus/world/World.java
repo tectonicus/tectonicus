@@ -221,6 +221,9 @@ public class World implements BlockContext
 		DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
 				@Override
 				public boolean accept(Path entry) throws IOException {
+					if (entry.getFileName().toString().contains("template_glazed_terracotta"))
+						return false;
+
 					return entry.getFileName().toString().contains("_glazed_terracotta") || entry.getFileName().toString().contains("observer");
 				}
 		    };
@@ -249,6 +252,8 @@ public class World implements BlockContext
 			parser.parse("defaultBlockConfigMC1.8.xml", registry);
 		else if (useDefaultBlocks && this.textureVersion == "1.9+")
 			parser.parse("defaultBlockConfigMC1.9.xml", registry);
+		else if (useDefaultBlocks && this.textureVersion == "1.12+")
+			parser.parse("defaultBlockConfigMC1.12.xml", registry);
 		else if (useDefaultBlocks)
 			parser.parse("defaultBlockConfig.xml", registry);
 		
@@ -762,6 +767,11 @@ public class World implements BlockContext
 		}
 		else
 		{
+			final String name = c.getRawChunk().getBlockName(loc.x, loc.y, loc.z);
+
+			if (name != null)
+				return registry.find(name);
+
 			final int id = c.getBlockId(loc.x, loc.y, loc.z, defaultBlockId);
 			final int data = c.getRawChunk().getBlockData(loc.x, loc.y, loc.z);
 			return registry.find(id, data);
