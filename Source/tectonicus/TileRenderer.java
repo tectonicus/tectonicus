@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import lombok.RequiredArgsConstructor;
 import org.lwjgl.util.vector.Vector3f;
 import tectonicus.PlayerIconAssembler.WriteIconTask;
 import tectonicus.cache.BiomeCache;
@@ -88,18 +89,26 @@ import static tectonicus.Version.VERSION_12;
 
 public class TileRenderer
 {
+	@RequiredArgsConstructor
 	public enum Task
 	{
-		LOADING_WORLD,
-		CALCULATING_CHUNK_HASHES,
-		STARTING_RENDERER,
-		FIND_VISIBLE_TILES,
-		FIND_CHANGED_TILES,
-		RENDER_BASE_TILES,
-		DOWNSAMPLING,
-		OUTPUT_HTML,
-		OUTPUT_CHANGED_LIST,
-		FINISHED
+		LOADING_WORLD("Loading World"),
+		CALCULATING_CHUNK_HASHES("Calculating Chunk Hashes"),
+		STARTING_RENDERER("Starting Renderer"),
+		FIND_VISIBLE_TILES("Find Visible Tiles"),
+		FIND_CHANGED_TILES("Find Changed Tiles"),
+		RENDER_BASE_TILES("Render Base Tiles"),
+		DOWNSAMPLING("Downsampling"),
+		OUTPUT_HTML("Output Html"),
+		OUTPUT_CHANGED_LIST("Output Changed List"),
+		FINISHED("Finished");
+
+		private final String description;
+
+		@Override
+		public String toString() {
+			return description;
+		}
 	}
 	
 	public static final Color clearColour = new Color(229, 227, 223);
