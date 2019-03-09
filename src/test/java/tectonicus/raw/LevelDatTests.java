@@ -11,6 +11,7 @@ package tectonicus.raw;
 
 import java.nio.file.Paths;
 
+import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.core.Is.is;
@@ -19,9 +20,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class LevelDatTests
 {
 	@Test
-	public void createLevelDat() throws Exception
+	public void createLevelDat()
 	{
 		LevelDat data = new LevelDat(Paths.get("src/test/resources/level.dat"), "");
 		assertThat(data.getWorldName(), is("Block Gallery"));
+		assertThat(data.isSnapshot(), is(false));
+		assertThat(data.getVersion(), is("1.11.2"));
+	}
+
+	@Test
+	public void createLevelDatFromOldLevel()
+	{
+		LevelDat data = new LevelDat(Paths.get("src/test/resources/oldLevel.dat"), "");
+		assertThat(data.getWorldName(), is("Test18"));
+		assertThat(data.getVersion(), is(IsNull.nullValue()));
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,12 +12,14 @@ package tectonicus.blockTypes;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
+import static tectonicus.Version.VERSION_RV;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Chunk;
 import tectonicus.TextLayout;
+import tectonicus.Version;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
@@ -36,7 +38,8 @@ public class Sign implements BlockType
 	
 	private final String name;
 	
-	private SubTexture frontTexture, backTexture;
+	private SubTexture frontTexture;
+	private SubTexture backTexture;
 	private SubTexture sideTexture;
 	private SubTexture edgeTexture;
 	private SubTexture postTexture;
@@ -44,7 +47,7 @@ public class Sign implements BlockType
 	private final boolean hasPost;
 	private final boolean obey;
 	
-	private String texturePackVersion;
+	private Version texturePackVersion;
 	
 	public Sign(String name, SubTexture texture, final boolean hasPost, boolean obey)
 	{
@@ -180,7 +183,7 @@ public class Sign implements BlockType
 		// Add the text
 		if (!obey)
 		{
-			String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+			String xyz = "x" + x + "y" + y + "z" + z;
 			SignEntity s = rawChunk.getSigns().get(xyz);
 			Mesh textMesh = geometry.getMesh(world.getTexturePack().getFont().getTexture(), Geometry.MeshType.AlphaTest);
 			
@@ -188,7 +191,7 @@ public class Sign implements BlockType
 			final float lineHeight = 1.0f / 16.0f * 2.6f;
 			
 			final Vector4f color;
-			if (texturePackVersion == "1.RV")
+			if (texturePackVersion == VERSION_RV)
 				color = new Vector4f(50f/255f, 183f/255f, 50f/255f, 1);
 			else
 				color = new Vector4f(0, 0, 0, 1);

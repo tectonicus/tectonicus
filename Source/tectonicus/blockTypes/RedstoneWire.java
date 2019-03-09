@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,7 +17,7 @@ import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Chunk;
-import tectonicus.Minecraft;
+import tectonicus.Version;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
@@ -25,16 +25,19 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSIONS_9_TO_11;
+import static tectonicus.Version.VERSION_4;
+
 public class RedstoneWire implements BlockType
 {
 	private final SubTexture junction;
 	private final SubTexture line;
-	private final String version;
-	
+	private final Version version;
+
 	public RedstoneWire(SubTexture offJunction, SubTexture onJunction, SubTexture offLine, SubTexture onLine)
 	{
 		version = offJunction.texturePackVersion;
-		if (version != "1.4")
+		if (version != VERSION_4)
 		{
 			final float tile = offJunction.texture.getWidth()/offJunction.texture.getHeight();
 			this.junction = new SubTexture(offJunction.texture, offJunction.u0, offJunction.v0, offJunction.u1, offJunction.v0+tile);
@@ -108,7 +111,7 @@ public class RedstoneWire implements BlockType
 		
 		final float nudge = 0.001f;
 		final float actualY = y + nudge;
-		final boolean newTexture = Minecraft.getMinecraftVersion() >= 1.9f;
+		final boolean newTexture = version.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion();
 		
 		if ( (hasNorth && hasSouth && hasEast && hasWest))
 		{
@@ -178,7 +181,7 @@ public class RedstoneWire implements BlockType
 			final float leftOffset = one16th * 4;
 			final float rightOffset = one16th * 12;
 			final float texel;
-			if (junction.texturePackVersion == "1.4")
+			if (junction.texturePackVersion == VERSION_4)
 				texel = 1.0f / 16.0f / 16.0f;
 			else
 				texel = 1.0f / junction.texture.getHeight();

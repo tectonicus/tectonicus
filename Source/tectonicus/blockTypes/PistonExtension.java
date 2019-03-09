@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,6 +24,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSION_4;
+
 public class PistonExtension implements BlockType
 {
 	private final String name;
@@ -35,7 +37,7 @@ public class PistonExtension implements BlockType
 		this.name = name;
 		
 		this.normalFace = normalFace;
-		if (stickyFace.texturePackVersion != "1.4")
+		if (stickyFace.texturePackVersion != VERSION_4)
 		{
 			final float texel = 1.0f / stickyFace.texture.getHeight();
 			final float tile = texel * stickyFace.texture.getWidth();
@@ -47,7 +49,7 @@ public class PistonExtension implements BlockType
 		}
 		
 		final float divide;
-		if (edge.texturePackVersion == "1.4")
+		if (edge.texturePackVersion == VERSION_4)
 			divide = 1.0f / 16.0f / 16.0f * 4.0f;
 		else
 			divide = 1.0f / 16.0f * 4.0f;

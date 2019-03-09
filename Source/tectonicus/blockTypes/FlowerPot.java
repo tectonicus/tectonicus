@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -25,6 +25,8 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 
+import static tectonicus.Version.VERSION_4;
+
 public class FlowerPot implements BlockType
 {
 	private final String name;
@@ -38,7 +40,7 @@ public class FlowerPot implements BlockType
 		this.texture = texture;
 		this.dirt = dirt;
 		
-		if (plant.texturePackVersion != "1.4")
+		if (plant.texturePackVersion != VERSION_4)
 		{
 			final float texel = 1.0f / plant.texture.getHeight();
 			final float tile = texel * plant.texture.getWidth();
@@ -50,7 +52,7 @@ public class FlowerPot implements BlockType
 		}
 		
 		final float texel;
-		if (texture.texturePackVersion == "1.4")
+		if (texture.texturePackVersion == VERSION_4)
 			texel = 1.0f / 16.0f / 16.0f;
 		else
 			texel = 1.0f / 16.0f;

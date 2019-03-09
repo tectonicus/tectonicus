@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,6 +18,8 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 
+import static tectonicus.Version.VERSION_4;
+
 public class Furnace implements BlockType
 {
 	private final String name;
@@ -33,7 +35,7 @@ public class Furnace implements BlockType
 		this.topTexture = topTexture;
 		this.sideTexture = sideTexture;
 
-		if (frontTexture.texturePackVersion != "1.4")
+		if (frontTexture.texturePackVersion != VERSION_4)
 		{
 			final float texel = 1.0f / frontTexture.texture.getHeight();
 			final float tile = texel * frontTexture.texture.getWidth();

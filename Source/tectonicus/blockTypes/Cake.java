@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,6 +24,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSION_4;
+
 public class Cake implements BlockType
 {
 	private final String name;
@@ -37,7 +39,7 @@ public class Cake implements BlockType
 		this.top = top;
 		
 		final float half;
-		if (top.texturePackVersion == "1.4")
+		if (top.texturePackVersion == VERSION_4)
 			half = 1.0f / 16.0f / 2.0f;
 		else
 			half = 1.0f / 2.0f;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,6 +23,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSION_4;
+
 public class Cauldron implements BlockType
 {
 	private final String name;
@@ -38,7 +40,7 @@ public class Cauldron implements BlockType
 		this.side = side;
 		this.bottom = bottom;
 		
-		if (water.texturePackVersion == "1.4")
+		if (water.texturePackVersion == VERSION_4)
 			this.water = water;
 		else
 			this.water = new SubTexture(water.texture, water.u0, water.v0, water.u1, water.v0+16.0f/512.0f);

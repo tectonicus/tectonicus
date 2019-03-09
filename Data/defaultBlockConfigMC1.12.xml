@@ -677,8 +677,6 @@
 	<ShulkerBox id="232" stringId="minecraft:green_shulker_box" name="Green Shulker Box" />
 	<ShulkerBox id="233" stringId="minecraft:red_shulker_box" name="Red Shulker Box" />
 	<ShulkerBox id="234" stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
-				
-	<Solid id="250" stringId="minecraft:usb_charger" name="USB Charger" side="usb_charger_side.png" top="usb_charger_top.png" />
 						
 	<DataSolid id="255" stringId="minecraft:structure_block" name="Structure Block" 
 						side0="structure_block_save.png" top0="structure_block_save.png"

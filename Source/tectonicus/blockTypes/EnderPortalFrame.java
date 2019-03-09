@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,6 +22,8 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 
+import static tectonicus.Version.VERSION_4;
+
 public class EnderPortalFrame implements BlockType
 {
 	private final String name;
@@ -36,7 +38,7 @@ public class EnderPortalFrame implements BlockType
 		
 		this.top = top;
 		this.bottom = bottom;
-		if (side.texturePackVersion != "1.4")
+		if (side.texturePackVersion != VERSION_4)
 		{
 			final float texel = 1.0f / side.texture.getHeight();
 			final float tile = texel * side.texture.getWidth();
@@ -48,7 +50,7 @@ public class EnderPortalFrame implements BlockType
 		}
 		
 		final float texel;
-		if (eye.texturePackVersion == "1.4")
+		if (eye.texturePackVersion == VERSION_4)
 			texel = 1.0f / 16.0f / 16.0f;
 		else
 			texel = 1.0f / 16.0f;

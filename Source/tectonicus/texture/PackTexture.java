@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import tectonicus.Version;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
@@ -42,12 +43,12 @@ public class PackTexture
 		
 		this.image = image;
 		
-		subTextures = new HashMap<TextureRequest, SubTexture>();
+		subTextures = new HashMap<>();
 		
 		fullTexture = rasteriser.createTexture(image, TextureFilter.NEAREST);
 	}
 
-	public SubTexture find(TextureRequest request)
+	public SubTexture find(TextureRequest request, Version version)
 	{
 		assert(request.path.equals(path));
 		
@@ -59,7 +60,7 @@ public class PackTexture
 		{
 			if (request.isFullTexture())
 			{
-				sub = new SubTexture(fullTexture, 0, 0, 1, 1);
+				sub = new SubTexture(fullTexture, 0, 0, 1, 1, version);
 				
 				subTextures.put(request, sub);
 			}
@@ -110,7 +111,7 @@ public class PackTexture
 	
 	public static BufferedImage[] generateTileMips(BufferedImage inputImage)
 	{
-		ArrayList<BufferedImage> mipmaps = new ArrayList<BufferedImage>();
+		ArrayList<BufferedImage> mipmaps = new ArrayList<>();
 		
 		mipmaps.add(inputImage);
 		

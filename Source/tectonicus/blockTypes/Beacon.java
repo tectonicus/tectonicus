@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -25,6 +25,8 @@ import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 import tectonicus.world.Colors;
 
+import static tectonicus.Version.VERSION_4;
+
 public class Beacon implements BlockType
 {	
 	private final String name;
@@ -39,7 +41,7 @@ public class Beacon implements BlockType
 		this.beam = beam;
 		
 		final float texel;
-		if (glass.texturePackVersion == "1.4")
+		if (glass.texturePackVersion == VERSION_4)
 			texel = 1.0f / 16.0f / 16.0f;
 		else
 			texel = 1.0f / 16.0f;

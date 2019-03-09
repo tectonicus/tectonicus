@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -21,6 +21,8 @@ import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+
+import static tectonicus.Version.VERSION_4;
 
 public class Snow implements BlockType
 {
@@ -93,7 +95,7 @@ public class Snow implements BlockType
 			height = 0;
 		
 		final float texHeight;
-		if(texture.texturePackVersion == "1.4")
+		if(texture.texturePackVersion == VERSION_4)
 			texHeight = (1-height) / 16;
 		else
 			texHeight = 1-height;

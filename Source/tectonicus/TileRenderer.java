@@ -83,6 +83,9 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static tectonicus.Version.VERSION_12;
+
+
 public class TileRenderer
 {
 	public enum Task
@@ -669,15 +672,13 @@ public class TileRenderer
 		
 		setupInitialCamera(map);
 		
-		progressListener.onTaskStarted(Task.RENDER_BASE_TILES.toString());
-		
 		int done = 0;
 		
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(args.getNumDownsampleThreads());
 		
 		for (TileCoord t : tiles)
 		{
-			System.out.print("Rendering tile @ "+t.x+","+t.y+" (tile "+(done+1)+" of "+tiles.size()+")\r"); //prints a carraige return after line
+			System.out.print("Rendering tile @ "+t.x+","+t.y+" (tile "+(done+1)+" of "+tiles.size()+")\r"); //prints a carriage return after line
 			progressListener.onTaskUpdate(done, tiles.size());
 			
 			setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
@@ -1577,52 +1578,54 @@ public class TileRenderer
 		FileUtils.extractResource("Images/Logo.png", new File(imagesDir, "Logo.png"));
 		
 		FileUtils.extractResource("Images/Spacer.png", new File(imagesDir, "Spacer.png"));
-		
-		if (texturePack.getVersion().equals("1.4"))
-		{
-			writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
-			writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
-			writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));
-			writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
-			writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
-			writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
-			if (defaultSkin.equals("steve"))
-				defaultSkin = "mob/char.png";
-		}
-		else if (texturePack.getVersion().equals("1.5"))
-		{
-			writeImage(texturePack.getItem("textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
-			writeImage(texturePack.getItem("textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
-			writeImage(texturePack.getItem("textures/items/ingotIron.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
-			writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
-			writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
-			writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
-			if (defaultSkin.equals("steve"))
-				defaultSkin = "mob/char.png";
-		}
-		else if (texturePack.getVersion() == "1.13+")
-		{
-			writeImage(texturePack.getItem("assets/minecraft/textures/item/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/item/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/item/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/item/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 
-			if (defaultSkin == "steve")
-				defaultSkin = "assets/minecraft/textures/entity/steve.png";
-		}
-		else //assume version is 1.6-1.12
-		{
-			writeImage(texturePack.getItem("assets/minecraft/textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/items/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
-			writeImage(texturePack.getItem("assets/minecraft/textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
-			if (!texturePack.getVersion().equals("1.12+"))
-			{
-				writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
-			}
-			
-			if (defaultSkin.equals("steve"))
-				defaultSkin = "assets/minecraft/textures/entity/steve.png";
+		Version texturePackVersion = texturePack.getVersion();
+		switch (texturePackVersion) {
+			case VERSION_4:
+				writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
+				writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "mob/char.png";
+				break;
+
+			case VERSION_5:
+				writeImage(texturePack.getItem("textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				writeImage(texturePack.getItem("textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem("textures/items/ingotIron.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "mob/char.png";
+				break;
+
+			case VERSIONS_6_TO_8:
+			case VERSION_RV:
+			case VERSIONS_9_TO_11:
+			case VERSION_12:
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				if (texturePackVersion != VERSION_12) {
+					writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+				}
+
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "assets/minecraft/textures/entity/steve.png";
+				break;
+
+			default: //assume version is 1.13+
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "assets/minecraft/textures/entity/steve.png";
 		}
 		
 		// Hearts need composing so they get the outline

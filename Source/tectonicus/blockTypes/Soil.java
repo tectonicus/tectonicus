@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,6 +22,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSION_4;
+
 public class Soil implements BlockType
 {
 	private final String name;
@@ -36,7 +38,7 @@ public class Soil implements BlockType
 		this.topTexture = topTexture;
 		
 		final float texel;
-		if (topTexture.texturePackVersion == "1.4")
+		if (topTexture.texturePackVersion == VERSION_4)
 			texel = 1.0f / 16.0f / 16.0f;
 		else
 			texel = 1.0f / 16.0f;

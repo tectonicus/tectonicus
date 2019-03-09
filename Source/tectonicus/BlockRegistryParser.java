@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -106,12 +106,15 @@ import tectonicus.configuration.SignFilter;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 
+import static tectonicus.Version.VERSION_12;
+import static tectonicus.Version.VERSION_5;
+
 public class BlockRegistryParser
 {
 	private final TexturePack texturePack;
 	private final BiomeCache biomeCache;
 	private final SignFilter signFilter;
-	private final HashMap<String, BufferedImage> patternImages;
+	private final Map<String, BufferedImage> patternImages;
 	
 	public BlockRegistryParser(TexturePack texturePack, BiomeCache biomeCache, SignFilter signFilter)
 	{
@@ -215,8 +218,8 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("datasolid"))
 		{
-			ArrayList<SubTexture> sides = new ArrayList<SubTexture>();
-			ArrayList<SubTexture> tops = new ArrayList<SubTexture>();
+			ArrayList<SubTexture> sides = new ArrayList<>();
+			ArrayList<SubTexture> tops = new ArrayList<>();
 			
 			int sideIndex = 0;
 			while (true)
@@ -308,16 +311,18 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("bed"))
 		{
-			SubTexture headTop = parseTexture(element, "headTop", null);
-			SubTexture footTop = parseTexture(element, "footTop", null);
-			
-			SubTexture headSide = parseTexture(element, "headSide", null);
-			SubTexture footSide = parseTexture(element, "footSide", null);
-			
-			SubTexture headEdge = parseTexture(element, "headEdge", null);
-			SubTexture footEdge = parseTexture(element, "footEdge", null);
-			
-			blockType = new Bed(headTop, footTop, headSide, footSide, headEdge, footEdge);
+			if (texturePack.getVersion().getNumVersion() < VERSION_12.getNumVersion()) {
+				SubTexture headTop = parseTexture(element, "headTop", null);
+				SubTexture footTop = parseTexture(element, "footTop", null);
+
+				SubTexture headSide = parseTexture(element, "headSide", null);
+				SubTexture footSide = parseTexture(element, "footSide", null);
+
+				SubTexture headEdge = parseTexture(element, "headEdge", null);
+				SubTexture footEdge = parseTexture(element, "footEdge", null);
+
+				blockType = new Bed(headTop, footTop, headSide, footSide, headEdge, footEdge);
+			}
 		}
 		else if (nodeName.equals("bednew"))
 		{
@@ -421,7 +426,7 @@ public class BlockRegistryParser
 			SubTexture xmassmall = null;
 			SubTexture xmaslarge = null;
 			
-			if(Minecraft.getMinecraftVersion() >= 1.5f)
+			if(texturePack.getVersion().getNumVersion() >= VERSION_5.getNumVersion())
 			{
 				trappedsmall = parseTexture(element, "trappedsmall", null);
 				trappedlarge = parseTexture(element, "trappedlarge", null);
@@ -480,7 +485,7 @@ public class BlockRegistryParser
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
-			boolean obey = signFilter == SignFilter.Obey ? true : false;
+			boolean obey = signFilter == SignFilter.Obey;
 			if(signFilter == SignFilter.Obey)
 			{
 				texture = parseTexture(element, "obey", null);

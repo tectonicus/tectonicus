@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -31,14 +31,24 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 import tectonicus.Minecraft;
+import tectonicus.Version;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
 import tectonicus.renderer.Font;
 
+import static tectonicus.Version.UNKNOWN_VERSION;
+import static tectonicus.Version.VERSIONS_6_TO_8;
+import static tectonicus.Version.VERSIONS_9_TO_11;
+import static tectonicus.Version.VERSION_12;
+import static tectonicus.Version.VERSION_13;
+import static tectonicus.Version.VERSION_4;
+import static tectonicus.Version.VERSION_5;
+import static tectonicus.Version.VERSION_RV;
+
 public class TexturePack
 {
-	private String version;
+	private Version version;
 	
 	private Rasteriser rasteriser;
 	
@@ -64,7 +74,7 @@ public class TexturePack
 	
 		this.rasteriser = rasteriser;
 		
-		loadedPackTextures = new HashMap<String, PackTexture>();
+		loadedPackTextures = new HashMap<>();
 		
 		try
 		{
@@ -74,51 +84,33 @@ public class TexturePack
 		{
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
-		
+
 		//TODO: Clean up this version stuff
-		if (zipStack.hasFile("terrain.png"))
-		{
-			this.version = "1.4";
-			Minecraft.setMinecraftVersion(1.4f);
+		if (zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
+			version = VERSION_13;
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
+			version = VERSION_12;
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png")) {
+			version = VERSIONS_9_TO_11;
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
+			version = VERSION_RV;
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
+			version = VERSIONS_6_TO_8;
+		} else if (zipStack.hasFile("textures/blocks/activatorRail.png")) {
+			version = VERSION_5;
+		} else if (zipStack.hasFile("terrain.png")) {
+			version = VERSION_4;
+		} else {
+			version = UNKNOWN_VERSION;
 		}
-		else if(zipStack.hasFile("textures/blocks/activatorRail.png"))
-		{
-			this.version = "1.5";
-			Minecraft.setMinecraftVersion(1.5f);
-		}
-		else if(zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png"))
-		{
-			this.version = "1.678";
-			Minecraft.setMinecraftVersion(1.6f);
-			if(zipStack.hasFile("assets/minecraft/textures/blocks/stone_andesite.png"))
-				Minecraft.setMinecraftVersion(1.8f);
-		}
-//		else if(zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png"))
-//		{
-//			this.version = "1.RV";
-//			Minecraft.setMinecraftVersion(1.9f);
-//		}
-		else if(zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png"))
-		{
-			this.version = "1.9+";
-			Minecraft.setMinecraftVersion(1.9f);
-		}
-		else if(zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png"))
-		{
-			this.version = "1.13+";
-			Minecraft.setMinecraftVersion(13f);
-		}
-		else
-		{
-			this.version = "1.12+";
-			Minecraft.setMinecraftVersion(12f);
-		}
-		
+
+		System.out.println("Texture pack version: " + version);
+
 		try
 		{
-			if (this.version == "1.4")
+			if (version == VERSION_4)
 				findTexture("terrain.png[0, 0]");
-			else if (this.version == "1.5")
+			else if (version == VERSION_5)
 			{
 				// Load each individual texture file?
 			}
@@ -176,7 +168,7 @@ public class TexturePack
 			}
 		*/
 			String path;
-			if(Minecraft.getMinecraftVersion() >= 1.6f)
+			if(version.getNumVersion() >= VERSIONS_6_TO_8.getNumVersion())
 				path = "assets/minecraft/textures/";
 			else
 				path = "";
@@ -294,9 +286,8 @@ public class TexturePack
 		{
 			PackTexture tex = findTexture(request); // find existing or load
 			
-			result = tex.find(request); // find existing or load
+			result = tex.find(request, version); // find existing or load
 			assert (result != null);
-			result.texturePackVersion = this.version;
 		//	loadedSubTextures.put(request, result);
 		}
 		
@@ -342,15 +333,16 @@ public class TexturePack
 		}
 		
 		// The name 'terrain' is a synonym for terrain.png
-		if (path.equals("terrain") && version == "1.4")  //MC 1.4 texture packs
+		if (path.equals("terrain") && version == VERSION_4) {  //MC 1.4 (or older) texture packs
 			path = "terrain.png";
-		else if (!path.contains("/") && !path.contains("\\") && version == "1.5") //MC 1.5 texture packs
+		} else if (!path.contains("/") && !path.contains("\\") && version == VERSION_5) { //MC 1.5 texture packs
 			path = "textures/blocks/" + path;
-		else if (!path.contains("/") && !path.contains("\\") && Minecraft.getMinecraftVersion() >= 13f) //MC 1.13+ texture packs
-			path = "assets/minecraft/textures/block/" + path;
-		else if (!path.contains("/") && !path.contains("\\") && Minecraft.getMinecraftVersion() >= 1.6f) //MC 1.6+ texture packs
+		}  else if (!path.contains("/") && !path.contains("\\") && (version == VERSIONS_6_TO_8 || version == VERSIONS_9_TO_11
+					|| version == VERSION_12)) { //MC 1.6-1.12 texture packs
 			path = "assets/minecraft/textures/blocks/" + path;
-		
+		} else if (!path.contains("/") && !path.contains("\\") && version.getNumVersion() >= VERSION_13.getNumVersion()) { //MC 1.13+ texture packs
+			path = "assets/minecraft/textures/block/" + path;
+		}
 		return new TextureRequest(path, params);
 	}
 	
@@ -453,10 +445,10 @@ public class TexturePack
 		return copy( img );
 	}
 	
-	public HashMap<String, BufferedImage> loadPatterns()
+	public Map<String, BufferedImage> loadPatterns()
 	{
-		HashMap<String, BufferedImage> patterns = new HashMap<String, BufferedImage>();
-		HashMap<String, String> codes = new HashMap<String, String>();  // TODO: Maybe populate this map from defaultBlockConfig file?
+		Map<String, BufferedImage> patterns = new HashMap<>();
+		Map<String, String> codes = new HashMap<>();  // TODO: Maybe populate this map from defaultBlockConfig file?
 		codes.put("banner_base.png", "base");
 		codes.put("base.png", "baseMask");
 		codes.put("border.png", "bo");
@@ -573,7 +565,7 @@ public class TexturePack
 		return zipStack;
 	}
 
-	public String getVersion()
+	public Version getVersion()
 	{
 		return version;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,7 +13,6 @@ import org.lwjgl.util.vector.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.Minecraft;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
@@ -21,6 +20,8 @@ import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+
+import static tectonicus.Version.VERSIONS_9_TO_11;
 
 public class GlassPane implements BlockType
 {
@@ -83,7 +84,7 @@ public class GlassPane implements BlockType
 		
 		if ((!hasNorth && !hasSouth && !hasEast && !hasWest) && (!north.isSolid() && !south.isSolid() && !east.isSolid() && !west.isSolid()))
 		{
-			if (Minecraft.getMinecraftVersion() >= 1.9f)
+			if (texture.texturePackVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion())
 			{
 				final float offSet = 1.0f / 16.0f;
 				SubMesh glassMesh = new SubMesh();

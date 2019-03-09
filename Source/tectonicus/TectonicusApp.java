@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,9 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import tectonicus.cache.BiomeCache;
@@ -37,6 +37,7 @@ import tectonicus.gui.Gui;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
+import tectonicus.util.Vector3l;
 import tectonicus.world.World;
 
 // TODO:
@@ -825,7 +826,8 @@ import tectonicus.world.World;
 public class TectonicusApp
 {
 	private Configuration args;
-	private CompositePrintStream newOut, newErr;
+	private CompositePrintStream newOut;
+	private CompositePrintStream newErr;
 	
 	private TectonicusApp(Configuration args)
 	{	
@@ -866,11 +868,10 @@ public class TectonicusApp
 		{
 			logFile.getAbsoluteFile().getParentFile().mkdirs();
 			
-			if (logFile.exists())
-				logFile.delete();
+			Files.deleteIfExists(logFile.toPath());
 			
 			PrintStream fileOut = new PrintStream( new FileOutputStream(logFile) );
-			
+
 			newOut = new CompositePrintStream(System.out, fileOut);
 			newErr = new CompositePrintStream(System.err, fileOut);
 			
@@ -943,9 +944,7 @@ public class TectonicusApp
 				
 				for (tectonicus.configuration.Map map : args.getMaps())
 				{
-					ArrayList<Player> players = World.loadPlayers(map.getWorldDir(), skinCache);
-			
-					//PlayerList ops = PlayerList.loadOps(map.getWorldDir());
+					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache);
 									
 					File mapDir = new File(args.outputDir(), map.getId());
 					File playerDir = new File(mapDir, "players.js");
@@ -953,13 +952,14 @@ public class TectonicusApp
 					File imagesDir = new File(args.outputDir(), "Images");
 					
 					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), "");
+					Vector3l spawnPosition = levelDat.getSpawnPosition();
 					
 					if (map.getDimension() == Dimension.Ender)
 					{
-						levelDat.setSpawnPosition(100, 49, 0);
+						spawnPosition = new Vector3l(100, 49, 0);
 					}
 					
-					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, iconAssembler, levelDat.getSpawnPosition());
+					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, iconAssembler, spawnPosition);
 				}
 				
 				skinCache.destroy();
@@ -1046,11 +1046,11 @@ public class TectonicusApp
 			"lwjgl64.dll"
 		};
 		
-		Map<String, String> force64BitMapping = new HashMap<String, String>();
+		Map<String, String> force64BitMapping = new HashMap<>();
 		force64BitMapping.put("liblwjgl64.so", "liblwjgl.so");
 		force64BitMapping.put("lwjgl64.dll", "lwjgl.dll");
 		
-		Map<String, String> force32BitMapping = new HashMap<String, String>();
+		Map<String, String> force32BitMapping = new HashMap<>();
 		force32BitMapping.put("liblwjgl.so", "liblwjgl64.so");
 		force32BitMapping.put("lwjgl.dll", "lwjgl64.dll");
 		
@@ -1061,7 +1061,6 @@ public class TectonicusApp
 		for (String f : files)
 		{
 			File outFile = new File(cacheDir, f);
-			//FileUtils.extractResource(f, outFile);
 			FileUtils.extractResource("Native/"+f, outFile);
 		}
 		
@@ -1087,15 +1086,15 @@ public class TectonicusApp
 		}
 		if (renameMap != null)
 		{
-			for (String src : renameMap.keySet())
+			for (Map.Entry<String, String> entry : renameMap.entrySet())
 			{
 				try
 				{
-					Files.copy(Paths.get(cacheDir.getPath(), src), Paths.get(cacheDir.getPath(), renameMap.get(src)), StandardCopyOption.REPLACE_EXISTING);
+					Files.copy(Paths.get(cacheDir.getPath(), entry.getKey()), Paths.get(cacheDir.getPath(), entry.getValue()), StandardCopyOption.REPLACE_EXISTING);
 				}
 				catch (Exception e)
 				{
-					throw new RuntimeException("Couldn't copy "+src, e);
+					throw new RuntimeException("Couldn't copy "+entry.getKey(), e);
 				}
 			}
 		}
@@ -1107,8 +1106,6 @@ public class TectonicusApp
 	
 	public static void main(String[] argArray) throws Exception
 	{
-	//	jsonWriteTest(new File("/Users/John/TectonicusTests/LayerTest/test.js"));
-		
 		ArgParser parser = new ArgParser(argArray);
 		String configFile = parser.getString("config", null);
 		

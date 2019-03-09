@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -49,6 +49,7 @@ import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
 import tectonicus.Util;
+import tectonicus.Version;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.BiomeCache;
@@ -58,6 +59,7 @@ import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.SignFilter;
+import tectonicus.exceptions.IncompatibleVersionException;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
@@ -81,11 +83,19 @@ import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
 import tectonicus.world.subset.WorldSubsetFactory;
 
+import static tectonicus.Version.VERSIONS_6_TO_8;
+import static tectonicus.Version.VERSIONS_9_TO_11;
+import static tectonicus.Version.VERSION_12;
+import static tectonicus.Version.VERSION_13;
+import static tectonicus.Version.VERSION_4;
+import static tectonicus.Version.VERSION_5;
+
+
 public class World implements BlockContext
 {
 	private static final int BATCH_SIZE = 100;
 	
-	private String textureVersion;
+	private Version textureVersion;
 	
 	private final Rasteriser rasteriser;
 	
@@ -97,7 +107,7 @@ public class World implements BlockContext
 	
 	private LevelDat levelDat;
 	
-	private ArrayList<Player> players;
+	private List<Player> players;
 	private PlayerSkinCache playerSkinCache;
 	
 	private List<ContainerEntity> chests;
@@ -173,7 +183,7 @@ public class World implements BlockContext
 			System.out.println("Loading level.dat");
 			levelDat = new LevelDat(Minecraft.findLevelDat(baseDir.toPath()), singlePlayerName);
 			
-			if (levelDat.getVersion() == 0)
+			if (levelDat.isAlpha())
 			{
 				throw new RuntimeException("Error: Alpha map format no longer supported");
 			}
@@ -191,11 +201,33 @@ public class World implements BlockContext
 		System.out.println("Loading textures");
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars);
 		this.textureVersion = texturePack.getVersion();
+
+		String worldVersion = levelDat.getVersion();
+		System.out.println("World version: " + worldVersion);
+		if (worldVersion != null && (textureVersion.equals(VERSIONS_9_TO_11) || textureVersion.equals(VERSION_12) || textureVersion.equals(VERSION_13))) {
+			switch (worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "") {
+				case "9":
+				case "10":
+				case "11":
+					if (!textureVersion.equals(VERSIONS_9_TO_11))
+						throw new IncompatibleVersionException(textureVersion, worldVersion);
+					break;
+				case "12":
+					if (!textureVersion.equals(VERSION_12))
+						throw new IncompatibleVersionException(textureVersion, worldVersion);
+					break;
+				case "13":
+					if (!textureVersion.equals(VERSION_13))
+						throw new IncompatibleVersionException(textureVersion, worldVersion);
+					break;
+				default:
+			}
+		}
 		
 		System.out.println("Loading players");
 		players = loadPlayers(worldDir, playerSkinCache);
 		
-		chests = new ArrayList<ContainerEntity>();
+		chests = new ArrayList<>();
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(dimensionDir, biomeCache, regionCache);
@@ -244,15 +276,15 @@ public class World implements BlockContext
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
 		
-		if (useDefaultBlocks && this.textureVersion == "1.4")
+		if (useDefaultBlocks && this.textureVersion == VERSION_4)
 			parser.parse("defaultBlockConfigMC1.4.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == "1.5")
+		else if (useDefaultBlocks && this.textureVersion == VERSION_5)
 			parser.parse("defaultBlockConfigMC1.5.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == "1.678")
+		else if (useDefaultBlocks && this.textureVersion == VERSIONS_6_TO_8)
 			parser.parse("defaultBlockConfigMC1.8.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == "1.9+")
+		else if (useDefaultBlocks && this.textureVersion == VERSIONS_9_TO_11)
 			parser.parse("defaultBlockConfigMC1.9.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == "1.12+")
+		else if (useDefaultBlocks && this.textureVersion == VERSION_12)
 			parser.parse("defaultBlockConfigMC1.12.xml", registry);
 		else if (useDefaultBlocks)
 			parser.parse("defaultBlockConfig.xml", registry);
@@ -952,13 +984,13 @@ public class World implements BlockContext
 	}
 	
 	
-	public static ArrayList<Player> loadPlayers(File worldDir, PlayerSkinCache playerSkinCache)
+	public static List<Player> loadPlayers(File worldDir, PlayerSkinCache playerSkinCache)
 	{
 		File playersDir = Minecraft.findPlayersDir(worldDir);
 		
 		System.out.println("Loading players from "+playersDir.getAbsolutePath());
 		
-		ArrayList<Player> players = new ArrayList<Player>();
+		ArrayList<Player> players = new ArrayList<>();
 		File[] playerFiles = playersDir.listFiles();
 		if (playerFiles != null)
 		{

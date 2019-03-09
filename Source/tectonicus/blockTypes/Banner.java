@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,8 +13,8 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
@@ -41,16 +41,17 @@ public class Banner implements BlockType
 	
 	private final String name;
 	
-	private final HashMap<String, BufferedImage> patternImages;
+	private final Map<String, BufferedImage> patternImages;
 	
 	private SubTexture bannerSideTexture;
-	private SubTexture sideTexture, sideTexture2;
+	private SubTexture sideTexture;
+	private SubTexture sideTexture2;
 	private SubTexture edgeTexture;
 	private SubTexture topTexture;
 	
 	private final boolean hasPost;
 	
-	public Banner(String name, SubTexture texture, final boolean hasPost, HashMap<String, BufferedImage> patternImages)
+	public Banner(String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
 	{
 		this.name = name;
 		this.hasPost = hasPost;
@@ -97,7 +98,7 @@ public class Banner implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		int baseColor = 0;		
-		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		String xyz = "x" + x + "y" + y + "z" + z;
 		BannerEntity entity = rawChunk.getBanners().get(xyz);
 		baseColor = entity.getBaseColor();
 		List<Pattern> patterns = entity.getPatterns();

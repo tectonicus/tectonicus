@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,6 +23,9 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSION_4;
+import static tectonicus.Version.VERSION_5;
+
 public class TripwireHook implements BlockType
 {	
 	private final String name;
@@ -36,7 +39,7 @@ public class TripwireHook implements BlockType
 		this.base = base;
 		
 		final float texel;
-		if (base.texturePackVersion == "1.4")
+		if (base.texturePackVersion == VERSION_4)
 			texel = 1.0f / 16.0f / 16.0f;
 		else
 			texel = 1.0f / 16.0f;
@@ -45,7 +48,7 @@ public class TripwireHook implements BlockType
 		this.hookRingSide = new SubTexture(hook.texture, hook.u0+texel*5, hook.v0+texel*3, hook.u0+texel*7, hook.v1-texel*7);
 		this.hookPole = new SubTexture(hook.texture, hook.u0+texel*7, hook.v0+texel*10, hook.u0+texel*9, hook.v1);
 		
-		if (base.texturePackVersion == "1.4" || base.texturePackVersion == "1.5")
+		if (base.texturePackVersion == VERSION_4 || base.texturePackVersion == VERSION_5)
 			this.tripwire = new SubTexture(tripwire.texture, tripwire.u0, tripwire.v0+texel*2, tripwire.u1, tripwire.v0+texel*4);
 		else
 			this.tripwire = new SubTexture(tripwire.texture, tripwire.u0, tripwire.v0+texel*6, tripwire.u1, tripwire.v0+texel*8);

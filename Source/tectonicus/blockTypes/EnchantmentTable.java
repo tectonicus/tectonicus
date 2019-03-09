@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,6 +22,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import static tectonicus.Version.VERSION_4;
+
 public class EnchantmentTable implements BlockType
 {
 	private final String name;
@@ -32,7 +34,7 @@ public class EnchantmentTable implements BlockType
 	{
 		this.name = name;
 		
-		if (side.texturePackVersion != "1.4")
+		if (side.texturePackVersion != VERSION_4)
 		{
 			final float topTexel = 1.0f / top.texture.getHeight();
 			final float sideTexel = 1.0f / side.texture.getHeight();

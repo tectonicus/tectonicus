@@ -7,3 +7,5 @@ gradle-app.setting
 org.eclipse.jdt.core.prefs
 .idea
 *.iml
+/TectonicusLog.txt
+/out

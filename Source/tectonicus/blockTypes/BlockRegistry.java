@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -37,6 +37,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import tectonicus.Minecraft;
+import tectonicus.Version;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.rasteriser.Rasteriser;
@@ -44,6 +45,9 @@ import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.Vector3f;
+
+import static tectonicus.Version.VERSION_13;
+
 
 public class BlockRegistry
 {
@@ -292,7 +296,7 @@ public class BlockRegistry
 
 				String texturePath;
 
-				if (texturePack.getVersion() == "1.13+")
+				if (texturePack.getVersion() == VERSION_13)
 					texturePath = StringUtils.removeStart(combineMap.get(texture), "block/") + ".png";
 				else
 					texturePath = StringUtils.removeStart(combineMap.get(texture), "blocks/") + ".png";
