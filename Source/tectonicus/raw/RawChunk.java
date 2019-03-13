@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -587,8 +587,11 @@ public class RawChunk
 							CompoundTag paletteEntry = (CompoundTag)paletteList.get((int)paletteIndex);
 
 							String blockName = NbtUtil.getChild(paletteEntry, "Name", StringTag.class).getValue();
+							CompoundTag properties = NbtUtil.getChild(paletteEntry, "Properties", CompoundTag.class);
+							BlockProperties blockState = NbtUtil.getProperties(properties);
 
 							newSection.blockNames[x][y][z] = blockName;
+							newSection.blockStates[x][y][z] = blockState;
 						}
 
 						newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
@@ -869,6 +872,36 @@ public class RawChunk
 		s.blockNames[x][localY][z] = blockName;
 	}
 
+	public Map<String, String> getBlockState(final int x, final int y, final int z)
+	{
+		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+			return null;
+
+		final int sectionY = y / MAX_SECTIONS;
+		final int localY = y % SECTION_HEIGHT;
+
+		Section s = sections[sectionY];
+		if (s != null)
+			return s.blockStates[x][localY][z].getProperties();
+		else
+			return null;
+	}
+
+	public void setBlockState(final int x, final int y, final int z, final BlockProperties blockState)
+	{
+		final int sectionY = y / MAX_SECTIONS;
+		final int localY = y % SECTION_HEIGHT;
+
+		Section s = sections[sectionY];
+		if (s == null)
+		{
+			s = new Section();
+			sections[sectionY] = s;
+		}
+
+		s.blockStates[x][localY][z] = blockState;
+	}
+
 	public void setSkyLight(final int x, final int y, final int z, final byte val)
 	{
 		final int sectionY = y / MAX_SECTIONS;
@@ -1112,6 +1145,7 @@ public class RawChunk
 		public int[][][] blockIds;
 		public byte[][][] blockData;
 		public String[][][] blockNames;
+		public BlockProperties[][][] blockStates;
 
 		public byte[][][] skylight;
 		public byte[][][] blocklight;
@@ -1121,6 +1155,7 @@ public class RawChunk
 			blockIds = new int[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blockData = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blockNames = new String[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+			blockStates = new BlockProperties[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 
 			skylight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blocklight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];

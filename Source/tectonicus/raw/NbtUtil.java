@@ -9,7 +9,7 @@
 
 package tectonicus.raw;
 
-import java.util.List;
+import java.util.*;
 
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -107,5 +107,18 @@ public class NbtUtil
 			return tag.getValue();
 		else
 			return defaultValue;
+	}
+
+	public static BlockProperties getProperties(CompoundTag properties) {
+		if (properties != null) {
+			Map<String, String> props = new HashMap<>();
+			for (Map.Entry<String, Tag> entry : properties.getValue().entrySet()) {
+				String key = entry.getKey();
+				props.put(key, getString(properties, key, ""));
+			}
+			return new BlockProperties(props);
+		} else {
+			return new BlockProperties(Collections.emptyMap());
+		}
 	}
 }
