@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,107 +9,117 @@
 
 package tectonicus.configuration;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public interface Configuration
 {
-	public enum Mode
+	@Getter
+	@RequiredArgsConstructor
+	enum Mode
 	{
-		CommandLine,
-		Gui,
-		Interactive,
-		ExportPlayers,
-		RenderViews,
-		Profile;
+		CMD("Command Line"),
+		GUI("Gui"),
+		INTERACTIVE("Interactive"),
+		PLAYERS("Export Players"),
+		VIEWS("Render Views"),
+		PROFILE("Profile");
+
+		private final String name;
 	}
 	
-	public enum RasteriserType
+	enum RasteriserType
 	{
-		Lwjgl,
-		Processing,
-		Jpct
-	};
+		LWJGL,
+		PROCESSING,
+		JPCT
+	}
 	
-	public enum RenderStyle
+	enum RenderStyle
 	{
 		Regular,
 		Cave,
 		ExploredCaves,
 		Nether
-	};
+	}
 	
-	public enum Dimension
+	enum Dimension
 	{
 		Terra,
 		Nether,
 		Ender
 	}
 	
-	public void printActive();
+	void printActive();
 	
-	public Mode getMode();
+	Mode getMode();
 	
-	public RasteriserType getRasteriserType();
+	RasteriserType getRasteriserType();
 	
-	public boolean extractLwjglNatives();
+	boolean extractLwjglNatives();
 	
-	public boolean eraseOutputDir();
+	boolean eraseOutputDir();
 	
-	public File outputDir();
-	public File cacheDir();
+	File outputDir();
+	File cacheDir();
 	
-	public boolean useCache();
+	boolean useCache();
 	
-	public File getLogFile();
+	File getLogFile();
 	
-	public File minecraftJar();
+	File minecraftJar();
 	
-	public File texturePack();
+	File texturePack();
 	
-	public String getOutputHtmlName();
+	String getOutputHtmlName();
 	
-	public String getDefaultSkin();
+	String getDefaultSkin();
 	
-	public int colourDepth();
+	int colourDepth();
 	
-	public int alphaBits();
+	int alphaBits();
 	
-	public int numSamples();
+	int numSamples();
 	
-	public int numZoomLevels();
+	int numZoomLevels();
 	
-	public int maxTiles();
+	int maxTiles();
 	
-	public boolean showSpawn();
+	boolean showSpawn();
 	
-	public boolean areSignsInitiallyVisible();
+	boolean areSignsInitiallyVisible();
 	
-	public boolean arePlayersInitiallyVisible();
+	boolean arePlayersInitiallyVisible();
 	
-	public boolean arePortalsInitiallyVisible();
+	boolean arePortalsInitiallyVisible();
 	
-	public boolean areBedsInitiallyVisible();
+	boolean areBedsInitiallyVisible();
 	
-	public boolean isSpawnInitiallyVisible();
+	boolean isSpawnInitiallyVisible();
 	
-	public boolean areViewsInitiallyVisible();
+	boolean areViewsInitiallyVisible();
 	
-	public boolean isVerbose();
+	boolean isVerbose();
 	
-	public boolean forceLoadAwt();
+	boolean forceLoadAwt();
 	
-	public boolean force32BitNatives();
+	boolean force32BitNatives();
 	
-	public boolean force64BitNatives();
+	boolean force64BitNatives();
 	
-	public int tileSize();
+	int tileSize();
 	
-	public int getNumDownsampleThreads();
+	int getNumDownsampleThreads();
 	
-	public String getSinglePlayerName();
+	String getSinglePlayerName();
+
+	Path getUpdateToLeaflet();
 	
-	public int numMaps();
-	public Map getMap(final int index);
-	public List<Map> getMaps();
+	int numMaps();
+	Map getMap(final int index);
+	List<Map> getMaps();
 }

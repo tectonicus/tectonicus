@@ -1680,16 +1680,27 @@ public class TileRenderer
 		// Write default player icon
 		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		
-		// And pull out the jQuery code
+		//Extract Leaflet/Vue resources
+		extractMapResources(exportDir);
+
+		ArrayList<String> scriptResources = new ArrayList<>();
+		scriptResources.add("marker.js");
+		scriptResources.add("controls.js");
+		scriptResources.add("minecraftProjection.js");
+		scriptResources.add("main.js");
+		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources);
+	}
+
+	public static void extractMapResources(File exportDir) {
 		File scriptsDir = new File(exportDir, "Scripts");
-		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptsDir.mkdirs();
+		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptImagesDir.mkdirs();
-		
+
 		FileUtils.extractResource("vue.min.js", new File(scriptsDir, "vue.min.js"));
-		
+
 		FileUtils.extractResource("styles.css", new File(scriptsDir, "styles.css"));
-		
+
 		FileUtils.extractResource("math.js", new File(scriptsDir, "math.js"));
 		FileUtils.extractResource("leaflet.js", new File(scriptsDir, "leaflet.js"));
 		FileUtils.extractResource("leaflet.css", new File(scriptsDir, "leaflet.css"));
@@ -1701,15 +1712,8 @@ public class TileRenderer
 		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
 		FileUtils.extractResource("Images/marker-icon-2x.png", new File(scriptImagesDir, "marker-icon-2x.png"));
 		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));
-		
-		ArrayList<String> scriptResources = new ArrayList<>();
-		scriptResources.add("marker.js");
-		scriptResources.add("controls.js");
-		scriptResources.add("minecraftProjection.js");
-		scriptResources.add("main.js");
-		outputMergedJs(new File(scriptsDir, "tectonicus.js"), scriptResources);
 	}
-	
+
 	public static void writeImage(BufferedImage img, final int width, final int height, File file)
 	{
 		try

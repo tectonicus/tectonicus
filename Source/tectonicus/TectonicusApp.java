@@ -10,18 +10,18 @@
 package tectonicus;
 
 import java.awt.Toolkit;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.*;
+import java.net.URL;
+import java.nio.file.*;
 import java.security.MessageDigest;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
@@ -867,10 +867,8 @@ public class TectonicusApp
 		try
 		{
 			logFile.getAbsoluteFile().getParentFile().mkdirs();
-			
-			Files.deleteIfExists(logFile.toPath());
-			
-			PrintStream fileOut = new PrintStream( new FileOutputStream(logFile) );
+
+			PrintStream fileOut = new PrintStream( new FileOutputStream(logFile) );  //TODO: Should we switch to a logging framework to do this?
 
 			newOut = new CompositePrintStream(System.out, fileOut);
 			newErr = new CompositePrintStream(System.err, fileOut);
@@ -889,16 +887,15 @@ public class TectonicusApp
 		newOut.close();
 		newErr.close();
 	}
-		
-	private void run()
+
+	public Integer run()
 	{
 		InteractiveRenderer interactiveRenderer = null;
 		TileRenderer tileRenderer = null;
 		try
 		{
 			MessageDigest hashAlgorithm = MessageDigest.getInstance("sha1");
-			
-			if (args.getMode() == Mode.Interactive)
+			if (args.getMode() == Mode.INTERACTIVE)
 			{
 				interactiveRenderer = new InteractiveRenderer(args, 512, 512);
 				
@@ -915,7 +912,7 @@ public class TectonicusApp
 				
 				interactiveRenderer.destroy();
 			}
-			else if (args.getMode() == Mode.CommandLine)
+			else if (args.getMode() == Mode.CMD)
 			{
 				// Do this first before we attempt to load any caches
 				if (args.eraseOutputDir())
@@ -929,13 +926,13 @@ public class TectonicusApp
 				
 				tileRenderer.output();
 			}
-			else if (args.getMode() == Mode.RenderViews)
+			else if (args.getMode() == Mode.VIEWS)
 			{
 				tileRenderer = new TileRenderer(args, new CommandLineOutput(), hashAlgorithm);
 				
 				tileRenderer.outputViews();				
 			}
-			else if (args.getMode() == Mode.ExportPlayers)
+			else if (args.getMode() == Mode.PLAYERS)
 			{
 				final Date startTime = new Date();
 				
@@ -968,12 +965,12 @@ public class TectonicusApp
 				String time = Util.getElapsedTime(startTime, endTime);
 				System.out.println("Player export took "+time);
 			}
-			else if (args.getMode() == Mode.Gui)
+			else if (args.getMode() == Mode.GUI)
 			{
 				Gui gui = new Gui(hashAlgorithm);
 				gui.display();
 			}
-			else if (args.getMode() == Mode.Profile)
+			else if (args.getMode() == Mode.PROFILE)
 			{
 				/*
 				BiomeCache biomeCache = new NullBiomeCache();
@@ -987,7 +984,7 @@ public class TectonicusApp
 				Chunk c = region.loadChunk(chunkCoord, biomeCache, blockFilter);
 				
 				// createGeometry profiling
-				Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.Lwjgl, DisplayType.Offscreen, 512, 312, 24, 8, 16, 4);
+				Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Offscreen, 512, 312, 24, 8, 16, 4);
 				NullBlockMaskFactory mask = new NullBlockMaskFactory();
 				TexturePack texturePack = new TexturePack(rasteriser, args.minecraftJar(), args.texturePack());
 				World world = new World(rasteriser, args.worldDir(), args.getDimensionDir(), args.minecraftJar(), args.texturePack(), biomeCache, hashAlgorithm, "Player", new FullWorldSubsetFactory());
@@ -1033,6 +1030,8 @@ public class TectonicusApp
 		}
 		
 		System.out.println("Finished");
+
+		return 0;
 	}
 	
 	public static void unpackLwjgl(final boolean force32BitNatives, final boolean force64BitNatives)
@@ -1103,60 +1102,120 @@ public class TectonicusApp
 		System.setProperty("org.lwjgl.librarypath", nativePath);
 		System.setProperty("org.lwjgl.opengl.Display.allowSoftwareOpenGL", "true");
 	}
-	
+
 	public static void main(String[] argArray) throws Exception
 	{
-		ArgParser parser = new ArgParser(argArray);
-		String configFile = parser.getString("config", null);
+		//Parse command line to get config file
+		MutableConfiguration m = new MutableConfiguration();
+		CommandLine cmd = new CommandLine(m);
+		cmd.setCaseInsensitiveEnumValuesAllowed(true).parseWithHandler(new CommandLine.RunFirst(), argArray);
+		Path configFile = m.getConfigFile();
 		
-		MutableConfiguration args = null;
+		MutableConfiguration args = new MutableConfiguration();
 		if (configFile != null)
 		{
-			// Load config from xml
-			args = XmlConfigurationParser.parseConfiguration(new File(configFile));
-			
-			final String modeStr = parser.getString("mode", "");
-			if (modeStr.equalsIgnoreCase("players"))
-				args.setMode(Mode.ExportPlayers);
-			else if (modeStr.equalsIgnoreCase("views"))
-				args.setMode(Mode.RenderViews);
-			else if (modeStr.equalsIgnoreCase("interactive"))
-				args.setMode(Mode.Interactive);
+			// Load config from xml first
+			args = XmlConfigurationParser.parseConfiguration(configFile.toFile());
 		}
-		else
-		{
-			// Parse config from command line
-			args = CommandLineParser.parseCommandLine(argArray);
+
+		// Load config from command line second.  Command line options will override config file options
+		CommandLine commandLine = new CommandLine(args);
+		commandLine.setCaseInsensitiveEnumValuesAllowed(true).parseWithHandler(new CommandLine.RunFirst(), argArray);
+		if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
+			System.exit(0);
 		}
-		
-		if (args != null)
+
+		if (args.getUpdateToLeaflet() != null) {
+			updateToLeaflet(args.getUpdateToLeaflet());
+			System.exit(0);
+		}
+
+		TectonicusApp app = new TectonicusApp(args);
+
+		args.printActive();
+
+		// Workaround for sun bug 6539705 ( http://bugs.sun.com/view_bug.do?bug_id=6539705 )
+		// Trigger the load of the awt libraries before we load lwjgl
+		Toolkit.getDefaultToolkit();
+
+		if (args.forceLoadAwt())
 		{
-			TectonicusApp app = new TectonicusApp(args);
-			
-			args.printActive();
-			
-			// Workaround for sun bug 6539705 ( http://bugs.sun.com/view_bug.do?bug_id=6539705 )
-			// Trigger the load of the awt libraries before we load lwjgl
-			Toolkit.getDefaultToolkit();
-			
-			if (args.forceLoadAwt())
+			System.loadLibrary("awt");
+		}
+
+		if (args.extractLwjglNatives())
+			unpackLwjgl(args.force32BitNatives(), args.force64BitNatives());
+
+		app.run();
+
+		app.closeLog();
+	}
+
+
+	private static void updateToLeaflet(Path renderDir) {
+		if (renderDir.resolve("Scripts").toFile().exists()) {
+			TileRenderer.extractMapResources(renderDir.toFile());
+			writeUpdatedHtmlFile(renderDir.toFile());
+			System.out.println("Finished updating map " + renderDir + " to use Leaflet.");
+		} else {
+			System.err.println(renderDir + " is not a Tectonicus map render directory.");
+		}
+		System.exit(1);
+	}
+
+	private static void writeUpdatedHtmlFile(final File exportDir) {
+
+		Path htmlFile = null;
+		List<String> mapLines = new ArrayList<>();
+		try (Stream<Path> htmlFiles = Files.list(exportDir.toPath()).filter(path -> path.toString().endsWith(".html"))) {
+			 htmlFile = htmlFiles.findFirst().orElse(Paths.get(""));
+			 mapLines = Files.readAllLines(htmlFile).stream().filter(str -> str.contains("Map") && str.contains(".js")
+					 && !str.contains("Scripts")).collect(Collectors.toList());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		File outputHtmlFile = new File(exportDir, htmlFile.getFileName().toString());
+		System.out.println("\twriting html to "+outputHtmlFile.getAbsolutePath());
+
+		URL url = TectonicusApp.class.getClassLoader().getResource("mapWithSigns.html");
+		try (Scanner scanner = new Scanner(url.openStream());
+			 PrintWriter writer = new PrintWriter(new FileOutputStream(outputHtmlFile)))
+		{
+
+			while (scanner.hasNext())
 			{
-				System.loadLibrary("awt");
+				String line = scanner.nextLine();
+				StringBuilder outLine = new StringBuilder();
+
+				ArrayList<Util.Token> tokens = Util.split(line);
+
+				while (!tokens.isEmpty())
+				{
+					Util.Token first = tokens.remove(0);
+					if (first.isReplaceable)
+					{
+						if (first.value.equals("includes"))
+						{
+							for (String l : mapLines) {
+								outLine.append(l).append("\n");
+							}
+						}
+					}
+					else
+					{
+						outLine.append(first.value);
+					}
+				}
+
+				writer.write(outLine.append("\n").toString());
 			}
-			
-			if (args.extractLwjglNatives())
-				unpackLwjgl(args.force32BitNatives(), args.force64BitNatives());
-			
-			app.run();
-			
-			app.closeLog();
+
+			writer.flush();
 		}
-		else
+		catch (Exception e)
 		{
-			BuildInfo.print();
-			MutableConfiguration.printUsage();
+			e.printStackTrace();
 		}
-		
 	}
 	
 	// 5m 42s vs 5m 47s

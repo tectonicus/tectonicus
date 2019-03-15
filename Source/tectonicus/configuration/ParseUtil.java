@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -26,19 +26,19 @@ public class ParseUtil
 	{
 		modeStr = modeStr.toLowerCase();
 		
-		Mode mode = Mode.CommandLine;
+		Mode mode = Mode.CMD;
 		if (modeStr.equals("interactive"))
-			mode = Mode.Interactive;
+			mode = Mode.INTERACTIVE;
 		else if (modeStr.equals("gui"))
-			mode = Mode.Gui;
+			mode = Mode.GUI;
 		else if (modeStr.equals("cmd"))
-			mode = Mode.CommandLine;
+			mode = Mode.CMD;
 		else if (modeStr.equals("players"))
-			mode = Mode.ExportPlayers;
+			mode = Mode.PLAYERS;
 		else if (modeStr.equals("views"))
-			mode = Mode.RenderViews;
+			mode = Mode.VIEWS;
 		else if (modeStr.equals("profile"))
-			mode = Mode.Profile;
+			mode = Mode.PROFILE;
 		
 		return mode;
 	}
@@ -81,12 +81,12 @@ public class ParseUtil
 	{
 		rasteriserStr = rasteriserStr.toLowerCase();
 		
-		RasteriserType rasteriser = RasteriserType.Lwjgl;
+		RasteriserType rasteriser = RasteriserType.LWJGL;
 		
 		if (rasteriserStr.equals("lwjgl"))
-			rasteriser = RasteriserType.Lwjgl;
+			rasteriser = RasteriserType.LWJGL;
 		else if (rasteriserStr.equals("processing"))
-			rasteriser = RasteriserType.Processing;
+			rasteriser = RasteriserType.PROCESSING;
 		
 		return rasteriser;
 	}

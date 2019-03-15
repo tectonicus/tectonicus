@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,71 +10,117 @@
 package tectonicus.configuration;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
+import lombok.Data;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import tectonicus.Log;
 
-public class MutableConfiguration implements Configuration
+@Data
+@Command(name = "java -jar Tectonicus.jar", description = "Tectonicus a super cool app for rendering minecraft worlds.",
+		resourceBundle = "commandLine", mixinStandardHelpOptions = true, version = "Tectonicus 2.26.01")
+public class MutableConfiguration implements Configuration, Callable<MutableConfiguration>
 {
+	@Option(names = {"-c", "--config", "config"}, paramLabel = "<String>")
+	private Path configFile;
+
+	@Option(names = {"-m", "--mode", "mode"}, paramLabel = "<string>")
 	private Mode mode;
-	
+
+	@Option(names = {"-r", "--rasterizer", "rasterizer", "rasteriser"}, paramLabel = "<string>")
 	private RasteriserType rasteriserType;
-	
+
+	@Option(names = {"-x", "--extractNatives", "extractNatives"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean extractLwjglNatives;
-	
+
+	@Option(names = {"-d", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean eraseOutputDir;
-	
+
+	@Option(names = {"-l", "--logFile", "logFile"}, paramLabel = "<String>")
 	private File logFile;
-	
+
+	@Option(names = {"-o", "--outputDir", "outputDir"}, paramLabel = "<String>")
 	private File outputDir;
-	
+
+	@Option(names = {"-b", "--useCache", "useCache"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useCache;
+
+	@Option(names = {"--cacheDir", "cacheDir"}, paramLabel = "<String>")
 	private File cacheDir;
-	
+
+	@Option(names = {"-j", "--minecraftJar", "minecraftJar"}, paramLabel = "<String>")
 	private File minecraftJar;
+
+	@Option(names = {"-t", "--texturePack", "texturePack"}, paramLabel = "<String>")
 	private File texturePack;
-	
+
+	@Option(names = {"-p", "--useOldColorPalette", "useOldColorPalette"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useOldColorPalette;
-	
+
+	@Option(names = {"-f", "--outputHtmlName", "outputHtmlName"}, paramLabel = "<string>")
 	private String outputHtmlName;
+
+	@Option(names = {"-s", "--defaultSkin", "defaultSkin"}, paramLabel = "<string>")
 	private String defaultSkin;
-	
+
+	@Option(names = {"--signsInitiallyVisible", "signsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean signsInitiallyVisible;
+	@Option(names = {"--playersInitiallyVisible", "playersInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean playersInitiallyVisible;
+	@Option(names = {"--portalsInitiallyVisible", "portalsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean portalsInitiallyVisible;
+	@Option(names = {"--bedsInitiallyVisible", "bedsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean bedsInitiallyVisible;
+	@Option(names = {"--viewsInitiallyVisible", "viewsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean viewsInitiallyVisible;
+	@Option(names = {"--spawnInitiallyVisible", "spawnInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean spawnInitiallyVisible;
-	
+
+	@Option(names = {"-w", "--showSpawn", "showSpawn"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean showSpawn;
-	
+
+	@Option(names = {"-v", "--verbose", "verbose"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean isVerbose;
-	
+
+	@Option(names = {"-k", "--tileSize", "tileSize"}, paramLabel = "<integer>")
 	private int tileSize;
-	
+
+	@Option(names = {"--maxTiles", "maxTiles"}, paramLabel = "<integer>")
 	private int maxTiles;
-	
+
+	@Option(names = {"--colorDepth", "colorDepth", "colourDepth"}, paramLabel = "<integer>")
 	private int colourDepth;
+	@Option(names = {"--alphaBits", "alphaBits"}, paramLabel = "<integer>")
 	private int alphaBits;
+	@Option(names = {"--numSamples", "numSamples"}, paramLabel = "<integer>")
 	private int numSamples;
-	
+
+	@Option(names = {"-z", "--numZoomLevels", "numZoomLevels"}, paramLabel = "<integer>")
 	private int numZoomLevels;
-	
+
+	@Option(names = {"--numDownsampleThreads", "numDownsampleThreads"}, paramLabel = "<integer>")
 	private int numDownsampleThreads;
-	
+
+
 	private boolean forceLoadAwt;
 	private boolean force32BitNatives;
 	private boolean force64BitNatives;
-	
+
 	private String singlePlayerName;
+
+	@Option(names = {"-u", "--updateToLeaflet"}, paramLabel = "<String>")
+	private Path updateToLeaflet;
 	
-	private ArrayList<MutableMap> maps;
+	private List<MutableMap> maps;
 	
 	public MutableConfiguration()
 	{
-		mode = Mode.CommandLine;
-		rasteriserType = RasteriserType.Lwjgl;
+		mode = Mode.CMD;
+		rasteriserType = RasteriserType.LWJGL;
 		extractLwjglNatives = true;
 		showSpawn = true;
 		tileSize = 512;
@@ -91,18 +137,21 @@ public class MutableConfiguration implements Configuration
 		viewsInitiallyVisible = true;
 		logFile = new File("./TectonicusLog.txt");
 		outputHtmlName = "map.html";
-		useOldColorPalette = false;
 		defaultSkin = "steve";
 		numDownsampleThreads = 1;
 		singlePlayerName = "Player";
-		maps = new ArrayList<MutableMap>();
+		maps = new ArrayList<>();
 	}
-	
+
+	@Override
+	public MutableConfiguration call() {
+		return this;
+	}
 	
 	public void printActive()
 	{
 		System.out.println("Settings:");
-		System.out.println("\tmode:"+getMode());
+		System.out.println("\tmode:"+getMode().getName());
 		System.out.println("\trasteriser:"+getRasteriserType());
 		System.out.println("\toutputDir:"+outputDir.getAbsolutePath());
 		System.out.println("\tuseCache:"+useCache());
@@ -173,69 +222,7 @@ public class MutableConfiguration implements Configuration
 		
 		System.out.println();
 	}
-	
-	public static void printUsage()
-	{
-		System.out.println("Command line arguments:");
-		System.out.println("arguments are specified as key=value in any order");
-		
-		// People can't be trusted with this, so make it a hidden option
-		//System.out.println("'cacheDir'                - path to a directory to cache rendering info in. Optional, defaults to a subdir within the output directory");
-		
-		System.out.println("'alphaBits'               - number of alpha bits for output. Specify 8 or 0 for off (default 8)");
-		System.out.println("'bedsInitiallyVisible'    - specifies whether bed markers are initially visible or not. Choose 'true' or 'false', default 'true'.");
-		System.out.println("'cacheDir'                - specify a different directory for the cache files. Use with caution! Should be an empty directory as it may be deleted. Defaults to a subdirectory in the output dir.");
-		System.out.println("'cameraAngle'             - specifies the angle to rotate the camera by, in degrees. 0 puts north at the top, 90 to put east at the top, etc. Defaults to 45, which puts NE at the top");
-		System.out.println("'cameraElevation'         - specifies the angle of elevation for the camera, in degrees. 0 is looking horizontally, 90 is looking directly down. Defaults to 45. Choose 30 for a more traditional isometric view.");
-		System.out.println("'closestZoomSize'         - specifies how close the camera is for the highest-detail zoom level. Higher numbers will produce maps which cannot be zoomed in as much, but will take up less disk space. Defaults to 12");
-		System.out.println("'colourDepth'             - colour depth for rendering. Specify 24 or 16 (default 24)");
-		System.out.println("'dimension'               - dimension to render. 'terra' for the regular world, or 'nether' for the nether dimesion. Default 'terra'");
-		System.out.println("'eraseOutputDir           - specify 'true' to erase the entire output directory and start from scratch");
-		System.out.println("'imageFormat'             - format to use when outputing images. Specify 'png', 'jpg' or 'gif'. Default is png");
-		System.out.println("'imageCompressionLevel'   - sets the compression level for output images (jpeg only). Specify a number between 1.0 and 0.1. Default 0.95");
-		System.out.println("'lighting'                - lighting style to render with. Possible values are 'day' 'night' or 'none'. Defaults to 'day'");
-		System.out.println("'logFile                  - sets the file for the output log. Defaults to './TectonicusLog.txt'");
-		System.out.println("'minecraftJar'            - path to your client minecraft jar, for terrain texture. If not specified, will attempt to find it in your AppData dir");
-		System.out.println("'mode'                    - 'cmd' for command line, 'gui' for gui, 'players' for just player info export, 'views' to just render views");
-		System.out.println("'numZoomLevels'           - how many different levels of zoom to generate");
-		System.out.println("'numSamples'              - specifies the number of samples for antialiasing. Defaults to 4 (high quality), specify 0 for no antialiasing");
-		System.out.println("'numDownsampleThreads     - specifies the number of threads to use while downsampling. Defaults to the number of cores your machine has");
-		System.out.println("'outputDir'               - path to a directory to output the rendered map");
-		System.out.println("'outputHtmlName'          - sets the name for the map html file. Defaults to 'map.html'");
-		System.out.println("'players'                 - set whether to export players or not. Choose 'all', 'none', 'ops', 'whitelist' or 'blacklist'. 'ops' only exports positions for players with op privileges, whitelist only exports players in the filter file, blacklist excludes players in the filter file");
-		System.out.println("'playerFilterFile'        - specify the whitelist or blacklist file for use with players=whitelist or players=blacklist. File should be one player name per line (same format as ops file)");
-		System.out.println("'portals'                 - specify whether portals should be exported or not. Choose 'all' or 'none'. Default 'all'");
-		System.out.println("'playersInitiallyVisible' - sets whether player markers are initially visible or hidden. Choose 'true' or 'false', default true");
-		System.out.println("'portalsInitiallyVisible' - sets whether portal markers are initially visible or hidden. Choose 'true' or 'false', default true");
-		System.out.println("'renderStyle'             - drawing style, 'regular' for normal, 'cave' for cave style, or 'nether' for nether. Defaults to 'regular'");
-		System.out.println("'signs'                   - set whether to export signs or not. Choose 'none', 'special' or 'all'. 'Special' only exports signs which begin and end with - ! ~ or =. Default 'special'");
-		System.out.println("'showSpawn'               - show an icon for the spawn position. Choose 'true' or 'false', default 'true'.");
-		System.out.println("'spawnInitiallyVisible    - sets whether the spawn marker is initially visible");
-		System.out.println("'signsInitiallyVisible'   - sets whether sign markers are initially visible or hidden. Choose 'true' or 'false', default true");
-		System.out.println("'tileSize'                - the size of the output image tiles, in pixels. Default 512, min 64, max 1024.");
-		System.out.println("'useBiomeColours'         - set to use biome colours for grass and leaves. Choose 'true' or 'false', default 'true'");
-		System.out.println("'useCache'                - enable or disable the use of the cache to speed up repeated map rendering. Specify true or false, defaults to true.");
-		System.out.println("'verbose'                 - set to true to print additional debug output");
-		System.out.println("'worldDir'                - path to your minecraft world directory (containing level.dat), or numbers 1 to 5 for your singleplayer world");
-		System.out.println("");
-		System.out.println("Example:");
-		System.out.println("java -jar tectonicus worldDir=1 outputDir=C:/tectonicusMap");
-		
-		// maxTiles is 'hidden' option
-	}
-	
-	public void setMode(final Mode mode)
-	{
-		this.mode = mode;
-	}
-	public Mode getMode() { return mode; }
-	
-	public void setRasteriserType(RasteriserType type)
-	{
-		this.rasteriserType = type;
-	}
-	public RasteriserType getRasteriserType() { return rasteriserType; }
-	
+
 	public void setExtractLwjglNatives(final boolean extractLwjglNatives)
 	{
 		this.extractLwjglNatives = extractLwjglNatives;
@@ -387,7 +374,8 @@ public class MutableConfiguration implements Configuration
 		this.viewsInitiallyVisible = visible;
 	}
 	public boolean areViewsInitiallyVisible() { return viewsInitiallyVisible; }
-	
+
+
 	public void setLogFile(File file)
 	{
 		this.logFile = file;
@@ -427,7 +415,7 @@ public class MutableConfiguration implements Configuration
 		
 		return maps.get(index);
 	}
-	
+
 	@Override
 	public List<Map> getMaps()
 	{

@@ -21,9 +21,9 @@ public class CommandLineParserTests {
 	public void testMode() throws Exception
 	{
 		MutableConfiguration config = CommandLineParser.parseCommandLine(new String[] {"mode=cmd"});
-		assertThat(config.getMode(), is(Configuration.Mode.CommandLine));
+		assertThat(config.getMode(), is(Configuration.Mode.CMD));
 		
 		config = CommandLineParser.parseCommandLine(new String[] {"mode=interactive"});
-		assertThat(config.getMode(), is(Configuration.Mode.Interactive));
+		assertThat(config.getMode(), is(Configuration.Mode.INTERACTIVE));
 	}
 }

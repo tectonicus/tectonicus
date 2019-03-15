@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,16 +14,16 @@ import java.nio.file.Path;
 
 import static tectonicus.configuration.ParseUtil.*;
 
+import lombok.experimental.UtilityClass;
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
 
+@UtilityClass
 public class CommandLineParser
 {
-
-	
 	public static MutableConfiguration parseCommandLine(String[] args) throws Exception
 	{
 		ArgParser parser = new ArgParser(args);

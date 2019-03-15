@@ -28,7 +28,8 @@ dependencies {
 				   'org.apache.commons:commons-lang3:3.5@jar',
 				   'com.google.code.gson:gson:2.8.0@jar',
 				   'org.joml:joml:1.9.3',
-				   'xyz.nickr:nbt:1.1.1')
+				   'xyz.nickr:nbt:1.1.1',
+				   'info.picocli:picocli:3.9.5')
 	implementation('org.lwjgl.lwjgl:lwjgl:2.9.3') {
 					exclude module: 'jinput'
 	}
