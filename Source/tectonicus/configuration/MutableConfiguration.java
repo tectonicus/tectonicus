@@ -21,7 +21,17 @@ import picocli.CommandLine.Option;
 import tectonicus.Log;
 
 @Data
-@Command(name = "java -jar Tectonicus.jar", mixinStandardHelpOptions = true,
+@Command(name = "java -jar Tectonicus.jar",
+		header = {
+				"@|cyan  ______               __                                                 |@",
+				"@|cyan /\\__  _\\             /\\ \\__                 __                           |@",
+				"@|cyan \\/_/\\ \\/    __    ___\\ \\ ,_\\   ___     ___ /\\_\\    ___   __  __    ____  |@",
+				"@|cyan    \\ \\ \\  /'__`\\ /'___\\ \\ \\/  / __`\\ /' _ `\\/\\ \\  /'___\\/\\ \\/\\ \\  /',__\\ |@",
+				"@|cyan     \\ \\ \\/\\  __//\\ \\__/\\ \\ \\_/\\ \\L\\ \\/\\ \\/\\ \\ \\ \\/\\ \\__/\\ \\ \\_\\ \\/\\__, `\\|@",
+				"@|cyan      \\ \\_\\ \\____\\ \\____\\\\ \\__\\ \\____/\\ \\_\\ \\_\\ \\_\\ \\____\\\\ \\____/\\/\\____/|@",
+				"@|cyan       \\/_/\\/____/\\/____/ \\/__/\\/___/  \\/_/\\/_/\\/_/\\/____/ \\/___/  \\/___/ |@",
+				""}, //Font is 'Larry 3D' from http://www.patorjk.com/software/taag
+		mixinStandardHelpOptions = true,
 		description = "Tectonicus is a high detail Minecraft world mapper focused on creating zoomable maps that look as close to what you see in Minecraft as possible.",
 		resourceBundle = "commandLine", versionProvider = tectonicus.BuildInfo.PropertiesVersionProvider.class)
 public class MutableConfiguration implements Configuration, Callable<MutableConfiguration>
@@ -115,9 +125,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	@Option(names = {"-u", "--updateToLeaflet"}, paramLabel = "<String>")
 	private Path updateToLeaflet;
-	
+
 	private List<MutableMap> maps;
-	
+
 	public MutableConfiguration()
 	{
 		mode = Mode.CMD;
@@ -148,7 +158,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	public MutableConfiguration call() {
 		return this;
 	}
-	
+
 	public void printActive()
 	{
 		System.out.println("Settings:");
@@ -182,13 +192,13 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		System.out.println("\toutputHtmlName:"+getOutputHtmlName());
 		System.out.println("\tnumDownsampleThreads:"+getNumDownsampleThreads());
 		System.out.println("\tsinglePlayerName:"+getSinglePlayerName());
-		
+
 		System.out.println();
-		
+
 		for (Map m : getMaps())
 		{
 			System.out.println("'"+m.getName()+"' map");
-			
+
 			System.out.println("\tworldDir: "+m.getWorldDir().getAbsolutePath());
 			System.out.println("\tdimension: "+m.getDimension());
 			System.out.println("\tcameraAngle: "+m.getCameraAngleDeg());
@@ -196,18 +206,18 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 			System.out.println("\tclosestZoomSize: "+m.getClosestZoomSize());
 			System.out.println("\tworldSubset: "+m.getWorldSubsetFactory().getDescription());
 			System.out.println("\tuseBiomeColours: "+m.useBiomeColours());
-			
+
 			for (Layer l : m.getLayers())
 			{
 				System.out.println("\t'"+l.getName()+"' layer");
-				
+
 				System.out.println("\t\trenderStyle: "+l.getRenderStyle());
 				System.out.println("\t\tlightStyle: "+l.getLightStyle());
 				System.out.println("\t\timageFormat: "+l.getImageFormat());
-				
+
 				if (l.getImageFormat() == ImageFormat.Jpg)
 					System.out.println("\t\timageCompressionLevel: "+l.getImageCompressionLevel());
-				
+
 				if (l.getCustomBlockConfig() != null)
 					System.out.println("\t\tcustomBlockConfig: "+l.getCustomBlockConfig());
 			}
@@ -220,7 +230,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		{
 			System.out.println("no maps!");
 		}
-		
+
 		System.out.println();
 	}
 
@@ -229,85 +239,85 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.extractLwjglNatives = extractLwjglNatives;
 	}
 	public boolean extractLwjglNatives() { return extractLwjglNatives; }
-	
+
 	public void setEraseOutputDir(final boolean eraseOutputDir)
 	{
 		this.eraseOutputDir = eraseOutputDir;
 	}
 	public boolean eraseOutputDir() { return eraseOutputDir; }
-	
+
 	public void setOutputDir(File dir)
 	{
 		this.outputDir = dir;
 	}
 	public File outputDir() { return outputDir; }
-	
+
 	public void setCacheDir(File dir)
 	{
 		this.cacheDir = dir;
 	}
 	public File cacheDir() { return cacheDir; }
-	
+
 	public void setUseCache(final boolean useCache)
 	{
 		this.useCache = useCache;
 	}
 	public boolean useCache() { return useCache; }
-	
+
 	public void setMinecraftJar(File jar)
 	{
 		this.minecraftJar = jar;
 	}
 	public File minecraftJar() { return minecraftJar; }
-	
+
 	public void setTexturePack(File texturePack)
 	{
 		this.texturePack = texturePack;
 	}
 	public File texturePack() { return texturePack; }
-	
+
 	public void setUseOldColorPalette(boolean useOldColorPalette)
 	{
 		this.useOldColorPalette = useOldColorPalette;
 	}
 	public boolean useOldColorPalette() { return useOldColorPalette; }
-	
+
 	public void setShowPlayerSpawn(final boolean showSpawn)
 	{
 		this.showSpawn = showSpawn;
 	}
 	public boolean showSpawn() { return showSpawn; }
-	
+
 	public void setColourDepth(final int colourDepth)
 	{
 		this.colourDepth = colourDepth;
 	}
 	public int colourDepth() { return colourDepth; }
-	
+
 	public void setAlphaBits(final int alphaBits)
 	{
 		this.alphaBits = alphaBits;
 	}
 	public int alphaBits() { return alphaBits; }
-	
+
 	public void setNumSamples(final int numSamples)
 	{
 		this.numSamples = numSamples;
 	}
 	public int numSamples() { return numSamples; }
-	
+
 	public void setNumZoomLevels(final int numZoomLevels)
 	{
 		this.numZoomLevels = numZoomLevels;
 	}
 	public int numZoomLevels() { return numZoomLevels; }
-	
+
 	public void setMaxTiles(final int maxTiles)
 	{
 		this.maxTiles = maxTiles;
 	}
 	public int maxTiles() { return maxTiles; }
-	
+
 	public void setIsVerbose(final boolean isVerbose)
 	{
 		this.isVerbose = isVerbose;
@@ -315,61 +325,61 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 			Log.setLogLevel(Log.DEBUG);
 	}
 	public boolean isVerbose() { return isVerbose; }
-	
+
 	public void setForceLoadAwt(final boolean forceLoadAwt)
 	{
 		this.forceLoadAwt = forceLoadAwt;
 	}
 	public boolean forceLoadAwt() { return forceLoadAwt; }
-	
+
 	public void setForce32BitNatives(final boolean force32BitNatives)
 	{
 		this.force32BitNatives = force32BitNatives;
 	}
 	public boolean force32BitNatives() { return force32BitNatives; }
-	
+
 	public void setForce64BitNatives(final boolean force64BitNatives)
 	{
 		this.force64BitNatives = force64BitNatives;
 	}
 	public boolean force64BitNatives() { return force64BitNatives; }
-	
+
 	public void setTileSize(final int tileSize)
 	{
 		this.tileSize = tileSize;
 	}
 	public int tileSize() { return tileSize; }
-	
+
 	public void setSignsInitiallyVisible(final boolean visible)
 	{
 		this.signsInitiallyVisible = visible;
 	}
 	public boolean areSignsInitiallyVisible() { return signsInitiallyVisible; }
-	
+
 	public void setPlayersInitiallyVisible(final boolean visible)
 	{
 		this.playersInitiallyVisible = visible;
 	}
 	public boolean arePlayersInitiallyVisible() { return playersInitiallyVisible; }
-	
+
 	public void setPortalsInitiallyVisible(final boolean visible)
 	{
 		this.portalsInitiallyVisible = visible;
 	}
 	public boolean arePortalsInitiallyVisible() { return portalsInitiallyVisible; }
-	
+
 	public void setBedsInitiallyVisible(final boolean visible)
 	{
 		this.bedsInitiallyVisible = visible;
 	}
 	public boolean areBedsInitiallyVisible() { return bedsInitiallyVisible; }
-	
+
 	public void setSpawnInitiallyVisible(final boolean visible)
 	{
 		this.spawnInitiallyVisible = visible;
 	}
 	public boolean isSpawnInitiallyVisible() { return spawnInitiallyVisible; }
-	
+
 	public void setViewsInitiallyVisible(final boolean visible)
 	{
 		this.viewsInitiallyVisible = visible;
@@ -382,38 +392,38 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.logFile = file;
 	}
 	public File getLogFile() { return logFile; }
-	
+
 	public void setOutputHtmlName(String name)
 	{
 		this.outputHtmlName = name;
 	}
 	public String getOutputHtmlName() { return outputHtmlName; }
-	
+
 	public void setDefaultSkin(String skin) { this.defaultSkin = skin; }
 	public String getDefaultSkin()	{ return defaultSkin; }
-	
+
 	public void setNumDownsampleThreads(final int num)
 	{
 		this.numDownsampleThreads = num;
 	}
 	public int getNumDownsampleThreads() { return numDownsampleThreads; }
-	
+
 	public void setSinglePlayerName(String name)
 	{
 		this.singlePlayerName = name;
 	}
 	public String getSinglePlayerName() { return singlePlayerName; }
-	
+
 	public int numMaps()
 	{
 		return maps.size();
 	}
-	
+
 	public MutableMap getMap(final int index)
 	{
 		if (index < 0 || index >= maps.size())
 			return null;
-		
+
 		return maps.get(index);
 	}
 
@@ -422,12 +432,13 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	{
 		return new ArrayList<Map>(maps);
 	}
-	
+
 	public void addMap(MutableMap newMap)
 	{
 		if (maps.contains(newMap))
 			throw new RuntimeException("Map already present in configuration!");
-		
+
 		maps.add(newMap);
 	}
 }
+
