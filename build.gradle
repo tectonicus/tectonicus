@@ -21,15 +21,16 @@ repositories {
 
 ext {
 	lombokVersion = '1.18.6'
+	junitVersion = '5.4.0'
 }
 
 dependencies {
 	implementation('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
-				   'org.apache.commons:commons-lang3:3.5@jar',
+				   'org.apache.commons:commons-text:1.6',
 				   'com.google.code.gson:gson:2.8.0@jar',
 				   'org.joml:joml:1.9.3',
 				   'xyz.nickr:nbt:1.1.1',
-				   'info.picocli:picocli:3.9.5')
+				   'info.picocli:picocli:3.9.5@jar')
 	implementation('org.lwjgl.lwjgl:lwjgl:2.9.3') {
 					exclude module: 'jinput'
 	}
@@ -38,9 +39,9 @@ dependencies {
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor "org.projectlombok:lombok:$lombokVersion"
 	
-	testImplementation('org.junit.jupiter:junit-jupiter-api:5.3.2',
+	testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion",
 					   'org.hamcrest:hamcrest:2.1')
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
 	testCompileOnly "org.projectlombok:lombok:$lombokVersion"
 	testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
 }
@@ -52,13 +53,12 @@ jar {
 		props.setProperty('buildTime', new Date().format('hhmm'))
 		props.setProperty('buildNumber', grgit.log().size().toString())
 		props.setProperty('version', "${version}")
-		def writer = new FileWriter(file('build/tectonicus.buildInfo'))
+		def writer = new FileWriter(file('build/resources/main/tectonicus.buildInfo'))
 		props.store(writer, 'Tectonicus build info')
 		writer.flush()
 		writer.close()
 	}
 	
-	from files('build/tectonicus.buildinfo')
 	from configurations.runtimeClasspath.asFileTree.files.collect { zipTree(it) }
 	from fileTree('Data')
 	exclude ('OpenAL*.dll', 'openal.dylib', 'libopenal*.so', 'processing/**')

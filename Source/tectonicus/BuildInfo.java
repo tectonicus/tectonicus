@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,11 +9,15 @@
 
 package tectonicus;
 
+import lombok.experimental.UtilityClass;
+import picocli.CommandLine.IVersionProvider;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
+@UtilityClass
 public class BuildInfo
 {
 	private static final Properties info;
@@ -73,5 +77,14 @@ public class BuildInfo
 	public static String getBuildTime()
 	{
 		return info.getProperty("buildTime");
+	}
+
+	public static class PropertiesVersionProvider implements IVersionProvider {
+		public String[] getVersion() {
+			return new String[] {
+					"Tectonicus " + BuildInfo.getVersion(),
+					"Built: " + BuildInfo.getBuildDate()
+			};
+		}
 	}
 }

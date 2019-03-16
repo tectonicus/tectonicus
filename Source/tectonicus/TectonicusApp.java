@@ -1115,7 +1115,7 @@ public class TectonicusApp
 		//Parse command line to get config file
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
-		cmd.setCaseInsensitiveEnumValuesAllowed(true).parseWithHandler(new CommandLine.RunFirst(), argArray);
+		cmd.setCaseInsensitiveEnumValuesAllowed(true).parse(argArray);
 		Path configFile = m.getConfigFile();
 		
 		MutableConfiguration args = new MutableConfiguration();

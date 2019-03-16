@@ -21,7 +21,7 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;

@@ -11,7 +11,7 @@ package tectonicus.blockTypes;
 
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
-import static org.apache.commons.lang3.StringEscapeUtils.unescapeJava;
+import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 import static tectonicus.Version.VERSION_RV;
 
 import tectonicus.BlockContext;

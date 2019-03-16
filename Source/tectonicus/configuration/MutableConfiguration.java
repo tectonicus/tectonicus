@@ -21,8 +21,9 @@ import picocli.CommandLine.Option;
 import tectonicus.Log;
 
 @Data
-@Command(name = "java -jar Tectonicus.jar", description = "Tectonicus a super cool app for rendering minecraft worlds.",
-		resourceBundle = "commandLine", mixinStandardHelpOptions = true, version = "Tectonicus 2.26.01")
+@Command(name = "java -jar Tectonicus.jar", mixinStandardHelpOptions = true,
+		description = "Tectonicus is a high detail Minecraft world mapper focused on creating zoomable maps that look as close to what you see in Minecraft as possible.",
+		resourceBundle = "commandLine", versionProvider = tectonicus.BuildInfo.PropertiesVersionProvider.class)
 public class MutableConfiguration implements Configuration, Callable<MutableConfiguration>
 {
 	@Option(names = {"-c", "--config", "config"}, paramLabel = "<String>")
@@ -46,7 +47,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-o", "--outputDir", "outputDir"}, paramLabel = "<String>")
 	private File outputDir;
 
-	@Option(names = {"-b", "--useCache", "useCache"}, arity = "0..1", paramLabel = "<boolean>")
+	@Option(names = {"-C", "--useCache", "useCache"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useCache;
 
 	@Option(names = {"--cacheDir", "cacheDir"}, paramLabel = "<String>")
@@ -80,13 +81,13 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"--spawnInitiallyVisible", "spawnInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean spawnInitiallyVisible;
 
-	@Option(names = {"-w", "--showSpawn", "showSpawn"}, arity = "0..1", paramLabel = "<boolean>")
+	@Option(names = {"--showSpawn", "showSpawn"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean showSpawn;
 
 	@Option(names = {"-v", "--verbose", "verbose"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean isVerbose;
 
-	@Option(names = {"-k", "--tileSize", "tileSize"}, paramLabel = "<integer>")
+	@Option(names = {"-w", "--tileSize", "tileSize"}, paramLabel = "<integer>")
 	private int tileSize;
 
 	@Option(names = {"--maxTiles", "maxTiles"}, paramLabel = "<integer>")
