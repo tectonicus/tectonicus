@@ -311,18 +311,16 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("bed"))
 		{
-			if (texturePack.getVersion().getNumVersion() < VERSION_12.getNumVersion()) {
-				SubTexture headTop = parseTexture(element, "headTop", null);
-				SubTexture footTop = parseTexture(element, "footTop", null);
+			SubTexture headTop = parseTexture(element, "headTop", null);
+			SubTexture footTop = parseTexture(element, "footTop", null);
 
-				SubTexture headSide = parseTexture(element, "headSide", null);
-				SubTexture footSide = parseTexture(element, "footSide", null);
+			SubTexture headSide = parseTexture(element, "headSide", null);
+			SubTexture footSide = parseTexture(element, "footSide", null);
 
-				SubTexture headEdge = parseTexture(element, "headEdge", null);
-				SubTexture footEdge = parseTexture(element, "footEdge", null);
+			SubTexture headEdge = parseTexture(element, "headEdge", null);
+			SubTexture footEdge = parseTexture(element, "footEdge", null);
 
-				blockType = new Bed(headTop, footTop, headSide, footSide, headEdge, footEdge);
-			}
+			blockType = new Bed(headTop, footTop, headSide, footSide, headEdge, footEdge);
 		}
 		else if (nodeName.equals("bednew"))
 		{
