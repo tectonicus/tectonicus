@@ -1,3 +1,12 @@
 /.gradle/
 **/*.class
 /build/
+/Binary
+/Dist
+gradle-app.setting
+/bin/
+org.eclipse.jdt.core.prefs
+.idea
+*.iml
+/TectonicusLog.txt
+/out
