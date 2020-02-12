@@ -1047,18 +1047,27 @@ public class TectonicusApp
 		{
 			"liblwjgl.dylib",
 			"liblwjgl.so",
-			"liblwjgl64.so",
 			"lwjgl.dll",
-			"lwjgl64.dll"
+			
+			"libglfw.dylib",
+			"libglfw.so",
+			"glfw.dll",
+			"libglfw_wayland.so",
+			
+			"liblwjgl_opengl.dylib",
+			"liblwjgl_opengl.so",
+			"lwjgl_opengl.dll",
 		};
 		
 		Map<String, String> force64BitMapping = new HashMap<>();
-		force64BitMapping.put("liblwjgl64.so", "liblwjgl.so");
-		force64BitMapping.put("lwjgl64.dll", "lwjgl.dll");
+		force64BitMapping.put("glfw.dll", "glfw32.dll");
+		force64BitMapping.put("lwjgl.dll", "lwjgl32.dll");
+		force64BitMapping.put("lwjgl_opengl.dll", "lwjgl_opengl32.dll");
 		
 		Map<String, String> force32BitMapping = new HashMap<>();
-		force32BitMapping.put("liblwjgl.so", "liblwjgl64.so");
-		force32BitMapping.put("lwjgl.dll", "lwjgl64.dll");
+		force64BitMapping.put("glfw32.dll", "glfw.dll");
+		force64BitMapping.put("lwjgl32.dll", "lwjgl.dll");
+		force64BitMapping.put("lwjgl_opengl32.dll", "lwjgl_opengl.dll");
 		
 		File cacheDir = new File(System.getProperty("user.home"), ".tectonicus/native");
 		FileUtils.deleteDirectory(cacheDir);
@@ -1073,10 +1082,12 @@ public class TectonicusApp
 		try  // Mac hack
 		{
 			Files.copy(Paths.get(cacheDir.getPath(), "liblwjgl.dylib"), Paths.get(cacheDir.getPath(), "liblwjgl.jnilib"), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(Paths.get(cacheDir.getPath(), "libglfw.dylib"), Paths.get(cacheDir.getPath(), "libglfw.jnilib"), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(Paths.get(cacheDir.getPath(), "liblwjgl_opengl.dylib"), Paths.get(cacheDir.getPath(), "liblwjgl_opengl.jnilib"), StandardCopyOption.REPLACE_EXISTING);
 		}
 		catch (Exception e)
 		{
-			throw new RuntimeException("Couldn't create liblwjgl.jnilib", e);
+			throw new RuntimeException("Couldn't create jnilibs", e);
 		}
 		
 		Map<String, String> renameMap = null;

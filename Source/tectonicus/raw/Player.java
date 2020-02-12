@@ -18,9 +18,8 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.concurrent.Callable;
-
-import javax.xml.bind.DatatypeConverter;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -268,7 +267,7 @@ public class Player
 				JsonObject obj = new JsonParser().parse(builder.toString()).getAsJsonObject();
 				Player.this.setName(obj.get("name").getAsString());
 				JsonObject textures = obj.get("properties").getAsJsonArray().get(0).getAsJsonObject();
-				byte[] decoded = DatatypeConverter.parseBase64Binary(textures.get("value").getAsString());
+				byte[] decoded = Base64.getDecoder().decode(textures.get("value").getAsString());// DatatypeConverter.parseBase64Binary();
 				obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
 				boolean hasSkin = obj.get("textures").getAsJsonObject().has("SKIN");
 				String textureUrl = null;

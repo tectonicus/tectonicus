@@ -128,7 +128,7 @@ public class MatrixUtil
 		GLU.gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 		
 		FloatBuffer fromGlBuffer = BufferUtils.createFloatBuffer(16);
-		GL11.glGetFloat(GL11.GL_MODELVIEW, fromGlBuffer);
+		GL11.glGetFloatv(GL11.GL_MODELVIEW, fromGlBuffer);
 		Matrix4f fromGl = new Matrix4f();
 		fromGl.load(fromGlBuffer);
 		
@@ -144,7 +144,7 @@ public class MatrixUtil
 		GL11.glLoadIdentity();
 		GL11.glOrtho(left, right, bottom, top, near, far);
 		FloatBuffer fromGlBuffer = BufferUtils.createFloatBuffer(16);
-		GL11.glGetFloat(GL11.GL_MODELVIEW, fromGlBuffer);
+		GL11.glGetFloatv(GL11.GL_MODELVIEW, fromGlBuffer);
 		Matrix4f fromGl = new Matrix4f();
 		fromGl.load(fromGlBuffer);
 		

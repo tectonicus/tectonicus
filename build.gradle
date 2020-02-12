@@ -4,7 +4,7 @@ plugins {
 }
 
 archivesBaseName = 'Tectonicus'
-version = '2.26.01'
+version = '2.26.02'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -31,10 +31,7 @@ dependencies {
 				   'org.joml:joml:1.9.3',
 				   'xyz.nickr:nbt:1.1.1',
 				   'info.picocli:picocli:3.9.5@jar')
-	implementation('org.lwjgl.lwjgl:lwjgl:2.9.3') {
-					exclude module: 'jinput'
-	}
-	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/lwjgl.jar', 'Libs/Jars/lwjgl-opengl.jar', 'Libs/Jars/lwjgl-glfw.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
 
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor "org.projectlombok:lombok:$lombokVersion"
