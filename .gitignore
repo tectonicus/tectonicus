@@ -1,7 +1,8 @@
+/.gradle/
+**/*.class
+/build/
 /Binary
 /Dist
-/build
-.gradle
 gradle-app.setting
 /bin/
 org.eclipse.jdt.core.prefs

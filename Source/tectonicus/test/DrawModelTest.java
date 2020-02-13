@@ -9,24 +9,51 @@
 
 package tectonicus.test;
 
-import org.lwjgl.input.Keyboard;
-
+import static org.lwjgl.opengl.GL11.GL_ALPHA_TEST;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_CW;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
+import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
+import static org.lwjgl.opengl.GL11.GL_PROJECTION;
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.GL_VENDOR;
+import static org.lwjgl.opengl.GL11.GL_VERSION;
+import static org.lwjgl.opengl.GL11.glAlphaFunc;
+import static org.lwjgl.opengl.GL11.glBegin;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.glColor3f;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glEnd;
+import static org.lwjgl.opengl.GL11.glFrontFace;
+import static org.lwjgl.opengl.GL11.glGetString;
+import static org.lwjgl.opengl.GL11.glLoadIdentity;
+import static org.lwjgl.opengl.GL11.glMatrixMode;
+import static org.lwjgl.opengl.GL11.glPopMatrix;
+import static org.lwjgl.opengl.GL11.glPushMatrix;
+import static org.lwjgl.opengl.GL11.glRotatef;
+import static org.lwjgl.opengl.GL11.glTexCoord2f;
+import static org.lwjgl.opengl.GL11.glTranslatef;
+import static org.lwjgl.opengl.GL11.glVertex3f;
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.util.glu.GLU.gluPerspective;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.lwjgl.opengl.GL11.*;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.GL11;
-
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWFramebufferSizeCallbackI;
+import org.lwjgl.opengl.GL11;
 
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
+import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
@@ -36,12 +63,14 @@ import tectonicus.rasteriser.lwjgl.LwjglMesh;
 import tectonicus.rasteriser.lwjgl.LwjglTexture;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
-import tectonicus.blockTypes.BlockRegistry;
-import tectonicus.configuration.Configuration.RasteriserType;
 
 public class DrawModelTest 
 {
 	private float rot = 2.0f;
+	
+	private long window;
+	
+	private long prevMillis;
 	
 	public static void main(String[] args)
 	{
@@ -57,6 +86,9 @@ public class DrawModelTest
 	{	
 		Map<Texture, Mesh> meshList = new HashMap<>();
 		
+		int width = 800;
+		int height = 800;
+		
 //		try
 //		{
 //			Display.setDisplayMode(new DisplayMode(640, 640));
@@ -66,7 +98,7 @@ public class DrawModelTest
 //		} catch(LWJGLException e) {
 //			e.printStackTrace();
 //		}		
-		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, 800, 800, 24, 8, 24, 4);
+		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, width, height, 24, 8, 24, 4);
 		BlockRegistry br = new BlockRegistry(rasteriser);
 		BlockModel bm = br.loadModel("block/beacon", new HashMap<String, String>(), null);
 		List<BlockElement> elements = bm.getElements();
@@ -185,7 +217,7 @@ public class DrawModelTest
 		for (Mesh m : meshList.values())
 			m.finalise();
 		
-		resize();
+		resize(width, height);
 		
 		System.out.println(glGetString(GL_VERSION));
 		System.out.println(glGetString(GL_VENDOR));
@@ -201,11 +233,15 @@ public class DrawModelTest
 		//glEnable(GL_MULTISAMPLE);
 		//glPolygonMode(GL_FRONT, GL_LINE);
 		
-		while(!Display.isCloseRequested())
+		GLFW.glfwSetFramebufferSizeCallback(window, new GLFWFramebufferSizeCallbackI() {
+		    @Override
+		    public void invoke(long window, int width, int height) {
+		        resize(width, height);
+		    }
+		});
+		
+		while(!GLFW.glfwWindowShouldClose(window))
 		{
-			if (Display.wasResized())
-                resize();
-			
 			getKeys();
 			
 			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -223,10 +259,18 @@ public class DrawModelTest
 			// Restore transformations
 			//glPopMatrix();
 
-			Display.update();
-			Display.sync(60);
+			GLFW.glfwPollEvents();
+			
+			long currMillis = System.currentTimeMillis();
+			long fps = 1000 / (currMillis - prevMillis);
+			prevMillis = currMillis;
+			if (fps > 60) {
+				return;
+			}
+			
+			GLFW.glfwSwapBuffers(window);
 		}
-		Display.destroy();
+		GLFW.glfwDestroyWindow(window);
 	}
 
 	private void oldDraw(List<BlockElement> elements) {
@@ -530,36 +574,36 @@ public class DrawModelTest
 	}
 	
 	private void getKeys() {
-		if(Keyboard.isKeyDown(Keyboard.KEY_UP))
+		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_UP) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(rot, 1.0f, 0.0f, 0.0f);
 		}
 
-		if(Keyboard.isKeyDown(Keyboard.KEY_DOWN))
+		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_DOWN) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(-rot, 1.0f, 0.0f, 0.0f);
 		}
 
-		if(Keyboard.isKeyDown(Keyboard.KEY_LEFT))
+		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(rot, 0.0f, 1.0f, 0.0f);
 		}
 
-		if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT))
+		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(-rot, 0.0f, 1.0f, 0.0f);
 		}
 	}
 	
-	private void resize()
+	private void resize(int width, int height)
 	{
 		//final int range = 100;
 		
-		glViewport(0, 0, Display.getWidth(), Display.getHeight());
+		glViewport(0, 0, width, height);
 		
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		float aspect = Display.getWidth() / Display.getHeight();
+		float aspect = width / height;
 	    gluPerspective(25.0f, aspect, 1.0f, 300.0f);
 		//glOrtho(-range, range, -range*Display.getHeight()/Display.getWidth(), range*Display.getHeight()/Display.getWidth(), -range, range);
 		glMatrixMode(GL_MODELVIEW);

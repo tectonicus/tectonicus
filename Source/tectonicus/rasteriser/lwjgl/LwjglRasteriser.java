@@ -23,16 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.LWJGLException;
-import org.lwjgl.Sys;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.Drawable;
+import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWErrorCallbackI;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.Pbuffer;
-import org.lwjgl.opengl.PixelFormat;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -42,21 +38,24 @@ import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
-import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 
 public class LwjglRasteriser implements Rasteriser
 {
 	private final DisplayType type;
 	
-	private Pbuffer pbuffer;
+	private long window = 0;
+	
 	
 	private int width, height;
 	
 	private Map<Integer, Integer> keyCodeMap;
 	
 	private Map<Integer, Boolean> prevKeyStates;
+	
+	private long prevMillis;
 	
 	public LwjglRasteriser(DisplayType type, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples) throws Exception
 	{
@@ -67,134 +66,114 @@ public class LwjglRasteriser implements Rasteriser
 		
 		keyCodeMap = new HashMap<Integer, Integer>();
 		
-		keyCodeMap.put(KeyEvent.VK_0, Keyboard.KEY_0);
-		keyCodeMap.put(KeyEvent.VK_1, Keyboard.KEY_1);
-		keyCodeMap.put(KeyEvent.VK_2, Keyboard.KEY_2);
-		keyCodeMap.put(KeyEvent.VK_3, Keyboard.KEY_3);
-		keyCodeMap.put(KeyEvent.VK_4, Keyboard.KEY_4);
-		keyCodeMap.put(KeyEvent.VK_5, Keyboard.KEY_5);
-		keyCodeMap.put(KeyEvent.VK_6, Keyboard.KEY_6);
-		keyCodeMap.put(KeyEvent.VK_7, Keyboard.KEY_7);
-		keyCodeMap.put(KeyEvent.VK_8, Keyboard.KEY_8);
-		keyCodeMap.put(KeyEvent.VK_9, Keyboard.KEY_9);
+		keyCodeMap.put(KeyEvent.VK_0, GLFW.GLFW_KEY_0);
+		keyCodeMap.put(KeyEvent.VK_1, GLFW.GLFW_KEY_1);
+		keyCodeMap.put(KeyEvent.VK_2, GLFW.GLFW_KEY_2);
+		keyCodeMap.put(KeyEvent.VK_3, GLFW.GLFW_KEY_3);
+		keyCodeMap.put(KeyEvent.VK_4, GLFW.GLFW_KEY_4);
+		keyCodeMap.put(KeyEvent.VK_5, GLFW.GLFW_KEY_5);
+		keyCodeMap.put(KeyEvent.VK_6, GLFW.GLFW_KEY_6);
+		keyCodeMap.put(KeyEvent.VK_7, GLFW.GLFW_KEY_7);
+		keyCodeMap.put(KeyEvent.VK_8, GLFW.GLFW_KEY_8);
+		keyCodeMap.put(KeyEvent.VK_9, GLFW.GLFW_KEY_9);
 		
-		keyCodeMap.put(KeyEvent.VK_UP, Keyboard.KEY_UP);
-		keyCodeMap.put(KeyEvent.VK_DOWN, Keyboard.KEY_DOWN);
-		keyCodeMap.put(KeyEvent.VK_LEFT, Keyboard.KEY_LEFT);
-		keyCodeMap.put(KeyEvent.VK_RIGHT, Keyboard.KEY_RIGHT);
+		keyCodeMap.put(KeyEvent.VK_UP, GLFW.GLFW_KEY_UP);
+		keyCodeMap.put(KeyEvent.VK_DOWN, GLFW.GLFW_KEY_DOWN);
+		keyCodeMap.put(KeyEvent.VK_LEFT, GLFW.GLFW_KEY_LEFT);
+		keyCodeMap.put(KeyEvent.VK_RIGHT, GLFW.GLFW_KEY_RIGHT);
 		
-		keyCodeMap.put(KeyEvent.VK_SPACE, Keyboard.KEY_SPACE);
-		keyCodeMap.put(KeyEvent.VK_MINUS, Keyboard.KEY_MINUS);
-		keyCodeMap.put(KeyEvent.VK_EQUALS, Keyboard.KEY_EQUALS);
-		keyCodeMap.put(KeyEvent.VK_BACK_SPACE, Keyboard.KEY_BACK);
+		keyCodeMap.put(KeyEvent.VK_SPACE, GLFW.GLFW_KEY_SPACE);
+		keyCodeMap.put(KeyEvent.VK_MINUS, GLFW.GLFW_KEY_MINUS);
+		keyCodeMap.put(KeyEvent.VK_EQUALS, GLFW.GLFW_KEY_EQUAL);
+		keyCodeMap.put(KeyEvent.VK_BACK_SPACE, GLFW.GLFW_KEY_BACKSPACE);
 		
-		keyCodeMap.put(KeyEvent.VK_A, Keyboard.KEY_A);
-		keyCodeMap.put(KeyEvent.VK_B, Keyboard.KEY_B);
-		keyCodeMap.put(KeyEvent.VK_C, Keyboard.KEY_C);
-		keyCodeMap.put(KeyEvent.VK_D, Keyboard.KEY_D);
-		keyCodeMap.put(KeyEvent.VK_E, Keyboard.KEY_E);
-		keyCodeMap.put(KeyEvent.VK_F, Keyboard.KEY_F);
-		keyCodeMap.put(KeyEvent.VK_G, Keyboard.KEY_G);
-		keyCodeMap.put(KeyEvent.VK_H, Keyboard.KEY_H);
-		keyCodeMap.put(KeyEvent.VK_I, Keyboard.KEY_I);
-		keyCodeMap.put(KeyEvent.VK_J, Keyboard.KEY_J);
-		keyCodeMap.put(KeyEvent.VK_K, Keyboard.KEY_K);
-		keyCodeMap.put(KeyEvent.VK_L, Keyboard.KEY_L);
-		keyCodeMap.put(KeyEvent.VK_M, Keyboard.KEY_M);
-		keyCodeMap.put(KeyEvent.VK_N, Keyboard.KEY_N);
-		keyCodeMap.put(KeyEvent.VK_O, Keyboard.KEY_O);
-		keyCodeMap.put(KeyEvent.VK_P, Keyboard.KEY_P);
-		keyCodeMap.put(KeyEvent.VK_Q, Keyboard.KEY_Q);
-		keyCodeMap.put(KeyEvent.VK_R, Keyboard.KEY_R);
-		keyCodeMap.put(KeyEvent.VK_S, Keyboard.KEY_S);
-		keyCodeMap.put(KeyEvent.VK_T, Keyboard.KEY_T);
-		keyCodeMap.put(KeyEvent.VK_U, Keyboard.KEY_U);
-		keyCodeMap.put(KeyEvent.VK_V, Keyboard.KEY_V);
-		keyCodeMap.put(KeyEvent.VK_W, Keyboard.KEY_W);
-		keyCodeMap.put(KeyEvent.VK_X, Keyboard.KEY_X);
-		keyCodeMap.put(KeyEvent.VK_Y, Keyboard.KEY_Y);
-		keyCodeMap.put(KeyEvent.VK_Z, Keyboard.KEY_Z);
+		keyCodeMap.put(KeyEvent.VK_A, GLFW.GLFW_KEY_A);
+		keyCodeMap.put(KeyEvent.VK_B, GLFW.GLFW_KEY_B);
+		keyCodeMap.put(KeyEvent.VK_C, GLFW.GLFW_KEY_C);
+		keyCodeMap.put(KeyEvent.VK_D, GLFW.GLFW_KEY_D);
+		keyCodeMap.put(KeyEvent.VK_E, GLFW.GLFW_KEY_E);
+		keyCodeMap.put(KeyEvent.VK_F, GLFW.GLFW_KEY_F);
+		keyCodeMap.put(KeyEvent.VK_G, GLFW.GLFW_KEY_G);
+		keyCodeMap.put(KeyEvent.VK_H, GLFW.GLFW_KEY_H);
+		keyCodeMap.put(KeyEvent.VK_I, GLFW.GLFW_KEY_I);
+		keyCodeMap.put(KeyEvent.VK_J, GLFW.GLFW_KEY_J);
+		keyCodeMap.put(KeyEvent.VK_K, GLFW.GLFW_KEY_K);
+		keyCodeMap.put(KeyEvent.VK_L, GLFW.GLFW_KEY_L);
+		keyCodeMap.put(KeyEvent.VK_M, GLFW.GLFW_KEY_M);
+		keyCodeMap.put(KeyEvent.VK_N, GLFW.GLFW_KEY_N);
+		keyCodeMap.put(KeyEvent.VK_O, GLFW.GLFW_KEY_O);
+		keyCodeMap.put(KeyEvent.VK_P, GLFW.GLFW_KEY_P);
+		keyCodeMap.put(KeyEvent.VK_Q, GLFW.GLFW_KEY_Q);
+		keyCodeMap.put(KeyEvent.VK_R, GLFW.GLFW_KEY_R);
+		keyCodeMap.put(KeyEvent.VK_S, GLFW.GLFW_KEY_S);
+		keyCodeMap.put(KeyEvent.VK_T, GLFW.GLFW_KEY_T);
+		keyCodeMap.put(KeyEvent.VK_U, GLFW.GLFW_KEY_U);
+		keyCodeMap.put(KeyEvent.VK_V, GLFW.GLFW_KEY_V);
+		keyCodeMap.put(KeyEvent.VK_W, GLFW.GLFW_KEY_W);
+		keyCodeMap.put(KeyEvent.VK_X, GLFW.GLFW_KEY_X);
+		keyCodeMap.put(KeyEvent.VK_Y, GLFW.GLFW_KEY_Y);
+		keyCodeMap.put(KeyEvent.VK_Z, GLFW.GLFW_KEY_Z);
 		
 		prevKeyStates = new HashMap<Integer, Boolean>();
 		
-		Drawable drawable = Display.getDrawable();
-		System.out.println("\tDrawable: "+drawable);
-	
 		// Make a list of pixel formats to try (in preferance order)
-		ArrayList<PixelFormat> pixelFormats = new ArrayList<PixelFormat>();
+		ArrayList<LwjglPixelFormat> pixelFormats = new ArrayList<LwjglPixelFormat>();
 		
 		// As requested
-		pixelFormats.add( new PixelFormat(colourDepth, alphaBits, depthBits, 0, numSamples) );
+		pixelFormats.add( new LwjglPixelFormat(colourDepth, alphaBits, depthBits, 0, numSamples) );
 		
 		// No anti-aliasing
-		pixelFormats.add( new PixelFormat(colourDepth, alphaBits, depthBits, 0, 0) );
+		pixelFormats.add( new LwjglPixelFormat(colourDepth, alphaBits, depthBits, 0, 0) );
 		
 		// No anti-aliasing or alpha buffer
-		pixelFormats.add( new PixelFormat(colourDepth, 0, depthBits, 0, 0) );
+		pixelFormats.add( new LwjglPixelFormat(colourDepth, 0, depthBits, 0, 0) );
 		
 		// No anti-aliasing, no alpha buffer, 16bit colour
-		pixelFormats.add( new PixelFormat(16, 0, depthBits, 0, 0) );
+		pixelFormats.add( new LwjglPixelFormat(16, 0, depthBits, 0, 0) );
 		
 		// No anti-aliasing, no alpha buffer, 16bit colour, 16bit depth
-		pixelFormats.add( new PixelFormat(16, 0, 16, 0, 0) );
+		pixelFormats.add( new LwjglPixelFormat(16, 0, 16, 0, 0) );
 		
 		// Ugh. Anything with a depth buffer.
-		pixelFormats.add( new PixelFormat(0, 0, 1, 0, 0) );
+		pixelFormats.add( new LwjglPixelFormat(0, 0, 1, 0, 0) );
 		
-		PixelFormat usedPixelFormat = null;
-		LWJGLException pbufferException = null;
+		GLFW.glfwSetErrorCallback(new GLFWErrorCallbackI() {
+
+			@Override
+			public void invoke(int arg0, long arg1) {
+				System.out.println("GLFW error: " + String.format("0x%08X", arg0));
+			}
+			
+		});
 		
-		if (type == DisplayType.Offscreen)
-		{
-			for (PixelFormat pf : pixelFormats)
-			{
-				try
-				{
-					pbuffer = new Pbuffer(displayWidth, displayHeight, pf, drawable);
-					usedPixelFormat = pf;
-					break;
-				}
-				catch (LWJGLException e)
-				{
-					pbufferException = e;
-				}
-			}
-			
-			if (pbuffer != null)
-			{
-				// Ok!
-				System.out.println("\tcreated pbuffer: "+pbuffer);
-				System.out.println("\tused pixel format:   colour:"+usedPixelFormat.getBitsPerPixel()
-														+" depth:"+usedPixelFormat.getDepthBits()
-														+" alpha:"+usedPixelFormat.getAlphaBits()
-														+" stencil:"+usedPixelFormat.getStencilBits()
-														+" samples:"+usedPixelFormat.getSamples());
-			}
-			else
-			{
-				System.err.println("Could not create pbuffer! (colour:"+colourDepth+", alpha:"+alphaBits+", depth:"+depthBits+", samples:"+numSamples+")");
-				throw pbufferException;
-			}
-			
-			pbuffer.makeCurrent();
-			
-			// Issue a few gl commands so we fail early if the pbuffer is actually a bogus one
-			resetState();
-			
+		if (!GLFW.glfwInit()) {
+			throw new RuntimeException("Failed to init GLFW");
 		}
-		else if (type == DisplayType.Window)
-		{
-			Display.setDisplayMode(new DisplayMode(displayWidth, displayHeight));
-			Display.setLocation( (Display.getDisplayMode().getWidth() - displayWidth) / 2, (Display.getDisplayMode().getHeight() - displayHeight)/2 );
-			Display.setTitle("Tectonicus");
-			
-			// TODO: Use same pixel formats from above here
-			Display.create( new PixelFormat(32, 0, depthBits, 0, 4) );
+		
+		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GL11.GL_TRUE);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
+		for (LwjglPixelFormat pf : pixelFormats) {
+			GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pf.depth);
+			GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pf.stencil);
+			GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pf.alpha);
+			GLFW.glfwWindowHint(GLFW.GLFW_RED_BITS, pf.bpp);
+			GLFW.glfwWindowHint(GLFW.GLFW_GREEN_BITS, pf.bpp);
+			GLFW.glfwWindowHint(GLFW.GLFW_BLUE_BITS, pf.bpp);
+			GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, pf.samples);
+			window = GLFW.glfwCreateWindow(displayWidth, displayHeight, "Tectonicus", 0, 0);
+			if(window != 0) {
+			    break;
+			}
 		}
-		else
-		{
-			throw new RuntimeException("Unknown display type: "+type);
+		
+		if(window == 0) {
+		    throw new RuntimeException("Failed to create window!");
 		}
+		
+		GLFW.glfwMakeContextCurrent(window);
+		GL.createCapabilities();
 		
 		System.out.println("\tdisplay created ok");
 	}
@@ -202,25 +181,17 @@ public class LwjglRasteriser implements Rasteriser
 	@Override
 	public void destroy()
 	{
-		if (type == DisplayType.Window)
-		{
-			Display.destroy();
-		}
-		else if (type == DisplayType.Offscreen)
-		{
-			pbuffer.destroy();
-		}
+		GLFW.glfwDestroyWindow(window);
 	}
 	
 	@Override
 	public void printInfo()
 	{
 		System.out.println(" -- Lwjgl Rasteriser -- ");
-		System.out.println("\tLWJGL version: " + Sys.getVersion());
+		System.out.println("\tLWJGL version: " + Version.getVersion());
 		System.out.println("\ttype: "+type);
 		System.out.println("\twidth: "+width);
 		System.out.println("\theigth: "+height);
-		System.out.println("\tpBuffer: "+pbuffer);
 		
 		System.out.println("\tOpenGL Vendor: "+GL11.glGetString(GL11.GL_VENDOR));
 		System.out.println("\tOpenGL Renderer: "+GL11.glGetString(GL11.GL_RENDERER));
@@ -234,20 +205,28 @@ public class LwjglRasteriser implements Rasteriser
 	@Override
 	public void sync()
 	{
+		long currMillis = System.currentTimeMillis();
+		long delta = currMillis - prevMillis;
+		long fps = 1000 / (delta > 0 ? delta : 1);
+		if (fps > 60) {
+			return;
+		}
+		prevMillis = currMillis;
+		
 		prevKeyStates.clear();
 		for (Integer i : keyCodeMap.values())
 		{
-			prevKeyStates.put(i, Keyboard.isKeyDown(i));
+			prevKeyStates.put(i, GLFW.glfwGetKey(window, i) == GLFW.GLFW_PRESS);
 		}
 		
-		Display.update();
-		Display.sync(60);
+		GLFW.glfwPollEvents();		
+		GLFW.glfwSwapBuffers(window);
 	}
 	
 	@Override
 	public boolean isCloseRequested()
 	{
-		return Display.isCloseRequested();
+		return GLFW.glfwWindowShouldClose(window);
 	}
 	
 	@Override
@@ -263,7 +242,7 @@ public class LwjglRasteriser implements Rasteriser
 			throw new RuntimeException("No mapping for :"+vkKey);
 		
 		Integer lwjglKey = keyCodeMap.get(vkKey);
-		return Keyboard.isKeyDown(lwjglKey);
+		return GLFW.glfwGetKey(window, lwjglKey) == GLFW.GLFW_PRESS;
 	}
 	
 	public boolean isKeyJustDown(final int vkKey)
@@ -273,7 +252,7 @@ public class LwjglRasteriser implements Rasteriser
 		
 		Integer lwjglKey = keyCodeMap.get(vkKey);
 		
-		return Keyboard.isKeyDown(lwjglKey) && !prevKeyStates.get(lwjglKey);
+		return GLFW.glfwGetKey(window, lwjglKey) == GLFW.GLFW_PRESS && !prevKeyStates.get(lwjglKey);
 	}
 	
 	public int getDisplayWidth()
@@ -465,7 +444,7 @@ public class LwjglRasteriser implements Rasteriser
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
 		matrix.store(buffer);
 		buffer.flip();
-		GL11.glLoadMatrix(buffer);
+		GL11.glLoadMatrixf(buffer);
 	}
 	
 	public void setCameraMatrix(Matrix4f matrix, Vector3f lookAt, Vector3f eye, Vector3f up)
@@ -476,7 +455,7 @@ public class LwjglRasteriser implements Rasteriser
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
 		matrix.store(buffer);
 		buffer.flip();
-		GL11.glLoadMatrix(buffer);
+		GL11.glLoadMatrixf(buffer);
 	}
 	
 	@Override

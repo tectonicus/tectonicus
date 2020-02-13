@@ -13,7 +13,6 @@ import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
-import org.lwjgl.LWJGLException;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -56,7 +55,7 @@ public class InteractiveRenderer
 	private ArrayList<SignEntity> views;
 	private int currentViewIndex;
 	
-	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight) throws LWJGLException
+	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight)
 	{
 		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Window, displayWidth, displayHeight, 24, 8, 24, 4);
 		System.out.println("Using rasteriser: "+rasteriser);

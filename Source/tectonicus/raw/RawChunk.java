@@ -14,15 +14,14 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
-
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -366,7 +365,7 @@ public class RawChunk
 											ListTag textures = NbtUtil.getChild(properties, "textures", ListTag.class);
 											CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
 											StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
-											byte[] decoded = DatatypeConverter.parseBase64Binary(value.getValue());
+											byte[] decoded = Base64.getDecoder().decode(value.getValue());
 								            JsonObject obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
 								            textureURL = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
 										}
@@ -572,26 +571,28 @@ public class RawChunk
 							int longIndex = bitIndex / 64;
 							int bitOffset = bitIndex % 64;
 
-							long paletteIndex = (blockStatesTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
+							if (blockStatesTag != null && blockStatesTag.getValue() != null) {
+								long paletteIndex = (blockStatesTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
 
-							// overflow
-							if (bitOffset + bitsPerBlock > 64)
-							{
-								int carryBits = bitOffset + bitsPerBlock - 64;
-								int carryMask = (1 << carryBits) - 1;
-								int carryShift = (bitsPerBlock - carryBits);
+								// overflow
+								if (bitOffset + bitsPerBlock > 64)
+								{
+									int carryBits = bitOffset + bitsPerBlock - 64;
+									int carryMask = (1 << carryBits) - 1;
+									int carryShift = (bitsPerBlock - carryBits);
 
-								paletteIndex |= (blockStatesTag.getValue()[longIndex + 1] & carryMask) << carryShift;
+									paletteIndex |= (blockStatesTag.getValue()[longIndex + 1] & carryMask) << carryShift;
+								}
+
+								CompoundTag paletteEntry = (CompoundTag)paletteList.get((int)paletteIndex);
+								String blockName = NbtUtil.getChild(paletteEntry, "Name", StringTag.class).getValue();
+								CompoundTag properties = NbtUtil.getChild(paletteEntry, "Properties", CompoundTag.class);
+								
+								newSection.blockNames[x][y][z] = blockName;
+								BlockProperties blockState = NbtUtil.getProperties(properties);
+
+								newSection.blockStates[x][y][z] = blockState;
 							}
-
-							CompoundTag paletteEntry = (CompoundTag)paletteList.get((int)paletteIndex);
-
-							String blockName = NbtUtil.getChild(paletteEntry, "Name", StringTag.class).getValue();
-							CompoundTag properties = NbtUtil.getChild(paletteEntry, "Properties", CompoundTag.class);
-							BlockProperties blockState = NbtUtil.getProperties(properties);
-
-							newSection.blockNames[x][y][z] = blockName;
-							newSection.blockStates[x][y][z] = blockState;
 						}
 
 						newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
@@ -738,23 +739,25 @@ public class RawChunk
 	
 	private static byte getAnvil4Bit(ByteArrayTag tag, final int x, final int y, final int z)
 	{
+		byte half = 0;
 		final int index = calcAnvil4BitIndex(x, y, z);
 		if (index == 2048)
 			System.out.println();;
 		
-		final int doublet = tag.getValue()[index];
-		
-		// Upper or lower half?
-		final boolean isUpper = (x % 2 == 1);
-		
-		byte half;
-		if (isUpper)
-		{
-			half = (byte)((doublet >> 4) & 0xF);
-		}
-		else
-		{
-			half = (byte)(doublet & 0xF);
+		if (tag != null && tag.getValue() != null) {
+			final int doublet = tag.getValue()[index];
+			
+			// Upper or lower half?
+			final boolean isUpper = (x % 2 == 1);
+			
+			if (isUpper)
+			{
+				half = (byte)((doublet >> 4) & 0xF);
+			}
+			else
+			{
+				half = (byte)(doublet & 0xF);
+			}
 		}
 		
 		return half;

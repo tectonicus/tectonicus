@@ -170,16 +170,16 @@ public class LwjglMesh implements Mesh
 		assert (isFinalised);
 		assert (numVertices > 0);
 		
-		org.lwjgl.opengl.Util.checkGLError();
+		//org.lwjgl.opengl.Util.checkGLError();
 		
 		GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-		GL11.glVertexPointer(3, 0, vertices);
+		GL11.glVertexPointer(3, GL11.GL_FLOAT, 0, vertices);
 		
 		GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-		GL11.glColorPointer(4, true, 0, colours);
+		GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, 0, colours);
 		
 		GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-		GL11.glTexCoordPointer(2, 0, texCoords);
+		GL11.glTexCoordPointer(2, GL11.GL_FLOAT, 0, texCoords);
 		
 		if (texture != null)
 		{
@@ -192,7 +192,7 @@ public class LwjglMesh implements Mesh
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
 		
-		org.lwjgl.opengl.Util.checkGLError();
+		//org.lwjgl.opengl.Util.checkGLError();
 	}
 	
 	@Override

@@ -9,34 +9,19 @@
 
 package tectonicus.blockTypes;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import tectonicus.blockTypes.BlockModel;
-import tectonicus.blockTypes.BlockModel.BlockElement;
-import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
-import tectonicus.blockTypes.BlockRegistry;
-import tectonicus.blockTypes.BlockVariant;
-import tectonicus.blockTypes.BlockVariant.VariantModel;
-import tectonicus.configuration.Configuration.RasteriserType;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.RasteriserFactory;
-import tectonicus.rasteriser.RasteriserFactory.DisplayType;
-import tectonicus.texture.ZipStack;
 
 public class BlockVariantTests
 {	
