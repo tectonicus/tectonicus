@@ -170,7 +170,7 @@ public class TileRenderer
 		{
 			System.out.println("Initialising display...");
 			
-			rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Offscreen, 2048, 2048, args.colourDepth(), args.alphaBits(), 24, args.numSamples());
+			rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Offscreen, args.tileSize(), args.tileSize(), args.colourDepth(), args.alphaBits(), 24, args.numSamples());
 		
 			if (rasteriser != null)
 			{
