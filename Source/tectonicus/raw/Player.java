@@ -264,11 +264,11 @@ public class Player
 				}
 				reader.close();
 				
-				JsonObject obj = new JsonParser().parse(builder.toString()).getAsJsonObject();
+				JsonObject obj = JsonParser.parseString(builder.toString()).getAsJsonObject();
 				Player.this.setName(obj.get("name").getAsString());
 				JsonObject textures = obj.get("properties").getAsJsonArray().get(0).getAsJsonObject();
 				byte[] decoded = Base64.getDecoder().decode(textures.get("value").getAsString());// DatatypeConverter.parseBase64Binary();
-				obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
+				obj = JsonParser.parseString(new String(decoded, "UTF-8")).getAsJsonObject();
 				boolean hasSkin = obj.get("textures").getAsJsonObject().has("SKIN");
 				String textureUrl = null;
 				if (hasSkin == true)

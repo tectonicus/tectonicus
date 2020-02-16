@@ -65,7 +65,7 @@ public class BlockVariant
 
 		try {
 			if (variant.isJsonObject()) //If only a single model
-				variant = new JsonParser().parse("[" + variant.toString() + "]");
+				variant = JsonParser.parseString("[" + variant.toString() + "]");
 			
 			models = new Gson().fromJson(variant.getAsJsonArray(), new TypeToken<List<VariantModel>>(){}.getType());
 		} catch (JsonSyntaxException e) {

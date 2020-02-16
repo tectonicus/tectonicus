@@ -366,7 +366,7 @@ public class RawChunk
 											CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
 											StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
 											byte[] decoded = Base64.getDecoder().decode(value.getValue());
-								            JsonObject obj = new JsonParser().parse(new String(decoded, "UTF-8")).getAsJsonObject();
+								            JsonObject obj = JsonParser.parseString(new String(decoded, "UTF-8")).getAsJsonObject();
 								            textureURL = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
 										}
 										else if (extraType != null && !(extraType.getValue().equals("")))

@@ -65,7 +65,7 @@ public class BlockVariantTests
 	@Test
 	public void testDeserializeVariantSingleModel() throws JsonSyntaxException
 	{
-		JsonElement variant = new JsonParser().parse("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
+		JsonElement variant = JsonParser.parseString("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
 		BlockVariant bv = BlockVariant.deserializeVariant("east=true,north=false,south=false,west=false", variant);
 		
 		assertThat(bv.getModels().size(), is(equalTo(1)));
@@ -75,7 +75,7 @@ public class BlockVariantTests
 	@Test
 	public void testDeserializeVariantMultipleModels() throws JsonSyntaxException
 	{
-		JsonElement variant = new JsonParser().parse("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
+		JsonElement variant = JsonParser.parseString("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
 		BlockVariant bv = BlockVariant.deserializeVariant("snowy=false", variant);
 		
 		assertThat(bv.getModels().size(), is(equalTo(4)));

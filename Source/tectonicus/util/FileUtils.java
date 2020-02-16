@@ -141,7 +141,7 @@ public class FileUtils
 	{
 		try 
 		{
-			new JsonParser().parse(test).getAsJsonObject();
+			JsonParser.parseString(test).getAsJsonObject();
 			return true;
 		}
 		catch(Exception ex)

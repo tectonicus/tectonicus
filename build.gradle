@@ -1,12 +1,15 @@
 plugins {
-	id 'java'
-	id 'org.ajoberstar.grgit' version '3.0.0'
+	id 'application'
+	id 'org.ajoberstar.grgit' version '4.0.1'
+	id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
 archivesBaseName = 'Tectonicus'
-version = '2.26.02'
+project.version = '2.26.03'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+mainClassName = "tectonicus.TectonicusApp"
 
 sourceSets.main.java.srcDirs = ['Source']
 sourceSets.main.resources.srcDirs = ['Data']
@@ -20,55 +23,72 @@ repositories {
 }
 
 ext {
-	lombokVersion = '1.18.6'
-	junitVersion = '5.4.0'
+	lwjglVersion = '3.2.3'
+	lombokVersion = '1.18.12'
+	junitVersion = '5.6.0'
 }
 
 dependencies {
 	implementation('org.lwjgl.lwjgl:lwjgl_util:2.9.3@jar',
-				   'org.apache.commons:commons-text:1.6',
-				   'com.google.code.gson:gson:2.8.0@jar',
-				   'org.joml:joml:1.9.3',
+				   "org.lwjgl:lwjgl:$lwjglVersion",
+				   "org.lwjgl:lwjgl-opengl:$lwjglVersion",
+				   "org.lwjgl:lwjgl-glfw:$lwjglVersion",
+				   'org.apache.commons:commons-text:1.8',
+				   'com.google.code.gson:gson:2.8.6@jar',
+				   'org.joml:joml:1.9.20',
 				   'xyz.nickr:nbt:1.1.1',
 				   'info.picocli:picocli:3.9.5@jar')
-	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/lwjgl.jar', 'Libs/Jars/lwjgl-opengl.jar', 'Libs/Jars/lwjgl-glfw.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-windows",
+				"org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-windows",
+				"org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-windows",
+				"org.lwjgl:lwjgl:$lwjglVersion:natives-macos",
+				"org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-macos",
+				"org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-macos",
+				"org.lwjgl:lwjgl:$lwjglVersion:natives-linux",
+				"org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-linux",
+				"org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-linux")
 
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor "org.projectlombok:lombok:$lombokVersion"
 	
 	testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion",
-					   'org.hamcrest:hamcrest:2.1')
+					   'org.hamcrest:hamcrest:2.2')
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
 	testCompileOnly "org.projectlombok:lombok:$lombokVersion"
 	testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
 }
 
-jar {
+shadowJar {
 	doFirst {
 		def props = new Properties()
 		props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
 		props.setProperty('buildTime', new Date().format('hhmm'))
 		props.setProperty('buildNumber', grgit.log().size().toString())
-		props.setProperty('version', "${version}")
+		props.setProperty('version', "${project.version}")
 		def writer = new FileWriter(file('build/resources/main/tectonicus.buildInfo'))
 		props.store(writer, 'Tectonicus build info')
 		writer.flush()
 		writer.close()
 	}
-	
-	from configurations.runtimeClasspath.asFileTree.files.collect { zipTree(it) }
-	from fileTree('Data')
-	exclude ('OpenAL*.dll', 'openal.dylib', 'libopenal*.so', 'processing/**')
 
-	manifest {
-		attributes 'Main-Class': 'tectonicus.TectonicusApp'
+	archiveClassifier = ''
+
+	exclude ('processing/**', 'com/threed/**')
+	minimize {
+		exclude(dependency('xyz.nickr:nbt:.*'))
 	}
 }
 
-task createPackage(type: Zip, dependsOn: 'build', group: 'build', description: 'Create release zip file') {
-	from files('Data/defaultBlockConfig.xml', "build/libs/tectonicus-${version}.jar")
-	from('Docs') {
-		include('*.xml', '*.txt')
+distributions {
+	shadow {
+		distributionBaseName = archivesBaseName
+		contents {
+			from files('Data/defaultBlockConfig.xml')
+			from('Docs') {
+				include('*.xml', '*.txt')
+			}
+		}
 	}
 }
 

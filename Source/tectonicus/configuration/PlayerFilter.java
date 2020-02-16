@@ -71,7 +71,7 @@ public class PlayerFilter
 		{
 			if (playerFile.toString().toLowerCase().endsWith(".json"))
 			{	
-				JsonArray array = new JsonParser().parse(new String(Files.readAllBytes(playerFile))).getAsJsonArray();
+				JsonArray array = JsonParser.parseString(new String(Files.readAllBytes(playerFile))).getAsJsonArray();
 				
 				for (int i=0; i<array.size(); i++)
 				{

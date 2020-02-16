@@ -97,7 +97,7 @@ public class BlockRegistry
 		{
 			for (Path entry : entries)
 			{
-				JsonObject json = new JsonParser().parse(Files.newBufferedReader(entry, StandardCharsets.UTF_8)).getAsJsonObject();
+				JsonObject json = JsonParser.parseReader(Files.newBufferedReader(entry, StandardCharsets.UTF_8)).getAsJsonObject();
 				JsonObject variants = json.getAsJsonObject("variants");
 				
 				Set<Entry<String, JsonElement>> entrySet = variants.entrySet();
@@ -144,7 +144,7 @@ public class BlockRegistry
 	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
 	public BlockModel loadModel(String modelPath, Map<String, String> textureMap, JsonArray elements) throws Exception
 	{
-		JsonObject json = new JsonParser().parse(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json"))).getAsJsonObject();
+		JsonObject json = JsonParser.parseReader(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json"))).getAsJsonObject();
 		//JsonArray elements = null;
 		
 		String parent = "";
