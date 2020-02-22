@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
@@ -518,7 +518,7 @@ public class World implements BlockContext
 				Vector3f[] quad = camera.getClearQuad();
 				
 				Vector3f offset = new Vector3f(camera.getForward());
-				offset.scale(+0.20f); // Ugh. Arbitrary fudge factor because camera.getClearQuad doesn't seem to quite work for perspective camera 
+				offset.mul(+0.20f); // Ugh. Arbitrary fudge factor because camera.getClearQuad doesn't seem to quite work for perspective camera
 				for (Vector3f v : quad)
 				{
 					v.x += offset.x;

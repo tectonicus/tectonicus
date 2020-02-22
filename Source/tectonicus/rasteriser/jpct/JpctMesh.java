@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,9 +11,10 @@ package tectonicus.rasteriser.jpct;
 
 import java.util.ArrayList;
 
-import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+import com.jogamp.opengl.GL2;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import com.threed.jpct.Object3D;
 import com.threed.jpct.SimpleVector;
@@ -72,13 +73,23 @@ public class JpctMesh implements Mesh
 		// TODO Auto-generated method stub
 		
 	}
-	
+
+	@Override
+	public void bind(GL2 gl2) {
+
+	}
+
 	@Override
 	public void draw(float xOffset, float yOffset, float zOffset)
 	{
 		world.addObject(object3D);
 	}
-	
+
+	@Override
+	public void draw(float xOffset, float yOffset, float zOffset, GL2 gl2) {
+
+	}
+
 	@Override
 	public int getMemorySize()
 	{

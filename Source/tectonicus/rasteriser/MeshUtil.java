@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,18 +9,16 @@
 
 package tectonicus.rasteriser;
 
-import java.util.List;
-
+import lombok.experimental.UtilityClass;
 import org.joml.Matrix4f;
-import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
-
-import tectonicus.blockTypes.BlockUtil;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
+import tectonicus.blockTypes.BlockUtil;
 import tectonicus.configuration.LightFace;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -28,12 +26,15 @@ import tectonicus.renderer.Geometry.MeshType;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 
+import java.util.List;
+
+@UtilityClass
 public class MeshUtil
 {
 
 	public static void addCube(final float x, final float y, final float z, Vector4f colour, final boolean addTop,
-								final boolean addNorth, final boolean addSouth, final boolean addEast, final boolean addWest,
-								Mesh geometry)
+							   final boolean addNorth, final boolean addSouth, final boolean addEast, final boolean addWest,
+							   Mesh geometry)
 	{
 		final float inc = 0.2f;
 		Vector4f lightColour = new Vector4f(colour.x + inc, colour.y + inc, colour.z + inc, colour.w);
@@ -136,10 +137,10 @@ public class MeshUtil
 	
 	public static void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, List<BlockElement> elements, Geometry geometry, int rotation, String axis)
 	{
-		org.joml.Vector3f rotOrigin = new org.joml.Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
-		org.joml.Vector3f rotAxis = new org.joml.Vector3f(0, 1, 0);
+		Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
+		Vector3f rotAxis = new Vector3f(0, 1, 0);
 		if (axis.equals("x"))
-			rotAxis = new org.joml.Vector3f(1, 0, 0);
+			rotAxis = new Vector3f(1, 0, 0);
 		
 		Matrix4f blockRotation = new Matrix4f().translate(rotOrigin)
 				  							   .rotate((float) Math.toRadians(rotation), rotAxis.x, rotAxis.y, 0) 
@@ -223,8 +224,8 @@ public class MeshUtil
 		
 		for(BlockElement element : elements)
 		{
-			org.joml.Vector3f rotationOrigin = element.getRotationOrigin().div(16);
-			org.joml.Vector3f rotationAxis = element.getRotationAxis();
+			Vector3f rotationOrigin = element.getRotationOrigin().div(16);
+			Vector3f rotationAxis = element.getRotationAxis();
 			
 			Matrix4f elementRotation = null;
 			if (element.getRotationAngle() != 0)
@@ -242,7 +243,7 @@ public class MeshUtil
 			float y2 = y + element.getTo().y()/16;
 			float z2 = z + element.getTo().z()/16;
 	
-	        org.joml.Vector3f topLeft, topRight, bottomRight, bottomLeft;
+	        Vector3f topLeft, topRight, bottomRight, bottomLeft;
 	        
 			if (element.getFaces().containsKey("up") && !above.isSolid())
 	        {
@@ -250,10 +251,10 @@ public class MeshUtil
 				
 				ElementFace face = element.getFaces().get("up");
 				
-				topLeft = new org.joml.Vector3f(x1, y2, z1);
-		        topRight = new org.joml.Vector3f(x2, y2, z1);
-		        bottomRight = new org.joml.Vector3f(x2, y2, z2);
-		        bottomLeft = new org.joml.Vector3f(x1, y2, z2);
+				topLeft = new Vector3f(x1, y2, z1);
+		        topRight = new Vector3f(x2, y2, z1);
+		        bottomRight = new Vector3f(x2, y2, z2);
+		        bottomLeft = new Vector3f(x1, y2, z2);
 		        
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
@@ -264,10 +265,10 @@ public class MeshUtil
 				
 				ElementFace face = element.getFaces().get("down");
 				
-				topLeft = new org.joml.Vector3f(x1, y1, z2);
-		        topRight = new org.joml.Vector3f(x2, y1, z2);
-		        bottomRight = new org.joml.Vector3f(x2, y1, z1);
-		        bottomLeft = new org.joml.Vector3f(x1, y1, z1);
+				topLeft = new Vector3f(x1, y1, z2);
+		        topRight = new Vector3f(x2, y1, z2);
+		        bottomRight = new Vector3f(x2, y1, z1);
+		        bottomLeft = new Vector3f(x1, y1, z1);
 		        
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
@@ -278,10 +279,10 @@ public class MeshUtil
 				
 				ElementFace face = element.getFaces().get("north");
 				
-				topLeft = new org.joml.Vector3f(x2, y2, z1);
-		        topRight = new org.joml.Vector3f(x1, y2, z1);
-		        bottomRight = new org.joml.Vector3f(x1, y1, z1);
-		        bottomLeft = new org.joml.Vector3f(x2, y1, z1);
+				topLeft = new Vector3f(x2, y2, z1);
+		        topRight = new Vector3f(x1, y2, z1);
+		        bottomRight = new Vector3f(x1, y1, z1);
+		        bottomLeft = new Vector3f(x2, y1, z1);
 		        
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
@@ -292,10 +293,10 @@ public class MeshUtil
 				
 				ElementFace face = element.getFaces().get("south");
 				
-				topLeft = new org.joml.Vector3f(x1, y2, z2);
-		        topRight = new org.joml.Vector3f(x2, y2, z2);
-		        bottomRight = new org.joml.Vector3f(x2, y1, z2);
-		        bottomLeft = new org.joml.Vector3f(x1, y1, z2);
+				topLeft = new Vector3f(x1, y2, z2);
+		        topRight = new Vector3f(x2, y2, z2);
+		        bottomRight = new Vector3f(x2, y1, z2);
+		        bottomLeft = new Vector3f(x1, y1, z2);
 		        
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
@@ -306,10 +307,10 @@ public class MeshUtil
 				
 				ElementFace face = element.getFaces().get("east");
 				
-				topLeft = new org.joml.Vector3f(x2, y2, z2);
-		        topRight = new org.joml.Vector3f(x2, y2, z1);
-		        bottomRight = new org.joml.Vector3f(x2, y1, z1);
-		        bottomLeft = new org.joml.Vector3f(x2, y1, z2);
+				topLeft = new Vector3f(x2, y2, z2);
+		        topRight = new Vector3f(x2, y2, z1);
+		        bottomRight = new Vector3f(x2, y1, z1);
+		        bottomLeft = new Vector3f(x2, y1, z2);
 		        
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
@@ -320,17 +321,17 @@ public class MeshUtil
 				
 				ElementFace face = element.getFaces().get("west");
 				
-				topLeft = new org.joml.Vector3f(x1, y2, z1);
-		        topRight = new org.joml.Vector3f(x1, y2, z2);
-		        bottomRight = new org.joml.Vector3f(x1, y1, z2);
-		        bottomLeft = new org.joml.Vector3f(x1, y1, z1);
+				topLeft = new Vector3f(x1, y2, z1);
+		        topRight = new Vector3f(x1, y2, z2);
+		        bottomRight = new Vector3f(x1, y1, z2);
+		        bottomLeft = new Vector3f(x1, y1, z1);
 		        
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 		}
 	}
 	
-	private static void addVertices(Geometry geometry, Colour4f color, ElementFace face, org.joml.Vector3f topLeft, org.joml.Vector3f topRight, org.joml.Vector3f bottomRight, org.joml.Vector3f bottomLeft, org.joml.Matrix4f rotationTransform, Matrix4f rotTransform)
+	private static void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f rotationTransform, Matrix4f rotTransform)
 	{
 		rotTransform.transformPosition(topLeft);
         rotTransform.transformPosition(topRight);

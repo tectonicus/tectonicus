@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,7 +9,7 @@
 
 package tectonicus.util;
 
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 public class Plane
 {
@@ -25,7 +25,7 @@ public class Plane
 	{
 		this.point.set(point);
 		this.normal.set(normal);
-		this.normal.normalise();
+		this.normal.normalize();
 	}
 	
 	public boolean isInside(Vector3f testPoint)

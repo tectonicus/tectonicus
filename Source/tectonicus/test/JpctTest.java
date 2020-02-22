@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,17 +9,6 @@
 
 package tectonicus.test;
 
-import java.awt.Color;
-import java.awt.Image;
-
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
-
-import tectonicus.util.MatrixUtil;
-
 import com.threed.jpct.FrameBuffer;
 import com.threed.jpct.IRenderer;
 import com.threed.jpct.Matrix;
@@ -28,6 +17,14 @@ import com.threed.jpct.Primitives;
 import com.threed.jpct.SimpleVector;
 import com.threed.jpct.Texture;
 import com.threed.jpct.TextureManager;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import tectonicus.util.MatrixUtil;
+
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import java.awt.Color;
+import java.awt.Image;
 
 public class JpctTest
 {
@@ -117,10 +114,10 @@ public class JpctTest
 		dest.getTranslation().z = src.m23;
 		*/
 		
-		dest.setRow(0, src.m00, src.m01, src.m02, src.m03);
-		dest.setRow(1, src.m10, src.m11, src.m12, src.m13);
-		dest.setRow(2, src.m20, src.m21, src.m22, src.m23);
-		dest.setRow(3, src.m30, src.m31, src.m32, src.m33);
+		dest.setRow(0, src.m00(), src.m01(), src.m02(), src.m03());
+		dest.setRow(1, src.m10(), src.m11(), src.m12(), src.m13());
+		dest.setRow(2, src.m20(), src.m21(), src.m22(), src.m23());
+		dest.setRow(3, src.m30(), src.m31(), src.m32(), src.m33());
 	/*	
 		dest.getXAxis().x = src.m00;
 		dest.getXAxis().y = src.m10;

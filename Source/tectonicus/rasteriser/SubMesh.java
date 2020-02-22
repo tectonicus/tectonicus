@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,14 +9,13 @@
 
 package tectonicus.rasteriser;
 
-import java.util.ArrayList;
-
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
-
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import tectonicus.texture.SubTexture;
+
+import java.util.ArrayList;
 
 public class SubMesh
 {
@@ -34,9 +33,9 @@ public class SubMesh
 	
 	public SubMesh()
 	{
-		positions = new ArrayList<Vector3f>();
-		texCoords = new ArrayList<Vector2f>();
-		colours = new ArrayList<Vector4f>();
+		positions = new ArrayList<>();
+		texCoords = new ArrayList<>();
+		colours = new ArrayList<>();
 	}
 	
 	public void addVertex(Vector3f position, Vector4f colour, final float u, final float v)
@@ -94,7 +93,7 @@ public class SubMesh
 			if (transform != null)
 			{
 				Vector4f dest = new Vector4f();
-				Matrix4f.transform(transform, new Vector4f(pos.x, pos.y, pos.z, 1.0f), dest);
+				transform.transform(new Vector4f(pos.x, pos.y, pos.z, 1.0f), dest);
 				
 				pos.x = dest.x / dest.w;
 				pos.y = dest.y / dest.w;
@@ -120,7 +119,7 @@ public class SubMesh
 			if (transform != null)
 			{
 				Vector4f dest = new Vector4f();
-				Matrix4f.transform(transform, new Vector4f(pos.x, pos.y, pos.z, 1.0f), dest);
+				transform.transform(new Vector4f(pos.x, pos.y, pos.z, 1.0f), dest);
 				
 				pos.x = dest.x / dest.w;
 				pos.y = dest.y / dest.w;
@@ -170,13 +169,13 @@ public class SubMesh
 		trans1.translate(new Vector3f(-0.5f, -0.5f, -0.5f));
 		
 		Matrix4f combinedRotate = new Matrix4f();
-		Matrix4f.mul(horizontalRotate, verticalRotate, combinedRotate);
+		horizontalRotate.mul(verticalRotate, combinedRotate);
 		
 		Matrix4f working = new Matrix4f();
-		Matrix4f.mul(trans0, combinedRotate, working);
+		trans0.mul(combinedRotate, working);
 		
 		Matrix4f actual = new Matrix4f();
-		Matrix4f.mul(working, trans1, actual);
+		working.mul(trans1, actual);
 		
 		
 		

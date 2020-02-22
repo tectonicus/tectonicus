@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,16 +9,16 @@
 
 package tectonicus.renderer;
 
-import java.awt.Point;
-import java.awt.Rectangle;
 
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
-
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.util.MatrixUtil;
 import tectonicus.util.Project;
 import tectonicus.util.Vector2f;
+
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public class OrthoCamera implements Camera
 {
@@ -88,7 +88,7 @@ public class OrthoCamera implements Camera
 		// Calculate up and right vectors
 		{
 			Vector3f forward = new Vector3f(lookAt.x - eye.x, lookAt.y - eye.y, lookAt.z - eye.z);
-			forward.normalise();
+			forward.normalize();
 		
 			// Find right and up vectors
 			if (elevationAngleRads >= Math.PI/2f)
@@ -98,7 +98,7 @@ public class OrthoCamera implements Camera
 				// Calculate a dummy eye position as if we were had an elevation of 45'
 				Vector3f dummyEye = calcEyePosition(lookAt, angleOffsetRads, (float)Math.PI/4.0f);
 				Vector3f dummyForward = new Vector3f(lookAt.x - dummyEye.x, lookAt.y - dummyEye.y, lookAt.z - dummyEye.z);
-				dummyForward.normalise();
+				dummyForward.normalize();
 				
 				// Actual up is along forward direction but nudged up
 				up = new Vector3f(dummyForward.x, dummyForward.y+1, dummyForward.z);	
@@ -108,13 +108,13 @@ public class OrthoCamera implements Camera
 				up = new Vector3f(0, 1, 0);
 			}
 			Vector3f dir = new Vector3f(lookAt.x-eye.x, lookAt.y-eye.y, lookAt.z-eye.z);
-			dir.normalise();
+			dir.normalize();
 		
-			Vector3f.cross(dir, up, right);
-			Vector3f.cross(right, dir, up);
+			dir.cross(up, right);
+			right.cross(dir, up);
 		
-			right.normalise();
-			up.normalise();
+			right.normalize();
+			up.normalize();
 		}
 		
 		final float size = this.zoom / 2;
@@ -158,7 +158,7 @@ public class OrthoCamera implements Camera
 		forward.y = lookAt.y - eye.y;
 		forward.z = lookAt.z - eye.z;
 		
-		forward.normalise();
+		forward.normalize();
 		
 		return forward;
 	}

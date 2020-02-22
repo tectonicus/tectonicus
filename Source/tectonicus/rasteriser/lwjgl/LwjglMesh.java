@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,10 +12,11 @@ package tectonicus.rasteriser.lwjgl;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
+import com.jogamp.opengl.GL2;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
@@ -194,6 +195,11 @@ public class LwjglMesh implements Mesh
 		
 		//org.lwjgl.opengl.Util.checkGLError();
 	}
+
+	@Override
+	public void bind(GL2 gl2) {
+		throw new UnsupportedOperationException();
+	}
 	
 	@Override
 	public void draw(final float xOffset, final float yOffset, final float zOffset)
@@ -231,7 +237,12 @@ public class LwjglMesh implements Mesh
 		//	org.lwjgl.opengl.Util.checkGLError();
 		}
 	}
-	
+
+	@Override
+	public void draw(final float xOffset, final float yOffset, final float zOffset, GL2 gl2) {
+		throw new UnsupportedOperationException();
+	}
+
 	@Override
 	public int getMemorySize()
 	{

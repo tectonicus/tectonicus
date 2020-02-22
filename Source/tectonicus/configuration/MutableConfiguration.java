@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -19,6 +19,7 @@ import lombok.Data;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import tectonicus.Log;
+import tectonicus.Minecraft;
 
 @Data
 @Command(name = "java -jar Tectonicus.jar",
@@ -57,6 +58,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-o", "--outputDir", "outputDir"}, paramLabel = "<String>")
 	private File outputDir;
 
+	@Option(names = {"-w", "--worldDir", "worldDir"}, paramLabel = "<String>")
+	private MutableMap worldDir;
+
 	@Option(names = {"-C", "--useCache", "useCache"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useCache;
 
@@ -75,7 +79,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-f", "--outputHtmlName", "outputHtmlName"}, paramLabel = "<string>")
 	private String outputHtmlName;
 
-	@Option(names = {"-s", "--defaultSkin", "defaultSkin"}, paramLabel = "<string>")
+	@Option(names = {"--defaultSkin", "defaultSkin"}, paramLabel = "<string>")
 	private String defaultSkin;
 
 	@Option(names = {"--signsInitiallyVisible", "signsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
@@ -97,7 +101,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-v", "--verbose", "verbose"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean isVerbose;
 
-	@Option(names = {"-w", "--tileSize", "tileSize"}, paramLabel = "<integer>")
+	@Option(names = {"-s", "--tileSize", "tileSize"}, paramLabel = "<integer>")
 	private int tileSize;
 
 	@Option(names = {"--maxTiles", "maxTiles"}, paramLabel = "<integer>")
@@ -148,6 +152,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		viewsInitiallyVisible = true;
 		logFile = new File("./TectonicusLog.txt");
 		outputHtmlName = "map.html";
+		outputDir = new File(".");
+		cacheDir = new File(outputDir, "Cache");
+		minecraftJar = Minecraft.findMinecraftJar();
 		defaultSkin = "steve";
 		numDownsampleThreads = 1;
 		singlePlayerName = "Player";
@@ -257,6 +264,8 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.cacheDir = dir;
 	}
 	public File cacheDir() { return cacheDir; }
+
+	public MutableMap getWorldDir() { return worldDir; }
 
 	public void setUseCache(final boolean useCache)
 	{
@@ -385,7 +394,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.viewsInitiallyVisible = visible;
 	}
 	public boolean areViewsInitiallyVisible() { return viewsInitiallyVisible; }
-
 
 	public void setLogFile(File file)
 	{

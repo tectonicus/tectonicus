@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,13 +9,13 @@
 
 package tectonicus.renderer;
 
-import java.awt.Rectangle;
 
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
-
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.util.MatrixUtil;
+
+import java.awt.Rectangle;
 
 public class PerspectiveCamera implements Camera
 {
@@ -74,7 +74,7 @@ public class PerspectiveCamera implements Camera
 		forward.y = lookAt.y - eye.y;
 		forward.z = lookAt.z - eye.z;
 		
-		forward.normalise();
+		forward.normalize();
 		
 		return forward;
 	}
@@ -107,9 +107,9 @@ public class PerspectiveCamera implements Camera
 	//	Vector3f.cross(eye, up, right); // TODO: Shouldn't this be 'forwards' not 'eye'?
 		
 		Vector3f forwards = new Vector3f(lookAt.x-eye.x, lookAt.y-eye.y, lookAt.z-eye.z);
-		forwards.normalise();
-		Vector3f.cross(forwards, up, right);
-		
+		forwards.normalize();
+		forwards.cross(up, right);
+
 		projectionMatrix = MatrixUtil.createPerspectiveMatrix(fovInDegs, aspect, near, far);
 		cameraMatrix = MatrixUtil.createLookAt(eye, lookAt, up);
 		

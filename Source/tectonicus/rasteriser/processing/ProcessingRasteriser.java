@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,24 +9,8 @@
 
 package tectonicus.rasteriser.processing;
 
-import java.awt.BorderLayout;
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Image;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.swing.JFrame;
-
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
-
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
@@ -41,6 +25,20 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
+
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ProcessingRasteriser implements Rasteriser
 {
@@ -158,7 +156,12 @@ public class ProcessingRasteriser implements Rasteriser
 	{
 		return keyHandler.isJustDown(vkKey);
 	}
-	
+
+	@Override
+	public long getWindowId() {
+		return 0;
+	}
+
 	@Override
 	public int getDisplayWidth()
 	{

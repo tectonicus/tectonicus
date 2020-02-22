@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,6 +18,8 @@ import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.MutableLayer;
+import tectonicus.configuration.MutableMap;
 import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
 import tectonicus.raw.LevelDat;
@@ -905,14 +907,22 @@ public class TectonicusApp
 			if (args.getMode() == Mode.INTERACTIVE)
 			{
 				interactiveRenderer = new InteractiveRenderer(args, 512, 512);
-				
-				tectonicus.configuration.Map map = args.getMap(0);
-				Layer layer = map.getLayer(0);
+
+				tectonicus.configuration.Map map;
+				Layer layer;
+				if (args.getWorldDir() != null) {
+					map = args.getWorldDir();
+					layer = new MutableLayer("LayerA", map.getId());
+				} else {
+					map = args.getMap(0);
+					layer = map.getLayer(0);
+				}
 				
 				BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.cacheDir(), map, hashAlgorithm);
 				PlayerSkinCache skinCache = new PlayerSkinCache(args, hashAlgorithm);
 				
-				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.texturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache, map.getSignFilter());	
+				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(),
+						args.minecraftJar(), args.texturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache, map.getSignFilter());
 				TileRenderer.setupWorldForLayer(layer, world);
 				
 				interactiveRenderer.display(world);
@@ -1126,6 +1136,7 @@ public class TectonicusApp
 		//Parse command line to get config file
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
+		cmd.registerConverter(MutableMap.class, s -> new MutableMap("Throwaway"));
 		cmd.setCaseInsensitiveEnumValuesAllowed(true).parse(argArray);
 		Path configFile = m.getConfigFile();
 		
@@ -1138,6 +1149,13 @@ public class TectonicusApp
 
 		// Load config from command line second.  Command line options will override config file options
 		CommandLine commandLine = new CommandLine(args);
+		commandLine.registerConverter(MutableMap.class, s -> {
+			MutableMap map = new MutableMap("Map0");
+			MutableLayer layer = new MutableLayer("LayerA", map.getId());
+			map.addLayer(layer);
+			map.setWorldDir(new File(s));
+			return map;
+		});
 		commandLine.setCaseInsensitiveEnumValuesAllowed(true).parseWithHandler(new CommandLine.RunFirst(), argArray);
 		if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
 			System.exit(0);

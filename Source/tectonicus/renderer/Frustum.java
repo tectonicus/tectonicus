@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,9 +11,10 @@ package tectonicus.renderer;
 
 import java.awt.Rectangle;
 
+
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 import tectonicus.Util;
 import tectonicus.util.Plane;
@@ -116,13 +117,12 @@ public class Frustum
 	private static Vector3f cross(Vector3f lhs, Vector3f rhs)
 	{
 		Vector3f normLeft = new Vector3f(lhs);
-		normLeft.normalise();
+		normLeft.normalize();
 		Vector3f normRight = new Vector3f(rhs);
-		normRight.normalise();
+		normRight.normalize();
 		
 		Vector3f res = new Vector3f();
-		
-		Vector3f.cross(normLeft, normRight, res);
+		normLeft.cross(normRight, res);
 		
 		return res;
 	}
@@ -189,17 +189,17 @@ public class Frustum
 		final float upScale = getVisibleWorldHeight();
 		Vector3f upScaled = new Vector3f(up.x * upScale, up.y * upScale, up.z * upScale);
 		
-		Vector3f.add(result[0], upScaled, result[0]);
-		Vector3f.sub(result[0], rightScaled, result[0]);
-		
-		Vector3f.add(result[1], upScaled, result[1]);
-		Vector3f.add(result[1], rightScaled, result[1]);
-		
-		Vector3f.sub(result[2], upScaled, result[2]);
-		Vector3f.add(result[2], rightScaled, result[2]);
-		
-		Vector3f.sub(result[3], upScaled, result[3]);
-		Vector3f.sub(result[3], rightScaled, result[3]);
+		result[0].add(upScaled);
+		result[0].sub(rightScaled);
+
+		result[1].add(upScaled);
+		result[1].add(rightScaled);
+
+		result[2].sub(upScaled);
+		result[2].add(rightScaled);
+
+		result[3].sub(upScaled);
+		result[3].sub(rightScaled);
 		
 		return result;
 	}

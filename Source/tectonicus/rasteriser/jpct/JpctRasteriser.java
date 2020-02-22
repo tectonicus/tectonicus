@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,8 +16,9 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JFrame;
 
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import com.threed.jpct.FrameBuffer;
 import com.threed.jpct.IRenderer;
@@ -109,7 +110,12 @@ public class JpctRasteriser implements Rasteriser
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
+	@Override
+	public long getWindowId() {
+		return 0;
+	}
+
 	@Override
 	public int getDisplayWidth()
 	{

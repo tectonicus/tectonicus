@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,9 +9,9 @@
 
 package tectonicus.rasteriser;
 
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
-
+import com.jogamp.opengl.GL2;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import tectonicus.util.Colour4f;
 
 public interface Mesh
@@ -24,8 +24,10 @@ public interface Mesh
 	public Texture getTexture();
 	
 	public void bind();
+	public void bind(GL2 gl2);
 
 	public void draw(final float xOffset, final float yOffset, final float zOffset);
+	public void draw(final float xOffset, final float yOffset, final float zOffset, GL2 gl2);
 
 	
 	public int getMemorySize();
@@ -34,7 +36,7 @@ public interface Mesh
 	
 	
 	public void addVertex(Vector3f position, Vector4f colour, final float u, final float v);
-	
+
 	public void addVertex(Vector3f position, final float u, final float v);
 
 	public void addVertex(org.joml.Vector3f position, Colour4f color, float u, float v);

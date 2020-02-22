@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightStyle;
@@ -193,8 +193,8 @@ public class ViewUtil
 		
 		// Make orthogonal
 		Vector3f right = new Vector3f();
-		Vector3f.cross(forward, up, right);
-		Vector3f.cross(right, forward, up);
+		forward.cross(up, right);
+		right.cross(forward, up);
 		
 		return new Viewpoint(eye, lookAt, up, fov);
 	}

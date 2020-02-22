@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,32 @@
  */
 
 package tectonicus.test;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWFramebufferSizeCallbackI;
+import org.lwjgl.opengl.GL11;
+import tectonicus.blockTypes.BlockModel;
+import tectonicus.blockTypes.BlockModel.BlockElement;
+import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
+import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.configuration.Configuration.RasteriserType;
+import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory;
+import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+import tectonicus.rasteriser.Texture;
+import tectonicus.rasteriser.lwjgl.LwjglMesh;
+import tectonicus.rasteriser.lwjgl.LwjglTexture;
+import tectonicus.texture.SubTexture;
+import tectonicus.util.Colour4f;
+
+import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.GL_ALPHA_TEST;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
@@ -28,7 +54,7 @@ import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL11.glEnd;
 import static org.lwjgl.opengl.GL11.glFrontFace;
 import static org.lwjgl.opengl.GL11.glGetString;
-import static org.lwjgl.opengl.GL11.glLoadIdentity;
+import static org.lwjgl.opengl.GL11.glLoadMatrixf;
 import static org.lwjgl.opengl.GL11.glMatrixMode;
 import static org.lwjgl.opengl.GL11.glPopMatrix;
 import static org.lwjgl.opengl.GL11.glPushMatrix;
@@ -36,33 +62,6 @@ import static org.lwjgl.opengl.GL11.glRotatef;
 import static org.lwjgl.opengl.GL11.glTexCoord2f;
 import static org.lwjgl.opengl.GL11.glTranslatef;
 import static org.lwjgl.opengl.GL11.glVertex3f;
-import static org.lwjgl.opengl.GL11.glViewport;
-import static org.lwjgl.util.glu.GLU.gluPerspective;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWFramebufferSizeCallbackI;
-import org.lwjgl.opengl.GL11;
-
-import tectonicus.blockTypes.BlockModel;
-import tectonicus.blockTypes.BlockModel.BlockElement;
-import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
-import tectonicus.blockTypes.BlockRegistry;
-import tectonicus.configuration.Configuration.RasteriserType;
-import tectonicus.rasteriser.Mesh;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.RasteriserFactory;
-import tectonicus.rasteriser.RasteriserFactory.DisplayType;
-import tectonicus.rasteriser.Texture;
-import tectonicus.rasteriser.lwjgl.LwjglMesh;
-import tectonicus.rasteriser.lwjgl.LwjglTexture;
-import tectonicus.texture.SubTexture;
-import tectonicus.util.Colour4f;
 
 public class DrawModelTest 
 {
@@ -99,6 +98,7 @@ public class DrawModelTest
 //			e.printStackTrace();
 //		}		
 		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, width, height, 24, 8, 24, 4);
+		window = rasteriser.getWindowId();
 		BlockRegistry br = new BlockRegistry(rasteriser);
 		BlockModel bm = br.loadModel("block/beacon", new HashMap<String, String>(), null);
 		List<BlockElement> elements = bm.getElements();
@@ -261,12 +261,12 @@ public class DrawModelTest
 
 			GLFW.glfwPollEvents();
 			
-			long currMillis = System.currentTimeMillis();
-			long fps = 1000 / (currMillis - prevMillis);
-			prevMillis = currMillis;
-			if (fps > 60) {
-				return;
-			}
+//			long currMillis = System.currentTimeMillis();
+//			long fps = 1000 / (currMillis - prevMillis);
+//			prevMillis = currMillis;
+//			if (fps > 60) {
+//				return;
+//			}
 			
 			GLFW.glfwSwapBuffers(window);
 		}
@@ -599,12 +599,16 @@ public class DrawModelTest
 	{
 		//final int range = 100;
 		
-		glViewport(0, 0, width, height);
+		//glViewport(0, 0, width, height);
 		
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+		//glMatrixMode(GL_PROJECTION);
+		//glLoadIdentity();
 		float aspect = width / height;
-	    gluPerspective(25.0f, aspect, 1.0f, 300.0f);
+		Matrix4f m = new Matrix4f();
+		m.perspective((float) Math.toRadians(45), aspect, 1f, 300.0f);
+		FloatBuffer fb = BufferUtils.createFloatBuffer(16);
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(m.get(fb));
 		//glOrtho(-range, range, -range*Display.getHeight()/Display.getWidth(), range*Display.getHeight()/Display.getWidth(), -range, range);
 		glMatrixMode(GL_MODELVIEW);
 		glTranslatef(0,0, -50);

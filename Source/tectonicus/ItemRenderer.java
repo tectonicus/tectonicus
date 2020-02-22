@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -19,8 +19,8 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.PlayerSkinCache;
@@ -255,7 +255,7 @@ public class ItemRenderer
 		camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
-		ArrayList<Vector2f> corners = new ArrayList<Vector2f>();
+		ArrayList<Vector2f> corners = new ArrayList<>();
 		corners.add( camera.projectf(new Vector3f(bounds.getOrigin().x,						bounds.getOrigin().y,	bounds.getOrigin().z) ) );
 		corners.add( camera.projectf(new Vector3f(bounds.getOrigin().x+bounds.getWidth(),	bounds.getOrigin().y,	bounds.getOrigin().z) ) );
 		corners.add( camera.projectf(new Vector3f(bounds.getOrigin().x, 					bounds.getOrigin().y,	bounds.getOrigin().z+bounds.getDepth()) ) );
@@ -283,8 +283,8 @@ public class ItemRenderer
 		Vector3f topRightWorld = camera.unproject(new Vector2f(maxX, minY));
 		Vector3f bottomLeftWorld = camera.unproject(new Vector2f(minX, maxY));
 		
-		final float xSize = Vector3f.sub(topLeftWorld, topRightWorld, null).length();
-		final float ySize = Vector3f.sub(topLeftWorld, bottomLeftWorld, null).length();
+		final float xSize = topLeftWorld.sub(topRightWorld, new Vector3f()).length();
+		final float ySize = topLeftWorld.sub(bottomLeftWorld, new Vector3f()).length();
 		float longest = Math.max(xSize, ySize);
 		
 		camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
@@ -357,11 +357,13 @@ public class ItemRenderer
 				{
 					Color c = new Color(img.getRGB(x, y));
 					Vector4f colour = new Vector4f(c.getRed()/255.0f, c.getGreen()/255.0f, c.getBlue()/255.0f, 1.0f);
-					
-					Vector4f lighter = Vector4f.add(colour, new Vector4f(0.1f, 0.1f, 0.1f, 0), null);
+
+					Vector4f lighter = new Vector4f();
+					colour.add(new Vector4f(0.1f, 0.1f, 0.1f, 0), lighter);
 					clamp(lighter, 0, 1);
-					
-					Vector4f darker = Vector4f.add(colour, new Vector4f(-0.1f, -0.1f, -0.1f, 0), null);
+
+					Vector4f darker = new Vector4f();
+					colour.add(new Vector4f(-0.1f, -0.1f, -0.1f, 0), darker);
 					clamp(darker, 0, 1);
 					
 					final float xx = y - (img.getHeight()/2);

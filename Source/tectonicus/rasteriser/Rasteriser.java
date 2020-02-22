@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,8 +12,9 @@ package tectonicus.rasteriser;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import tectonicus.configuration.ImageFormat;
 
@@ -28,6 +29,8 @@ public interface Rasteriser
 	public boolean isCloseRequested();
 	public boolean isKeyDown(final int vkKey);
 	public boolean isKeyJustDown(final int vkKey);
+
+	public long getWindowId();
 	
 	public int getDisplayWidth();
 	public int getDisplayHeight();

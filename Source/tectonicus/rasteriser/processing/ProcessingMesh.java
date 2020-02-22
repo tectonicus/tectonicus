@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,17 +9,16 @@
 
 package tectonicus.rasteriser.processing;
 
-import java.util.Arrays;
-
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
-
+import com.jogamp.opengl.GL2;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import processing.core.PGraphics;
 import processing.core.PGraphics3D;
-
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
 import tectonicus.util.Colour4f;
+
+import java.util.Arrays;
 
 public class ProcessingMesh implements Mesh
 {
@@ -88,6 +87,13 @@ public class ProcessingMesh implements Mesh
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void bind(GL2 gl2)
+	{
+		// TODO Auto-generated method stub
+
+	}
 	
 	@Override
 	public void draw(final float xOffset, final float yOffset, final float zOffset)
@@ -114,6 +120,11 @@ public class ProcessingMesh implements Mesh
 		}
 		
 		graphics.endShape();
+	}
+
+	@Override
+	public void draw(final float xOffset, final float yOffset, final float zOffset, GL2 gl2) {
+
 	}
 
 	@Override
@@ -157,7 +168,7 @@ public class ProcessingMesh implements Mesh
 	}
 	
 	@Override
-	public void addVertex(org.joml.Vector3f position, Colour4f color, final float u, final float v)
+	public void addVertex(Vector3f position, Colour4f color, final float u, final float v)
 	{
 		
 	}

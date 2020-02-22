@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,15 +22,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWErrorCallbackI;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
+
+import org.joml.Vector3f;
 
 import tectonicus.configuration.ImageFormat;
 import tectonicus.rasteriser.AlphaFunc;
@@ -64,7 +64,7 @@ public class LwjglRasteriser implements Rasteriser
 		this.width = displayWidth;
 		this.height = displayHeight;
 		
-		keyCodeMap = new HashMap<Integer, Integer>();
+		keyCodeMap = new HashMap<>();
 		
 		keyCodeMap.put(KeyEvent.VK_0, GLFW.GLFW_KEY_0);
 		keyCodeMap.put(KeyEvent.VK_1, GLFW.GLFW_KEY_1);
@@ -136,15 +136,9 @@ public class LwjglRasteriser implements Rasteriser
 		
 		// Ugh. Anything with a depth buffer.
 		pixelFormats.add( new LwjglPixelFormat(0, 0, 1, 0, 0) );
-		
-		GLFW.glfwSetErrorCallback(new GLFWErrorCallbackI() {
 
-			@Override
-			public void invoke(int arg0, long arg1) {
-				System.out.println("GLFW error: " + String.format("0x%08X", arg0));
-			}
-			
-		});
+
+		GLFW.glfwSetErrorCallback((arg0, arg1) -> System.out.println("GLFW error: " + String.format("0x%08X", arg0)));
 		
 		if (!GLFW.glfwInit()) {
 			throw new RuntimeException("Failed to init GLFW");
@@ -200,6 +194,11 @@ public class LwjglRasteriser implements Rasteriser
 	//	System.out.println();
 		
 	//	GL11.glGetString(GL11.GL_EXTENSIONS);
+	}
+
+	@Override
+	public long getWindowId() {
+		return window;
 	}
 	
 	@Override
@@ -442,8 +441,7 @@ public class LwjglRasteriser implements Rasteriser
 		GL11.glLoadIdentity();
 		
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-		matrix.store(buffer);
-		buffer.flip();
+		matrix.get(buffer);
 		GL11.glLoadMatrixf(buffer);
 	}
 	
@@ -453,8 +451,7 @@ public class LwjglRasteriser implements Rasteriser
 		GL11.glLoadIdentity();
 		
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-		matrix.store(buffer);
-		buffer.flip();
+		matrix.get(buffer);
 		GL11.glLoadMatrixf(buffer);
 	}
 	

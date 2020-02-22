@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,32 +9,33 @@
 
 package tectonicus.util;
 
+import lombok.experimental.UtilityClass;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+
 import java.nio.FloatBuffer;
 import java.text.NumberFormat;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.GLU;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
-
+@UtilityClass
 public class MatrixUtil
 {
 	public static Matrix4f createOrthoMatrix(final float left, final float right, final float bottom, final float top, final float near, final float far)
 	{
 		Matrix4f ortho = new Matrix4f();
-		ortho.setZero();
+		ortho.zero();
 		
 		// First the scale part
-		ortho.m00 = 2.0f / (right - left);
-		ortho.m11 = 2.0f / (top - bottom);
-		ortho.m22 = (-2.0f) / (far - near);
-		ortho.m33 = 1.0f;
+		ortho.m00(2.0f / (right - left));
+		ortho.m11(2.0f / (top - bottom));
+		ortho.m22((-2.0f) / (far - near));
+		ortho.m33(1.0f);
 		
 		// Then the translation part
-		ortho.m30 = -( (right+left) / (right-left) );
-		ortho.m31 = -( (top+bottom) / (top-bottom) );
-		ortho.m32 = -( (far+near) / (far-near) );
+		ortho.m30(-( (right+left) / (right-left) ));
+		ortho.m31(-( (top+bottom) / (top-bottom) ));
+		ortho.m32(-( (far+near) / (far-near) ));
 		
 		return ortho;
 	}
@@ -47,19 +48,19 @@ public class MatrixUtil
 	public static Matrix4f createPerspectiveMatrix(final float fovYDeg, final float aspect, final float zNear, final float zFar)
 	{
 		Matrix4f persp = new Matrix4f();
-		persp.setZero();
+		persp.zero();
 		
 		final float fovYRad = degToRad(fovYDeg);
 		
 		final float f = 1.0f / (float)Math.tan( fovYRad/2 );
 		
-		persp.m00 = f / aspect;
-		persp.m11 = f;
-		persp.m22 = (zFar + zNear) / (zNear-zFar);
+		persp.m00(f / aspect);
+		persp.m11(f);
+		persp.m22((zFar + zNear) / (zNear-zFar));
 		
-		persp.m23 = -1;
+		persp.m23(-1);
 		
-		persp.m32 = (2*zNear*zFar) / (zNear-zFar);
+		persp.m32((2*zNear*zFar) / (zNear-zFar));
 		
 		return persp;
 	}
@@ -67,39 +68,40 @@ public class MatrixUtil
 	public static Matrix4f createLookAt(Vector3f eye, Vector3f lookAt, Vector3f up)
 	{
 		Matrix4f matrix = new Matrix4f();
-		matrix.setIdentity();
 		
 		// Create the basis vectors
-		Vector3f forwards = Vector3f.sub(eye, lookAt, null);
-		forwards.normalise();
+		Vector3f forwards = new Vector3f();
+		eye.sub(lookAt, forwards);
+		forwards.normalize();
 		
-		Vector3f right = Vector3f.cross(up, forwards, null);
-		right.normalise();
+		Vector3f right = new Vector3f();
+		up.cross(forwards, right);
+		right.normalize();
 		
-		Vector3f actualUp = Vector3f.cross(forwards, right, null);
-		actualUp.normalise();
+		Vector3f actualUp = new Vector3f();
+		forwards.cross(right, actualUp);
+		actualUp.normalize();
 		
 		// Right vector across the top
-		matrix.m00 = right.x;
-		matrix.m10 = right.y;
-		matrix.m20 = right.z;
+		matrix.m00(right.x);
+		matrix.m10(right.y);
+		matrix.m20(right.z);
 		
 		// Up vector across the middle row
-		matrix.m01 = actualUp.x;
-		matrix.m11 = actualUp.y;
-		matrix.m21 = actualUp.z;
+		matrix.m01(actualUp.x);
+		matrix.m11(actualUp.y);
+		matrix.m21(actualUp.z);
 		
 		// Forwards vector across the bottom row
-		matrix.m02 = forwards.x;
-		matrix.m12 = forwards.y;
-		matrix.m22 = forwards.z;
+		matrix.m02(forwards.x);
+		matrix.m12(forwards.y);
+		matrix.m22(forwards.z);
 		
 		// Negative translation in the last column
 		Matrix4f translation = new Matrix4f();
-		translation.setIdentity();
 		translation.translate(new Vector3f(-eye.x, -eye.y, -eye.z));
 		
-		return Matrix4f.mul(matrix, translation, null);
+		return matrix.mul(translation);
 	}
 	
 	
@@ -122,19 +124,13 @@ public class MatrixUtil
 
 	public static void testLookAtMatrix(Vector3f eye, Vector3f center, Vector3f up)
 	{
-		// Make a lookat matrix in opengl and pull it out into a Matrix4f
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glLoadIdentity();
-		GLU.gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
-		
-		FloatBuffer fromGlBuffer = BufferUtils.createFloatBuffer(16);
-		GL11.glGetFloatv(GL11.GL_MODELVIEW, fromGlBuffer);
-		Matrix4f fromGl = new Matrix4f();
-		fromGl.load(fromGlBuffer);
+		// Make a lookat matrix with JOML
+		Matrix4f fromJoml = new Matrix4f();
+		fromJoml.setLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 		
 		Matrix4f manual = createLookAt(eye, center, up);
 		
-		compare(fromGl, manual);
+		compare(fromJoml, manual);
 	}
 	
 	public static void testOrthoMatrix(final int left, final int right, final int bottom, final int top, final int near, final int far)
@@ -146,7 +142,7 @@ public class MatrixUtil
 		FloatBuffer fromGlBuffer = BufferUtils.createFloatBuffer(16);
 		GL11.glGetFloatv(GL11.GL_MODELVIEW, fromGlBuffer);
 		Matrix4f fromGl = new Matrix4f();
-		fromGl.load(fromGlBuffer);
+		fromGl.set(fromGlBuffer);
 		
 		Matrix4f manual = createOrthoMatrix(left, right, bottom, top, near, far);
 		
@@ -168,25 +164,25 @@ public class MatrixUtil
 	{
 		float delta = 0;
 		
-		final float d00 = left.m00 - right.m00;
-		final float d01 = left.m01 - right.m01;
-		final float d02 = left.m02 - right.m02;
-		final float d03 = left.m03 - right.m03;
+		final float d00 = left.m00() - right.m00();
+		final float d01 = left.m01() - right.m01();
+		final float d02 = left.m02() - right.m02();
+		final float d03 = left.m03() - right.m03();
 		
-		final float d10 = left.m10 - right.m10;
-		final float d11 = left.m11 - right.m11;
-		final float d12 = left.m12 - right.m12;
-		final float d13 = left.m13 - right.m13;
+		final float d10 = left.m10() - right.m10();
+		final float d11 = left.m11() - right.m11();
+		final float d12 = left.m12() - right.m12();
+		final float d13 = left.m13() - right.m13();
 		
-		final float d20 = left.m20 - right.m20;
-		final float d21 = left.m21 - right.m21;
-		final float d22 = left.m22 - right.m22;
-		final float d23 = left.m23 - right.m23;
+		final float d20 = left.m20() - right.m20();
+		final float d21 = left.m21() - right.m21();
+		final float d22 = left.m22() - right.m22();
+		final float d23 = left.m23() - right.m23();
 		
-		final float d30 = left.m30 - right.m30;
-		final float d31 = left.m31 - right.m31;
-		final float d32 = left.m32 - right.m32;
-		final float d33 = left.m33 - right.m33;
+		final float d30 = left.m30() - right.m30();
+		final float d31 = left.m31() - right.m31();
+		final float d32 = left.m32() - right.m32();
+		final float d33 = left.m33() - right.m33();
 		
 		delta += d00 + d01 + d02 + d03;
 		delta += d10 + d11 + d12 + d13;
