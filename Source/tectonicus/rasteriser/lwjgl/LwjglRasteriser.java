@@ -9,6 +9,24 @@
 
 package tectonicus.rasteriser.lwjgl;
 
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+import tectonicus.configuration.ImageFormat;
+import tectonicus.rasteriser.AlphaFunc;
+import tectonicus.rasteriser.BlendFunc;
+import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.PrimativeType;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+import tectonicus.rasteriser.Texture;
+import tectonicus.rasteriser.TextureFilter;
+
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -22,25 +40,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.Version;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-
-import org.joml.Vector3f;
-
-import tectonicus.configuration.ImageFormat;
-import tectonicus.rasteriser.AlphaFunc;
-import tectonicus.rasteriser.BlendFunc;
-import tectonicus.rasteriser.Mesh;
-import tectonicus.rasteriser.PrimativeType;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.RasteriserFactory.DisplayType;
-import tectonicus.rasteriser.Texture;
-import tectonicus.rasteriser.TextureFilter;
+import static org.lwjgl.opengl.GL11.GL_RGBA16;
+import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
+import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
+import static org.lwjgl.opengl.GL30.GL_DEPTH_ATTACHMENT;
+import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
+import static org.lwjgl.opengl.GL30.GL_RENDERBUFFER;
+import static org.lwjgl.opengl.GL30.glBindFramebuffer;
+import static org.lwjgl.opengl.GL30.glBindRenderbuffer;
+import static org.lwjgl.opengl.GL30.glFramebufferRenderbuffer;
+import static org.lwjgl.opengl.GL30.glGenFramebuffers;
+import static org.lwjgl.opengl.GL30.glGenRenderbuffers;
+import static org.lwjgl.opengl.GL30.glRenderbufferStorage;
 
 public class LwjglRasteriser implements Rasteriser
 {
@@ -114,10 +125,10 @@ public class LwjglRasteriser implements Rasteriser
 		keyCodeMap.put(KeyEvent.VK_Y, GLFW.GLFW_KEY_Y);
 		keyCodeMap.put(KeyEvent.VK_Z, GLFW.GLFW_KEY_Z);
 		
-		prevKeyStates = new HashMap<Integer, Boolean>();
+		prevKeyStates = new HashMap<>();
 		
 		// Make a list of pixel formats to try (in preferance order)
-		ArrayList<LwjglPixelFormat> pixelFormats = new ArrayList<LwjglPixelFormat>();
+		ArrayList<LwjglPixelFormat> pixelFormats = new ArrayList<>();
 		
 		// As requested
 		pixelFormats.add( new LwjglPixelFormat(colourDepth, alphaBits, depthBits, 0, numSamples) );
@@ -143,23 +154,32 @@ public class LwjglRasteriser implements Rasteriser
 		if (!GLFW.glfwInit()) {
 			throw new RuntimeException("Failed to init GLFW");
 		}
-		
-		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GL11.GL_TRUE);
+
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
-		for (LwjglPixelFormat pf : pixelFormats) {
-			GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pf.depth);
-			GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pf.stencil);
-			GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pf.alpha);
-			GLFW.glfwWindowHint(GLFW.GLFW_RED_BITS, pf.bpp);
-			GLFW.glfwWindowHint(GLFW.GLFW_GREEN_BITS, pf.bpp);
-			GLFW.glfwWindowHint(GLFW.GLFW_BLUE_BITS, pf.bpp);
-			GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, pf.samples);
-			window = GLFW.glfwCreateWindow(displayWidth, displayHeight, "Tectonicus", 0, 0);
-			if(window != 0) {
-			    break;
+
+		if (type == DisplayType.Offscreen) {
+			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+			window = GLFW.glfwCreateWindow(displayWidth, displayHeight, "", 0, 0);
+		} else if (type == DisplayType.Window) {
+			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_TRUE);
+
+			for (LwjglPixelFormat pf : pixelFormats) {
+				GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pf.depth);
+				GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pf.stencil);
+				GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pf.alpha);
+				GLFW.glfwWindowHint(GLFW.GLFW_RED_BITS, pf.bpp);
+				GLFW.glfwWindowHint(GLFW.GLFW_GREEN_BITS, pf.bpp);
+				GLFW.glfwWindowHint(GLFW.GLFW_BLUE_BITS, pf.bpp);
+				GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, pf.samples);
+				window = GLFW.glfwCreateWindow(displayWidth, displayHeight, "Tectonicus", 0, 0);
+				if(window != 0) {
+					break;
+				}
 			}
+		} else {
+			throw new RuntimeException("Unknown display type: "+type);
 		}
 		
 		if(window == 0) {
@@ -168,6 +188,19 @@ public class LwjglRasteriser implements Rasteriser
 		
 		GLFW.glfwMakeContextCurrent(window);
 		GL.createCapabilities();
+
+		if (type == DisplayType.Offscreen) {
+			int fbo = glGenFramebuffers();
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			int rbo = glGenRenderbuffers();
+			int rboDepth = glGenRenderbuffers();
+			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16, displayWidth, displayHeight);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
+			glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, displayWidth, displayHeight);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+		}
 		
 		System.out.println("\tdisplay created ok");
 	}
@@ -176,6 +209,7 @@ public class LwjglRasteriser implements Rasteriser
 	public void destroy()
 	{
 		GLFW.glfwDestroyWindow(window);
+		GLFW.glfwTerminate();
 	}
 	
 	@Override
@@ -218,7 +252,7 @@ public class LwjglRasteriser implements Rasteriser
 			prevKeyStates.put(i, GLFW.glfwGetKey(window, i) == GLFW.GLFW_PRESS);
 		}
 		
-		GLFW.glfwPollEvents();		
+		GLFW.glfwPollEvents();
 		GLFW.glfwSwapBuffers(window);
 	}
 	

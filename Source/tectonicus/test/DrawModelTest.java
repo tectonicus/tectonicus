@@ -13,7 +13,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWFramebufferSizeCallbackI;
 import org.lwjgl.opengl.GL11;
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -43,6 +42,7 @@ import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
 import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
 import static org.lwjgl.opengl.GL11.GL_PROJECTION;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_VENDOR;
 import static org.lwjgl.opengl.GL11.GL_VERSION;
 import static org.lwjgl.opengl.GL11.glAlphaFunc;
@@ -62,12 +62,15 @@ import static org.lwjgl.opengl.GL11.glRotatef;
 import static org.lwjgl.opengl.GL11.glTexCoord2f;
 import static org.lwjgl.opengl.GL11.glTranslatef;
 import static org.lwjgl.opengl.GL11.glVertex3f;
+import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
+import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_COMPLETE;
+import static org.lwjgl.opengl.GL30.glCheckFramebufferStatus;
 
 public class DrawModelTest 
 {
 	private float rot = 2.0f;
 	
-	private long window;
+	private long windowId;
 	
 	private long prevMillis;
 	
@@ -96,9 +99,16 @@ public class DrawModelTest
 //			Display.create(new PixelFormat(8,24,0,8));
 //		} catch(LWJGLException e) {
 //			e.printStackTrace();
-//		}		
+//		}
+
 		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, width, height, 24, 8, 24, 4);
-		window = rasteriser.getWindowId();
+		windowId = rasteriser.getWindowId();
+//		int fbo = glGenFramebuffers();
+//		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+//		int rbo = glGenRenderbuffers();
+//		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+//		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, 1024, 1024);
+
 		BlockRegistry br = new BlockRegistry(rasteriser);
 		BlockModel bm = br.loadModel("block/beacon", new HashMap<String, String>(), null);
 		List<BlockElement> elements = bm.getElements();
@@ -224,6 +234,7 @@ public class DrawModelTest
 		
 		glColor3f(0.0f, 1.0f, 0.0f);
 
+
 		//glShadeModel(GL_SMOOTH);
 		glFrontFace(GL_CW);
 		//glEnable(GL_CULL_FACE);
@@ -232,21 +243,23 @@ public class DrawModelTest
 		glAlphaFunc(GL11.GL_GREATER, 0.6f);
 		//glEnable(GL_MULTISAMPLE);
 		//glPolygonMode(GL_FRONT, GL_LINE);
-		
-		GLFW.glfwSetFramebufferSizeCallback(window, new GLFWFramebufferSizeCallbackI() {
-		    @Override
-		    public void invoke(long window, int width, int height) {
-		        resize(width, height);
-		    }
-		});
-		
-		while(!GLFW.glfwWindowShouldClose(window))
+
+		GLFW.glfwSetFramebufferSizeCallback(windowId, (window, width1, height1) -> resize(width1, height1));
+
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+		int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE) {
+			System.out.println("Incomplete framebuffer");
+		}
+
+		while(!GLFW.glfwWindowShouldClose(windowId))
 		{
 			getKeys();
 			
 			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	        
 			for (Mesh m : meshList.values())
 			{
@@ -268,9 +281,11 @@ public class DrawModelTest
 //				return;
 //			}
 			
-			GLFW.glfwSwapBuffers(window);
+			GLFW.glfwSwapBuffers(windowId);
 		}
-		GLFW.glfwDestroyWindow(window);
+//		BufferedImage image = rasteriser.takeScreenshot(0, 0, 800, 800, ImageFormat.Png);
+//		Screenshot.write(new File("c:/users/Ender/Desktop/testImage.png"), image, ImageFormat.Png, 1.0f);
+		GLFW.glfwDestroyWindow(windowId);
 	}
 
 	private void oldDraw(List<BlockElement> elements) {
@@ -305,8 +320,8 @@ public class DrawModelTest
 				//System.out.println("u0="+tex.u0+" v0="+tex.v0+" u1="+tex.u1+" v1="+tex.v1);
 				texture = (LwjglTexture) tex.texture;
 				//System.out.println(texture.getId());
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glBindTexture(GL_TEXTURE_2D, texture.getId());
 				glColor3f(1.0f, 1.0f, 1.0f);
 				glBegin(GL_QUADS);
 				glTexCoord2f(tex.u0, tex.v0);
@@ -327,8 +342,8 @@ public class DrawModelTest
 				tex = element.getFaces().get("down").getTexture();
 				texture = (LwjglTexture) element.getFaces().get("down").getTexture().texture;
 				//System.out.println(texture.getId());
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glBindTexture(GL_TEXTURE_2D, texture.getId());
 				glColor3f(1.0f, 1.0f, 1.0f);
 				glBegin(GL_QUADS);
 				glTexCoord2f(tex.u0, tex.v0);
@@ -350,8 +365,8 @@ public class DrawModelTest
 				tex = element.getFaces().get("north").getTexture();
 				texture = (LwjglTexture) element.getFaces().get("north").getTexture().texture;
 				//System.out.println(texture.getId());
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glBindTexture(GL_TEXTURE_2D, texture.getId());
 				glColor3f(1.0f, 1.0f, 1.0f);
 				
 				if(rotation == 0)
@@ -415,8 +430,8 @@ public class DrawModelTest
 				
 				texture = (LwjglTexture) southFace.getTexture().texture;
 				//System.out.println(texture.getId());
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glBindTexture(GL_TEXTURE_2D, texture.getId());
 				glColor3f(1.0f, 1.0f, 1.0f);
 				
 				if(rotation == 0)
@@ -477,8 +492,8 @@ public class DrawModelTest
 				tex = element.getFaces().get("east").getTexture();
 				texture = (LwjglTexture) element.getFaces().get("east").getTexture().texture;
 				//System.out.println(texture.getId());
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glBindTexture(GL_TEXTURE_2D, texture.getId());
 				glColor3f(1.0f, 1.0f, 1.0f);
 				glBegin(GL_QUADS);
 				glTexCoord2f(tex.u0, tex.v0);
@@ -496,8 +511,8 @@ public class DrawModelTest
 				tex = element.getFaces().get("west").getTexture();
 				texture = (LwjglTexture) element.getFaces().get("west").getTexture().texture;
 				//System.out.println(texture.getId());
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
+				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glBindTexture(GL_TEXTURE_2D, texture.getId());
 				glColor3f(1.0f, 1.0f, 1.0f);
 				glBegin(GL_QUADS);
 				glTexCoord2f(tex.u0, tex.v0);
@@ -574,22 +589,22 @@ public class DrawModelTest
 	}
 	
 	private void getKeys() {
-		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_UP) == GLFW.GLFW_PRESS)
+		if(GLFW.glfwGetKey(windowId, GLFW.GLFW_KEY_UP) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(rot, 1.0f, 0.0f, 0.0f);
 		}
 
-		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_DOWN) == GLFW.GLFW_PRESS)
+		if(GLFW.glfwGetKey(windowId, GLFW.GLFW_KEY_DOWN) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(-rot, 1.0f, 0.0f, 0.0f);
 		}
 
-		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT) == GLFW.GLFW_PRESS)
+		if(GLFW.glfwGetKey(windowId, GLFW.GLFW_KEY_LEFT) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(rot, 0.0f, 1.0f, 0.0f);
 		}
 
-		if(GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT) == GLFW.GLFW_PRESS)
+		if(GLFW.glfwGetKey(windowId, GLFW.GLFW_KEY_RIGHT) == GLFW.GLFW_PRESS)
 		{
 			glRotatef(-rot, 0.0f, 1.0f, 0.0f);
 		}
