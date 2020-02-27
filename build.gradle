@@ -29,9 +29,10 @@ ext {
 }
 
 dependencies {
-	implementation("org.lwjgl:lwjgl:$lwjglVersion",
-				   "org.lwjgl:lwjgl-opengl:$lwjglVersion",
-				   "org.lwjgl:lwjgl-glfw:$lwjglVersion",
+	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+	implementation("org.lwjgl:lwjgl",
+				   "org.lwjgl:lwjgl-opengl",
+				   "org.lwjgl:lwjgl-glfw",
 				   'org.apache.commons:commons-text:1.8',
 				   'com.google.code.gson:gson:2.8.6@jar',
 				   'org.joml:joml:1.9.20',
@@ -39,15 +40,15 @@ dependencies {
 				   'info.picocli:picocli:3.9.5@jar',
 				   "org.jogamp.jogl:jogl-all:2.3.2")
 	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
-	runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-windows",
-				"org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-windows",
-				"org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-windows",
-				"org.lwjgl:lwjgl:$lwjglVersion:natives-macos",
-				"org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-macos",
-				"org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-macos",
-				"org.lwjgl:lwjgl:$lwjglVersion:natives-linux",
-				"org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-linux",
-				"org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-linux")
+	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
+				"org.lwjgl:lwjgl-glfw::natives-windows",
+				"org.lwjgl:lwjgl-opengl::natives-windows",
+				"org.lwjgl:lwjgl::natives-macos",
+				"org.lwjgl:lwjgl-glfw::natives-macos",
+				"org.lwjgl:lwjgl-opengl::natives-macos",
+				"org.lwjgl:lwjgl::natives-linux",
+				"org.lwjgl:lwjgl-glfw::natives-linux",
+				"org.lwjgl:lwjgl-opengl::natives-linux")
 
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor "org.projectlombok:lombok:$lombokVersion"
