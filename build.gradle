@@ -12,7 +12,6 @@ targetCompatibility = 1.8
 mainClassName = "tectonicus.TectonicusApp"
 
 sourceSets.main.java.srcDirs = ['Source']
-sourceSets.main.resources.srcDirs = ['Data']
 
 compileJava {
 	options.debug = false
