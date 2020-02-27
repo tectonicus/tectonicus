@@ -104,10 +104,7 @@
 
 	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
 	<tweeks
-		extractLwjglNatives="true / false"
 		forceLoadAwt="false / true"
-		force32BitNatives="false / true"
-		force64BitNatives="false / true"
 	/>
 
 	<!-- Debug options, you shouldn't need to tinker with these -->

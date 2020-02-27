@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,22 +9,19 @@
 
 package tectonicus.test;
 
-import java.awt.Color;
-
 import tectonicus.InteractiveRenderer;
-import tectonicus.TectonicusApp;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.renderer.OrthoCamera;
 
+import java.awt.Color;
+
 public class RasteriserTest
 {
 	public static void main(String[] args)
 	{
-		TectonicusApp.unpackLwjgl(false, false);
-		
 		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.JPCT, DisplayType.Window, 512, 512, 24, 0, 16, 0);
 		
 		OrthoCamera camera = new OrthoCamera(rasteriser, 512, 512);

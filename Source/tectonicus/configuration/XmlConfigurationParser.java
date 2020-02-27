@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -362,10 +362,7 @@ public class XmlConfigurationParser
 		Element tweeksNode = getChild(root, "tweeks");
 		if (tweeksNode != null)
 		{
-			config.setExtractLwjglNatives( parseExtractLwjglNatives( getString(tweeksNode, "extractLwjglNatives") ) );			
 			config.setForceLoadAwt( parseForceLoadAwt( getString(tweeksNode, "forceLoadAwt")) );
-			config.setForce32BitNatives( parseForce32BitNatives( getString(tweeksNode, "force32BitNatives")) );
-			config.setForce64BitNatives( parseForce64BitNatives( getString(tweeksNode, "force64BitNatives")) );
 		}
 		
 		Element debugNode = getChild(root, "debug");

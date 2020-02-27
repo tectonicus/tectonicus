@@ -1050,86 +1050,6 @@ public class TectonicusApp
 
 		return 0;
 	}
-	
-	public static void unpackLwjgl(final boolean force32BitNatives, final boolean force64BitNatives)
-	{
-		String[] files =
-		{
-			"liblwjgl.dylib",
-			"liblwjgl.so",
-			"lwjgl.dll",
-			
-			"libglfw.dylib",
-			"libglfw.so",
-			"glfw.dll",
-			"libglfw_wayland.so",
-			
-			"liblwjgl_opengl.dylib",
-			"liblwjgl_opengl.so",
-			"lwjgl_opengl.dll",
-		};
-		
-		Map<String, String> force64BitMapping = new HashMap<>();
-		force64BitMapping.put("glfw.dll", "glfw32.dll");
-		force64BitMapping.put("lwjgl.dll", "lwjgl32.dll");
-		force64BitMapping.put("lwjgl_opengl.dll", "lwjgl_opengl32.dll");
-		
-		Map<String, String> force32BitMapping = new HashMap<>();
-		force64BitMapping.put("glfw32.dll", "glfw.dll");
-		force64BitMapping.put("lwjgl32.dll", "lwjgl.dll");
-		force64BitMapping.put("lwjgl_opengl32.dll", "lwjgl_opengl.dll");
-		
-		File cacheDir = new File(System.getProperty("user.home"), ".tectonicus/native");
-		FileUtils.deleteDirectory(cacheDir);
-		cacheDir.mkdirs();
-		
-		for (String f : files)
-		{
-			File outFile = new File(cacheDir, f);
-			FileUtils.extractResource("Native/"+f, outFile);
-		}
-		
-		try  // Mac hack
-		{
-			Files.copy(Paths.get(cacheDir.getPath(), "liblwjgl.dylib"), Paths.get(cacheDir.getPath(), "liblwjgl.jnilib"), StandardCopyOption.REPLACE_EXISTING);
-			Files.copy(Paths.get(cacheDir.getPath(), "libglfw.dylib"), Paths.get(cacheDir.getPath(), "libglfw.jnilib"), StandardCopyOption.REPLACE_EXISTING);
-			Files.copy(Paths.get(cacheDir.getPath(), "liblwjgl_opengl.dylib"), Paths.get(cacheDir.getPath(), "liblwjgl_opengl.jnilib"), StandardCopyOption.REPLACE_EXISTING);
-		}
-		catch (Exception e)
-		{
-			throw new RuntimeException("Couldn't create jnilibs", e);
-		}
-		
-		Map<String, String> renameMap = null;
-		if (force32BitNatives)
-		{
-			System.out.println("Forcing 32-bit native libraries");
-			renameMap = force32BitMapping;
-		}
-		else if (force64BitNatives)
-		{
-			System.out.println("Forcing 64-bit native libraries");
-			renameMap = force64BitMapping;
-		}
-		if (renameMap != null)
-		{
-			for (Map.Entry<String, String> entry : renameMap.entrySet())
-			{
-				try
-				{
-					Files.copy(Paths.get(cacheDir.getPath(), entry.getKey()), Paths.get(cacheDir.getPath(), entry.getValue()), StandardCopyOption.REPLACE_EXISTING);
-				}
-				catch (Exception e)
-				{
-					throw new RuntimeException("Couldn't copy "+entry.getKey(), e);
-				}
-			}
-		}
-		
-		String nativePath = cacheDir.getAbsolutePath();
-		System.setProperty("org.lwjgl.librarypath", nativePath);
-		System.setProperty("org.lwjgl.opengl.Display.allowSoftwareOpenGL", "true");
-	}
 
 	public static void main(String[] argArray) throws Exception
 	{
@@ -1178,9 +1098,6 @@ public class TectonicusApp
 		{
 			System.loadLibrary("awt");
 		}
-
-		if (args.extractLwjglNatives())
-			unpackLwjgl(args.force32BitNatives(), args.force64BitNatives());
 
 		app.run();
 

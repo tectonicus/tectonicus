@@ -60,8 +60,6 @@ public interface Configuration
 	
 	RasteriserType getRasteriserType();
 	
-	boolean extractLwjglNatives();
-	
 	boolean eraseOutputDir();
 	
 	File outputDir();
@@ -107,10 +105,6 @@ public interface Configuration
 	boolean isVerbose();
 	
 	boolean forceLoadAwt();
-	
-	boolean force32BitNatives();
-	
-	boolean force64BitNatives();
 	
 	int tileSize();
 	

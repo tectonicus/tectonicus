@@ -46,9 +46,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-r", "--rasterizer", "rasterizer", "rasteriser"}, paramLabel = "<string>")
 	private RasteriserType rasteriserType;
 
-	@Option(names = {"-x", "--extractNatives", "extractNatives"}, arity = "0..1", paramLabel = "<boolean>")
-	private boolean extractLwjglNatives;
-
 	@Option(names = {"-d", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean eraseOutputDir;
 
@@ -120,10 +117,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"--numDownsampleThreads", "numDownsampleThreads"}, paramLabel = "<integer>")
 	private int numDownsampleThreads;
 
-
 	private boolean forceLoadAwt;
-	private boolean force32BitNatives;
-	private boolean force64BitNatives;
 
 	private String singlePlayerName;
 
@@ -136,7 +130,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	{
 		mode = Mode.CMD;
 		rasteriserType = RasteriserType.LWJGL;
-		extractLwjglNatives = true;
 		showSpawn = true;
 		tileSize = 512;
 		maxTiles = -1;
@@ -190,11 +183,8 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		System.out.println("\tspawnInitiallyVisible:"+isSpawnInitiallyVisible());
 		System.out.println("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
 		System.out.println("\teraseOutputDir:"+eraseOutputDir());
-		System.out.println("\textractLwjglNatives:"+extractLwjglNatives());
 		System.out.println("\tisVerbose:"+isVerbose());
 		System.out.println("\tforceLoadAwt:"+forceLoadAwt());
-		System.out.println("\tforce32BitNatives:"+force32BitNatives());
-		System.out.println("\tforce64BitNatives:"+force64BitNatives());
 		System.out.println("\tlogFile:"+getLogFile().getAbsolutePath());
 		System.out.println("\toutputHtmlName:"+getOutputHtmlName());
 		System.out.println("\tnumDownsampleThreads:"+getNumDownsampleThreads());
@@ -240,12 +230,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 		System.out.println();
 	}
-
-	public void setExtractLwjglNatives(final boolean extractLwjglNatives)
-	{
-		this.extractLwjglNatives = extractLwjglNatives;
-	}
-	public boolean extractLwjglNatives() { return extractLwjglNatives; }
 
 	public void setEraseOutputDir(final boolean eraseOutputDir)
 	{
@@ -340,18 +324,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.forceLoadAwt = forceLoadAwt;
 	}
 	public boolean forceLoadAwt() { return forceLoadAwt; }
-
-	public void setForce32BitNatives(final boolean force32BitNatives)
-	{
-		this.force32BitNatives = force32BitNatives;
-	}
-	public boolean force32BitNatives() { return force32BitNatives; }
-
-	public void setForce64BitNatives(final boolean force64BitNatives)
-	{
-		this.force64BitNatives = force64BitNatives;
-	}
-	public boolean force64BitNatives() { return force64BitNatives; }
 
 	public void setTileSize(final int tileSize)
 	{

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2012-2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,17 +9,49 @@
 
 package tectonicus.configuration;
 
-import java.io.File;
-import java.nio.file.Path;
-
-import static tectonicus.configuration.ParseUtil.*;
-
 import lombok.experimental.UtilityClass;
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
+
+import java.io.File;
+import java.nio.file.Path;
+
+import static tectonicus.configuration.ParseUtil.parseAlphaBits;
+import static tectonicus.configuration.ParseUtil.parseCacheDir;
+import static tectonicus.configuration.ParseUtil.parseCameraAngle;
+import static tectonicus.configuration.ParseUtil.parseClosestZoomSize;
+import static tectonicus.configuration.ParseUtil.parseColourDepth;
+import static tectonicus.configuration.ParseUtil.parseDimension;
+import static tectonicus.configuration.ParseUtil.parseElevationAngle;
+import static tectonicus.configuration.ParseUtil.parseEraseOutputDir;
+import static tectonicus.configuration.ParseUtil.parseForceLoadAwt;
+import static tectonicus.configuration.ParseUtil.parseImageCompression;
+import static tectonicus.configuration.ParseUtil.parseImageFormat;
+import static tectonicus.configuration.ParseUtil.parseInitiallyVisible;
+import static tectonicus.configuration.ParseUtil.parseIsVerbose;
+import static tectonicus.configuration.ParseUtil.parseLightStyle;
+import static tectonicus.configuration.ParseUtil.parseLogFile;
+import static tectonicus.configuration.ParseUtil.parseMaxTiles;
+import static tectonicus.configuration.ParseUtil.parseMode;
+import static tectonicus.configuration.ParseUtil.parseNorthDirection;
+import static tectonicus.configuration.ParseUtil.parseNumDownsampleThreads;
+import static tectonicus.configuration.ParseUtil.parseNumSamples;
+import static tectonicus.configuration.ParseUtil.parseNumZoomLevels;
+import static tectonicus.configuration.ParseUtil.parseOutputDir;
+import static tectonicus.configuration.ParseUtil.parseOutputHtmlName;
+import static tectonicus.configuration.ParseUtil.parsePlayerFilterFile;
+import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
+import static tectonicus.configuration.ParseUtil.parsePortalFilter;
+import static tectonicus.configuration.ParseUtil.parseRasteriserType;
+import static tectonicus.configuration.ParseUtil.parseRenderStyle;
+import static tectonicus.configuration.ParseUtil.parseShowSpawn;
+import static tectonicus.configuration.ParseUtil.parseSignFilter;
+import static tectonicus.configuration.ParseUtil.parseTileSize;
+import static tectonicus.configuration.ParseUtil.parseUseBiomeColours;
+import static tectonicus.configuration.ParseUtil.parseUseCache;
 
 @UtilityClass
 public class CommandLineParser
@@ -122,8 +154,6 @@ public class CommandLineParser
 		PortalFilterType portalFilterType = parsePortalFilter( parser.getString("portals", "") );
 		map.setPortalFilter( new PortalFilter(portalFilterType) );
 		
-		config.setExtractLwjglNatives( parseExtractLwjglNatives( parser.getString("extractLwjglNatives", "") ) );
-		
 		config.setEraseOutputDir( parseEraseOutputDir( parser.getString("eraseOutputDir", "") ) );
 		
 		File outputDir = parseOutputDir( parser.get("outputDir") );
@@ -159,8 +189,6 @@ public class CommandLineParser
 		config.setMaxTiles( parseMaxTiles( parser.getString("maxTiles", "") ) );
 		
 		config.setForceLoadAwt( parseForceLoadAwt( parser.getString("forceLoadAwt", "") ) );
-		config.setForce32BitNatives( parseForce32BitNatives( parser.getString("force32BitNatives", "") ) );
-		config.setForce64BitNatives( parseForce64BitNatives( parser.getString("force64BitNatives", "") ) );
 		
 		map.setUseBiomeColours( parseUseBiomeColours( parser.getString("useBiomeColours", "") ) );
 		
