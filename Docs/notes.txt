@@ -1,0 +1,203 @@
+TODO:
+
+- Heights for water blocks
+- Heights for lava blocks
+
+Photo signposts
+done!	- allow drawing with perspective camera
+		- extract signs to take photos from in preprocess
+		- write photo signs list to disk
+		- go through photo sign list and output photos to sub dir
+		- output photos.js as we do
+		- draw photo marker
+		- add photo markers to map
+		- click on photo marker to open window
+		- display photo in window
+		- check box to show/hide photo icons
+		- allow drawing into subsection of canvas
+
+insert custom text into html
+	- into <head>
+	- into <body>
+	- anything else?
+		- replace getTileUrl contents? (with default)
+		- replace title? (with default)
+	- all should have defaults?
+different tree types
+different leaf types
+
+Multi-threading thoughts
+
+Several distinct stages:
+	- gather regions (TileRenderer.preprocess)
+		calculate per-chunk hash + write to disk
+		gather world stats
+	- find visible tiles
+		project every chunk into map space, store tiles to be renderer
+	- find changed tiles
+		calc tile hash from chunk hashes, compare against stored hash
+	- render base tiles
+		lots happening here
+		..
+	- downsample
+		- for each downsample level
+			- find downsample images
+			- downsample up to 4 base images into new downsample image
+	done!
+
+(we'll ignore small tasks like outputting the html and compass images)
+
+Ideally we want a job-based design, with N worker threads chewing through a list of tasks
+Mostly we have a master 'todo' list (like the list of tiles to render,
+or a list of regions to hash) where each item in the todo list is reasonably independent.
+
+Simplest would be to turn every item in the todo list into a task, then wait until the
+task queue is empty before moving on.
+However the task queue would be *huge*
+We need some kind of task-producer, which contantly keeps the task queue stocked with
+jobs (say, 32)
+
+TODO: Tile rendering much slower on epic world, something scaling non-linearly in drawing?
+
+FIXME: 'Get Link' only works for 45' camera elevation?
+
+TODO: Several complex objects don't respect lighting
+- doors
+- buttons
+- pressure plates
+- repeaters
+- redstone wire
+- beds
+- slab?
+- double slab?
+- cake?
+
+May need a clever solution to deal with sub-meshes that rotate
+
+Improve redstone wiring connectivity to take into account repeater
+- isRedstone() in block type?
+
+Memory:
+
+	16 * 16 * 128 = 32768
+	530 chunks
+	raw chunk: 4 * 32768 = ~131k
+	geometry: worst case 32768 * 6 = 19608 faces
+	each face: 4 vertices
+	each vertex: position + colour + texture coord = (3 + 4 + 2) * 4 = 36 byte vertex
+	one chunk geometry: ~28,235k
+
+	total raw chunks: 67.8Mb
+	total world geom: 1.354Gb
+
+	Conclusions:
+		geometry much heavier than raw chunks
+			- need seperate caches for raw chunks and geometry
+			- cache *much* more raw chunks than geometry
+			- optimises vertex format (colours as packed int, texcoords as short?)
+		raw chunks actually quite small (and stored on regular java heap)
+			- agressively cache!
+
+
+
+Next release todo:
+- different tree types
+- different leaves types
+
+
+Software renderer thoughts:
+
+Needed features:
+	- draw lines and triangles
+	- depth buffer
+	- nearest texture filtering
+	- texturing
+	- ortho projection matrix
+	- look at camera matrix
+	- matrix setup like opengl
+	- regular and additive blending
+
+Plane todo:
+- sign filtering:
+	- all / special / none
+	- filter file for special sybmols (begins with / ends with)
+
+google analytics!
+
+Player positions bukkit plugin:
+- update player positions from js on timer
+- output DefaultPlayerSkin.png
+
+Sign links
+- some way of linking to custom user galleries
+either:
+	custom sign text eg. 'link:gallery/castle.html'
+	custom sign_text=>url mapping file
+
+InfoWindow popups!
+- show player name / icon / health and inventory
+- show furnace contents
+- show chest contents
+
+Promised features:
+- show chunk coords in signs?
+- streetview!
+- figure out a way to get the fire texture (GLIntercept?)
+- fire!
+- define regions via signs
+
+TODO: Reload player positions on time interval?
+
+TODO: Nuke raw loaded chunks and loaded geometry when we have finished rendering base tiles
+
+Scan for players and add those markers to the world
+	- with inventory!
+
+Inventory work
+- need to be able to render blocks out to single tile
+
+Software 3d renderer?
+
+Make worldDir work with path to dir *or* path to level.dat
+
+
+TODO: Support new biome-compatible grass
+
+TODO: Remove any block types made redundant by new id:data syntax
+
+TODO: Write up biome data in chunk proposal
+
+TODO: Soil class checks that above block is solid, but is not full height
+Looks like a bug. Check up!
+
+Idea: Lots of wasted time looking chunk data, then (id+data)->BlockType
+	Instead resolve BlockTypes into one big chunk array and use that when generating geometry
+Also merge with padding around the side so we can pretend a chunk is part of a huge
+ 3d array, so we don't have to do slow world.resolveCoord(chunkCoord, x, y, z) etc.
+Also calculate empty/solid into a similar array
+
+TODO: Fix/go over batched rendering and memory usage
+- record max/average chunks per render
+- trim chunk caches after each addition?
+- swap chunk cache collection types?
+- maybe extract templated cache class?
+
+TODO: Fix donation html
+
+Todo: expand stats
+- world stats (num chunks, area, file size, num players)
+ - total paintings
+ - items count
+ - mobs count (per mob type?)
+
+http:tectonicus.betaeasy.com/thread/10422
+
+todo: put jar verification code (from TexturePack c'tor, sniffing for class files) back somewhere
+todo: check version of block config file
+todo: support custom blocks in views
+
+todo: enchantment table should have book
+
+5m 42s vs 5m 47s
+New takeScreenshot: 5m 12s
+old 35m 25s
