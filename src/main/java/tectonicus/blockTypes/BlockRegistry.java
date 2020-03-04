@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,21 @@
  */
 
 package tectonicus.blockTypes;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import org.apache.commons.lang3.StringUtils;
+import tectonicus.Minecraft;
+import tectonicus.blockTypes.BlockModel.BlockElement;
+import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.texture.SubTexture;
+import tectonicus.texture.TexturePack;
+import tectonicus.texture.ZipStack;
+import tectonicus.util.Vector3f;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,24 +42,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-
-import tectonicus.Minecraft;
-import tectonicus.Version;
-import tectonicus.blockTypes.BlockModel.BlockElement;
-import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.texture.SubTexture;
-import tectonicus.texture.TexturePack;
-import tectonicus.texture.ZipStack;
-import tectonicus.util.Vector3f;
 
 import static tectonicus.Version.VERSION_13;
 
@@ -67,9 +64,10 @@ public class BlockRegistry
 	
 	public BlockRegistry(Rasteriser rasteriser)
 	{
-		texturePack = new TexturePack(rasteriser, Minecraft.findMinecraftJar(), null, Collections.<File>emptyList());
+		File minecraftJar = Minecraft.findMinecraftJar();
+		texturePack = new TexturePack(rasteriser, minecraftJar, null, Collections.emptyList());
 		try {
-			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
+			zips = new ZipStack(minecraftJar, null, null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

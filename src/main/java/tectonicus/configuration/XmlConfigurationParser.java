@@ -57,15 +57,10 @@ public class XmlConfigurationParser
 			Mode mode = parseMode( getString(configNode, "mode") );
 			config.setMode(mode);
 			
-			File minecraftJar;
+			File minecraftJar = null;
 			if (configNode.hasAttribute("minecraftJar"))
 			{
 				minecraftJar = new File( configNode.getAttribute("minecraftJar") );
-			}
-			else
-			{
-				// Not specified, try and guess where it is
-				minecraftJar = Minecraft.findMinecraftJar();
 			}
 			config.setMinecraftJar(minecraftJar);
 			

@@ -295,6 +295,11 @@ public class TectonicusApp
 			System.exit(0);
 		}
 
+		if (args.getMinecraftJar() == null) {
+			System.out.println("No Minecraft jar specified.");
+			args.setMinecraftJar(Minecraft.findMinecraftJar());
+		}
+
 		if (args.getUpdateToLeaflet() != null) {
 			updateToLeaflet(args.getUpdateToLeaflet());
 			System.exit(0);

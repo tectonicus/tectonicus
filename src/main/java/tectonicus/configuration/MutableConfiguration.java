@@ -147,7 +147,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		outputHtmlName = "map.html";
 		outputDir = new File(".");
 		cacheDir = new File(outputDir, "Cache");
-		minecraftJar = Minecraft.findMinecraftJar();
 		defaultSkin = "steve";
 		numDownsampleThreads = 1;
 		singlePlayerName = "Player";
@@ -257,10 +256,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	}
 	public boolean useCache() { return useCache; }
 
-	public void setMinecraftJar(File jar)
-	{
-		this.minecraftJar = jar;
-	}
 	public File minecraftJar() { return minecraftJar; }
 
 	public void setTexturePack(File texturePack)
