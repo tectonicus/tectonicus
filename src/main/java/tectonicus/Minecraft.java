@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,14 +9,13 @@
 
 package tectonicus;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import lombok.experimental.UtilityClass;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.OsDetect;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 
 @UtilityClass
@@ -63,13 +62,8 @@ public class Minecraft
 		if(versionsDir.exists())
 		{
 			System.out.println("Searching for most recent Minecraft jar...");
-			String[] directories = versionsDir.list(new FilenameFilter() {
-			  @Override
-			  public boolean accept(File dir, String name) {
-			    return new File(dir, name).isDirectory();
-			  }
-			});
-			
+			String[] directories = versionsDir.list((dir, name) -> new File(dir, name).isDirectory());
+
 			String major = "0";
 			String minor = "0";
 			String patch = "0";
@@ -78,7 +72,7 @@ public class Minecraft
 				String[] version = directory.split("\\.");
 				try 
 				{
-					if(version.length == 2)
+					if(version.length == 2 && version[1].matches("\\d+"))
 					{
 						if(Integer.parseInt(major) < Integer.parseInt(version[0]))
 						{
@@ -92,7 +86,7 @@ public class Minecraft
 							patch = "0";
 						}
 					}
-					else if (version.length == 3)
+					else if (version.length == 3 && version[2].matches("\\d+"))
 					{
 						if(Integer.parseInt(major) < Integer.parseInt(version[0]))
 						{
@@ -113,7 +107,7 @@ public class Minecraft
 				}
 				catch(NumberFormatException e)
 				{
-					System.out.println("Skipping directory with invalid version number: " + directory);
+					System.out.println("Error parsing version number: " + directory);
 				}
 			}
 			
@@ -123,6 +117,7 @@ public class Minecraft
 			else
 				version = major + "." + minor + "." + patch;
 
+			System.out.println("Minecraft jar version: " + version);
 			return new File(findMinecraftDir(), "versions/" + version + "/" + version + ".jar");
 		}
 		else	
