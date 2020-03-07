@@ -271,7 +271,12 @@ public class TectonicusApp
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
 		cmd.registerConverter(MutableMap.class, s -> new MutableMap("Throwaway"));
-		cmd.setCaseInsensitiveEnumValuesAllowed(true).parse(argArray);
+		cmd.setCaseInsensitiveEnumValuesAllowed(true);
+		CommandLine.ParseResult parseResult = cmd.parseArgs(argArray);
+		if (parseResult.originalArgs().isEmpty()) {
+			cmd.usage(cmd.getOut());
+			System.exit(cmd.getCommandSpec().exitCodeOnUsageHelp());
+		}
 		Path configFile = m.getConfigFile();
 		
 		MutableConfiguration args = new MutableConfiguration();
@@ -290,9 +295,12 @@ public class TectonicusApp
 			map.setWorldDir(new File(s));
 			return map;
 		});
-		commandLine.setCaseInsensitiveEnumValuesAllowed(true).parseWithHandler(new CommandLine.RunFirst(), argArray);
+		commandLine.setCaseInsensitiveEnumValuesAllowed(true);
+		commandLine.setExecutionStrategy(new CommandLine.RunFirst());
+		commandLine.execute(argArray);
+
 		if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
-			System.exit(0);
+			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
 		}
 
 		if (args.getMinecraftJar() == null) {
