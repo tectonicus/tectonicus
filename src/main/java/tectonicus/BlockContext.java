@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,21 +18,22 @@ import tectonicus.util.Colour4f;
 
 public interface BlockContext
 {
-	public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
+	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
 	
-	public BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);
+	BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);
 	
-	public float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
+	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
 	
-	public LightStyle getLightStyle();
+	LightStyle getLightStyle();
 	
-	public TexturePack getTexturePack();
+	TexturePack getTexturePack();
 
-	public int getBiomeId(ChunkCoord chunkCoord, int x, int y, int z);
+	int getBiomeId(ChunkCoord chunkCoord, int x, int y, int z);
 	
-	public Colour4f getGrassColour(ChunkCoord chunkCoord, final int x, final int y, final int z);
+	Colour4f getGrassColour(ChunkCoord chunkCoord, final int x, final int y, final int z);
+	Colour4f getWaterColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
 	
-	public PlayerSkinCache getPlayerSkinCache();
+	PlayerSkinCache getPlayerSkinCache();
 	
-	public BlockRegistry getModelRegistry();
+	BlockRegistry getModelRegistry();
 }

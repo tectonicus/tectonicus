@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -614,7 +614,7 @@ public class RawChunk
 			{
 				for (int z=0; z<SECTION_DEPTH; z++)
 				{
-					final int index = x * SECTION_WIDTH + z;
+					final int index = z * SECTION_WIDTH + x;
 					biomes[x][z] = biomeDataTag.getValue()[index];
 				}
 			}
@@ -628,7 +628,7 @@ public class RawChunk
 			{
 				for (int z=0; z<SECTION_DEPTH; z++)
 				{
-					final int index = x * SECTION_WIDTH + z;
+					final int index = z * SECTION_WIDTH + x;
 					biomes[x][z] = (byte)intBiomeDataTag.getValue()[index];
 				}
 			}

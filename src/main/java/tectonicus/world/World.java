@@ -64,6 +64,7 @@ import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.Biome;
 import tectonicus.raw.BiomeIds;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
@@ -1097,7 +1098,43 @@ public class World implements BlockContext
 	{
 		Point colourCoord = BiomeIds.getColourCoord(id);
 		Color awtColour = texturePack.getGrassColour(colourCoord.x, colourCoord.y);
-		Colour4f colour = new Colour4f(awtColour);
+		return new Colour4f(awtColour);
+	}
+
+	@Override
+	public Colour4f getWaterColor(ChunkCoord chunkCoord, int x, int y, int z)
+	{
+		final int biomeId = getBiomeId(chunkCoord, x, y, z);
+		final int northId = getBiomeId(chunkCoord, x, y, z-1);
+		final int southId = getBiomeId(chunkCoord, x, y, z+1);
+		final int eastId = getBiomeId(chunkCoord, x+1, y, z);
+		final int westId = getBiomeId(chunkCoord, x-1, y, z);
+		final int northEastId = getBiomeId(chunkCoord, x+1, y, z-1);
+		final int northWestId = getBiomeId(chunkCoord, x-1, y, z-1);
+		final int southEastId = getBiomeId(chunkCoord, x+1, y, z+1);
+		final int southWestId = getBiomeId(chunkCoord, x-1, y, z+1);
+
+		Colour4f centerColour = Biome.byId(biomeId).getWaterColor();
+		Colour4f northColour = Biome.byId(northId).getWaterColor();
+		Colour4f southColour = Biome.byId(southId).getWaterColor();
+		Colour4f eastColour = Biome.byId(eastId).getWaterColor();
+		Colour4f westColour = Biome.byId(westId).getWaterColor();
+		Colour4f northEastColor = Biome.byId(northEastId).getWaterColor();
+		Colour4f northWestColor = Biome.byId(northWestId).getWaterColor();
+		Colour4f southEastColor = Biome.byId(southEastId).getWaterColor();
+		Colour4f southWestColor = Biome.byId(southWestId).getWaterColor();
+
+		Colour4f colour = new Colour4f(centerColour);
+		colour.add(northColour);
+		colour.add(southColour);
+		colour.add(eastColour);
+		colour.add(westColour);
+		colour.add(northEastColor);
+		colour.add(northWestColor);
+		colour.add(southEastColor);
+		colour.add(southWestColor);
+		colour.divide(9);
+
 		return colour;
 	}
 }

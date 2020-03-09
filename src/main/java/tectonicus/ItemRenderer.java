@@ -547,7 +547,13 @@ public class ItemRenderer
 		{
 			return new Colour4f(1, 1, 1, 1);
 		}
-		
+
+		@Override
+		public Colour4f getWaterColor(ChunkCoord chunkCoord, int x, int y, int z)
+		{
+			return new Colour4f(1, 1, 1, 1);
+		}
+
 		@Override
 		public PlayerSkinCache getPlayerSkinCache()
 		{

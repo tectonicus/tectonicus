@@ -9,31 +9,35 @@
 
 package tectonicus.blockTypes;
 
-import java.util.Random;
-
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.Version;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.util.Colour4f;
 
+import java.util.Random;
+
+import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_4;
 
 public class Water implements BlockType
 {
 	private final String name;
-	private SubTexture subTexture;	
+	private SubTexture subTexture;
+	private final Version texturePackVersion;
 	
 	public Water(String name, SubTexture subTexture, int frame)
 	{
 		this.name = name;
+		this.texturePackVersion = subTexture.getTexturePackVersion();
 		
 		final int texHeight = subTexture.texture.getHeight();
 		final int texWidth = subTexture.texture.getWidth();
@@ -83,7 +87,13 @@ public class Water implements BlockType
 		final float alpha = 0.8f;
 		final float internalAlpha = 0.3f;
 		final float waterLevel = 14.0f/16.0f;
-		
+		final Colour4f waterColor;
+		if (texturePackVersion.getNumVersion() >= VERSION_13.getNumVersion()) {
+			waterColor = world.getWaterColor(rawChunk.getChunkCoord(), x, y, z);
+		} else {
+			waterColor = new Colour4f();
+		}
+
 		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		final float northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
 		final float southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.NorthSouth);
@@ -104,7 +114,7 @@ public class Water implements BlockType
 										new Vector3f(x,		y+waterLevel,	z+1),
 										new Vector3f(x,		y,		z+1),
 										new Vector3f(x,		y,		z),
-										new Vector4f(northLight, northLight, northLight, alpha),
+										new Vector4f(waterColor.r * northLight, waterColor.g * northLight, waterColor.b * northLight, alpha),
 										subTexture); 
 			}
 
@@ -115,7 +125,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,		y+waterLevel,	z),
 										new Vector3f(x+1,		y,	z),
 										new Vector3f(x+1,		y,	z+1),
-										new Vector4f(southLight, southLight, southLight, alpha),
+										new Vector4f(waterColor.r * southLight, waterColor.g * southLight, waterColor.b * southLight, alpha),
 										subTexture); 
 			}
 
@@ -126,7 +136,7 @@ public class Water implements BlockType
 										new Vector3f(x,		y+waterLevel,	z),
 										new Vector3f(x,		y,		z),
 										new Vector3f(x+1,	y,		z),
-										new Vector4f(eastLight, eastLight, eastLight, alpha),
+										new Vector4f(waterColor.r *eastLight, waterColor.g * eastLight, waterColor.b * eastLight, alpha),
 										subTexture); 
 			}
 
@@ -137,7 +147,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,	y+waterLevel,	z+1),
 										new Vector3f(x+1,	y,		z+1),
 										new Vector3f(x,		y,		z+1),
-										new Vector4f(westLight, westLight, westLight, alpha),
+										new Vector4f(waterColor.r *westLight, waterColor.g * westLight, waterColor.b * westLight, alpha),
 										subTexture); 
 			}
 			
@@ -148,7 +158,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,	y+waterLevel,	z),
 										new Vector3f(x+1,	y+waterLevel,	z+1),
 										new Vector3f(x,		y+waterLevel,	z+1),
-										new Vector4f(topLight, topLight, topLight, aboveAlpha),
+										new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, aboveAlpha),
 										subTexture);
 			
 			
@@ -159,7 +169,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,	y,	z+1),
 										new Vector3f(x+1,	y,	z),
 										new Vector3f(x,		y,	z),
-										new Vector4f(topLight, topLight, topLight, alpha),
+										new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, alpha),
 										subTexture);
 			}
 		}
@@ -174,7 +184,7 @@ public class Water implements BlockType
 										new Vector3f(x,		y+1,	z+1),
 										new Vector3f(x,		y,		z+1),
 										new Vector3f(x,		y,		z),
-										new Vector4f(northLight, northLight, northLight, alpha),
+										new Vector4f(waterColor.r * northLight, waterColor.g * northLight, waterColor.b * northLight, alpha),
 										subTexture); 
 			}
 			
@@ -187,7 +197,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,		y+1,	z),
 										new Vector3f(x+1,		y,	z),
 										new Vector3f(x+1,		y,	z+1),
-										new Vector4f(southLight, southLight, southLight, alpha),
+										new Vector4f(waterColor.r * southLight, waterColor.g * southLight, waterColor.b * southLight, alpha),
 										subTexture); 
 			}
 			
@@ -200,7 +210,7 @@ public class Water implements BlockType
 										new Vector3f(x,		y+1,	z),
 										new Vector3f(x,		y,		z),
 										new Vector3f(x+1,	y,		z),
-										new Vector4f(eastLight, eastLight, eastLight, alpha),
+										new Vector4f(waterColor.r * eastLight, waterColor.g * eastLight, waterColor.b * eastLight, alpha),
 										subTexture); 
 			}
 			
@@ -213,7 +223,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,	y+1,	z+1),
 										new Vector3f(x+1,	y,		z+1),
 										new Vector3f(x,		y,		z+1),
-										new Vector4f(westLight, westLight, westLight, alpha),
+										new Vector4f(waterColor.r * westLight, waterColor.g * westLight, waterColor.b * westLight, alpha),
 										subTexture); 
 			}
 			
@@ -228,7 +238,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,	y+1,	z),
 										new Vector3f(x+1,	y+1,	z+1),
 										new Vector3f(x,		y+1,	z+1),
-										new Vector4f(topLight, topLight, topLight, aboveAlpha),
+										new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, aboveAlpha),
 										subTexture);
 			
 			
@@ -241,7 +251,7 @@ public class Water implements BlockType
 										new Vector3f(x+1,	y,	z+1),
 										new Vector3f(x+1,	y,	z),
 										new Vector3f(x,		y,	z),
-										new Vector4f(topLight, topLight, topLight, alpha),
+										new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, alpha),
 										subTexture);
 			}
 		}
