@@ -9,8 +9,8 @@
 
 package tectonicus.raw;
 
-import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import tectonicus.util.Colour4f;
 
 import java.awt.Color;
@@ -18,27 +18,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Getter
+@RequiredArgsConstructor
 public enum BiomeWater {
-	OCEAN(0, new Color(63, 118, 228)),
-	SWAMP(6, new Color(97,123,100)),
-	RIVER(7, new Color(63, 118, 228)),
-	FROZEN_OCEAN(10, new Color(57, 56, 201)),
-	FROZEN_RIVER(11, new Color(57, 56, 201)),
-	WARM_OCEAN(44, new Color(67, 213, 238)),
-	LUKEWARM_OCEAN(45, new Color(69, 173, 242)),
-	COLD_OCEAN(46, new Color(61, 87, 214));
+	OCEAN(0, new Colour4f(new Color(63, 118, 228))),
+	SWAMP(6, new Colour4f(new Color(97,123,100))),
+	RIVER(7, new Colour4f(new Color(63, 118, 228))),
+	FROZEN_OCEAN(10, new Colour4f(new Color(57, 56, 201))),
+	FROZEN_RIVER(11, new Colour4f(new Color(57, 56, 201))),
+	WARM_OCEAN(44, new Colour4f(new Color(67, 213, 238))),
+	LUKEWARM_OCEAN(45, new Colour4f(new Color(69, 173, 242))),
+	COLD_OCEAN(46, new Colour4f(new Color(61, 87, 214)));
 
 	private static final Map<Integer, BiomeWater> ID_LOOKUP = new HashMap<>(values().length);
 	private final int id;
-	@Getter(AccessLevel.NONE)
-	private final Color wColor;
 	private final Colour4f waterColor;
-
-	BiomeWater(int id, Color wColor) {
-		this.id = id;
-		this.wColor = wColor;
-		waterColor = new Colour4f(wColor.getRed() / 255f, wColor.getGreen() / 255f, wColor.getBlue() / 255f);
-	}
 
 	static
 	{
