@@ -64,7 +64,7 @@ import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
-import tectonicus.raw.Biome;
+import tectonicus.raw.BiomeWater;
 import tectonicus.raw.BiomeIds;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
@@ -1114,15 +1114,15 @@ public class World implements BlockContext
 		final int southEastId = getBiomeId(chunkCoord, x+1, y, z+1);
 		final int southWestId = getBiomeId(chunkCoord, x-1, y, z+1);
 
-		Colour4f centerColour = Biome.byId(biomeId).getWaterColor();
-		Colour4f northColour = Biome.byId(northId).getWaterColor();
-		Colour4f southColour = Biome.byId(southId).getWaterColor();
-		Colour4f eastColour = Biome.byId(eastId).getWaterColor();
-		Colour4f westColour = Biome.byId(westId).getWaterColor();
-		Colour4f northEastColor = Biome.byId(northEastId).getWaterColor();
-		Colour4f northWestColor = Biome.byId(northWestId).getWaterColor();
-		Colour4f southEastColor = Biome.byId(southEastId).getWaterColor();
-		Colour4f southWestColor = Biome.byId(southWestId).getWaterColor();
+		Colour4f centerColour = BiomeWater.byId(biomeId).getWaterColor();
+		Colour4f northColour = BiomeWater.byId(northId).getWaterColor();
+		Colour4f southColour = BiomeWater.byId(southId).getWaterColor();
+		Colour4f eastColour = BiomeWater.byId(eastId).getWaterColor();
+		Colour4f westColour = BiomeWater.byId(westId).getWaterColor();
+		Colour4f northEastColor = BiomeWater.byId(northEastId).getWaterColor();
+		Colour4f northWestColor = BiomeWater.byId(northWestId).getWaterColor();
+		Colour4f southEastColor = BiomeWater.byId(southEastId).getWaterColor();
+		Colour4f southWestColor = BiomeWater.byId(southWestId).getWaterColor();
 
 		Colour4f colour = new Colour4f(centerColour);
 		colour.add(northColour);

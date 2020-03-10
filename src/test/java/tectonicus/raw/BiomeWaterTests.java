@@ -15,14 +15,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
-public class BiomeTests {
+public class BiomeWaterTests {
 	@Test
 	public void enumLookupValidId() {
-		assertThat(Biome.byId(0), is(equalTo(Biome.OCEAN)));
+		assertThat(BiomeWater.byId(6), is(equalTo(BiomeWater.SWAMP)));
 	}
 
 	@Test
 	public void enumLookupInvalidId() {
-		assertThat(Biome.byId(99999), is(equalTo(Biome.DEFAULT)));
+		assertThat(BiomeWater.byId(99999), is(equalTo(BiomeWater.OCEAN)));
+	}
+
+	@Test
+	public void getNameReturnsLowercaseName() {
+		assertThat(BiomeWater.LUKEWARM_OCEAN.getName(), is(equalTo("lukewarm_ocean")));
 	}
 }
