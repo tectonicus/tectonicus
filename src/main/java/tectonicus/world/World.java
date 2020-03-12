@@ -9,31 +9,7 @@
 
 package tectonicus.world;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.joml.Vector3f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockMaskFactory;
@@ -64,14 +40,14 @@ import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
-import tectonicus.raw.BiomeWater;
+import tectonicus.raw.Biome;
 import tectonicus.raw.BiomeIds;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.Player.RequestPlayerInfoTask;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
-import tectonicus.raw.ContainerEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.TexturePack;
@@ -83,6 +59,29 @@ import tectonicus.world.filter.CompositeBlockFilter;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
 import tectonicus.world.subset.WorldSubsetFactory;
+
+import java.awt.Color;
+import java.awt.Point;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
@@ -1068,7 +1067,7 @@ public class World implements BlockContext
 		
 		return result.values().toArray(new SignEntity[0]);
 	}
-	
+
 	@Override
 	public Colour4f getGrassColour(ChunkCoord chunkCoord, int x, int y, int z)
 	{
@@ -1077,20 +1076,58 @@ public class World implements BlockContext
 		final int southId = getBiomeId(chunkCoord, x, y, z+1);
 		final int eastId = getBiomeId(chunkCoord, x+1, y, z);
 		final int westId = getBiomeId(chunkCoord, x-1, y, z);
-		
-		Colour4f centerColour = getGrassColour(biomeId);
-		Colour4f northColour = getGrassColour(northId);
-		Colour4f southColour = getGrassColour(southId);
-		Colour4f eastColour = getGrassColour(eastId);
-		Colour4f westColour = getGrassColour(westId);
-		
+		final int northEastId = getBiomeId(chunkCoord, x+1, y, z-1);
+		final int northWestId = getBiomeId(chunkCoord, x-1, y, z-1);
+		final int southEastId = getBiomeId(chunkCoord, x+1, y, z+1);
+		final int southWestId = getBiomeId(chunkCoord, x-1, y, z+1);
+
+		Colour4f centerColour;
+		Colour4f northColour;
+		Colour4f southColour;
+		Colour4f eastColour;
+		Colour4f westColour;
+		Colour4f northEastColor;
+		Colour4f northWestColor;
+		Colour4f southEastColor;
+		Colour4f southWestColor;
+
+		//The new way to find biome colors was actually only added in 1.7.2, but for my own
+		//sanity I'm not going to worry about letting the new method work with 1.6
+		if (textureVersion.getNumVersion() < VERSIONS_6_TO_8.getNumVersion()) {
+			centerColour = getGrassColour(biomeId);
+			northColour = getGrassColour(northId);
+			southColour = getGrassColour(southId);
+			eastColour = getGrassColour(eastId);
+			westColour = getGrassColour(westId);
+			northEastColor = getGrassColour(northEastId);
+			northWestColor = getGrassColour(northWestId);
+			southEastColor = getGrassColour(southEastId);
+			southWestColor = getGrassColour(southWestId);
+		} else {
+			int elevation = Math.max(y - 64, 0);
+
+			centerColour = getGrassColour(biomeId, elevation);
+			northColour = getGrassColour(northId, elevation);
+			southColour = getGrassColour(southId, elevation);
+			eastColour = getGrassColour(eastId, elevation);
+			westColour = getGrassColour(westId, elevation);
+			northEastColor = getGrassColour(northEastId, elevation);
+			northWestColor = getGrassColour(northWestId, elevation);
+			southEastColor = getGrassColour(southEastId, elevation);
+			southWestColor = getGrassColour(southWestId, elevation);
+		}
+
 		Colour4f colour = new Colour4f(centerColour);
 		colour.add(northColour);
 		colour.add(southColour);
 		colour.add(eastColour);
 		colour.add(westColour);
-		colour.divide(5);
-		
+		colour.add(northEastColor);
+		colour.add(northWestColor);
+		colour.add(southEastColor);
+		colour.add(southWestColor);
+		colour.divide(9);
+
 		return colour;
 	}
 	
@@ -1099,6 +1136,26 @@ public class World implements BlockContext
 		Point colourCoord = BiomeIds.getColourCoord(id);
 		Color awtColour = texturePack.getGrassColour(colourCoord.x, colourCoord.y);
 		return new Colour4f(awtColour);
+	}
+
+	private Colour4f getGrassColour(final int id, int elevation)
+	{
+		Biome biome = Biome.byId(id);
+		float temperature = biome.getTemperature();
+		float rainfall = biome.getRainfall();
+
+		float adjTemp = clamp(temperature - elevation * 0.00166667f, 0.0f, 1.0f);
+		float adjRainfall = clamp(rainfall, 0.0f, 1.0f) * adjTemp;
+
+		int tempInt = Math.round(255 - adjTemp * 255);
+		int tempRain = Math.round(255 - adjRainfall * 255);
+
+		Color awtColour = texturePack.getGrassColour(tempInt, tempRain);
+		return new Colour4f(awtColour);
+	}
+
+	public float clamp(float val, float min, float max) {
+		return Math.max(min, Math.min(max, val));
 	}
 
 	@Override
@@ -1114,15 +1171,15 @@ public class World implements BlockContext
 		final int southEastId = getBiomeId(chunkCoord, x+1, y, z+1);
 		final int southWestId = getBiomeId(chunkCoord, x-1, y, z+1);
 
-		Colour4f centerColour = BiomeWater.byId(biomeId).getWaterColor();
-		Colour4f northColour = BiomeWater.byId(northId).getWaterColor();
-		Colour4f southColour = BiomeWater.byId(southId).getWaterColor();
-		Colour4f eastColour = BiomeWater.byId(eastId).getWaterColor();
-		Colour4f westColour = BiomeWater.byId(westId).getWaterColor();
-		Colour4f northEastColor = BiomeWater.byId(northEastId).getWaterColor();
-		Colour4f northWestColor = BiomeWater.byId(northWestId).getWaterColor();
-		Colour4f southEastColor = BiomeWater.byId(southEastId).getWaterColor();
-		Colour4f southWestColor = BiomeWater.byId(southWestId).getWaterColor();
+		Colour4f centerColour = Biome.byId(biomeId).getWaterColor();
+		Colour4f northColour = Biome.byId(northId).getWaterColor();
+		Colour4f southColour = Biome.byId(southId).getWaterColor();
+		Colour4f eastColour = Biome.byId(eastId).getWaterColor();
+		Colour4f westColour = Biome.byId(westId).getWaterColor();
+		Colour4f northEastColor = Biome.byId(northEastId).getWaterColor();
+		Colour4f northWestColor = Biome.byId(northWestId).getWaterColor();
+		Colour4f southEastColor = Biome.byId(southEastId).getWaterColor();
+		Colour4f southWestColor = Biome.byId(southWestId).getWaterColor();
 
 		Colour4f colour = new Colour4f(centerColour);
 		colour.add(northColour);
