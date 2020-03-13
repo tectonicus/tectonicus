@@ -10,12 +10,19 @@
 package tectonicus;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.OsDetect;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 
 @UtilityClass
@@ -62,14 +69,20 @@ public class Minecraft
 		if(versionsDir.exists())
 		{
 			System.out.println("Searching for most recent Minecraft jar...");
-			String[] directories = versionsDir.list((dir, name) -> new File(dir, name).isDirectory());
+			List<Path> jars = new ArrayList<>();
+			try (Stream<Path> paths = Files.find(versionsDir.toPath(), 2,
+					(path, attr) -> attr.isRegularFile() && path.getFileName().toString().toLowerCase().endsWith(".jar"))){
+				jars = paths.collect(toList());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 			String major = "0";
 			String minor = "0";
 			String patch = "0";
-			for(String directory : directories)
+			for(Path jar : jars)
 			{
-				String[] version = directory.split("\\.");
+				String[] version = StringUtils.removeEndIgnoreCase(jar.getFileName().toString(), ".jar").split("\\.");
 				try 
 				{
 					if(version.length == 2 && version[1].matches("\\d+"))
@@ -107,7 +120,7 @@ public class Minecraft
 				}
 				catch(NumberFormatException e)
 				{
-					System.out.println("Error parsing version number: " + directory);
+					System.out.println("Error parsing version number: " + jar);
 				}
 			}
 			
