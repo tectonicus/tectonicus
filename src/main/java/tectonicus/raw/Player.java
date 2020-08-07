@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,22 +9,10 @@
 
 package tectonicus.raw;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.concurrent.Callable;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectReader;
 import tectonicus.configuration.Configuration.Dimension;
+import tectonicus.util.FileUtils;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
 import xyz.nickr.nbt.NBTCodec;
@@ -32,6 +20,19 @@ import xyz.nickr.nbt.NBTCompression;
 import xyz.nickr.nbt.tags.CompoundTag;
 import xyz.nickr.nbt.tags.ListTag;
 import xyz.nickr.nbt.tags.NBTTag;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.concurrent.Callable;
 
 public class Player
 {
@@ -56,6 +57,8 @@ public class Player
 	private int xpTotal;
 	
 	private ArrayList<Item> inventory;
+
+	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	
 	public Player(Path playerFile) throws Exception
 	{
@@ -63,7 +66,7 @@ public class Player
 		
 		dimension = Dimension.Terra;
 		position = new Vector3d();
-		inventory = new ArrayList<Item>();
+		inventory = new ArrayList<>();
 		
 		UUID = playerFile.getFileName().toString();
 		
@@ -106,11 +109,11 @@ public class Player
 		this.skinURL = skinURL;
 	}
 	
-	private void parse(CompoundTag root) throws Exception
+	private void parse(CompoundTag root)
 	{
 		dimension = Dimension.Terra;
 		position = new Vector3d();
-		inventory = new ArrayList<Item>();	
+		inventory = new ArrayList<>();
 		
 		health = root.getAsNumber("Health").shortValue();
 		air = root.getAsNumber("Air").shortValue();
@@ -257,22 +260,22 @@ public class Player
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 				StringBuilder builder = new StringBuilder();
 				
-				String line = null;
+				String line;
 				while ((line = reader.readLine()) != null)
 				{
-					builder.append(line + "\n");
+					builder.append(line).append("\n");
 				}
 				reader.close();
-				
-				JsonObject obj = JsonParser.parseString(builder.toString()).getAsJsonObject();
-				Player.this.setName(obj.get("name").getAsString());
-				JsonObject textures = obj.get("properties").getAsJsonArray().get(0).getAsJsonObject();
-				byte[] decoded = Base64.getDecoder().decode(textures.get("value").getAsString());// DatatypeConverter.parseBase64Binary();
-				obj = JsonParser.parseString(new String(decoded, "UTF-8")).getAsJsonObject();
-				boolean hasSkin = obj.get("textures").getAsJsonObject().has("SKIN");
+
+				JsonNode node = OBJECT_READER.readTree(builder.toString());
+				Player.this.setName(node.get("name").asText());
+				JsonNode textures = node.get("properties").get(0);
+				byte[] decoded = Base64.getDecoder().decode(textures.get("value").asText());
+				node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
+				boolean hasSkin = node.get("textures").has("SKIN");
 				String textureUrl = null;
-				if (hasSkin == true)
-					textureUrl = obj.get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
+				if (hasSkin)
+					textureUrl = node.get("textures").get("SKIN").get("url").asText();
 				Player.this.setSkinURL(textureUrl);
 			}
 			System.out.println("Loaded " + Player.this.getName());

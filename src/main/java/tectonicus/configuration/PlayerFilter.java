@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,17 +9,17 @@
 
 package tectonicus.configuration;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import tectonicus.Minecraft;
+import tectonicus.raw.Player;
+import tectonicus.util.FileUtils;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
-
-import tectonicus.Minecraft;
-import tectonicus.raw.Player;
 
 public class PlayerFilter
 {
@@ -32,7 +32,7 @@ public class PlayerFilter
 		this.filter = PlayerFilterType.All;
 	}
 	
-	public PlayerFilter(final PlayerFilterType type, Path playersFile, Path worldDir) throws Exception
+	public PlayerFilter(final PlayerFilterType type, Path playersFile, Path worldDir)
 	{
 		this.filter = type;
 		this.filterFile = playersFile;
@@ -65,28 +65,25 @@ public class PlayerFilter
 	{
 		System.out.println("Loading players from " + playerFile);
 		
-		playerList = new ArrayList<String>();
+		playerList = new ArrayList<>();
 		
 		try
 		{
 			if (playerFile.toString().toLowerCase().endsWith(".json"))
-			{	
-				JsonArray array = JsonParser.parseString(new String(Files.readAllBytes(playerFile))).getAsJsonArray();
-				
-				for (int i=0; i<array.size(); i++)
+			{
+				JsonNode node = FileUtils.getOBJECT_MAPPER().reader().readTree(new String(Files.readAllBytes(playerFile)));
+
+				for (int i=0; i<node.size(); i++)
 				{
-					String name = array.get(i).getAsJsonObject().get("name").getAsString();
+					String name = node.get(i).get("name").asText();
 					playerList.add(name.toLowerCase());
 				}
 			}
-			else if (playerFile.toString().toLowerCase().endsWith(".txt"))
+			else if (playerFile.toString().toLowerCase().endsWith(".txt") && Files.exists(playerFile))
 			{
-				if (Files.exists(playerFile))
-				{
-					List<String> lines = Files.readAllLines(playerFile, StandardCharsets.UTF_8);
-					for (String line : lines)
-						playerList.add( line.trim().toLowerCase() );
-				}
+				List<String> lines = Files.readAllLines(playerFile, StandardCharsets.UTF_8);
+				for (String line : lines)
+					playerList.add( line.trim().toLowerCase() );
 			}
 			
 			System.out.println("\tfound " + playerList.size() + " players");

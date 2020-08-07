@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -90,24 +90,9 @@ public class DrawModelTest
 		
 		int width = 800;
 		int height = 800;
-		
-//		try
-//		{
-//			Display.setDisplayMode(new DisplayMode(640, 640));
-//			Display.setTitle("Test!");
-//			Display.setResizable(true);
-//			Display.create(new PixelFormat(8,24,0,8));
-//		} catch(LWJGLException e) {
-//			e.printStackTrace();
-//		}
 
 		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, width, height, 24, 8, 24, 4);
 		windowId = rasteriser.getWindowId();
-//		int fbo = glGenFramebuffers();
-//		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-//		int rbo = glGenRenderbuffers();
-//		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-//		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, 1024, 1024);
 
 		BlockRegistry br = new BlockRegistry(rasteriser);
 		BlockModel bm = br.loadModel("block/beacon", new HashMap<String, String>(), null);

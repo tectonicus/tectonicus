@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,27 +9,26 @@
 
 package tectonicus.configuration;
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.junit.jupiter.api.Test;
+import tectonicus.raw.Player;
 
 import java.nio.file.Paths;
 
-import org.junit.jupiter.api.Test;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.StringContains.containsString;
 
-import tectonicus.raw.Player;
-
-public class PlayerFilterTests
+class PlayerFilterTests
 {
 	@Test
-	public void testCreatePlayerFilter() throws Exception
+	void testCreatePlayerFilter()
 	{
 		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
 		assertThat(pf.toString(), containsString("whitelist.json"));
 	}
 	
 	@Test
-	public void passesFilterWithFilterTypeAll() throws Exception
+	void passesFilterWithFilterTypeAll()
 	{
 		PlayerFilter pf = new PlayerFilter();
 		boolean pass = pf.passesFilter(new Player("", "", ""));
@@ -37,7 +36,7 @@ public class PlayerFilterTests
 	}
 	
 	@Test
-	public void passesFilterWithJsonWhitelist() throws Exception
+	void passesFilterWithJsonWhitelist()
 	{
 		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
 		boolean pass = pf.passesFilter(new Player("androidz", "", ""));
@@ -45,7 +44,7 @@ public class PlayerFilterTests
 	}
 	
 	@Test
-	public void passesFilterWithTxtWhitelist() throws Exception
+	void passesFilterWithTxtWhitelist()
 	{
 		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.txt"), Paths.get("src/test/resources/Canned"));
 		boolean pass = pf.passesFilter(new Player("androidz", "", ""));
@@ -53,7 +52,7 @@ public class PlayerFilterTests
 	}
 	
 	@Test
-	public void createPlayerFilterWithDefaultWhitelist() throws Exception
+	void createPlayerFilterWithDefaultWhitelist()
 	{
 		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("."), Paths.get("src/test/resources/Canned"));
 		assertThat(pf.toString(), is("Whitelist: ."));

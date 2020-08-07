@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,19 +9,24 @@
 
 package tectonicus.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.experimental.UtilityClass;
+import tectonicus.TectonicusApp;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
-import com.google.gson.JsonParser;
-
-import tectonicus.TectonicusApp;
-
+@UtilityClass
 public class FileUtils
 {
-	public static boolean deleteDirectory(File path)
+	@Getter
+	private final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+	public boolean deleteDirectory(File path)
 	{
 		if (!path.exists())
 			return true;
@@ -42,7 +47,7 @@ public class FileUtils
 		return path.delete();
 	}
 	
-	public static void ensureExists(File dir)
+	public void ensureExists(File dir)
 	{
 		if (!dir.exists())
 			dir.mkdirs();
@@ -62,7 +67,7 @@ public class FileUtils
 	 * @throws IOException
 	 *             if unable to copy.
 	 */
-	public static void copyFiles(File src, File dest, Set<String> excludeExtensions) throws IOException
+	public void copyFiles(File src, File dest, Set<String> excludeExtensions) throws IOException
 	{
 		// Check to ensure that the source is valid...
 		if (!src.exists())
@@ -125,7 +130,7 @@ public class FileUtils
 		}
 	}
 	
-	public static void extractResource(String resource, File outputFile)
+	public void extractResource(String resource, File outputFile)
 	{
 		try
 		{
@@ -137,23 +142,25 @@ public class FileUtils
 		}
 	}
 	
-	public static boolean isJSONValid(String test)
+	public boolean isJSONValid(String json)
 	{
+		boolean valid = true;
 		try 
 		{
-			JsonParser.parseString(test).getAsJsonObject();
-			return true;
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.readTree(json);
 		}
 		catch(Exception ex)
 		{ 
-			return false;
+			valid = false;
 		}
+
+		return valid;
 	}
 	
-	public static String getExtension(String file)
+	public String getExtension(String file)
 	{
 		final int dotPos = file.lastIndexOf('.');
-		String ext = file.substring(dotPos+1, file.length());
-		return ext;
+		return file.substring(dotPos+1, file.length());
 	}
 }

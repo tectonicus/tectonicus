@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,9 +18,9 @@ import tectonicus.util.Vector3f;
 
 public class BlockModel
 {
-	final private String name;
-	final private boolean ambientlyOccluded;
-	final private List<BlockElement> elements;
+	private final String name;
+	private final boolean ambientlyOccluded;
+	private final List<BlockElement> elements;
 	
 	public BlockModel(String name, boolean ambientlyOccluded, List<BlockElement> elements)
 	{
@@ -41,12 +41,12 @@ public class BlockModel
 	
 	public static class BlockElement
 	{
-		final private Vector3f from, to;
-		final private org.joml.Vector3f rotationOrigin;
-		final private org.joml.Vector3f rotationAxis;
-		final private float rotationAngle;
-		final private boolean scaled, shaded;
-		final private Map<String, ElementFace> faces;
+		private final Vector3f from, to;
+		private final org.joml.Vector3f rotationOrigin;
+		private final org.joml.Vector3f rotationAxis;
+		private final float rotationAngle;
+		private final boolean scaled, shaded;
+		private final Map<String, ElementFace> faces;
 		
 		public BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, org.joml.Vector3f rotationAxis, float rotationAngle, boolean scaled, boolean shaded, Map<String, ElementFace> faces)
 		{
@@ -72,9 +72,9 @@ public class BlockModel
 		
 		public static class ElementFace
 		{
-			final private SubTexture texture;
-			final private boolean faceCulled, tinted;  // May need to change the type of these variables in the future, for now they work fine as booleans
-			final private int textureRotation;
+			private final SubTexture texture;
+			private final boolean faceCulled, tinted;  // May need to change the type of these variables in the future, for now they work fine as booleans
+			private final int textureRotation;
 			
 			public ElementFace(SubTexture texture, boolean faceCulled, int textureRotation, boolean tinted)
 			{				

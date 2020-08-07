@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,22 +9,27 @@
 
 package tectonicus.blockTypes;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsEqual.equalTo;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class BlockVariantTests
-{	
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static tectonicus.blockTypes.BlockRegistry.deserializeBlockStateModels;
+
+
+class BlockVariantTests
+{
+	ObjectMapper mapper = new ObjectMapper();
+
 	@BeforeEach
 	public void setUp()
 	{	
@@ -36,7 +41,7 @@ public class BlockVariantTests
 	}
 
 	@Test
-	public void createSingleStateMap()
+	void createSingleStateMap()
 	{
 		BlockVariant bv = new BlockVariant("normal", null);
 		Map<String, String> states = bv.getStates();
@@ -48,7 +53,7 @@ public class BlockVariantTests
 	}
 	
 	@Test
-	public void createMultipleStatesMap()
+	void createMultipleStatesMap()
 	{
 		BlockVariant bv = new BlockVariant("attached=false,facing=north,powered=false,suspended=false", null);
 		Map<String, String> states = bv.getStates();
@@ -61,28 +66,26 @@ public class BlockVariantTests
 		
 		assertThat(states, is(equalTo(testStates)));
 	}
-	
+
 	@Test
-	public void testDeserializeVariantSingleModel() throws JsonSyntaxException
-	{
-		JsonElement variant = JsonParser.parseString("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
-		BlockVariant bv = BlockVariant.deserializeVariant("east=true,north=false,south=false,west=false", variant);
-		
-		assertThat(bv.getModels().size(), is(equalTo(1)));
-		assertThat(bv.getModels().get(0).getModel(), is("acacia_fence_n"));
+	void testDeserializeVariantSingleModel() throws JsonProcessingException {
+		JsonNode variant = mapper.readTree("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
+		List<BlockStateModel> models = deserializeBlockStateModels(variant);
+
+		assertThat(models.size(), is(equalTo(1)));
+		assertThat(models.get(0).getModel(), is("acacia_fence_n"));
 	}
 	
 	@Test
-	public void testDeserializeVariantMultipleModels() throws JsonSyntaxException
-	{
-		JsonElement variant = JsonParser.parseString("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
-		BlockVariant bv = BlockVariant.deserializeVariant("snowy=false", variant);
+	void testDeserializeVariantMultipleModels() throws JsonProcessingException {
+		JsonNode variant = mapper.readTree("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
+		List<BlockStateModel> models = deserializeBlockStateModels(variant);
 		
-		assertThat(bv.getModels().size(), is(equalTo(4)));
-		assertThat(bv.getModels().get(2).getModel(), is("grass_normal"));
+		assertThat(models.size(), is(equalTo(4)));
+		assertThat(models.get(2).getModel(), is("grass_normal"));
 	}
 
-	//TODO: Fix this test once we've switched to using Gson
+	//TODO: This test is very outdated
 //	@Test
 //	public void testLoadModel() throws Exception
 //	{
@@ -107,18 +110,18 @@ public class BlockVariantTests
 	
 	//TODO: This test assumes minecraft.jar is located on the system.  Need to add a resource pack to the unit test data instead.
 //	@Test
-//	public void testDeserializeBlockStates()
+//	void testDeserializeBlockStates()
 //	{
 //		BlockRegistry test = new BlockRegistry();
 //		test.deserializeBlockstates();
 //		Map<String, List<BlockVariant>> blockStates = test.getBlockStates();
 //
 //		assertFalse(blockStates.isEmpty());
-//		assertThat(blockStates.size(), is(equalTo(355)));
+//		assertThat(blockStates.size(), is(equalTo(599))); //MC 1.13.2
 //		assertThat(blockStates.containsKey("minecraft:acacia_door"), is(equalTo(true)));
 //	}
 	
-	//TODO: This test is broken because we can't handle the new 1.9 "multipart" format.  Fix this once we've switched to Gson
+	//TODO: This test is broken because we can't handle the new 1.9 "multipart" format.
 //	@Test
 //	public void testLoadModels() throws Exception
 //	{

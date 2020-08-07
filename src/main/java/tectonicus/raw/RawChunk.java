@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,19 +9,11 @@
 
 package tectonicus.raw;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -34,17 +26,23 @@ import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.util.FileUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RawChunk
 {
@@ -61,6 +59,9 @@ public class RawChunk
 	public static final int MAX_LIGHT = 16;
 	
 	private static final int MAX_SECTIONS = HEIGHT / SECTION_HEIGHT;
+
+	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
+	private static final ObjectWriter OBJECT_WRITER = FileUtils.getOBJECT_MAPPER().writer();
 	
 	private byte[][] biomes;
 	
@@ -285,7 +286,7 @@ public class RawChunk
 									
 									if (id.equals("Sign") || id.equals("minecraft:sign"))
 									{
-										List<String> textLines = new ArrayList<String>();
+										List<String> textLines = new ArrayList<>();
 
 										for (int i=1; i<=4; i++)
 										{
@@ -295,18 +296,10 @@ public class RawChunk
 											{
 												textLines.add(textFromJSON(text));
 											}
-											else if (!StringUtils.isEmpty(text) && text.charAt(0) == '"' && text.charAt(text.length()-1) == '"' && text.length()>2) // 1.8 or older sign text
+											else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
 											{
-												text = text.replaceAll("^\"|\"$", "");  //This removes begin and end double quotes
-												text = StringEscapeUtils.unescapeJava(text);
-												Gson gson = new GsonBuilder().create();
-										        textLines.add(gson.toJson(text).replaceAll("^\"|\"$", ""));
-											}
-											else if (!StringUtils.isBlank(text)) // 1.7 or older sign text
-											{
-												text = text.replaceAll("^\"|\"$", "");
-												Gson gson = new GsonBuilder().create();
-												textLines.add(gson.toJson(text).replaceAll("^\"|\"$", ""));
+												text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
+												textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
 											}
 											else
 											{
@@ -366,8 +359,8 @@ public class RawChunk
 											CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
 											StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
 											byte[] decoded = Base64.getDecoder().decode(value.getValue());
-								            JsonObject obj = JsonParser.parseString(new String(decoded, "UTF-8")).getAsJsonObject();
-								            textureURL = obj.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
+											JsonNode node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
+											textureURL = node.get("textures").get("SKIN").get("url").asText();
 										}
 										else if (extraType != null && !(extraType.getValue().equals("")))
 										{

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -27,12 +27,13 @@ import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 
 import java.util.List;
+import java.util.Map;
 
 @UtilityClass
 public class MeshUtil
 {
 
-	public static void addCube(final float x, final float y, final float z, Vector4f colour, final boolean addTop,
+	public void addCube(final float x, final float y, final float z, Vector4f colour, final boolean addTop,
 							   final boolean addNorth, final boolean addSouth, final boolean addEast, final boolean addWest,
 							   Mesh geometry)
 	{
@@ -89,7 +90,7 @@ public class MeshUtil
 		}
 	}
 
-	public static void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
+	public void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
 	{
 		mesh.addVertex(p0, colour, texture.u0, texture.v0);
 		mesh.addVertex(p1, colour, texture.u1, texture.v0);
@@ -97,7 +98,7 @@ public class MeshUtil
 		mesh.addVertex(p3, colour, texture.u0, texture.v1);
 	}
 	
-	public static void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
+	public void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
 	{
 		// Clockwise
 		mesh.addVertex(p0, colour, texture.u0, texture.v0);
@@ -112,7 +113,7 @@ public class MeshUtil
 		mesh.addVertex(p1, colour, texture.u1, texture.v0);
 	}
 	
-	public static void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, Vector2f uv0, Vector2f uv1, Vector2f uv2, Vector2f uv3)
+	public void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, Vector2f uv0, Vector2f uv1, Vector2f uv2, Vector2f uv3)
 	{
 		// Clockwise
 		mesh.addVertex(p0, colour, uv0.x, uv0.y);
@@ -127,7 +128,7 @@ public class MeshUtil
 		mesh.addVertex(p1, colour, uv1.x, uv1.y);
 	}
 
-	public static void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, Vector2f uv0, Vector2f uv1, Vector2f uv2, Vector2f uv3)
+	public void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, Vector2f uv0, Vector2f uv1, Vector2f uv2, Vector2f uv3)
 	{
 		mesh.addVertex(p0, colour, uv0.x, uv0.y);
 		mesh.addVertex(p1, colour, uv1.x, uv1.y);
@@ -135,7 +136,7 @@ public class MeshUtil
 		mesh.addVertex(p3, colour, uv3.x, uv3.y);
 	}
 	
-	public static void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, List<BlockElement> elements, Geometry geometry, int rotation, String axis)
+	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, List<BlockElement> elements, Geometry geometry, int rotation, String axis)
 	{
 		Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
 		Vector3f rotAxis = new Vector3f(0, 1, 0);
@@ -244,12 +245,12 @@ public class MeshUtil
 			float z2 = z + element.getTo().z()/16;
 	
 	        Vector3f topLeft, topRight, bottomRight, bottomLeft;
-	        
-			if (element.getFaces().containsKey("up") && !above.isSolid())
+			Map<String, ElementFace> faces = element.getFaces();
+			if (faces.containsKey("up") && !above.isSolid())
 	        {
 				Colour4f color = new Colour4f(1 * topLight, 1 * topLight, 1 * topLight, 1);
 				
-				ElementFace face = element.getFaces().get("up");
+				ElementFace face = faces.get("up");
 				
 				topLeft = new Vector3f(x1, y2, z1);
 		        topRight = new Vector3f(x2, y2, z1);
@@ -259,11 +260,11 @@ public class MeshUtil
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (element.getFaces().containsKey("down") && !below.isSolid())
+			if (faces.containsKey("down") && !below.isSolid())
 	        {
 				Colour4f color = new Colour4f(1 * bottomLight, 1 * bottomLight, 1 * bottomLight, 1);
 				
-				ElementFace face = element.getFaces().get("down");
+				ElementFace face = faces.get("down");
 				
 				topLeft = new Vector3f(x1, y1, z2);
 		        topRight = new Vector3f(x2, y1, z2);
@@ -273,11 +274,11 @@ public class MeshUtil
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (element.getFaces().containsKey("north") && !north.isSolid())
+			if (faces.containsKey("north") && !north.isSolid())
 	        {
 				Colour4f color = new Colour4f(1 * northLight, 1 * northLight, 1 * northLight, 1);
 				
-				ElementFace face = element.getFaces().get("north");
+				ElementFace face = faces.get("north");
 				
 				topLeft = new Vector3f(x2, y2, z1);
 		        topRight = new Vector3f(x1, y2, z1);
@@ -287,11 +288,11 @@ public class MeshUtil
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (element.getFaces().containsKey("south") && !south.isSolid())
+			if (faces.containsKey("south") && !south.isSolid())
 	        {
 				Colour4f color = new Colour4f(1 * southLight, 1 * southLight, 1 * southLight, 1);
 				
-				ElementFace face = element.getFaces().get("south");
+				ElementFace face = faces.get("south");
 				
 				topLeft = new Vector3f(x1, y2, z2);
 		        topRight = new Vector3f(x2, y2, z2);
@@ -301,11 +302,11 @@ public class MeshUtil
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (element.getFaces().containsKey("east") && !east.isSolid())
+			if (faces.containsKey("east") && !east.isSolid())
 	        {
 				Colour4f color = new Colour4f(1 * eastLight, 1 * eastLight, 1 * eastLight, 1);
 				
-				ElementFace face = element.getFaces().get("east");
+				ElementFace face = faces.get("east");
 				
 				topLeft = new Vector3f(x2, y2, z2);
 		        topRight = new Vector3f(x2, y2, z1);
@@ -315,11 +316,11 @@ public class MeshUtil
 		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (element.getFaces().containsKey("west") && !west.isSolid())
+			if (faces.containsKey("west") && !west.isSolid())
 	        {
 				Colour4f color = new Colour4f(1 * westLight, 1 * westLight, 1 * westLight, 1);
 				
-				ElementFace face = element.getFaces().get("west");
+				ElementFace face = faces.get("west");
 				
 				topLeft = new Vector3f(x1, y2, z1);
 		        topRight = new Vector3f(x1, y2, z2);
@@ -331,7 +332,7 @@ public class MeshUtil
 		}
 	}
 	
-	private static void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f rotationTransform, Matrix4f rotTransform)
+	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f rotationTransform, Matrix4f rotTransform)
 	{
 		rotTransform.transformPosition(topLeft);
         rotTransform.transformPosition(topRight);
