@@ -1,7 +1,7 @@
 plugins {
 	id 'application'
-	id 'org.ajoberstar.grgit' version '4.0.1'
-	id 'com.github.johnrengelman.shadow' version '5.2.0'
+	id 'org.ajoberstar.grgit' version '4.0.2'
+	id 'com.github.johnrengelman.shadow' version '6.0.0'
 }
 
 archivesBaseName = 'Tectonicus'
@@ -21,9 +21,9 @@ repositories {
 
 ext {
 	lwjglVersion = '3.2.3'
-	picocliVersion = '4.2.0'
+	picocliVersion = '4.5.0'
 	lombokVersion = '1.18.12'
-	junitVersion = '5.6.0'
+	junitVersion = '5.6.2'
 }
 
 dependencies {
@@ -87,6 +87,7 @@ distributions {
 			from files('Data/defaultBlockConfig.xml')
 			from('Docs') {
 				include('*.xml', '*.txt')
+				exclude('notes.txt')
 			}
 		}
 	}
