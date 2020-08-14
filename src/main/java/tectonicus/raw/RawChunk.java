@@ -345,7 +345,7 @@ public class RawChunk
 										String UUID = "";
 										String textureURL = "";
 										StringTag extraType = NbtUtil.getChild(entity, "ExtraType", StringTag.class);
-										CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);
+										CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);  //TODO: this should support new SkullOwner tag
 										if(owner != null)
 										{
 											nameTag = NbtUtil.getChild(owner, "Name", StringTag.class);
@@ -367,8 +367,12 @@ public class RawChunk
 											name = UUID = extraType.getValue();
 											textureURL = "http://www.minecraft.net/skin/"+extraType.getValue()+".png";
 										}
-										
-										skulls.put(createKey(localX, localY, localZ), new SkullEntity(x, y, z, localX, localY, localZ, skullType.getValue(), rot.getValue(), name, UUID, textureURL));
+
+										if (skullType != null) {
+											skulls.put(createKey(localX, localY, localZ), new SkullEntity(x, y, z, localX, localY, localZ, skullType.getValue(), rot.getValue(), name, UUID, textureURL));
+										} else { // 1.13+ no longer has SkullType or Rot tags
+											skulls.put(createKey(localX, localY, localZ), new SkullEntity(x, y, z, localX, localY, localZ, name, UUID, textureURL));
+										}
 									}
 									else if (id.equals("Beacon") || id.equals("minecraft:beacon"))
 									{

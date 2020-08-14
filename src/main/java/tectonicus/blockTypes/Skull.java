@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -97,14 +97,18 @@ public class Skull implements BlockType
 		float yOffset = y;
 		float zOffset = z;
 		
-		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		String xyz = "x" + x + "y" + y + "z" + z;
 		SkullEntity entity = rawChunk.getSkulls().get(xyz);
 		Rotation rotation = Rotation.AntiClockwise;
 		float angle = 90 / 4.0f * entity.getRotation() + 180;
 		
 		final int blockId = entity.getSkullType();
-		
-		SubTexture currentTexture = null;
+
+		if (blockId == -1) {  // TODO: For 1.13+ we need to get the skull type and direction from the BlockProperties
+
+		}
+
+		SubTexture currentTexture = texture;
 		if (blockId == 0)
 			currentTexture = stexture;
 		else if (blockId == 1)
@@ -118,7 +122,7 @@ public class Skull implements BlockType
 		else if (blockId == 5)
 			currentTexture = dtexture;
 		
-		boolean dragonHead = blockId == 5 ? true : false;
+		boolean dragonHead = blockId == 5;
 		
 		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
 		if(!player.getSkinURL().equals(""))
