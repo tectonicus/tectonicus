@@ -81,6 +81,8 @@ public class RawChunk
 	private List<ContainerEntity> chests;
 	
 	private Map<String, Object> filterData = new HashMap<>();
+
+	private static final String CHEST = "Chest";
 	
 	public RawChunk()
 	{
@@ -131,11 +133,8 @@ public class RawChunk
 	{
 		clear();
 
-		NBTInputStream nbtIn = null;
-		try
+		try (NBTInputStream nbtIn = new NBTInputStream(in, compression);)
 		{
-			nbtIn = new NBTInputStream(in, compression);
-			
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag)
 			{
@@ -148,14 +147,14 @@ public class RawChunk
 					
 					IntTag xPosTag = NbtUtil.getChild(level, "xPos", IntTag.class);
 					if (xPosTag != null)
-						blockX = xPosTag.getValue().intValue();
+						blockX = xPosTag.getValue();
 					
 					IntTag zPosTag = NbtUtil.getChild(level, "zPos", IntTag.class);
 					if (zPosTag != null)
-						blockZ = zPosTag.getValue().intValue();
+						blockZ = zPosTag.getValue();
 					
-					ListTag sections = NbtUtil.getChild(level, "Sections", ListTag.class);
-					if (sections != null)
+					ListTag sectionsTag = NbtUtil.getChild(level, "Sections", ListTag.class);
+					if (sectionsTag != null)
 					{
 						// Parse as anvil format
 						parseAnvilData(level, worldStats);
@@ -231,7 +230,7 @@ public class RawChunk
 										StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
 										paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
 									}
-									else if (itemFrame)
+									else
 									{
 										String item = "";
 										Map<String, Tag> map = entity.getValue();
@@ -390,7 +389,7 @@ public class RawChunk
 
 										ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
 										
-										List<Pattern> patterns = new ArrayList<Pattern>();
+										List<Pattern> patterns = new ArrayList<>();
 										
 										int numPatterns = 0;
 										if (patternList != null)
@@ -407,10 +406,10 @@ public class RawChunk
 										}
 										banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
 									}
-									else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box"))
+									else if (id.equals(CHEST) || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box"))
 									{
 										final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
-										String name = "Chest";
+										String name = CHEST;
 										if (customName != null)
 											name = customName.getValue();
 										
@@ -425,7 +424,7 @@ public class RawChunk
 										if (lootTable != null)
 											unopenedChest = true;
 										
-										if (id.equals("Chest") || id.equals("minecraft:chest"))
+										if (id.equals(CHEST) || id.equals("minecraft:chest"))
 										{
 											chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest));
 										}
@@ -469,8 +468,6 @@ public class RawChunk
 		}
 		finally
 		{
-			if (nbtIn != null)
-				nbtIn.close();
 			if (in != null)
 				in.close();
 		}
@@ -706,13 +703,13 @@ public class RawChunk
 		}
 	}
 	
-	private static final int calcIndex(final int x, final int y, final int z)
+	private static int calcIndex(final int x, final int y, final int z)
 	{
 		// y + ( z * ChunkSizeY(=128) + ( x * ChunkSizeY(=128) * ChunkSizeZ(=16) ) ) ];
 		return y + (z * MC_REGION_HEIGHT) + (x * MC_REGION_HEIGHT * DEPTH);
 	}
 	
-	private static final int calcAnvilIndex(final int x, final int y, final int z)
+	private static int calcAnvilIndex(final int x, final int y, final int z)
 	{
 		// Note that the old format is XZY ((x * 16 + z) * 128 + y)
 		// and the new format is       YZX ((y * 16 + z) * 16 + x)
@@ -720,14 +717,14 @@ public class RawChunk
 		return x + (z * SECTION_HEIGHT) + (y * SECTION_HEIGHT * SECTION_DEPTH);
 	}
 	
-	private static final int calc4BitIndex(final int x, final int y, final int z)
+	private static int calc4BitIndex(final int x, final int y, final int z)
 	{
 		// Math.floor is bloody slow!
 		// Since calcIndex should always be +ive, we can just cast to int and get the same result 
 		return (int)(calcIndex(x, y, z) / 2);
 	}
 	
-	private static final int calcAnvil4BitIndex(final int x, final int y, final int z)
+	private static int calcAnvil4BitIndex(final int x, final int y, final int z)
 	{
 		// Math.floor is bloody slow!
 		// Since calcIndex should always be +ive, we can just cast to int and get the same result 
@@ -739,7 +736,7 @@ public class RawChunk
 		byte half = 0;
 		final int index = calcAnvil4BitIndex(x, y, z);
 		if (index == 2048)
-			System.out.println();;
+			System.out.println();
 		
 		if (tag != null && tag.getValue() != null) {
 			final int doublet = tag.getValue()[index];
@@ -872,7 +869,7 @@ public class RawChunk
 		s.blockNames[x][localY][z] = blockName;
 	}
 
-	public Map<String, String> getBlockState(final int x, final int y, final int z)
+	public BlockProperties getBlockState(final int x, final int y, final int z)
 	{
 		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
 			return null;
@@ -882,7 +879,7 @@ public class RawChunk
 
 		Section s = sections[sectionY];
 		if (s != null)
-			return s.blockStates[x][localY][z].getProperties();
+			return s.blockStates[x][localY][z];
 		else
 			return null;
 	}
@@ -991,7 +988,7 @@ public class RawChunk
 			}
 		}
 		
-		return blockIdTotal + blockDataTotal + skyLightTotal + blockLightTotal;
+		return (long)blockIdTotal + blockDataTotal + skyLightTotal + blockLightTotal;
 	}
 
 	public Map<String, SignEntity> getSigns()
@@ -1071,10 +1068,8 @@ public class RawChunk
 			}
 		}
 		
-		for (String key : signs.keySet())
+		for (SignEntity sign : signs.values())
 		{
-			SignEntity sign = signs.get(key);
-			
 			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getY()).getBytes());
 			hashAlgorithm.update(Integer.toString(sign.getZ()).getBytes());

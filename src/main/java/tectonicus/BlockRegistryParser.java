@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -106,7 +106,6 @@ import tectonicus.configuration.SignFilter;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 
-import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_5;
 
 public class BlockRegistryParser
@@ -182,7 +181,10 @@ public class BlockRegistryParser
 		
 		// Every type has an id
 		String idStr = element.getAttribute("id");
-		IdDataPair id = parseIdDataPair(idStr);
+		IdDataPair id = null;
+		if (!idStr.equals("")) {  // Starting with MC 1.13 blocks no longer use numeric ids
+			id = parseIdDataPair(idStr);
+		}
 		String stringId = element.getAttribute("stringId");
 		
 		// Every type has a name
@@ -786,11 +788,11 @@ public class BlockRegistryParser
 		else if (nodeName.equals("skull"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
-			SubTexture ctexture = parseTexture(element, "ctexture", null);
-			SubTexture stexture = parseTexture(element, "stexture", null);
-			SubTexture wtexture = parseTexture(element, "wtexture", null);
-			SubTexture ztexture = parseTexture(element, "ztexture", null);
-			SubTexture dtexture = parseTexture(element, "dtexture", null);
+			SubTexture ctexture = parseTexture(element, "ctexture", texture);
+			SubTexture stexture = parseTexture(element, "stexture", texture);
+			SubTexture wtexture = parseTexture(element, "wtexture", texture);
+			SubTexture ztexture = parseTexture(element, "ztexture", texture);
+			SubTexture dtexture = parseTexture(element, "dtexture", texture);
 		 	
 		 	blockType = new Skull(name, texture, ctexture, stexture, wtexture, ztexture, dtexture);
 		}
@@ -854,13 +856,15 @@ public class BlockRegistryParser
 		}
 		
 		if (blockType != null)
-		{	
-			if (id.data == -1)
-				registry.register(id.id, blockType);
-			else
-				registry.register(id.id, id.data, blockType);
+		{
+			if (id != null) {
+				if (id.data == -1)
+					registry.register(id.id, blockType);
+				else
+					registry.register(id.id, id.data, blockType);
+			}
 
-			if(stringId != "")
+			if(!stringId.equals(""))
 				registry.register(stringId, blockType);
 		}
 	}

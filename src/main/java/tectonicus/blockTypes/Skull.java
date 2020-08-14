@@ -21,6 +21,7 @@ import tectonicus.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
@@ -87,7 +88,26 @@ public class Skull implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) 
 	{				
 		SubMesh subMesh = new SubMesh();
-		
+
+		//1.13+
+		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+		final String blockName = rawChunk.getBlockName(x, y, z);
+		String facing = null;
+		String rotationString = null;
+		if (properties != null) {
+			facing = properties.get("facing");
+			rotationString = properties.get("rotation");
+		}
+		String xyz = "x" + x + "y" + y + "z" + z;
+		SkullEntity entity = rawChunk.getSkulls().get(xyz);
+		int rotationValue;
+		if (rotationString != null) {
+			rotationValue = Integer.parseInt(properties.get("rotation"));
+		} else {
+			rotationValue = entity.getRotation();
+		}
+
+
 		final int data = rawChunk.getBlockData(x, y, z);
 		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
 		final Vector4f light = new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a);
@@ -96,16 +116,16 @@ public class Skull implements BlockType
 		float xOffset = x;
 		float yOffset = y;
 		float zOffset = z;
-		
-		String xyz = "x" + x + "y" + y + "z" + z;
-		SkullEntity entity = rawChunk.getSkulls().get(xyz);
+
 		Rotation rotation = Rotation.AntiClockwise;
-		float angle = 90 / 4.0f * entity.getRotation() + 180;
+
+		float angle = 90 / 4.0f * rotationValue + 180;
 		
-		final int blockId = entity.getSkullType();
+		int blockId = entity.getSkullType();
 
-		if (blockId == -1) {  // TODO: For 1.13+ we need to get the skull type and direction from the BlockProperties
-
+		// For 1.13+ we don't care about any blockId except for dragon heads since we no longer pass in all the different textures
+		if (blockId == -1 && (blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head"))) {
+			blockId = 5;
 		}
 
 		SubTexture currentTexture = texture;
@@ -115,8 +135,7 @@ public class Skull implements BlockType
 			currentTexture = wtexture;
 		else if (blockId == 2)
 			currentTexture = ztexture;
-		else if (blockId == 3)
-			currentTexture = texture;
+		//blockId == 3 is default texture
 		else if (blockId == 4)
 			currentTexture = ctexture;
 		else if (blockId == 5)
@@ -156,7 +175,6 @@ public class Skull implements BlockType
 		
 		SubTexture mouthTexture = null;
 		SubTexture earTexture = null;
-		//SubTexture nostrilTexture = null;
 		
 		if(dragonHead)
 		{
@@ -174,29 +192,29 @@ public class Skull implements BlockType
 		}
 		
 		
-		if (data > 1)
+		if (data > 1 || facing != null)
 		{  
-			if (data == 2)
+			if (data == 2 || (facing != null && facing.equals("north")))
 			{
 				// Facing north
 				rotation = Rotation.Clockwise;
 				angle = 180;
 				zOffset += offSet*4;
 			}
-			if (data == 3)
+			if (data == 3 || (facing != null && facing.equals("south")))
 			{
 				// Facing south
 				angle = 0;
 				zOffset -= offSet*4;
 			}
-			else if (data == 4)
+			else if (data == 4 || (facing != null && facing.equals("west")))
 			{
 				// Facing west
 				rotation = Rotation.Clockwise;
 				angle = -90;
 				xOffset += offSet*4;
 			}
-			else if (data == 5)
+			else if (data == 5 || (facing != null && facing.equals("east")))
 			{
 				// Facing east
 				rotation = Rotation.Clockwise;
@@ -312,7 +330,7 @@ public class Skull implements BlockType
 							leftSideTexture);
 		}
 
-		if(data > 1)
+		if(data > 1 || facing != null)
 			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4, zOffset, rotation, angle);
 		else
 			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y, z, rotation, angle);			

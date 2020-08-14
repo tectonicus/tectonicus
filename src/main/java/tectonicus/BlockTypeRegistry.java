@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,17 +18,17 @@ import tectonicus.blockTypes.Air;
 
 public class BlockTypeRegistry
 {
-	private Map<Integer, BlockType> blocks; // TODO: Implement custom Id object that contains both numeric id and string id
-	private Map<String, BlockType> blocksByName;
-	private Map<IdDataPair, BlockType> boundBlocks;
+	private final Map<Integer, BlockType> blocks;
+	private final Map<String, BlockType> blocksByName;
+	private final Map<IdDataPair, BlockType> boundBlocks;
 	
 	private BlockType defaultBlock;
 	
 	public BlockTypeRegistry()
 	{
-		blocks = new HashMap<Integer, BlockType>();
-		boundBlocks = new HashMap<IdDataPair, BlockType>();
-		blocksByName = new HashMap<String, BlockType>();
+		blocks = new HashMap<>();
+		boundBlocks = new HashMap<>();
+		blocksByName = new HashMap<>();
 		
 		defaultBlock = new Air();
 	}
@@ -40,30 +40,24 @@ public class BlockTypeRegistry
 	
 	public void register(final int blockId, BlockType type)
 	{
-		if (blocks.containsKey(blockId))
-			blocks.remove(blockId);
-		
+		blocks.remove(blockId);
 		blocks.put(blockId, type);
 	}
 	
 	public void register(final int blockId, final int data, BlockType type)
 	{
 		IdDataPair key = new IdDataPair(blockId, data);
-		if (boundBlocks.containsKey(key))
-			boundBlocks.remove(key);
-			
+		boundBlocks.remove(key);
 		boundBlocks.put(key, type);
 	}
 
 	public void register(final String blockName, BlockType type)
 	{
-		if (blocksByName.containsKey(blockName))
-			blocksByName.remove(blockName);
-
+		blocksByName.remove(blockName);
 		blocksByName.put(blockName, type);
 	}
 
-	public BlockType find(final int id, final int data) // TODO: Create second find method that takes a string id
+	public BlockType find(final int id, final int data)
 	{
 		BlockType result = null;
 		
@@ -95,7 +89,7 @@ public class BlockTypeRegistry
 
 	public Set<BlockType> getTypes()
 	{
-		Set<BlockType> allTypes = new HashSet<BlockType>();
+		Set<BlockType> allTypes = new HashSet<>();
 		
 		allTypes.addAll( blocks.values() );
 		allTypes.addAll (boundBlocks.values() );

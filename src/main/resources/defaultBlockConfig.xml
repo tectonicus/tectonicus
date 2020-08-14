@@ -458,9 +458,18 @@
 
 	<Button id="143" stringId="minecraft:oak_button" name="Wooden Button" texture="oak_planks.png" />
 
-	<Skull id="144" name="Mob Head" texture="assets/minecraft/textures/entity/steve.png" ctexture="assets/minecraft/textures/entity/creeper/creeper.png" 
-									stexture="assets/minecraft/textures/entity/skeleton/skeleton.png" wtexture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png"
-									ztexture="assets/minecraft/textures/entity/zombie/zombie.png" dtexture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
+	<Skull stringId="minecraft:skeleton_skull" name="Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/skeleton.png" />
+	<Skull stringId="minecraft:wither_skeleton_skull" name="Wither Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png" />
+	<Skull stringId="minecraft:zombie_head" name="Zombie Head" texture="assets/minecraft/textures/entity/zombie/zombie.png" />
+	<Skull stringId="minecraft:player_head" name="Player Head" texture="assets/minecraft/textures/entity/steve.png" />
+	<Skull stringId="minecraft:creeper_head" name="Creeper Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
+	<Skull stringId="minecraft:dragon_head" name="Dragon Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
+	<Skull stringId="minecraft:skeleton_wall_skull" name="Skeleton Wall Skull" texture="assets/minecraft/textures/entity/skeleton/skeleton.png" />
+	<Skull stringId="minecraft:wither_skeleton_wall_skull" name="Wither Skeleton Wall Skull" texture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png" />
+	<Skull stringId="minecraft:zombie_wall_head" name="Zombie Wall Head" texture="assets/minecraft/textures/entity/zombie/zombie.png" />
+	<Skull stringId="minecraft:player_wall_head" name="Player Wall Head" texture="assets/minecraft/textures/entity/steve.png" />
+	<Skull stringId="minecraft:creeper_wall_head" name="Creeper Wall Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
+	<Skull stringId="minecraft:dragon_wall_head" name="Dragon Wall Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
 
 	<Anvil id="145" stringId="minecraft:anvil" name="Anvil" base="anvil.png" top0="anvil_top.png" top1="chipped_anvil_top.png" top2="damaged_anvil_top.png" />
 
