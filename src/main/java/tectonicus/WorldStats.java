@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,6 +14,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.mutable.MutableLong;
@@ -28,7 +29,7 @@ public class WorldStats
 	
 	public WorldStats()
 	{
-		blockIdCounts = new HashMap<IdDataPair, MutableLong>();
+		blockIdCounts = new HashMap<>();
 	}
 	
 	public void setNumPlayers(final int numPlayers)
@@ -80,9 +81,9 @@ public class WorldStats
 		System.out.println("Outputting block stats to "+statsFile.getAbsolutePath());
 		
 		// First merge with block id names (so that 'flowing lava' and 'stationary lava' becomes 'lava'
-		Map<String, Long> nameCounts = new HashMap<String, Long>();
-		Map<IdDataPair, Boolean> unknownBlockIds = new HashMap<IdDataPair, Boolean>();
-		for (IdDataPair id : blockIdCounts.keySet())
+		Map<String, Long> nameCounts = new HashMap<>();
+		Map<IdDataPair, Boolean> unknownBlockIds = new HashMap<>();
+		for (IdDataPair id : blockIdCounts.keySet())  //TODO: would using the entryset instead of keyset make this faster?
 		{
 			// Find the name
 			BlockType type = registry.find(id.id, id.data);
@@ -114,14 +115,14 @@ public class WorldStats
 			jsWriter = new JsArrayWriter(statsFile, varNamePrefix+"_blockStats");
 			
 			// Get the names and sort them so they're output in alphabetical order
-			ArrayList<String> names = new ArrayList<String>( nameCounts.keySet() );
+			List<String> names = new ArrayList<>( nameCounts.keySet() );
 			Collections.sort(names);
 			
 			for (String key : names)
 			{
 				long count = nameCounts.get(key);
 				
-				HashMap<String, String> args = new HashMap<String, String>();
+				Map<String, String> args = new HashMap<>();
 				
 				args.put("name", "\""+key+"\"");
 				

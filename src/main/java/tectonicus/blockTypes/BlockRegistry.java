@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -42,13 +43,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import static tectonicus.Version.VERSION_13;
-
 
 public class BlockRegistry
 {
-	private Map<String, List<BlockVariant>> blockStates = new HashMap<>();
-	private Map<String, BlockModel> blockModels = new HashMap<>();
+	@Getter
+	private final Map<String, BlockStateWrapper> blockStates = new HashMap<>();
+	@Getter
+	private final Map<String, BlockModel> blockModels = new HashMap<>();
 	private TexturePack texturePack;
 	private ZipStack zips;
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -81,17 +82,12 @@ public class BlockRegistry
 		this.texturePack = texturePack;
 		this.zips = texturePack.getZipStack();
 	}
-	
-	public Map<String, List<BlockVariant>> getBlockStates() { return Collections.unmodifiableMap(blockStates); }
-	public Map<String, BlockModel> getBlockModels() { return Collections.unmodifiableMap(blockModels); }
-	public List<BlockVariant> getVariants(String blockID) { return blockStates.get(blockID); }
+
 	public BlockModel getModel(String model) { return blockModels.get(model); }
 	
 	
 	public void deserializeBlockstates()
 	{
-		List<BlockVariant> blockVariants = new ArrayList<>();
-		
 		//TODO: need to use override pack blockstate files first
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
 			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"));)
@@ -99,11 +95,13 @@ public class BlockRegistry
 			int multipartTotal = 0;
 			for (Path blockStateFile : entries)
 			{
+				String name = "minecraft:" + StringUtils.removeEnd(blockStateFile.getFileName().toString(), ".json");
 				JsonNode root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
 
+				BlockStateWrapper states = new BlockStateWrapper();
 				if (root.has("multipart")) {
 					multipartTotal += 1;
-					List<BlockStateCase> cases = new ArrayList<>();
+
 					root.get("multipart").forEach(node -> {
 						List<Map<String, String>> whenClauses = new ArrayList<>();
 						if (node.has("when")) {
@@ -115,7 +113,7 @@ public class BlockRegistry
 							}
 						}
 
-						cases.add(new BlockStateCase(whenClauses, deserializeBlockStateModels(node.get("apply"))));
+						states.addCase(new BlockStateCase(whenClauses, deserializeBlockStateModels(node.get("apply"))));
 					});
 				} else {
 					JsonNode variants = root.get("variants");
@@ -125,12 +123,11 @@ public class BlockRegistry
 						Map.Entry<String, JsonNode> entry = iter.next();
 						String key = entry.getKey();
 						BlockVariant blockVariant = new BlockVariant(key, deserializeBlockStateModels(entry.getValue()));
-						blockVariants.add(blockVariant);
+						states.addVariant(blockVariant);
 					}
+
 				}
-			
-				String name = "minecraft:" + StringUtils.removeEnd(blockStateFile.getFileName().toString(), ".json");
-				blockStates.put(name, blockVariants);
+				blockStates.put(name, states);
 			}				
 		} catch (Exception e)
 		{
@@ -163,35 +160,49 @@ public class BlockRegistry
 		}
 		return stateModels;
 	}
-	
-	public void loadModels() throws Exception
-	{
-		for (Map.Entry<String, List<BlockVariant>> blockState : blockStates.entrySet())
+
+	public void loadModels(List<BlockStateModel> models) throws Exception {
+		for(BlockStateModel model : models)
 		{
-			for(BlockVariant variant : blockState.getValue())
+			String modelName = model.getModel();
+			if(!blockModels.containsKey(modelName))
 			{
-				for(BlockStateModel model : variant.getModels())
-				{
-					String modelName = model.getModel();
-					if(!blockModels.containsKey(modelName))
-					{
-						Map<String, String> textureMap = new HashMap<>();
-						JsonNode elements = null;
-						blockModels.put(modelName, loadModel("block/" + modelName, textureMap, elements));
-					}
-				}
+				loadModel(modelName);
 			}
-		}		
+		}
+	}
+
+	public void loadModels() throws Exception {
+		for (Map.Entry<String, BlockStateWrapper> entry : blockStates.entrySet()) {
+			BlockStateWrapper states = entry.getValue();
+			if (!states.getCases().isEmpty()) {
+				for(BlockStateCase bsc : states.getCases()) {
+					loadModels(bsc.getModels());
+				}
+			} else if (!states.getVariants().isEmpty()){
+				for(BlockVariant variant : states.getVariants()) {
+					loadModels(variant.getModels());
+				}
+			} else {
+				//Error no cases or variants found
+			}
+		}
 	}
 	
 	public void loadModel(String modelName) throws Exception
 	{
-		blockModels.put(modelName, loadModel("block/"+modelName, new HashMap<>(), null));
+		if (!modelName.contains("block/")) {
+			modelName = "block/" + modelName;
+		}
+		blockModels.put(modelName, loadModel(modelName, new HashMap<>(), null));
 	}
 	
-	// Recurse through model files and get block model information  TODO: This will need to change some with MC 1.9
+	// Recurse through model files and get block model information
 	public BlockModel loadModel(String modelPath, Map<String, String> textureMap, JsonNode elements) throws Exception
 	{
+		if (modelPath.contains("minecraft:")) {
+			modelPath = modelPath.replace("minecraft:", "");
+		}
 		JsonNode json = OBJECT_MAPPER.readTree(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json")));
 		
 		String parent = "";
@@ -213,7 +224,7 @@ public class BlockRegistry
 				return loadModel(parent, textureMap, elements);
 			}
 		}
-		else  //Load all elements
+		else if(json.has(ELEMENTS_FIELD) || elements != null)//Load all elements
 		{
 			Map<String, String> combineMap = new HashMap<>(textureMap);
 			if(json.has(TEXTURES_FIELD))
@@ -222,7 +233,7 @@ public class BlockRegistry
 			}
 
 			boolean ao = true;
-			if (json.has("ambientocclusion"))
+			if (json.has("ambientocclusion"))  //TODO: what is this doing?
 				ao = false;
 			
 			if(json.has(ELEMENTS_FIELD) && elements == null)
@@ -231,6 +242,8 @@ public class BlockRegistry
 			}			
 			
 			return new BlockModel(modelPath, ao, deserializeBlockElements(combineMap, elements));
+		} else {  //TODO: There is no block model so we need to use our own model for these blocks
+			return new BlockModel(modelPath, false, Collections.emptyList());
 		}
 	}
 
@@ -270,7 +283,7 @@ public class BlockRegistry
 			}
 			
 			boolean shaded = true;
-			if(element.has("shade"))
+			if(element.has("shade"))  //TODO: again what is this doing?  I don't think this is right
 				shaded = false;						
 			
 			JsonNode faces = element.get("faces");
@@ -332,12 +345,14 @@ public class BlockRegistry
 			{
 				String texture = tex.deleteCharAt(0).toString();
 
-				String texturePath;
-
-				if (texturePack.getVersion() == VERSION_13)
+				String texturePath = combineMap.get(texture);
+				if (texturePath.contains("minecraft:block/")) { // 1.16+
+					texturePath = texturePath.replace("minecraft:block/", "") + ".png";
+				} else if (texturePath.contains("block/")) { // 1.13 - 1.15
 					texturePath = StringUtils.removeStart(combineMap.get(texture), "block/") + ".png";
-				else
+				} else { // 1.8 - 1.12
 					texturePath = StringUtils.removeStart(combineMap.get(texture), "blocks/") + ".png";
+				}
 
 				SubTexture te = texturePack.findTexture(texturePath);
 

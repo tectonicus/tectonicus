@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -63,7 +63,6 @@ import tectonicus.world.subset.WorldSubsetFactory;
 import java.awt.Color;
 import java.awt.Point;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -249,16 +248,14 @@ public class World implements BlockContext
 		registry.setDefaultBlock(new Air());
 		
 		modelRegistry = new BlockRegistry(texturePack);
-		//Only load Glazed Terracotta and Observer block models for now  	TODO: Load all block models
-		DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
-				@Override
-				public boolean accept(Path entry) throws IOException {
-					if (entry.getFileName().toString().contains("template_glazed_terracotta"))
-						return false;
+		//Only load Glazed Terracotta and Observer block models for now
+		DirectoryStream.Filter<Path> filter = path -> {
+			if (path.getFileName().toString().contains("template_glazed_terracotta")) {
+				return false;
+			}
 
-					return entry.getFileName().toString().contains("_glazed_terracotta") || entry.getFileName().toString().contains("observer");
-				}
-		    };
+			return path.getFileName().toString().contains("_glazed_terracotta") || path.getFileName().toString().contains("observer");
+		};
 		
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()), null);
 				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/models/block"), filter);)
@@ -266,7 +263,7 @@ public class World implements BlockContext
 			for (Path entry : entries)
 			{
 				String filename = entry.getFileName().toString();
-				modelRegistry.loadModel(filename.substring(0, filename.lastIndexOf('.')));
+				modelRegistry.loadModel("block/"+filename.substring(0, filename.lastIndexOf('.')));
 			}
 		}
 		catch (Exception e)
@@ -375,9 +372,9 @@ public class World implements BlockContext
 	}
 	
 	/** Gets the players for a particular dimension, or null for all players */
-	public ArrayList<Player> players(Dimension dimension)
+	public List<Player> players(Dimension dimension)
 	{
-		ArrayList<Player> result = new ArrayList<Player>();
+		List<Player> result = new ArrayList<>();
 		for (Player p : players)
 		{
 			if (dimension == null || p.getDimension() == dimension)
@@ -417,9 +414,9 @@ public class World implements BlockContext
 	 * For regions which touch the frustum, then check all contained chunks.
 	 * This gives us a quad-tree-esque lookup method without having to actually store a heavy quad tree in memory.
 	 */
-	public ArrayList<ChunkCoord> findVisible(Camera camera)
+	public List<ChunkCoord> findVisible(Camera camera)
 	{
-		ArrayList<ChunkCoord> result = new ArrayList<ChunkCoord>();
+		List<ChunkCoord> result = new ArrayList<>();
 		
 		// Cast verts down onto landscape
 		long minX = Long.MAX_VALUE;
@@ -457,12 +454,9 @@ public class World implements BlockContext
 							if (worldSubset.contains(chunkCoord))
 							{
 								BoundingBox chunkBounds = new BoundingBox(new Vector3f(chunkCoord.x*RawChunk.WIDTH, 0, chunkCoord.z*RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
-								if (chunkBounds.isVisible(camera))
+								if (chunkBounds.isVisible(camera) && chunkLocator.exists(chunkCoord))
 								{
-									if (chunkLocator.exists(chunkCoord))
-									{
-										result.add(chunkCoord);
-									}
+									result.add(chunkCoord);
 								}
 							}
 						}
@@ -496,7 +490,7 @@ public class World implements BlockContext
 	public void draw(Camera camera, final boolean showSky, final boolean genAlphaMask)
 	{
 		// Find visible chunks
-		ArrayList<ChunkCoord> visible = findVisible(camera);
+		List<ChunkCoord> visible = findVisible(camera);
 			
 		// Sort back to front
 		Collections.sort(visible, new BackToFrontSorter(camera));
@@ -547,10 +541,10 @@ public class World implements BlockContext
 		}
 		
 		// Now the chunks in batches
-		ArrayList<ChunkCoord> toProcess = new ArrayList<ChunkCoord>(visible);
+		List<ChunkCoord> toProcess = new ArrayList<>(visible);
 		while (!toProcess.isEmpty())
 		{
-			ArrayList<ChunkCoord> batch = new ArrayList<ChunkCoord>();
+			List<ChunkCoord> batch = new ArrayList<>();
 			
 			final int nextBatchSize = Math.min(BATCH_SIZE, toProcess.size());
 			for (int i=0; i<nextBatchSize; i++)
@@ -562,10 +556,10 @@ public class World implements BlockContext
 		}
 	}
 	
-	private void draw(Camera camera, ArrayList<ChunkCoord> visible, final boolean genAlphaMask)
+	private void draw(Camera camera, List<ChunkCoord> visible, final boolean genAlphaMask)
 	{
 		// Find adjacent chunks (need adjacent chunks loaded for proper geometry gen)
-		Set<ChunkCoord> adjacent = new HashSet<ChunkCoord>();
+		Set<ChunkCoord> adjacent = new HashSet<>();
 		adjacent.addAll(visible);
 		for (ChunkCoord base : visible)
 		{
@@ -624,7 +618,7 @@ public class World implements BlockContext
 		}
 		
 		// Now actually find all visible chunks we've managed to load
-		ArrayList<Chunk> visibleChunks = new ArrayList<Chunk>();
+		List<Chunk> visibleChunks = new ArrayList<>();
 		for (ChunkCoord coord : visible)
 		{
 			Chunk c = geometryLoadedChunks.get(coord);
@@ -662,7 +656,7 @@ public class World implements BlockContext
 		geometryLoadedChunks.trimToMaxSize();
 	}
 	
-	private void drawGeometry(Camera camera, ArrayList<Chunk> visible)
+	private void drawGeometry(Camera camera, List<Chunk> visible)
 	{
 		rasteriser.enableDepthWriting(true);
 		

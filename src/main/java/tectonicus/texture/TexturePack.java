@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -179,6 +179,8 @@ public class TexturePack
 			} catch (Exception e) {
 				
 			}
+
+			//TODO: try this alternate way of loading these images
 //			ZipStackEntry vignetteEntry = zipStack.getEntry(path + "misc/vignette.png");
 //			if (vignetteEntry != null)
 //			{
@@ -188,12 +190,13 @@ public class TexturePack
 			
 			loadBedTextures();
 			loadShulkerTextures();
-			
-			//TODO: For MC 1.5, do we need to load each individual item into the TexturePack object?
-			try {
-				itemSheet = copy( ImageIO.read( zipStack.getStream(path + "gui/items.png") ) );
-			} catch (IllegalArgumentException e) {
-				System.out.println("Could not find items.png.  This is only required if using a Minecraft 1.4 or older jar file.");
+
+			if (version == VERSION_4) {
+				try {
+					itemSheet = copy(ImageIO.read(zipStack.getStream(path + "gui/items.png")));
+				} catch (IllegalArgumentException e) {
+					System.out.println("Could not find items.png.  This is only required if using a Minecraft 1.4 or older jar file.");
+				}
 			}
 
 			try {

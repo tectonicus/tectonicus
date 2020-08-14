@@ -11,14 +11,13 @@ package tectonicus.blockTypes;
 
 import lombok.Getter;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
 public class BlockVariant
 {
-	@Getter
 	private final String name;
 	private final Map<String, String> states;
 	private final List<BlockStateModel> models;
@@ -50,7 +49,4 @@ public class BlockVariant
 		
 		bm.drawModel(x, y, z, vm.getXRotation(), vm.getYRotation(), vm.isUvlock());
 	}
-
-	public Map<String, String> getStates() { return Collections.unmodifiableMap(states); }
-	public List<BlockStateModel> getModels() { return Collections.unmodifiableList(models); }
 }

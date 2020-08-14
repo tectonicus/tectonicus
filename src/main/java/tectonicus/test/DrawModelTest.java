@@ -95,7 +95,7 @@ public class DrawModelTest
 		windowId = rasteriser.getWindowId();
 
 		BlockRegistry br = new BlockRegistry(rasteriser);
-		BlockModel bm = br.loadModel("block/beacon", new HashMap<String, String>(), null);
+		BlockModel bm = br.loadModel("block/beacon", new HashMap<>(), null);
 		List<BlockElement> elements = bm.getElements();
 		
 		Vector3f rotOrigin = new Vector3f(0,0,0);

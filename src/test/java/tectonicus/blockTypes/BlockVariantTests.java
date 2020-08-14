@@ -14,6 +14,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.lwjgl.glfw.GLFW;
+import tectonicus.configuration.Configuration;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -114,30 +118,36 @@ class BlockVariantTests
 //	{
 //		BlockRegistry test = new BlockRegistry();
 //		test.deserializeBlockstates();
-//		Map<String, List<BlockVariant>> blockStates = test.getBlockStates();
+//		Map<String, BlockStateWrapper> blockStates = test.getBlockStates();
 //
 //		assertFalse(blockStates.isEmpty());
-//		assertThat(blockStates.size(), is(equalTo(599))); //MC 1.13.2
+//		assertThat(blockStates.size(), is(equalTo(764))); //MC 1.16.2
 //		assertThat(blockStates.containsKey("minecraft:acacia_door"), is(equalTo(true)));
 //	}
-	
-	//TODO: This test is broken because we can't handle the new 1.9 "multipart" format.
+
+	//TODO: This is more of an integration test as it initializes a rasterizer window. Should it stay here?
 //	@Test
-//	public void testLoadModels() throws Exception
+//	void testLoadModels() throws Exception
 //	{
-//		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.Lwjgl, DisplayType.Window, 300, 300, 24, 8, 24, 4);
-//	
-//		BlockRegistry test = new BlockRegistry(rasteriser);
-//		test.deserializeBlockstates();
-//		
+//		int width = 800;
+//		int height = 800;
+//
+//		Rasteriser rasteriser = RasteriserFactory.createRasteriser(Configuration.RasteriserType.LWJGL, RasteriserFactory.DisplayType.Window, width, height, 24, 8, 24, 4);
+//		long windowId = rasteriser.getWindowId();
+//
+//		BlockRegistry br = new BlockRegistry(rasteriser);
+//		br.deserializeBlockstates();
+//
 //		try {
-//			test.loadModels();
+//			br.loadModels();
+//			GLFW.glfwDestroyWindow(windowId);
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //		}
-//		rasteriser.destroy();
-//		Map<String, BlockModel> models = test.getBlockModels();
-//		
-//		assertThat(models.size(), is(equalTo(937)));
+//
+//		Map<String, BlockModel> models = br.getBlockModels();
+//
+////		assertThat(models.size(), is(equalTo(937))); // 1.8
+//		assertThat(models.size(), is(equalTo(1252))); // 1.16
 //	}
 }

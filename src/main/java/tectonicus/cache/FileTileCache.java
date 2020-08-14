@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,15 +8,6 @@
  */
 
 package tectonicus.cache;
-
-import java.io.File;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 
 import tectonicus.BlockRegistryParser;
 import tectonicus.ChunkCoord;
@@ -30,6 +21,15 @@ import tectonicus.configuration.Layer;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.FileUtils;
 import tectonicus.world.World;
+
+import java.io.File;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FileTileCache implements TileCache
 {
@@ -72,7 +72,7 @@ public class FileTileCache implements TileCache
 			CacheUtil.writeCacheFile(getMasterCacheFile(tileCacheDir), cacheString.getBytes());
 		}
 		
-		tileHashes = new HashMap<TileCoord, byte[]>();
+		tileHashes = new HashMap<>();
 	}
 	
 	public boolean isUsingExistingCache()
@@ -289,15 +289,15 @@ public class FileTileCache implements TileCache
 		
 		TileRenderer.setupCameraForTile(camera, tile, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
 		
-		ArrayList<ChunkCoord> chunks = world.findVisible(camera);
+		List<ChunkCoord> chunks = world.findVisible(camera);
 		
 		if (chunks.isEmpty())
 			return new byte[0];
 		
-		Collections.sort(chunks, ChunkSorter.instance);
+		chunks.sort(ChunkSorter.instance);
 		
 		// Find hash of each chunk
-		ArrayList<byte[]> hashes = new ArrayList<byte[]>();		
+		List<byte[]> hashes = new ArrayList<>();
 		for (ChunkCoord coord : chunks)
 		{
 			final byte[] hash = regionHashStore.getChunkHash(coord);

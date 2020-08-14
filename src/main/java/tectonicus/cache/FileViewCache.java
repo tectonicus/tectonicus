@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,10 +8,6 @@
  */
 
 package tectonicus.cache;
-
-import java.io.File;
-import java.security.MessageDigest;
-import java.util.ArrayList;
 
 import tectonicus.ChunkCoord;
 import tectonicus.ViewUtil;
@@ -24,6 +20,10 @@ import tectonicus.renderer.PerspectiveCamera;
 import tectonicus.util.TempArea;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
+
+import java.io.File;
+import java.security.MessageDigest;
+import java.util.List;
 
 public class FileViewCache
 {
@@ -62,8 +62,8 @@ public class FileViewCache
 		
 		try
 		{
-			viewsIn = new HddObjectListReader<Sign>(viewsFile);
-			viewsOut = new HddObjectListWriter<Sign>(changedViewsFile, true);
+			viewsIn = new HddObjectListReader<>(viewsFile);
+			viewsOut = new HddObjectListWriter<>(changedViewsFile, true);
 			
 			Sign sign = new Sign();
 			while (viewsIn.hasNext())
@@ -123,16 +123,14 @@ public class FileViewCache
 		PerspectiveCamera camera = ViewUtil.createCamera(rasteriser, view, drawDistance);
 		camera.apply();
 		
-		ArrayList<ChunkCoord> visibleCoords = world.findVisible(camera);
+		List<ChunkCoord> visibleCoords = world.findVisible(camera);
 		for (ChunkCoord chunkCoord : visibleCoords)
 		{
 			byte[] chunkHash = regionHashStore.getChunkHash(chunkCoord);
 			hashAlgorithm.update(chunkHash);
 		}
 		
-		final byte[] finalHash = hashAlgorithm.digest();
-		
-		return finalHash;
+		return hashAlgorithm.digest();
 	}
 	
 	public void writeHash(Sign sign, Rasteriser rasteriser, World world, final int drawDistance)
