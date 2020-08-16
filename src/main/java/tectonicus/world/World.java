@@ -247,29 +247,7 @@ public class World implements BlockContext
 		registry = new BlockTypeRegistry();
 		registry.setDefaultBlock(new Air());
 		
-		modelRegistry = new BlockRegistry(texturePack);
-		//Only load Glazed Terracotta and Observer block models for now
-		DirectoryStream.Filter<Path> filter = path -> {
-			if (path.getFileName().toString().contains("template_glazed_terracotta")) {
-				return false;
-			}
-
-			return path.getFileName().toString().contains("_glazed_terracotta") || path.getFileName().toString().contains("observer");
-		};
-		
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()), null);
-				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/models/block"), filter);)
-		{
-			for (Path entry : entries)
-			{
-				String filename = entry.getFileName().toString();
-				modelRegistry.loadModel("block/"+filename.substring(0, filename.lastIndexOf('.')));
-			}
-		}
-		catch (Exception e)
-		{
-			System.out.println("Problem loading block models");
-		}
+		modelRegistry = new BlockRegistry(texturePack);  //model registry loads all states and models now
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
 		

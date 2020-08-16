@@ -81,6 +81,14 @@ public class BlockRegistry
 	{
 		this.texturePack = texturePack;
 		this.zips = texturePack.getZipStack();
+		System.out.println("Loading all block state and block model json files...");
+		deserializeBlockstates();
+		try {
+			loadModels();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("All json files loaded.");
 	}
 
 	public BlockModel getModel(String model) { return blockModels.get(model); }
@@ -92,7 +100,6 @@ public class BlockRegistry
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
 			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"));)
 		{
-			int multipartTotal = 0;
 			for (Path blockStateFile : entries)
 			{
 				String name = "minecraft:" + StringUtils.removeEnd(blockStateFile.getFileName().toString(), ".json");
@@ -100,8 +107,6 @@ public class BlockRegistry
 
 				BlockStateWrapper states = new BlockStateWrapper();
 				if (root.has("multipart")) {
-					multipartTotal += 1;
-
 					root.get("multipart").forEach(node -> {
 						List<Map<String, String>> whenClauses = new ArrayList<>();
 						if (node.has("when")) {
@@ -161,7 +166,7 @@ public class BlockRegistry
 		return stateModels;
 	}
 
-	public void loadModels(List<BlockStateModel> models) throws Exception {
+	public void loadBlockStateModels(List<BlockStateModel> models) throws Exception {
 		for(BlockStateModel model : models)
 		{
 			String modelName = model.getModel();
@@ -177,11 +182,11 @@ public class BlockRegistry
 			BlockStateWrapper states = entry.getValue();
 			if (!states.getCases().isEmpty()) {
 				for(BlockStateCase bsc : states.getCases()) {
-					loadModels(bsc.getModels());
+					loadBlockStateModels(bsc.getModels());
 				}
 			} else if (!states.getVariants().isEmpty()){
 				for(BlockVariant variant : states.getVariants()) {
-					loadModels(variant.getModels());
+					loadBlockStateModels(variant.getModels());
 				}
 			} else {
 				//Error no cases or variants found
@@ -405,7 +410,7 @@ public class BlockRegistry
 	
 	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures)
 	{
-		Map<String, String> newTexMap = new HashMap<>();
+		Map<String, String> newTexMap = new HashMap<>(textureMap);
 
 		Iterator<Entry<String, JsonNode>> iter = textures.fields();
 
