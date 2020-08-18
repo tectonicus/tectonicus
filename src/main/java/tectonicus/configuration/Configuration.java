@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,6 +11,7 @@ package tectonicus.configuration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -62,31 +63,32 @@ public interface Configuration
 	
 	boolean eraseOutputDir();
 	
-	File outputDir();
-	File cacheDir();
+	File getOutputDir();
+	File getCacheDir();
 	MutableMap getWorldDir();
 	
 	boolean useCache();
 	
 	File getLogFile();
+	Level getLoggingLevel();
 	
 	File minecraftJar();
 	
-	File texturePack();
+	File getTexturePack();
 	
 	String getOutputHtmlName();
 	
 	String getDefaultSkin();
 	
-	int colourDepth();
+	int getColourDepth();
 	
-	int alphaBits();
+	int getAlphaBits();
 	
-	int numSamples();
+	int getNumSamples();
 	
-	int numZoomLevels();
+	int getNumZoomLevels();
 	
-	int maxTiles();
+	int getMaxTiles();
 	
 	boolean showSpawn();
 	
@@ -106,7 +108,7 @@ public interface Configuration
 	
 	boolean forceLoadAwt();
 	
-	int tileSize();
+	int getTileSize();
 	
 	int getNumDownsampleThreads();
 	

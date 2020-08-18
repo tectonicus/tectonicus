@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,11 +16,13 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import tectonicus.Log;
-import tectonicus.Minecraft;
 
+@Log4j2
 @Data
 @Command(name = "java -jar Tectonicus.jar",
 		header = {
@@ -98,6 +100,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-v", "--verbose", "verbose"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean isVerbose;
 
+	@Option(names = {"--logLevel","logLevel"}, paramLabel = "<String>")
+	private Level loggingLevel;
+
 	@Option(names = {"-s", "--tileSize", "tileSize"}, paramLabel = "<integer>")
 	private int tileSize;
 
@@ -161,6 +166,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	public void printActive()
 	{
 		System.out.println("Settings:");
+		System.out.println("\tloggingLevel:"+getLoggingLevel());
 		System.out.println("\tmode:"+getMode().getName());
 		System.out.println("\trasteriser:"+getRasteriserType());
 		System.out.println("\toutputDir:"+outputDir.getAbsolutePath());
@@ -169,11 +175,11 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		System.out.println("\tminecraftJar:"+minecraftJar.getAbsolutePath());
 		System.out.println("\ttexturePack:"+(texturePack != null ? texturePack.getAbsolutePath() : "none"));
 		System.out.println("\tuseOldColorPalette:"+useOldColorPalette());
-		System.out.println("\tcolourDepth:"+colourDepth());
-		System.out.println("\talphaBits:"+alphaBits());
-		System.out.println("\tnumSamples:"+numSamples());
-		System.out.println("\ttileSize:"+tileSize());
-		System.out.println("\tnumZoomLevels:"+numZoomLevels());
+		System.out.println("\tcolourDepth:"+ this.getColourDepth());
+		System.out.println("\talphaBits:"+ this.getAlphaBits());
+		System.out.println("\tnumSamples:"+ this.getNumSamples());
+		System.out.println("\ttileSize:"+ this.getTileSize());
+		System.out.println("\tnumZoomLevels:"+ this.getNumZoomLevels());
 		System.out.println("\tportalsInitiallyVisible:"+arePortalsInitiallyVisible());
 		System.out.println("\tshowSpawn:"+showSpawn());
 		System.out.println("\tsignsInitiallyVisible:"+areSignsInitiallyVisible());
@@ -219,12 +225,12 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 			}
 			if (m.numLayers() == 0)
 			{
-				System.out.println("\tno layers!");
+				log.warn("\tNo layers found!");
 			}
 		}
 		if (numMaps() == 0)
 		{
-			System.out.println("no maps!");
+			log.warn("No maps found!");
 		}
 
 		System.out.println();
@@ -236,18 +242,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	}
 	public boolean eraseOutputDir() { return eraseOutputDir; }
 
-	public void setOutputDir(File dir)
-	{
-		this.outputDir = dir;
-	}
-	public File outputDir() { return outputDir; }
-
-	public void setCacheDir(File dir)
-	{
-		this.cacheDir = dir;
-	}
-	public File cacheDir() { return cacheDir; }
-
 	public MutableMap getWorldDir() { return worldDir; }
 
 	public void setUseCache(final boolean useCache)
@@ -257,12 +251,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	public boolean useCache() { return useCache; }
 
 	public File minecraftJar() { return minecraftJar; }
-
-	public void setTexturePack(File texturePack)
-	{
-		this.texturePack = texturePack;
-	}
-	public File texturePack() { return texturePack; }
 
 	public void setUseOldColorPalette(boolean useOldColorPalette)
 	{
@@ -275,36 +263,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.showSpawn = showSpawn;
 	}
 	public boolean showSpawn() { return showSpawn; }
-
-	public void setColourDepth(final int colourDepth)
-	{
-		this.colourDepth = colourDepth;
-	}
-	public int colourDepth() { return colourDepth; }
-
-	public void setAlphaBits(final int alphaBits)
-	{
-		this.alphaBits = alphaBits;
-	}
-	public int alphaBits() { return alphaBits; }
-
-	public void setNumSamples(final int numSamples)
-	{
-		this.numSamples = numSamples;
-	}
-	public int numSamples() { return numSamples; }
-
-	public void setNumZoomLevels(final int numZoomLevels)
-	{
-		this.numZoomLevels = numZoomLevels;
-	}
-	public int numZoomLevels() { return numZoomLevels; }
-
-	public void setMaxTiles(final int maxTiles)
-	{
-		this.maxTiles = maxTiles;
-	}
-	public int maxTiles() { return maxTiles; }
 
 	public void setIsVerbose(final boolean isVerbose)
 	{
@@ -319,12 +277,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.forceLoadAwt = forceLoadAwt;
 	}
 	public boolean forceLoadAwt() { return forceLoadAwt; }
-
-	public void setTileSize(final int tileSize)
-	{
-		this.tileSize = tileSize;
-	}
-	public int tileSize() { return tileSize; }
 
 	public void setSignsInitiallyVisible(final boolean visible)
 	{
@@ -362,33 +314,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	}
 	public boolean areViewsInitiallyVisible() { return viewsInitiallyVisible; }
 
-	public void setLogFile(File file)
-	{
-		this.logFile = file;
-	}
-	public File getLogFile() { return logFile; }
-
-	public void setOutputHtmlName(String name)
-	{
-		this.outputHtmlName = name;
-	}
-	public String getOutputHtmlName() { return outputHtmlName; }
-
-	public void setDefaultSkin(String skin) { this.defaultSkin = skin; }
-	public String getDefaultSkin()	{ return defaultSkin; }
-
-	public void setNumDownsampleThreads(final int num)
-	{
-		this.numDownsampleThreads = num;
-	}
-	public int getNumDownsampleThreads() { return numDownsampleThreads; }
-
-	public void setSinglePlayerName(String name)
-	{
-		this.singlePlayerName = name;
-	}
-	public String getSinglePlayerName() { return singlePlayerName; }
-
 	public int numMaps()
 	{
 		return maps.size();
@@ -405,7 +330,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Override
 	public List<Map> getMaps()
 	{
-		return new ArrayList<Map>(maps);
+		return new ArrayList<>(maps);
 	}
 
 	public void addMap(MutableMap newMap)

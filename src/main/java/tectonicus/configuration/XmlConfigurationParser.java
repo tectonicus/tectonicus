@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,6 +17,7 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.logging.log4j.Level;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -99,9 +100,10 @@ public class XmlConfigurationParser
 			
 			config.setUseCache( parseUseCache( getString(configNode, "useCache") ) );
 			
-			config.setCacheDir( parseCacheDir( getString(configNode, "cacheDir"), config.outputDir() ) );
+			config.setCacheDir( parseCacheDir( getString(configNode, "cacheDir"), config.getOutputDir() ) );
 			
 			config.setLogFile( parseLogFile( getString(configNode, "logFile") ) );
+			config.setLoggingLevel(Level.toLevel(getString(configNode, "loggingLevel")));
 			
 			config.setSpawnInitiallyVisible( parseShowSpawn( getString(configNode, "spawnInitiallyVisible")) );
 			config.setPlayersInitiallyVisible( parseShowPlayers( getString(configNode, "playersInitiallyVisible")) );

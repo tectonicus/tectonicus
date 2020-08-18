@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -45,7 +45,7 @@ public class PlayerSkinCache
 	
 	public PlayerSkinCache(Configuration config, MessageDigest hashAlgorithm)
 	{
-		cacheDir = new File(config.cacheDir(), "skinCache");
+		cacheDir = new File(config.getCacheDir(), "skinCache");
 		cacheDir.mkdirs();
 		
 		skinCache = new HashMap<String, PlayerSkinCache.CacheEntry>();

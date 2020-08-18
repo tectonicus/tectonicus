@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,9 @@
 
 package tectonicus;
 
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
@@ -46,32 +49,33 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Log4j2
 public class TectonicusApp
 {
-	private Configuration args;
+	private final Configuration args;
 	private CompositePrintStream newOut;
 	private CompositePrintStream newErr;
 	
 	private TectonicusApp(Configuration args)
-	{	
+	{
 		this.args = args;
-		
+
+		Configurator.setRootLevel(args.getLoggingLevel());
 		openLog( args.getLogFile() );
 		
 		BuildInfo.print();
 		
-		System.out.println("Started on "+new Date());
-		
-		System.out.println("System:");
-		System.out.println("\tOS Name: "+getProperty("os.name"));
-		System.out.println("\tOS Architecture: "+getProperty("os.arch"));
-		System.out.println("\tOS Version: "+getProperty("os.version"));
-		
-		System.out.println("\tJava vendor: "+getProperty("java.vendor"));
-		System.out.println("\tJava version: "+getProperty("java.version"));
-		
-		System.out.println("\tAwt toolkit: "+getProperty("awt.toolkit"));
-		System.out.println("\tHeadless?: "+getProperty("java.awt.headless"));
+		log.info("Started on {}", new Date().toString());
+
+		log.debug("System:\n\tOS Name: {}\n\tOS Architecture: {}\n\tOS Version: {}",
+				getProperty("os.name"),
+				getProperty("os.arch"),
+				getProperty("os.version"));
+
+		log.debug("\tJava vendor: {}\n\tJava version: {}\n\tAwt toolkit: {}",
+				getProperty("java.vendor"),
+				getProperty("java.version"),
+				getProperty("awt.toolkit"));
 	}
 	
 	private static String getProperty(String key)
@@ -91,7 +95,7 @@ public class TectonicusApp
 		{
 			logFile.getAbsoluteFile().getParentFile().mkdirs();
 
-			PrintStream fileOut = new PrintStream( new FileOutputStream(logFile) );  //TODO: Should we switch to a logging framework to do this?
+			PrintStream fileOut = new PrintStream( new FileOutputStream(logFile) );
 
 			newOut = new CompositePrintStream(System.out, fileOut);
 			newErr = new CompositePrintStream(System.err, fileOut);
@@ -132,11 +136,11 @@ public class TectonicusApp
 					layer = map.getLayer(0);
 				}
 				
-				BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.cacheDir(), map, hashAlgorithm);
+				BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
 				PlayerSkinCache skinCache = new PlayerSkinCache(args, hashAlgorithm);
 				
 				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(),
-						args.minecraftJar(), args.texturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache, map.getSignFilter());
+						args.minecraftJar(), args.getTexturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache, map.getSignFilter());
 				TileRenderer.setupWorldForLayer(layer, world);
 				
 				interactiveRenderer.display(world);
@@ -148,9 +152,9 @@ public class TectonicusApp
 				// Do this first before we attempt to load any caches
 				if (args.eraseOutputDir())
 				{
-					System.out.println("Deleting output dir: "+args.outputDir().getAbsolutePath());
+					System.out.println("Deleting output dir: "+args.getOutputDir().getAbsolutePath());
 					
-					FileUtils.deleteDirectory(args.outputDir());
+					FileUtils.deleteDirectory(args.getOutputDir());
 				}
 				
 				tileRenderer = new TileRenderer(args, new CommandLineOutput(), hashAlgorithm);
@@ -174,10 +178,10 @@ public class TectonicusApp
 				{
 					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache);
 									
-					File mapDir = new File(args.outputDir(), map.getId());
+					File mapDir = new File(args.getOutputDir(), map.getId());
 					File playerDir = new File(mapDir, "players.js");
 					
-					File imagesDir = new File(args.outputDir(), "Images");
+					File imagesDir = new File(args.getOutputDir(), "Images");
 					
 					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), "");
 					Vector3l spawnPosition = levelDat.getSpawnPosition();
@@ -271,6 +275,7 @@ public class TectonicusApp
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
 		cmd.registerConverter(MutableMap.class, s -> new MutableMap("Throwaway"));
+		cmd.registerConverter(Level.class, Level::toLevel);
 		cmd.setCaseInsensitiveEnumValuesAllowed(true);
 		CommandLine.ParseResult parseResult = cmd.parseArgs(argArray);
 		if (parseResult.originalArgs().isEmpty()) {
@@ -295,6 +300,7 @@ public class TectonicusApp
 			map.setWorldDir(new File(s));
 			return map;
 		});
+		commandLine.registerConverter(Level.class, Level::toLevel);
 		commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 		commandLine.setExecutionStrategy(new CommandLine.RunFirst());
 		commandLine.execute(argArray);

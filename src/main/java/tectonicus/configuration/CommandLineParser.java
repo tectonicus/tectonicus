@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -164,7 +164,7 @@ public class CommandLineParser
 		
 		config.setUseCache( parseUseCache(parser.getString("useCache", "") ) );
 		
-		File cacheDir = parseCacheDir(parser.getString("cacheDir", ""), config.outputDir());
+		File cacheDir = parseCacheDir(parser.getString("cacheDir", ""), config.getOutputDir());
 		config.setCacheDir(cacheDir);
 		
 		

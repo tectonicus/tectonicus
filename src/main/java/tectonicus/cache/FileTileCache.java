@@ -104,27 +104,27 @@ public class FileTileCache implements TileCache
 		buffer.append('\n');
 		
 		// Render config
-		buffer.append(args.maxTiles());
+		buffer.append(args.getMaxTiles());
 		buffer.append('\n');
-		buffer.append(args.numZoomLevels());
+		buffer.append(args.getNumZoomLevels());
 		buffer.append('\n');
-		buffer.append(args.tileSize());
+		buffer.append(args.getTileSize());
 		buffer.append('\n');
 		
 		// Framebuffer config
-		buffer.append(args.colourDepth());
+		buffer.append(args.getColourDepth());
 		buffer.append('\n');
-		buffer.append(args.alphaBits());
+		buffer.append(args.getAlphaBits());
 		buffer.append('\n');
-		buffer.append(args.numSamples());
+		buffer.append(args.getNumSamples());
 		buffer.append('\n');
 		
 		// Paths
-		buffer.append(args.outputDir().getAbsolutePath());
+		buffer.append(args.getOutputDir().getAbsolutePath());
 		buffer.append('\n');
 		buffer.append(args.minecraftJar().getAbsolutePath());
 		buffer.append('\n');
-		buffer.append(args.texturePack() != null ? args.texturePack().getAbsolutePath() : "");
+		buffer.append(args.getTexturePack() != null ? args.getTexturePack().getAbsolutePath() : "");
 		buffer.append('\n');
 		
 		return buffer.toString();
