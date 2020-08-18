@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -47,16 +47,16 @@ public class ParseUtil
 	{
 		renderStyleStr = renderStyleStr.toLowerCase();
 		
-		RenderStyle renderStyle = RenderStyle.Regular;
+		RenderStyle renderStyle = RenderStyle.REGULAR;
 		
 		if (renderStyleStr.equalsIgnoreCase("regular"))
-			renderStyle = RenderStyle.Regular;
+			renderStyle = RenderStyle.REGULAR;
 		else if (renderStyleStr.equalsIgnoreCase("cave"))
-			renderStyle = RenderStyle.Cave;
+			renderStyle = RenderStyle.CAVE;
 		else if (renderStyleStr.equalsIgnoreCase("exploredCaves"))
-			renderStyle = RenderStyle.ExploredCaves;
+			renderStyle = RenderStyle.EXPLORED_CAVES;
 		else if (renderStyleStr.equalsIgnoreCase("nether"))
-			renderStyle = RenderStyle.Nether;
+			renderStyle = RenderStyle.NETHER;
 		
 		return renderStyle;
 	}
@@ -65,14 +65,14 @@ public class ParseUtil
 	{
 		dimensionStr = dimensionStr.toLowerCase();
 		
-		Dimension dimension = Dimension.Terra;
+		Dimension dimension = Dimension.OVERWORLD;
 		
 		if (dimensionStr.equalsIgnoreCase("terra"))
-			dimension = Dimension.Terra;
+			dimension = Dimension.OVERWORLD;
 		else if (dimensionStr.equalsIgnoreCase("nether"))
-			dimension = Dimension.Nether;
+			dimension = Dimension.NETHER;
 		else if (dimensionStr.equalsIgnoreCase("ender") || dimensionStr.equals("end"))
-			dimension = Dimension.Ender;
+			dimension = Dimension.END;
 		
 		return dimension;
 	}
@@ -573,9 +573,9 @@ public class ParseUtil
 	{
 		if (StringUtils.isEmpty(string))
 		{
-			if (dimension == Dimension.Terra || dimension == Dimension.Nether)
+			if (dimension == Dimension.OVERWORLD || dimension == Dimension.NETHER)
 				return "#e5e3df";
-			else if (dimension == Dimension.Ender)
+			else if (dimension == Dimension.END)
 				return "#281932";
 		}
 		

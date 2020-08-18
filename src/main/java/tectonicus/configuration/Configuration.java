@@ -42,17 +42,17 @@ public interface Configuration
 	
 	enum RenderStyle
 	{
-		Regular,
-		Cave,
-		ExploredCaves,
-		Nether
+		REGULAR,
+		CAVE,
+		EXPLORED_CAVES,
+		NETHER
 	}
 	
 	enum Dimension
 	{
-		Terra,
-		Nether,
-		Ender
+		OVERWORLD,
+		NETHER,
+		END
 	}
 	
 	void printActive();

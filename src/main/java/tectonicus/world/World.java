@@ -63,12 +63,6 @@ import tectonicus.world.subset.WorldSubsetFactory;
 import java.awt.Color;
 import java.awt.Point;
 import java.io.File;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -146,15 +140,15 @@ public class World implements BlockContext
 		this.worldDir = baseDir;
 		
 		// Use the world dir and the dimension to find the dimension dir
-		if (dimension == Dimension.Terra)
+		if (dimension == Dimension.OVERWORLD)
 		{
 			dimensionDir = worldDir;
 		}
-		else if (dimension == Dimension.Nether)
+		else if (dimension == Dimension.NETHER)
 		{
 			dimensionDir = new File(worldDir, "DIM-1");
 		}
-		else if (dimension == Dimension.Ender)
+		else if (dimension == Dimension.END)
 		{
 			dimensionDir = new File(worldDir, "DIM1");
 		}
@@ -192,7 +186,7 @@ public class World implements BlockContext
 			throw new RuntimeException(e);
 		}
 		
-		if (dimension == Dimension.Ender)
+		if (dimension == Dimension.END)
 		{
 			levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 		}

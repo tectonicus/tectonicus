@@ -186,7 +186,7 @@ public class TectonicusApp
 					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), "");
 					Vector3l spawnPosition = levelDat.getSpawnPosition();
 					
-					if (map.getDimension() == Dimension.Ender)
+					if (map.getDimension() == Dimension.END)
 					{
 						spawnPosition = new Vector3l(100, 49, 0);
 					}

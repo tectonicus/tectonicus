@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -52,7 +52,7 @@ public class MutableMap implements Map
 		this.id = id;
 		this.name = "Unnamed map";
 		this.worldDir = new File(".");
-		this.dimension = Dimension.Terra;
+		this.dimension = Dimension.OVERWORLD;
 		
 		this.playerFilter = new PlayerFilter();
 		this.signFilter = SignFilter.All;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -35,7 +35,7 @@ public class MutableLayer implements Layer
 		this.mapId = mapId;
 		this.name = "Unnamed layer";
 		this.lightStyle = LightStyle.Day;
-		this.renderStyle = RenderStyle.Regular;
+		this.renderStyle = RenderStyle.REGULAR;
 		this.imageFormat = ImageFormat.Png;
 		this.imageCompressionLevel = 1.0f;
 		this.useDefaultBlockConfig = true;

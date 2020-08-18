@@ -78,7 +78,7 @@ public class CommandLineParser
 		layer.setRenderStyle(renderStyle);
 		
 		// If rendering caves then default the light style to cave style
-		if (renderStyle == RenderStyle.Cave)
+		if (renderStyle == RenderStyle.CAVE)
 			layer.setLightStyle(LightStyle.Cave);
 		
 		// Find the world dir

@@ -64,7 +64,7 @@ public class Player
 	{
 		System.out.println("Loading raw player from "+playerFile);
 		
-		dimension = Dimension.Terra;
+		dimension = Dimension.OVERWORLD;
 		position = new Vector3d();
 		inventory = new ArrayList<>();
 		
@@ -111,7 +111,7 @@ public class Player
 	
 	private void parse(CompoundTag root)
 	{
-		dimension = Dimension.Terra;
+		dimension = Dimension.OVERWORLD;
 		position = new Vector3d();
 		inventory = new ArrayList<>();
 		
@@ -121,11 +121,11 @@ public class Player
 		
 		final int dimensionVal = root.getAsNumber("Dimension").intValue();
 		if (dimensionVal == 0)
-			dimension = Dimension.Terra;
+			dimension = Dimension.OVERWORLD;
 		else if (dimensionVal == 1)
-			dimension = Dimension.Ender;
+			dimension = Dimension.END;
 		else if (dimensionVal == -1)
-			dimension = Dimension.Nether;
+			dimension = Dimension.NETHER;
 		
 		ListTag posList = root.getAsListTag("Pos");
 		if (posList != null)

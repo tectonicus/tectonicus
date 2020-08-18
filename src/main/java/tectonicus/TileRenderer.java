@@ -416,18 +416,18 @@ public class TileRenderer
 		world.setLightStyle(layer.getLightStyle());
 		world.setDefaultBlockId(BlockIds.AIR);
 		
-		if (layer.getRenderStyle() == RenderStyle.Cave)
+		if (layer.getRenderStyle() == RenderStyle.CAVE)
 		{
 			world.setDefaultBlockId(BlockIds.STONE);
 			world.setBlockMaskFactory( new CaveMaskFactory() );
 		}
-		else if (layer.getRenderStyle() == RenderStyle.ExploredCaves)
+		else if (layer.getRenderStyle() == RenderStyle.EXPLORED_CAVES)
 		{
 		//	world.setDefaultBlockId(BlockIds.STONE);
 			world.setBlockFilter( new ExploredCaveFilter() );
 			world.setBlockMaskFactory( new CaveMaskFactory() );
 		}
-		else if (layer.getRenderStyle() == RenderStyle.Nether)
+		else if (layer.getRenderStyle() == RenderStyle.NETHER)
 		{
 			world.setBlockFilter( new NetherBlockFilter() );
 		}	
@@ -1538,7 +1538,7 @@ public class TileRenderer
 				}
 			}
 			
-			if (map.getDimension() == Dimension.Terra) // Beds only exist in the terra dimension for now
+			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the terra dimension for now
 			{
 				for (Player player : players)
 				{
