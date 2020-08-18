@@ -149,6 +149,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		spawnInitiallyVisible = true;
 		viewsInitiallyVisible = true;
 		logFile = new File("./TectonicusLog.txt");
+		loggingLevel = Level.DEBUG;
 		outputHtmlName = "map.html";
 		outputDir = new File(".");
 		cacheDir = new File(outputDir, "Cache");
