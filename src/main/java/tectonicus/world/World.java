@@ -577,7 +577,7 @@ public class World implements BlockContext
 				{	
 					// Actually create the geometry
 					
-					final boolean ok = c.createGeometry(rasteriser, this, registry, blockMaskFactory, texturePack);
+					final boolean ok = c.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
 					assert ok;
 					
 					geometryLoadedChunks.put(coord, c);

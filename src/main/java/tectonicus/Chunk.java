@@ -13,15 +13,21 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jnbt.NBTInputStream.Compression;
 import org.joml.Vector3f;
+import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.blockTypes.BlockStateModel;
+import tectonicus.blockTypes.BlockStateWrapper;
+import tectonicus.blockTypes.NamePropertiesPair;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
@@ -90,7 +96,7 @@ public class Chunk
 		}
 	}
 	
-	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockMaskFactory maskFactory, TexturePack texturePack)
+	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack)
 	{
 		if (rawChunk == null)
 			return false;
@@ -100,6 +106,8 @@ public class Chunk
 		BlockMask mask = maskFactory.createMask(coord, rawChunk); 
 		
 		geometry = new Geometry(rasteriser, texturePack.getTexture());
+
+		Map<NamePropertiesPair, List<BlockStateModel>> blockStateCache = new HashMap<>();
 		
 		for (int y=0; y<RawChunk.HEIGHT; y++)
 		{
@@ -114,6 +122,20 @@ public class Chunk
 						if (blockName != null)
 						{
 							type = registry.find(blockName);
+
+							List<BlockStateModel> models;
+							BlockProperties properties = rawChunk.getBlockState(x, y, z);
+							NamePropertiesPair pair = new NamePropertiesPair(blockName, properties);
+							if (blockStateCache.containsKey(pair)) {
+								models = blockStateCache.get(pair);
+							} else {
+								BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
+								models = stateWrapper.getModels(properties);
+								blockStateCache.put(pair, models);
+							}
+
+							//TODO: Create the BlockStateModel geometry...
+							//TODO: Some blocks still require special handling e.g. redstone wire 'powered'
 						}
 						else
 						{

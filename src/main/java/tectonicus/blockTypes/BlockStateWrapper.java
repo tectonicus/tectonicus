@@ -13,8 +13,8 @@ import lombok.Getter;
 import tectonicus.raw.BlockProperties;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 public class BlockStateWrapper {
@@ -30,11 +30,37 @@ public class BlockStateWrapper {
 	}
 
 	public List<BlockStateModel> getModels(BlockProperties properties) {
+		List<BlockStateModel> models = new ArrayList<>();
 		if (!cases.isEmpty()) {
-			//get models from cases based on properties
+			for (BlockStateCase bsc : cases) {
+				List<Map<String, String>> whenClauses = bsc.getWhenClauses();
+				if (whenClauses.isEmpty()) {  // If no when clauses then always apply models
+					models.addAll(bsc.getModels());
+				} else {
+					for (Map<String, String> clause : whenClauses) {
+						boolean addModel = true;
+						for (Map.Entry<String, String> entry : clause.entrySet()) {
+							String key = entry.getKey();
+							if (!(properties.containsKey(key) && entry.getValue().contains(properties.get(key)))) {
+								addModel = false;
+								break;
+							}
+						}
+						if (addModel) {
+							models.addAll(bsc.getModels());
+							break;
+						}
+					}
+				}
+			}
 		} else {
-			//get models from variants based on properties
+			for (BlockVariant variant : variants) {
+				if (properties.containsAll(variant.getName())) {
+					models.addAll(variant.getModels());
+					break;
+				}
+			}
 		}
-		return Collections.emptyList();
+		return models;
 	}
 }

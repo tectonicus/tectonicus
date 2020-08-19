@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
 import tectonicus.blockTypes.BlockModel.BlockElement;
@@ -44,6 +45,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 
+@Log4j2
 public class BlockRegistry
 {
 	@Getter
@@ -81,16 +83,19 @@ public class BlockRegistry
 	{
 		this.texturePack = texturePack;
 		this.zips = texturePack.getZipStack();
-		System.out.println("Loading all block state and block model json files...");
+		log.info("Loading all block state and block model json files...");
 		deserializeBlockstates();
 		try {
 			loadModels();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("All json files loaded.");
+		log.info("All json files loaded.");
 	}
 
+	public BlockStateWrapper getBlock(String blockName) {
+		return blockStates.get(blockName);
+	}
 	public BlockModel getModel(String model) { return blockModels.get(model); }
 	
 	
