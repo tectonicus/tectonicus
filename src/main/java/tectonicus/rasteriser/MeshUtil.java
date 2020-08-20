@@ -332,20 +332,20 @@ public class MeshUtil
 		}
 	}
 	
-	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f rotationTransform, Matrix4f rotTransform)
+	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation)
 	{
-		rotTransform.transformPosition(topLeft);
-        rotTransform.transformPosition(topRight);
-        rotTransform.transformPosition(bottomRight);
-        rotTransform.transformPosition(bottomLeft);
-		
-		if(rotationTransform != null)
+		if(elementRotation != null)
         {
-	        rotationTransform.transformPosition(topLeft);
-	        rotationTransform.transformPosition(topRight);
-	        rotationTransform.transformPosition(bottomRight);
-	        rotationTransform.transformPosition(bottomLeft);
+	        elementRotation.transformPosition(topLeft);
+	        elementRotation.transformPosition(topRight);
+	        elementRotation.transformPosition(bottomRight);
+	        elementRotation.transformPosition(bottomLeft);
         }
+
+		blockRotation.transformPosition(topLeft);
+		blockRotation.transformPosition(topRight);
+		blockRotation.transformPosition(bottomRight);
+		blockRotation.transformPosition(bottomLeft);
 		
 		SubTexture tex = face.getTexture();
 		Mesh mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);

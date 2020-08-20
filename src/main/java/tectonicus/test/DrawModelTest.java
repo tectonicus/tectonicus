@@ -72,8 +72,6 @@ public class DrawModelTest
 	
 	private long windowId;
 	
-	private long prevMillis;
-	
 	public static void main(String[] args)
 	{
 		DrawModelTest test = new DrawModelTest();
@@ -95,37 +93,29 @@ public class DrawModelTest
 		windowId = rasteriser.getWindowId();
 
 		BlockRegistry br = new BlockRegistry(rasteriser);
-		BlockModel bm = br.loadModel("block/beacon", new HashMap<>(), null);
+		BlockModel bm = br.loadModel("block/tripwire_hook_attached", new HashMap<>(), null);
 		List<BlockElement> elements = bm.getElements();
-		
+
+		//Rotation for entire block
 		Vector3f rotOrigin = new Vector3f(0,0,0);
-		Matrix4f rotTransform = new Matrix4f().translate(rotOrigin)
-				  .rotate((float) Math.toRadians(90), 0, 1, 0) 
+		Matrix4f blockRotation = new Matrix4f().translate(rotOrigin)
+				  .rotate((float) Math.toRadians(90), 0, 1, 0)
 				  .translate(rotOrigin.negate());
 		
 		
 		for(BlockElement element : elements)
 		{
-//			Vector3f rotationOrigin = element.getRotationOrigin().div(16);
 			Vector3f rotationOrigin = element.getRotationOrigin();
 			Vector3f rotationAxis = element.getRotationAxis();
 			
-			Matrix4f rotationTransform = null;
+			Matrix4f elementRotation = null;
 			if (element.getRotationAngle() != 0)
 			{
-				rotationTransform = new Matrix4f().translate(rotationOrigin)
+				elementRotation = new Matrix4f().translate(rotationOrigin)
 									              .rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
 									              .translate(rotationOrigin.negate());
 			}
-			
-//			float x1 = element.getFrom().x()/16;
-//	        float y1 = element.getFrom().y()/16;
-//	        float z1 = element.getFrom().z()/16;
-//	        
-//	        float x2 = element.getTo().x()/16;
-//	        float y2 = element.getTo().y()/16;
-//	        float z2 = element.getTo().z()/16;
-	        
+
 	        float x1 = element.getFrom().x();
 	        float y1 = element.getFrom().y();
 	        float z1 = element.getFrom().z();
@@ -145,7 +135,7 @@ public class DrawModelTest
 		        Vector3f bottomRight = new Vector3f(x2, y2, z2);
 		        Vector3f bottomLeft = new Vector3f(x1, y2, z2);
 
-		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform, rotTransform);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
 			if (element.getFaces().containsKey("down"))
@@ -157,7 +147,7 @@ public class DrawModelTest
 		        Vector3f bottomRight = new Vector3f(x2, y1, z1);
 		        Vector3f bottomLeft = new Vector3f(x1, y1, z1);
 
-		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform, rotTransform);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
 			if (element.getFaces().containsKey("north"))
@@ -169,7 +159,7 @@ public class DrawModelTest
 		        Vector3f bottomRight = new Vector3f(x1, y1, z1);
 		        Vector3f bottomLeft = new Vector3f(x2, y1, z1);
 		        
-		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform, rotTransform);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
 			if (element.getFaces().containsKey("south"))
@@ -181,7 +171,7 @@ public class DrawModelTest
 		        Vector3f bottomRight = new Vector3f(x2, y1, z2);
 		        Vector3f bottomLeft = new Vector3f(x1, y1, z2);
 		        
-		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform, rotTransform);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
 			if (element.getFaces().containsKey("east"))
@@ -193,7 +183,7 @@ public class DrawModelTest
 		        Vector3f bottomRight = new Vector3f(x2, y1, z1);
 		        Vector3f bottomLeft = new Vector3f(x2, y1, z2);
 		        
-		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform, rotTransform);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
 			if (element.getFaces().containsKey("west"))
@@ -205,7 +195,7 @@ public class DrawModelTest
 		        Vector3f bottomRight = new Vector3f(x1, y1, z2);
 		        Vector3f bottomLeft = new Vector3f(x1, y1, z1);
 		        
-		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, rotationTransform, rotTransform);
+		        addVertices(meshList, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 		}
 		
@@ -514,20 +504,20 @@ public class DrawModelTest
 		}
 	}
 
-	private void addVertices(Map<Texture, Mesh> meshList, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f rotationTransform, Matrix4f rotTransform)
+	private void addVertices(Map<Texture, Mesh> meshList, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation)
 	{
-		rotTransform.transformPosition(topLeft);
-        rotTransform.transformPosition(topRight);
-        rotTransform.transformPosition(bottomRight);
-        rotTransform.transformPosition(bottomLeft);
-		
-		if(rotationTransform != null)
+		if(elementRotation != null)
         {
-	        rotationTransform.transformPosition(topLeft);
-	        rotationTransform.transformPosition(topRight);
-	        rotationTransform.transformPosition(bottomRight);
-	        rotationTransform.transformPosition(bottomLeft);
+	        elementRotation.transformPosition(topLeft);
+	        elementRotation.transformPosition(topRight);
+	        elementRotation.transformPosition(bottomRight);
+	        elementRotation.transformPosition(bottomLeft);
         }
+
+		blockRotation.transformPosition(topLeft);
+		blockRotation.transformPosition(topRight);
+		blockRotation.transformPosition(bottomRight);
+		blockRotation.transformPosition(bottomLeft);
 		
 		SubTexture tex = face.getTexture();
 		int texRotation = face.getTextureRotation();
