@@ -144,7 +144,7 @@ public class MeshUtil
 			rotAxis = new Vector3f(1, 0, 0);
 		
 		Matrix4f blockRotation = new Matrix4f().translate(rotOrigin)
-				  							   .rotate((float) Math.toRadians(rotation), rotAxis.x, rotAxis.y, 0) 
+				  							   .rotate(-(float) Math.toRadians(rotation), rotAxis.x, rotAxis.y, 0)
 				  							   .translate(rotOrigin.negate());
 		
 		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
@@ -161,7 +161,7 @@ public class MeshUtil
 		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 		
-		if (axis.equals("x") && Math.abs(rotation) == 90)
+		if (axis.equals("x") && Math.abs(rotation) == 270)
 		{
 			above = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 			below = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
@@ -173,7 +173,7 @@ public class MeshUtil
 			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 		}
-		if (axis.equals("x") && Math.abs(rotation) == 270)
+		if (axis.equals("x") && Math.abs(rotation) == 90)
 		{
 			above = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 			below = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
@@ -185,13 +185,13 @@ public class MeshUtil
 			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		}
-		else if (axis.equals("y") && Math.abs(rotation) == 90)
+		else if (axis.equals("y") && (rotation == 90 || rotation == -270))
 		{
 			north = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 			east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
-			
+
 			northLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 			southLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
@@ -209,13 +209,13 @@ public class MeshUtil
 			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		}
-		if (axis.equals("y") && Math.abs(rotation) == 270)
+		if (axis.equals("y") && (rotation == 270 || rotation == -90))
 		{
 			north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 			east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
-			
+
 			northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 			southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
@@ -246,88 +246,83 @@ public class MeshUtil
 	
 	        Vector3f topLeft, topRight, bottomRight, bottomLeft;
 			Map<String, ElementFace> faces = element.getFaces();
-			if (faces.containsKey("up") && !above.isSolid())
+			ElementFace upFace = faces.get("up");
+			ElementFace downFace = faces.get("down");
+			ElementFace northFace = faces.get("north");
+			ElementFace southFace = faces.get("south");
+			ElementFace eastFace = faces.get("east");
+			ElementFace westFace = faces.get("west");
+
+			if (upFace != null && !(above.isSolid() && upFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * topLight, 1 * topLight, 1 * topLight, 1);
-				
-				ElementFace face = faces.get("up");
 				
 				topLeft = new Vector3f(x1, y2, z1);
 		        topRight = new Vector3f(x2, y2, z1);
 		        bottomRight = new Vector3f(x2, y2, z2);
 		        bottomLeft = new Vector3f(x1, y2, z2);
 		        
-		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (faces.containsKey("down") && !below.isSolid())
+			if (downFace != null && !(below.isSolid() && downFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * bottomLight, 1 * bottomLight, 1 * bottomLight, 1);
-				
-				ElementFace face = faces.get("down");
 				
 				topLeft = new Vector3f(x1, y1, z2);
 		        topRight = new Vector3f(x2, y1, z2);
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x1, y1, z1);
 		        
-		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (faces.containsKey("north") && !north.isSolid())
+			if (northFace != null && !(north.isSolid() && northFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * northLight, 1 * northLight, 1 * northLight, 1);
-				
-				ElementFace face = faces.get("north");
 				
 				topLeft = new Vector3f(x2, y2, z1);
 		        topRight = new Vector3f(x1, y2, z1);
 		        bottomRight = new Vector3f(x1, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z1);
 		        
-		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 			
-			if (faces.containsKey("south") && !south.isSolid())
+			if (southFace != null && !(south.isSolid() && southFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * southLight, 1 * southLight, 1 * southLight, 1);
-				
-				ElementFace face = faces.get("south");
-				
+
 				topLeft = new Vector3f(x1, y2, z2);
 		        topRight = new Vector3f(x2, y2, z2);
 		        bottomRight = new Vector3f(x2, y1, z2);
 		        bottomLeft = new Vector3f(x1, y1, z2);
-		        
-		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+
+		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
-			
-			if (faces.containsKey("east") && !east.isSolid())
+
+			if (eastFace != null && !(east.isSolid() && eastFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * eastLight, 1 * eastLight, 1 * eastLight, 1);
-				
-				ElementFace face = faces.get("east");
-				
+
 				topLeft = new Vector3f(x2, y2, z2);
 		        topRight = new Vector3f(x2, y2, z1);
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z2);
-		        
-		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+
+		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
-			
-			if (faces.containsKey("west") && !west.isSolid())
+
+			if (westFace != null && !(west.isSolid() && westFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * westLight, 1 * westLight, 1 * westLight, 1);
-				
-				ElementFace face = faces.get("west");
-				
+
 				topLeft = new Vector3f(x1, y2, z1);
 		        topRight = new Vector3f(x1, y2, z2);
 		        bottomRight = new Vector3f(x1, y1, z2);
 		        bottomLeft = new Vector3f(x1, y1, z1);
-		        
-		        addVertices(geometry, color, face, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+
+		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 	        }
 		}
 	}

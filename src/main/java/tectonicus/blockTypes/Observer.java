@@ -70,8 +70,8 @@ public class Observer implements BlockType
 		else if (data == 3)
 			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 180, "y");
 		else if (data == 4)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, -270, "y");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 90, "y");
 		else if (data == 5)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, -90, "y");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 270, "y");
 	}
 }

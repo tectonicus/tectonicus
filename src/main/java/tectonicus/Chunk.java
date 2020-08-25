@@ -26,6 +26,7 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.rasteriser.MeshUtil;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
@@ -117,25 +118,36 @@ public class Chunk
 				{
 					if (mask.isVisible(x, y, z))
 					{
-						BlockType type;
+						BlockType type = null;
 						final String blockName = rawChunk.getBlockName(x, y, z);
 						if (blockName != null)
 						{
-							type = registry.find(blockName);
-
-							List<BlockStateModel> models;
-							BlockProperties properties = rawChunk.getBlockState(x, y, z);
-							NamePropertiesPair pair = new NamePropertiesPair(blockName, properties);
-							if (blockStateCache.containsKey(pair)) {
-								models = blockStateCache.get(pair);
+							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava")
+									|| blockName.contains("shulker_box") || blockName.contains("head")
+									|| blockName.contains("skull") || blockName.contains("banner")
+									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")) {
+								type = registry.find(blockName);
 							} else {
-								BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
-								models = stateWrapper.getModels(properties);
-								blockStateCache.put(pair, models);
-							}
+								//TODO: This is quite slow. Need to profile and figure out if it can be sped up
+								List<BlockStateModel> models;
+								BlockProperties properties = rawChunk.getBlockState(x, y, z);
+								NamePropertiesPair pair = new NamePropertiesPair(blockName, properties);
+								if (blockStateCache.containsKey(pair)) {
+									models = blockStateCache.get(pair);
+								} else {
+									BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
+									models = stateWrapper.getModels(properties);
+									blockStateCache.put(pair, models);
+								}
 
-							//TODO: Create the BlockStateModel geometry...
-							//TODO: Some blocks still require special handling e.g. redstone wire 'powered'
+								for (BlockStateModel model : models) {  // Need to add methods for transparent blocks
+									if (model.getXRotation() > 0) {
+										MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getXRotation(), "x");
+									} else {
+										MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getYRotation(), "y");
+									}
+								}
+							}
 						}
 						else
 						{
@@ -169,7 +181,6 @@ public class Chunk
 			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
 		
 		// Create itemframe geometry
-		type = null;
 		type = registry.find(-2, 0);
 		if (type != null)
 			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
