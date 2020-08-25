@@ -596,9 +596,39 @@
 	<Plant id="175:4" stringId="minecraft:rose_bush" name="Rose Bush" top="rose_bush_top.png" bottom="rose_bush_bottom.png" />
 	<Plant id="175:5" stringId="minecraft:peony" name="Peony" top="peony_top.png" bottom="peony_bottom.png" />
 
-	<Banner id="176" stringid="minecraft:white_banner" name="Standing Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true" />
+	<Banner stringId="minecraft:white_banner" name="White Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true" />
+	<Banner stringId="minecraft:orange_banner" name="Orange Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:magenta_banner" name="Magenta Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:light_blue_banner" name="Light Blue Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:yellow_banner" name="Yellow Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:lime_banner" name="Lime Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:pink_banner" name="Pink Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:gray_banner" name="Gray Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:light_gray_banner" name="Light Gray Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:cyan_banner" name="Cyan Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:purple_banner" name="Purple Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:blue_banner" name="Blue Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:brown_banner" name="Brown Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:green_banner" name="Green Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:red_banner" name="Red Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
+	<Banner stringId="minecraft:black_banner" name="Black Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true"/>
 
-	<Banner id="177" stringid="minecraft:white_wall_banner" name="Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:white_wall_banner" name="White Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:orange_wall_banner" name="Orange Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:magenta_wall_banner" name="Magenta Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:light_blue_wall_banner" name="Light Blue Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:yellow_wall_banner" name="Yellow Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:lime_wall_banner" name="Lime Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:pink_wall_banner" name="Pink Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:gray_wall_banner" name="Gray Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:light_gray_wall_banner" name="Light Gray Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:cyan_wall_banner" name="Cyan Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:purple_wall_banner" name="Purple Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:blue_wall_banner" name="Blue Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:brown_wall_banner" name="Brown Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:green_wall_banner" name="Green Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:red_wall_banner" name="Red Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner stringId="minecraft:black_wall_banner" name="Black Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
 
 	<DaylightSensor id="178" stringId="minecraft:inverted_daylight_detector" name="Inverted Daylight Sensor" top="daylight_detector_inverted_top.png" bottom="daylight_detector_side.png" />
 

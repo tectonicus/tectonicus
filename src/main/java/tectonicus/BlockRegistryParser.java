@@ -808,8 +808,12 @@ public class BlockRegistryParser
 			
 			String hasPostStr = element.getAttribute("hasPost");
 			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));
-			
-			blockType = new Banner(name, texture, hasPost, patternImages);
+
+			if (StringUtils.isNotEmpty(stringId)) {
+				blockType = new Banner(stringId, name, texture, hasPost, patternImages);
+			} else {
+				blockType = new Banner(name, texture, hasPost, patternImages);
+			}
 		}
 		else if (nodeName.equals("itemframe"))
 		{

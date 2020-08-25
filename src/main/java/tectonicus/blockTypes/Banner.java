@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,6 +16,7 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -23,9 +24,11 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Chunk;
+import tectonicus.Version;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.BannerEntity;
 import tectonicus.renderer.Geometry;
@@ -38,24 +41,26 @@ public class Banner implements BlockType
 	private static final int HEIGHT = 2;
 	private static final int THICKNESS = 2;
 	private static final int POST_HEIGHT = 28;
-	
+
+	private final String id;
 	private final String name;
 	
 	private final Map<String, BufferedImage> patternImages;
 	
-	private SubTexture bannerSideTexture;
-	private SubTexture sideTexture;
-	private SubTexture sideTexture2;
-	private SubTexture edgeTexture;
-	private SubTexture topTexture;
+	private final SubTexture bannerSideTexture;
+	private final SubTexture sideTexture;
+	private final SubTexture sideTexture2;
+	private final SubTexture edgeTexture;
+	private final SubTexture topTexture;
 	
 	private final boolean hasPost;
-	
-	public Banner(String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
+
+	public Banner(String id, String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
 	{
+		this.id = id;
 		this.name = name;
 		this.hasPost = hasPost;
-		
+
 		final float texel = 1.0f / 64.0f;
 
 		this.bannerSideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel, texture.u0+texel, texture.v0+texel*41);
@@ -63,8 +68,13 @@ public class Banner implements BlockType
 		this.sideTexture2 = new SubTexture(texture.texture, texture.u0+texel*48, texture.v0+texel*2, texture.u0+texel*50, texture.v0+texel*43);
 		this.topTexture = new SubTexture(texture.texture, texture.u0+texel*2, texture.v0+texel*42, texture.u0+texel*22, texture.v0+texel*44);
 		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel*44, texture.u0+texel*2, texture.v0+texel*46);
-		
+
 		this.patternImages = patternImages;
+	}
+
+	public Banner(String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
+	{
+		this(StringUtils.EMPTY, name, texture, hasPost, patternImages);
 	}
 	
 	@Override
@@ -94,13 +104,38 @@ public class Banner implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		final int data = rawChunk.getBlockData(x, y, z);
+		int data = rawChunk.getBlockData(x, y, z);
+		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+		if (properties != null && properties.containsKey("facing")) {
+			final String facing = properties.get("facing");
+			switch (facing) {
+				case "north":
+					data = 2;
+					break;
+				case "south":
+					data = 3;
+					break;
+				case "west":
+					data = 4;
+					break;
+				case "east":
+					data = 5;
+					break;
+				default:
+			}
+		}
+		if (properties != null && properties.containsKey("rotation")) {
+			data = Integer.parseInt(properties.get("rotation"));
+		}
 		
 		SubMesh subMesh = new SubMesh();
-		int baseColor = 0;		
 		String xyz = "x" + x + "y" + y + "z" + z;
 		BannerEntity entity = rawChunk.getBanners().get(xyz);
-		baseColor = entity.getBaseColor();
+		Colors baseColor = Colors.byId(15-entity.getBaseColor());
+		if (StringUtils.isNotEmpty(id)) {
+			String bannerId = id.replace("minecraft:", "").replace("_wall", "").replace("_banner", "");
+			baseColor = Colors.byName(bannerId);
+		}
 		List<Pattern> patterns = entity.getPatterns();
 
 		//TODO: Only run this code if texture has not already been created
@@ -111,19 +146,24 @@ public class Banner implements BlockType
 		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
 		g.drawImage(base, 0, 0, null);
 
-		String identifier = "banner_base_" + baseColor;
-		
-		addPattern(base, patternImages.get("baseMask"), Colors.byId(15-baseColor).getColor(), g);
+		StringBuilder identifier = new StringBuilder();
+		identifier.append("banner_base_").append(baseColor.getName());
+
+		addPattern(base, patternImages.get("baseMask"), baseColor.getColor(), g);
 		if (!patterns.isEmpty())
 		{
 			for (Pattern pattern : patterns)
 			{
-				addPattern(base, patternImages.get(pattern.pattern), Colors.byId(15-pattern.color).getColor(), g);
-				identifier += pattern.toString();
+				if (StringUtils.isNotEmpty(id)) {
+					addPattern(base, patternImages.get(pattern.pattern), Colors.byId(pattern.color).getColor(), g);
+				} else {
+					addPattern(base, patternImages.get(pattern.pattern), Colors.byId(15-pattern.color).getColor(), g);
+				}
+				identifier.append(pattern.toString());
 			}
 		}
 		
-		SubTexture texture = world.getTexturePack().findTexture(finalImage, identifier);
+		SubTexture texture = world.getTexturePack().findTexture(finalImage, identifier.toString());
 		final float texel2 = 1.0f / 64.0f;
 		final SubTexture frontTexture = new SubTexture(texture.texture, texture.u0+texel2, texture.v0+texel2, texture.u0+texel2*21, texture.v0+texel2*41);
 		final SubTexture backTexture = new SubTexture(texture.texture, texture.u0+texel2*22, texture.v0+texel2, texture.u0+texel2*42, texture.v0+texel2*41);
@@ -208,29 +248,26 @@ public class Banner implements BlockType
 		}
 		else
 		{
-			yOffset = y - 1;
+			yOffset = y - 1.0f;
 			
 			if (data == 2)
 			{
-				// Facing east
+				// Facing north
 				rotation = Rotation.Clockwise;
 				angle = 180;
 			}
-			else if (data == 3)
-			{
-				// Facing west
-				// ...built this way
-				
-			}
+			// data == 3 Facing south
+			// ...built this way
 			else if (data == 4)
 			{
-				// Facing north
+				// Facing west
 				rotation = Rotation.AntiClockwise;
 				angle = 90;
 				
 			}
 			else if (data == 5)
 			{
+				// Facing east
 				rotation = Rotation.Clockwise;
 				angle = 90;
 			}
