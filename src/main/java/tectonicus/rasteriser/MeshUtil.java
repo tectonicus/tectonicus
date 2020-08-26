@@ -142,10 +142,13 @@ public class MeshUtil
 		Vector3f rotAxis = new Vector3f(0, 1, 0);
 		if (axis.equals("x"))
 			rotAxis = new Vector3f(1, 0, 0);
-		
-		Matrix4f blockRotation = new Matrix4f().translate(rotOrigin)
-				  							   .rotate(-(float) Math.toRadians(rotation), rotAxis.x, rotAxis.y, 0)
-				  							   .translate(rotOrigin.negate());
+
+		Matrix4f blockRotation = null;
+		if (rotation != 0) {
+			blockRotation = new Matrix4f().translate(rotOrigin)
+					.rotate(-(float) Math.toRadians(rotation), rotAxis.x, rotAxis.y, 0)
+					.translate(rotOrigin.negate());
+		}
 		
 		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
@@ -337,10 +340,12 @@ public class MeshUtil
 	        elementRotation.transformPosition(bottomLeft);
         }
 
-		blockRotation.transformPosition(topLeft);
-		blockRotation.transformPosition(topRight);
-		blockRotation.transformPosition(bottomRight);
-		blockRotation.transformPosition(bottomLeft);
+		if (blockRotation != null) {
+			blockRotation.transformPosition(topLeft);
+			blockRotation.transformPosition(topRight);
+			blockRotation.transformPosition(bottomRight);
+			blockRotation.transformPosition(bottomLeft);
+		}
 		
 		SubTexture tex = face.getTexture();
 		Mesh mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);

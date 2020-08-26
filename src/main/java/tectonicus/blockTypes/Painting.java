@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -34,9 +34,6 @@ public class Painting implements BlockType
 
 	public Painting(String name, SubTexture texture)
 	{
-		//if (texture == null)
-			//throw new RuntimeException("painting texture is null!");
-		
 		this.name = name;
 		this.texture = texture;
 		
@@ -132,148 +129,142 @@ public class Painting implements BlockType
 			int numTilesY = 1;
 			SubTexture painting = backing;
 			
-			String motive = entity.getMotive().toLowerCase();
+			String motive = entity.getMotive().replace("minecraft:", "").toLowerCase();
 
 			// 16x16 paintings
-			if (motive.equals("kebab"))
-				painting = kebab;	
-			else if(motive.equals("aztec"))
-				painting = aztec;
-			else if(motive.equals("alban"))
-				painting = alban;
-			else if(motive.equals("aztec2"))
-				painting = aztec2;
-			else if(motive.equals("bomb"))
-				painting = bomb;
-			else if(motive.equals("plant"))
-				painting = plant;
-			else if(motive.equals("wasteland"))
-				painting = wasteland;
-			// 16x32 paintings
-			else if(motive.equals("pool"))
-			{
-				painting = pool;
-				numTilesX = 2;
-				dim1 = numTilesX * 16;
-			}
-			else if(motive.equals("courbet"))
-			{
-				painting = courbet;
-				numTilesX = 2;
-				dim1 = numTilesX * 16;
-			}
-			else if(motive.equals("sea"))
-			{
-				painting = sea;
-				numTilesX = 2;
-				dim1 = numTilesX * 16;
-			}
-			else if(motive.equals("sunset"))
-			{
-				painting = sunset;
-				numTilesX = 2;
-				dim1 = numTilesX * 16;
-			}
-			else if(motive.equals("creebet"))
-			{
-				painting = creebet;
-				numTilesX = 2;
-				dim1 = numTilesX * 16;
-			}
-			// 32x16 paintings
-			else if(motive.equals("wanderer"))
-			{
-				painting = wanderer;
-				numTilesY = 2;
-				dim2 = numTilesY * 16;
-			}
-			else if(motive.equals("graham"))
-			{
-				painting = graham;
-				numTilesY = 2;
-				dim2 = numTilesY * 16;
-			}		
-			// 32x32 paintings
-			else if(motive.equals("match"))
-			{
-				painting = match;
-				numTilesX = numTilesY = 2;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("bust"))
-			{
-				painting = bust;
-				numTilesX = numTilesY = 2;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("stage"))
-			{
-				painting = stage;
-				numTilesX = numTilesY = 2;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("void"))
-			{
-				painting = thevoid;
-				numTilesX = numTilesY = 2;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("skullandroses"))
-			{
-				painting = skullandroses;
-				numTilesX = numTilesY = 2;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("wither"))
-			{
-				painting = wither;
-				numTilesX = numTilesY = 2;
-				dim1 = dim2 = numTilesX * 16;
-			}		
-			// 64x32 painting
-			else if(motive.equals("fighters"))
-			{
-				painting = fighters;
-				numTilesX = 4;
-				numTilesY = 2;
-				dim1 = numTilesX * 16;
-				dim2 = numTilesY * 16;
-			}
-			// 64x48 paintings
-			else if(motive.equals("skeleton"))
-			{
-				painting = skeleton;
-				numTilesX = 4;
-				numTilesY = 3;
-				dim1 = numTilesX * 16;
-				dim2 = numTilesY * 16;
-			}
-			else if(motive.equals("donkeykong"))
-			{
-				painting = donkeykong;
-				numTilesX = 4;
-				numTilesY = 3;
-				dim1 = numTilesX * 16;
-				dim2 = numTilesY * 16;
-			}	
-			// 64x64 paintings
-			else if(motive.equals("pointer"))
-			{
-				painting = pointer;
-				numTilesX = numTilesY = 4;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("pigscene"))
-			{
-				painting = pigscene;
-				numTilesX = numTilesY = 4;
-				dim1 = dim2 = numTilesX * 16;
-			}
-			else if(motive.equals("burningskull"))
-			{
-				painting = burningskull;
-				numTilesX = numTilesY = 4;
-				dim1 = dim2 = numTilesX * 16;
+			switch (motive) {
+				case "kebab":
+					painting = kebab;
+					break;
+				case "aztec":
+					painting = aztec;
+					break;
+				case "alban":
+					painting = alban;
+					break;
+				case "aztec2":
+					painting = aztec2;
+					break;
+				case "bomb":
+					painting = bomb;
+					break;
+				case "plant":
+					painting = plant;
+					break;
+				case "wasteland":
+					painting = wasteland;
+					break;
+				// 16x32 paintings
+				case "pool":
+					painting = pool;
+					numTilesX = 2;
+					dim1 = numTilesX * 16;
+					break;
+				case "courbet":
+					painting = courbet;
+					numTilesX = 2;
+					dim1 = numTilesX * 16;
+					break;
+				case "sea":
+					painting = sea;
+					numTilesX = 2;
+					dim1 = numTilesX * 16;
+					break;
+				case "sunset":
+					painting = sunset;
+					numTilesX = 2;
+					dim1 = numTilesX * 16;
+					break;
+				case "creebet":
+					painting = creebet;
+					numTilesX = 2;
+					dim1 = numTilesX * 16;
+					break;
+				// 32x16 paintings
+				case "wanderer":
+					painting = wanderer;
+					numTilesY = 2;
+					dim2 = numTilesY * 16;
+					break;
+				case "graham":
+					painting = graham;
+					numTilesY = 2;
+					dim2 = numTilesY * 16;
+					break;
+				// 32x32 paintings
+				case "match":
+					painting = match;
+					numTilesX = numTilesY = 2;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "bust":
+					painting = bust;
+					numTilesX = numTilesY = 2;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "stage":
+					painting = stage;
+					numTilesX = numTilesY = 2;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "void":
+					painting = thevoid;
+					numTilesX = numTilesY = 2;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "skullandroses":
+				case "skull_and_roses":
+					painting = skullandroses;
+					numTilesX = numTilesY = 2;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "wither":
+					painting = wither;
+					numTilesX = numTilesY = 2;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				// 64x32 painting
+				case "fighters":
+					painting = fighters;
+					numTilesX = 4;
+					numTilesY = 2;
+					dim1 = numTilesX * 16;
+					dim2 = numTilesY * 16;
+					break;
+				// 64x48 paintings
+				case "skeleton":
+					painting = skeleton;
+					numTilesX = 4;
+					numTilesY = 3;
+					dim1 = numTilesX * 16;
+					dim2 = numTilesY * 16;
+					break;
+				case "donkeykong":
+				case "donkey_kong":
+					painting = donkeykong;
+					numTilesX = 4;
+					numTilesY = 3;
+					dim1 = numTilesX * 16;
+					dim2 = numTilesY * 16;
+					break;
+				// 64x64 paintings
+				case "pointer":
+					painting = pointer;
+					numTilesX = numTilesY = 4;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "pigscene":
+					painting = pigscene;
+					numTilesX = numTilesY = 4;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				case "burningskull":
+				case "burning_skull":
+					painting = burningskull;
+					numTilesX = numTilesY = 4;
+					dim1 = dim2 = numTilesX * 16;
+					break;
+				default:
 			}
 			
 			final int localX = entity.getLocalX();

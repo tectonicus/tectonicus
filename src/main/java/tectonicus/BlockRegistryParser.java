@@ -326,7 +326,11 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("bednew"))
 		{
-			blockType = new BedNew(name);
+			if (StringUtils.isNotEmpty(stringId)) {
+				blockType = new BedNew(stringId, name);
+			} else {
+				blockType = new BedNew(name);
+			}
 		}
 		else if (nodeName.equals("dispenser"))
 		{
@@ -727,12 +731,15 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("beacon"))
 		{
-			SubTexture glass = parseTexture(element, "glass", null);
-		 	SubTexture beacon = parseTexture(element, "beacon", null);
-		 	SubTexture obsidian = parseTexture(element, "obsidian", null);
 		 	SubTexture beam = parseTexture(element, "beam", null);
-		 	
-		 	blockType = new Beacon(name, glass, beacon, obsidian, beam);
+		 	if (StringUtils.isNotEmpty(stringId)) {
+				blockType = new Beacon(stringId, name, beam);
+			} else {
+				SubTexture glass = parseTexture(element, "glass", null);
+				SubTexture beacon = parseTexture(element, "beacon", null);
+				SubTexture obsidian = parseTexture(element, "obsidian", null);
+				blockType = new Beacon(name, glass, beacon, obsidian, beam);
+			}
 		}
 		else if (nodeName.equals("anvil"))
 		{

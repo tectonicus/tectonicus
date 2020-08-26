@@ -125,7 +125,8 @@ public class Chunk
 							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava")
 									|| blockName.contains("shulker_box") || blockName.contains("head")
 									|| blockName.contains("skull") || blockName.contains("banner")
-									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")) {
+									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")
+									|| blockName.contains("beacon")) {
 								type = registry.find(blockName);
 							} else {
 								//TODO: This is quite slow. Need to profile and figure out if it can be sped up
@@ -140,7 +141,7 @@ public class Chunk
 									blockStateCache.put(pair, models);
 								}
 
-								for (BlockStateModel model : models) {  // Need to add methods for transparent blocks
+								for (BlockStateModel model : models) {  // TODO: Need to add methods for transparent blocks
 									if (model.getXRotation() > 0) {
 										MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getXRotation(), "x");
 									} else {

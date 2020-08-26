@@ -105,22 +105,22 @@
 
 	<Solid id="25" stringId="minecraft:note_block" name="Note Block" texture="note_block.png" />
 
-	<BedNew id="26" stringId="minecraft:white_bed" name="White bed" />
-	<BedNew id="26" stringId="minecraft:orange_bed" name="Orange bed" />
-	<BedNew id="26" stringId="minecraft:magenta_bed" name="Magenta bed" />
-	<BedNew id="26" stringId="minecraft:light_blue_bed" name="Light blue bed" />
-	<BedNew id="26" stringId="minecraft:yellow_bed" name="Yellow bed" />
-	<BedNew id="26" stringId="minecraft:lime_bed" name="Lime bed" />
-	<BedNew id="26" stringId="minecraft:pink_bed" name="Pink bed" />
-	<BedNew id="26" stringId="minecraft:gray_bed" name="Gray bed" />
-	<BedNew id="26" stringId="minecraft:light_gray_bed" name="Light gray bed" />
-	<BedNew id="26" stringId="minecraft:cyan_bed" name="Cyan bed" />
-	<BedNew id="26" stringId="minecraft:purple_bed" name="Purple bed" />
-	<BedNew id="26" stringId="minecraft:blue_bed" name="Blue bed" />
-	<BedNew id="26" stringId="minecraft:brown_bed" name="Brown bed" />
-	<BedNew id="26" stringId="minecraft:green_bed" name="Green bed" />
-	<BedNew id="26" stringId="minecraft:red_bed" name="Red bed" />
-	<BedNew id="26" stringId="minecraft:black_bed" name="Black bed" />
+	<BedNew stringId="minecraft:white_bed" name="White Bed" />
+	<BedNew stringId="minecraft:orange_bed" name="Orange Bed" />
+	<BedNew stringId="minecraft:magenta_bed" name="Magenta Bed" />
+	<BedNew stringId="minecraft:light_blue_bed" name="Light Blue Bed" />
+	<BedNew stringId="minecraft:yellow_bed" name="Yellow Bed" />
+	<BedNew stringId="minecraft:lime_bed" name="Lime Bed" />
+	<BedNew stringId="minecraft:pink_bed" name="Pink Bed" />
+	<BedNew stringId="minecraft:gray_bed" name="Gray Bed" />
+	<BedNew stringId="minecraft:light_gray_bed" name="Light Gray Bed" />
+	<BedNew stringId="minecraft:cyan_bed" name="Cyan Bed" />
+	<BedNew stringId="minecraft:purple_bed" name="Purple Bed" />
+	<BedNew stringId="minecraft:blue_bed" name="Blue Bed" />
+	<BedNew stringId="minecraft:brown_bed" name="Brown Bed" />
+	<BedNew stringId="minecraft:green_bed" name="Green Bed" />
+	<BedNew stringId="minecraft:red_bed" name="Red Bed" />
+	<BedNew stringId="minecraft:black_bed" name="Black Bed" />
 
 	<MinecartTracks id="27" stringId="minecraft:powered_rail" name="Powered rails" straight="powered_rail.png" corner="powered_rail.png" powered="powered_rail_on.png" isStraightOnly="true" />
 
@@ -431,7 +431,7 @@
 						top="command_block_conditional.png" topBottom="command_block_back.png" 
 						side="command_block_side.png" front="command_block_front.png" />
 
-	<Beacon id="138" stringId="minecraft:spruce_beacon" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" beam="assets/minecraft/textures/entity/beacon_beam.png" />
+	<Beacon stringId="minecraft:beacon" name="Beacon" beam="assets/minecraft/textures/entity/beacon_beam.png" />
 
 	<Wall id="139" stringId="minecraft:cobblestone_wall" name="Cobblestone Wall" texture="cobblestone.png" />
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus.blockTypes;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -21,6 +22,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BedEntity;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -28,11 +30,17 @@ import tectonicus.world.Colors;
 
 public class BedNew implements BlockType
 {
+	private final String id;
 	private final String name;
-	
+
+	public BedNew(String id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
 	public BedNew(String name)
 	{
-		this.name = name;
+		this(StringUtils.EMPTY, name);
 	}
 	
 	@Override
@@ -63,15 +71,23 @@ public class BedNew implements BlockType
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
 		final int data = rawChunk.getBlockData(x, y, z);
-		final boolean isHead = (data & 0x8) > 0;
+		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+		boolean isHead = (data & 0x8) > 0;
+		if (properties != null) {
+			isHead = properties.get("part").equals("head");
+		}
 		
 		final float texel = 1.0f / 64.0f;
-		
-		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
-		BedEntity be = rawChunk.getBeds().get(xyz);
-		String color = "red";
-		if (be != null)
-			color = Colors.byId(be.getColor()).getName();
+
+		String color = Colors.RED.getName();
+		if (StringUtils.isNotEmpty(id)) {
+			color = id.replace("minecraft:", "").replace("_bed", "");
+		} else {
+			String xyz = "x" + x + "y" + y + "z" + z;
+			BedEntity be = rawChunk.getBeds().get(xyz);
+			if (be != null)
+				color = Colors.byId(be.getColor()).getName();
+		}
 
 		SubTexture texture = world.getTexturePack().findTexture(null, "bed_"+color);
 		SubTexture headTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*6, texture.u0+texel*22, texture.v0+texel*21.8f);
@@ -127,7 +143,25 @@ public class BedNew implements BlockType
 		SubMesh.Rotation rotation = Rotation.None;
 		float angle = 0;
 		
-		final int dir = (data & 0x3);
+		int dir = (data & 0x3);
+		if (properties != null) {
+			String facing = properties.get("facing");
+			switch (facing) {
+				case "south":
+					dir = 0;
+					break;
+				case "west":
+					dir = 1;
+					break;
+				case "north":
+					dir = 2;
+					break;
+				case "east":
+					dir = 3;
+					break;
+				default:
+			}
+		}
 		if (dir == 0)
 		{
 			// Head is pointing south
@@ -140,10 +174,8 @@ public class BedNew implements BlockType
 			rotation = Rotation.Clockwise;
 			angle = 90;
 		}
-		else if (dir == 2)
-		{
-			// Head is pointing north
-		}
+		// dir == 2
+		// Head is pointing north
 		else if (dir == 3)
 		{
 			// Head is pointing east
