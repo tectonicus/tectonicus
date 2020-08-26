@@ -243,8 +243,9 @@ public class BlockRegistry
 			}
 
 			boolean ao = true;
-			if (json.has("ambientocclusion"))  //TODO: what is this doing?
-				ao = false;
+			if (json.has("ambientocclusion")) {
+				ao = json.get("ambientocclusion").asBoolean();
+			}
 			
 			if(json.has(ELEMENTS_FIELD) && elements == null)
 			{
@@ -269,7 +270,6 @@ public class BlockRegistry
 			Vector3f toVector = new Vector3f(to.get(0).floatValue(), to.get(1).floatValue(), to.get(2).floatValue());
 			
 			org.joml.Vector3f rotationOrigin = new org.joml.Vector3f(8.0f, 8.0f, 8.0f);
-			String rotationAxis = "y";
 			org.joml.Vector3f rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
 			float rotationAngle = 0;
 			boolean rotationScale = false;
@@ -280,21 +280,29 @@ public class BlockRegistry
 				JsonNode rotOrigin = rot.get("origin");
 				rotationOrigin = new org.joml.Vector3f(rotOrigin.get(0).floatValue(), rotOrigin.get(1).floatValue(), rotOrigin.get(2).floatValue());
 
-				rotationAxis = rot.get("axis").asText();
-				if (rotationAxis.equals("x"))
+				String rotationAxis = rot.get("axis").asText();
+				if (rotationAxis.equals("x")) {
 					rotAxis = new org.joml.Vector3f(1.0f, 0.0f, 0.0f);
-				else
+				}
+				else if (rotationAxis.equals("y")) {
+					rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
+				}
+				else {
 					rotAxis = new org.joml.Vector3f(0.0f, 0.0f, 1.0f);
-				
+				}
+
+
 				rotationAngle = rot.get("angle").floatValue();
 				
-				if(element.has("rescale"))
-					rotationScale = true;
+				if(rot.has("rescale")) {
+					rotationScale = rot.get("rescale").asBoolean();
+				}
 			}
 			
 			boolean shaded = true;
-			if(element.has("shade"))  //TODO: again what is this doing?  I don't think this is right
-				shaded = false;						
+			if(element.has("shade")) {
+				shaded = element.get("shade").asBoolean();
+			}
 			
 			JsonNode faces = element.get("faces");
 			SubTexture subTexture = new SubTexture(null, fromVector.x(), 16-toVector.y(), toVector.x(), 16-fromVector.y());

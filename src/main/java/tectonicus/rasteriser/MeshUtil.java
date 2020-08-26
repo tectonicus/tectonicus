@@ -232,7 +232,7 @@ public class MeshUtil
 			Vector3f rotationAxis = element.getRotationAxis();
 			
 			Matrix4f elementRotation = null;
-			if (element.getRotationAngle() != 0)
+			if (element.getRotationAngle() != 0)  //TODO: need to handle scaling for those elements that need it
 			{
 				elementRotation = new Matrix4f().translate(rotationOrigin)
 									              .rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
