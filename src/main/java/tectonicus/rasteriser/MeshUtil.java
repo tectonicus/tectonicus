@@ -228,7 +228,10 @@ public class MeshUtil
 		
 		for(BlockElement element : elements)
 		{
-			Vector3f rotationOrigin = element.getRotationOrigin().div(16);
+			float xrot = x + element.getRotationOrigin().x()/16;
+			float yrot = y + element.getRotationOrigin().y()/16;
+			float zrot = z + element.getRotationOrigin().z()/16;
+			Vector3f rotationOrigin = new Vector3f(xrot, yrot, zrot);
 			Vector3f rotationAxis = element.getRotationAxis();
 			
 			Matrix4f elementRotation = null;
