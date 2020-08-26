@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,6 +24,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Geometry;
@@ -93,7 +94,29 @@ public class Sign implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		final int data = rawChunk.getBlockData(x, y, z);
+		int data = rawChunk.getBlockData(x, y, z);
+		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+		if (properties != null && properties.containsKey("facing")) {
+			final String facing = properties.get("facing");
+			switch (facing) {
+				case "north":
+					data = 2;
+					break;
+				case "south":
+					data = 3;
+					break;
+				case "west":
+					data = 4;
+					break;
+				case "east":
+					data = 5;
+					break;
+				default:
+			}
+		}
+		if (properties != null && properties.containsKey("rotation")) {
+			data = Integer.parseInt(properties.get("rotation"));
+		}
 		
 		SubMesh subMesh = new SubMesh();
 		
@@ -160,12 +183,8 @@ public class Sign implements BlockType
 				rotation = Rotation.Clockwise;
 				angle = 180;
 			}
-			else if (data == 3)
-			{
-				// Facing west
-				// ...built this way
-				
-			}
+			// data == 3 Facing west
+			// ...built this way
 			else if (data == 4)
 			{
 				// Facing north

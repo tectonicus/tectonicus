@@ -237,7 +237,8 @@
 
 	<Furnace id="62" name="Furnace" top="furnace_top.png" side="furnace_side.png" front="furnace_front_on.png" />
 
-	<Sign id="63" stringId="minecraft:sign" name="Sign Post" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" hasPost="true" />
+	<Sign stringId="minecraft:sign" name="Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" hasPost="true" />
+	<Sign stringId="minecraft:wall_sign" name="Wall Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" />
 
 	<Door id="64" stringId="minecraft:oak_door" name="Wooden Door" top="oak_door_top.png" bottom="oak_door_bottom.png" />
 
@@ -246,8 +247,6 @@
 	<MinecartTracks id="66" stringId="minecraft:rail" name="Rails" straight="rail.png" corner="rail_corner.png" powered="rail.png" isStraightOnly="false" />
 
 	<Stairs id="67" stringId="minecraft:cobblestone_stairs" name="Cobblestone Stairs" texture="cobblestone.png" />
-
-	<Sign id="68" stringId="minecraft:wall_sign" name="Wall Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" />
 
 	<Lever id="69" stringId="minecraft:lever" name="Lever" lever="lever.png" base="cobblestone.png" />
 
