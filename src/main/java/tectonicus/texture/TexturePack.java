@@ -540,7 +540,11 @@ public class TexturePack
 				{
 					String color = filename.substring(0, filename.lastIndexOf('.')).replace("shulker_", "");
 					BufferedImage img = loadTexture(entry.toString());
-					findTexture(img, "shulker_"+color);
+					if (color.equals("shulker")) {
+						findTexture(img, color);
+					} else {
+						findTexture(img, color + "_shulker");
+					}
 					
 					int height = img.getHeight();
 					int textureSize = height/4;
@@ -553,7 +557,11 @@ public class TexturePack
 					Graphics2D g = finalImage.createGraphics();
 					g.drawImage(img.getSubimage(0, textureSize, textureSize, topTileHeight), 0, 0, null);
 					g.drawImage(img.getSubimage(bottomImgX, bottomImgY, textureSize, textureSize), 0, 0, null);
-					findTexture(finalImage, "shulker_side_"+color);
+					if (color.equals("shulker")) {
+						findTexture(finalImage, color + "_side");
+					} else {
+						findTexture(finalImage, color + "_shulker_side");
+					}
 				}
 			}
 		}

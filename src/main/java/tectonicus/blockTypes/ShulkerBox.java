@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -56,20 +56,22 @@ public class ShulkerBox implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		String color = stringId.replace("minecraft:", "").replace("_shulker_box", "");
+		String shulkerType = stringId.replace("minecraft:", "").replace("_box", "");
 		
 		final float texel = 1.0f / 64.0f;
 		
-		SubTexture texture = world.getTexturePack().findTexture(null, "shulker_"+color);
+		SubTexture texture = world.getTexturePack().findTexture(null, shulkerType);
 		SubTexture topTexture = new SubTexture(texture.texture, texture.u0+texel*16.1f, texture.v0, texture.u0+texel*31.9f, texture.v0+texel*16);
 		SubTexture bottomTexture = new SubTexture(texture.texture, texture.u0+texel*32.1f, texture.v0+texel*28.1f, texture.u0+texel*47.9f, texture.v0+texel*43.9f);
-		SubTexture sideTexture = world.getTexturePack().findTexture(null, "shulker_side_"+color);
+		SubTexture sideTexture = world.getTexturePack().findTexture(null, shulkerType + "_side");
 		
 		Mesh topBottomMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
 
 		Colour4f colour = new Colour4f(1, 1, 1, 1);
-		
+
+
+		//TODO: Need to handle facing direction of shulker boxes
 		BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry);
 		BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry);
 		

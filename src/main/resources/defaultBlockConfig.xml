@@ -723,22 +723,23 @@
 
 	<Observer id="218" stringId="minecraft:observer" name="Observer" />
 
-	<ShulkerBox id="219" stringId="minecraft:white_shulker_box" name="White Shulker Box" />
-	<ShulkerBox id="220" stringId="minecraft:orange_shulker_box" name="Orange Shulker Box" />
-	<ShulkerBox id="221" stringId="minecraft:magenta_shulker_box" name="Magenta Shulker Box" />
-	<ShulkerBox id="222" stringId="minecraft:light_blue_shulker_box" name="Light Blue Shulker Box" />
-	<ShulkerBox id="223" stringId="minecraft:yellow_shulker_box" name="Yellow Shulker Box" />
-	<ShulkerBox id="224" stringId="minecraft:lime_shulker_box" name="Lime Shulker Box" />
-	<ShulkerBox id="225" stringId="minecraft:pink_shulker_box" name="Pink Shulker Box" />
-	<ShulkerBox id="226" stringId="minecraft:gray_shulker_box" name="Gray Shulker Box" />
-	<ShulkerBox id="227" stringId="minecraft:light_gray_shulker_box" name="Light Gray Shulker Box" />
-	<ShulkerBox id="228" stringId="minecraft:cyan_shulker_box" name="Cyan Shulker Box" />
-	<ShulkerBox id="229" stringId="minecraft:purple_shulker_box" name="Purple Shulker Box" />
-	<ShulkerBox id="230" stringId="minecraft:blue_shulker_box" name="Blue Shulker Box" />
-	<ShulkerBox id="231" stringId="minecraft:brown_shulker_box" name="Brown Shulker Box" />
-	<ShulkerBox id="232" stringId="minecraft:green_shulker_box" name="Green Shulker Box" />
-	<ShulkerBox id="233" stringId="minecraft:red_shulker_box" name="Red Shulker Box" />
-	<ShulkerBox id="234" stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
+	<ShulkerBox stringId="minecraft:shulker_box" name="Shulker Box" />
+	<ShulkerBox stringId="minecraft:white_shulker_box" name="White Shulker Box" />
+	<ShulkerBox stringId="minecraft:orange_shulker_box" name="Orange Shulker Box" />
+	<ShulkerBox stringId="minecraft:magenta_shulker_box" name="Magenta Shulker Box" />
+	<ShulkerBox stringId="minecraft:light_blue_shulker_box" name="Light Blue Shulker Box" />
+	<ShulkerBox stringId="minecraft:yellow_shulker_box" name="Yellow Shulker Box" />
+	<ShulkerBox stringId="minecraft:lime_shulker_box" name="Lime Shulker Box" />
+	<ShulkerBox stringId="minecraft:pink_shulker_box" name="Pink Shulker Box" />
+	<ShulkerBox stringId="minecraft:gray_shulker_box" name="Gray Shulker Box" />
+	<ShulkerBox stringId="minecraft:light_gray_shulker_box" name="Light Gray Shulker Box" />
+	<ShulkerBox stringId="minecraft:cyan_shulker_box" name="Cyan Shulker Box" />
+	<ShulkerBox stringId="minecraft:purple_shulker_box" name="Purple Shulker Box" />
+	<ShulkerBox stringId="minecraft:blue_shulker_box" name="Blue Shulker Box" />
+	<ShulkerBox stringId="minecraft:brown_shulker_box" name="Brown Shulker Box" />
+	<ShulkerBox stringId="minecraft:green_shulker_box" name="Green Shulker Box" />
+	<ShulkerBox stringId="minecraft:red_shulker_box" name="Red Shulker Box" />
+	<ShulkerBox stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
 
 	<GlazedTerracotta id="235" stringId="minecraft:white_glazed_terracotta" name="White Glazed Terracotta" />
 	<GlazedTerracotta id="236" stringId="minecraft:orange_glazed_terracotta" name="Orange Glazed Terracotta" />
