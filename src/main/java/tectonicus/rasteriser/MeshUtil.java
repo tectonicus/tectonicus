@@ -136,17 +136,15 @@ public class MeshUtil
 		mesh.addVertex(p3, colour, uv3.x, uv3.y);
 	}
 	
-	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, List<BlockElement> elements, Geometry geometry, int rotation, String axis)
+	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, List<BlockElement> elements, Geometry geometry, int xRotation, int yRotation)
 	{
 		Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
-		Vector3f rotAxis = new Vector3f(0, 1, 0);
-		if (axis.equals("x"))
-			rotAxis = new Vector3f(1, 0, 0);
 
 		Matrix4f blockRotation = null;
-		if (rotation != 0) {
+		if (xRotation != 0 || yRotation != 0) {
 			blockRotation = new Matrix4f().translate(rotOrigin)
-					.rotate(-(float) Math.toRadians(rotation), rotAxis.x, rotAxis.y, 0)
+					.rotate(-(float) Math.toRadians(yRotation), 0, 1, 0)
+					.rotate(-(float) Math.toRadians(xRotation), 1, 0, 0)
 					.translate(rotOrigin.negate());
 		}
 		
@@ -164,7 +162,7 @@ public class MeshUtil
 		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 		
-		if (axis.equals("x") && Math.abs(rotation) == 270)
+		if (Math.abs(xRotation) == 270)
 		{
 			above = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 			below = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
@@ -176,7 +174,7 @@ public class MeshUtil
 			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 		}
-		if (axis.equals("x") && Math.abs(rotation) == 90)
+		if (Math.abs(xRotation) == 90)
 		{
 			above = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 			below = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
@@ -188,7 +186,7 @@ public class MeshUtil
 			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		}
-		else if (axis.equals("y") && (rotation == 90 || rotation == -270))
+		else if (yRotation == 90 || yRotation == -270)
 		{
 			north = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
@@ -200,7 +198,7 @@ public class MeshUtil
 			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
 			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
 		}
-		else if (Math.abs(rotation) == 180)
+		else if (Math.abs(yRotation) == 180)
 		{
 			north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
@@ -212,7 +210,7 @@ public class MeshUtil
 			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		}
-		if (axis.equals("y") && (rotation == 270 || rotation == -90))
+		if (yRotation == 270 || xRotation == -90)
 		{
 			north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);

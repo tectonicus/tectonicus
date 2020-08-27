@@ -61,6 +61,6 @@ public class GlazedTerracotta implements BlockType
 	{
 		List<BlockElement> elements = world.getModelRegistry().getModel(stringId.replace("minecraft:", "block/")).getElements();
 		final int data = chunk.getBlockData(x, y, z);
-		MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, -90*data, "y");
+		MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, 90*data);
 	}
 }

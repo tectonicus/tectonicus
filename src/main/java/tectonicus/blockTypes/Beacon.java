@@ -97,7 +97,7 @@ public class Beacon implements BlockType
 
 		if (StringUtils.isNotEmpty(id)) {
 			List<BlockModel.BlockElement> elements = world.getModelRegistry().getModel(id.replace("minecraft:", "block/")).getElements();
-			MeshUtil.addBlock(world, rawChunk, x, y, z, elements, geometry, 0, "x");
+			MeshUtil.addBlock(world, rawChunk, x, y, z, elements, geometry, 0, 0);
 		} else {
 			Vector4f colour = new Vector4f(1, 1, 1, 1);
 

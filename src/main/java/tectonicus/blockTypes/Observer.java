@@ -62,16 +62,16 @@ public class Observer implements BlockType
 		List<BlockElement> elements = world.getModelRegistry().getModel(stringId.replace("minecraft:", "block/")).getElements();
 		final int data = chunk.getBlockData(x, y, z);
 		if (data == 0)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 270, "x");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 90, 0);
 		else if (data == 1)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 90, "x");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 270, 0);
 		else if (data == 2)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, "y");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, 0);
 		else if (data == 3)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 180, "y");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, 180);
 		else if (data == 4)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 90, "y");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, 270);
 		else if (data == 5)
-			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 270, "y");
+			MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, 90);
 	}
 }

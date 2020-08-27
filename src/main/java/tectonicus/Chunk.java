@@ -142,11 +142,7 @@ public class Chunk
 								}
 
 								for (BlockStateModel model : models) {  // TODO: Need to add methods for transparent blocks
-									if (model.getXRotation() > 0) {
-										MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getXRotation(), "x");
-									} else {
-										MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getYRotation(), "y");
-									}
+									MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getXRotation(), model.getYRotation());
 								}
 							}
 						}
