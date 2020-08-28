@@ -39,14 +39,4 @@ public class BlockVariant
 				states.put(state[0], "");
 		}
 	}
-	
-	
-	public void drawVariant(int x, int y, int z, BlockRegistry registry)
-	{
-		//TODO: get randomized index based on weight for variant model choice
-		BlockStateModel vm = models.get(0);
-		BlockModel bm = registry.getModel(vm.getModel());
-		
-		bm.drawModel(x, y, z, vm.getXRotation(), vm.getYRotation(), vm.isUvlock());
-	}
 }

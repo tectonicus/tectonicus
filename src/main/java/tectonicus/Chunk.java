@@ -9,13 +9,6 @@
 
 package tectonicus;
 
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jnbt.NBTInputStream.Compression;
 import org.joml.Vector3f;
 import tectonicus.blockTypes.BlockRegistry;
@@ -26,7 +19,6 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
-import tectonicus.rasteriser.MeshUtil;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
@@ -38,6 +30,13 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.world.World;
 import tectonicus.world.filter.BlockFilter;
+
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Chunk
 {	
@@ -97,7 +96,7 @@ public class Chunk
 		}
 	}
 	
-	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack)
+	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack, Map<NamePropertiesPair, List<BlockStateModel>> blockStateCache)
 	{
 		if (rawChunk == null)
 			return false;
@@ -107,8 +106,6 @@ public class Chunk
 		BlockMask mask = maskFactory.createMask(coord, rawChunk); 
 		
 		geometry = new Geometry(rasteriser, texturePack.getTexture());
-
-		Map<NamePropertiesPair, List<BlockStateModel>> blockStateCache = new HashMap<>();
 		
 		for (int y=0; y<RawChunk.HEIGHT; y++)
 		{
@@ -122,8 +119,9 @@ public class Chunk
 						final String blockName = rawChunk.getBlockName(x, y, z);
 						if (blockName != null)
 						{
-							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava")
-									|| blockName.contains("shulker_box") || blockName.contains("head")
+							// These blocks don't have models or they require special handling so they are created by the old system
+							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava") || blockName.equals("minecraft:air")
+									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
 									|| blockName.contains("skull") || blockName.contains("banner")
 									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")
 									|| blockName.contains("beacon")) {
@@ -141,8 +139,8 @@ public class Chunk
 									blockStateCache.put(pair, models);
 								}
 
-								for (BlockStateModel model : models) {  // TODO: Need to add methods for transparent blocks
-									MeshUtil.addBlock(world, rawChunk, x, y, z, modelRegistry.getModel(model.getModel()).getElements(), geometry, model.getXRotation(), model.getYRotation());
+								for (BlockStateModel model : models) {
+									model.createGeometry(x, y, z, world, modelRegistry, rawChunk, geometry);
 								}
 							}
 						}

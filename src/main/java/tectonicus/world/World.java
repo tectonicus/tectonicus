@@ -28,6 +28,8 @@ import tectonicus.Util;
 import tectonicus.Version;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.blockTypes.BlockStateModel;
+import tectonicus.blockTypes.NamePropertiesPair;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
@@ -566,7 +568,9 @@ public class World implements BlockContext
 				rawLoadedChunks.touch(coord);
 			}
 		}
-		
+
+		Map<NamePropertiesPair, List<BlockStateModel>> blockStateCache = new HashMap<>();
+
 		for (ChunkCoord coord : visible)
 		{
 			// Create geometry if not present
@@ -577,7 +581,7 @@ public class World implements BlockContext
 				{	
 					// Actually create the geometry
 					
-					final boolean ok = c.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
+					final boolean ok = c.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack, blockStateCache);
 					assert ok;
 					
 					geometryLoadedChunks.put(coord, c);

@@ -17,13 +17,9 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
-import tectonicus.blockTypes.BlockModel.BlockElement;
-import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.rasteriser.Rasteriser;
-import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
-import tectonicus.util.Vector3f;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +38,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 
 @Log4j2
@@ -251,176 +246,13 @@ public class BlockRegistry
 			{
 				elements = json.get(ELEMENTS_FIELD);
 			}			
-			
-			return new BlockModel(modelPath, ao, deserializeBlockElements(combineMap, elements));
+
+			return new BlockModel(modelPath, ao, combineMap, elements, texturePack);
 		} else {  //TODO: There is no block model so we need to use our own model for these blocks
-			return new BlockModel(modelPath, false, Collections.emptyList());
+			return new BlockModel(modelPath, false, null, null, null);
 		}
 	}
 
-	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap,	JsonNode elements)
-	{
-		List<BlockElement> elementsList = new ArrayList<>();
-		
-		for(JsonNode element : elements)
-		{
-			JsonNode from = element.get("from");
-			Vector3f fromVector = new Vector3f(from.get(0).floatValue(), from.get(1).floatValue(), from.get(2).floatValue());
-			JsonNode to = element.get("to");
-			Vector3f toVector = new Vector3f(to.get(0).floatValue(), to.get(1).floatValue(), to.get(2).floatValue());
-			
-			org.joml.Vector3f rotationOrigin = new org.joml.Vector3f(8.0f, 8.0f, 8.0f);
-			org.joml.Vector3f rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
-			float rotationAngle = 0;
-			boolean rotationScale = false;
-			
-			if(element.has(ROTATION_FIELD))
-			{
-				JsonNode rot = element.get(ROTATION_FIELD);
-				JsonNode rotOrigin = rot.get("origin");
-				rotationOrigin = new org.joml.Vector3f(rotOrigin.get(0).floatValue(), rotOrigin.get(1).floatValue(), rotOrigin.get(2).floatValue());
-
-				String rotationAxis = rot.get("axis").asText();
-				if (rotationAxis.equals("x")) {
-					rotAxis = new org.joml.Vector3f(1.0f, 0.0f, 0.0f);
-				}
-				else if (rotationAxis.equals("y")) {
-					rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
-				}
-				else {
-					rotAxis = new org.joml.Vector3f(0.0f, 0.0f, 1.0f);
-				}
-
-
-				rotationAngle = rot.get("angle").floatValue();
-				
-				if(rot.has("rescale")) {
-					rotationScale = rot.get("rescale").asBoolean();
-				}
-			}
-			
-			boolean shaded = true;
-			if(element.has("shade")) {
-				shaded = element.get("shade").asBoolean();
-			}
-			
-			JsonNode faces = element.get("faces");
-			SubTexture subTexture = new SubTexture(null, fromVector.x(), 16-toVector.y(), toVector.x(), 16-fromVector.y());
-			BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotAxis, rotationAngle, rotationScale, shaded, deserializeElementFaces(combineMap, subTexture, faces, fromVector, toVector));
-			elementsList.add(be);
-		}
-		return elementsList;
-	}
-
-	private Map<String, ElementFace> deserializeElementFaces(Map<String, String> combineMap, SubTexture texCoords, JsonNode faces, Vector3f fromVector, Vector3f toVector)
-	{
-		Map<String, ElementFace> elementFaces = new HashMap<>();
-
-		Iterator<Entry<String, JsonNode>> iter = faces.fields();
-		while (iter.hasNext()) {
-			Map.Entry<String, JsonNode> entry = iter.next();
-
-			String key = entry.getKey();
-			JsonNode face = entry.getValue();
-
-			float u0 = texCoords.u0;
-			float v0 = texCoords.v0;
-			float u1 = texCoords.u1;
-			float v1 = texCoords.v1;
-
-			if (key.equals("up") || key.equals("down"))
-			{
-				v0 = fromVector.z();
-				v1 = toVector.z();
-			}
-			else if (key.equals("north"))
-			{
-				u0 = 16 - texCoords.u1;
-				u1 = 16 - texCoords.u0;
-			}
-			else if (key.equals("east"))
-			{
-				u0 = 16 - toVector.z();
-				u1 = 16 - fromVector.z();
-			}
-			else if (key.equals("west"))
-			{
-				u0 = fromVector.z();
-				u1 = toVector.z();
-			}
-
-
-			int rotation = 0;
-			if(face.has(ROTATION_FIELD))
-				rotation = face.get(ROTATION_FIELD).asInt();
-
-			//System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
-			// TODO: Need to test more texture packs
-			SubTexture subTexture = new SubTexture(null, u0*(1.0f/16.0f), v0*(1.0f/16.0f), u1*(1.0f/16.0f), v1*(1.0f/16.0f));
-
-			StringBuilder tex = new StringBuilder(face.get("texture").asText());
-			if(tex.charAt(0) == '#')
-			{
-				String texture = tex.deleteCharAt(0).toString();
-
-				String texturePath = combineMap.get(texture);
-				if (texturePath.contains("minecraft:block/")) { // 1.16+
-					texturePath = texturePath.replace("minecraft:block/", "") + ".png";
-				} else if (texturePath.contains("block/")) { // 1.13 - 1.15
-					texturePath = StringUtils.removeStart(combineMap.get(texture), "block/") + ".png";
-				} else { // 1.8 - 1.12
-					texturePath = StringUtils.removeStart(combineMap.get(texture), "blocks/") + ".png";
-				}
-
-				SubTexture te = texturePack.findTexture(texturePath);
-
-				final float texHeight = te.texture.getHeight();
-				final float texWidth = te.texture.getWidth();
-				final int numTiles = te.texture.getHeight()/te.texture.getWidth();
-
-				u0 /= texWidth;
-				v0 = (v0 / texWidth) / numTiles;
-				u1 /= texWidth;
-				v1 = (v1 / texWidth) / numTiles;
-
-				if(face.has("uv"))
-				{
-					//System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
-					JsonNode uv = face.get("uv");
-					u0 = uv.get(0).floatValue()/16.0f;
-					v0 = (uv.get(1).floatValue()/16.0f) / numTiles;
-					u1 = uv.get(2).floatValue()/16.0f;
-					v1 = (uv.get(3).floatValue()/16.0f) / numTiles;
-				}
-
-				//System.out.println(texWidth + " x " + texHeight);
-				int frame = 1;
-				if(numTiles > 1)
-				{
-					Random rand = new Random();
-					frame = rand.nextInt(numTiles)+1;
-				}
-
-				subTexture = new SubTexture(te.texture, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
-				//subTexture = new SubTexture(test, u0, v0, u1, v1);
-				//System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
-			}
-
-			boolean cullFace = false;
-			if(face.has("cullface"))
-				cullFace = true;
-
-			boolean tintIndex = false;
-			if(face.has("tintindex"))
-				tintIndex = true;
-
-			ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex);
-			elementFaces.put(key, ef);
-		}
-
-		return elementFaces;
-	}
-	
 	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures)
 	{
 		Map<String, String> newTexMap = new HashMap<>(textureMap);

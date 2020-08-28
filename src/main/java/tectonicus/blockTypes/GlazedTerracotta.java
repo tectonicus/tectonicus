@@ -59,8 +59,8 @@ public class GlazedTerracotta implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		List<BlockElement> elements = world.getModelRegistry().getModel(stringId.replace("minecraft:", "block/")).getElements();
+		BlockModel model = world.getModelRegistry().getModel(stringId.replace("minecraft:", "block/"));
 		final int data = chunk.getBlockData(x, y, z);
-		MeshUtil.addBlock(world, chunk, x, y, z, elements, geometry, 0, 90*data);
+		MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 0, 90*data);
 	}
 }

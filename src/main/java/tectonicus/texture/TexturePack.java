@@ -274,6 +274,10 @@ public class TexturePack
 		else*/
 			return null;
 	}
+
+	public PackTexture getTexture(String path) {
+		return loadedPackTextures.get(path);
+	}
 	
 	public SubTexture findTexture(String texturePath)
 	{

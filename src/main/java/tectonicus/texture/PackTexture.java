@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.Getter;
 import tectonicus.Version;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
@@ -25,7 +26,8 @@ public class PackTexture
 	private final Rasteriser rasteriser;
 	
 	private final String path;
-	
+
+	@Getter
 	private BufferedImage image;
 	
 	private Texture fullTexture;

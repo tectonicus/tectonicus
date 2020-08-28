@@ -137,8 +137,6 @@
 
 	<PistonBase id="33" stringId="minecraft:piston" name="Piston" side="piston_side.png" top="piston_inner.png" bottom="piston_bottom.png" pistonFace="piston_top.png" />
 
-	<PistonExtension id="34" stringId="minecraft:moving_piston" name="Piston Extension" edge="piston_side.png" normalFace="piston_top.png" stickyFace="piston_top_sticky.png" />
-
 	<!-- Various wool colours -->
 	<Solid id="35:0" stringId="minecraft:white_wool" name="White wool"  texture="white_wool.png" />
 	<Solid id="35:1" stringId="minecraft:orange_wool" name="Orange wool"  texture="orange_wool.png" />

@@ -16,10 +16,10 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
+import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockTypes.BlockUtil;
-import tectonicus.configuration.LightFace;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.Geometry.MeshType;
@@ -136,8 +136,11 @@ public class MeshUtil
 		mesh.addVertex(p3, colour, uv3.x, uv3.y);
 	}
 	
-	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, List<BlockElement> elements, Geometry geometry, int xRotation, int yRotation)
+	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation)
 	{
+		List<BlockElement> elements = model.getElements();
+		boolean isAmbientlyOccluded = model.isAmbientlyOccluded();
+		boolean isSolid = model.isSolid();
 		Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
 
 		Matrix4f blockRotation = null;
@@ -147,7 +150,8 @@ public class MeshUtil
 					.rotate(-(float) Math.toRadians(xRotation), 1, 0, 0)
 					.translate(rotOrigin.negate());
 		}
-		
+
+		//TODO: fix lighting and culling
 		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
@@ -155,12 +159,19 @@ public class MeshUtil
 		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		
-		float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-		float bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-		float northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-		float southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+//		float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+//		float bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+//		float northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+//		float southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+//		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+//		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+
+		float topLight = 1f;
+		float bottomLight = 1f;
+		float northLight = 1f;
+		float southLight = 1f;
+		float eastLight = 1f;
+		float westLight = 1f;
 		
 		if (Math.abs(xRotation) == 270)
 		{
@@ -169,10 +180,10 @@ public class MeshUtil
 			north = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 			
-			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+//			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+//			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+//			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+//			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 		}
 		if (Math.abs(xRotation) == 90)
 		{
@@ -181,10 +192,10 @@ public class MeshUtil
 			north = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 			
-			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+//			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+//			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+//			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+//			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		}
 		else if (yRotation == 90 || yRotation == -270)
 		{
@@ -193,10 +204,10 @@ public class MeshUtil
 			east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 
-			northLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+//			northLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+//			southLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+//			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+//			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
 		}
 		else if (Math.abs(yRotation) == 180)
 		{
@@ -205,10 +216,10 @@ public class MeshUtil
 			east = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 			
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+//			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+//			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+//			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+//			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		}
 		if (yRotation == 270 || xRotation == -90)
 		{
@@ -217,10 +228,10 @@ public class MeshUtil
 			east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 
-			northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+//			northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+//			southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+//			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+//			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
 		}
 		
 		
@@ -266,7 +277,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y2, z2);
 		        bottomLeft = new Vector3f(x1, y2, z2);
 		        
-		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
 	        }
 			
 			if (downFace != null && !(below.isSolid() && downFace.isFaceCulled()))
@@ -278,7 +289,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x1, y1, z1);
 		        
-		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
 	        }
 			
 			if (northFace != null && !(north.isSolid() && northFace.isFaceCulled()))
@@ -290,7 +301,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x1, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z1);
 		        
-		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
 	        }
 			
 			if (southFace != null && !(south.isSolid() && southFace.isFaceCulled()))
@@ -302,7 +313,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z2);
 		        bottomLeft = new Vector3f(x1, y1, z2);
 
-		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
 	        }
 
 			if (eastFace != null && !(east.isSolid() && eastFace.isFaceCulled()))
@@ -314,7 +325,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z2);
 
-		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
 	        }
 
 			if (westFace != null && !(west.isSolid() && westFace.isFaceCulled()))
@@ -326,12 +337,13 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x1, y1, z2);
 		        bottomLeft = new Vector3f(x1, y1, z1);
 
-		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
 	        }
 		}
 	}
 	
-	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation)
+	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
+							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, boolean isAmbientlyOccluded, boolean isSolid)
 	{
 		if(elementRotation != null)
         {
@@ -349,7 +361,15 @@ public class MeshUtil
 		}
 		
 		SubTexture tex = face.getTexture();
-		Mesh mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);
+		Mesh mesh;
+		if (isSolid) {
+			mesh = geometry.getMesh(tex.texture, MeshType.Solid);
+		} else {
+			mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);
+		} //TODO: need to handle transparent/blended blocks, e.g. stained glass, ice
+
+
+		//TODO: if the block has ambient occlusion we should figure out smooth lighting
 		
 		int texRotation = face.getTextureRotation();
 		if(texRotation == 0)
