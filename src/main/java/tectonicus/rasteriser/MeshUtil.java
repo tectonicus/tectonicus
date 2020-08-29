@@ -16,10 +16,12 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
+import tectonicus.Util;
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockTypes.BlockUtil;
+import tectonicus.configuration.LightFace;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.Geometry.MeshType;
@@ -159,19 +161,12 @@ public class MeshUtil
 		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		
-//		float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-//		float bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-//		float northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-//		float southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-//		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-//		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-
-		float topLight = 1f;
-		float bottomLight = 1f;
-		float northLight = 1f;
-		float southLight = 1f;
-		float eastLight = 1f;
-		float westLight = 1f;
+		float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+		float bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+		float northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+		float southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
 		
 		if (Math.abs(xRotation) == 270)
 		{
@@ -180,10 +175,10 @@ public class MeshUtil
 			north = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 			
-//			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-//			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-//			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-//			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 		}
 		if (Math.abs(xRotation) == 90)
 		{
@@ -192,10 +187,10 @@ public class MeshUtil
 			north = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 			south = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 			
-//			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-//			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-//			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-//			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		}
 		else if (yRotation == 90 || yRotation == -270)
 		{
@@ -204,10 +199,10 @@ public class MeshUtil
 			east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 
-//			northLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-//			southLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-//			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-//			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
 		}
 		else if (Math.abs(yRotation) == 180)
 		{
@@ -216,10 +211,10 @@ public class MeshUtil
 			east = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 			
-//			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-//			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-//			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-//			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		}
 		if (yRotation == 270 || xRotation == -90)
 		{
@@ -228,10 +223,10 @@ public class MeshUtil
 			east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 			west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 
-//			northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-//			southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-//			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-//			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
+			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
+			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
 		}
 		
 		
@@ -244,11 +239,18 @@ public class MeshUtil
 			Vector3f rotationAxis = element.getRotationAxis();
 			
 			Matrix4f elementRotation = null;
-			if (element.getRotationAngle() != 0)  //TODO: need to handle scaling for those elements that need it
+			if (element.getRotationAngle() != 0)
 			{
-				elementRotation = new Matrix4f().translate(rotationOrigin)
-									              .rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
-									              .translate(rotationOrigin.negate());
+				if (element.isScaled()) {
+					elementRotation = new Matrix4f().translate(rotationOrigin)
+							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
+							.scale(1, 1, 1.4f)  //TODO: this needs work
+							.translate(rotationOrigin.negate());
+				} else {
+					elementRotation = new Matrix4f().translate(rotationOrigin)
+							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
+							.translate(rotationOrigin.negate());
+				}
 			}
 			
 			float x1 = x + element.getFrom().x()/16;
@@ -268,9 +270,30 @@ public class MeshUtil
 			ElementFace eastFace = faces.get("east");
 			ElementFace westFace = faces.get("west");
 
+			//Set the tint color if any
+			Colour4f tintColor = new Colour4f();
+			if ((upFace != null && upFace.isTinted()) || (downFace != null && downFace.isTinted())
+					|| (northFace != null && northFace.isTinted()) || (southFace != null && southFace.isTinted())
+					|| (eastFace != null && eastFace.isTinted()) || (westFace != null && westFace.isTinted())) {
+
+				String modelName = model.getName();
+				if (modelName.contains("cauldron")) {
+					tintColor = world.getWaterColor(rawChunk.getChunkCoord(), x, y, z);
+				} else if (modelName.contains("redstone")) {
+					final float power = (Integer.parseInt(rawChunk.getBlockState(x, y, z).get("power")) / 16.0f);
+					tintColor = new Colour4f(Util.clamp(1.0f * power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
+				}
+				else {
+					tintColor = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
+				}
+			}
+
 			if (upFace != null && !(above.isSolid() && upFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * topLight, 1 * topLight, 1 * topLight, 1);
+	        	if (upFace.isTinted()) {
+	        		color.multiply(tintColor);
+				}
 				
 				topLeft = new Vector3f(x1, y2, z1);
 		        topRight = new Vector3f(x2, y2, z1);
@@ -283,6 +306,9 @@ public class MeshUtil
 			if (downFace != null && !(below.isSolid() && downFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * bottomLight, 1 * bottomLight, 1 * bottomLight, 1);
+				if (downFace.isTinted()) {
+					color.multiply(tintColor);
+				}
 				
 				topLeft = new Vector3f(x1, y1, z2);
 		        topRight = new Vector3f(x2, y1, z2);
@@ -295,6 +321,9 @@ public class MeshUtil
 			if (northFace != null && !(north.isSolid() && northFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * northLight, 1 * northLight, 1 * northLight, 1);
+				if (northFace.isTinted()) {
+					color.multiply(tintColor);
+				}
 				
 				topLeft = new Vector3f(x2, y2, z1);
 		        topRight = new Vector3f(x1, y2, z1);
@@ -307,6 +336,9 @@ public class MeshUtil
 			if (southFace != null && !(south.isSolid() && southFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * southLight, 1 * southLight, 1 * southLight, 1);
+				if (southFace.isTinted()) {
+					color.multiply(tintColor);
+				}
 
 				topLeft = new Vector3f(x1, y2, z2);
 		        topRight = new Vector3f(x2, y2, z2);
@@ -319,6 +351,9 @@ public class MeshUtil
 			if (eastFace != null && !(east.isSolid() && eastFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * eastLight, 1 * eastLight, 1 * eastLight, 1);
+				if (eastFace.isTinted()) {
+					color.multiply(tintColor);
+				}
 
 				topLeft = new Vector3f(x2, y2, z2);
 		        topRight = new Vector3f(x2, y2, z1);
@@ -331,6 +366,9 @@ public class MeshUtil
 			if (westFace != null && !(west.isSolid() && westFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(1 * westLight, 1 * westLight, 1 * westLight, 1);
+				if (westFace.isTinted()) {
+					color.multiply(tintColor);
+				}
 
 				topLeft = new Vector3f(x1, y2, z1);
 		        topRight = new Vector3f(x1, y2, z2);
