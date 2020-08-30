@@ -204,7 +204,7 @@ public class BlockModel
 					}
 
 					SubTexture te = texturePack.findTexture(texturePath);
-					PackTexture pt = texturePack.getTexture("assets/minecraft/textures/block/"+texturePath);
+					PackTexture pt = texturePack.getTexture(texturePack.getTexturePathPrefix("") + texturePath);
 					if (blockModel.isSolid() && ImageUtils.containsTransparency(pt.getImage())) {
 						blockModel.setSolid(false);
 						log.trace(key + ": " + texturePath + " contains transparency");

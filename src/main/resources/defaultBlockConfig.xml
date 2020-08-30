@@ -215,9 +215,8 @@
 
 	<Stairs id="53" stringId="minecraft:oak_stairs" name="Wooden Stairs" texture="oak_planks.png" />
 
-	<Chest id="54" stringId="minecraft:chest" name="Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png" ender="assets/minecraft/textures/entity/chest/ender.png"
-								trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
-								xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
+	<Chest stringId="minecraft:chest" name="Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png"
+		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
 	<RedstoneWire id="55" stringId="minecraft:redstone_wire" name="Redstone Wire" offJunction="redstone_dust_dot.png" onJunction="redstone_dust_dot.png" offLine="redstone_dust_line0.png" onLine="redstone_dust_line0.png" />
 
@@ -408,9 +407,8 @@
 
 	<Solid id="129" stringId="minecraft:emerald_ore" name="Emerald Ore" texture="emerald_ore.png" />
 
-	<Chest id="130" stringId="minecraft:ender_chest" name="Ender Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png" ender="assets/minecraft/textures/entity/chest/ender.png"
-										trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
-										xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
+	<Chest stringId="minecraft:ender_chest" name="Ender Chest" large="assets/minecraft/textures/entity/chest/normal_double.png" ender="assets/minecraft/textures/entity/chest/ender.png"
+		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
 	<TripwireHook id="131" stringId="minecraft:tripwire_hook" name="Tripwire Hook" texture="oak_planks.png" texture2="tripwire_hook.png" tripwire="tripwire.png" />
 
@@ -470,9 +468,8 @@
 
 	<Anvil id="145" stringId="minecraft:anvil" name="Anvil" base="anvil.png" top0="anvil_top.png" top1="chipped_anvil_top.png" top2="damaged_anvil_top.png" />
 
-	<Chest id="146" stringId="minecraft:trapped_chest" name="Trapped Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png" ender="assets/minecraft/textures/entity/chest/ender.png"
-										trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
-										xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
+	<Chest stringId="minecraft:trapped_chest" name="Trapped Chest" trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
+		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
 	<PressurePlate id="147" stringId="minecraft:light_weighted_pressure_plate" name="Gold Pressure Plate" texture="gold_block.png" />
 

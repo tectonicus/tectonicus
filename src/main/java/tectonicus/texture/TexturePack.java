@@ -338,19 +338,27 @@ public class TexturePack
 			path = texturePath;
 			params = "";
 		}
-		
-		// The name 'terrain' is a synonym for terrain.png
-		if (path.equals("terrain") && version == VERSION_4) {  //MC 1.4 (or older) texture packs
-			path = "terrain.png";
-		} else if (!path.contains("/") && !path.contains("\\") && version == VERSION_5) { //MC 1.5 texture packs
-			path = "textures/blocks/" + path;
-		}  else if (!path.contains("/") && !path.contains("\\") && (version == VERSIONS_6_TO_8 || version == VERSIONS_9_TO_11
-					|| version == VERSION_12)) { //MC 1.6-1.12 texture packs
-			path = "assets/minecraft/textures/blocks/" + path;
-		} else if (!path.contains("/") && !path.contains("\\") && version.getNumVersion() >= VERSION_13.getNumVersion()) { //MC 1.13+ texture packs
-			path = "assets/minecraft/textures/block/" + path;
+
+		return new TextureRequest(getTexturePathPrefix(path), params);
+	}
+
+	public String getTexturePathPrefix(String path) {
+		if (path.contains("/") || path.contains("\\")) {
+			return path;
 		}
-		return new TextureRequest(path, params);
+
+		String pathPrefix = "";
+		if (path.equals("terrain") && version == VERSION_4) {  //MC 1.4 (or older) texture packs
+			pathPrefix = "terrain.png";
+		} else if (version == VERSION_5) { //MC 1.5 texture packs
+			pathPrefix = "textures/blocks/" + path;
+		}  else if ((version == VERSIONS_6_TO_8 || version == VERSIONS_9_TO_11 || version == VERSION_12)) { //MC 1.6-1.12 texture packs
+			pathPrefix = "assets/minecraft/textures/blocks/" + path;
+		} else if (version.getNumVersion() >= VERSION_13.getNumVersion()) { //MC 1.13+ texture packs
+			pathPrefix = "assets/minecraft/textures/block/" + path;
+		}
+
+		return pathPrefix;
 	}
 	
 	private PackTexture findTexture(TextureRequest request)

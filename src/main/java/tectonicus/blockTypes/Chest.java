@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,11 +9,8 @@
 
 package tectonicus.blockTypes;
 
-import java.util.Calendar;
-
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockType;
@@ -21,9 +18,12 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+
+import java.util.Calendar;
 
 import static tectonicus.Version.VERSION_5;
 
@@ -34,6 +34,9 @@ public class Chest implements BlockType
 	private final SubTexture smallTop, smallTopSide, smallTopFront, smallBottom, smallBaseSide, smallBaseFront, smallLock;
 	private final SubTexture largeTopLeft, largeTopRight, largeTopSide, largeTopFrontLeft, largeTopFrontRight, largeTopBackLeft, largeTopBackRight,
 							 largeBottomLeft, largeBottomRight, largeBaseSide, largeBaseFrontLeft, largeBaseFrontRight, largeBaseBackLeft, largeBaseBackRight, largeLock, largeLock2;
+
+	private static final float offSet = 1.0f / 16.0f;
+	private static final float height = offSet * 10.0f;
 
 	public Chest(String name, SubTexture small, SubTexture large, SubTexture ender,
 							SubTexture trappedSmall, SubTexture trappedLarge,
@@ -54,8 +57,9 @@ public class Chest implements BlockType
 			smallChest = small;
 		
 		SubTexture largeChest = name.equals("Trapped Chest") ? trappedLarge : large;
-		
-		if(calendar.get(Calendar.MONTH) == 11 && calendar.get(Calendar.DAY_OF_MONTH) == 25 && large.texturePackVersion == VERSION_5)
+		int day = calendar.get(Calendar.DAY_OF_MONTH);
+		if(calendar.get(Calendar.MONTH) == Calendar.DECEMBER && (day == 24 || day == 25 || day == 26)
+				&& large.texturePackVersion.getNumVersion() >= VERSION_5.getNumVersion())
 		{
 			smallChest = xmasSmall;
 			largeChest = xmasLarge;
@@ -116,180 +120,75 @@ public class Chest implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
-		final int data = chunk.getBlockData(x, y, z);
+		int data = chunk.getBlockData(x, y, z);
+		final BlockProperties properties = chunk.getBlockState(x, y, z);
+		if (properties != null) {
+			switch (properties.get("facing")) {
+				case "north":
+					data = 2;
+					break;
+				case "south":
+					data = 3;
+					break;
+				case "west":
+					data = 4;
+					break;
+				case "east":
+					data = 5;
+					break;
+				default:
+			}
+		}
 		
 		final float lightness = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
-		//final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
 		
 		SubMesh smallMesh = new SubMesh();
 		SubMesh largeMesh = new SubMesh();
-		
-		final float offSet = 1.0f / 16.0f;
-		final float height = offSet * 10.0f;
-		
-		final int westId = world.getBlockId(chunk.getChunkCoord(), x-1, y, z);
-		final int eastId = world.getBlockId(chunk.getChunkCoord(), x+1, y, z);
-		final int northId = world.getBlockId(chunk.getChunkCoord(), x, y, z-1);
-		final int southId = world.getBlockId(chunk.getChunkCoord(), x, y, z+1);		
-		
-		final boolean chestNorth;
-		final boolean chestSouth;
-		final boolean chestEast;
-		final boolean chestWest;
-		if(name.equals("Trapped Chest"))
-		{
-			chestNorth = northId == BlockIds.TRAPPED_CHEST;
-			chestSouth = southId == BlockIds.TRAPPED_CHEST;
-			chestEast = eastId == BlockIds.TRAPPED_CHEST;
-			chestWest = westId == BlockIds.TRAPPED_CHEST;
-		}
-		else if(name.equals("Chest"))
-		{
-			chestNorth = northId == BlockIds.CHEST;
-			chestSouth = southId == BlockIds.CHEST;
-			chestEast = eastId == BlockIds.CHEST;
-			chestWest = westId == BlockIds.CHEST;
-		}
-		else
-		{
-			chestNorth = chestSouth = chestEast = chestWest = false;
-		}
-			
-		
 
-		if (chestNorth || chestSouth || chestEast || chestWest)
-		{
-			// Double chest!
-			
-			if((data == 2 && chestWest) || (data == 3 && chestEast) || (data == 4 && chestSouth) || (data == 5 && chestNorth))
-			{
-				// Left half
-				
-				// Top
-				largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(1, 1-offSet*2, 0+offSet),
-								new Vector3f(1, 1-offSet*2, 1-offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet), colour, largeTopLeft);
-				// West
-				largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
-								new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, largeTopSide);
-				// North
-				largeMesh.addQuad(new Vector3f(1, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 0+offSet),
-								new Vector3f(0+offSet, height, 0+offSet),  new Vector3f(1, height, 0+offSet), colour, largeTopBackLeft);
-				// South
-				largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 1-offSet), new Vector3f(1, 1-offSet*2, 1-offSet),
-								new Vector3f(1, height, 1-offSet),  new Vector3f(0+offSet, height, 1-offSet), colour, largeTopFrontLeft);
-				// East
-				/*largeLeftMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
-								new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, largeTopSide);*/
-				
-				
-				//Chest bottom
-				
-				// Bottom
-				largeMesh.addQuad(new Vector3f(0+offSet, 0, 0+offSet), new Vector3f(0+offSet, 0, 1-offSet),
-								new Vector3f(1, 0, 1-offSet), new Vector3f(1, 0, 0+offSet), colour, largeBottomLeft);
-			
-				// West
-				largeMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
-								new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, largeBaseSide);
-				// North
-				largeMesh.addQuad(new Vector3f(1, height, 0+offSet), new Vector3f(0+offSet, height, 0+offSet),
-								new Vector3f(0+offSet, 0, 0+offSet),  new Vector3f(1, 0, 0+offSet), colour, largeBaseBackLeft);
-				// South
-				largeMesh.addQuad(new Vector3f(0+offSet, height, 1-offSet), new Vector3f(1, height, 1-offSet),
-								new Vector3f(1, 0, 1-offSet),  new Vector3f(0+offSet, 0, 1-offSet), colour, largeBaseFrontLeft);
-				// East
-				/*largeLeftMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
-								new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);*/
-				
-				SubMesh.addBlockSimple(largeMesh, 1-offSet, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
+		if (properties != null) {
+			String type = properties.get("type");
+			if (type != null && type.equals("left")) {
+				addLeftHalfDoubleChest(largeMesh, colour);
+			} else if (type != null && type.equals("right")) {
+				addRightHalfDoubleChest(largeMesh, colour);
+			} else {
+				addSingleChest(smallMesh, colour);
 			}
-			else if ((data == 2 && chestEast) || (data == 3 && chestWest) || (data == 4 && chestNorth) || (data == 5 && chestSouth))
-			{
-				// Right half
-				
-				// Top
-				largeMesh.addQuad(new Vector3f(0, 1-offSet*2, 0+offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
-								new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(0, 1-offSet*2, 1-offSet), colour, largeTopRight);
-				// West
-				/*largeLeftMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
-								new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, largeTopSide);*/
-				// North
-				largeMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 0+offSet), new Vector3f(0, 1-offSet*2, 0+offSet),
-								new Vector3f(0, height, 0+offSet),  new Vector3f(1-offSet, height, 0+offSet), colour, largeTopBackRight);
-				// South
-				largeMesh.addQuad(new Vector3f(0, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 1-offSet),
-								new Vector3f(1-offSet, height, 1-offSet),  new Vector3f(0, height, 1-offSet), colour, largeTopFrontRight);
-				// East
-				largeMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
-								new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, largeTopSide);
-				
-				
-				//Chest bottom
-				
-				// Bottom
-				largeMesh.addQuad(new Vector3f(0, 0, 0+offSet), new Vector3f(0, 0, 1-offSet),
-								new Vector3f(1-offSet, 0, 1-offSet), new Vector3f(1-offSet, 0, 0+offSet), colour, largeBottomRight);
-			
-				// West
-				/*largeRightMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
-								new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, largeBaseSide);*/
-				// North
-				largeMesh.addQuad(new Vector3f(1-offSet, height, 0+offSet), new Vector3f(0, height, 0+offSet),
-								new Vector3f(0, 0, 0+offSet),  new Vector3f(1-offSet, 0, 0+offSet), colour, largeBaseBackRight);
-				// South
-				largeMesh.addQuad(new Vector3f(0, height, 1-offSet), new Vector3f(1-offSet, height, 1-offSet),
-								new Vector3f(1-offSet, 0, 1-offSet),  new Vector3f(0, 0, 1-offSet), colour, largeBaseFrontRight);
-				// East
-				largeMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
-								new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);
-				
-				SubMesh.addBlockSimple(largeMesh, 0, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock2, largeLock2, largeLock2);
+		} else {
+			final int westId = world.getBlockId(chunk.getChunkCoord(), x - 1, y, z);
+			final int eastId = world.getBlockId(chunk.getChunkCoord(), x + 1, y, z);
+			final int northId = world.getBlockId(chunk.getChunkCoord(), x, y, z - 1);
+			final int southId = world.getBlockId(chunk.getChunkCoord(), x, y, z + 1);
+
+			final boolean chestNorth;
+			final boolean chestSouth;
+			final boolean chestEast;
+			final boolean chestWest;
+			if (name.equals("Trapped Chest")) {
+				chestNorth = northId == BlockIds.TRAPPED_CHEST;
+				chestSouth = southId == BlockIds.TRAPPED_CHEST;
+				chestEast = eastId == BlockIds.TRAPPED_CHEST;
+				chestWest = westId == BlockIds.TRAPPED_CHEST;
+			} else if (name.equals("Chest")) {
+				chestNorth = northId == BlockIds.CHEST;
+				chestSouth = southId == BlockIds.CHEST;
+				chestEast = eastId == BlockIds.CHEST;
+				chestWest = westId == BlockIds.CHEST;
+			} else {
+				chestNorth = chestSouth = chestEast = chestWest = false;
 			}
-		}
-		else
-		{
-			// Single chest
-			
-			// Chest top
-			
-			// Top
-			smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
-							new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet), colour, smallTop);
-			// West
-			smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
-							new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, smallTopSide);
-			// North
-			smallMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 0+offSet),
-							new Vector3f(0+offSet, height, 0+offSet),  new Vector3f(1-offSet, height, 0+offSet), colour, smallTopSide);
-			// South
-			smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 1-offSet),
-							new Vector3f(1-offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 1-offSet), colour, smallTopFront);
-			// East
-			smallMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
-							new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, smallTopSide);
-			
-			
-			//Chest bottom
-			
-			// Bottom
-			smallMesh.addQuad(new Vector3f(0, 0, 0), new Vector3f(0, 0, 1),
-							new Vector3f(1, 0, 1), new Vector3f(1, 0, 0), colour, smallBottom);
-		
-			// West
-			smallMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
-							new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, smallBaseSide);
-			// North
-			smallMesh.addQuad(new Vector3f(1-offSet, height, 0+offSet), new Vector3f(0+offSet, height, 0+offSet),
-							new Vector3f(0+offSet, 0, 0+offSet),  new Vector3f(1-offSet, 0, 0+offSet), colour, smallBaseSide);
-			// South
-			smallMesh.addQuad(new Vector3f(0+offSet, height, 1-offSet), new Vector3f(1-offSet, height, 1-offSet),
-							new Vector3f(1-offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 1-offSet), colour, smallBaseFront);
-			// East
-			smallMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
-							new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, smallBaseSide);
-			
-			SubMesh.addBlockSimple(smallMesh, offSet*7, offSet*8, offSet*15, offSet*2, offSet*4, offSet, colour, smallLock, smallLock, smallLock);
+
+			if (chestNorth || chestSouth || chestEast || chestWest) {
+				// Double chest!
+				if ((data == 2 && chestWest) || (data == 3 && chestEast) || (data == 4 && chestSouth) || (data == 5 && chestNorth)) {
+					addRightHalfDoubleChest(largeMesh, colour);
+				} else if ((data == 2 && chestEast) || (data == 3 && chestWest) || (data == 4 && chestNorth) || (data == 5 && chestSouth)) {
+					addLeftHalfDoubleChest(largeMesh, colour);
+				}
+			} else {
+				addSingleChest(smallMesh, colour);
+			}
 		}
 
 		
@@ -303,25 +202,128 @@ public class Chest implements BlockType
 			horizRotation = Rotation.AntiClockwise;
 			horizAngle = 180;
 		}
-		else if (data == 3)
-		{
-			// south
-		}
+		// data == 3 south
 		else if (data == 4)
 		{
 			// west
-			horizRotation = Rotation.Clockwise;
 			horizAngle = 270;
-
 		}
 		else if (data == 5)
 		{
-			// east			
-			horizRotation = Rotation.Clockwise;
+			// east
 			horizAngle = 90;
 		}
 		
 		smallMesh.pushTo(geometry.getMesh(smallTop.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, Rotation.None, 0);
 		largeMesh.pushTo(geometry.getMesh(largeTopLeft.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, Rotation.None, 0);
+	}
+
+	private void addRightHalfDoubleChest(SubMesh largeMesh, Vector4f colour) {
+		// Top
+		largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(1, 1-offSet*2, 0+offSet),
+				new Vector3f(1, 1-offSet*2, 1-offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet), colour, largeTopLeft);
+		// West
+		largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
+				new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, largeTopSide);
+		// North
+		largeMesh.addQuad(new Vector3f(1, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 0+offSet),
+				new Vector3f(0+offSet, height, 0+offSet),  new Vector3f(1, height, 0+offSet), colour, largeTopBackLeft);
+		// South
+		largeMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 1-offSet), new Vector3f(1, 1-offSet*2, 1-offSet),
+				new Vector3f(1, height, 1-offSet),  new Vector3f(0+offSet, height, 1-offSet), colour, largeTopFrontLeft);
+
+
+		//Chest bottom
+
+		// Bottom
+		largeMesh.addQuad(new Vector3f(0+offSet, 0, 0+offSet), new Vector3f(0+offSet, 0, 1-offSet),
+				new Vector3f(1, 0, 1-offSet), new Vector3f(1, 0, 0+offSet), colour, largeBottomLeft);
+
+		// West
+		largeMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
+				new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, largeBaseSide);
+		// North
+		largeMesh.addQuad(new Vector3f(1, height, 0+offSet), new Vector3f(0+offSet, height, 0+offSet),
+				new Vector3f(0+offSet, 0, 0+offSet),  new Vector3f(1, 0, 0+offSet), colour, largeBaseBackLeft);
+		// South
+		largeMesh.addQuad(new Vector3f(0+offSet, height, 1-offSet), new Vector3f(1, height, 1-offSet),
+				new Vector3f(1, 0, 1-offSet),  new Vector3f(0+offSet, 0, 1-offSet), colour, largeBaseFrontLeft);
+
+		SubMesh.addBlockSimple(largeMesh, 1-offSet, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock, largeLock, largeLock);
+	}
+
+	private void addLeftHalfDoubleChest(SubMesh largeMesh, Vector4f colour) {
+		// Top
+		largeMesh.addQuad(new Vector3f(0, 1-offSet*2, 0+offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+				new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(0, 1-offSet*2, 1-offSet), colour, largeTopRight);
+		// North
+		largeMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 0+offSet), new Vector3f(0, 1-offSet*2, 0+offSet),
+				new Vector3f(0, height, 0+offSet),  new Vector3f(1-offSet, height, 0+offSet), colour, largeTopBackRight);
+		// South
+		largeMesh.addQuad(new Vector3f(0, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 1-offSet),
+				new Vector3f(1-offSet, height, 1-offSet),  new Vector3f(0, height, 1-offSet), colour, largeTopFrontRight);
+		// East
+		largeMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+				new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, largeTopSide);
+
+
+		//Chest bottom
+
+		// Bottom
+		largeMesh.addQuad(new Vector3f(0, 0, 0+offSet), new Vector3f(0, 0, 1-offSet),
+				new Vector3f(1-offSet, 0, 1-offSet), new Vector3f(1-offSet, 0, 0+offSet), colour, largeBottomRight);
+		// North
+		largeMesh.addQuad(new Vector3f(1-offSet, height, 0+offSet), new Vector3f(0, height, 0+offSet),
+				new Vector3f(0, 0, 0+offSet),  new Vector3f(1-offSet, 0, 0+offSet), colour, largeBaseBackRight);
+		// South
+		largeMesh.addQuad(new Vector3f(0, height, 1-offSet), new Vector3f(1-offSet, height, 1-offSet),
+				new Vector3f(1-offSet, 0, 1-offSet),  new Vector3f(0, 0, 1-offSet), colour, largeBaseFrontRight);
+		// East
+		largeMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
+				new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, largeBaseSide);
+
+		SubMesh.addBlockSimple(largeMesh, 0, offSet*8, offSet*15, offSet, offSet*4, offSet, colour, largeLock2, largeLock2, largeLock2);
+	}
+
+	private void addSingleChest(SubMesh smallMesh, Vector4f colour) {
+		// Chest top
+
+		// Top
+		smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+				new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet), colour, smallTop);
+		// West
+		smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 1-offSet),
+				new Vector3f(0+offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 0+offSet), colour, smallTopSide);
+		// North
+		smallMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 0+offSet), new Vector3f(0+offSet, 1-offSet*2, 0+offSet),
+				new Vector3f(0+offSet, height, 0+offSet),  new Vector3f(1-offSet, height, 0+offSet), colour, smallTopSide);
+		// South
+		smallMesh.addQuad(new Vector3f(0+offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 1-offSet),
+				new Vector3f(1-offSet, height, 1-offSet),  new Vector3f(0+offSet, height, 1-offSet), colour, smallTopFront);
+		// East
+		smallMesh.addQuad(new Vector3f(1-offSet, 1-offSet*2, 1-offSet), new Vector3f(1-offSet, 1-offSet*2, 0+offSet),
+				new Vector3f(1-offSet, height, 0+offSet), new Vector3f(1-offSet, height, 1-offSet), colour, smallTopSide);
+
+
+		//Chest bottom
+
+		// Bottom
+		smallMesh.addQuad(new Vector3f(0, 0, 0), new Vector3f(0, 0, 1),
+				new Vector3f(1, 0, 1), new Vector3f(1, 0, 0), colour, smallBottom);
+
+		// West
+		smallMesh.addQuad(new Vector3f(0+offSet, height, 0+offSet), new Vector3f(0+offSet, height, 1-offSet),
+				new Vector3f(0+offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 0+offSet), colour, smallBaseSide);
+		// North
+		smallMesh.addQuad(new Vector3f(1-offSet, height, 0+offSet), new Vector3f(0+offSet, height, 0+offSet),
+				new Vector3f(0+offSet, 0, 0+offSet),  new Vector3f(1-offSet, 0, 0+offSet), colour, smallBaseSide);
+		// South
+		smallMesh.addQuad(new Vector3f(0+offSet, height, 1-offSet), new Vector3f(1-offSet, height, 1-offSet),
+				new Vector3f(1-offSet, 0, 1-offSet),  new Vector3f(0+offSet, 0, 1-offSet), colour, smallBaseFront);
+		// East
+		smallMesh.addQuad(new Vector3f(1-offSet, height, 1-offSet), new Vector3f(1-offSet, height, 0+offSet),
+				new Vector3f(1-offSet, 0, 0+offSet), new Vector3f(1-offSet, 0, 1-offSet), colour, smallBaseSide);
+
+		SubMesh.addBlockSimple(smallMesh, offSet*7, offSet*8, offSet*15, offSet*2, offSet*4, offSet, colour, smallLock, smallLock, smallLock);
 	}
 }
