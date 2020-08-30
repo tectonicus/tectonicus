@@ -13,6 +13,8 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -70,14 +72,74 @@ public class ShulkerBox implements BlockType
 
 		Colour4f colour = new Colour4f(1, 1, 1, 1);
 
+		final int data = chunk.getBlockData(x, y, z);
+		int direction = data & 0x7;
+		final BlockProperties properties = chunk.getBlockState(x, y, z);
+		if (properties != null) {
+			switch (properties.get("facing")) {
+				case "down":
+					direction = 0;
+					break;
+				case "north":
+					direction = 2;
+					break;
+				case "south":
+					direction = 3;
+					break;
+				case "west":
+					direction = 4;
+					break;
+				case "east":
+					direction = 5;
+					break;
+				default:
+					direction = 1;
 
-		//TODO: Need to handle facing direction of shulker boxes
-		BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry);
-		BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry);
-		
-		BlockUtil.addNorth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);  //West
-		BlockUtil.addSouth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);  //East
-		BlockUtil.addEast(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);  //North
-		BlockUtil.addWest(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);  //South
+			}
+		}
+
+		if (direction == 0) { //Facing down
+			BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry); //The bottom texture isn't quite correct but close enough
+			BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry);
+			BlockUtil.addNorth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
+			BlockUtil.addSouth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
+			BlockUtil.addEast(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
+			BlockUtil.addWest(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
+		} else if (direction == 1) { //Facing up
+			BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry);
+			BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry);
+			BlockUtil.addEast(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addWest(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addNorth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addSouth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry);
+		} else if (direction == 2) { //Facing north
+			BlockUtil.addTop(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.None);
+			BlockUtil.addBottom(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.None);
+			BlockUtil.addEast(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+			BlockUtil.addWest(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+			BlockUtil.addNorth(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry, Rotation.None);
+			BlockUtil.addSouth(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry, Rotation.None);
+		} else if (direction == 3) { //Facing south
+			BlockUtil.addTop(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
+			BlockUtil.addBottom(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.None);
+			BlockUtil.addEast(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+			BlockUtil.addWest(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+			BlockUtil.addNorth(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry, Rotation.None);
+			BlockUtil.addSouth(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry, Rotation.None);
+		} else if (direction == 4) { //Facing west
+			BlockUtil.addTop(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+			BlockUtil.addBottom(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+			BlockUtil.addEast(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry, Rotation.None);
+			BlockUtil.addWest(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry, Rotation.None);
+			BlockUtil.addNorth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+			BlockUtil.addSouth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+		} else if (direction == 5) { //Facing east
+			BlockUtil.addTop(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+			BlockUtil.addBottom(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+			BlockUtil.addEast(world, chunk, topBottomMesh, x, y, z, colour, topTexture, registry, Rotation.None);
+			BlockUtil.addWest(world, chunk, topBottomMesh, x, y, z, colour, bottomTexture, registry, Rotation.None);
+			BlockUtil.addNorth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+			BlockUtil.addSouth(world, chunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+		}
 	}
 }
