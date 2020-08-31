@@ -141,8 +141,6 @@ public class MeshUtil
 	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation)
 	{
 		List<BlockElement> elements = model.getElements();
-		boolean isAmbientlyOccluded = model.isAmbientlyOccluded();
-		boolean isSolid = model.isSolid();
 		Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
 
 		Matrix4f blockRotation = null;
@@ -300,7 +298,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y2, z2);
 		        bottomLeft = new Vector3f(x1, y2, z2);
 		        
-		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
+		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 			
 			if (downFace != null && !(below.isSolid() && downFace.isFaceCulled()))
@@ -315,7 +313,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x1, y1, z1);
 		        
-		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
+		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 			
 			if (northFace != null && !(north.isSolid() && northFace.isFaceCulled()))
@@ -330,7 +328,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x1, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z1);
 		        
-		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
+		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 			
 			if (southFace != null && !(south.isSolid() && southFace.isFaceCulled()))
@@ -345,7 +343,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z2);
 		        bottomLeft = new Vector3f(x1, y1, z2);
 
-		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
+		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 
 			if (eastFace != null && !(east.isSolid() && eastFace.isFaceCulled()))
@@ -360,7 +358,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z2);
 
-		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
+		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 
 			if (westFace != null && !(west.isSolid() && westFace.isFaceCulled()))
@@ -375,13 +373,13 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x1, y1, z2);
 		        bottomLeft = new Vector3f(x1, y1, z1);
 
-		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, isAmbientlyOccluded, isSolid);
+		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 		}
 	}
 	
 	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
-							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, boolean isAmbientlyOccluded, boolean isSolid)
+							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, BlockModel model)
 	{
 		if(elementRotation != null)
         {
@@ -400,11 +398,13 @@ public class MeshUtil
 		
 		SubTexture tex = face.getTexture();
 		Mesh mesh;
-		if (isSolid) {
+		if (model.isSolid()) {
 			mesh = geometry.getMesh(tex.texture, MeshType.Solid);
+		} else if (model.isTransparent()) {
+			mesh = geometry.getMesh(tex.texture, MeshType.Transparent);
 		} else {
 			mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);
-		} //TODO: need to handle transparent/blended blocks, e.g. stained glass, ice
+		}
 
 
 		//TODO: if the block has ambient occlusion we should figure out smooth lighting

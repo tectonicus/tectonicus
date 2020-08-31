@@ -199,15 +199,21 @@ public class BlockRegistry
 		if (!modelName.contains("block/")) {
 			modelName = "block/" + modelName;
 		}
-		blockModels.put(modelName, loadModel(modelName, new HashMap<>(), null));
+
+		blockModels.put(modelName, loadModel(modelName, StringUtils.EMPTY, new HashMap<>(), null));
 	}
 	
 	// Recurse through model files and get block model information
-	public BlockModel loadModel(String modelPath, Map<String, String> textureMap, JsonNode elements) throws Exception
+	public BlockModel loadModel(String modelPath, String modelName, Map<String, String> textureMap, JsonNode elements) throws Exception
 	{
 		if (modelPath.contains("minecraft:")) {
 			modelPath = modelPath.replace("minecraft:", "");
 		}
+
+		if (modelName.equals(StringUtils.EMPTY)) {
+			modelName = modelPath;
+		}
+
 		JsonNode json = OBJECT_MAPPER.readTree(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json")));
 		
 		String parent = "";
@@ -222,11 +228,11 @@ public class BlockRegistry
 			
 			if(json.has(TEXTURES_FIELD))
 			{
-				return loadModel(parent, populateTextureMap(textureMap, json.get(TEXTURES_FIELD)), elements);
+				return loadModel(parent, modelName, populateTextureMap(textureMap, json.get(TEXTURES_FIELD)), elements);
 			}
 			else
 			{
-				return loadModel(parent, textureMap, elements);
+				return loadModel(parent, modelName, textureMap, elements);
 			}
 		}
 		else if(json.has(ELEMENTS_FIELD) || elements != null)//Load all elements
@@ -247,9 +253,9 @@ public class BlockRegistry
 				elements = json.get(ELEMENTS_FIELD);
 			}			
 
-			return new BlockModel(modelPath, ao, combineMap, elements, texturePack);
+			return new BlockModel(modelName, ao, combineMap, elements, texturePack);
 		} else {  //TODO: There is no block model so we need to use our own model for these blocks
-			return new BlockModel(modelPath, false, null, null, null);
+			return new BlockModel(modelName, false, null, null, null);
 		}
 	}
 

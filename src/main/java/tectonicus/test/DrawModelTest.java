@@ -9,6 +9,7 @@
 
 package tectonicus.test;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
@@ -93,7 +94,7 @@ public class DrawModelTest
 		windowId = rasteriser.getWindowId();
 
 		BlockRegistry br = new BlockRegistry(rasteriser);
-		BlockModel bm = br.loadModel("block/tripwire_hook_attached", new HashMap<>(), null);
+		BlockModel bm = br.loadModel("block/tripwire_hook_attached", StringUtils.EMPTY, new HashMap<>(), null);
 		List<BlockElement> elements = bm.getElements();
 
 		//Rotation for entire block

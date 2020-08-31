@@ -41,6 +41,8 @@ public class BlockModel
 	private final List<BlockElement> elements;
 	@Setter
 	private boolean isSolid = true;
+	@Setter
+	private boolean isTransparent = false;
 
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
@@ -205,7 +207,12 @@ public class BlockModel
 
 					SubTexture te = texturePack.findTexture(texturePath);
 					PackTexture pt = texturePack.getTexture(texturePack.getTexturePathPrefix("") + texturePath);
-					if (blockModel.isSolid() && ImageUtils.containsTransparency(pt.getImage())) {
+
+					//These are hard-coded in as I'm not sure how to programmatically tell the difference between these and other transparent blocks
+					if (blockModel.getName().contains("stained_glass") || blockModel.getName().contains("_ice") || blockModel.getName().contains("nether_portal")) {
+						blockModel.setSolid(false);
+						blockModel.setTransparent(true);
+					} else if (blockModel.isSolid() && ImageUtils.containsTransparency(pt.getImage())) {
 						blockModel.setSolid(false);
 						log.trace(key + ": " + texturePath + " contains transparency");
 					}
