@@ -66,6 +66,7 @@ import tectonicus.blockTypes.Hopper;
 import tectonicus.blockTypes.HugeMushroom;
 import tectonicus.blockTypes.Ice;
 import tectonicus.blockTypes.ItemFrame;
+import tectonicus.blockTypes.ItemFrameNew;
 import tectonicus.blockTypes.JackOLantern;
 import tectonicus.blockTypes.Ladder;
 import tectonicus.blockTypes.Leaves;
@@ -822,13 +823,17 @@ public class BlockRegistryParser
 				blockType = new Banner(name, texture, hasPost, patternImages);
 			}
 		}
-		else if (nodeName.equals("itemframe"))
+		else if (nodeName.equals("itemframe") || nodeName.equals("itemframenew"))
 		{
 			SubTexture background = parseTexture(element, "background", null);
 			SubTexture border = parseTexture(element, "border", null);
 			SubTexture map = parseTexture(element, "map", null);
-		 	
-		 	blockType = new ItemFrame(name, background, border, map);
+
+			if (nodeName.equals("itemframe")) {
+				blockType = new ItemFrame(name, background, border, map);
+			} else {
+				blockType = new ItemFrameNew(name, background, border, map);
+			}
 		}
 		else if (nodeName.equals("endrod"))
 		{

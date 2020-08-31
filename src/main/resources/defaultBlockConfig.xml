@@ -736,69 +736,10 @@
 	<ShulkerBox stringId="minecraft:red_shulker_box" name="Red Shulker Box" />
 	<ShulkerBox stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
 
-	<GlazedTerracotta id="235" stringId="minecraft:white_glazed_terracotta" name="White Glazed Terracotta" />
-	<GlazedTerracotta id="236" stringId="minecraft:orange_glazed_terracotta" name="Orange Glazed Terracotta" />
-	<GlazedTerracotta id="237" stringId="minecraft:magenta_glazed_terracotta" name="Magenta Glazed Terracotta" />
-	<GlazedTerracotta id="238" stringId="minecraft:light_blue_glazed_terracotta" name="Light Blue Glazed Terracotta" />
-	<GlazedTerracotta id="239" stringId="minecraft:yellow_glazed_terracotta" name="Yellow Glazed Terracotta" />
-	<GlazedTerracotta id="240" stringId="minecraft:lime_glazed_terracotta" name="Lime Glazed Terracotta" />
-	<GlazedTerracotta id="241" stringId="minecraft:pink_glazed_terracotta" name="Pink Glazed Terracotta" />
-	<GlazedTerracotta id="242" stringId="minecraft:gray_glazed_terracotta" name="Gray Glazed Terracotta" />
-	<GlazedTerracotta id="243" stringId="minecraft:light_gray_glazed_terracotta" name="Light Gray Glazed Terracotta" />
-	<GlazedTerracotta id="244" stringId="minecraft:cyan_glazed_terracotta" name="Cyan Glazed Terracotta" />
-	<GlazedTerracotta id="245" stringId="minecraft:purple_glazed_terracotta" name="Purple Glazed Terracotta" />
-	<GlazedTerracotta id="246" stringId="minecraft:blue_glazed_terracotta" name="Blue Glazed Terracotta" />
-	<GlazedTerracotta id="247" stringId="minecraft:brown_glazed_terracotta" name="Brown Glazed Terracotta" />
-	<GlazedTerracotta id="248" stringId="minecraft:green_glazed_terracotta" name="Green Glazed Terracotta" />
-	<GlazedTerracotta id="249" stringId="minecraft:red_glazed_terracotta" name="Red Glazed Terracotta" />
-	<GlazedTerracotta id="250" stringId="minecraft:black_glazed_terracotta" name="Black Glazed Terracotta" />
-
-	<Solid id="251:0" stringId="minecraft:white_concrete" name="White Concrete"  texture="white_concrete.png" />
-	<Solid id="251:1" stringId="minecraft:orange_concrete" name="Orange Concrete"  texture="orange_concrete.png" />
-	<Solid id="251:2" stringId="minecraft:magenta_concrete" name="Magenta Concrete"  texture="magenta_concrete.png" />
-	<Solid id="251:3" stringId="minecraft:light_blue_concrete" name="Light Blue Concrete"  texture="light_blue_concrete.png" />
-	<Solid id="251:4" stringId="minecraft:yellow_concrete" name="Yellow Concrete"  texture="yellow_concrete.png" />
-	<Solid id="251:5" stringId="minecraft:lime_concrete" name="Lime Concrete"  texture="lime_concrete.png" />
-	<Solid id="251:6" stringId="minecraft:pink_concrete" name="Pink Concrete"  texture="pink_concrete.png" />
-	<Solid id="251:7" stringId="minecraft:gray_concrete" name="Gray Concrete"  texture="gray_concrete.png" />
-	<Solid id="251:8" stringId="minecraft:light_gray_concrete" name="Silver Concrete"  texture="light_gray_concrete.png" />
-	<Solid id="251:9" stringId="minecraft:cyan_concrete" name="Cyan Concrete"  texture="cyan_concrete.png" />
-	<Solid id="251:10" stringId="minecraft:purple_concrete" name="Purple Concrete"  texture="purple_concrete.png" />
-	<Solid id="251:11" stringId="minecraft:blue_concrete" name="Blue Concrete"  texture="blue_concrete.png" />
-	<Solid id="251:12" stringId="minecraft:brown_concrete" name="Brown Concrete"  texture="brown_concrete.png" />
-	<Solid id="251:13" stringId="minecraft:green_concrete" name="Green Concrete"  texture="green_concrete.png" />
-	<Solid id="251:14" stringId="minecraft:red_concrete" name="Red Concrete"  texture="red_concrete.png" />
-	<Solid id="251:15" stringId="minecraft:black_concrete" name="Black Concrete"  texture="black_concrete.png" />
-
-	<Solid id="252:0" stringId="minecraft:white_concrete_powder" name="White Concrete Powder"  texture="white_concrete_powder.png" />
-	<Solid id="252:1" stringId="minecraft:orange_concrete_powder" name="Orange Concrete Powder"  texture="orange_concrete_powder.png" />
-	<Solid id="252:2" stringId="minecraft:magenta_concrete_powder" name="Magenta Concrete Powder"  texture="magenta_concrete_powder.png" />
-	<Solid id="252:3" stringId="minecraft:light_blue_concrete_powder" name="Light Blue Concrete Powder"  texture="light_blue_concrete_powder.png" />
-	<Solid id="252:4" stringId="minecraft:yellow_concrete_powder" name="Yellow Concrete Powder"  texture="yellow_concrete_powder.png" />
-	<Solid id="252:5" stringId="minecraft:lime_concrete_powder" name="Lime Concrete Powder"  texture="lime_concrete_powder.png" />
-	<Solid id="252:6" stringId="minecraft:pink_concrete_powder" name="Pink Concrete Powder"  texture="pink_concrete_powder.png" />
-	<Solid id="252:7" stringId="minecraft:gray_concrete_powder" name="Gray Concrete Powder"  texture="gray_concrete_powder.png" />
-	<Solid id="252:8" stringId="minecraft:light_gray_concrete_powder" name="Silver Concrete Powder"  texture="light_gray_concrete_powder.png" />
-	<Solid id="252:9" stringId="minecraft:cyan_concrete_powder" name="Cyan Concrete Powder"  texture="cyan_concrete_powder.png" />
-	<Solid id="252:10" stringId="minecraft:purple_concrete_powder" name="Purple Concrete Powder"  texture="purple_concrete_powder.png" />
-	<Solid id="252:11" stringId="minecraft:blue_concrete_powder" name="Blue Concrete Powder"  texture="blue_concrete_powder.png" />
-	<Solid id="252:12" stringId="minecraft:brown_concrete_powder" name="Brown Concrete Powder"  texture="brown_concrete_powder.png" />
-	<Solid id="252:13" stringId="minecraft:green_concrete_powder" name="Green Concrete Powder"  texture="green_concrete_powder.png" />
-	<Solid id="252:14" stringId="minecraft:red_concrete_powder" name="Red Concrete Powder"  texture="red_concrete_powder.png" />
-	<Solid id="252:15" stringId="minecraft:black_concrete_powder" name="Black Concrete Powder"  texture="black_concrete_powder.png" />
-
-	<DataSolid id="255" stringId="minecraft:structure_block" name="Structure Block" 
-						side0="structure_block_save.png" top0="structure_block_save.png"
-						side1="structure_block_load.png" top1="structure_block_load.png"
-						side2="structure_block_corner.png" top2="structure_block_corner.png"
-						side3="structure_block_data.png" top3="structure_block_data.png" />
-
 	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
 
-	<ItemFrame id="-2" name="ItemFrame" background="item_frame.png" border="birch_planks.png" map="assets/minecraft/textures/map/map_background.png" />
+	<ItemFrameNew id="-2" name="ItemFrame==" background="item_frame.png" border="birch_planks.png" map="assets/minecraft/textures/map/map_background.png" />
 
 	<!-- <Furnace id="1122" name="Computer" top="assets/computercraft/textures/blocks/computerTop.png" side="assets/computercraft/textures/blocks/computerSide.png" front="assets/computercraft/textures/blocks/computerFrontOn.png" />-->
-
-	<!-- <Block id="2" stringId="minecraft:grass" name="Grass" /> -->
 
 </blockConfig>
