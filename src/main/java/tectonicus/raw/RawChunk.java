@@ -841,8 +841,8 @@ public class RawChunk
 
 	public String getBlockName(final int x, final int y, final int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
-			return null;
+		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH)
+			return StringUtils.EMPTY;
 
 		final int sectionY = y / MAX_SECTIONS;
 		final int localY = y % SECTION_HEIGHT;
@@ -851,7 +851,7 @@ public class RawChunk
 		if (s != null)
 			return s.blockNames[x][localY][z];
 		else
-			return null;
+			return StringUtils.EMPTY;
 	}
 
 	public void setBlockName(final int x, final int y, final int z, final String blockName)

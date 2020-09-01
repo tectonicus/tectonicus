@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,6 +18,7 @@ import tectonicus.Version;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -105,10 +106,21 @@ public class Water implements BlockType
 		BlockType aboveSouth = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z-1);
 		BlockType aboveEast = world.getBlockType(rawChunk.getChunkCoord(), x+1, y+1, z);
 		BlockType aboveWest = world.getBlockType(rawChunk.getChunkCoord(), x-1, y+1, z);
+
+		BlockProperties aboveProperties = world.getBlockState(rawChunk.getChunkCoord(), x, y+1, z);
+		BlockProperties belowProperties = world.getBlockState(rawChunk.getChunkCoord(), x, y-1, z);
+		BlockProperties northProperties = world.getBlockState(rawChunk.getChunkCoord(), x, y, z-1);
+		BlockProperties southProperties = world.getBlockState(rawChunk.getChunkCoord(), x, y, z+1);
+		BlockProperties westProperties = world.getBlockState(rawChunk.getChunkCoord(), x-1, y, z);
+		BlockProperties eastProperties = world.getBlockState(rawChunk.getChunkCoord(), x+1, y, z);
+
+		//TODO: handle some waterlogged blocks better e.g. waterlogged stairs
+
 		if(!above.getName().equals("Ice") && !above.isWater() && !aboveNorth.isWater() && !aboveSouth.isWater() && !aboveEast.isWater() && !aboveWest.isWater())  // Only water blocks that don't have another water block above them should be lower
 		{
-			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
-			if (!north.isWater())
+			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
+			String westName = world.getBlockName(rawChunk.getChunkCoord(), x-1, y, z);
+			if (!west.isWater() && !isWaterlogged(westProperties, westName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
 										new Vector3f(x,		y+waterLevel,	z+1),
@@ -118,8 +130,9 @@ public class Water implements BlockType
 										subTexture); 
 			}
 
-			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
-			if (!south.isWater())
+			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
+			String eastName = world.getBlockName(rawChunk.getChunkCoord(), x+1, y, z);
+			if (!east.isWater() && !isWaterlogged(eastProperties, eastName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+waterLevel,		z+1),
 										new Vector3f(x+1,		y+waterLevel,	z),
@@ -129,8 +142,9 @@ public class Water implements BlockType
 										subTexture); 
 			}
 
-			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
-			if (!east.isWater())
+			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
+			String northName = world.getBlockName(rawChunk.getChunkCoord(), x, y, z-1);
+			if (!north.isWater() && !isWaterlogged(northProperties, northName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+waterLevel,	z),
 										new Vector3f(x,		y+waterLevel,	z),
@@ -140,8 +154,9 @@ public class Water implements BlockType
 										subTexture); 
 			}
 
-			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
-			if (!west.isWater())
+			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
+			String southName = world.getBlockName(rawChunk.getChunkCoord(), x, y, z+1);
+			if (!south.isWater() && !isWaterlogged(southProperties, southName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z+1),
 										new Vector3f(x+1,	y+waterLevel,	z+1),
@@ -163,7 +178,8 @@ public class Water implements BlockType
 			
 			
 			BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-			if (!below.isWater())
+			String belowName = world.getBlockName(rawChunk.getChunkCoord(), x, y+1, z);
+			if (!below.isWater() && !isWaterlogged(belowProperties, belowName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
 										new Vector3f(x+1,	y,	z+1),
@@ -175,10 +191,9 @@ public class Water implements BlockType
 		}
 		else
 		{
-		//	final int northId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
-		//	BlockType north = registry.find(northId);
-			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
-			if (!north.isWater())
+			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
+			String westName = world.getBlockName(rawChunk.getChunkCoord(), x-1, y, z);
+			if (!west.isWater() && !isWaterlogged(westProperties, westName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
 										new Vector3f(x,		y+1,	z+1),
@@ -187,11 +202,10 @@ public class Water implements BlockType
 										new Vector4f(waterColor.r * northLight, waterColor.g * northLight, waterColor.b * northLight, alpha),
 										subTexture); 
 			}
-			
-		//	final int southId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
-		//	BlockType south = registry.find(southId);
-			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
-			if (!south.isWater())
+
+			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
+			String eastName = world.getBlockName(rawChunk.getChunkCoord(), x+1, y, z);
+			if (!east.isWater() && !isWaterlogged(eastProperties, eastName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,		z+1),
 										new Vector3f(x+1,		y+1,	z),
@@ -200,11 +214,10 @@ public class Water implements BlockType
 										new Vector4f(waterColor.r * southLight, waterColor.g * southLight, waterColor.b * southLight, alpha),
 										subTexture); 
 			}
-			
-		//	final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
-		//	BlockType east = registry.find(eastId);
-			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
-			if (!east.isWater())
+
+			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
+			String northName = world.getBlockName(rawChunk.getChunkCoord(), x, y, z-1);
+			if (!north.isWater() && !isWaterlogged(northProperties, northName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
 										new Vector3f(x,		y+1,	z),
@@ -213,11 +226,10 @@ public class Water implements BlockType
 										new Vector4f(waterColor.r * eastLight, waterColor.g * eastLight, waterColor.b * eastLight, alpha),
 										subTexture); 
 			}
-			
-		//	final int westId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
-		//	BlockType west = registry.find(westId);
-			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
-			if (!west.isWater())
+
+			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
+			String southName = world.getBlockName(rawChunk.getChunkCoord(), x, y, z+1);
+			if (!south.isWater() && !isWaterlogged(southProperties, southName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
 										new Vector3f(x+1,	y+1,	z+1),
@@ -226,26 +238,21 @@ public class Water implements BlockType
 										new Vector4f(waterColor.r * westLight, waterColor.g * westLight, waterColor.b * westLight, alpha),
 										subTexture); 
 			}
-			
-			
-		//	final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
-		//	BlockType above = registry.find(aboveId);
-			
-		//	if (!above.isWater())
-			
+
+			String aboveName = world.getBlockName(rawChunk.getChunkCoord(), x, y+1, z);
+			if (!isWaterlogged(aboveProperties, aboveName)) {
 				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
-				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
-										new Vector3f(x+1,	y+1,	z),
-										new Vector3f(x+1,	y+1,	z+1),
-										new Vector3f(x,		y+1,	z+1),
-										new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, aboveAlpha),
-										subTexture);
-			
-			
-		//	final int belowId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
-		//	BlockType below = registry.find(belowId);
+				MeshUtil.addQuad(mesh, new Vector3f(x, y + 1, z),
+									   new Vector3f(x + 1, y + 1, z),
+									   new Vector3f(x + 1, y + 1, z + 1),
+									   new Vector3f(x, y + 1, z + 1),
+									   new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, aboveAlpha),
+									   subTexture);
+			}
+
 			BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-			if (!below.isWater())
+			String belowName = world.getBlockName(rawChunk.getChunkCoord(), x, y+1, z);
+			if (!below.isWater() && !isWaterlogged(belowProperties, belowName))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
 										new Vector3f(x+1,	y,	z+1),
@@ -255,6 +262,11 @@ public class Water implements BlockType
 										subTexture);
 			}
 		}
+	}
+
+	private boolean isWaterlogged(BlockProperties properties, String id) {
+		return (properties != null && properties.containsKey("waterlogged") && properties.get("waterlogged").equals("true"))
+				|| id.contains("kelp") || id.contains("seagrass") || id.contains("pickle") || id.contains("coral");
 	}
 	
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -33,6 +34,7 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BedEntity;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Geometry;
@@ -517,6 +519,12 @@ public class ItemRenderer
 		{
 			return registry.find(0, 0);
 		}
+
+		@Override
+		public String getBlockName(ChunkCoord chunkCoord, int x, int y, int z) { return StringUtils.EMPTY; }
+
+		@Override
+		public BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z) { return null; }
 		
 		@Override
 		public float getLight(ChunkCoord chunkCoord, int x, int y, int z, LightFace face)

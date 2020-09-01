@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jnbt.NBTInputStream.Compression;
 import org.joml.Vector3f;
 import tectonicus.blockTypes.BlockRegistry;
@@ -117,9 +118,12 @@ public class Chunk
 					{
 						BlockType type = null;
 						final String blockName = rawChunk.getBlockName(x, y, z);
-						if (blockName != null)
+						if (blockName != null && !blockName.equals(StringUtils.EMPTY))
 						{
+							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+
 							// These blocks don't have models or they require special handling so they are created by the old system
+							//TODO: we should be able to detect this programatically and not hard code these blocks
 							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava") || blockName.equals("minecraft:air")
 									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
 									|| blockName.contains("skull") || blockName.contains("banner")
@@ -129,7 +133,6 @@ public class Chunk
 							} else {
 								//TODO: This is quite slow. Need to profile and figure out if it can be sped up
 								List<BlockStateModel> models;
-								BlockProperties properties = rawChunk.getBlockState(x, y, z);
 								NamePropertiesPair pair = new NamePropertiesPair(blockName, properties);
 								if (blockStateCache.containsKey(pair)) {
 									models = blockStateCache.get(pair);
@@ -142,6 +145,12 @@ public class Chunk
 								for (BlockStateModel model : models) {
 									model.createGeometry(x, y, z, world, modelRegistry, rawChunk, geometry);
 								}
+							}
+
+							//Render a water block at this same location if waterlogged
+							if (properties.containsKey("waterlogged") && properties.get("waterlogged").equals("true")
+									|| blockName.equals("minecraft:kelp") || blockName.equals("minecraft:kelp_plant") || blockName.contains("seagrass")) {  //TODO: is there some way to avoid hard-coding these blocks?
+								registry.find("minecraft:water").addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
 							}
 						}
 						else

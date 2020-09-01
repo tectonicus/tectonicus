@@ -9,6 +9,7 @@
 
 package tectonicus.world;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
@@ -44,6 +45,7 @@ import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.Biome;
 import tectonicus.raw.BiomeIds;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
@@ -777,6 +779,47 @@ public class World implements BlockContext
 			final int id = c.getBlockId(loc.x, loc.y, loc.z, defaultBlockId);
 			final int data = c.getRawChunk().getBlockData(loc.x, loc.y, loc.z);
 			return registry.find(id, data);
+		}
+	}
+
+	@Override
+	public String getBlockName(ChunkCoord chunkCoord, int x, int y, int z)
+	{
+		if (y < 0 || y >= RawChunk.HEIGHT)
+			return StringUtils.EMPTY;
+
+		Location loc = resolve(chunkCoord, x, y, z);
+		Chunk c = rawLoadedChunks.get(loc.coord);
+		if (c == null)
+		{
+			return StringUtils.EMPTY;
+		}
+		else
+		{
+			final String name = c.getRawChunk().getBlockName(loc.x, loc.y, loc.z);
+
+			if (name != null)
+				return name;
+			else
+				return StringUtils.EMPTY;
+		}
+	}
+
+	@Override
+	public BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z)
+	{
+		if (y < 0 || y >= RawChunk.HEIGHT)
+			return null;
+
+		Location loc = resolve(chunkCoord, x, y, z);
+		Chunk c = rawLoadedChunks.get(loc.coord);
+		if (c == null)
+		{
+			return null;
+		}
+		else
+		{
+			return c.getRawChunk().getBlockState(loc.x, loc.y, loc.z);
 		}
 	}
 	
