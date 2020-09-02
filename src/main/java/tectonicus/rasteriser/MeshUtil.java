@@ -22,6 +22,7 @@ import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockTypes.BlockUtil;
 import tectonicus.configuration.LightFace;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.Geometry.MeshType;
@@ -281,7 +282,13 @@ public class MeshUtil
 					final float power = (Integer.parseInt(rawChunk.getBlockState(x, y, z).get("power")) / 16.0f);
 					tintColor = new Colour4f(Util.clamp(power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
 				} else if (modelName.contains("stem") && !modelName.contains("mushroom")) {
-					final int age = Integer.parseInt(rawChunk.getBlockState(x, y, z).get("age"));
+					BlockProperties stemProperties = rawChunk.getBlockState(x, y, z);
+					int age;
+					if (stemProperties.containsKey("age")) {
+						age = Integer.parseInt(rawChunk.getBlockState(x, y, z).get("age"));
+					} else {
+						age = 7;
+					}
 					tintColor = new Colour4f(age*32/255f, (255-age*8)/255f, age*4/255f);
 				} else if (modelName.contains("lilypad")) {
 					tintColor = new Colour4f(32/255f, 128/255f, 48/255f);
