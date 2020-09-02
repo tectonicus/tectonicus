@@ -279,7 +279,12 @@ public class MeshUtil
 					tintColor = world.getWaterColor(rawChunk.getChunkCoord(), x, y, z);
 				} else if (modelName.contains("redstone")) {
 					final float power = (Integer.parseInt(rawChunk.getBlockState(x, y, z).get("power")) / 16.0f);
-					tintColor = new Colour4f(Util.clamp(1.0f * power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
+					tintColor = new Colour4f(Util.clamp(power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
+				} else if (modelName.contains("stem") && !modelName.contains("mushroom")) {
+					final int age = Integer.parseInt(rawChunk.getBlockState(x, y, z).get("age"));
+					tintColor = new Colour4f(age*32/255f, (255-age*8)/255f, age*4/255f);
+				} else if (modelName.contains("lilypad")) {
+					tintColor = new Colour4f(32/255f, 128/255f, 48/255f);
 				}
 				else {
 					tintColor = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
