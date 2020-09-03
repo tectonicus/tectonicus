@@ -128,7 +128,8 @@ public class Chunk
 									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
 									|| blockName.contains("skull") || blockName.contains("banner")
 									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")
-									|| blockName.contains("beacon") || blockName.equals("minecraft:end_portal") || blockName.equals("minecraft:end_gateway")) {
+									|| blockName.contains("beacon") || blockName.equals("minecraft:end_portal") || blockName.equals("minecraft:end_gateway")
+									|| blockName.equals("minecraft:conduit")) {
 								type = registry.find(blockName);
 							} else {
 								//TODO: This is quite slow. Need to profile and figure out if it can be sped up

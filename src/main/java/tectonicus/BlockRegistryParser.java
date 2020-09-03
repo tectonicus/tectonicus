@@ -42,6 +42,7 @@ import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.ChorusFlower;
 import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
+import tectonicus.blockTypes.Conduit;
 import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.DaylightSensor;
 import tectonicus.blockTypes.Dispenser;
@@ -865,6 +866,10 @@ public class BlockRegistryParser
 		else if (nodeName.equals("observer"))
 		{
 			blockType = new Observer(name, stringId);
+		}
+		else if (nodeName.equals("conduit")) {
+			SubTexture texture = parseTexture(element, "texture", null);
+			blockType = new Conduit(name, stringId, texture);
 		}
 		else
 		{
