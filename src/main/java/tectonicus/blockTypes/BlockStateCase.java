@@ -22,7 +22,7 @@ import java.util.Map;
 @Builder
 @Getter
 @ToString
-public class BlockStateCase {
+public class BlockStateCase implements BlockState{
 	List<Map<String, String>> whenClauses;
 	List<BlockStateModel> models;
 

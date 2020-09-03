@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
@@ -41,6 +42,7 @@ import java.util.Map.Entry;
 
 
 @Log4j2
+@NoArgsConstructor
 public class BlockRegistry
 {
 	@Getter
@@ -53,8 +55,9 @@ public class BlockRegistry
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
 	private static final String ROTATION_FIELD = "rotation";
-	
-	public BlockRegistry()
+
+
+	public BlockRegistry(String blah)
 	{
 		try {
 			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
@@ -80,11 +83,6 @@ public class BlockRegistry
 		this.zips = texturePack.getZipStack();
 		log.info("Loading all block state and block model json files...");
 		deserializeBlockstates();
-		try {
-			loadModels();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 		log.info("All json files loaded.");
 	}
 
@@ -152,7 +150,7 @@ public class BlockRegistry
 		return states;
 	}
 
-	public static List<BlockStateModel> deserializeBlockStateModels(JsonNode models) {
+	public List<BlockStateModel> deserializeBlockStateModels(JsonNode models) {
 		List<BlockStateModel> stateModels = new ArrayList<>();
 		try {
 			if (models.isArray()) {
@@ -163,44 +161,37 @@ public class BlockRegistry
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
+
+		try {
+			loadBlockStateModels(stateModels);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return stateModels;
 	}
 
 	public void loadBlockStateModels(List<BlockStateModel> models) throws Exception {
-		for(BlockStateModel model : models)
+		for(BlockStateModel stateModel : models)
 		{
-			String modelName = model.getModel();
-			if(!blockModels.containsKey(modelName))
+			String modelPath = stateModel.getModel();
+			if(stateModel.getBlockModel() == null)
 			{
-				loadModel(modelName);
-			}
-		}
-	}
-
-	public void loadModels() throws Exception {
-		for (Map.Entry<String, BlockStateWrapper> entry : blockStates.entrySet()) {
-			BlockStateWrapper states = entry.getValue();
-			if (!states.getCases().isEmpty()) {
-				for(BlockStateCase bsc : states.getCases()) {
-					loadBlockStateModels(bsc.getModels());
-				}
-			} else if (!states.getVariants().isEmpty()){
-				for(BlockVariant variant : states.getVariants()) {
-					loadBlockStateModels(variant.getModels());
-				}
-			} else {
-				//Error no cases or variants found
+				stateModel.setBlockModel(loadModel(modelPath));
 			}
 		}
 	}
 	
-	public void loadModel(String modelName) throws Exception
+	public BlockModel loadModel(String modelName) throws Exception
 	{
 		if (!modelName.contains("block/")) {
 			modelName = "block/" + modelName;
 		}
 
-		blockModels.put(modelName, loadModel(modelName, StringUtils.EMPTY, new HashMap<>(), null));
+		BlockModel model = loadModel(modelName, StringUtils.EMPTY, new HashMap<>(), null);
+
+		blockModels.put(modelName, model);
+		return model;
 	}
 	
 	// Recurse through model files and get block model information

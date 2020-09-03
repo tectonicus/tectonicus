@@ -19,7 +19,8 @@ import tectonicus.world.World;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockStateModel {
-	private String model = "";  //TODO: can we make this be the actual BlockModel?
+	private String model = "";
+	private BlockModel blockModel;
 	@JsonProperty("x")
 	private int xRotation = 0;
 	@JsonProperty("y")
@@ -28,7 +29,6 @@ public class BlockStateModel {
 	private boolean uvlock = false;
 
 	public void createGeometry(int x, int y, int z, World world, BlockRegistry registry, RawChunk rawChunk, Geometry geometry) {
-		BlockModel blockModel = registry.getModel(model);
 		blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation);  //TODO: pass in weight and uvlock
 	}
 }

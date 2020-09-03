@@ -27,7 +27,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static tectonicus.blockTypes.BlockRegistry.deserializeBlockStateModels;
 
 
 class BlockVariantTests
@@ -74,7 +73,8 @@ class BlockVariantTests
 	@Test
 	void testDeserializeVariantSingleModel() throws JsonProcessingException {
 		JsonNode variant = mapper.readTree("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
-		List<BlockStateModel> models = deserializeBlockStateModels(variant);
+		BlockRegistry registry = new BlockRegistry();
+		List<BlockStateModel> models = registry.deserializeBlockStateModels(variant);
 
 		assertThat(models.size(), is(equalTo(1)));
 		assertThat(models.get(0).getModel(), is("acacia_fence_n"));
@@ -83,7 +83,8 @@ class BlockVariantTests
 	@Test
 	void testDeserializeVariantMultipleModels() throws JsonProcessingException {
 		JsonNode variant = mapper.readTree("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
-		List<BlockStateModel> models = deserializeBlockStateModels(variant);
+		BlockRegistry registry = new BlockRegistry();
+		List<BlockStateModel> models = registry.deserializeBlockStateModels(variant);
 		
 		assertThat(models.size(), is(equalTo(4)));
 		assertThat(models.get(2).getModel(), is("grass_normal"));

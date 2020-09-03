@@ -10,16 +10,19 @@
 package tectonicus.blockTypes;
 
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import tectonicus.raw.BlockProperties;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @Getter
 public class BlockStateWrapper {
-	private List<BlockStateCase> cases = new ArrayList<>();
-	private List<BlockVariant> variants = new ArrayList<>();
+	private final List<BlockStateCase> cases = new ArrayList<>();
+	private final List<BlockVariant> variants = new ArrayList<>();
+	private final Random random = new Random();
 
 	public void addCase(BlockStateCase bsc) {
 		cases.add(bsc);
@@ -47,7 +50,7 @@ public class BlockStateWrapper {
 							}
 						}
 						if (addModel) {
-							models.addAll(bsc.getModels());
+							models.add(getBlockStateModel(bsc));
 							break;
 						}
 					}
@@ -55,12 +58,23 @@ public class BlockStateWrapper {
 			}
 		} else {
 			for (BlockVariant variant : variants) {
-				if (properties.containsAll(variant.getName())) {
-					models.addAll(variant.getModels());
+				String variantProperties = variant.getName();
+				if (variantProperties.equals(StringUtils.EMPTY) || properties.containsAll(variantProperties)) {
+					models.add(getBlockStateModel(variant));
 					break;
 				}
 			}
 		}
 		return models;
+	}
+
+	private BlockStateModel getBlockStateModel(BlockState state) {
+		List<BlockStateModel> variantModels = state.getModels();
+		int size = variantModels.size();
+		if (size > 1) {
+			return variantModels.get(random.nextInt(size));
+		} else {
+			return variantModels.get(0);
+		}
 	}
 }

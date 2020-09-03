@@ -97,7 +97,7 @@ public class Chunk
 		}
 	}
 	
-	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack, Map<NamePropertiesPair, List<BlockStateModel>> blockStateCache)
+	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack)
 	{
 		if (rawChunk == null)
 			return false;
@@ -124,7 +124,7 @@ public class Chunk
 
 							// These blocks don't have models or they require special handling so they are created by the old system
 							//TODO: we should be able to detect this programatically and not hard code these blocks
-							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava") || blockName.equals("minecraft:air")
+							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava") //|| blockName.equals("minecraft:air") || blockName.equals("minecraft:cave_air")
 									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
 									|| blockName.contains("skull") || blockName.contains("banner")
 									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")
@@ -134,14 +134,8 @@ public class Chunk
 							} else {
 								//TODO: This is quite slow. Need to profile and figure out if it can be sped up
 								List<BlockStateModel> models;
-								NamePropertiesPair pair = new NamePropertiesPair(blockName, properties);
-								if (blockStateCache.containsKey(pair)) {
-									models = blockStateCache.get(pair);
-								} else {
-									BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
-									models = stateWrapper.getModels(properties);
-									blockStateCache.put(pair, models);
-								}
+								BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
+								models = stateWrapper.getModels(properties);
 
 								for (BlockStateModel model : models) {
 									model.createGeometry(x, y, z, world, modelRegistry, rawChunk, geometry);

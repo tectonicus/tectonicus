@@ -571,8 +571,6 @@ public class World implements BlockContext
 			}
 		}
 
-		Map<NamePropertiesPair, List<BlockStateModel>> blockStateCache = new HashMap<>();
-
 		for (ChunkCoord coord : visible)
 		{
 			// Create geometry if not present
@@ -583,7 +581,7 @@ public class World implements BlockContext
 				{	
 					// Actually create the geometry
 					
-					final boolean ok = c.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack, blockStateCache);
+					final boolean ok = c.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
 					assert ok;
 					
 					geometryLoadedChunks.put(coord, c);

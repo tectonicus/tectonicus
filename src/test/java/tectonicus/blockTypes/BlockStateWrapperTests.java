@@ -24,7 +24,7 @@ class BlockStateWrapperTests {
 
 	@Test
 	void wrapperReturnsModelsFromBlockVariant() {
-		BlockRegistry test = new BlockRegistry();
+		BlockRegistry test = new BlockRegistry("");
 		test.deserializeBlockstates();
 		BlockStateWrapper wrapper = test.getBlock("minecraft:acacia_door");
 
@@ -43,7 +43,7 @@ class BlockStateWrapperTests {
 
 	@Test
 	void wrapperReturnsModelsFromMultipart() {
-		BlockRegistry test = new BlockRegistry();
+		BlockRegistry test = new BlockRegistry("");
 		test.deserializeBlockstates();
 		BlockStateWrapper wrapper = test.getBlock("minecraft:acacia_fence");
 
@@ -63,7 +63,7 @@ class BlockStateWrapperTests {
 
 	@Test
 	void wrapperReturnsModelsFromComplicatedMultipart() {
-		BlockRegistry test = new BlockRegistry();
+		BlockRegistry test = new BlockRegistry("");
 		test.deserializeBlockstates();
 		BlockStateWrapper wrapper = test.getBlock("minecraft:redstone_wire");
 

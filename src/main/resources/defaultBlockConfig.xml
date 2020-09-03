@@ -2,8 +2,8 @@
 
 	<!-- This doesn't have to be in numeric block order, but it's a lot easier to follow if it is -->
 
-	<Air id="0" stringId="minecraft:air" name="Air" />
-	<Air id="0" stringId="minecraft:cave_air" name="Air" />
+	<Air stringId="minecraft:air" name="Air" />
+	<Air stringId="minecraft:cave_air" name="Air" />
 
 	<!--
 	terrain indexed by 16x16 tile

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-public class BlockVariant
+public class BlockVariant implements BlockState
 {
 	private final String name;
 	private final Map<String, String> states;
