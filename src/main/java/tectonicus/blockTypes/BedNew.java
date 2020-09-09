@@ -13,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
@@ -181,10 +180,6 @@ public class BedNew implements BlockType
 			// Head is pointing east
 			rotation = Rotation.AntiClockwise;
 			angle = 90;
-		}
-		else
-		{
-			System.err.println("Warning: Unknown block data for bed");
 		}
 		
 		// Apply rotation
