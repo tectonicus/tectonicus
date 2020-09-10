@@ -10,6 +10,7 @@
 package tectonicus.blockTypes;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.raw.BlockProperties;
 
@@ -23,6 +24,8 @@ public class BlockStateWrapper {
 	private final List<BlockStateCase> cases = new ArrayList<>();
 	private final List<BlockVariant> variants = new ArrayList<>();
 	private final Random random = new Random();
+	@Setter
+	private boolean fullBlock = true;
 
 	public void addCase(BlockStateCase bsc) {
 		cases.add(bsc);

@@ -83,6 +83,7 @@ public class BlockRegistry
 		this.zips = texturePack.getZipStack();
 		log.info("Loading all block state and block model json files...");
 		deserializeBlockstates();
+		checkBlockAttributes();
 		log.info("All json files loaded.");
 	}
 
@@ -273,5 +274,29 @@ public class BlockRegistry
 		}
 		
 		return newTexMap;
+	}
+
+	private void checkBlockAttributes() {
+		for (BlockStateWrapper wrapper : blockStates.values()) {
+			List<BlockStateCase> cases = wrapper.getCases();
+			if (!cases.isEmpty()) {
+				for (BlockStateCase c : cases) {
+					setBlockAttributes(wrapper, c.getModels());
+				}
+			} else {
+				for (BlockVariant variant : wrapper.getVariants()) {
+					setBlockAttributes(wrapper, variant.getModels());
+				}
+			}
+		}
+	}
+
+	private void setBlockAttributes(BlockStateWrapper wrapper, List<BlockStateModel> models) {
+		for (BlockStateModel model : models) {
+			BlockModel blockModel = model.getBlockModel();
+			if (wrapper.isFullBlock() && (!blockModel.isFullBlock() || !blockModel.isSolid())) {
+				wrapper.setFullBlock(false);
+			}
+		}
 	}
 }

@@ -9,6 +9,7 @@
 
 package tectonicus.world;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import tectonicus.BlockContext;
@@ -29,8 +30,7 @@ import tectonicus.Util;
 import tectonicus.Version;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.BlockRegistry;
-import tectonicus.blockTypes.BlockStateModel;
-import tectonicus.blockTypes.NamePropertiesPair;
+import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
@@ -87,7 +87,7 @@ import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 
-
+@Log4j2
 public class World implements BlockContext
 {
 	private static final int BATCH_SIZE = 100;
@@ -131,6 +131,8 @@ public class World implements BlockContext
 	private Geometry daySkybox, nightSkybox;
 	
 	private SignFilter signFilter;
+
+	private final static String DEFAULT_BLOCK_ID = "minecraft:air";
 	
 	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache, SignFilter signFilter)
 	{
@@ -777,6 +779,30 @@ public class World implements BlockContext
 			final int id = c.getBlockId(loc.x, loc.y, loc.z, defaultBlockId);
 			final int data = c.getRawChunk().getBlockData(loc.x, loc.y, loc.z);
 			return registry.find(id, data);
+		}
+	}
+
+	@Override
+	public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z)
+	{
+		if (y < 0 || y >= RawChunk.HEIGHT)
+			return modelRegistry.getBlock(DEFAULT_BLOCK_ID);
+
+		Location loc = resolve(chunkCoord, x, y, z);
+		Chunk c = rawLoadedChunks.get(loc.coord);
+		if (c == null)
+		{
+			return modelRegistry.getBlock(DEFAULT_BLOCK_ID);
+		}
+		else
+		{
+			final String name = c.getRawChunk().getBlockName(loc.x, loc.y, loc.z);
+
+			if (StringUtils.isNotEmpty(name)) {
+				return modelRegistry.getBlock(name);
+			} else {
+				return modelRegistry.getBlock(DEFAULT_BLOCK_ID);
+			}
 		}
 	}
 

@@ -24,6 +24,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightFace;
@@ -497,7 +498,7 @@ public class ItemRenderer
 		}
 	}
 	
-	private class ItemContext implements BlockContext
+	private class ItemContext implements BlockContext  //TODO: why does this implement BlockContext when it does nothing with any of the implemented methods?
 	{
 		private TexturePack texturePack;
 		private BlockTypeRegistry registry;
@@ -519,6 +520,9 @@ public class ItemRenderer
 		{
 			return registry.find(0, 0);
 		}
+
+		@Override
+		public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z) { return null; }
 
 		@Override
 		public String getBlockName(ChunkCoord chunkCoord, int x, int y, int z) { return StringUtils.EMPTY; }

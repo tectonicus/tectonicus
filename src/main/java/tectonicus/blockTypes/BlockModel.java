@@ -43,6 +43,8 @@ public class BlockModel
 	private boolean isSolid = true;
 	@Setter
 	private boolean isTransparent = false;
+	@Setter
+	private boolean isFullBlock = true;
 
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
@@ -55,6 +57,7 @@ public class BlockModel
 		if (elementsNode != null) {
 			this.elements = deserializeBlockElements(combineMap, elementsNode, texturePack, this);
 		} else {
+			this.isFullBlock = false;  //This assumes that any block with no elements is not a full block, this isn't correct (shulker box) but works fine
 			this.elements = Collections.emptyList();
 		}
 	}
@@ -74,6 +77,12 @@ public class BlockModel
 			Vector3f fromVector = new Vector3f(from.get(0).floatValue(), from.get(1).floatValue(), from.get(2).floatValue());
 			JsonNode to = element.get("to");
 			Vector3f toVector = new Vector3f(to.get(0).floatValue(), to.get(1).floatValue(), to.get(2).floatValue());
+
+			//Test if not full-block
+			if (fromVector.x() > 0 && fromVector.x() < 16 || fromVector.y() > 0 && fromVector.y() < 16 || fromVector.z() > 0 && fromVector.z() < 16
+					|| toVector.x() > 0 && toVector.x() < 16 || toVector.y() > 0 && toVector.y() < 16 || toVector.z() > 0 && toVector.z() < 16) {
+				blockModel.setFullBlock(false);
+			}
 
 			org.joml.Vector3f rotationOrigin = new org.joml.Vector3f(8.0f, 8.0f, 8.0f);
 			org.joml.Vector3f rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);

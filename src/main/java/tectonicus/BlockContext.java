@@ -10,6 +10,7 @@
 package tectonicus;
 
 import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
@@ -22,6 +23,7 @@ public interface BlockContext
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
 	
 	BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);
+	BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z);
 	String getBlockName(ChunkCoord chunkCoord, int x, int y, int z);
 	BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z);
 	
