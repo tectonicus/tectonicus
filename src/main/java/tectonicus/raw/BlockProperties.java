@@ -41,7 +41,10 @@ public class BlockProperties {
         return properties.containsKey(prop);
     }
 
-    public boolean containsAll(String props) {
+    public boolean contains(String props) {
         return this.toString().contains(props);
+    }
+    public boolean containsAll(Map<String, String> props) {
+        return properties.entrySet().containsAll(props.entrySet());
     }
 }

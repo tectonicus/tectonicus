@@ -651,7 +651,7 @@ public class World implements BlockContext
 		// Alpha test pass
 		
 		rasteriser.enableAlphaTest(true);
-		rasteriser.setAlphaFunc(AlphaFunc.Greater, 0.6f); // TODO: Figure out what this value should actually be
+		rasteriser.setAlphaFunc(AlphaFunc.Greater, 0.4f);
 		rasteriser.enableBlending(false);
 		
 		for (Chunk c : visible)
@@ -895,7 +895,7 @@ public class World implements BlockContext
 			return 0;
 		if (y >= RawChunk.HEIGHT)
 			return 1.0f;
-		
+
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = chunks.get(loc.coord);
 		if (c == null)

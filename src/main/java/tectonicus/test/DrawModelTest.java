@@ -20,6 +20,7 @@ import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.configuration.Configuration.RasteriserType;
+import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
@@ -46,7 +47,6 @@ import static org.lwjgl.opengl.GL11.GL_QUADS;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_VENDOR;
 import static org.lwjgl.opengl.GL11.GL_VERSION;
-import static org.lwjgl.opengl.GL11.glAlphaFunc;
 import static org.lwjgl.opengl.GL11.glBegin;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
@@ -91,30 +91,39 @@ public class DrawModelTest
 		int height = 800;
 
 		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, width, height, 24, 8, 24, 4);
+		rasteriser.resetState();
 		windowId = rasteriser.getWindowId();
 
 		BlockRegistry br = new BlockRegistry(rasteriser);
-		BlockModel bm = br.loadModel("block/tripwire_hook_attached", StringUtils.EMPTY, new HashMap<>(), null);
+		BlockModel bm = br.loadModel("block/tripwire_n", StringUtils.EMPTY, new HashMap<>(), null);
 		List<BlockElement> elements = bm.getElements();
 
 		//Rotation for entire block
-		Vector3f rotOrigin = new Vector3f(0,0,0);
+		Vector3f rotOrigin = new Vector3f(8,8,8);
 		Matrix4f blockRotation = new Matrix4f().translate(rotOrigin)
-				  .rotate((float) Math.toRadians(90), 0, 1, 0)
-				  .translate(rotOrigin.negate());
+					.rotate(-(float) Math.toRadians(0), 0, 1, 0)
+					.rotate(-(float) Math.toRadians(0), 1, 0, 0)
+					.translate(rotOrigin.negate());
 		
 		
 		for(BlockElement element : elements)
 		{
 			Vector3f rotationOrigin = element.getRotationOrigin();
 			Vector3f rotationAxis = element.getRotationAxis();
-			
+
 			Matrix4f elementRotation = null;
 			if (element.getRotationAngle() != 0)
 			{
-				elementRotation = new Matrix4f().translate(rotationOrigin)
-									              .rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
-									              .translate(rotationOrigin.negate());
+				if (element.isScaled()) {
+					elementRotation = new Matrix4f().translate(rotationOrigin)
+							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
+							.scale(1, 1, 1.4f)  //TODO: this needs work
+							.translate(rotationOrigin.negate());
+				} else {
+					elementRotation = new Matrix4f().translate(rotationOrigin)
+							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
+							.translate(rotationOrigin.negate());
+				}
 			}
 
 	        float x1 = element.getFrom().x();
@@ -142,7 +151,7 @@ public class DrawModelTest
 			if (element.getFaces().containsKey("down"))
 	        {
 				ElementFace face = element.getFaces().get("down");
-				
+
 				Vector3f topLeft = new Vector3f(x1, y1, z2);
 		        Vector3f topRight = new Vector3f(x2, y1, z2);
 		        Vector3f bottomRight = new Vector3f(x2, y1, z1);
@@ -216,7 +225,7 @@ public class DrawModelTest
 		//glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL11.GL_GREATER, 0.6f);
+		rasteriser.setAlphaFunc(AlphaFunc.Greater, 0.4f);
 		//glEnable(GL_MULTISAMPLE);
 		//glPolygonMode(GL_FRONT, GL_LINE);
 

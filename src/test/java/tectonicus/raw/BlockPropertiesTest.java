@@ -39,7 +39,7 @@ class BlockPropertiesTest {
 
 	@Test
 	void propertiesContainsVariantString() {
-		boolean containsString = properties.containsAll("facing=west,half=lower,hinge=left,open=false");
+		boolean containsString = properties.contains("facing=west,half=lower,hinge=left,open=false");
 
 		assertThat(containsString, is(true));
 	}
@@ -53,7 +53,7 @@ class BlockPropertiesTest {
 		unordered.put("powered", "false");
 		unordered.put("hinge", "left");
 
-		boolean containsString = unordered.containsAll("facing=west,half=lower,hinge=left,open=false");
+		boolean containsString = unordered.contains("facing=west,half=lower,hinge=left,open=false");
 
 		assertThat(containsString, is(true));
 	}

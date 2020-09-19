@@ -62,7 +62,8 @@ public class BlockStateWrapper {
 		} else {
 			for (BlockVariant variant : variants) {
 				String variantProperties = variant.getName();
-				if (variantProperties.equals(StringUtils.EMPTY) || properties.containsAll(variantProperties)) {
+				if (variantProperties.equals(StringUtils.EMPTY) || properties.contains(variantProperties)
+						|| properties.containsAll(variant.getStates())) {
 					models.add(getBlockStateModel(variant));
 					break;
 				}
