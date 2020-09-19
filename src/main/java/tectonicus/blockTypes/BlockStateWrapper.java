@@ -21,11 +21,16 @@ import java.util.Random;
 
 @Getter
 public class BlockStateWrapper {
+	private final String blockName;
 	private final List<BlockStateCase> cases = new ArrayList<>();
 	private final List<BlockVariant> variants = new ArrayList<>();
 	private final Random random = new Random();
 	@Setter
 	private boolean fullBlock = true;
+
+	public BlockStateWrapper(String blockName) {
+		this.blockName = blockName;
+	}
 
 	public void addCase(BlockStateCase bsc) {
 		cases.add(bsc);

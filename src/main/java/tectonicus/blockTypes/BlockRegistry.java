@@ -104,7 +104,7 @@ public class BlockRegistry
 				String name = "minecraft:" + StringUtils.removeEnd(blockStateFile.getFileName().toString(), ".json");
 				JsonNode root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
 
-				BlockStateWrapper states = new BlockStateWrapper();
+				BlockStateWrapper states = new BlockStateWrapper(name);
 				if (root.has("multipart")) {
 					root.get("multipart").forEach(node -> {
 						List<Map<String, String>> whenClauses = new ArrayList<>();
@@ -294,7 +294,7 @@ public class BlockRegistry
 	private void setBlockAttributes(BlockStateWrapper wrapper, List<BlockStateModel> models) {
 		for (BlockStateModel model : models) {
 			BlockModel blockModel = model.getBlockModel();
-			if (wrapper.isFullBlock() && (!blockModel.isFullBlock() || !blockModel.isSolid())) {
+			if (!blockModel.getName().contains("grass_block") && wrapper.isFullBlock() && (!blockModel.isFullBlock() || !blockModel.isSolid())) {
 				wrapper.setFullBlock(false);
 			}
 		}

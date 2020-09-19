@@ -78,9 +78,9 @@ public class BlockModel
 			JsonNode to = element.get("to");
 			Vector3f toVector = new Vector3f(to.get(0).floatValue(), to.get(1).floatValue(), to.get(2).floatValue());
 
-			//Test if not full-block
+			//Test if not full-block (grass path and farmland are treated as full blocks)
 			if (fromVector.x() > 0 && fromVector.x() < 16 || fromVector.y() > 0 && fromVector.y() < 16 || fromVector.z() > 0 && fromVector.z() < 16
-					|| toVector.x() > 0 && toVector.x() < 16 || toVector.y() > 0 && toVector.y() < 16 || toVector.z() > 0 && toVector.z() < 16) {
+					|| toVector.x() > 0 && toVector.x() < 16 || toVector.y() > 0 && toVector.y() < 15 || toVector.z() > 0 && toVector.z() < 16) {
 				blockModel.setFullBlock(false);
 			}
 
@@ -197,7 +197,8 @@ public class BlockModel
 
 				//System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
 				// TODO: Need to test more texture packs
-				SubTexture subTexture = new SubTexture(null, u0*(1.0f/16.0f), v0*(1.0f/16.0f), u1*(1.0f/16.0f), v1*(1.0f/16.0f));
+				final float texel = 1.0f/16.0f;
+				SubTexture subTexture = new SubTexture(null, u0*texel, v0*texel, u1*texel, v1*texel);
 
 				StringBuilder tex = new StringBuilder(face.get("texture").asText());
 				if(tex.charAt(0) == '#')

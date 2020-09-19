@@ -15,11 +15,13 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
-import tectonicus.BlockType;
+import tectonicus.Chunk;
 import tectonicus.Util;
+import tectonicus.Version;
 import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockModel.BlockElement;
 import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
+import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.blockTypes.BlockUtil;
 import tectonicus.configuration.LightFace;
 import tectonicus.raw.BlockProperties;
@@ -142,93 +144,346 @@ public class MeshUtil
 	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation)
 	{
 		List<BlockElement> elements = model.getElements();
-		Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
 
-		Matrix4f blockRotation = null;
-		if (xRotation != 0 || yRotation != 0) {
-			blockRotation = new Matrix4f().translate(rotOrigin)
-					.rotate(-(float) Math.toRadians(yRotation), 0, 1, 0)
-					.rotate(-(float) Math.toRadians(xRotation), 1, 0, 0)
-					.translate(rotOrigin.negate());
-		}
+		boolean selfFull = true;
+		boolean above;
+		boolean below;
+		boolean north;
+		boolean south;
+		boolean east;
+		boolean west;
 
-		//TODO: fix lighting and culling
-		boolean above = world.getBlock(rawChunk.getChunkCoord(), x, y+1, z).isFullBlock();
-		boolean below = world.getBlock(rawChunk.getChunkCoord(), x, y-1, z).isFullBlock();
-		boolean north = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1).isFullBlock();
-		boolean south = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1).isFullBlock();
-		boolean east = world.getBlock(rawChunk.getChunkCoord(), x+1, y, z).isFullBlock();
-		boolean west = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z).isFullBlock();
-		
+		float selfTopLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		float selfNorthSouthLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z);
+		float selfEastWestLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z);
 		float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 		float bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
 		float northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
 		float southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
 		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
 		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-		
-		if (Math.abs(xRotation) == 270)
-		{
-			above = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1).isFullBlock();
-			below = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1).isFullBlock();
-			north = world.getBlock(rawChunk.getChunkCoord(), x, y+1, z).isFullBlock();
-			south = world.getBlock(rawChunk.getChunkCoord(), x, y-1, z).isFullBlock();
-			
-			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-		}
-		if (Math.abs(xRotation) == 90)
-		{
-			above = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1).isFullBlock();
-			below = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1).isFullBlock();
-			north = world.getBlock(rawChunk.getChunkCoord(), x, y-1, z).isFullBlock();
-			south = world.getBlock(rawChunk.getChunkCoord(), x, y+1, z).isFullBlock();
-			
-			topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-		}
-		else if (yRotation == 90 || yRotation == -270)
-		{
-			north = world.getBlock(rawChunk.getChunkCoord(), x+1, y, z).isFullBlock();
-			south = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z).isFullBlock();
-			east = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1).isFullBlock();
-			west = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1).isFullBlock();
 
-			northLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-		}
-		else if (Math.abs(yRotation) == 180)
-		{
-			north = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1).isFullBlock();
-			south = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1).isFullBlock();
-			east = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z).isFullBlock();
-			west = world.getBlock(rawChunk.getChunkCoord(), x+1, y, z).isFullBlock();
-			
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-		}
-		if (yRotation == 270 || xRotation == -90)
-		{
-			north = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z).isFullBlock();
-			south = world.getBlock(rawChunk.getChunkCoord(), x+1, y, z).isFullBlock();
-			east = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1).isFullBlock();
-			west = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1).isFullBlock();
 
-			northLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
+		Version textureVersion = world.getTexturePack().getVersion();
+		if (textureVersion.getNumVersion() <= Version.VERSION_12.getNumVersion()) {
+			above = world.getBlockType(rawChunk.getChunkCoord(), x, y + 1, z).isSolid();
+			below = world.getBlockType(rawChunk.getChunkCoord(), x, y - 1, z).isSolid();
+			north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z - 1).isSolid();
+			south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z + 1).isSolid();
+			east = world.getBlockType(rawChunk.getChunkCoord(), x + 1, y, z).isSolid();
+			west = world.getBlockType(rawChunk.getChunkCoord(), x - 1, y, z).isSolid();
+		} else {
+			BlockStateWrapper selfBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z);
+			BlockStateWrapper aboveBlock = world.getBlock(rawChunk.getChunkCoord(), x, y+1, z);
+			BlockStateWrapper belowBlock = world.getBlock(rawChunk.getChunkCoord(), x, y-1, z);
+			BlockStateWrapper northBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1);
+			BlockStateWrapper southBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1);
+			BlockStateWrapper eastBlock = world.getBlock(rawChunk.getChunkCoord(), x+1, y, z);
+			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
+
+			selfFull = selfBlock.isFullBlock();
+			above = aboveBlock.isFullBlock();
+			below = belowBlock.isFullBlock();
+			north = northBlock.isFullBlock();
+			south = southBlock.isFullBlock();
+			east = eastBlock.isFullBlock();
+			west = westBlock.isFullBlock();
+
+			//Handle some special cases e.g. double slabs, 8 layer snow
+			if (!selfFull && model.isFullBlock()) {
+				selfFull = true;
+			}
+
+			String blockName = selfBlock.getBlockName();
+			if(!selfFull) {
+				//Since stairs and slabs don't contain any lighting value we have to approximate it, it's not perfect but good enough for now
+				if(blockName.contains("stair") || blockName.contains("slab")) {
+					boolean aboveStairOrSlab = aboveBlock.getBlockName().contains("stair") || aboveBlock.getBlockName().contains("slab");
+					boolean belowStairOrSlab = belowBlock.getBlockName().contains("stair") || belowBlock.getBlockName().contains("slab");
+					boolean northStairOrSlab = northBlock.getBlockName().contains("stair") || northBlock.getBlockName().contains("slab");
+					boolean southStairOrSlab = southBlock.getBlockName().contains("stair") || southBlock.getBlockName().contains("slab");
+					boolean eastStairOrSlab = eastBlock.getBlockName().contains("stair") || eastBlock.getBlockName().contains("slab");
+					boolean westStairOrSlab = westBlock.getBlockName().contains("stair") || westBlock.getBlockName().contains("slab");
+
+					float lightTotal = 0;
+					int count = 0;
+					if (!above && !aboveStairOrSlab) {
+						lightTotal += topLight;
+						count++;
+					}
+					if (!below && !belowStairOrSlab) {
+						lightTotal += bottomLight;
+						count++;
+					}
+					if (!north && !northStairOrSlab) {
+						lightTotal += northLight;
+						count++;
+					}
+					if (!south && !southStairOrSlab) {
+						lightTotal += southLight;
+						count++;
+					}
+					if (!east && !eastStairOrSlab) {
+						lightTotal += eastLight;
+						count++;
+					}
+					if (!west && !westStairOrSlab) {
+						lightTotal += westLight;
+						count++;
+					}
+
+					float lightAvg = 0;
+					if (count > 0) {
+						lightAvg = Util.clamp(lightTotal / count, 0, 1);
+					}
+
+					topLight = bottomLight = northLight = southLight = eastLight = westLight = lightAvg;
+				} else {
+					topLight = bottomLight = selfTopLight;
+					northLight = southLight = selfNorthSouthLight;
+					eastLight = westLight = selfEastWestLight;
+				}
+			}
 		}
-		
-		
+
+
+		boolean upFaceCovered = above;
+		boolean downFaceCovered = below;
+		boolean northFaceCovered = north;
+		boolean southFaceCovered = south;
+		boolean eastFaceCovered = east;
+		boolean westFaceCovered = west;
+
+		float topLightTemp = topLight;
+		float bottomLightTemp = bottomLight;
+		float northLightTemp = northLight;
+		float southLightTemp = southLight;
+		float eastLightTemp = eastLight;
+		float westLightTemp = westLight;
+
+		Matrix4f blockRotation = null;
+
+		if (xRotation != 0 || yRotation != 0) {
+			Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
+			blockRotation = new Matrix4f().translate(rotOrigin)
+					.rotate(-(float) Math.toRadians(yRotation), 0, 1, 0)
+					.rotate(-(float) Math.toRadians(xRotation), 1, 0, 0)
+					.translate(rotOrigin.negate());
+
+			if (Math.abs(xRotation) == 90 && yRotation == 0) {
+				upFaceCovered = north;
+				downFaceCovered = south;
+				northFaceCovered = below;
+				southFaceCovered = above;
+
+				if (selfFull) {
+					topLightTemp = northLight;
+					bottomLightTemp = southLight;
+					northLightTemp = bottomLight;
+					southLightTemp = topLight;
+				}
+			} else if (xRotation == 180 && yRotation == 0) {
+				upFaceCovered = below;
+				downFaceCovered = above;
+				northFaceCovered = south;
+				southFaceCovered = north;
+
+				if (selfFull) {
+					topLightTemp = bottomLight;
+					bottomLightTemp = topLight;
+					northLightTemp = southLight;
+					southLightTemp = northLight;
+				}
+			} else if (Math.abs(xRotation) == 270 && yRotation == 0) {
+				upFaceCovered = south;
+				downFaceCovered = north;
+				northFaceCovered = above;
+				southFaceCovered = below;
+
+				if (selfFull) {
+					topLightTemp = southLight;
+					bottomLightTemp = northLight;
+					northLightTemp = topLight;
+					southLightTemp = bottomLight;
+				}
+			} else if (yRotation == 90 && xRotation == 0 || yRotation == -270 && xRotation == 0) {
+				northFaceCovered = east;
+				southFaceCovered = west;
+				eastFaceCovered = south;
+				westFaceCovered = north;
+
+				if (selfFull) {
+					northLightTemp = eastLight;
+					southLightTemp = westLight;
+					eastLightTemp = southLight;
+					westLightTemp = northLight;
+				}
+			} else if (yRotation == 90 && xRotation == 90) {
+				upFaceCovered = east;
+				downFaceCovered = west;
+				northFaceCovered = below;
+				southFaceCovered = above;
+				eastFaceCovered = south;
+				westFaceCovered = north;
+				if (selfFull) {
+					topLightTemp = eastLight;
+					bottomLightTemp = westLight;
+					northLightTemp = bottomLight;
+					southLightTemp = topLight;
+					eastLightTemp = southLight;
+					westLightTemp = northLight;
+				}
+			} else if (yRotation == 90 && xRotation == 180) {
+				upFaceCovered = below;
+				downFaceCovered = above;
+				northFaceCovered = west;
+				southFaceCovered = east;
+				eastFaceCovered = south;
+				westFaceCovered = north;
+
+				if (selfFull) {
+					topLightTemp = bottomLight;
+					bottomLightTemp = topLight;
+					northLightTemp = westLight;
+					southLightTemp = eastLight;
+					eastLightTemp = southLight;
+					westLightTemp = northLight;
+				}
+			} else if (yRotation == 90 && xRotation == 270) {
+				upFaceCovered = west;
+				downFaceCovered = east;
+				northFaceCovered = above;
+				southFaceCovered = below;
+				eastFaceCovered = south;
+				westFaceCovered = north;
+
+				if (selfFull) {
+					topLightTemp = westLight;
+					bottomLightTemp = eastLight;
+					northLightTemp = topLight;
+					southLightTemp = bottomLight;
+					eastLightTemp = southLight;
+					westLightTemp = northLight;
+				}
+			} else if (Math.abs(yRotation) == 180 && xRotation == 0) {
+				northFaceCovered = south;
+				southFaceCovered = north;
+				eastFaceCovered = west;
+				westFaceCovered = east;
+
+				if (selfFull) {
+					northLightTemp = southLight;
+					southLightTemp = northLight;
+					eastLightTemp = westLight;
+					westLightTemp = eastLight;
+				}
+			} else if (Math.abs(yRotation) == 180 && xRotation == 90) {
+				upFaceCovered = south;
+				downFaceCovered = north;
+				northFaceCovered = below;
+				southFaceCovered = above;
+				eastFaceCovered = west;
+				westFaceCovered = east;
+
+				if (selfFull) {
+					topLightTemp = southLight;
+					bottomLightTemp = northLight;
+					northLightTemp = bottomLight;
+					southLightTemp = topLight;
+					eastLightTemp = westLight;
+					westLightTemp = eastLight;
+				}
+			} else if (Math.abs(yRotation) == 180 && xRotation == 180) {
+				upFaceCovered = below;
+				downFaceCovered = above;
+				eastFaceCovered = west;
+				westFaceCovered = east;
+
+				if (selfFull) {
+					topLightTemp = bottomLight;
+					bottomLightTemp = topLight;
+					eastLightTemp = westLight;
+					westLightTemp = eastLight;
+				}
+			} else if (Math.abs(yRotation) == 180 && xRotation == 270) {
+				upFaceCovered = north;
+				downFaceCovered = south;
+				northFaceCovered = above;
+				southFaceCovered = below;
+				eastFaceCovered = west;
+				westFaceCovered = east;
+
+				if (selfFull) {
+					topLightTemp = northLight;
+					bottomLightTemp = southLight;
+					northLightTemp = topLight;
+					southLightTemp = bottomLight;
+					eastLightTemp = westLight;
+					westLightTemp = eastLight;
+				}
+			} else if (yRotation == 270 && xRotation == 0 || yRotation == -90 && xRotation == 0) {
+				northFaceCovered = west;
+				southFaceCovered = east;
+				eastFaceCovered = north;
+				westFaceCovered = south;
+
+				if (selfFull) {
+					northLightTemp = westLight;
+					southLightTemp = eastLight;
+					eastLightTemp = northLight;
+					westLightTemp = southLight;
+				}
+			} else if (yRotation == 270 && xRotation == 90) {
+				upFaceCovered = west;
+				downFaceCovered = east;
+				northFaceCovered = below;
+				southFaceCovered = above;
+				eastFaceCovered = north;
+				westFaceCovered = south;
+
+				if (selfFull) {
+					topLightTemp = westLight;
+					bottomLightTemp = eastLight;
+					northLightTemp = bottomLight;
+					southLightTemp = topLight;
+					eastLightTemp = northLight;
+					westLightTemp = southLight;
+				}
+			} else if (yRotation == 270 && xRotation == 180) {
+				upFaceCovered = below;
+				downFaceCovered = above;
+				northFaceCovered = east;
+				southFaceCovered = west;
+				eastFaceCovered = north;
+				westFaceCovered = south;
+
+				if (selfFull) {
+					topLightTemp = bottomLight;
+					bottomLightTemp = topLight;
+					northLightTemp = eastLight;
+					southLightTemp = westLight;
+					eastLightTemp = northLight;
+					westLightTemp = southLight;
+				}
+			} else if (yRotation == 270 && xRotation == 270) {
+				upFaceCovered = east;
+				downFaceCovered = west;
+				northFaceCovered = above;
+				southFaceCovered = below;
+				eastFaceCovered = north;
+				westFaceCovered = south;
+
+				if (selfFull) {
+					topLightTemp = eastLight;
+					bottomLightTemp = westLight;
+					northLightTemp = topLight;
+					southLightTemp = bottomLight;
+					eastLightTemp = northLight;
+					westLightTemp = southLight;
+				}
+			}
+		}
+
 		for(BlockElement element : elements)
 		{
 			float xrot = x + element.getRotationOrigin().x()/16;
@@ -294,14 +549,18 @@ public class MeshUtil
 					tintColor = new Colour4f(32/255f, 128/255f, 48/255f);
 				} else if (modelName.contains("stonecutter")) {
 					// do nothing, I have no idea why tintindex is set for this block
+				} else if (modelName.contains("spruce_leaves")) {
+					tintColor = new Colour4f(97/255f, 153/255f, 97/255f);
+				} else if (modelName.contains("birch_leaves")) {
+					tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
 				} else {
-					tintColor = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
+					tintColor = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z); //TODO: this method needs to handle swamp grass
 				}
 			}
 
-			if (upFace != null && !(above && upFace.isFaceCulled()))
+			if (upFace != null && !(upFaceCovered && upFace.isFaceCulled()))
 	        {
-				Colour4f color = new Colour4f(1 * topLight, 1 * topLight, 1 * topLight, 1);
+				Colour4f color = new Colour4f(topLightTemp, topLightTemp, topLightTemp, 1);
 	        	if (upFace.isTinted()) {
 	        		color.multiply(tintColor);
 				}
@@ -310,13 +569,13 @@ public class MeshUtil
 		        topRight = new Vector3f(x2, y2, z1);
 		        bottomRight = new Vector3f(x2, y2, z2);
 		        bottomLeft = new Vector3f(x1, y2, z2);
-		        
+
 		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 			
-			if (downFace != null && !(below && downFace.isFaceCulled()))
+			if (downFace != null && !(downFaceCovered && downFace.isFaceCulled()))
 	        {
-				Colour4f color = new Colour4f(1 * bottomLight, 1 * bottomLight, 1 * bottomLight, 1);
+				Colour4f color = new Colour4f(bottomLightTemp, bottomLightTemp, bottomLightTemp, 1);
 				if (downFace.isTinted()) {
 					color.multiply(tintColor);
 				}
@@ -325,13 +584,13 @@ public class MeshUtil
 		        topRight = new Vector3f(x2, y1, z2);
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x1, y1, z1);
-		        
+
 		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 			
-			if (northFace != null && !(north && northFace.isFaceCulled()))
+			if (northFace != null && !(northFaceCovered && northFace.isFaceCulled()))
 	        {
-				Colour4f color = new Colour4f(1 * northLight, 1 * northLight, 1 * northLight, 1);
+				Colour4f color = new Colour4f(northLightTemp, northLightTemp, northLightTemp, 1);
 				if (northFace.isTinted()) {
 					color.multiply(tintColor);
 				}
@@ -340,13 +599,13 @@ public class MeshUtil
 		        topRight = new Vector3f(x1, y2, z1);
 		        bottomRight = new Vector3f(x1, y1, z1);
 		        bottomLeft = new Vector3f(x2, y1, z1);
-		        
+
 		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 			
-			if (southFace != null && !(south && southFace.isFaceCulled()))
+			if (southFace != null && !(southFaceCovered && southFace.isFaceCulled()))
 	        {
-				Colour4f color = new Colour4f(1 * southLight, 1 * southLight, 1 * southLight, 1);
+				Colour4f color = new Colour4f(southLightTemp, southLightTemp, southLightTemp, 1);
 				if (southFace.isTinted()) {
 					color.multiply(tintColor);
 				}
@@ -359,9 +618,9 @@ public class MeshUtil
 		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 
-			if (eastFace != null && !(east && eastFace.isFaceCulled()))
+			if (eastFace != null && !(eastFaceCovered && eastFace.isFaceCulled()))
 	        {
-				Colour4f color = new Colour4f(1 * eastLight, 1 * eastLight, 1 * eastLight, 1);
+				Colour4f color = new Colour4f(eastLightTemp, eastLightTemp, eastLightTemp, 1);
 				if (eastFace.isTinted()) {
 					color.multiply(tintColor);
 				}
@@ -374,9 +633,9 @@ public class MeshUtil
 		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
 	        }
 
-			if (westFace != null && !(west && westFace.isFaceCulled()))
+			if (westFace != null && !(westFaceCovered && westFace.isFaceCulled()))
 	        {
-				Colour4f color = new Colour4f(1 * westLight, 1 * westLight, 1 * westLight, 1);
+				Colour4f color = new Colour4f(westLightTemp, westLightTemp, westLightTemp, 1);
 				if (westFace.isTinted()) {
 					color.multiply(tintColor);
 				}

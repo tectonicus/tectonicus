@@ -15,7 +15,6 @@ import org.joml.Vector3f;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockStateModel;
 import tectonicus.blockTypes.BlockStateWrapper;
-import tectonicus.blockTypes.NamePropertiesPair;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
@@ -127,7 +126,7 @@ public class Chunk
 							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava") //|| blockName.equals("minecraft:air") || blockName.equals("minecraft:cave_air")
 									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
 									|| blockName.contains("skull") || blockName.contains("banner")
-									|| blockName.contains("bed") || blockName.contains("sign") || blockName.contains("chest")
+									|| blockName.endsWith("bed") || blockName.contains("sign") || blockName.contains("chest")
 									|| blockName.contains("beacon") || blockName.equals("minecraft:end_portal") || blockName.equals("minecraft:end_gateway")
 									|| blockName.equals("minecraft:conduit")) {
 								type = registry.find(blockName);
@@ -394,7 +393,7 @@ public class Chunk
 	{
 		if (rawChunk == null)
 		{
-			return new HashMap<String, SignEntity>();
+			return new HashMap<>();
 		}
 		else
 		{
@@ -441,7 +440,7 @@ public class Chunk
 	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z)
 	{
 		float result = 0;
-		
+
 		switch (lightStyle)
 		{
 			case Day:
@@ -457,12 +456,8 @@ public class Chunk
 					
 					result = Util.clamp( skyLight * 0.7f + blockLight * 0.3f + 0.3f, 0, 1 );
 				}
-				
-				if (face == LightFace.Top)
-				{
-					
-				}
-				else if (face == LightFace.NorthSouth)
+
+				if (face == LightFace.NorthSouth)
 				{
 					result -= 0.15f;
 				}
@@ -486,12 +481,8 @@ public class Chunk
 					
 					result = Util.clamp( skyLight * 0.1f + blockLight * 0.7f + 0.1f, 0, 1 );
 				}
-				
-				if (face == LightFace.Top)
-				{
-					
-				}
-				else if (face == LightFace.NorthSouth)
+
+				if (face == LightFace.NorthSouth)
 				{
 					result -= 0.05f;
 				}
@@ -515,12 +506,8 @@ public class Chunk
 					
 					result = Util.clamp(heightScale + blockLight * 0.5f, 0f, 1f);
 				}
-				
-				if (face == LightFace.Top)
-				{
-					
-				}
-				else if (face == LightFace.NorthSouth)
+
+				if (face == LightFace.NorthSouth)
 				{
 					result -= 0.05f;
 				}
