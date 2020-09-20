@@ -42,6 +42,7 @@ import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
+import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
@@ -86,7 +87,9 @@ public class TexturePack
 		}
 
 		//TODO: Clean up this version stuff
-		if (zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
+		if (zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
+			version = VERSION_14;
+		} else if (zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
 			version = VERSION_12;
@@ -504,6 +507,9 @@ public class TexturePack
 		codes.put("triangle_top.png", "tt");
 		codes.put("triangles_bottom.png", "bts");
 		codes.put("triangles_top.png", "tts");
+		if (version.getNumVersion() >= VERSION_14.getNumVersion()) {
+			codes.put("globe.png", "glb");
+		}
 			
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
 			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner"));)

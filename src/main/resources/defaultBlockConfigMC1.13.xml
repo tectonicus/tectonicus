@@ -29,18 +29,8 @@
 	<Chest stringId="minecraft:chest" name="Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png"
 		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
-	<Sign stringId="minecraft:oak_sign" name="Oak Sign" texture="assets/minecraft/textures/entity/signs/oak.png" hasPost="true" />
-	<Sign stringId="minecraft:oak_wall_sign" name="Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/oak.png" />
-	<Sign stringId="minecraft:spruce_sign" name="Spruce Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" hasPost="true" />
-	<Sign stringId="minecraft:spruce_wall_sign" name="Spruce Wall Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" />
-	<Sign stringId="minecraft:birch_sign" name="Birch Sign" texture="assets/minecraft/textures/entity/signs/birch.png" hasPost="true" />
-	<Sign stringId="minecraft:birch_wall_sign" name="Birch Wall Sign" texture="assets/minecraft/textures/entity/signs/birch.png" />
-	<Sign stringId="minecraft:jungle_sign" name="Jungle Sign" texture="assets/minecraft/textures/entity/signs/jungle.png" hasPost="true" />
-	<Sign stringId="minecraft:jungle_wall_sign" name="Jungle Wall Sign" texture="assets/minecraft/textures/entity/signs/jungle.png" />
-	<Sign stringId="minecraft:acacia_sign" name="Acacia Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" hasPost="true" />
-	<Sign stringId="minecraft:acacia_wall_sign" name="Acacia Wall Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" />
-	<Sign stringId="minecraft:dark_oak_sign" name="Dark Oak Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" hasPost="true" />
-	<Sign stringId="minecraft:dark_oak_wall_sign" name="Dark Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" />
+	<Sign stringId="minecraft:sign" name="Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" hasPost="true" />
+	<Sign stringId="minecraft:wall_sign" name="Wall Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" />
 
 	<EnderPortal stringId="minecraft:end_portal" name="EnderPortal" texture="Images/EnderPortal.png" />
 

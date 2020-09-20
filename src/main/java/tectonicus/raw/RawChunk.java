@@ -344,7 +344,7 @@ public class RawChunk
 										String UUID = "";
 										String textureURL = "";
 										StringTag extraType = NbtUtil.getChild(entity, "ExtraType", StringTag.class);
-										CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);  //TODO: this should support new SkullOwner tag
+										CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);
 										if(owner != null)
 										{
 											nameTag = NbtUtil.getChild(owner, "Name", StringTag.class);
