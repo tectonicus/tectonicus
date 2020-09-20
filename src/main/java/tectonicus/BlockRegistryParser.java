@@ -78,6 +78,7 @@ import tectonicus.blockTypes.MinecartTracks;
 import tectonicus.blockTypes.NetherWart;
 import tectonicus.blockTypes.Observer;
 import tectonicus.blockTypes.Painting;
+import tectonicus.blockTypes.PaintingNew;
 import tectonicus.blockTypes.PistonBase;
 import tectonicus.blockTypes.PistonExtension;
 import tectonicus.blockTypes.Plant;
@@ -793,6 +794,9 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 		 	
 		 	blockType = new Painting(name, texture);
+		}
+		else if (nodeName.equals("paintingnew")) {
+			blockType = new PaintingNew(name);
 		}
 		else if (nodeName.equals("skull"))
 		{

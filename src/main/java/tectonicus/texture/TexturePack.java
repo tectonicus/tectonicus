@@ -9,6 +9,14 @@
 
 package tectonicus.texture;
 
+import lombok.extern.log4j.Log4j2;
+import tectonicus.Version;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.Texture;
+import tectonicus.rasteriser.TextureFilter;
+import tectonicus.renderer.Font;
+
+import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -28,15 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.imageio.ImageIO;
-
-import tectonicus.Minecraft;
-import tectonicus.Version;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.Texture;
-import tectonicus.rasteriser.TextureFilter;
-import tectonicus.renderer.Font;
-
 import static tectonicus.Version.UNKNOWN_VERSION;
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
@@ -47,6 +46,7 @@ import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
 
+@Log4j2
 public class TexturePack
 {
 	private Version version;
@@ -193,6 +193,10 @@ public class TexturePack
 			
 			loadBedTextures();
 			loadShulkerTextures();
+
+			if (version.getNumVersion() >= VERSION_14.getNumVersion()) {
+				loadPaintingTextures();
+			}
 
 			if (version == VERSION_4) {
 				try {
@@ -542,7 +546,25 @@ public class TexturePack
 		}
 		catch (IOException e)
 		{
-			System.out.println("No bed textures found. You may be using an older Minecraft jar file");
+			log.error("No bed textures found. You may be using an older Minecraft jar file");
+		}
+	}
+
+	private void loadPaintingTextures()
+	{
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/painting"));)
+		{
+			for (Path entry : entries)
+			{
+				String filename = entry.getFileName().toString();
+				String name = filename.substring(0, filename.lastIndexOf('.'));
+				findTexture(loadTexture(entry.toString()), name);
+			}
+		}
+		catch (IOException e)
+		{
+			log.error("No painting textures found. You may be using an older Minecraft jar file");
 		}
 	}
 	
@@ -585,7 +607,7 @@ public class TexturePack
 		}
 		catch (IOException e)
 		{
-			System.out.println("No shulker textures found. You may be using an older Minecraft jar file");
+			log.error("No shulker textures found. You may be using an older Minecraft jar file");
 		}
 	}
 	
