@@ -305,11 +305,17 @@ public class RawChunk
 												textLines.add("");
 											}
 										}
-										
+
+										StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
+										String color = "black";
+										if (colorTag != null) {
+											color = colorTag.getValue();
+										}
+
 										final int data = getBlockData(localX, localY, localZ);
 										
 										signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
-																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data) );
+																textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data, color) );
 									}
 									else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot"))
 									{

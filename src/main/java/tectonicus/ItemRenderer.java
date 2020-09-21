@@ -186,7 +186,7 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 0, (byte)16);
 		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		HashMap<String, SignEntity> signs = new HashMap<>();
-		signs.put("x0y0z0", new SignEntity(0, 0, 0, 0, 0, 0, "", "Tectonicus", "", "", blockData));
+		signs.put("x0y0z0", new SignEntity(0, 0, 0, 0, 0, 0, "", "Tectonicus", "", "", blockData, "black"));
 		rawChunk.setSigns(signs);
 		
 		BlockType type = registry.find(blockId, blockData);

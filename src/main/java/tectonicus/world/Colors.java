@@ -12,6 +12,7 @@ package tectonicus.world;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
+import tectonicus.util.Colour4f;
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ public enum Colors
 	private final String name;
 	private final String altName;
 	private final Color newColor, oldColor;
+	private final Colour4f newColorNormalized, oldColorNormalized;
 	
 	Colors(int id, String name, Color newColor, Color oldColor)
 	{
@@ -57,6 +59,9 @@ public enum Colors
 		this.altName = altName;
 		this.newColor = newColor;
 		this.oldColor = oldColor;
+
+		this.newColorNormalized = new Colour4f(newColor);
+		this.oldColorNormalized = new Colour4f(oldColor);
 	}
 	
 	static
@@ -67,6 +72,8 @@ public enum Colors
 			if (StringUtils.isNotEmpty(color.altName)) {
 				NAME_LOOKUP.put(color.altName, color);
 			}
+
+
 		}
     }
 	
@@ -76,6 +83,14 @@ public enum Colors
 			return oldColor;
 		else
 			return newColor;
+	}
+
+	public Colour4f getColorNormalized()
+	{
+		if (Minecraft.useOldColorPalette())
+			return oldColorNormalized;
+		else
+			return newColorNormalized;
 	}
 	
 	public static Colors byId(int id)

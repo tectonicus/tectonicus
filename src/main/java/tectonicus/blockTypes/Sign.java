@@ -11,9 +11,6 @@ package tectonicus.blockTypes;
 
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
-import static tectonicus.Version.VERSION_RV;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
@@ -29,6 +26,11 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.util.Colour4f;
+import tectonicus.world.Colors;
+
+import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
+import static tectonicus.Version.VERSION_RV;
 
 public class Sign implements BlockType
 {
@@ -210,10 +212,13 @@ public class Sign implements BlockType
 			final float lineHeight = 1.0f / 16.0f * 2.6f;
 			
 			final Vector4f color;
-			if (texturePackVersion == VERSION_RV)
-				color = new Vector4f(50f/255f, 183f/255f, 50f/255f, 1);
-			else
-				color = new Vector4f(0, 0, 0, 1);
+			if (texturePackVersion == VERSION_RV) {
+				color = new Vector4f(50/255f, 183/255f, 50/255f, 1);
+			}
+			else {
+				Colour4f signColor = Colors.byName(s.getColor()).getColorNormalized();
+				color = new Vector4f(signColor.getR(), signColor.getG(), signColor.getB(), 1);
+			}
 			
 			TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
 			text1.setText(unescapeJava(s.getText1()), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true, color);

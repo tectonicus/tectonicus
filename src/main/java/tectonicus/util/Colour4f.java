@@ -9,10 +9,13 @@
 
 package tectonicus.util;
 
+import lombok.Getter;
+
 import java.awt.Color;
 
 public class Colour4f
 {
+	@Getter
 	public float r, g, b, a;
 	
 	public Colour4f()
