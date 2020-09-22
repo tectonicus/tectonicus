@@ -24,7 +24,7 @@ ext {
 	lwjglVersion = '3.2.3'
 	picocliVersion = '4.5.0'
 	lombokVersion = '1.18.12'
-	junitVersion = '5.6.2'
+	junitVersion = '5.7.0'
 }
 
 dependencies {
