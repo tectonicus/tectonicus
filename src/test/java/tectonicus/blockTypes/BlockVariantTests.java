@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.lwjgl.glfw.GLFW;
 import tectonicus.configuration.Configuration;
 import tectonicus.rasteriser.Rasteriser;
@@ -70,8 +71,10 @@ class BlockVariantTests
 		assertThat(states, is(equalTo(testStates)));
 	}
 
+	@EnabledIfSystemProperty(named = "os.name", matches = "Windows 10")
 	@Test
 	void testDeserializeVariantSingleModel() throws JsonProcessingException {
+		System.out.println(System.getProperty("os.name") + " " + System.getProperty("os.version"));
 		JsonNode variant = mapper.readTree("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
 		BlockRegistry registry = new BlockRegistry();
 		List<BlockStateModel> models = registry.deserializeBlockStateModels(variant);
@@ -79,7 +82,8 @@ class BlockVariantTests
 		assertThat(models.size(), is(equalTo(1)));
 		assertThat(models.get(0).getModel(), is("acacia_fence_n"));
 	}
-	
+
+	@EnabledIfSystemProperty(named = "os.name", matches = "Windows 10")
 	@Test
 	void testDeserializeVariantMultipleModels() throws JsonProcessingException {
 		JsonNode variant = mapper.readTree("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
