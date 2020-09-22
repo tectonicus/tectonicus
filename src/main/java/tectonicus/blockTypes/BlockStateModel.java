@@ -12,6 +12,7 @@ package tectonicus.blockTypes;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import tectonicus.BlockContext;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.world.World;
@@ -28,7 +29,7 @@ public class BlockStateModel {
 	private int weight = 1;
 	private boolean uvlock = false;
 
-	public void createGeometry(int x, int y, int z, World world, BlockRegistry registry, RawChunk rawChunk, Geometry geometry) {
+	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry) {
 		blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation);  //TODO: pass in weight and uvlock
 	}
 }

@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import tectonicus.BlockContext;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -22,7 +23,6 @@ import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.ImageUtils;
 import tectonicus.util.Vector3f;
-import tectonicus.world.World;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +62,7 @@ public class BlockModel
 		}
 	}
 	
-	public void createGeometry(int x, int y, int z, World world, RawChunk rawChunk, Geometry geometry, int xRotation, int yRotation)
+	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry, int xRotation, int yRotation)
 	{
 		MeshUtil.addBlock(world, rawChunk, x, y, z, this, geometry, xRotation, yRotation);
 	}

@@ -54,7 +54,6 @@ public class BlockRegistry
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
-	private static final String ROTATION_FIELD = "rotation";
 
 
 	public BlockRegistry(String blah)

@@ -32,6 +32,7 @@ import tectonicus.blockTypes.Banner;
 import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
 import tectonicus.blockTypes.BedNew;
+import tectonicus.blockTypes.Bell;
 import tectonicus.blockTypes.BrewingStand;
 import tectonicus.blockTypes.Button;
 import tectonicus.blockTypes.Cactus;
@@ -874,6 +875,10 @@ public class BlockRegistryParser
 		else if (nodeName.equals("conduit")) {
 			SubTexture texture = parseTexture(element, "texture", null);
 			blockType = new Conduit(name, stringId, texture);
+		}
+		else if (nodeName.equals("bell")) {
+			SubTexture texture = parseTexture(element, "texture", null);
+			blockType = new Bell(name, stringId, texture);
 		}
 		else
 		{
