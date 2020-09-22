@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus.renderer;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,17 +24,16 @@ public class Geometry
 		Solid,
 		AlphaTest,
 		Transparent
-	};
+	}
 	
 	private final Rasteriser rasteriser;
 	
-	private Mesh baseMesh;
-	private Mesh alphaTestMesh;
-	private Mesh transparentMesh;
+	private final Mesh baseMesh;
+	private final Mesh transparentMesh;
 	
-	private Map<MeshType, Map<Texture, Mesh>> meshes;
-	
-	public Geometry(Rasteriser rasteriser, Texture texture)
+	private final Map<MeshType, Map<Texture, Mesh>> meshes;
+
+	public Geometry(Rasteriser rasteriser)
 	{
 		this.rasteriser = rasteriser;
 		
@@ -44,21 +44,19 @@ public class Geometry
 		
 		// At the moment, with all three at 50k max, 100 loaded geometry chunks comes to 514Mb
 		
-		baseMesh = rasteriser.createMesh(texture);
-		alphaTestMesh = rasteriser.createMesh(texture);
-		transparentMesh = rasteriser.createMesh(texture);
+		baseMesh = rasteriser.createMesh(null);
+		transparentMesh = rasteriser.createMesh(null);
 		
-		meshes = new HashMap<Geometry.MeshType, Map<Texture, Mesh>>();
+		meshes = new EnumMap<>(MeshType.class);
 		
-		meshes.put(MeshType.Solid, new HashMap<Texture, Mesh>());
-		meshes.put(MeshType.AlphaTest, new HashMap<Texture, Mesh>());
-		meshes.put(MeshType.Transparent, new HashMap<Texture, Mesh>());
+		meshes.put(MeshType.Solid, new HashMap<>());
+		meshes.put(MeshType.AlphaTest, new HashMap<>());
+		meshes.put(MeshType.Transparent, new HashMap<>());
 	}
 	
 	public void destroy()
 	{
 		baseMesh.destroy();
-		alphaTestMesh.destroy();
 		transparentMesh.destroy();
 		
 		for (Map<Texture, Mesh> meshMap : meshes.values())
@@ -68,29 +66,21 @@ public class Geometry
 	
 	// TODO: Refactor to remove these
 	public Mesh getBaseMesh() { return baseMesh; }
-	public Mesh getAlphaTestMesh() { return alphaTestMesh; }
-	public Mesh getTransparentMesh() { return transparentMesh; }
 	
 	public Mesh getMesh(Texture texture, MeshType type)
 	{
-		Mesh result = null;
-		
 		Map<Texture, Mesh> meshList = meshes.get(type);
-		
-		result = meshList.get(texture);
-		if (result == null)
-		{
-			result = rasteriser.createMesh(texture);
-			meshList.put(texture, result);
-		}
-		
-		return result;
+
+		return meshList.computeIfAbsent(texture, tex -> {
+			Mesh mesh = rasteriser.createMesh(tex);
+			meshList.put(tex, mesh);
+			return mesh;
+		});
 	}
 	
 	public void finalise()
 	{
 		baseMesh.finalise();
-		alphaTestMesh.finalise();
 		transparentMesh.finalise();
 		
 		for (Map<Texture, Mesh> meshMap : meshes.values())
@@ -113,9 +103,6 @@ public class Geometry
 	
 	public void drawAlphaTestedSurfaces(final float xOffset, final float yOffset, final float zOffset)
 	{
-		alphaTestMesh.bind();
-		alphaTestMesh.draw(xOffset, yOffset, zOffset);
-		
 		Map<Texture, Mesh> alphaTestMeshes = meshes.get(MeshType.AlphaTest);
 		for (Mesh m : alphaTestMeshes.values())
 		{
@@ -128,7 +115,7 @@ public class Geometry
 	{
 		transparentMesh.bind();
 		transparentMesh.draw(xOffset, yOffset, zOffset);
-		
+
 		Map<Texture, Mesh> transparentMeshes = meshes.get(MeshType.Transparent);
 		for (Mesh m : transparentMeshes.values())
 		{
@@ -139,9 +126,9 @@ public class Geometry
 	
 	public long getMemorySize()
 	{
-		final int baseSize = baseMesh.getMemorySize() + alphaTestMesh.getMemorySize() + transparentMesh.getMemorySize();
+		final int baseSize = baseMesh.getMemorySize() + transparentMesh.getMemorySize();
 		
-		int size = 0;
+		long size = 0;
 		
 		for (Map<Texture, Mesh> meshMap : meshes.values())
 			for (Mesh m : meshMap.values())
@@ -158,7 +145,7 @@ public class Geometry
 		
 		System.out.println("Geometry:");
 		System.out.println("\tbase vertices: "+ (baseMesh.getTotalVertices() + baseVerts));
-		System.out.println("\talpha vertices: "+ (alphaTestMesh.getTotalVertices() + alphaTestVerts));
+		System.out.println("\talpha vertices: "+ alphaTestVerts);
 		System.out.println("\ttransparent vertices: "+ (transparentMesh.getTotalVertices() + transparentVerts));
 	}
 	

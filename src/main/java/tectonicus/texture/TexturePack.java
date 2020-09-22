@@ -13,6 +13,8 @@ import lombok.extern.log4j.Log4j2;
 import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.Configuration;
+import tectonicus.exceptions.MissingMinecraftJarException;
+import tectonicus.exceptions.MissingAssetException;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
@@ -51,29 +53,29 @@ import static tectonicus.Version.VERSION_RV;
 @Log4j2
 public class TexturePack
 {
-	private Version version;
+	private final Version version;
 	
-	private Rasteriser rasteriser;
+	private final Rasteriser rasteriser;
 	
 	private Texture vignetteTexture;
 	
 	private BufferedImage itemSheet;
-	private BufferedImage iconSheet;
-	private BufferedImage chestImage;
+	private final BufferedImage iconSheet;
+	private final BufferedImage chestImage;
 	
-	private BufferedImage grassLookupImage;
-	private BufferedImage foliageLookupImage;
+	private final BufferedImage grassLookupImage;
+	private final BufferedImage foliageLookupImage;
 	
-	private Font font;
+	private final Font font;
 	
-	private ZipStack zipStack;
+	private final ZipStack zipStack;
 	
-	private Map<String, PackTexture> loadedPackTextures;
+	private final Map<String, PackTexture> loadedPackTextures;
 	
 	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
 	{
 		if (!minecraftJar.exists())
-			throw new RuntimeException("Couldn't find minecraft.jar at "+minecraftJar.getAbsolutePath());
+			throw new MissingMinecraftJarException("Couldn't find minecraft.jar at " + minecraftJar.getAbsolutePath());
 	
 		this.rasteriser = rasteriser;
 		
@@ -120,63 +122,7 @@ public class TexturePack
 		{
 			if (version == VERSION_4)
 				findTexture("terrain.png[0, 0]");
-			else if (version == VERSION_5)
-			{
-				// Load each individual texture file?
-			}
-			
-		/*	ZipStackEntry terrainEntry = zipStack.getEntry("terrain.png");
-			if (terrainEntry != null)
-			{
-				BufferedImage terrainImage = copy( ImageIO.read(terrainEntry.getInputStream()) );
-				
-				BufferedImage[] mipmaps = PackTexture.generateTileMips(terrainImage);
-				
-				terrainTexture = rasteriser.createTexture(mipmaps, TextureFilter.NEAREST);
-				
-				final float tileU = 1.0f / 16.0f;
-				final float tileV = 1.0f / 16.0f;
-				
-				final float uNudge = tileU / 64.0f;
-				final float vNudge = tileV / 64.0f;
-				
-				for (int tileX=0; tileX<16; tileX++)
-				{
-					for (int tileY=0; tileY<16; tileY++)
-					{
-						final float u0 = tileX * tileU + uNudge;
-						final float u1 = (tileX+1) * tileU - uNudge;
-						
-						final float v0 = tileY * tileV + vNudge;
-						final float v1 = (tileY+1) * tileV - vNudge;
-						
-						SubTexture sub = new SubTexture(terrainTexture, u0, v0, u1, v1);
-						tiles.put(new Point(tileX, tileY), sub);
-					}
-				}
-			}
-			else
-			{
-				ZipStackEntry serverClass = zipStack.getEntry("net/minecraft/server/MinecraftServer.class");
-				final boolean isServerJar = serverClass != null;
-				
-				ZipStackEntry launcherClass = zipStack.getEntry("net/minecraft/MinecraftLauncher.class");
-				final boolean isLauncherJar = launcherClass != null;
-				
-				if (isServerJar)
-				{
-					throw new RuntimeException("Couldn't find terrain.png in "+minecraftJar.getName()+", make sure you're using the minecraft client jar, not the server jar!");
-				}
-				else if (isLauncherJar)
-				{
-					throw new RuntimeException("Couldn't find terrain.png in "+minecraftJar.getName()+", make sure you're using the minecraft client jar, not the client launcher jar!");
-				}
-				else
-				{
-					throw new RuntimeException("Couldn't find terrain.png in "+formatPaths(minecraftJar, texturePack));
-				}
-			}
-		*/
+
 			String path;
 			if(version.getNumVersion() >= VERSIONS_6_TO_8.getNumVersion())
 				path = "assets/minecraft/textures/";
@@ -216,7 +162,7 @@ public class TexturePack
 			try {
 				iconSheet = copy( ImageIO.read( zipStack.getStream(path + "gui/icons.png") ) );
 			} catch (IllegalArgumentException e) {
-				throw new RuntimeException("Couldn't find icons.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find icons.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
 			try {
@@ -225,7 +171,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "gui/container/generic_54.png");
 				chestImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
-				throw new RuntimeException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, texturePack));
 			}
 
 			try {
@@ -234,7 +180,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "colormap/grass.png");
 				grassLookupImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
-				throw new RuntimeException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
 			try {
@@ -243,7 +189,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "colormap/foliage.png");
 				foliageLookupImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
-				throw new RuntimeException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
 			
 			//TODO: The font stuff needs some work
@@ -255,12 +201,12 @@ public class TexturePack
 				BufferedImage fontSheet = ImageIO.read( imgStream );
 				font = new Font(rasteriser, fontSheet, textIn);
 			} catch (IllegalArgumentException e) {
-				throw new RuntimeException("Couldn't find font resources in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find font resources in "+formatPaths(minecraftJar, texturePack));
 			}
 		}
 		catch (Exception e)
 		{
-			throw new RuntimeException("Couldn't load textures from "+formatPaths(minecraftJar, texturePack), e);
+			throw new MissingAssetException("Couldn't load textures from "+formatPaths(minecraftJar, texturePack), e);
 		}
 	}
 	
@@ -278,16 +224,6 @@ public class TexturePack
 		
 		return result.trim();
 	}
-	
-	// TODO: refactor to remove this? why is it still needed?
-	public Texture getTexture()
-	{
-	//	return terrainTexture;
-		/*if (this.version == "1.4")
-			return findTexture("terrain").texture;
-		else*/
-			return null;
-	}
 
 	public PackTexture getTexture(String path) {
 		return loadedPackTextures.get(path);
@@ -298,19 +234,11 @@ public class TexturePack
 		SubTexture result = null;
 		
 		TextureRequest request = parseRequest(texturePath);
-		
-		// First see if we already have it loaded
-	//	result = loadedSubTextures.get(request);
-		
-		// If not already loaded, then load it and cache it
-	//	if (result != null)
-		{
-			PackTexture tex = findTexture(request); // find existing or load
-			
-			result = tex.find(request, version); // find existing or load
-			assert (result != null);
-		//	loadedSubTextures.put(request, result);
-		}
+
+		PackTexture tex = findTexture(request); // find existing or load
+
+		result = tex.find(request, version); // find existing or load
+		assert (result != null);
 		
 		return result;
 	}
@@ -418,7 +346,6 @@ public class TexturePack
 		try
 		{
 			// Check texture pack and minecraft jar
-			//ZipStack.ZipStackEntry entry = zipStack.getEntry(path);
 			InputStream stream = zipStack.getStream(path);
 			if (stream != null)
 			{
@@ -477,7 +404,7 @@ public class TexturePack
 	public Map<String, BufferedImage> loadPatterns()
 	{
 		Map<String, BufferedImage> patterns = new HashMap<>();
-		Map<String, String> codes = new HashMap<>();  // TODO: Maybe populate this map from defaultBlockConfig file?
+		Map<String, String> codes = new HashMap<>();
 		codes.put("banner_base.png", "base");
 		codes.put("base.png", "baseMask");
 		codes.put("border.png", "bo");

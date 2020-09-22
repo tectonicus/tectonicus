@@ -105,7 +105,7 @@ public class Chunk
 		
 		BlockMask mask = maskFactory.createMask(coord, rawChunk); 
 		
-		geometry = new Geometry(rasteriser, texturePack.getTexture());
+		geometry = new Geometry(rasteriser);
 		
 		for (int y=0; y<RawChunk.HEIGHT; y++)
 		{

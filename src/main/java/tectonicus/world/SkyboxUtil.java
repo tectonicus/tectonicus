@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -39,7 +39,7 @@ public class SkyboxUtil
 	
 	public static Geometry generateSkybox(Rasteriser rasteriser, Vector4f topColour, Vector4f bottomColour)
 	{
-		Geometry skybox = new Geometry(rasteriser, null);
+		Geometry skybox = new Geometry(rasteriser);
 		Mesh mesh = skybox.getBaseMesh();
 		
 		final float size = 10.0f;
@@ -95,7 +95,7 @@ public class SkyboxUtil
 	
 	public static Geometry generateSkyboxOld(Rasteriser rasteriser)
 	{
-		Geometry skybox = new Geometry(rasteriser, null);
+		Geometry skybox = new Geometry(rasteriser);
 		Mesh mesh = skybox.getBaseMesh();
 		
 		final float size = 10.0f;

@@ -89,7 +89,7 @@ public class ItemRenderer
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
-		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		Geometry geometry = new Geometry(rasteriser);
 		
 		RawChunk rawChunk = new RawChunk();
 		
@@ -150,7 +150,7 @@ public class ItemRenderer
 	{		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
-		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		Geometry geometry = new Geometry(rasteriser);
 		
 		RawChunk rawChunk = new RawChunk();
 		
@@ -177,7 +177,7 @@ public class ItemRenderer
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
-		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		Geometry geometry = new Geometry(rasteriser);
 		
 		RawChunk rawChunk = new RawChunk();
 		
@@ -207,7 +207,7 @@ public class ItemRenderer
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
-		Geometry geometry = new Geometry(rasteriser, texturePack.getTexture());
+		Geometry geometry = new Geometry(rasteriser);
 		
 		RawChunk rawChunk = new RawChunk();
 		
@@ -339,13 +339,12 @@ public class ItemRenderer
 	private float getAngleRad(int angle)
 	{
 		final float normalised = (float)angle / 360.0f;
-		final float rad = normalised * (float)Math.PI * 2.0f;
-		return rad;
+		return normalised * (float)Math.PI * 2.0f;
 	}
 	
 	private static ItemGeometry createCompassGeometry(Rasteriser rasteriser, NorthDirection dir, BufferedImage img)
 	{
-		Geometry geometry = new Geometry(rasteriser, null);
+		Geometry geometry = new Geometry(rasteriser);
 		
 		SubMesh mesh = new SubMesh();
 		
@@ -466,10 +465,10 @@ public class ItemRenderer
 	
 	public static void clamp(Vector4f vec, final float min, final float max)
 	{
-		vec.x = (float)Math.min(Math.max(vec.x, min), max);
-		vec.y = (float)Math.min(Math.max(vec.y, min), max);
-		vec.z = (float)Math.min(Math.max(vec.z, min), max);
-		vec.w = (float)Math.min(Math.max(vec.w, min), max);
+		vec.x = Math.min(Math.max(vec.x, min), max);
+		vec.y = Math.min(Math.max(vec.y, min), max);
+		vec.z = Math.min(Math.max(vec.z, min), max);
+		vec.w = Math.min(Math.max(vec.w, min), max);
 	}
 	
 	public static BufferedImage downsample(BufferedImage src)
