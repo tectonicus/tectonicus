@@ -9,18 +9,18 @@
 
 package tectonicus.configuration;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import tectonicus.Log;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 @Log4j2
 @Data
@@ -73,7 +73,10 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private File texturePack;
 
 	@Option(names = {"-p", "--useOldColorPalette", "useOldColorPalette"}, arity = "0..1", paramLabel = "<boolean>")
-	private boolean useOldColorPalette;
+	private boolean useOldColorPalette; //TODO: is this working?
+
+	@Option(names = {"-a", "--useProgrammerArt", "useProgrammerArt"}, arity = "0..1", paramLabel = "<boolean>")
+	private boolean usingProgrammerArt;
 
 	@Option(names = {"-f", "--outputHtmlName", "outputHtmlName"}, paramLabel = "<string>")
 	private String outputHtmlName;

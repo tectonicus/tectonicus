@@ -71,7 +71,9 @@ public class XmlConfigurationParser
 				texturePack = new File(getString(configNode, "texturePack"));
 			}
 			config.setTexturePack(texturePack);
-			
+
+			config.setUsingProgrammerArt(getBoolean(configNode, "useProgrammerArt", false));
+
 			boolean useOldColorPalette = false;
 			if (configNode.hasAttribute("useOldColorPalette"))
 			{
@@ -433,6 +435,19 @@ public class XmlConfigurationParser
 			return "";
 		
 		return element.getAttribute(attributeName);
+	}
+
+	public static boolean getBoolean(Element element, String attributeName, boolean defaultValue)
+	{
+		if (element == null || attributeName == null)
+			return defaultValue;
+
+		String elementString = element.getAttribute(attributeName);
+
+		if (elementString == null || elementString.length() == 0)
+			return defaultValue;
+
+		return elementString.equalsIgnoreCase("true");
 	}
 	
 	private static WorldSubsetFactory parseWorldSubset(Element subsetNode)

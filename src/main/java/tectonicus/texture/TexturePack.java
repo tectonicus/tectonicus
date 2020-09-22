@@ -10,7 +10,9 @@
 package tectonicus.texture;
 
 import lombok.extern.log4j.Log4j2;
+import tectonicus.Minecraft;
 import tectonicus.Version;
+import tectonicus.configuration.Configuration;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
@@ -68,7 +70,7 @@ public class TexturePack
 	
 	private Map<String, PackTexture> loadedPackTextures;
 	
-	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars)
+	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
 	{
 		if (!minecraftJar.exists())
 			throw new RuntimeException("Couldn't find minecraft.jar at "+minecraftJar.getAbsolutePath());
@@ -79,6 +81,11 @@ public class TexturePack
 		
 		try
 		{
+			int worldVersion = Minecraft.getWorldVersion();
+			if (args.isUsingProgrammerArt() && worldVersion >= VERSION_14.getNumVersion()) {
+				//TODO: currently we are overwriting the value of texturepack if useProgrammerArt is true, we need to implement an ordered list of texture packs instead
+				texturePack = new File(Minecraft.findMinecraftDir(), "assets/objects/e4/e49420da40aa1cac6d85838e28a4b82f429ff1a1");
+			}
 			zipStack = new ZipStack(minecraftJar, texturePack, modJars);
 		}
 		catch (Exception e)

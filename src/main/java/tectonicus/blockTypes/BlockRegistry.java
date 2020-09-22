@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
+import tectonicus.configuration.MutableConfiguration;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -68,7 +69,8 @@ public class BlockRegistry
 	public BlockRegistry(Rasteriser rasteriser)
 	{
 		File minecraftJar = Minecraft.findMinecraftJar();
-		texturePack = new TexturePack(rasteriser, minecraftJar, null, Collections.emptyList());
+		MutableConfiguration config = new MutableConfiguration();
+		texturePack = new TexturePack(rasteriser, minecraftJar, null, Collections.emptyList(), config);
 		try {
 			zips = new ZipStack(minecraftJar, null, null);
 		} catch (IOException e) {

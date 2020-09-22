@@ -17,7 +17,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-public interface Configuration
+public interface Configuration  //TODO: is this interface needed?
 {
 	@Getter
 	@RequiredArgsConstructor
@@ -107,6 +107,8 @@ public interface Configuration
 	boolean isVerbose();
 	
 	boolean forceLoadAwt();
+
+	boolean isUsingProgrammerArt();
 	
 	int getTileSize();
 	

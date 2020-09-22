@@ -239,7 +239,7 @@ public class TileRenderer
 			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter());
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter(), args);
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -325,7 +325,7 @@ public class TileRenderer
 		
 		// Output html resources
 		// TODO: Should only load texture pack once and share between this and world loading
-		outputHtmlResources( new TexturePack(rasteriser, args.minecraftJar(), args.getTexturePack(), args.getMap(0).getModJars()), playerIconAssembler, args.getDefaultSkin() );
+		outputHtmlResources( new TexturePack(rasteriser, args.minecraftJar(), args.getTexturePack(), args.getMap(0).getModJars(), args), playerIconAssembler, args.getDefaultSkin());
 		
 		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), args);
 		
@@ -378,7 +378,7 @@ public class TileRenderer
 			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter());
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter(), args);
 			
 			// TODO: Load custom blocks here
 			

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,8 @@
 
 package tectonicus;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.texture.ZipStack;
@@ -28,16 +30,16 @@ import static java.util.stream.Collectors.toList;
 @UtilityClass
 public class Minecraft
 {
+	@Setter
 	private static boolean useOldColorPalette;
+
+	@Getter
+	@Setter
+	private static int worldVersion;
 	
 	public static boolean useOldColorPalette()
 	{
 		return useOldColorPalette;
-	}
-	
-	public static void setUseOldColorPalette(boolean b)
-	{
-		useOldColorPalette = b;
 	}
 	
 	public static File findMinecraftDir()

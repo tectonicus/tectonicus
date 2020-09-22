@@ -34,6 +34,7 @@ import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
+import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
@@ -84,6 +85,7 @@ import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
+import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 
@@ -134,7 +136,9 @@ public class World implements BlockContext
 
 	private final static String DEFAULT_BLOCK_ID = "minecraft:air";
 	
-	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile, List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName, WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache, SignFilter signFilter)
+	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile,
+				 List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName,
+				 WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache, SignFilter signFilter, Configuration args)
 	{
 		this.rasteriser = rasteriser;
 		this.signFilter = signFilter;
@@ -196,14 +200,21 @@ public class World implements BlockContext
 		{
 			levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 		}
-		
-		System.out.println("Loading textures");
-		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars);
-		this.textureVersion = texturePack.getVersion();
 
 		String worldVersion = levelDat.getVersion();
-		System.out.println("World version: " + worldVersion);
-		if (worldVersion != null && (textureVersion.equals(VERSIONS_9_TO_11) || textureVersion.equals(VERSION_12) || textureVersion.equals(VERSION_13))) {
+		if (worldVersion != null) {
+			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
+			if (StringUtils.isNotEmpty(versionNumber)) {
+				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
+			}
+		}
+		log.info("Loading textures");
+		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars, args);
+		this.textureVersion = texturePack.getVersion();
+
+
+		log.info("World version: " + worldVersion);
+		if (worldVersion != null && textureVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion()) {
 			switch (worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "") {
 				case "9":
 				case "10":
@@ -219,11 +230,15 @@ public class World implements BlockContext
 					if (!textureVersion.equals(VERSION_13))
 						throw new IncompatibleVersionException(textureVersion, worldVersion);
 					break;
+				case "14":
+					if (!textureVersion.equals(VERSION_14))
+						throw new IncompatibleVersionException(textureVersion, worldVersion);
+					break;
 				default:
 			}
 		}
 		
-		System.out.println("Loading players");
+		log.info("Loading players");
 		players = loadPlayers(worldDir, playerSkinCache);
 		
 		chests = new ArrayList<>();
