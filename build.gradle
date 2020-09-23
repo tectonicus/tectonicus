@@ -9,7 +9,7 @@ plugins {
 project.gradle.startParameter.excludedTaskNames.addAll("jar", "distTar", "distZip", "shadowDistTar")
 
 archivesBaseName = 'Tectonicus'
-project.version = '2.26.03'
+project.version = '2.27'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 

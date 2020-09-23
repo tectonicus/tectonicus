@@ -1,3 +1,26 @@
+Version 2.27 09-22-2020
+- now compatible with Minecraft 1.13 and 1.14 (NOT compatible with 1.15 or 1.16 yet)
+- parse and load all Minecraft blockstate and model json files and use these for rendering almost all blocks (some blocks do not
+have model files or require special handling so they are rendered using the old system)
+- added Conduit which has no model json and Bell which has only a partial model
+- fixed Player Heads, Banners, Beacons, Beds, Signs, Item Frames, and Paintings in 1.13 and 1.14
+- added support for waterlogged blocks
+- improved lighting for stairs and slabs (some work still to do here)
+- added support for dyed text on signs
+- added Globe banner pattern
+- added missing Shulker box rotation
+- water now has correct color based on biome
+- fixed an issue that was causing biome colors to be incorrect
+- added correct colors for cauldron water, melon/pumpking stems, and lilypads
+- Minecraft jar search will now look for the actual minecraft jar file instead of the directory
+- new xml configuration option (or command line option) 'useProgrammerArt' which will use Programmer Art as the texture pack
+- improved command line usage
+- new command line option 'updateToLeaflet' will update old Tectonicus maps using Google Maps to use Leaflet
+- updated to use LWJGL3
+- switched to using FBOs for rendering instead of pBuffers
+- added log4j2 logging support
+- lots of code cleanup and refactoring and dependency upgrades
+
 Version 2.26.01 02-15-2019
 - Leaflet maps are now full-screen in the browser
 
