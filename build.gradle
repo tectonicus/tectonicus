@@ -41,8 +41,9 @@ dependencies {
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.11.2",
-				   "org.apache.logging.log4j:log4j-core:2.13.3")
+				   "org.apache.logging.log4j:log4j-api:2.13.3")
 	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
+	shadow "org.apache.logging.log4j:log4j-core:2.13.3"
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
 				"org.lwjgl:lwjgl-glfw::natives-windows",
 				"org.lwjgl:lwjgl-opengl::natives-windows",
@@ -82,6 +83,7 @@ shadowJar {
 	exclude ('processing/**', 'com/threed/**')
 	minimize {
 		exclude(dependency('xyz.nickr:nbt:.*'))
+		exclude(dependency('com.fasterxml.jackson.core:jackson-databind:.*'))
 	}
 }
 
