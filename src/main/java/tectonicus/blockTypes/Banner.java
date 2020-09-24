@@ -9,17 +9,9 @@
 
 package tectonicus.blockTypes;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
@@ -28,12 +20,19 @@ import tectonicus.Version;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BannerEntity;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.BannerEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.world.Colors;
+
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.Map;
 
 public class Banner implements BlockType
 {
@@ -55,6 +54,8 @@ public class Banner implements BlockType
 	
 	private final boolean hasPost;
 
+	private final Version texturePackVersion;
+
 	public Banner(String id, String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
 	{
 		this.id = id;
@@ -70,6 +71,8 @@ public class Banner implements BlockType
 		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel*44, texture.u0+texel*2, texture.v0+texel*46);
 
 		this.patternImages = patternImages;
+
+		this.texturePackVersion = texture.getTexturePackVersion();
 	}
 
 	public Banner(String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
@@ -149,13 +152,22 @@ public class Banner implements BlockType
 		StringBuilder identifier = new StringBuilder();
 		identifier.append("banner_base_").append(baseColor.getName());
 
-		addPattern(base, patternImages.get("baseMask"), baseColor.getColor(), g);
+		if (texturePackVersion.getNumVersion() <= Version.VERSION_14.getNumVersion()) {
+			addPattern(base, patternImages.get("baseMask"), baseColor.getColor(), g);
+		} else {
+			addPattern(patternImages.get("baseMask"), baseColor.getColor(), g);
+		}
+
 		if (!patterns.isEmpty())
 		{
 			for (Pattern pattern : patterns)
 			{
 				if (StringUtils.isNotEmpty(id)) {
-					addPattern(base, patternImages.get(pattern.pattern), Colors.byId(pattern.color).getColor(), g);
+					if (texturePackVersion == Version.VERSION_13 || texturePackVersion == Version.VERSION_14) {
+						addPattern(base, patternImages.get(pattern.pattern), Colors.byId(pattern.color).getColor(), g);
+					} else {
+						addPattern(patternImages.get(pattern.pattern), Colors.byId(pattern.color).getColor(), g);
+					}
 				} else {
 					addPattern(base, patternImages.get(pattern.pattern), Colors.byId(15-pattern.color).getColor(), g);
 				}
@@ -274,6 +286,45 @@ public class Banner implements BlockType
 		}
 		
 		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);
+	}
+
+	private void tint(BufferedImage image, Color color) {
+		for (int x = 0; x < image.getWidth(); x++) {
+			for (int y = 0; y < image.getHeight(); y++) {
+				Color pixelColor = new Color(image.getRGB(x, y), true);
+				int r = color.getRed();
+				int g = color.getGreen();
+				int b = color.getBlue();
+				int a = pixelColor.getAlpha();
+				int rgba = (a << 24) | (r << 16) | (g << 8) | b;
+				image.setRGB(x, y, rgba);
+			}
+		}
+	}
+
+	//I haven't actually tested if this method is faster but I put Fast in the name just in case :)
+	private void tintFast(BufferedImage image, Color color) {
+		final float heightRatio = 41.0f/64.0f;
+		final float widthRatio = 42.0f/64.0f;
+		//We use this smaller width and height because banner patterns don't take up all of the 64x64 image
+		final int height = (int) (image.getHeight() * heightRatio);
+		final int width = (int) (image.getWidth() * widthRatio);
+
+		int newRgb = (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
+
+		int[] rgb = image.getRGB(0, 0, width, height, null, 0, width);
+
+		int alphaMask = 0xff000000;
+		for (int i = 0; i < rgb.length; i++) {
+			rgb[i] = (rgb[i] & alphaMask) | newRgb;
+		}
+		image.setRGB(0, 0, width, height, rgb, 0, width);
+	}
+
+	private void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
+		//tint(p, Colors.byId(pattern.color).getColor());
+		tintFast(pattern, color);
+		g.drawImage(pattern, 0, 0, null);
 	}
 
 	private void addPattern(BufferedImage base, BufferedImage pattern, Color currentColor, Graphics2D g)
