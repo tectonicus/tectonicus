@@ -46,6 +46,7 @@ import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
+import static tectonicus.Version.VERSION_15;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
@@ -96,7 +97,9 @@ public class TexturePack
 		}
 
 		//TODO: Clean up this version stuff
-		if (zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
+		if (zipStack.hasFile("assets/minecraft/textures/block/bee_nest_bottom.png")) {
+			version = VERSION_15;
+		} else if (zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
 			version = VERSION_14;
 		} else if (zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;

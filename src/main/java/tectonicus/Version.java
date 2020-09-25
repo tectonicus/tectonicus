@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,7 +23,8 @@ public enum Version {
     VERSIONS_9_TO_11("1.9-1.11", 9),
     VERSION_12("1.12", 12),
     VERSION_13("1.13", 13),
-    VERSION_14("1.14", 14);
+    VERSION_14("1.14", 14),
+    VERSION_15("1.15", 15);
 
     private final String strVersion;
     private final int numVersion;

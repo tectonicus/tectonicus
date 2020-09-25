@@ -26,6 +26,9 @@
 	<BedNew stringId="minecraft:red_bed" name="Red Bed" />
 	<BedNew stringId="minecraft:black_bed" name="Black Bed" />
 
+	<Chest stringId="minecraft:chest" name="Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png"
+		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
+
 	<Sign stringId="minecraft:oak_sign" name="Oak Sign" texture="assets/minecraft/textures/entity/signs/oak.png" hasPost="true" />
 	<Sign stringId="minecraft:oak_wall_sign" name="Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/oak.png" />
 	<Sign stringId="minecraft:spruce_sign" name="Spruce Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" hasPost="true" />
@@ -41,16 +44,8 @@
 
 	<EnderPortal stringId="minecraft:end_portal" name="EnderPortal" texture="Images/EnderPortal.png" />
 
-	<ChestNew stringId="minecraft:chest" name="Chest" single="assets/minecraft/textures/entity/chest/normal.png" right="assets/minecraft/textures/entity/chest/normal_right.png"
-			  left="assets/minecraft/textures/entity/chest/normal_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png"
-			  christmasLeft="assets/minecraft/textures/entity/chest/christmas_left.png" christmasRight="assets/minecraft/textures/entity/chest/christmas_right.png" />
-
-	<ChestNew stringId="minecraft:trapped_chest" name="Trapped Chest" single="assets/minecraft/textures/entity/chest/trapped.png" right="assets/minecraft/textures/entity/chest/trapped_right.png"
-			  left="assets/minecraft/textures/entity/chest/trapped_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png"
-			  christmasLeft="assets/minecraft/textures/entity/chest/christmas_left.png" christmasRight="assets/minecraft/textures/entity/chest/christmas_right.png" />
-
-	<ChestNew stringId="minecraft:ender_chest" name="Ender Chest" single="assets/minecraft/textures/entity/chest/ender.png"
-		   christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
+	<Chest stringId="minecraft:ender_chest" name="Ender Chest" large="assets/minecraft/textures/entity/chest/normal_double.png" ender="assets/minecraft/textures/entity/chest/ender.png"
+		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
 	<Beacon stringId="minecraft:beacon" name="Beacon" beam="assets/minecraft/textures/entity/beacon_beam.png" />
 
@@ -66,6 +61,9 @@
 	<Skull stringId="minecraft:player_wall_head" name="Player Wall Head" texture="assets/minecraft/textures/entity/steve.png" />
 	<Skull stringId="minecraft:creeper_wall_head" name="Creeper Wall Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
 	<Skull stringId="minecraft:dragon_wall_head" name="Dragon Wall Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
+
+	<Chest stringId="minecraft:trapped_chest" name="Trapped Chest" trappedsmall="assets/minecraft/textures/entity/chest/trapped.png" trappedlarge="assets/minecraft/textures/entity/chest/trapped_double.png"
+		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
 <!--	<Plant stringId="minecraft:barrier" name="Barrier" texture="assets/minecraft/textures/item/barrier.png" />-->
 
@@ -130,5 +128,6 @@
 	<Bell stringId="minecraft:bell" name="Bell" texture="assets/minecraft/textures/entity/bell/bell_body.png" />
 
 	<PaintingNew id="-1" name="Paintings" />
+
 	<ItemFrameNew id="-2" name="Item Frame" background="item_frame.png" border="birch_planks.png" map="assets/minecraft/textures/map/map_background.png" />
 </blockConfig>

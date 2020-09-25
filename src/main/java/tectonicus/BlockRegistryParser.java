@@ -40,6 +40,7 @@ import tectonicus.blockTypes.Cake;
 import tectonicus.blockTypes.Carpet;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
+import tectonicus.blockTypes.ChestNew;
 import tectonicus.blockTypes.ChorusFlower;
 import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
@@ -443,6 +444,17 @@ public class BlockRegistryParser
 			}
 			
 			blockType = new Chest(name, small, large, ender, trappedsmall, trappedlarge, xmassmall, xmaslarge);
+		}
+		else if (nodeName.equals("chestnew"))
+		{
+			SubTexture single = parseTexture(element, "single", null);
+			SubTexture left = parseTexture(element, "left", single);
+			SubTexture right = parseTexture(element, "right", single);
+			SubTexture christmasSmall = parseTexture(element, "christmasSmall", null);
+			SubTexture christmasLeft = parseTexture(element, "christmasLeft", christmasSmall);
+			SubTexture christmasRight = parseTexture(element, "christmasRight", christmasSmall);
+
+			blockType = new ChestNew(name, stringId, single, left, right, christmasSmall, christmasLeft, christmasRight);
 		}
 		else if (nodeName.equals("redstonewire"))
 		{
