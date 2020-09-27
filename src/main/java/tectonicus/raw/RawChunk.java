@@ -10,7 +10,6 @@
 package tectonicus.raw;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.commons.lang3.StringUtils;
@@ -63,7 +62,8 @@ public class RawChunk
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	private static final ObjectWriter OBJECT_WRITER = FileUtils.getOBJECT_MAPPER().writer();
 	
-	private byte[][] biomes;
+	private int[][] biomes;
+	private int[][][] biomes3d;
 	
 	private Section[] sections;
 	
@@ -601,35 +601,38 @@ public class RawChunk
 				}
 			}
 		}
-		
-		// Parse "Biomes" data (16x16)
+
+		// Parse "Biomes" data (16x16) or 1.15+ (one int is biome id for 4x4x4 volume)
 		ByteArrayTag biomeDataTag = NbtUtil.getChild(level, "Biomes", ByteArrayTag.class);
 		IntArrayTag intBiomeDataTag = NbtUtil.getChild(level, "Biomes", IntArrayTag.class);
 
-		if (biomeDataTag != null)
-		{
-			biomes = new byte[SECTION_WIDTH][SECTION_DEPTH];
-			
-			for (int x=0; x<SECTION_WIDTH; x++)
-			{
-				for (int z=0; z<SECTION_DEPTH; z++)
-				{
+		if (biomeDataTag != null || (intBiomeDataTag != null && intBiomeDataTag.getValue().length == 256)) {
+			biomes = new int[SECTION_WIDTH][SECTION_DEPTH];
+
+			for (int x = 0; x < SECTION_WIDTH; x++) {
+				for (int z = 0; z < SECTION_DEPTH; z++) {
 					final int index = z * SECTION_WIDTH + x;
-					biomes[x][z] = biomeDataTag.getValue()[index];
+					if (biomeDataTag != null) {
+						biomes[x][z] = biomeDataTag.getValue()[index];
+					} else {
+						biomes[x][z] = intBiomeDataTag.getValue()[index];
+					}
 				}
 			}
-		}
-		else if (intBiomeDataTag != null && intBiomeDataTag.getValue().length > 0)
-		{
-			// 1.13+
-			biomes = new byte[SECTION_WIDTH][SECTION_DEPTH]; //TODO: use int
+		} else if (intBiomeDataTag != null && intBiomeDataTag.getValue().length == 1024) {
+			int width = 4;
+			int height = 64;
+			int depth = 4;
 
-			for (int x=0; x<SECTION_WIDTH; x++)
-			{
-				for (int z=0; z<SECTION_DEPTH; z++)
-				{
-					final int index = z * SECTION_WIDTH + x;
-					biomes[x][z] = (byte)intBiomeDataTag.getValue()[index];
+			// 1.15+
+			biomes3d = new int[width][height][depth];
+
+			for (int x = 0; x < width; x++) {
+				for (int y = 0; y < height; y++) {
+					for (int z = 0; z < depth; z++) {
+						final int index = (z * width + x) + y * SECTION_HEIGHT;
+						biomes3d[x][y][z] = intBiomeDataTag.getValue()[index];
+					}
 				}
 			}
 		}
@@ -1132,13 +1135,21 @@ public class RawChunk
 			}
 		}
 	}
-	
+
 	public int getBiomeId(final int x, final int y, final int z)
 	{
-		if(biomes != null)
+		if(biomes != null) {
 			return biomes[x][z];
-		else
+		}
+		else if (biomes3d != null) {
+			int xIndex = Math.floorDiv(x, 4);
+			int yIndex = Math.floorDiv(y, 4);
+			int zIndex = Math.floorDiv(z, 4);
+
+			return biomes3d[xIndex][yIndex][zIndex];
+		} else {
 			return BiomeIds.UNKNOWN;
+		}
 	}
 	
 	private static class Section

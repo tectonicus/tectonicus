@@ -86,7 +86,6 @@ import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
-import static tectonicus.Version.VERSION_15;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 
@@ -1128,10 +1127,6 @@ public class World implements BlockContext
 	@Override
 	public Colour4f getGrassColour(ChunkCoord chunkCoord, int x, int y, int z)
 	{
-		if (textureVersion.getNumVersion() >= VERSION_15.getNumVersion()) {
-			y = 0;
-		}
-
 		final int biomeId = getBiomeId(chunkCoord, x, y, z);
 		final int northId = getBiomeId(chunkCoord, x, y, z-1);
 		final int southId = getBiomeId(chunkCoord, x, y, z+1);
