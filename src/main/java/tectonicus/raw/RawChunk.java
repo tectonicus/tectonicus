@@ -529,12 +529,20 @@ public class RawChunk
 			ListTag paletteTag = NbtUtil.getChild(compound, "Palette", ListTag.class);
 			int bitsPerBlock = 0;
 			int blockBitMask = 0;
+			int blocksPerLong = 0;
 			List<Tag> paletteList = null;
+			boolean packedBits = false;
 
 			if (blockStatesTag != null)
 			{
-				bitsPerBlock = blockStatesTag.getValue().length * 64 / (SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH);
+				int sectionVolume = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
+				int blockStatesTagLength = blockStatesTag.getValue().length;
+				bitsPerBlock = blockStatesTagLength * 64 / sectionVolume;
 				blockBitMask = (1 << bitsPerBlock) - 1;
+				if (sectionVolume / (64f / bitsPerBlock) == blockStatesTagLength) {
+					packedBits = true;
+				}
+				blocksPerLong = 64 / bitsPerBlock;
 
 				paletteList = paletteTag.getValue();
 			}
@@ -566,16 +574,22 @@ public class RawChunk
 						}
 						else
 						{
-							// 1.13+ format
-							int bitIndex = index * bitsPerBlock;
-							int longIndex = bitIndex / 64;
-							int bitOffset = bitIndex % 64;
-
 							if (blockStatesTag != null && blockStatesTag.getValue() != null) {
+								int longIndex;
+								int bitOffset;
+								if (packedBits) {  // 1.13-1.15 format or 1.16+ when bitsPerBlock is power of 2
+									int bitIndex = index * bitsPerBlock;
+									longIndex = bitIndex / 64;
+									bitOffset = bitIndex % 64;
+								} else { // 1.16+ format when bitsPerBlock is not a power of 2
+									longIndex = index / blocksPerLong;
+									bitOffset = (index % blocksPerLong) * bitsPerBlock;
+								}
+
 								long paletteIndex = (blockStatesTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
 
-								// overflow
-								if (bitOffset + bitsPerBlock > 64)
+								// overflow, only for 1.13-1.15
+								if (packedBits && bitOffset + bitsPerBlock > 64)
 								{
 									int carryBits = bitOffset + bitsPerBlock - 64;
 									int carryMask = (1 << carryBits) - 1;
