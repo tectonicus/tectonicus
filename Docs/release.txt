@@ -1,3 +1,14 @@
+Version 2.28 09-29-2020
+- added compatability with Minecraft 1.15 and 1.16
+- all new blocks are supported
+- added support for new 1.16 blockstate storage format (if a blockstate index will not fit in the remaining bits of a
+64-bit long it will be moved to a new long and those extra bits will be unused)
+- added Snout banner pattern
+- banner patterns images can now use alpha channel for compositing instead of grayscale mask
+- added support for 1.15 biomes with addtional y-dimension
+- fixed chest textures
+- fixed player heads to use new SkullOwner tag and IntArray UUID
+
 Version 2.27 09-22-2020
 - now compatible with Minecraft 1.13 and 1.14 (NOT compatible with 1.15 or 1.16 yet)
 - parse and load all Minecraft blockstate and model json files and use these for rendering almost all blocks (some blocks do not
