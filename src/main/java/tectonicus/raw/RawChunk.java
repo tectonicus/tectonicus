@@ -539,7 +539,8 @@ public class RawChunk
 				int blockStatesTagLength = blockStatesTag.getValue().length;
 				bitsPerBlock = blockStatesTagLength * 64 / sectionVolume;
 				blockBitMask = (1 << bitsPerBlock) - 1;
-				if (sectionVolume / (64f / bitsPerBlock) == blockStatesTagLength) {
+
+				if (Math.ceil(sectionVolume / (64f / bitsPerBlock)) == blockStatesTagLength) {
 					packedBits = true;
 				}
 				blocksPerLong = 64 / bitsPerBlock;
