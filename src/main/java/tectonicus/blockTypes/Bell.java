@@ -73,7 +73,7 @@ public class Bell implements BlockType
 		final float offSet = 1.0f / 16.0f;
 
 		BlockStateWrapper bellBlock = world.getModelRegistry().getBlock(id);
-		List<BlockStateModel> models = bellBlock.getModels(world.getBlockState(rawChunk.getChunkCoord(), x, y, z));
+		List<BlockStateModel> models = bellBlock.getModels(rawChunk.getBlockState(x, y, z));
 		for (BlockStateModel bsc : models) {  //There should only be one model per variant for bells in vanilla Minecraft
 			bsc.getBlockModel().createGeometry(x, y, z, world, rawChunk, geometry, bsc.getXRotation(), bsc.getYRotation());
 		}

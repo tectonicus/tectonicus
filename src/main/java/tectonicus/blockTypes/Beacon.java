@@ -96,8 +96,11 @@ public class Beacon implements BlockType
 		SubMesh beamMesh = new SubMesh();
 
 		if (StringUtils.isNotEmpty(id)) {
-			BlockModel model = world.getModelRegistry().getModel(id.replace("minecraft:", "block/"));
-			MeshUtil.addBlock(world, rawChunk, x, y, z, model, geometry, 0, 0);
+			BlockStateWrapper beaconBlock = world.getModelRegistry().getBlock(id);
+			List<BlockStateModel> models = beaconBlock.getModels(rawChunk.getBlockState(x, y, z));
+			for (BlockStateModel bsc : models) {  //There is only a single beacon model in vanilla Minecraft
+				bsc.getBlockModel().createGeometry(x, y, z, world, rawChunk, geometry, bsc.getXRotation(), bsc.getYRotation());
+			}
 		} else {
 			Vector4f colour = new Vector4f(1, 1, 1, 1);
 

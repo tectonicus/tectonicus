@@ -288,6 +288,16 @@ public class Banner implements BlockType
 		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);
 	}
 
+
+
+	private void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
+		//tint(p, Colors.byId(pattern.color).getColor());
+		if (pattern != null) {
+			tintFast(pattern, color);
+			g.drawImage(pattern, 0, 0, null);
+		}
+	}
+
 	private void tint(BufferedImage image, Color color) {
 		for (int x = 0; x < image.getWidth(); x++) {
 			for (int y = 0; y < image.getHeight(); y++) {
@@ -319,12 +329,6 @@ public class Banner implements BlockType
 			rgb[i] = (rgb[i] & alphaMask) | newRgb;
 		}
 		image.setRGB(0, 0, width, height, rgb, 0, width);
-	}
-
-	private void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
-		//tint(p, Colors.byId(pattern.color).getColor());
-		tintFast(pattern, color);
-		g.drawImage(pattern, 0, 0, null);
 	}
 
 	private void addPattern(BufferedImage base, BufferedImage pattern, Color currentColor, Graphics2D g)

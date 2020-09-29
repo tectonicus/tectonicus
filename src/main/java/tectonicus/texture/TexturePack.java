@@ -448,15 +448,19 @@ public class TexturePack
 		codes.put("triangle_top.png", "tt");
 		codes.put("triangles_bottom.png", "bts");
 		codes.put("triangles_top.png", "tts");
-		if (version.getNumVersion() >= VERSION_14.getNumVersion()) {
-			codes.put("globe.png", "glb");
-		}
+		codes.put("globe.png", "glb");
+		codes.put("piglin.png", "pig");
+
 			
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
 			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner"));)
 		{
-			for (Path entry : entries)
-				patterns.put(codes.get(entry.getFileName().toString()), loadTexture(entry.toString()));
+			for (Path entry : entries) {
+				String fileName = entry.getFileName().toString();
+				if (codes.containsKey(fileName)) { //Only add files that are in our codes map
+					patterns.put(codes.get(fileName), loadTexture(entry.toString()));
+				}
+			}
 			
 			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
 			patterns.put(codes.get(basePattern.getFileName().toString()), loadTexture(basePattern.toString()));
