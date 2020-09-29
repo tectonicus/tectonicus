@@ -9,16 +9,18 @@
 
 package tectonicus.texture;
 
+import com.fasterxml.jackson.databind.ObjectReader;
 import lombok.extern.log4j.Log4j2;
 import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.Configuration;
-import tectonicus.exceptions.MissingMinecraftJarException;
 import tectonicus.exceptions.MissingAssetException;
+import tectonicus.exceptions.MissingMinecraftJarException;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
 import tectonicus.renderer.Font;
+import tectonicus.util.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -47,6 +49,7 @@ import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_15;
+import static tectonicus.Version.VERSION_16;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
@@ -72,6 +75,8 @@ public class TexturePack
 	private final ZipStack zipStack;
 	
 	private final Map<String, PackTexture> loadedPackTextures;
+
+	private final ObjectReader objectReader = FileUtils.getOBJECT_MAPPER().readerFor(Pack.class);
 	
 	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
 	{
@@ -96,20 +101,31 @@ public class TexturePack
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 
+		Pack packMcMeta = new Pack();
+		if (zipStack.hasFile("pack.mcmeta")) {
+			try {
+				packMcMeta = objectReader.readValue(zipStack.getStream("pack.mcmeta"));
+			} catch (IOException e) {
+				log.error("Failed to read pack.mcmeta file.", e);
+			}
+		}
+
 		//TODO: Clean up this version stuff
-		if (zipStack.hasFile("assets/minecraft/textures/block/bee_nest_bottom.png")) {
+		if (packMcMeta.getPackVersion() >= 5 && zipStack.hasFile("assets/minecraft/textures/block/ancient_debris_side.png")) {
+			version = VERSION_16;
+		} else if (packMcMeta.getPackVersion() >= 5 && zipStack.hasFile("assets/minecraft/textures/block/bee_nest_bottom.png")) {
 			version = VERSION_15;
-		} else if (zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
+		} else if (packMcMeta.getPackVersion() >= 4 && zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
 			version = VERSION_14;
-		} else if (zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
+		} else if (packMcMeta.getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
+		} else if (packMcMeta.getPackVersion() == 3 && zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
 			version = VERSION_12;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png")) {
+		} else if ((packMcMeta.getPackVersion() == 2 || packMcMeta.getPackVersion() == 3) && zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png")) {
 			version = VERSIONS_9_TO_11;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
 			version = VERSION_RV;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
+		} else if (packMcMeta.getPackVersion() == 1 && zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
 			version = VERSIONS_6_TO_8;
 		} else if (zipStack.hasFile("textures/blocks/activatorRail.png")) {
 			version = VERSION_5;

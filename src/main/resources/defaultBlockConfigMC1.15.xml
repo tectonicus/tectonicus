@@ -38,10 +38,6 @@
 	<Sign stringId="minecraft:acacia_wall_sign" name="Acacia Wall Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" />
 	<Sign stringId="minecraft:dark_oak_sign" name="Dark Oak Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" hasPost="true" />
 	<Sign stringId="minecraft:dark_oak_wall_sign" name="Dark Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" />
-	<Sign stringId="minecraft:crimson_sign" name="Crimson Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" hasPost="true" />
-	<Sign stringId="minecraft:crimson_wall_sign" name="Crimson Wall Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" />
-	<Sign stringId="minecraft:warped_sign" name="Warped Sign" texture="assets/minecraft/textures/entity/signs/warped.png" hasPost="true" />
-	<Sign stringId="minecraft:warped_wall_sign" name="Warped Wall Sign" texture="assets/minecraft/textures/entity/signs/warped.png" />
 
 	<EnderPortal stringId="minecraft:end_portal" name="EnderPortal" texture="Images/EnderPortal.png" />
 
