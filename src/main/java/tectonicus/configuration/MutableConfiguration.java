@@ -48,7 +48,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-r", "--rasterizer", "rasterizer", "rasteriser"}, paramLabel = "<string>")
 	private RasteriserType rasteriserType;
 
-	@Option(names = {"-d", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
+	@Option(names = {"-e", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean eraseOutputDir;
 
 	@Option(names = {"-l", "--logFile", "logFile"}, paramLabel = "<String>")
@@ -59,6 +59,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	@Option(names = {"-w", "--worldDir", "worldDir"}, paramLabel = "<String>")
 	private MutableMap worldDir;
+
+	@Option(names = {"-d", "--dimension", "dimension"}, paramLabel = "<String>")
+	private Dimension dimension;
 
 	@Option(names = {"-C", "--useCache", "useCache"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useCache;

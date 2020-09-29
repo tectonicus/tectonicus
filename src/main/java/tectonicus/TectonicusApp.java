@@ -319,6 +319,10 @@ public class TectonicusApp
 			System.exit(0);
 		}
 
+		if (args.getDimension() != null) {
+			args.getWorldDir().setDimension(args.getDimension());
+		}
+
 		TectonicusApp app = new TectonicusApp(args);
 
 		args.printActive();
