@@ -117,7 +117,7 @@ public class Chunk
 					{
 						BlockType type = null;
 						final String blockName = rawChunk.getBlockName(x, y, z);
-						if (blockName != null && !blockName.equals(StringUtils.EMPTY))
+						if (blockName != null && !blockName.equals(Block.AIR.getName()))
 						{
 							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
 
@@ -142,7 +142,7 @@ public class Chunk
 							}
 
 							//Render a water block at this same location if waterlogged
-							if (properties.containsKey("waterlogged") && properties.get("waterlogged").equals("true")
+							if (properties != null && properties.containsKey("waterlogged") && properties.get("waterlogged").equals("true")
 									|| blockName.equals("minecraft:kelp") || blockName.equals("minecraft:kelp_plant") || blockName.contains("seagrass")) {  //TODO: is there some way to avoid hard-coding these blocks?
 								registry.find("minecraft:water").addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
 							}

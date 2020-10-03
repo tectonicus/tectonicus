@@ -25,6 +25,7 @@ import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
+import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
 import tectonicus.WorldStats;
@@ -530,9 +531,6 @@ public class RawChunk
 			if (sectionY < 0 || sectionY >= MAX_SECTIONS)
 				continue;
 			
-			Section newSection = new Section();
-			sections[sectionY] = newSection;
-			
 			ByteArrayTag blocksTag = NbtUtil.getChild(compound, "Blocks", ByteArrayTag.class);
 			ByteArrayTag addTag = NbtUtil.getChild(compound, "Add", ByteArrayTag.class);
 			ByteArrayTag dataTag = NbtUtil.getChild(compound, "Data", ByteArrayTag.class);
@@ -542,6 +540,13 @@ public class RawChunk
 			// 1.13+ block data
 			LongArrayTag blockStatesTag = NbtUtil.getChild(compound, "BlockStates", LongArrayTag.class);
 			ListTag paletteTag = NbtUtil.getChild(compound, "Palette", ListTag.class);
+
+			Section newSection = null;
+			if (blocksTag != null || blockStatesTag != null) {
+				newSection = new Section();
+				sections[sectionY] = newSection;
+			}
+
 			int bitsPerBlock = 0;
 			int blockBitMask = 0;
 			int blocksPerLong = 0;
@@ -617,7 +622,7 @@ public class RawChunk
 								CompoundTag paletteEntry = (CompoundTag)paletteList.get((int)paletteIndex);
 								String blockName = NbtUtil.getChild(paletteEntry, "Name", StringTag.class).getValue();
 								CompoundTag properties = NbtUtil.getChild(paletteEntry, "Properties", CompoundTag.class);
-								
+
 								newSection.blockNames[x][y][z] = blockName;
 								BlockProperties blockState = NbtUtil.getProperties(properties);
 
@@ -625,8 +630,12 @@ public class RawChunk
 							}
 						}
 
-						newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
-						newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
+						if (skylightTag != null && newSection != null) {
+							newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
+						}
+						if (blocklightTag != null && newSection != null) {
+							newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
+						}
 					}
 				}
 			}
@@ -881,7 +890,7 @@ public class RawChunk
 	public String getBlockName(final int x, final int y, final int z)
 	{
 		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH)
-			return StringUtils.EMPTY;
+			return Block.AIR.getName();
 
 		final int sectionY = y / MAX_SECTIONS;
 		final int localY = y % SECTION_HEIGHT;
@@ -890,7 +899,7 @@ public class RawChunk
 		if (s != null)
 			return s.blockNames[x][localY][z];
 		else
-			return StringUtils.EMPTY;
+			return Block.AIR.getName();
 	}
 
 	public void setBlockName(final int x, final int y, final int z, final String blockName)

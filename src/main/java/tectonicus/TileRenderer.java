@@ -85,6 +85,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static tectonicus.Version.VERSION_12;
+import static tectonicus.Version.VERSION_13;
 
 
 public class TileRenderer
@@ -429,7 +430,11 @@ public class TileRenderer
 		}
 		else if (layer.getRenderStyle() == RenderStyle.NETHER)
 		{
-			world.setBlockFilter( new NetherBlockFilter() );
+			if (world.getTexturePack().getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
+				world.setBlockFilter(new NetherBlockFilter());
+			} else {
+				world.setBlockFilter(new NetherBlockFilter113());
+			}
 		}	
 	}
 

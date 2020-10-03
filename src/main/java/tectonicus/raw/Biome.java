@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -104,7 +104,8 @@ public enum Biome {
 	BAMBOO_JUNGLE_HILLS(169, 0.95f, 0.9f, LUSH.getWaterColor()),
 	SOUL_SAND_VALLEY(170, 2.0f, 0.0f, null),
 	CRIMSON_FOREST(171, 2.0f, 0.0f, null),
-	WARPED_FOREST(172, 2.0f, 0.0f, null);
+	WARPED_FOREST(172, 2.0f, 0.0f, null),
+	BASALT_DELTAS(173, 2.0f, 0.0f, null);
 
 	private static final Map<Integer, Biome> ID_LOOKUP = new HashMap<>(values().length);
 

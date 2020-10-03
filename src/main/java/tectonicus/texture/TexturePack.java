@@ -119,9 +119,9 @@ public class TexturePack
 			version = VERSION_14;
 		} else if (packMcMeta.getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
-		} else if (packMcMeta.getPackVersion() == 3 && zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
 			version = VERSION_12;
-		} else if ((packMcMeta.getPackVersion() == 2 || packMcMeta.getPackVersion() == 3) && zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png")) {
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png")) {
 			version = VERSIONS_9_TO_11;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
 			version = VERSION_RV;

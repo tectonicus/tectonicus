@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,9 +11,11 @@ package tectonicus;
 
 import java.io.File;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.cache.BiomeCache;
 import tectonicus.world.filter.BlockFilter;
 
+@Log4j2
 public class ChunkLocator
 {
 	private final BiomeCache biomeCache;
@@ -80,12 +82,7 @@ public class ChunkLocator
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error while trying to load chunk at ("+chunkCoord.x+", "+chunkCoord.z+") from region "+region.getFile().getAbsolutePath());
-			e.printStackTrace();
-		}
-		finally
-		{
-			
+			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.x, chunkCoord.z, region.getFile().getAbsolutePath(), e);
 		}
 		
 		return chunk;
