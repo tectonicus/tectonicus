@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,11 +9,13 @@
 
 package tectonicus.rasteriser.lwjgl;
 
+import lombok.extern.log4j.Log4j2;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -40,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.opengl.GL11.GL_RGBA16;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
@@ -53,6 +56,7 @@ import static org.lwjgl.opengl.GL30.glGenFramebuffers;
 import static org.lwjgl.opengl.GL30.glGenRenderbuffers;
 import static org.lwjgl.opengl.GL30.glRenderbufferStorage;
 
+@Log4j2
 public class LwjglRasteriser implements Rasteriser
 {
 	private final DisplayType type;
@@ -148,8 +152,8 @@ public class LwjglRasteriser implements Rasteriser
 		// Ugh. Anything with a depth buffer.
 		pixelFormats.add( new LwjglPixelFormat(0, 0, 1, 0, 0) );
 
-
-		GLFW.glfwSetErrorCallback((arg0, arg1) -> System.out.println("GLFW error: " + String.format("0x%08X", arg0)));
+		glfwSetErrorCallback((error, description) ->
+				log.error("GLFW error [{}]: {}", String.format("0x%08X", error), GLFWErrorCallback.getDescription(description)));
 		
 		if (!GLFW.glfwInit()) {
 			throw new RuntimeException("Failed to init GLFW");
