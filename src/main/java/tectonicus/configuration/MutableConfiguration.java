@@ -48,7 +48,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-r", "--rasterizer", "rasterizer", "rasteriser"}, paramLabel = "<string>")
 	private RasteriserType rasteriserType;
 
-	@Option(names = {"--egl"}, paramLabel = "<boolean>")
+	@Option(names = {"--useEGL"}, paramLabel = "<boolean>")
 	private boolean useEGL;
 
 	@Option(names = {"-e", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
