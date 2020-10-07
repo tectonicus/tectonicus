@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -44,7 +44,7 @@ public class JpctRasteriser implements Rasteriser
 	
 	public JpctRasteriser(DisplayType displayType, final int displayWidth, final int displayHeight)
 	{
-		if (displayType == DisplayType.Window)
+		if (displayType == DisplayType.WINDOW)
 		{
 			jframe = new JFrame("Hello world");
 			jframe.setSize(displayWidth, displayHeight);

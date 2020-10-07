@@ -13,6 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -40,10 +41,75 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static org.lwjgl.egl.EGL10.EGL_NONE;
+import static org.lwjgl.egl.EGL10.EGL_NO_CONTEXT;
+import static org.lwjgl.egl.EGL10.EGL_NO_SURFACE;
+import static org.lwjgl.egl.EGL10.EGL_VENDOR;
+import static org.lwjgl.egl.EGL10.eglChooseConfig;
+import static org.lwjgl.egl.EGL10.eglCreateContext;
+import static org.lwjgl.egl.EGL10.eglGetError;
+import static org.lwjgl.egl.EGL10.eglInitialize;
+import static org.lwjgl.egl.EGL10.eglMakeCurrent;
+import static org.lwjgl.egl.EGL10.eglQueryString;
+import static org.lwjgl.egl.EGL10.eglTerminate;
+import static org.lwjgl.egl.EGL12.EGL_CLIENT_APIS;
+import static org.lwjgl.egl.EGL12.eglBindAPI;
+import static org.lwjgl.egl.EGL12.eglReleaseThread;
+import static org.lwjgl.egl.EGL14.EGL_DEFAULT_DISPLAY;
+import static org.lwjgl.egl.EGL14.EGL_OPENGL_API;
+import static org.lwjgl.egl.EGL14.eglGetDisplay;
+import static org.lwjgl.egl.EGL15.EGL_CONTEXT_MAJOR_VERSION;
+import static org.lwjgl.egl.EGL15.EGL_CONTEXT_MINOR_VERSION;
+import static org.lwjgl.egl.EGL15.EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
+import static org.lwjgl.egl.EGL15.EGL_CONTEXT_OPENGL_PROFILE_MASK;
+import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
+import static org.lwjgl.glfw.GLFW.GLFW_OSMESA_CONTEXT_API;
+import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
+import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
+import static org.lwjgl.glfw.GLFW.glfwGetKey;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
+import static org.lwjgl.glfw.GLFW.glfwInit;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.glfw.GLFW.glfwTerminate;
+import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_LINES;
+import static org.lwjgl.opengl.GL11.GL_POINTS;
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.GL_RENDERER;
 import static org.lwjgl.opengl.GL11.GL_RGBA16;
+import static org.lwjgl.opengl.GL11.GL_STENCIL_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
+import static org.lwjgl.opengl.GL11.GL_VENDOR;
+import static org.lwjgl.opengl.GL11.GL_VERSION;
+import static org.lwjgl.opengl.GL11.glAlphaFunc;
+import static org.lwjgl.opengl.GL11.glBegin;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL11.glBlendFunc;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.glColorMask;
+import static org.lwjgl.opengl.GL11.glCullFace;
+import static org.lwjgl.opengl.GL11.glDepthFunc;
+import static org.lwjgl.opengl.GL11.glDisable;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glFrontFace;
+import static org.lwjgl.opengl.GL11.glGetString;
+import static org.lwjgl.opengl.GL11.glReadPixels;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL30.GL_DEPTH_ATTACHMENT;
@@ -62,13 +128,13 @@ public class LwjglRasteriser implements Rasteriser
 	private final DisplayType type;
 	
 	private long window = 0;
+	private long eglDisplay = 0;
+
+	private final int width, height;
 	
+	private final Map<Integer, Integer> keyCodeMap;
 	
-	private int width, height;
-	
-	private Map<Integer, Integer> keyCodeMap;
-	
-	private Map<Integer, Boolean> prevKeyStates;
+	private final Map<Integer, Boolean> prevKeyStates;
 	
 	private long prevMillis;
 	
@@ -132,7 +198,7 @@ public class LwjglRasteriser implements Rasteriser
 		prevKeyStates = new HashMap<>();
 		
 		// Make a list of pixel formats to try (in preferance order)
-		ArrayList<LwjglPixelFormat> pixelFormats = new ArrayList<>();
+		List<LwjglPixelFormat> pixelFormats = new ArrayList<>();
 		
 		// As requested
 		pixelFormats.add( new LwjglPixelFormat(colourDepth, alphaBits, depthBits, 0, numSamples) );
@@ -152,48 +218,94 @@ public class LwjglRasteriser implements Rasteriser
 		// Ugh. Anything with a depth buffer.
 		pixelFormats.add( new LwjglPixelFormat(0, 0, 1, 0, 0) );
 
-		glfwSetErrorCallback((error, description) ->
-				log.error("GLFW error [{}]: {}", String.format("0x%08X", error), GLFWErrorCallback.getDescription(description)));
-		
-		if (!GLFW.glfwInit()) {
-			throw new RuntimeException("Failed to init GLFW");
+//		checkOpenGLCompatability(3, 1);
+
+		if(type == DisplayType.WINDOW || type == DisplayType.OFFSCREEN) {
+			log.debug("GLFW version: {}", GLFW::glfwGetVersionString);
+			glfwSetErrorCallback((error, description) ->
+					log.error("GLFW error [{}]: {}", String.format("0x%08X", error), GLFWErrorCallback.getDescription(description)));
+
+			if (!glfwInit()) {
+				throw new RuntimeException("Failed to init GLFW");
+			}
+
+			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 0);
+			glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
 		}
 
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
-
-		if (type == DisplayType.Offscreen) {
-			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
-			window = GLFW.glfwCreateWindow(displayWidth, displayHeight, "", 0, 0);
-		} else if (type == DisplayType.Window) {
-			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_TRUE);
+		if (type == DisplayType.OFFSCREEN) {
+			glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+			window = glfwCreateWindow(displayWidth, displayHeight, "", 0, 0);
+		} else if (type == DisplayType.WINDOW) {
+			glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_TRUE);
 
 			for (LwjglPixelFormat pf : pixelFormats) {
-				GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pf.depth);
-				GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pf.stencil);
-				GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pf.alpha);
-				GLFW.glfwWindowHint(GLFW.GLFW_RED_BITS, pf.bpp);
-				GLFW.glfwWindowHint(GLFW.GLFW_GREEN_BITS, pf.bpp);
-				GLFW.glfwWindowHint(GLFW.GLFW_BLUE_BITS, pf.bpp);
-				GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, pf.samples);
-				window = GLFW.glfwCreateWindow(displayWidth, displayHeight, "Tectonicus", 0, 0);
+				glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pf.getDepth());
+				glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pf.getStencil());
+				glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pf.getAlpha());
+				glfwWindowHint(GLFW.GLFW_RED_BITS, pf.getBitsPerColor());
+				glfwWindowHint(GLFW.GLFW_GREEN_BITS, pf.getBitsPerColor());
+				glfwWindowHint(GLFW.GLFW_BLUE_BITS, pf.getBitsPerColor());
+				glfwWindowHint(GLFW.GLFW_SAMPLES, pf.getSamples());
+				window = glfwCreateWindow(displayWidth, displayHeight, "Tectonicus", 0, 0);
 				if(window != 0) {
 					break;
 				}
 			}
+		} else if (type == DisplayType.OFFSCREEN_EGL) {
+			eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+			IntBuffer major = BufferUtils.createIntBuffer(1);
+			IntBuffer minor = BufferUtils.createIntBuffer(1);
+			eglInitialize(eglDisplay, major, minor);
+			log.debug("Using EGL for context creation.");
+			log.debug("EGL version: {}.{}", major.get(0), minor.get(0));
+			log.debug("EGL vendor: {}", eglQueryString(eglDisplay, EGL_VENDOR));
+			log.debug("Supported client apis: {}", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
+
+			int[] configCount = new int[1];
+
+			int[] attributes = pixelFormats.get(0).getEGLAttributes();
+
+			//TODO: we should be smarter about choosing config here see https://github.com/LWJGL/lwjgl3/issues/336
+			if (!eglChooseConfig(eglDisplay, attributes, null, configCount)) {
+				throw new RuntimeException("EGL error: " + eglGetError());
+			}
+
+			PointerBuffer configs = BufferUtils.createPointerBuffer(configCount[0]);
+
+			eglChooseConfig(eglDisplay, attributes, configs, configCount);
+			eglBindAPI(EGL_OPENGL_API);
+
+			int[] contextAttributes = {
+					EGL_CONTEXT_MAJOR_VERSION, 3,
+					EGL_CONTEXT_MINOR_VERSION, 0,
+					EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
+					EGL_NONE
+			};
+
+			long context = eglCreateContext(eglDisplay, configs.get(0), EGL_NO_CONTEXT, contextAttributes);
+
+			if (context == 0) {
+				throw new RuntimeException("Failed to create EGL context!");
+			}
+
+			eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, context);
 		} else {
 			throw new RuntimeException("Unknown display type: "+type);
 		}
-		
-		if(window == 0) {
-		    throw new RuntimeException("Failed to create window!");
+
+		if (type != DisplayType.OFFSCREEN_EGL) {
+			if(window == 0) {
+				throw new RuntimeException("Failed to create GLFW window!");
+			}
+
+			glfwMakeContextCurrent(window);
 		}
-		
-		GLFW.glfwMakeContextCurrent(window);
+
 		GL.createCapabilities();
 
-		if (type == DisplayType.Offscreen) {
+		if (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL) {
 			int fbo = glGenFramebuffers();
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			int rbo = glGenRenderbuffers();
@@ -212,26 +324,29 @@ public class LwjglRasteriser implements Rasteriser
 	@Override
 	public void destroy()
 	{
-		GLFW.glfwDestroyWindow(window);
-		GLFW.glfwTerminate();
+		if (type == DisplayType.OFFSCREEN_EGL) {
+			eglReleaseThread();
+			eglTerminate(eglDisplay);
+		} else {
+			glfwDestroyWindow(window);
+			glfwTerminate();
+		}
 	}
 	
 	@Override
 	public void printInfo()
 	{
-		System.out.println(" -- Lwjgl Rasteriser -- ");
-		System.out.println("\tLWJGL version: " + Version.getVersion());
-		System.out.println("\ttype: "+type);
-		System.out.println("\twidth: "+width);
-		System.out.println("\theigth: "+height);
-		
-		System.out.println("\tOpenGL Vendor: "+GL11.glGetString(GL11.GL_VENDOR));
-		System.out.println("\tOpenGL Renderer: "+GL11.glGetString(GL11.GL_RENDERER));
-		System.out.println("\tOpenGL Version: "+GL11.glGetString(GL11.GL_VERSION));
-		
-	//	System.out.println();
-		
-	//	GL11.glGetString(GL11.GL_EXTENSIONS);
+		log.debug(" -- Lwjgl Rasteriser -- ");
+		log.debug("\tLWJGL version: {}", Version.getVersion());
+		log.debug("\ttype: {}", type);
+		log.debug("\twidth: {}", width);
+		log.debug("\theight: {}", height);
+		if (type == DisplayType.OFFSCREEN_EGL) {
+			log.debug("\t");
+		}
+		log.debug("\tOpenGL Vendor: {}", glGetString(GL_VENDOR));
+		log.debug("\tOpenGL Renderer: {}", glGetString(GL_RENDERER));
+		log.debug("\tOpenGL Version: {}", glGetString(GL_VERSION));
 	}
 
 	@Override
@@ -253,17 +368,17 @@ public class LwjglRasteriser implements Rasteriser
 		prevKeyStates.clear();
 		for (Integer i : keyCodeMap.values())
 		{
-			prevKeyStates.put(i, GLFW.glfwGetKey(window, i) == GLFW.GLFW_PRESS);
+			prevKeyStates.put(i, glfwGetKey(window, i) == GLFW.GLFW_PRESS);
 		}
 		
-		GLFW.glfwPollEvents();
-		GLFW.glfwSwapBuffers(window);
+		glfwPollEvents();
+		glfwSwapBuffers(window);
 	}
 	
 	@Override
 	public boolean isCloseRequested()
 	{
-		return GLFW.glfwWindowShouldClose(window);
+		return glfwWindowShouldClose(window);
 	}
 	
 	@Override
@@ -279,7 +394,7 @@ public class LwjglRasteriser implements Rasteriser
 			throw new RuntimeException("No mapping for :"+vkKey);
 		
 		Integer lwjglKey = keyCodeMap.get(vkKey);
-		return GLFW.glfwGetKey(window, lwjglKey) == GLFW.GLFW_PRESS;
+		return glfwGetKey(window, lwjglKey) == GLFW.GLFW_PRESS;
 	}
 	
 	public boolean isKeyJustDown(final int vkKey)
@@ -289,7 +404,7 @@ public class LwjglRasteriser implements Rasteriser
 		
 		Integer lwjglKey = keyCodeMap.get(vkKey);
 		
-		return GLFW.glfwGetKey(window, lwjglKey) == GLFW.GLFW_PRESS && !prevKeyStates.get(lwjglKey);
+		return glfwGetKey(window, lwjglKey) == GLFW.GLFW_PRESS && !prevKeyStates.get(lwjglKey);
 	}
 	
 	public int getDisplayWidth()
@@ -305,15 +420,13 @@ public class LwjglRasteriser implements Rasteriser
 	public Texture createTexture(BufferedImage image, TextureFilter filter)
 	{
 		final int id = LwjglTextureUtils.createTexture(image, filter);
-		Texture texture = new LwjglTexture(id, image.getWidth(), image.getHeight());
-		return texture;
+		return new LwjglTexture(id, image.getWidth(), image.getHeight());
 	}
 	
 	public Texture createTexture(BufferedImage[] mips, TextureFilter filter)
 	{
 		final int id = LwjglTextureUtils.createTexture(mips, filter);
-		Texture texture = new LwjglTexture(id, mips[0].getWidth(), mips[0].getHeight());
-		return texture;
+		return new LwjglTexture(id, mips[0].getWidth(), mips[0].getHeight());
 	}
 	
 	public Mesh createMesh(Texture texture)
@@ -330,30 +443,30 @@ public class LwjglRasteriser implements Rasteriser
 	@Override
 	public void resetState()
 	{
-		GL11.glColorMask(true, true, true, true);
+		glColorMask(true, true, true, true);
 		
-		GL11.glDepthFunc(GL11.GL_LEQUAL);
+		glDepthFunc(GL11.GL_LEQUAL);
 		
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
-		GL11.glEnable(GL11.GL_CULL_FACE);
-		GL11.glCullFace(GL11.GL_BACK);
-		GL11.glFrontFace(GL11.GL_CW);
+		glEnable(GL11.GL_DEPTH_TEST);
+		glEnable(GL11.GL_CULL_FACE);
+		glCullFace(GL11.GL_BACK);
+		glFrontFace(GL11.GL_CW);
 
-		GL11.glDisable(GL11.GL_BLEND);
-		GL11.glDisable(GL11.GL_ALPHA_TEST);
+		glDisable(GL11.GL_BLEND);
+		glDisable(GL11.GL_ALPHA_TEST);
 	}
 	
 	@Override
 	public void clear(Color clearColour)
 	{
-		GL11.glClearColor(clearColour.getRed()/255.0f, clearColour.getGreen()/255.0f, clearColour.getBlue()/255.0f, 0);
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
+		glClearColor(clearColour.getRed()/255.0f, clearColour.getGreen()/255.0f, clearColour.getBlue()/255.0f, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	}
 	
 	@Override
 	public void clearDepthBuffer()
 	{
-		GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 	
 	// Slow, simple version. Pull framebuffer and convert to BufferedImage via setRGB()
@@ -362,7 +475,7 @@ public class LwjglRasteriser implements Rasteriser
 		ByteBuffer screenContentsBytes = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN); 
 		IntBuffer screenContents = screenContentsBytes.asIntBuffer();
 		
-		GL11.glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContents);
+		glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContents);
 		
 		int[] pixels = new int[width * height];
 		screenContents.get(pixels);
@@ -394,7 +507,7 @@ public class LwjglRasteriser implements Rasteriser
 			img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			int[] pixels = ((DataBufferInt)(img.getRaster().getDataBuffer())).getData();
 			
-			GL11.glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContents);
+			glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContents);
 			
 			for (int y=startY; y<startY+height; y++)
 			{
@@ -407,7 +520,7 @@ public class LwjglRasteriser implements Rasteriser
 			img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 			byte[] pixels = ((DataBufferByte)(img.getRaster().getDataBuffer())).getData();
 			
-			GL11.glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContents);
+			glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContents);
 			
 			for (int y=startY; y<startY+height; y++)
 			{
@@ -425,35 +538,35 @@ public class LwjglRasteriser implements Rasteriser
 		
 		if (tex != null)
 		{
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, tex.getId());
+			glBindTexture(GL_TEXTURE_2D, tex.getId());
 		}
 		else
 		{
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
 	
 	public void beginShape(PrimativeType type)
 	{
-		int glType = GL11.GL_TRIANGLES;
+		int glType = GL_TRIANGLES;
 		switch (type)
 		{
 			case Points:
-				glType = GL11.GL_POINTS;
+				glType = GL_POINTS;
 				break;
 			case Lines:
-				glType = GL11.GL_LINES;
+				glType = GL_LINES;
 				break;
 			case Triangles:
-				glType = GL11.GL_TRIANGLES;
+				glType = GL_TRIANGLES;
 				break;
 			case Quads:
-				glType = GL11.GL_QUADS;
+				glType = GL_QUADS;
 				break;
 			default:
 				assert false;
 		}
-		GL11.glBegin(glType);
+		glBegin(glType);
 	}
 	public void colour(final float r, final float g, final float b, final float a)
 	{
@@ -497,33 +610,33 @@ public class LwjglRasteriser implements Rasteriser
 	public void enableBlending(final boolean enable)
 	{
 		if (enable)
-			GL11.glEnable(GL11.GL_BLEND);
+			glEnable(GL11.GL_BLEND);
 		else
-			GL11.glDisable(GL11.GL_BLEND);
+			glDisable(GL11.GL_BLEND);
 	}
 	
 	@Override
 	public void enableDepthTest(boolean enable)
 	{
 		if (enable)
-			GL11.glEnable(GL11.GL_DEPTH_TEST);
+			glEnable(GL11.GL_DEPTH_TEST);
 		else
-			GL11.glDisable(GL11.GL_DEPTH_TEST);
+			glDisable(GL11.GL_DEPTH_TEST);
 	}
 	
 	@Override
 	public void enableAlphaTest(boolean enable)
 	{
 		if (enable)
-			GL11.glEnable(GL11.GL_ALPHA_TEST);
+			glEnable(GL11.GL_ALPHA_TEST);
 		else
-			GL11.glDisable(GL11.GL_ALPHA_TEST);	
+			glDisable(GL11.GL_ALPHA_TEST);
 	}
 	
 	@Override
 	public void enableColourWriting(final boolean colourMask, final boolean alphaMask)
 	{
-		GL11.glColorMask(colourMask, colourMask, colourMask, alphaMask);
+		glColorMask(colourMask, colourMask, colourMask, alphaMask);
 	}
 	
 	@Override
@@ -538,10 +651,10 @@ public class LwjglRasteriser implements Rasteriser
 		switch (func)
 		{
 			case Regular:
-				GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+				glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 				break;
 			case Additive:
-				GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+				glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 				break;
 			default:
 				assert false;
@@ -554,22 +667,69 @@ public class LwjglRasteriser implements Rasteriser
 		switch (func)
 		{
 			case Greater:
-				GL11.glAlphaFunc(GL11.GL_GREATER, refValue);
+				glAlphaFunc(GL11.GL_GREATER, refValue);
 			break;
 			case GreaterOrEqual:
-				GL11.glAlphaFunc(GL11.GL_GEQUAL, refValue);
+				glAlphaFunc(GL11.GL_GEQUAL, refValue);
 			break;
 			case Equal:
-				GL11.glAlphaFunc(GL11.GL_EQUAL, refValue);
+				glAlphaFunc(GL11.GL_EQUAL, refValue);
 			break;
 			case Less:
-				GL11.glAlphaFunc(GL11.GL_LESS, refValue);
+				glAlphaFunc(GL11.GL_LESS, refValue);
 			break;
 			case LessOrEqual:
-				GL11.glAlphaFunc(GL11.GL_LEQUAL, refValue);
+				glAlphaFunc(GL11.GL_LEQUAL, refValue);
 			break;
 			default:
 				assert false;
 		}
+	}
+
+	private void checkOpenGLCompatability(int major, int minor) {
+		log.debug("Attempting to create window for OpenGL {}.{}", major, minor);
+
+		glfwSetErrorCallback((arg0, arg1) -> System.out.println("GLFW error: " + String.format("0x%08X", arg0)));
+
+		if (!glfwInit()) {
+			throw new RuntimeException("Failed to init GLFW");
+		}
+
+//		glfwWindowHint(GLFW_SAMPLES, 4);
+//		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
+//		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
+		//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+		glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
+//		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
+		long windowId = glfwCreateWindow(640, 480, "Test", 0, 0);
+
+		if(windowId == 0) {
+			destroy();
+			throw new RuntimeException("Failed to create window!");
+		} else {
+			glfwMakeContextCurrent(windowId);
+			glfwMakeContextCurrent(0);
+			long context = glfwGetCurrentContext();
+			if (context == windowId) {
+				log.debug("Found current context after make current.");
+			}
+
+			int client = glfwGetWindowAttrib(windowId, GLFW_CLIENT_API);
+			int majorV = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
+			int minorV = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
+			if (client == GLFW_OPENGL_API) {
+				log.debug("client = OpenGL "+ majorV + "." + minorV);
+			}
+			if (GLFW_OSMESA_CONTEXT_API == glfwGetWindowAttrib(windowId, GLFW_CONTEXT_CREATION_API)) {
+				log.debug("OSMesa context creation api is set");
+			}
+			GL.createCapabilities();
+		}
+
+		printInfo();
+
+		destroy();
 	}
 }

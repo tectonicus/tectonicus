@@ -12,9 +12,6 @@ package tectonicus.blockTypes;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import tectonicus.configuration.Configuration;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.RasteriserFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -25,14 +22,4 @@ import java.util.Map;
 public class BlockStateCase implements BlockState{
 	List<Map<String, String>> whenClauses;
 	List<BlockStateModel> models;
-
-	public static void main(String[] args) {
-		int width = 800;
-		int height = 800;
-
-		Rasteriser rasteriser = RasteriserFactory.createRasteriser(Configuration.RasteriserType.LWJGL, RasteriserFactory.DisplayType.Window, width, height, 24, 8, 24, 4);
-
-		BlockRegistry br = new BlockRegistry(rasteriser);
-		//br.deserializeMultipartBlockStates();
-	}
 }

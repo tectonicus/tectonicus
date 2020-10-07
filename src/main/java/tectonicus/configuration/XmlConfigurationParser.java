@@ -119,15 +119,14 @@ public class XmlConfigurationParser
 		Element rasteriserNode = getChild(root, "rasteriser");
 		if (rasteriserNode != null)
 		{
-			RasteriserType rasteriser = parseRasteriserType( getString(rasteriserNode, "type") );
+			RasteriserType rasteriser = parseRasteriserType(getString(rasteriserNode, "type"));
 			config.setRasteriserType(rasteriser);
-			
-			config.setColourDepth( parseColourDepth( getString(rasteriserNode, "colourDepth") ) );
-			config.setAlphaBits( parseAlphaBits( getString(rasteriserNode, "alphaBits") ) );
-			config.setNumSamples( parseNumSamples( getString(rasteriserNode, "numSamples") ) );
-			
-			final int tileSize = parseTileSize( getString(rasteriserNode, "tileSize") );
-			config.setTileSize( tileSize );
+
+			config.setColourDepth(parseColourDepth(getString(rasteriserNode, "colourDepth")));
+			config.setAlphaBits(parseAlphaBits(getString(rasteriserNode, "alphaBits")));
+			config.setNumSamples(parseNumSamples(getString(rasteriserNode, "numSamples")));
+			config.setTileSize(parseTileSize(getString(rasteriserNode, "tileSize")));
+			config.setUseEGL(getBoolean(rasteriserNode, "useEGL", false));
 		}
 		
 		int mapNumber = 0;
@@ -358,10 +357,13 @@ public class XmlConfigurationParser
 		}
 		*/
 		
-		Element tweeksNode = getChild(root, "tweeks");
-		if (tweeksNode != null)
+		Element tweaksNode = getChild(root, "tweeks"); //Backwards compatibility with misspelled tag
+		if (tweaksNode == null) {
+			tweaksNode = getChild(root, "tweaks");
+		}
+		if (tweaksNode != null)
 		{
-			config.setForceLoadAwt( parseForceLoadAwt( getString(tweeksNode, "forceLoadAwt")) );
+			config.setForceLoadAwt( parseForceLoadAwt( getString(tweaksNode, "forceLoadAwt")) );
 		}
 		
 		Element debugNode = getChild(root, "debug");

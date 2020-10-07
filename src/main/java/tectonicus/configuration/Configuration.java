@@ -60,6 +60,7 @@ public interface Configuration  //TODO: is this interface needed?
 	Mode getMode();
 	
 	RasteriserType getRasteriserType();
+	boolean isUseEGL();
 	
 	boolean eraseOutputDir();
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -57,7 +57,7 @@ public class InteractiveRenderer
 	
 	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight)
 	{
-		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Window, displayWidth, displayHeight, 24, 8, 24, 4);
+		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.WINDOW, displayWidth, displayHeight, 24, 8, 24, 4);
 		System.out.println("Using rasteriser: "+rasteriser);
 		rasteriser.printInfo();
 		

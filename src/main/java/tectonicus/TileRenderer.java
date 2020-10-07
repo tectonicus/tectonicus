@@ -10,6 +10,7 @@
 package tectonicus;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
 import tectonicus.PlayerIconAssembler.WriteIconTask;
 import tectonicus.cache.BiomeCache;
@@ -87,7 +88,7 @@ import java.util.concurrent.Executors;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 
-
+@Log4j2
 public class TileRenderer
 {
 	@RequiredArgsConstructor
@@ -167,32 +168,35 @@ public class TileRenderer
 		playerIconAssembler = new PlayerIconAssembler(playerSkinCache);
 		
 		memoryMonitor = new MemoryMonitor();
-		
+
+		log.info("Initialising display...");
+
+		DisplayType type = DisplayType.OFFSCREEN;
+		if (args.isUseEGL()) {
+			type = DisplayType.OFFSCREEN_EGL;
+		}
+
+		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), type, args.getTileSize(), args.getTileSize(), args.getColourDepth(), args.getAlphaBits(), 24, args.getNumSamples());
+
+		if (rasteriser != null)
 		{
-			System.out.println("Initialising display...");
-			
-			rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.Offscreen, args.getTileSize(), args.getTileSize(), args.getColourDepth(), args.getAlphaBits(), 24, args.getNumSamples());
-		
-			if (rasteriser != null)
-			{
-				System.out.println("Using rasteriser: "+rasteriser);
-				rasteriser.printInfo();
-			}
-			else
-			{
-				throw new RuntimeException("Could not create drawing surface");
-			}
+			log.debug("Using rasteriser: {}", rasteriser);
+			rasteriser.printInfo();
+		}
+		else
+		{
+			throw new RuntimeException("Could not create drawing surface");
 		}
 		
-		System.out.println("Creating camera");
+		log.info("Creating camera");
 		camera = new OrthoCamera(rasteriser, tileWidth, tileHeight);
 		
-		System.out.println("TileRenderer init complete");
+		log.info("TileRenderer init complete");
 	}
 	
 	public void destroy()
 	{
-		System.out.println("Cleaning up...");
+		log.info("Cleaning up...");
 		
 		rasteriser.destroy();
 		

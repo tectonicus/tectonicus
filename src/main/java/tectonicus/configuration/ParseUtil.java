@@ -494,7 +494,7 @@ public class ParseUtil
 		}
 		catch (Exception e) {}
 		
-		return 24;
+		return 32;
 	}
 	
 	public static int parseAlphaBits(String depthStr)

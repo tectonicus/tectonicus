@@ -90,7 +90,7 @@ public class DrawModelTest
 		int width = 800;
 		int height = 800;
 
-		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.Window, width, height, 24, 8, 24, 4);
+		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.WINDOW, width, height, 24, 8, 24, 4);
 		rasteriser.resetState();
 		windowId = rasteriser.getWindowId();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -81,7 +81,7 @@ public class ProcessingRasteriser implements Rasteriser
 		big.save("big.tif");
 */
 		
-		if (type == DisplayType.Window)
+		if (type == DisplayType.WINDOW)
 		{
 			canvas = new Canvas();
 			canvas.setPreferredSize(new Dimension(displayWidth, displayHeight));
@@ -102,7 +102,7 @@ public class ProcessingRasteriser implements Rasteriser
 			windowHandler = new WindowHandler();
 			frame.addWindowListener(windowHandler);
 		}
-		else if (type == DisplayType.Offscreen)
+		else if (type == DisplayType.OFFSCREEN)
 		{
 			// http://wiki.processing.org/w/Draw_to_off-screen_buffer
 			

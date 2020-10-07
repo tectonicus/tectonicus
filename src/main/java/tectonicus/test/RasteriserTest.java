@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,7 +22,7 @@ public class RasteriserTest
 {
 	public static void main(String[] args)
 	{
-		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.JPCT, DisplayType.Window, 512, 512, 24, 0, 16, 0);
+		Rasteriser rasteriser = RasteriserFactory.createRasteriser(RasteriserType.JPCT, DisplayType.WINDOW, 512, 512, 24, 0, 16, 0);
 		
 		OrthoCamera camera = new OrthoCamera(rasteriser, 512, 512);
 		

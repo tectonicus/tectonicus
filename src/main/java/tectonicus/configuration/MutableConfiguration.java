@@ -48,6 +48,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-r", "--rasterizer", "rasterizer", "rasteriser"}, paramLabel = "<string>")
 	private RasteriserType rasteriserType;
 
+	@Option(names = {"--egl"}, paramLabel = "<boolean>")
+	private boolean useEGL;
+
 	@Option(names = {"-e", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean eraseOutputDir;
 
@@ -78,7 +81,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-p", "--useOldColorPalette", "useOldColorPalette"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useOldColorPalette; //TODO: is this working?
 
-	@Option(names = {"-a", "--useProgrammerArt", "useProgrammerArt"}, arity = "0..1", paramLabel = "<boolean>")
+	@Option(names = {"-a", "--useProgrammerArt"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean usingProgrammerArt;
 
 	@Option(names = {"-f", "--outputHtmlName", "outputHtmlName"}, paramLabel = "<string>")
@@ -144,7 +147,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		showSpawn = true;
 		tileSize = 512;
 		maxTiles = -1;
-		colourDepth = 16;
+		colourDepth = 32;
 		alphaBits = 8;
 		numSamples = 0;
 		numZoomLevels = 8;
@@ -172,63 +175,64 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	public void printActive()
 	{
-		System.out.println("Settings:");
-		System.out.println("\tloggingLevel:"+getLoggingLevel());
-		System.out.println("\tmode:"+getMode().getName());
-		System.out.println("\trasteriser:"+getRasteriserType());
-		System.out.println("\toutputDir:"+outputDir.getAbsolutePath());
-		System.out.println("\tuseCache:"+useCache());
-		System.out.println("\tcacheDir:"+cacheDir.getAbsolutePath());
-		System.out.println("\tminecraftJar:"+minecraftJar.getAbsolutePath());
-		System.out.println("\ttexturePack:"+(texturePack != null ? texturePack.getAbsolutePath() : "none"));
-		System.out.println("\tuseOldColorPalette:"+useOldColorPalette());
-		System.out.println("\tcolourDepth:"+ this.getColourDepth());
-		System.out.println("\talphaBits:"+ this.getAlphaBits());
-		System.out.println("\tnumSamples:"+ this.getNumSamples());
-		System.out.println("\ttileSize:"+ this.getTileSize());
-		System.out.println("\tnumZoomLevels:"+ this.getNumZoomLevels());
-		System.out.println("\tportalsInitiallyVisible:"+arePortalsInitiallyVisible());
-		System.out.println("\tshowSpawn:"+showSpawn());
-		System.out.println("\tsignsInitiallyVisible:"+areSignsInitiallyVisible());
-		System.out.println("\tplayersInitiallyVisible:"+arePlayersInitiallyVisible());
-		System.out.println("\tbedsInitiallyVisible:"+areBedsInitiallyVisible());
-		System.out.println("\tspawnInitiallyVisible:"+isSpawnInitiallyVisible());
-		System.out.println("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
-		System.out.println("\teraseOutputDir:"+eraseOutputDir());
-		System.out.println("\tisVerbose:"+isVerbose());
-		System.out.println("\tforceLoadAwt:"+forceLoadAwt());
-		System.out.println("\tlogFile:"+getLogFile().getAbsolutePath());
-		System.out.println("\toutputHtmlName:"+getOutputHtmlName());
-		System.out.println("\tnumDownsampleThreads:"+getNumDownsampleThreads());
-		System.out.println("\tsinglePlayerName:"+getSinglePlayerName());
+		log.debug("Settings:");
+		log.debug("\tloggingLevel:"+getLoggingLevel());
+		log.debug("\tmode:"+getMode().getName());
+		log.debug("\trasteriser:"+getRasteriserType());
+		log.debug("\tuseEGL: {}", isUseEGL());
+		log.debug("\toutputDir:"+outputDir.getAbsolutePath());
+		log.debug("\tuseCache:"+useCache());
+		log.debug("\tcacheDir:"+cacheDir.getAbsolutePath());
+		log.debug("\tminecraftJar:"+minecraftJar.getAbsolutePath());
+		log.debug("\ttexturePack:"+(texturePack != null ? texturePack.getAbsolutePath() : "none"));
+		log.debug("\tuseOldColorPalette:"+useOldColorPalette());
+		log.debug("\tcolourDepth:"+ this.getColourDepth());
+		log.debug("\talphaBits:"+ this.getAlphaBits());
+		log.debug("\tnumSamples:"+ this.getNumSamples());
+		log.debug("\ttileSize:"+ this.getTileSize());
+		log.debug("\tnumZoomLevels:"+ this.getNumZoomLevels());
+		log.debug("\tportalsInitiallyVisible:"+arePortalsInitiallyVisible());
+		log.debug("\tshowSpawn:"+showSpawn());
+		log.debug("\tsignsInitiallyVisible:"+areSignsInitiallyVisible());
+		log.debug("\tplayersInitiallyVisible:"+arePlayersInitiallyVisible());
+		log.debug("\tbedsInitiallyVisible:"+areBedsInitiallyVisible());
+		log.debug("\tspawnInitiallyVisible:"+isSpawnInitiallyVisible());
+		log.debug("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
+		log.debug("\teraseOutputDir:"+eraseOutputDir());
+		log.debug("\tisVerbose:"+isVerbose());
+		log.debug("\tforceLoadAwt:"+forceLoadAwt());
+		log.debug("\tlogFile:"+getLogFile().getAbsolutePath());
+		log.debug("\toutputHtmlName:"+getOutputHtmlName());
+		log.debug("\tnumDownsampleThreads:"+getNumDownsampleThreads());
+		log.debug("\tsinglePlayerName:"+getSinglePlayerName());
 
 		System.out.println();
 
 		for (Map m : getMaps())
 		{
-			System.out.println("'"+m.getName()+"' map");
+			log.debug("'"+m.getName()+"' map");
 
-			System.out.println("\tworldDir: "+m.getWorldDir().getAbsolutePath());
-			System.out.println("\tdimension: "+m.getDimension());
-			System.out.println("\tcameraAngle: "+m.getCameraAngleDeg());
-			System.out.println("\tcameraElevation: "+m.getCameraElevationDeg());
-			System.out.println("\tclosestZoomSize: "+m.getClosestZoomSize());
-			System.out.println("\tworldSubset: "+m.getWorldSubsetFactory().getDescription());
-			System.out.println("\tuseBiomeColours: "+m.useBiomeColours());
+			log.debug("\tworldDir: "+m.getWorldDir().getAbsolutePath());
+			log.debug("\tdimension: "+m.getDimension());
+			log.debug("\tcameraAngle: "+m.getCameraAngleDeg());
+			log.debug("\tcameraElevation: "+m.getCameraElevationDeg());
+			log.debug("\tclosestZoomSize: "+m.getClosestZoomSize());
+			log.debug("\tworldSubset: "+m.getWorldSubsetFactory().getDescription());
+			log.debug("\tuseBiomeColours: "+m.useBiomeColours());
 
 			for (Layer l : m.getLayers())
 			{
-				System.out.println("\t'"+l.getName()+"' layer");
+				log.debug("\t'"+l.getName()+"' layer");
 
-				System.out.println("\t\trenderStyle: "+l.getRenderStyle());
-				System.out.println("\t\tlightStyle: "+l.getLightStyle());
-				System.out.println("\t\timageFormat: "+l.getImageFormat());
+				log.debug("\t\trenderStyle: "+l.getRenderStyle());
+				log.debug("\t\tlightStyle: "+l.getLightStyle());
+				log.debug("\t\timageFormat: "+l.getImageFormat());
 
 				if (l.getImageFormat() == ImageFormat.Jpg)
-					System.out.println("\t\timageCompressionLevel: "+l.getImageCompressionLevel());
+					log.debug("\t\timageCompressionLevel: "+l.getImageCompressionLevel());
 
 				if (l.getCustomBlockConfig() != null)
-					System.out.println("\t\tcustomBlockConfig: "+l.getCustomBlockConfig());
+					log.debug("\t\tcustomBlockConfig: "+l.getCustomBlockConfig());
 			}
 			if (m.numLayers() == 0)
 			{
