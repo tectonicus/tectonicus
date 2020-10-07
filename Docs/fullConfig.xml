@@ -12,6 +12,7 @@
 		minecraftJar="(auto-find)"
 		texturePack=""
 		useOldColorPalette="false / true"
+		useProgrammerArt="false / true"
 		outputDir="."
 		outputHtmlName="map.html"
 		defaultSkin="steve"
@@ -22,6 +23,7 @@
 		useCache="true / false"
 		cacheDir="outputDir/cache"
 		logFile="./TectonicusLog.txt"
+		loggingLevel="DEBUG / OFF / FATAL / ERROR / WARN / INFO / TRACE / ALL"
 		spawnInitiallyVisible="true / false"
 		playersInitiallyVisible="true / false"
 		bedsInitiallyVisible="true / false"
@@ -33,21 +35,21 @@
 	<!-- Rasteriser config applies to all maps/layers -->
 	<rasteriser
 		type="lwjgl"
-		colourDepth="24"
+		colourDepth="32 / 16 / 24"
 		alphaBits="8"
 		numSamples="4"
 		tileSize="512 / 64 - 2048"
+		useEGL="false / true"
 	/>
 
 	<!-- Maps to process (must have at least one map) -->
 	<map
 		name=""
 		worldDir="/Users/xxxx/AppData/Roaming/.minecraft/saves/My World" <!-- required -->
-		dimension="terra / nether / ender"
+		dimension="terra / nether / end"
 		closestZoomSize="12"
 		cameraAngle="45"
 		cameraElevation="45 / 10 - 90"
-		useBiomeColours="false / true"
 		north="-z / +z / -x / +x" <!-- compass rose north direction -->
 		compassRose="" <!-- custom image path -->
 	>
@@ -103,7 +105,7 @@
 	</map>
 
 	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
-	<tweeks
+	<tweaks
 		forceLoadAwt="false / true"
 	/>
 

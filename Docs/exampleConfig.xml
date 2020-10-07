@@ -16,12 +16,14 @@
 
 		numZoomLevels="8"
 		singlePlayerName="Steve"
-
+		useOldColorPalette="false"
+		useProgrammerArt="false"
 		numDownsampleThreads="2"
 		eraseOutputDir="false"
 		useCache="true"
 		cacheDir="/Tectonicus Maps/My World/cache"
 		logFile="/Tectonicus Maps/My World/TectonicusLog.txt"
+		loggingLevel="DEBUG"
 		spawnInitiallyVisible="true"
 		playersInitiallyVisible="true"
 		bedsInitiallyVisible="true"
@@ -37,6 +39,7 @@
 		alphaBits="8"
 		numSamples="4"
 		tileSize="512"
+		useEGL="false"
 	/>
 
 	<map
