@@ -230,7 +230,7 @@ public class LwjglRasteriser implements Rasteriser
 			}
 
 			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 0);
+			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
 			glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
 		}
 
