@@ -486,15 +486,14 @@ public class MeshUtil
 
 		for(BlockElement element : elements)
 		{
-			float xrot = x + element.getRotationOrigin().x()/16;
-			float yrot = y + element.getRotationOrigin().y()/16;
-			float zrot = z + element.getRotationOrigin().z()/16;
-			Vector3f rotationOrigin = new Vector3f(xrot, yrot, zrot);
-			Vector3f rotationAxis = element.getRotationAxis();
-			
 			Matrix4f elementRotation = null;
-			if (element.getRotationAngle() != 0)
-			{
+			if (element.getRotationAngle() != 0) {
+				float xrot = x + element.getRotationOrigin().x()/16;
+				float yrot = y + element.getRotationOrigin().y()/16;
+				float zrot = z + element.getRotationOrigin().z()/16;
+				Vector3f rotationOrigin = new Vector3f(xrot, yrot, zrot);
+				Vector3f rotationAxis = element.getRotationAxis();
+
 				if (element.isScaled()) {
 					elementRotation = new Matrix4f().translate(rotationOrigin)
 							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
@@ -523,6 +522,9 @@ public class MeshUtil
 			ElementFace southFace = faces.get("south");
 			ElementFace eastFace = faces.get("east");
 			ElementFace westFace = faces.get("west");
+
+			boolean isGrassOverlay = false;
+			float fudgeFactor = 0;
 
 			//Set the tint color if any
 			Colour4f tintColor = new Colour4f();
@@ -555,6 +557,12 @@ public class MeshUtil
 					tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
 				} else {
 					tintColor = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z); //TODO: this method needs to handle swamp grass
+
+					//Grass block side overlay hack
+					if (model.getName().contains("grass_block") && element.getFaces().size() == 4) {
+						isGrassOverlay = true;
+						fudgeFactor = 0.0001f;
+					}
 				}
 			}
 
@@ -570,7 +578,7 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y2, z2);
 		        bottomLeft = new Vector3f(x1, y2, z2);
 
-		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
+		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, false);
 	        }
 			
 			if (downFace != null && !(downFaceCovered && downFace.isFaceCulled()))
@@ -585,22 +593,22 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z1);
 		        bottomLeft = new Vector3f(x1, y1, z1);
 
-		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
+		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, false);
 	        }
-			
+
 			if (northFace != null && !(northFaceCovered && northFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(northLightTemp, northLightTemp, northLightTemp, 1);
 				if (northFace.isTinted()) {
 					color.multiply(tintColor);
 				}
-				
-				topLeft = new Vector3f(x2, y2, z1);
-		        topRight = new Vector3f(x1, y2, z1);
-		        bottomRight = new Vector3f(x1, y1, z1);
-		        bottomLeft = new Vector3f(x2, y1, z1);
 
-		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
+				topLeft = new Vector3f(x2, y2, z1 - fudgeFactor);
+		        topRight = new Vector3f(x1, y2, z1 - fudgeFactor);
+		        bottomRight = new Vector3f(x1, y1, z1 - fudgeFactor);
+		        bottomLeft = new Vector3f(x2, y1, z1 - fudgeFactor);
+
+		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
 	        }
 			
 			if (southFace != null && !(southFaceCovered && southFace.isFaceCulled()))
@@ -610,12 +618,12 @@ public class MeshUtil
 					color.multiply(tintColor);
 				}
 
-				topLeft = new Vector3f(x1, y2, z2);
-		        topRight = new Vector3f(x2, y2, z2);
-		        bottomRight = new Vector3f(x2, y1, z2);
-		        bottomLeft = new Vector3f(x1, y1, z2);
+				topLeft = new Vector3f(x1, y2, z2 + fudgeFactor);
+		        topRight = new Vector3f(x2, y2, z2 + fudgeFactor);
+		        bottomRight = new Vector3f(x2, y1, z2 + fudgeFactor);
+		        bottomLeft = new Vector3f(x1, y1, z2 + fudgeFactor);
 
-		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
+		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
 	        }
 
 			if (eastFace != null && !(eastFaceCovered && eastFace.isFaceCulled()))
@@ -625,12 +633,12 @@ public class MeshUtil
 					color.multiply(tintColor);
 				}
 
-				topLeft = new Vector3f(x2, y2, z2);
-		        topRight = new Vector3f(x2, y2, z1);
-		        bottomRight = new Vector3f(x2, y1, z1);
-		        bottomLeft = new Vector3f(x2, y1, z2);
+				topLeft = new Vector3f(x2 + fudgeFactor, y2, z2);
+		        topRight = new Vector3f(x2 + fudgeFactor, y2, z1);
+		        bottomRight = new Vector3f(x2 + fudgeFactor, y1, z1);
+		        bottomLeft = new Vector3f(x2 + fudgeFactor, y1, z2);
 
-		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
+		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
 	        }
 
 			if (westFace != null && !(westFaceCovered && westFace.isFaceCulled()))
@@ -640,18 +648,18 @@ public class MeshUtil
 					color.multiply(tintColor);
 				}
 
-				topLeft = new Vector3f(x1, y2, z1);
-		        topRight = new Vector3f(x1, y2, z2);
-		        bottomRight = new Vector3f(x1, y1, z2);
-		        bottomLeft = new Vector3f(x1, y1, z1);
+				topLeft = new Vector3f(x1 - fudgeFactor, y2, z1);
+		        topRight = new Vector3f(x1 - fudgeFactor, y2, z2);
+		        bottomRight = new Vector3f(x1 - fudgeFactor, y1, z2);
+		        bottomLeft = new Vector3f(x1 - fudgeFactor, y1, z1);
 
-		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model);
+		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
 	        }
 		}
 	}
 	
 	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
-							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, BlockModel model)
+							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, BlockModel model, boolean isGrassOverlay)
 	{
 		if(elementRotation != null)
         {
@@ -670,7 +678,7 @@ public class MeshUtil
 		
 		SubTexture tex = face.getTexture();
 		Mesh mesh;
-		if (model.isSolid()) {
+		if (model.isSolid() || model.getName().contains("grass_block") && !isGrassOverlay) {
 			mesh = geometry.getMesh(tex.texture, MeshType.Solid);
 		} else if (model.isTransparent()) {
 			mesh = geometry.getMesh(tex.texture, MeshType.Transparent);
