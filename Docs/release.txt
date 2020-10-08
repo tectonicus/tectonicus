@@ -1,3 +1,9 @@
+Version 2.28.3 10-08-2020
+- fixed Cave and Nether rendering
+- fixed grass block side overlay
+Known issues
+- some lighting issues in Nether renders
+
 Version 2.28.2 10-06-2020
 - fixed GLFW context version issue
 
