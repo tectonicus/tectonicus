@@ -896,10 +896,17 @@ public class RawChunk
 		final int localY = y % SECTION_HEIGHT;
 
 		Section s = sections[sectionY];
-		if (s != null)
-			return s.blockNames[x][localY][z];
-		else
+		if (s != null) {
+			String blockName = s.blockNames[x][localY][z];
+			if (blockName != null) {
+				return blockName;
+			} else {
+				return Block.AIR.getName();
+			}
+		}
+		else {
 			return Block.AIR.getName();
+		}
 	}
 
 	public void setBlockName(final int x, final int y, final int z, final String blockName)

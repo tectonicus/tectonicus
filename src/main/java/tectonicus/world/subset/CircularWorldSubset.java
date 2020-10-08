@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,6 +14,7 @@ import tectonicus.SaveFormat;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
 import tectonicus.world.World;
+import tectonicus.world.filter.ArrayBlockFilter;
 import tectonicus.world.filter.BlockFilter;
 
 public class CircularWorldSubset implements WorldSubset

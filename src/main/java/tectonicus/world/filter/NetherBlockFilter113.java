@@ -7,10 +7,10 @@
  *
  */
 
-package tectonicus;
+package tectonicus.world.filter;
 
+import tectonicus.Block;
 import tectonicus.raw.RawChunk;
-import tectonicus.world.filter.BlockFilter;
 
 public class NetherBlockFilter113 implements BlockFilter
 {

@@ -9,21 +9,14 @@
 
 package tectonicus.world.filter;
 
+import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.CaveMaskFactory;
 import tectonicus.raw.RawChunk;
 
-public class ExploredCaveFilter implements BlockFilter
+public class ExploredCaveFilter113 implements BlockFilter
 {
-	private static final String NON_NATURAL_BLOCKS_METADATA = "nonNaturalBlocks";
-	
-	private static final int[] NON_NATURAL_BLOCK_IDS =
-	{
-		BlockIds.TORCH,
-		BlockIds.BED,
-		BlockIds.MINECART_TRACKS,
-		BlockIds.REDSTONE_WIRE
-	};
+	private static String NON_NATURAL_BLOCKS_METADATA = "nonNaturalBlocks";
 	
 	@Override
 	public void filter(RawChunk rawChunk)
@@ -36,7 +29,14 @@ public class ExploredCaveFilter implements BlockFilter
 			{
 				for (int z=0; z<RawChunk.DEPTH; z++)
 				{
-					nonNaturalBlocks[x][y][z] = isNonNatural(rawChunk.getBlockId(x, y, z));
+					String blockName = rawChunk.getBlockName(x, y, z);
+					if (blockName.contains("torch")
+							|| blockName.contains("rail")
+							|| blockName.contains("bed")
+							|| blockName.contains("redstone")
+							|| blockName.contains("stairs")) {
+						nonNaturalBlocks[x][y][z] = true;
+					}
 				}
 			}
 		}
@@ -153,15 +153,5 @@ public class ExploredCaveFilter implements BlockFilter
 	private static int max(final int v0, final int v1, final int v2, final int v3, final int v4, final int v5)
 	{
 		return Math.max(v0, Math.max(v1, Math.max(v2, Math.max(v3, Math.max(v4, v5)))));
-	}
-	
-	private static boolean isNonNatural(final int blockId)
-	{
-		for (int i=0; i<NON_NATURAL_BLOCK_IDS.length; i++)
-		{
-			if (blockId == NON_NATURAL_BLOCK_IDS[i])
-				return true;
-		}
-		return false;
 	}
 }

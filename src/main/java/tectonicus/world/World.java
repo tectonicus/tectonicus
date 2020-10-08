@@ -12,6 +12,7 @@ package tectonicus.world;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
+import tectonicus.Block;
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockMaskFactory;
@@ -22,7 +23,7 @@ import tectonicus.Chunk;
 import tectonicus.ChunkCoord;
 import tectonicus.ChunkLocator;
 import tectonicus.Minecraft;
-import tectonicus.NullBlockFilter;
+import tectonicus.world.filter.NullBlockFilter;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
@@ -123,6 +124,7 @@ public class World implements BlockContext
 	private LightStyle lightStyle;
 	
 	private int defaultBlockId;
+	private String defaultBlockName = Block.AIR.getName();
 	
 	private BlockFilter blockFilter;
 	private BlockMaskFactory blockMaskFactory;
@@ -329,6 +331,17 @@ public class World implements BlockContext
 		}
 		
 		this.defaultBlockId = blockId;
+	}
+
+	public void setDefaultBlockName(final String blockName)
+	{
+		// Clear the geometry cache if block has changed
+		if (!this.defaultBlockName.equals(blockName))
+		{
+			flushChunkCache();
+		}
+
+		this.defaultBlockName = blockName;
 	}
 	
 	public void setBlockFilter(BlockFilter filter)
@@ -808,13 +821,13 @@ public class World implements BlockContext
 	public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z)
 	{
 		if (y < 0 || y >= RawChunk.HEIGHT)
-			return modelRegistry.getBlock(DEFAULT_BLOCK_ID);
+			return modelRegistry.getBlock(defaultBlockName);
 
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		if (c == null)
 		{
-			return modelRegistry.getBlock(DEFAULT_BLOCK_ID);
+			return modelRegistry.getBlock(defaultBlockName);
 		}
 		else
 		{
@@ -823,7 +836,7 @@ public class World implements BlockContext
 			if (StringUtils.isNotEmpty(name)) {
 				return modelRegistry.getBlock(name);
 			} else {
-				return modelRegistry.getBlock(DEFAULT_BLOCK_ID);
+				return modelRegistry.getBlock(defaultBlockName);
 			}
 		}
 	}

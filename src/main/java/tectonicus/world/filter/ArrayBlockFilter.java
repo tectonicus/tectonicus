@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -7,11 +7,10 @@
  *
  */
 
-package tectonicus.world.subset;
+package tectonicus.world.filter;
 
 import tectonicus.BlockIds;
 import tectonicus.raw.RawChunk;
-import tectonicus.world.filter.BlockFilter;
 
 public class ArrayBlockFilter implements BlockFilter
 {

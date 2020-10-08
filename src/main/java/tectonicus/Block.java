@@ -16,16 +16,21 @@ import java.util.Map;
 
 public enum Block {
 	AIR("minecraft:air"),
+	ANCIENT_DEBRIS("minecraft:ancient_debris"),
+	BASALT("minecraft:basalt"),
 	BEDROCK("minecraft:bedrock"),
-	NETHERRACK("minecraft:netherrack"),
-	NETHER_QUARTZ_ORE("minecraft:nether_quartz_ore"),
 	BLACKSTONE("minecraft:blackstone"),
+	LAVA("minecraft:lava"),
 	NETHER_GOLD_ORE("minecraft:nether_gold_ore"),
+	NETHER_QUARTZ_ORE("minecraft:nether_quartz_ore"),
+	NETHERRACK("minecraft:netherrack"),
+	RAIL("minecraft:rail"),
 	SOUL_SAND("minecraft:soul_sand"),
 	SOUL_SOIL("minecraft:soul_soil"),
-	ANCIENT_DEBRIS("minecraft:ancient_debris"),
-	LAVA("minecraft:lava"),
-	BASALT("minecraft:basalt");
+	STONE("minecraft:stone"),
+	TORCH("minecraft:torch"),
+	WALL_TORCH("minecraft:wall_torch"),
+	WATER("minecraft:water");
 
 	private static final Map<String, Block> NAME_LOOKUP = new HashMap<>(values().length);
 	@Getter

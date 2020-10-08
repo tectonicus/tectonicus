@@ -56,6 +56,9 @@ import tectonicus.util.Vector3l;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.filter.ExploredCaveFilter;
+import tectonicus.world.filter.ExploredCaveFilter113;
+import tectonicus.world.filter.NetherBlockFilter;
+import tectonicus.world.filter.NetherBlockFilter113;
 import tectonicus.world.subset.CircularWorldSubsetFactory;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubsetFactory;
@@ -420,20 +423,25 @@ public class TileRenderer
 		
 		world.setLightStyle(layer.getLightStyle());
 		world.setDefaultBlockId(BlockIds.AIR);
-		
-		if (layer.getRenderStyle() == RenderStyle.CAVE)
-		{
-			world.setDefaultBlockId(BlockIds.STONE);
-			world.setBlockMaskFactory( new CaveMaskFactory() );
-		}
-		else if (layer.getRenderStyle() == RenderStyle.EXPLORED_CAVES)
-		{
-		//	world.setDefaultBlockId(BlockIds.STONE);
-			world.setBlockFilter( new ExploredCaveFilter() );
-			world.setBlockMaskFactory( new CaveMaskFactory() );
-		}
-		else if (layer.getRenderStyle() == RenderStyle.NETHER)
-		{
+		world.setDefaultBlockName(Block.AIR.getName());
+
+		if (layer.getRenderStyle() == RenderStyle.CAVE) {
+			if (world.getTexturePack().getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
+				world.setDefaultBlockId(BlockIds.STONE);
+				world.setBlockMaskFactory(new CaveMaskFactory());
+			} else {
+				world.setDefaultBlockName(Block.STONE.getName());
+				world.setBlockMaskFactory(new CaveMaskFactory113());
+			}
+		} else if (layer.getRenderStyle() == RenderStyle.EXPLORED_CAVES) {
+			if (world.getTexturePack().getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
+				world.setBlockFilter(new ExploredCaveFilter());
+				world.setBlockMaskFactory(new CaveMaskFactory());
+			} else {
+				world.setBlockFilter(new ExploredCaveFilter113());
+				world.setBlockMaskFactory(new CaveMaskFactory113());
+			}
+		} else if (layer.getRenderStyle() == RenderStyle.NETHER) {
 			if (world.getTexturePack().getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
 				world.setBlockFilter(new NetherBlockFilter());
 			} else {
