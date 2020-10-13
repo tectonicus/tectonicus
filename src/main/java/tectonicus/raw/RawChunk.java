@@ -358,7 +358,9 @@ public class RawChunk
 										if(owner != null)
 										{
 											nameTag = NbtUtil.getChild(owner, "Name", StringTag.class);
-											name = nameTag.getValue();
+											if (nameTag != null) {
+												name = nameTag.getValue();
+											}
 											playerId = NbtUtil.getChild(owner, "Id", StringTag.class);
 											if (playerId == null) { //1.16
 												IntArrayTag idArrayTag = NbtUtil.getChild(owner, "Id", IntArrayTag.class);
