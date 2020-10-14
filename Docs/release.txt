@@ -1,3 +1,8 @@
+Version 2.28.4 10-13-2020
+- fixed NPE when no player head Name tag exists
+- fixed issue with blue and packed ice and translucent blocks
+- changed swamp biome color to brownish (actual swamp biome colors are difficult to determine without copying the Minecraft algorithm)
+
 Version 2.28.3 10-08-2020
 - fixed Cave and Nether rendering
 - fixed grass block side overlay
