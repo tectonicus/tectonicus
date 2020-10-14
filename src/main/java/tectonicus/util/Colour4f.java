@@ -54,6 +54,14 @@ public class Colour4f
 		this.b = (float)(src.getBlue()) / 255.0f;
 		this.a = (float)(src.getAlpha()) / 255.0f;
 	}
+
+	public Colour4f(int red, int green , int blue)
+	{
+		this.r = red / 255.0f;
+		this.g = green / 255.0f;
+		this.b = blue / 255.0f;
+		this.a = 1;
+	}
 	
 	public void add(Colour4f other)
 	{

@@ -82,7 +82,7 @@ public class ChunkLocator
 		}
 		catch (Exception e)
 		{
-			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.x, chunkCoord.z, region.getFile().getAbsolutePath(), e);
+			log.error("ChunkLocator: Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.x, chunkCoord.z, region.getFile().getAbsolutePath(), e);
 		}
 		
 		return chunk;

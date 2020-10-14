@@ -1213,6 +1213,10 @@ public class World implements BlockContext
 	private Colour4f getGrassColour(final int id, int elevation)
 	{
 		Biome biome = Biome.byId(id);
+		//Swamp color actually varies but I would basically have to copy the Minecraft code in order to get it working correctly
+		if (biome == Biome.SWAMP || biome == Biome.SWAMP_HILLS) {
+			return new Colour4f(106, 112, 57);
+		}
 		float temperature = biome.getTemperature();
 		float rainfall = biome.getRainfall();
 
