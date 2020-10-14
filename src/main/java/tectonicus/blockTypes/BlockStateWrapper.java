@@ -27,6 +27,8 @@ public class BlockStateWrapper {
 	private final Random random = new Random();
 	@Setter
 	private boolean fullBlock = true;
+	@Setter
+	private boolean isTransparent = false;
 
 	public BlockStateWrapper(String blockName) {
 		this.blockName = blockName;

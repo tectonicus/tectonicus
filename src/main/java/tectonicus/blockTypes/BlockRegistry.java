@@ -292,11 +292,16 @@ public class BlockRegistry
 		}
 	}
 
+	//Set attributes on the entire block instead of just the individuals models. These are used to help with lighting and face culling
 	private void setBlockAttributes(BlockStateWrapper wrapper, List<BlockStateModel> models) {
 		for (BlockStateModel model : models) {
 			BlockModel blockModel = model.getBlockModel();
-			if (!blockModel.getName().contains("grass_block") && wrapper.isFullBlock() && (!blockModel.isFullBlock() || !blockModel.isSolid())) {
+			if (wrapper.isFullBlock() && !blockModel.isFullBlock()) {
 				wrapper.setFullBlock(false);
+			}
+
+			if (!wrapper.isTransparent() && blockModel.isTranslucent() || wrapper.isFullBlock() && !blockModel.isSolid()) {
+				wrapper.setTransparent(true);
 			}
 		}
 	}

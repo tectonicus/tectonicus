@@ -42,7 +42,7 @@ public class BlockModel
 	@Setter
 	private boolean isSolid = true;
 	@Setter
-	private boolean isTransparent = false;
+	private boolean isTranslucent = false;
 	@Setter
 	private boolean isFullBlock = true;
 
@@ -78,9 +78,9 @@ public class BlockModel
 			JsonNode to = element.get("to");
 			Vector3f toVector = new Vector3f(to.get(0).floatValue(), to.get(1).floatValue(), to.get(2).floatValue());
 
-			//Test if not full-block (grass path and farmland are treated as full blocks)
+			//Test if not full-block
 			if (fromVector.x() > 0 && fromVector.x() < 16 || fromVector.y() > 0 && fromVector.y() < 16 || fromVector.z() > 0 && fromVector.z() < 16
-					|| toVector.x() > 0 && toVector.x() < 16 || toVector.y() > 0 && toVector.y() < 15 || toVector.z() > 0 && toVector.z() < 16) {
+					|| toVector.x() > 0 && toVector.x() < 16 || toVector.y() > 0 && toVector.y() < 16 || toVector.z() > 0 && toVector.z() < 16) {
 				blockModel.setFullBlock(false);
 			}
 
@@ -218,10 +218,12 @@ public class BlockModel
 					SubTexture te = texturePack.findTexture(texturePath);
 					PackTexture pt = texturePack.getTexture(texturePack.getTexturePathPrefix("") + texturePath);
 
-					//These are hard-coded in as I'm not sure how to programmatically tell the difference between these and other transparent blocks
-					if (blockModel.getName().contains("stained_glass") || blockModel.getName().contains("_ice") || blockModel.getName().contains("nether_portal")) {
+					String modelName = blockModel.getName();
+					//These are hard-coded in as I'm not sure how to programmatically tell the difference between these and solid blocks
+					if (modelName.contains("stained_glass") || modelName.contains("block/ice")
+							|| modelName.contains("block/packed_ice") || modelName.contains("nether_portal") || modelName.contains("slime_block")) {
 						blockModel.setSolid(false);
-						blockModel.setTransparent(true);
+						blockModel.setTranslucent(true);
 					} else if (blockModel.isSolid() && ImageUtils.containsTransparency(pt.getImage())) {
 						blockModel.setSolid(false);
 						log.trace(key + ": " + texturePath + " contains transparency");

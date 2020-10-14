@@ -182,12 +182,21 @@ public class MeshUtil
 			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
 
 			selfFull = selfBlock.isFullBlock();
-			above = aboveBlock.isFullBlock();
-			below = belowBlock.isFullBlock();
-			north = northBlock.isFullBlock();
-			south = southBlock.isFullBlock();
-			east = eastBlock.isFullBlock();
-			west = westBlock.isFullBlock();
+			if (selfBlock.isTransparent()) {
+				above = aboveBlock.isFullBlock();
+				below = belowBlock.isFullBlock();
+				north = northBlock.isFullBlock();
+				south = southBlock.isFullBlock();
+				east = eastBlock.isFullBlock();
+				west = westBlock.isFullBlock();
+			} else {
+				above = aboveBlock.isFullBlock() && !aboveBlock.isTransparent();
+				below = belowBlock.isFullBlock() && !belowBlock.isTransparent();
+				north = northBlock.isFullBlock() && !northBlock.isTransparent();
+				south = southBlock.isFullBlock() && !southBlock.isTransparent();
+				east = eastBlock.isFullBlock() && !eastBlock.isTransparent();
+				west = westBlock.isFullBlock() && !westBlock.isTransparent();
+			}
 
 			//Handle some special cases e.g. double slabs, 8 layer snow
 			if (!selfFull && model.isFullBlock()) {
@@ -675,12 +684,12 @@ public class MeshUtil
 			blockRotation.transformPosition(bottomRight);
 			blockRotation.transformPosition(bottomLeft);
 		}
-		
+
 		SubTexture tex = face.getTexture();
 		Mesh mesh;
 		if (model.isSolid() || model.getName().contains("grass_block") && !isGrassOverlay) {
 			mesh = geometry.getMesh(tex.texture, MeshType.Solid);
-		} else if (model.isTransparent()) {
+		} else if (model.isTranslucent()) {
 			mesh = geometry.getMesh(tex.texture, MeshType.Transparent);
 		} else {
 			mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);
