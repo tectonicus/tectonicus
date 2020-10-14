@@ -48,6 +48,7 @@ import static org.lwjgl.egl.EGL10.EGL_NONE;
 import static org.lwjgl.egl.EGL10.EGL_NO_CONTEXT;
 import static org.lwjgl.egl.EGL10.EGL_NO_SURFACE;
 import static org.lwjgl.egl.EGL10.EGL_VENDOR;
+import static org.lwjgl.egl.EGL10.EGL_VERSION;
 import static org.lwjgl.egl.EGL10.eglChooseConfig;
 import static org.lwjgl.egl.EGL10.eglCreateContext;
 import static org.lwjgl.egl.EGL10.eglGetError;
@@ -72,7 +73,6 @@ import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
 import static org.lwjgl.glfw.GLFW.GLFW_OSMESA_CONTEXT_API;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
 import static org.lwjgl.glfw.GLFW.glfwGetKey;
 import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
@@ -259,9 +259,6 @@ public class LwjglRasteriser implements Rasteriser
 			IntBuffer minor = BufferUtils.createIntBuffer(1);
 			eglInitialize(eglDisplay, major, minor);
 			log.debug("Using EGL for context creation.");
-			log.debug("EGL version: {}.{}", major.get(0), minor.get(0));
-			log.debug("EGL vendor: {}", eglQueryString(eglDisplay, EGL_VENDOR));
-			log.debug("Supported client apis: {}", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
 
 			int[] configCount = new int[1];
 
@@ -328,7 +325,6 @@ public class LwjglRasteriser implements Rasteriser
 			eglReleaseThread();
 			eglTerminate(eglDisplay);
 		} else {
-			glfwDestroyWindow(window);
 			glfwTerminate();
 		}
 	}
@@ -342,7 +338,9 @@ public class LwjglRasteriser implements Rasteriser
 		log.debug("\twidth: {}", width);
 		log.debug("\theight: {}", height);
 		if (type == DisplayType.OFFSCREEN_EGL) {
-			log.debug("\t");
+			log.debug("\tEGL version: {}", eglQueryString(eglDisplay, EGL_VERSION));
+			log.debug("\tEGL vendor: {}", eglQueryString(eglDisplay, EGL_VENDOR));
+			log.debug("\tSupported client apis: {}", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
 		}
 		log.debug("\tOpenGL Vendor: {}", glGetString(GL_VENDOR));
 		log.debug("\tOpenGL Renderer: {}", glGetString(GL_RENDERER));
