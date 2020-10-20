@@ -1,3 +1,7 @@
+Version 2.28.5 10-20-2020
+- added logging for exceptions when creating block geometry
+- the -verbose command line option will now override logLevel to TRACE (mainly useful for devs)
+
 Version 2.28.4 10-13-2020
 - fixed NPE when no player head Name tag exists
 - fixed issue with blue and packed ice and translucent blocks
