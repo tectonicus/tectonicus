@@ -60,6 +60,9 @@ public class TectonicusApp
 	{
 		this.args = args;
 
+		if (args.isVerbose()) {
+			args.setLoggingLevel(Level.TRACE);
+		}
 		Configurator.setRootLevel(args.getLoggingLevel());
 		openLog( args.getLogFile() );
 		

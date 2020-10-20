@@ -114,7 +114,7 @@ public class CommandLineParser
 		RasteriserType rasteriser = parseRasteriserType( parser.getString("rasteriser", "") );
 		config.setRasteriserType(rasteriser);
 		
-		config.setIsVerbose( parseIsVerbose( parser.getString("verbose", "") ) );
+		config.setVerbose( parseIsVerbose( parser.getString("verbose", "") ) );
 		
 		File minecraftJar;
 		if (parser.hasValue("minecraftJar"))

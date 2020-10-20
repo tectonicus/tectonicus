@@ -14,7 +14,6 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import tectonicus.Log;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -107,7 +106,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private boolean showSpawn;
 
 	@Option(names = {"-v", "--verbose", "verbose"}, arity = "0..1", paramLabel = "<boolean>")
-	private boolean isVerbose;
+	private boolean verbose;
 
 	@Option(names = {"--logLevel","logLevel"}, paramLabel = "<String>")
 	private Level loggingLevel;
@@ -199,7 +198,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\tspawnInitiallyVisible:"+isSpawnInitiallyVisible());
 		log.debug("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
 		log.debug("\teraseOutputDir:"+eraseOutputDir());
-		log.debug("\tisVerbose:"+isVerbose());
 		log.debug("\tforceLoadAwt:"+forceLoadAwt());
 		log.debug("\tlogFile:"+getLogFile().getAbsolutePath());
 		log.debug("\toutputHtmlName:"+getOutputHtmlName());
@@ -274,14 +272,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.showSpawn = showSpawn;
 	}
 	public boolean showSpawn() { return showSpawn; }
-
-	public void setIsVerbose(final boolean isVerbose)
-	{
-		this.isVerbose = isVerbose;
-		if (isVerbose)
-			Log.setLogLevel(Log.DEBUG);
-	}
-	public boolean isVerbose() { return isVerbose; }
 
 	public void setForceLoadAwt(final boolean forceLoadAwt)
 	{

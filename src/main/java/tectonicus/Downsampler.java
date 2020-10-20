@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,10 +22,12 @@ import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
 
+@Log4j2
 public class Downsampler
 {
 	private ChangeFile changedFileList;
@@ -144,7 +146,7 @@ public class Downsampler
 			if (in00 == null && in10 == null && in01 == null && in11 == null)
 				return null;
 			
-			Log.logDebug("\tDownsampling to create meta tile at "+tile.x+","+tile.y);
+			log.trace("\tDownsampling to create meta tile at "+tile.x+","+tile.y);
 			
 			final boolean hasAlpha = state.imageFormat.hasAlpha();
 			final int pixelFormat = hasAlpha ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;

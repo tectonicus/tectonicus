@@ -17,6 +17,7 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -105,7 +106,11 @@ public class XmlConfigurationParser
 			config.setCacheDir( parseCacheDir( getString(configNode, "cacheDir"), config.getOutputDir() ) );
 			
 			config.setLogFile( parseLogFile( getString(configNode, "logFile") ) );
-			config.setLoggingLevel(Level.toLevel(getString(configNode, "loggingLevel")));
+			String logLevel = getString(configNode, "loggingLevel");
+			if (StringUtils.isEmpty(logLevel)) {
+				logLevel = getString(configNode, "logLevel");
+			}
+			config.setLoggingLevel(Level.toLevel(logLevel));
 			
 			config.setSpawnInitiallyVisible( parseShowSpawn( getString(configNode, "spawnInitiallyVisible")) );
 			config.setPlayersInitiallyVisible( parseShowPlayers( getString(configNode, "playersInitiallyVisible")) );

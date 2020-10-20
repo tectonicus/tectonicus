@@ -72,6 +72,7 @@ public interface Configuration  //TODO: is this interface needed?
 	
 	File getLogFile();
 	Level getLoggingLevel();
+	void setLoggingLevel(Level loggingLevel);
 	
 	File minecraftJar();
 	
