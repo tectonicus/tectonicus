@@ -9,7 +9,7 @@ plugins {
 project.gradle.startParameter.excludedTaskNames.addAll("jar", "distTar", "distZip", "shadowDistTar")
 
 archivesBaseName = 'Tectonicus'
-project.version = '2.28.5'
+project.version = '2.28.6'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -28,6 +28,7 @@ ext {
 	picocliVersion = '4.5.2'
 	lombokVersion = '1.18.16'
 	junitVersion = '5.7.0'
+	log4jVersion = '2.13.3'
 }
 
 dependencies {
@@ -42,10 +43,10 @@ dependencies {
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.11.3",
-				   "org.apache.logging.log4j:log4j-api:2.13.3",
-				   "org.apache.logging.log4j:log4j-core:2.13.3")
+				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
+				   "org.apache.logging.log4j:log4j-core:$log4jVersion")
 	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
-	shadow "org.apache.logging.log4j:log4j-core:2.13.3"
+	shadow "org.apache.logging.log4j:log4j-core:$log4jVersion"
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
 				"org.lwjgl:lwjgl-glfw::natives-windows",
 				"org.lwjgl:lwjgl-opengl::natives-windows",

@@ -1,3 +1,6 @@
+Version 2.28.6 10-20-2020
+- added error handling for unknown blocks
+
 Version 2.28.5 10-20-2020
 - added logging for exceptions when creating block geometry
 - the -verbose command line option will now override logLevel to TRACE (mainly useful for devs)
