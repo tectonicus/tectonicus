@@ -9,6 +9,7 @@
 
 package tectonicus.world;
 
+import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
@@ -23,7 +24,6 @@ import tectonicus.Chunk;
 import tectonicus.ChunkCoord;
 import tectonicus.ChunkLocator;
 import tectonicus.Minecraft;
-import tectonicus.world.filter.NullBlockFilter;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
@@ -62,6 +62,7 @@ import tectonicus.util.Colour4f;
 import tectonicus.util.Vector3l;
 import tectonicus.world.filter.BlockFilter;
 import tectonicus.world.filter.CompositeBlockFilter;
+import tectonicus.world.filter.NullBlockFilter;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
 import tectonicus.world.subset.WorldSubsetFactory;
@@ -136,6 +137,8 @@ public class World implements BlockContext
 	private Geometry daySkybox, nightSkybox;
 	
 	private SignFilter signFilter;
+
+	private final Map<Location, String> unknownBlocks;
 
 	private final static String DEFAULT_BLOCK_ID = "minecraft:air";
 	
@@ -258,6 +261,8 @@ public class World implements BlockContext
 		
 		this.daySkybox = SkyboxUtil.generateDaySkybox(rasteriser);
 		this.nightSkybox = SkyboxUtil.generateNightSkybox(rasteriser);
+
+		this.unknownBlocks = new HashMap<>();
 	}
 	
 	public void loadBlockRegistry(String customConfigPath, final boolean useDefaultBlocks)
@@ -823,18 +828,28 @@ public class World implements BlockContext
 		if (y < 0 || y >= RawChunk.HEIGHT)
 			return modelRegistry.getBlock(defaultBlockName);
 
-		Location loc = resolve(chunkCoord, x, y, z);
-		Chunk c = rawLoadedChunks.get(loc.coord);
+		Location location = resolve(chunkCoord, x, y, z);
+		Chunk c = rawLoadedChunks.get(location.coord);
 		if (c == null)
 		{
 			return modelRegistry.getBlock(defaultBlockName);
 		}
 		else
 		{
-			final String name = c.getRawChunk().getBlockName(loc.x, loc.y, loc.z);
+			final String name = c.getRawChunk().getBlockName(location.x, location.y, location.z);
 
 			if (StringUtils.isNotEmpty(name)) {
-				return modelRegistry.getBlock(name);
+				BlockStateWrapper block = modelRegistry.getBlock(name);
+				if (block != null) {
+					return modelRegistry.getBlock(name);
+				} else {
+					unknownBlocks.computeIfAbsent(location, loc -> {
+						log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
+						return name;
+					});
+
+					return modelRegistry.getBlock(defaultBlockName);
+				}
 			} else {
 				return modelRegistry.getBlock(defaultBlockName);
 			}
@@ -1039,11 +1054,12 @@ public class World implements BlockContext
 			return centerDist;
 		}
 	}
-	
+
+	@Value
 	private static class Location
 	{
-		public final ChunkCoord coord;
-		public final int x, y, z;
+		public ChunkCoord coord;
+		public int x, y, z;
 		
 		public Location(ChunkCoord coord, final int x, final int y, final int z)
 		{

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,13 +9,15 @@
 
 package tectonicus;
 
+import lombok.Getter;
 import tectonicus.raw.RawChunk;
 
 public class RegionCoord implements Comparable<RegionCoord>
 {
 	public static int REGION_WIDTH = 32;
 	public static int REGION_HEIGHT = 32;
-	
+
+	@Getter
 	public final long x, z;
 	
 	public RegionCoord()
@@ -53,6 +55,10 @@ public class RegionCoord implements Comparable<RegionCoord>
 		final long regionZ = (long)Math.floor(chunkCoord.z / (float)REGION_HEIGHT);
 		
 		return new RegionCoord(regionX, regionZ);
+	}
+
+	public static String getFilenameFromChunkCoord(ChunkCoord cc) {
+		return "r." + (cc.x >> 5) + "." + (cc.z >> 5) + ".mca";
 	}
 	
 	@Override

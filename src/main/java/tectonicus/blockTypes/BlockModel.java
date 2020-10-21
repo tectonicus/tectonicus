@@ -16,6 +16,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.BlockContext;
 import tectonicus.ChunkCoord;
+import tectonicus.RegionCoord;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -69,12 +70,8 @@ public class BlockModel
 			MeshUtil.addBlock(world, rawChunk, x, y, z, this, geometry, xRotation, yRotation);
 		} catch (Exception e) {
 			ChunkCoord cc = rawChunk.getChunkCoord();
-			log.error("Error adding block: {} in {} in {}", this.name, cc, getRegionCoords(cc));
+			log.error("Error adding block: {} in {} in {}", this.name, cc, RegionCoord.getFilenameFromChunkCoord(cc), e);
 		}
-	}
-
-	private String getRegionCoords(ChunkCoord cc) {
-		return "r." + (cc.x >> 5) + "." + (cc.z >> 5) + ".mca";
 	}
 
 	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap, JsonNode elements, TexturePack texturePack, BlockModel blockModel)
