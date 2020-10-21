@@ -372,9 +372,9 @@ public class XmlConfigurationParser
 		}
 		
 		Element debugNode = getChild(root, "debug");
-		if (debugNode != null)
-		{
-			config.setMaxTiles( parseMaxTiles( getString(debugNode, "maxTiles") ) );
+		if (debugNode != null) {
+			config.setMaxTiles(parseMaxTiles(getString(debugNode, "maxTiles")));
+			config.setVerbose(getBoolean(debugNode, "verbose", false));
 		}
 		
 		return config;
