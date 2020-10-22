@@ -9,10 +9,12 @@
 
 package tectonicus;
 
+import lombok.Getter;
 import tectonicus.raw.RawChunk;
 
 public class ChunkCoord implements Comparable<ChunkCoord>
 {
+	@Getter
 	public final long x, z;
 	
 	public ChunkCoord()

@@ -99,10 +99,9 @@ public class ChunkLocator
 		File secondDir = new File(firstDir, secondFrag);
 		
 		String first = Util.toBase36(coord.x);
-		String second = Util.toBase36(coord.z); 
-		File actual = new File(secondDir, "c."+first+"."+second+".dat");
-		
-		return actual;
+		String second = Util.toBase36(coord.z);
+
+		return new File(secondDir, "c."+first+"."+second+".dat");
 	}
 	
 	public static File findRegionFile(File baseDir, RegionCoord coord, SaveFormat format)
@@ -110,17 +109,9 @@ public class ChunkLocator
 		// world/region/r.0.0.mca
 		
 		File regionDir = new File(baseDir, "region");
-		
-		StringBuilder builder = new StringBuilder();
-		builder.append("r.");
-		builder.append(coord.x);
-		builder.append(".");
-		builder.append(coord.z);
-		builder.append(".");
-		builder.append(format.extension);
-		
-		File actual = new File(regionDir, builder.toString());
-		
-		return actual;
+
+		String builder = "r." + coord.x + "." + coord.z + "." + format.extension;
+
+		return new File(regionDir, builder);
 	}
 }

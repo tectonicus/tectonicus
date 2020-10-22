@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,12 +14,12 @@ import java.util.LinkedHashMap;
 
 public class RegionCache
 {
-	private SaveFormat format;
+	private final SaveFormat format;
 	
-	private File worldDir;
+	private final File worldDir;
 	
 	// TODO: Use a hash map of SoftReferences so we grow up to max memory?
-	private RegionCacheMap cache;
+	private final RegionCacheMap cache;
 	
 	public RegionCache(File worldDir)
 	{
@@ -83,7 +83,7 @@ public class RegionCache
 	{
 		private static final long serialVersionUID = 1L;
 
-		private int maxSize;
+		private final int maxSize;
 		private int minSize;
 		
 		public RegionCacheMap(final int maxSize)
@@ -101,9 +101,8 @@ public class RegionCache
 		{
 			if (size() <= minSize)
 				return false;
-			
-			final boolean remove = size() > maxSize;
-			return remove;
+
+			return size() > maxSize;
 		}
 		
 		public void touch(RegionCoord coord)
