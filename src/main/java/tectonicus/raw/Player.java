@@ -11,53 +11,56 @@ package tectonicus.raw;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
+import lombok.Getter;
+import lombok.Setter;
+import org.jnbt.ByteTag;
+import org.jnbt.CompoundTag;
+import org.jnbt.DoubleTag;
+import org.jnbt.IntTag;
+import org.jnbt.ListTag;
+import org.jnbt.NBTInputStream;
+import org.jnbt.ShortTag;
+import org.jnbt.Tag;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.util.FileUtils;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
-import xyz.nickr.nbt.NBTCodec;
-import xyz.nickr.nbt.NBTCompression;
-import xyz.nickr.nbt.tags.CompoundTag;
-import xyz.nickr.nbt.tags.ListTag;
-import xyz.nickr.nbt.tags.NBTTag;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.concurrent.Callable;
 
+@Getter
 public class Player
 {
-	public static final int MAX_HEALTH = 20;
-	public static final int MAX_AIR = 300;
-	
+	@Setter
 	private String name;
 	private String UUID;
+	@Setter
 	private String skinURL;
-	
 	private Dimension dimension;
-	
 	private Vector3d position;
-	
-	private Vector3l spawnPos;
-	
+	/** Caution - may be null if the player hasn't built a bed yet! */
+	private Vector3l spawnPosition;
 	private int health; // 0-20
 	private int food; // 0-20
 	private int air; // 0-300
-	
 	private int xpLevel;
 	private int xpTotal;
 	
-	private ArrayList<Item> inventory;
+	private List<Item> inventory;
 
+	public static final int MAX_HEALTH = 20;
+	public static final int MAX_AIR = 300;
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	
 	public Player(Path playerFile) throws Exception
@@ -82,24 +85,22 @@ public class Player
 		
 		skinURL = null;
 
-		try(InputStream in = Files.newInputStream(playerFile))
+		try(InputStream in = Files.newInputStream(playerFile); NBTInputStream nbtIn = new NBTInputStream(in))
 		{
-			NBTCodec codec = new NBTCodec(ByteOrder.BIG_ENDIAN);
-			CompoundTag root = codec.decode(in, NBTCompression.GZIP).getAsCompoundTag();
-
-			parse(root);
+			Tag tag = nbtIn.readTag();
+			if (tag instanceof CompoundTag)
+			{
+				CompoundTag root = (CompoundTag)tag;
+				parse(root);
+			}
 		}
 	}
 	
 	public Player(String playerName, CompoundTag tag)
 	{
 		this.name = playerName;
-		
-		try {
-			parse(tag);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+
+		parse(tag);
 	}
 	
 	public Player(String name, String UUID, String skinURL)
@@ -114,125 +115,68 @@ public class Player
 		dimension = Dimension.OVERWORLD;
 		position = new Vector3d();
 		inventory = new ArrayList<>();
-		
-		health = root.getAsNumber("Health").shortValue();
-		air = root.getAsNumber("Air").shortValue();
-		food = root.getAsNumber("foodLevel").intValue();
-		
-		final int dimensionVal = root.getAsNumber("Dimension").intValue();
+
+		health = NbtUtil.getShort(root, "Health", (short)0);
+		air = NbtUtil.getShort(root, "Air", (short)0);
+		food = NbtUtil.getInt(root, "foodLevel", 0);
+
+		final int dimensionVal = NbtUtil.getInt(root, "Dimension", 0);
 		if (dimensionVal == 0)
 			dimension = Dimension.OVERWORLD;
 		else if (dimensionVal == 1)
 			dimension = Dimension.END;
 		else if (dimensionVal == -1)
 			dimension = Dimension.NETHER;
-		
-		ListTag posList = root.getAsListTag("Pos");
+
+		ListTag posList = NbtUtil.getChild(root, "Pos", ListTag.class);
 		if (posList != null)
 		{
-			double x = posList.get(0).getAsNumber().doubleValue();
-			double y = posList.get(1).getAsNumber().doubleValue();
-			double z = posList.get(2).getAsNumber().doubleValue();
-			
-			position.set(x, y, z);
+			DoubleTag xTag = NbtUtil.getChild(posList, 0, DoubleTag.class);
+			DoubleTag yTag = NbtUtil.getChild(posList, 1, DoubleTag.class);
+			DoubleTag zTag = NbtUtil.getChild(posList, 2, DoubleTag.class);
+
+			if (xTag != null && yTag != null && zTag != null)
+			{
+				position.set(xTag.getValue(), yTag.getValue(), zTag.getValue());
+			}
 		}
-		
-		int spawnX = root.getAsNumber("SpawnX").intValue();
-		int spawnY = root.getAsNumber("SpawnY").intValue();
-		int spawnZ = root.getAsNumber("SpawnZ").intValue();
-		
-		spawnPos = new Vector3l(spawnX, spawnY, spawnZ);
-		
-		xpLevel = root.getAsNumber("XpLevel").intValue();
-		xpTotal = root.getAsNumber("XpTotal").intValue();
+
+		IntTag spawnXTag = NbtUtil.getChild(root, "SpawnX", IntTag.class);
+		IntTag spawnYTag = NbtUtil.getChild(root, "SpawnY", IntTag.class);
+		IntTag spawnZTag = NbtUtil.getChild(root, "SpawnZ", IntTag.class);
+		if (spawnXTag != null && spawnYTag != null && spawnZTag != null)
+		{
+			spawnPosition = new Vector3l(spawnXTag.getValue(), spawnYTag.getValue(), spawnZTag.getValue());
+		}
+
+		xpLevel = NbtUtil.getInt(root, "XpLevel", 0);
+		xpTotal = NbtUtil.getInt(root, "XpTotal", 0);
 		
 		// Parse inventory items (both inventory items and worn items)
-		ListTag inventoryList = root.getAsListTag("Inventory");
+		ListTag inventoryList = NbtUtil.getChild(root, "Inventory", ListTag.class);
 		if (inventoryList != null)
 		{
-			for (NBTTag t : inventoryList)
+			for (Tag t : inventoryList.getValue())
 			{
-				if (t.isCompoundTag())
+				if (t instanceof CompoundTag)
 				{
 					CompoundTag itemTag = (CompoundTag)t;
-					
-					short id = itemTag.getAsNumber("id").shortValue();
-					short damage = itemTag.getAsNumber("Damage").shortValue();
-					byte count = itemTag.getAsNumber("Count").byteValue();
-					byte slot = itemTag.getAsNumber("Slot").byteValue();
-					
-					inventory.add( new Item(id, damage, count, slot) );
+
+					ShortTag idTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
+					ShortTag damageTag = NbtUtil.getChild(itemTag, "Damage", ShortTag.class);
+					ByteTag countTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
+					ByteTag slotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
+
+					if (idTag != null && damageTag != null && countTag != null && slotTag != null)
+					{
+						inventory.add( new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue()) );
+					}
 				}
 			}
 		}
 	}
-	
-	public String getName()
-	{
-		return name;
-	}
-	
-	public void setName(String name)
-	{
-		this.name = name;
-	}
-	
-	public String getSkinURL()
-	{
-		return skinURL;
-	}
-	
-	public void setSkinURL(String skinURL)
-	{
-		this.skinURL = skinURL;
-	}
-	
-	public String getUUID()
-	{
-		return UUID;
-	}
-	
-	public Vector3d getPosition()
-	{
-		return new Vector3d(position);
-	}
-	
-	public int getHealth()
-	{
-		return health;
-	}
-	
-	public int getFood()
-	{
-		return food;
-	}
-	
-	public int getAir()
-	{
-		return air;
-	}
-	
-	public int getXpLevel()
-	{
-		return xpLevel;
-	}
-	
-	public int getXpTotal()
-	{
-		return xpTotal;
-	}
-	
-	public Dimension getDimension()
-	{
-		return dimension;
-	}
-	
-	/** Caution - may be null if the player hasn't built a bed yet! */
-	public Vector3l getSpawnPosition()
-	{
-		return spawnPos;
-	}
-	
+
+
 	public class RequestPlayerInfoTask implements Callable<Void>
 	{
 		@Override
@@ -254,9 +198,9 @@ public class Player
 				int responseCode = connection.getResponseCode();
 				if (responseCode == 204)
 					System.err.println("ERROR: Unrecognized UUID");
-				else if (responseCode == 429)
+				else if (responseCode == 429) //Is this error still necessary?  It doesn't seem to occur any more
 					System.err.println("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
-	
+
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 				StringBuilder builder = new StringBuilder();
 				

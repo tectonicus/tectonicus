@@ -10,14 +10,7 @@
 package tectonicus.raw;
 
 import org.junit.jupiter.api.Test;
-import xyz.nickr.nbt.NBTCodec;
-import xyz.nickr.nbt.NBTCompression;
-import xyz.nickr.nbt.tags.CompoundTag;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteOrder;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,22 +18,6 @@ import static org.hamcrest.core.Is.is;
 
 class PlayerTests
 {
-	@Test
-	void testLoadPlayerFromLevelDat() throws IOException
-	{
-		try(InputStream in = Files.newInputStream(Paths.get("src/test/resources/level.dat")))
-		{
-			NBTCodec codec = new NBTCodec(ByteOrder.BIG_ENDIAN);
-			CompoundTag tag = codec.decode(in, NBTCompression.GZIP).getAsCompoundTag();
-			CompoundTag data = tag.getAsCompoundTag("Data");
-			CompoundTag playerTag = data.getAsCompoundTag("Player");
-			
-			Player player = new Player("", playerTag);
-			
-			assertThat(player.getHealth(), is(20));
-		}
-	}
-	
 	@Test
 	void testLoadPlayerFromPlayerFile() throws Exception
 	{
