@@ -1,3 +1,7 @@
+Version 2.28.7 10-28-2020
+- fixed an issue causing ConcurrentModificationExceptions in Java 15
+- removed an old NBT library that was causing illegal reflective access warnings in newer versions of Java
+
 Version 2.28.6 10-20-2020
 - added error handling for unknown blocks
 
