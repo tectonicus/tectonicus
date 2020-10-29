@@ -71,11 +71,14 @@ public class Geometry
 	{
 		Map<Texture, Mesh> meshList = meshes.get(type);
 
-		return meshList.computeIfAbsent(texture, tex -> {
-			Mesh mesh = rasteriser.createMesh(tex);
-			meshList.put(tex, mesh);
+		Mesh mesh = meshList.get(texture);
+		if (mesh == null) {
+			Mesh newMesh = rasteriser.createMesh(texture);
+			meshList.put(texture, newMesh);
+			return newMesh;
+		} else {
 			return mesh;
-		});
+		}
 	}
 	
 	public void finalise()
