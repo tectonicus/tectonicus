@@ -25,7 +25,7 @@ repositories {
 
 ext {
 	lwjglVersion = '3.2.3'
-	picocliVersion = '4.5.2'
+	picocliVersion = '4.6.1'
 	lombokVersion = '1.18.20'
 	junitVersion = '5.7.1'
 	log4jVersion = '2.14.0'
