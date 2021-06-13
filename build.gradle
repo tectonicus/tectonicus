@@ -38,7 +38,7 @@ dependencies {
 				   "org.lwjgl:lwjgl-egl",
 				   "org.lwjgl:lwjgl-glfw",
 				   'org.apache.commons:commons-text:1.9',
-				   'org.joml:joml:1.9.25',
+				   'org.joml:joml:1.10.1',
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.11.3",
