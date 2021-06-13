@@ -20,7 +20,7 @@ compileJava {
 }
 
 repositories {
-	jcenter()
+	mavenCentral()
 }
 
 ext {
