@@ -1,7 +1,7 @@
 plugins {
 	id 'application'
-	id 'org.ajoberstar.grgit' version '4.1.0'
-	id 'com.github.johnrengelman.shadow' version '7.0.0'
+	id 'org.ajoberstar.grgit' version '4.1.1'
+	id 'com.github.johnrengelman.shadow' version '7.1.0'
 	id 'maven-publish'
 }
 
@@ -24,11 +24,11 @@ repositories {
 }
 
 ext {
-	lwjglVersion = '3.2.3'
-	picocliVersion = '4.6.1'
-	lombokVersion = '1.18.20'
-	junitVersion = '5.7.2'
-	log4jVersion = '2.14.1'
+	lwjglVersion = '3.3.0'
+	picocliVersion = '4.6.2'
+	lombokVersion = '1.18.22'
+	junitVersion = '5.8.1'
+	log4jVersion = '2.16.0'
 }
 
 dependencies {
@@ -38,10 +38,10 @@ dependencies {
 				   "org.lwjgl:lwjgl-egl",
 				   "org.lwjgl:lwjgl-glfw",
 				   'org.apache.commons:commons-text:1.9',
-				   'org.joml:joml:1.10.1',
+				   'org.joml:joml:1.10.3',
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
-				   "com.fasterxml.jackson.core:jackson-databind:2.12.3",
+				   "com.fasterxml.jackson.core:jackson-databind:2.13.0",
 				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion")
 	implementation files ('Libs/Jars/jnbt.jar', 'Libs/Jars/jpct.jar', 'Libs/Jars/ProcessingCore.jar', 'Libs/Jars/BiomeExtractor.jar')
