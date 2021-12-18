@@ -193,8 +193,8 @@ function onMapTypeChanged()
 {
 	var mapType = map.mapTypes.get( map.getMapTypeId() );
 	map.setCenter(mapType.tectonicusMap.viewLatLong);
-	
-	$("#map_canvas").css({"background-color" : mapType.layer.backgroundColor});
+
+	document.getElementById("map_canvas").style.backgroundColor = mapType.layer.backgroundColor;
 	
 	refreshSpawnMarker( spawnToggleControl.checked );
 	refreshSignMarkers( signToggleControl.checked );

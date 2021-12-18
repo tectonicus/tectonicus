@@ -14,34 +14,42 @@ var viewsInitiallyVisible = true; // todo!
 
 function createPlayerMarker(map, player, pos, signWindow)
 {
+    //TODO: convert to Leaflet marker
 	var marker = new google.maps.Marker(
-			{		
-	      		position: pos,
-				map: map, 
-				title: player.name,
-				icon: player.icon,
-				optimized: false
-			});
-			marker.player = player;
+    {
+        position: pos,
+        map: map,
+        title: player.name,
+        icon: player.icon,
+        optimized: false
+    });
+	marker.player = player;
 			
-			google.maps.event.addListener(marker, 'click', function()
-			{
-				if (player.donation == '')
-				{
-					jQuery.getJSON("http://www.triangularpixels.com/Tectonicus/Query/getDonation.py?json_callback=?",
-					{
-						username: player.name
-					},
-					function(data)
-					{
-						player.donation = data.html
-						
-						document.getElementById("donationDiv").innerHTML = getDonationHtml(player)
-					});
-				}
-				
-				showPlayerHtml(map, this.player, signWindow, this);
-			});
+    google.maps.event.addListener(marker, 'click', function()
+    {
+        //The supporters list can't be retrieved from JustGiving anymore, these are the only known ones
+        //They may not even care about this anymore, but we'll leave it in because they did donate years ago
+        if (player.name === 'griffen8280' || player.name === 'Vyruz' || player.name === 'iamsofa')
+        {
+            var html = ''
+            html += '<center><table><tr>'
+
+            html += '<td>'
+            html += '<img src=\\\"Images/IronIcon.png\\\"/>'
+            html += '</td>'
+
+            html += '<td>'
+            html += '<a href=\\\"http://www.justgiving.com/tectonicus\\\">Iron Supporter</a>'
+            html += '</td>'
+
+            html += '</tr></table></center>'
+
+            player.donation = html
+            document.getElementById("donationDiv").innerHTML = getDonationHtml(player)
+        }
+
+        showPlayerHtml(map, this.player, signWindow, this);
+    });
 			
 	return marker;
 }
