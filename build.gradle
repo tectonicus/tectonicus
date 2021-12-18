@@ -28,7 +28,7 @@ ext {
 	picocliVersion = '4.6.2'
 	lombokVersion = '1.18.22'
 	junitVersion = '5.8.2'
-	log4jVersion = '2.16.0'
+	log4jVersion = '2.17.0'
 }
 
 dependencies {
