@@ -6,7 +6,7 @@ plugins {
 }
 
 //Exclude unneeded tasks
-project.gradle.startParameter.excludedTaskNames.addAll("jar", "distTar", "distZip", "shadowDistTar")
+project.gradle.startParameter.excludedTaskNames.addAll(["jar", "distTar", "distZip", "shadowDistTar"])
 
 archivesBaseName = 'Tectonicus'
 project.version = '2.28.7'
@@ -80,7 +80,7 @@ shadowJar {
 		writer.close()
 	}
 
-	archiveClassifier = ''
+	archiveClassifier.set('')
 
 	exclude ('processing/**', 'com/threed/**')
 	minimize {
