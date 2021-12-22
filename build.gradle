@@ -23,15 +23,13 @@ repositories {
 	mavenCentral()
 }
 
-ext {
-	lwjglVersion = '3.3.0'
-	picocliVersion = '4.6.2'
-	lombokVersion = '1.18.22'
-	junitVersion = '5.8.2'
-	log4jVersion = '2.17.0'
-}
-
 dependencies {
+	def lwjglVersion = "3.3.0"
+	def picocliVersion = "4.6.2"
+	def lombokVersion = "1.18.22"
+	def junitVersion = "5.8.2"
+	def log4jVersion = "2.17.0"
+
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 	implementation("org.lwjgl:lwjgl",
 				   "org.lwjgl:lwjgl-opengl",
