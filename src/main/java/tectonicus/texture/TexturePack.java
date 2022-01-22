@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static tectonicus.Version.UNKNOWN_VERSION;
+import static tectonicus.Version.VERSION_UNKNOWN;
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
@@ -132,7 +132,7 @@ public class TexturePack
 		} else if (zipStack.hasFile("terrain.png")) {
 			version = VERSION_4;
 		} else {
-			version = UNKNOWN_VERSION;
+			version = VERSION_UNKNOWN;
 		}
 
 		System.out.println("Texture pack version: " + version);

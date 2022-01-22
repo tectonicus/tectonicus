@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Version {
-    UNKNOWN_VERSION("unknown", 9999),
+    VERSION_UNKNOWN("unknown", 9999),
     VERSION_4("1.4", 4),
     VERSION_5("1.5", 5),
     VERSIONS_6_TO_8("1.6-1.8", 6),
@@ -25,7 +25,9 @@ public enum Version {
     VERSION_13("1.13", 13),
     VERSION_14("1.14", 14),
     VERSION_15("1.15", 15),
-    VERSION_16("1.16", 16);
+    VERSION_16("1.16", 16),
+    VERSION_17("1.17", 17),
+    VERSION_18("1.18", 18);
 
     private final String strVersion;
     private final int numVersion;
