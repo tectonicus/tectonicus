@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Version {
-    UNKNOWN_VERSION("unknown", -1),
+    UNKNOWN_VERSION("unknown", 9999),
     VERSION_4("1.4", 4),
     VERSION_5("1.5", 5),
     VERSIONS_6_TO_8("1.6-1.8", 6),
