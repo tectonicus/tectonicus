@@ -525,7 +525,7 @@ public class TileRenderer
 				{
 					// For every region...
 					
-					regionHashStore.startRegion(region.getCoord());
+					regionHashStore.startRegion(region.getRegionCoord());
 					
 					ChunkCoord[] chunkCoords = region.getContainedChunks();
 					for (ChunkCoord coord : chunkCoords)
