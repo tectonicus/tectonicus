@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -202,11 +202,11 @@ public class BlockModel
 				if(face.has(ROTATION_FIELD))
 					rotation = face.get(ROTATION_FIELD).asInt();
 
-				//System.out.println("u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
 				// TODO: Need to test more texture packs
 				final float texel = 1.0f/16.0f;
 				SubTexture subTexture = new SubTexture(null, u0*texel, v0*texel, u1*texel, v1*texel);
 
+				String modelName = blockModel.getName();
 				StringBuilder tex = new StringBuilder(face.get("texture").asText());
 				if(tex.charAt(0) == '#')
 				{
@@ -225,7 +225,6 @@ public class BlockModel
 					SubTexture te = texturePack.findTexture(texturePath);
 					PackTexture pt = texturePack.getTexture(texturePack.getTexturePathPrefix("") + texturePath);
 
-					String modelName = blockModel.getName();
 					//These are hard-coded in as I'm not sure how to programmatically tell the difference between these and solid blocks
 					if (modelName.contains("stained_glass") || modelName.contains("block/ice")
 							|| modelName.contains("block/packed_ice") || modelName.contains("nether_portal") || modelName.contains("slime_block")) {
@@ -269,12 +268,14 @@ public class BlockModel
 				}
 
 				boolean cullFace = false;
-				if(face.has("cullface"))
+				if(face.has("cullface")) {
 					cullFace = true;
+				}
 
 				boolean tintIndex = false;
-				if(face.has("tintindex"))
+				if(face.has("tintindex") && !modelName.contains("powder_snow_cauldron") && !modelName.contains("lava_cauldron")) {  //Hack here to not tint lava or snow cauldrons
 					tintIndex = true;
+				}
 
 				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex);
 				elementFaces.put(key, ef);
