@@ -10,8 +10,11 @@
 package tectonicus;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.jnbt.NBTInputStream.Compression;
 import tectonicus.cache.BiomeCache;
+import tectonicus.exceptions.RegionProcessingException;
+import tectonicus.exceptions.UnknownCompressionTypeException;
 import tectonicus.world.filter.BlockFilter;
 
 import java.io.ByteArrayInputStream;
@@ -20,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,12 +50,12 @@ public class Region {
 
 	private final ChunkInfo[] info;
 
-	public Region(File regionFile) throws Exception {
+	public Region(File regionFile) throws RegionProcessingException, IOException {
 		this.regionFile = regionFile;
 
 		this.regionCoord = extractRegionCoord(regionFile);
 		if (regionCoord == null)
-			throw new Exception("Couldn't extract region coord from " + regionFile.getName());
+			throw new RegionProcessingException("Couldn't extract region coord from " + regionFile.getName());
 
 		actualFileSizeBytes = regionFile.length();
 
@@ -59,12 +63,16 @@ public class Region {
 		for (int i = 0; i < info.length; i++)
 			info[i] = new ChunkInfo();
 
+		if (Files.exists(regionFile.toPath())) {
+			System.out.println(regionFile.toPath().getParent().getParent());
+		}
+
 		try (RandomAccessFile file = new RandomAccessFile(regionFile, "r")) {
 			ByteBuffer buffer = ByteBuffer.allocate(1024 * 4);
 
 			// Read chunk locations
 			if (!read(file, buffer))
-				throw new Exception("Failed to read chunk locations");
+				throw new RegionProcessingException("Failed to read chunk locations");
 
 			buffer.rewind();
 
@@ -76,8 +84,8 @@ public class Region {
 
 				assert (offset < MAX_SECTORS);
 
-				chunkInfo.sectorOffset = offset;
-				chunkInfo.numSectors = numSectors;
+				chunkInfo.setSectorOffset(offset);
+				chunkInfo.setNumSectors(numSectors);
 			}
 
 			bytes = new byte[(int) file.length()];
@@ -94,7 +102,7 @@ public class Region {
 
 		// Now check to see if it actually exists
 		final int header = getHeaderOffsetForChunk(chunkCoord);
-		return info[header].sectorOffset != 0 && info[header].numSectors != 0;
+		return info[header].getSectorOffset() != 0 && info[header].getNumSectors() != 0;
 	}
 
 	public ChunkCoord[] getContainedChunks() {
@@ -109,7 +117,7 @@ public class Region {
 				final long chunkZ = baseChunkZ + z;
 
 				final int header = getHeaderOffsetForChunk(chunkX, chunkZ);
-				if (info[header].sectorOffset != 0 && info[header].numSectors != 0) {
+				if (info[header].getSectorOffset() != 0 && info[header].getNumSectors() != 0) {
 					result.add(new ChunkCoord(chunkX, chunkZ));
 				}
 			}
@@ -117,7 +125,7 @@ public class Region {
 
 		int count = 0;
 		for (ChunkInfo chunkInfo : info) {
-			if (chunkInfo.sectorOffset != 0 && chunkInfo.numSectors != 0) {
+			if (chunkInfo.getSectorOffset() != 0 && chunkInfo.getNumSectors() != 0) {
 				count++;
 			}
 		}
@@ -125,24 +133,21 @@ public class Region {
 			System.out.println("Mismatch!");
 		}
 
-		return result.toArray(new ChunkCoord[result.size()]);
+		return result.toArray(new ChunkCoord[0]);
 	}
 
 	private static int getHeaderOffsetForChunk(final ChunkCoord coord) {
-		return getHeaderOffsetForChunk(coord.x, coord.z);
+		return getHeaderOffsetForChunk(coord.getX(), coord.getZ());
 	}
 
 	private static int getHeaderOffsetForChunk(final long chunkX, final long chunkZ) {
 		// 4 * ((x mod 32) + (z mod 32) * 32
-		final int offset = (int) ((chunkX & 31) + (chunkZ & 31) * 32);
-		assert (offset >= 0);
-		assert (offset < 1024);
-		return offset;
+		return (int) ((chunkX & 31) + (chunkZ & 31) * 32);
 	}
 
 	private int getSectorOffsetForChunk(final ChunkCoord coord) {
 		final int header = getHeaderOffsetForChunk(coord);
-		return info[header].sectorOffset;
+		return info[header].getSectorOffset();
 	}
 
 	private static boolean read(RandomAccessFile file, ByteBuffer buffer) throws IOException {
@@ -154,7 +159,7 @@ public class Region {
 		return res != -1;
 	}
 
-	private static boolean read(RandomAccessFile file, byte[] dest) throws IOException {
+	private static void read(RandomAccessFile file, byte[] dest) throws IOException {
 		int position = 0;
 		ByteBuffer buffer = ByteBuffer.allocate(1024 * 4);
 		int res;
@@ -173,8 +178,6 @@ public class Region {
 			if (position >= dest.length)
 				break;
 		}
-
-		return res != -1;
 	}
 
 	public static RegionCoord extractRegionCoord(File file) {
@@ -205,16 +208,18 @@ public class Region {
 		return coord;
 	}
 
+	@Getter
+	@Setter
 	private static class ChunkInfo {
 		/**
 		 * Position of chunk from beginning of file, in sectors
 		 */
-		public int sectorOffset;
+		private int sectorOffset;
 
 		/**
 		 * Length of chunk, in sectors
 		 */
-		public int numSectors;
+		private int numSectors;
 	}
 
 	public Chunk loadChunk(ChunkCoord chunkCoord, BiomeCache biomeCache, BlockFilter filter, WorldStats worldStats) {
@@ -238,7 +243,7 @@ public class Region {
 		else if (compressionType2 == COMPRESSION_TYPE_DEFLATE)
 			compression = Compression.Deflate;
 		else
-			throw new RuntimeException("Unrecognised compression type:" + compressionType2);
+			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionType2);
 
 		// Make a new byte array of the chunk data
 		byte[] chunkData = new byte[actualLengthBytes2];
@@ -247,11 +252,11 @@ public class Region {
 		}
 
 		Chunk chunk = null;
-		try (InputStream in = new ByteArrayInputStream(chunkData, 0, chunkData.length);) {
+		try (InputStream in = new ByteArrayInputStream(chunkData, 0, chunkData.length)) {
 			chunk = new Chunk(chunkCoord, biomeCache);
 			chunk.loadRaw(in, compression, filter, worldStats);
 		} catch (Exception e) {
-			System.err.println("Error while trying to load chunk at (" + chunkCoord.x + ", " + chunkCoord.z + ") from region " + regionFile.getAbsolutePath());
+			System.err.println("Error while trying to load chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + regionFile.getAbsolutePath());
 			e.printStackTrace();
 		}
 
