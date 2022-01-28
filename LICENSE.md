@@ -1,4 +1,4 @@
-Copyright (c) 2012-2020, John Campbell and Tectonicus contributors
+Copyright (c) 2012-2022, John Campbell and Tectonicus contributors
 All rights reserved.
  
 Redistribution and use in source and binary forms, with or without modification,
