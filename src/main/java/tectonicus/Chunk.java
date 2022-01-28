@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,8 +9,6 @@
 
 package tectonicus;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jnbt.NBTInputStream.Compression;
 import org.joml.Vector3f;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockStateModel;
@@ -31,7 +29,7 @@ import tectonicus.util.BoundingBox;
 import tectonicus.world.World;
 import tectonicus.world.filter.BlockFilter;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,7 +42,7 @@ public class Chunk
 	
 	private final BiomeCache biomeCache;
 	
-	private BoundingBox bounds;
+	private final BoundingBox bounds;
 	
 	private RawChunk rawChunk;
 	private BiomeData biomeData;
@@ -53,7 +51,7 @@ public class Chunk
 	
 	private byte[] hash;
 	
-	public Chunk(ChunkCoord coord, BiomeCache biomeCache) throws Exception
+	public Chunk(ChunkCoord coord, BiomeCache biomeCache)
 	{
 		this.coord = new ChunkCoord(coord);
 		this.biomeCache = biomeCache;
@@ -66,12 +64,9 @@ public class Chunk
 	
 	public void calculateHash(MessageDigest hashAlgorithm)
 	{
-		assert (rawChunk != null);
-		
-		if (rawChunk != null)
+		if (rawChunk != null && hash == null)
 		{
-			if (hash == null)
-				hash = rawChunk.calculateHash(hashAlgorithm);
+			hash = rawChunk.calculateHash(hashAlgorithm);
 		}
 	}
 	
@@ -82,14 +77,26 @@ public class Chunk
 		return rawChunk;
 	}
 	
-	public void loadRaw(InputStream in, Compression compression, BlockFilter filter, WorldStats worldStats) throws Exception
-	{
+	public void loadRaw(ChunkData chunkData, BlockFilter filter, WorldStats worldStats) throws IOException {
 		if (rawChunk == null)
 		{
-			rawChunk = new RawChunk(in, compression, worldStats);
+			rawChunk = new RawChunk(chunkData, worldStats);
 			filter.filter(rawChunk);
 		}
 		
+		if (biomeData == null)
+		{
+			biomeData = biomeCache.loadBiomeData(coord);
+		}
+	}
+
+	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats) throws IOException {
+		if (rawChunk == null)
+		{
+			rawChunk = new RawChunk(chunkData, entityChunkData, worldStats);
+			filter.filter(rawChunk);
+		}
+
 		if (biomeData == null)
 		{
 			biomeData = biomeCache.loadBiomeData(coord);

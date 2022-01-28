@@ -17,13 +17,12 @@ import tectonicus.exceptions.RegionProcessingException;
 import tectonicus.exceptions.UnknownCompressionTypeException;
 import tectonicus.world.filter.BlockFilter;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,13 +39,17 @@ public class Region {
 	private static final long MAX_SIZE_BYTES = MAX_SECTORS * SECTOR_SIZE_BYTES;
 
 	private final long actualFileSizeBytes;
+	private long entityFileSizeBytes;
 
 	@Getter
 	private final RegionCoord regionCoord;
 
 	@Getter
 	private final File regionFile;
+	@Getter
+	private File entityRegionFile;
 	private final byte[] bytes;
+	private byte[] entityBytes;
 
 	private final ChunkInfo[] info;
 
@@ -57,16 +60,22 @@ public class Region {
 		if (regionCoord == null)
 			throw new RegionProcessingException("Couldn't extract region coord from " + regionFile.getName());
 
-		actualFileSizeBytes = regionFile.length();
-
 		info = new ChunkInfo[RegionCoord.REGION_WIDTH * RegionCoord.REGION_HEIGHT];
 		for (int i = 0; i < info.length; i++)
 			info[i] = new ChunkInfo();
 
-		if (Files.exists(regionFile.toPath())) {
-			System.out.println(regionFile.toPath().getParent().getParent());
-		}
+		actualFileSizeBytes = regionFile.length();
+		bytes = loadRegionFile(regionFile, false);
 
+		Path entityFile = regionFile.toPath().getParent().getParent().resolve("entities/" + regionFile.getName());
+		if (Files.exists(entityFile)) {
+			this.entityRegionFile = entityFile.toFile();
+			entityFileSizeBytes = Files.size(entityFile);
+			entityBytes = loadRegionFile(entityFile.toFile(), true);
+		}
+	}
+
+	private byte[] loadRegionFile(File regionFile, boolean isEntityFile) throws RegionProcessingException, IOException {
 		try (RandomAccessFile file = new RandomAccessFile(regionFile, "r")) {
 			ByteBuffer buffer = ByteBuffer.allocate(1024 * 4);
 
@@ -84,13 +93,19 @@ public class Region {
 
 				assert (offset < MAX_SECTORS);
 
-				chunkInfo.setSectorOffset(offset);
-				chunkInfo.setNumSectors(numSectors);
+				if (isEntityFile) {
+					chunkInfo.setEntitySectorOffset(offset);
+					chunkInfo.setEntityNumSectors(numSectors);
+				} else {
+					chunkInfo.setSectorOffset(offset);
+					chunkInfo.setNumSectors(numSectors);
+				}
 			}
 
-			bytes = new byte[(int) file.length()];
+			byte[] regionBytes = new byte[(int) file.length()];
 			file.seek(0);
-			read(file, bytes);
+			read(file, regionBytes);
+			return regionBytes;
 		}
 	}
 
@@ -143,11 +158,6 @@ public class Region {
 	private static int getHeaderOffsetForChunk(final long chunkX, final long chunkZ) {
 		// 4 * ((x mod 32) + (z mod 32) * 32
 		return (int) ((chunkX & 31) + (chunkZ & 31) * 32);
-	}
-
-	private int getSectorOffsetForChunk(final ChunkCoord coord) {
-		final int header = getHeaderOffsetForChunk(coord);
-		return info[header].getSectorOffset();
 	}
 
 	private static boolean read(RandomAccessFile file, ByteBuffer buffer) throws IOException {
@@ -220,42 +230,43 @@ public class Region {
 		 * Length of chunk, in sectors
 		 */
 		private int numSectors;
+
+		/**
+		 * Position of entity chunk from beginning of file, in sectors
+		 */
+		private int entitySectorOffset;
+
+		/**
+		 * Length of entity chunk, in sectors
+		 */
+		private int entityNumSectors;
 	}
 
 	public Chunk loadChunk(ChunkCoord chunkCoord, BiomeCache biomeCache, BlockFilter filter, WorldStats worldStats) {
 		if (!containsChunk(chunkCoord))
 			return null;
 
-		final int sector = getSectorOffsetForChunk(chunkCoord);
-		assert (sector >= 2); // First two sectors are the header info
+		ChunkInfo chunkInfo = info[getHeaderOffsetForChunk(chunkCoord)];
+		final int sectorOffset = chunkInfo.getSectorOffset();
+		assert (sectorOffset >= 2); // First two sectors are the header info
+		final int entitySectorOffset = chunkInfo.getEntitySectorOffset();
 
-		final long byteOffset = sector * 4 * 1024L;
-		assert (byteOffset < actualFileSizeBytes);
-
-		final int actualLengthBytes2 = readInt((int) byteOffset);
-		final int compressionType2 = bytes[(int) (byteOffset + 4)];
-
-		assert (byteOffset + actualLengthBytes2 <= MAX_SIZE_BYTES);
-
-		Compression compression;
-		if (compressionType2 == COMPRESSION_TYPE_GZIP)
-			compression = Compression.Gzip;
-		else if (compressionType2 == COMPRESSION_TYPE_DEFLATE)
-			compression = Compression.Deflate;
-		else
-			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionType2);
-
-		// Make a new byte array of the chunk data
-		byte[] chunkData = new byte[actualLengthBytes2];
-		for (int i = 0; i < chunkData.length; i++) {
-			chunkData[i] = bytes[(int) (byteOffset + i + 4 + 1)]; // +4 to skip chunk length, +1 to skip compression type
+		Chunk chunk = new Chunk(chunkCoord, biomeCache);
+		ChunkData chunkData = getChunkData(sectorOffset, actualFileSizeBytes, bytes);
+		ChunkData entityChunkData;
+		if (entitySectorOffset > 0) {
+			entityChunkData = getChunkData(entitySectorOffset, entityFileSizeBytes, entityBytes);
+			try {
+				chunk.loadRaw(chunkData, entityChunkData, filter, worldStats);
+			} catch (IOException e) {
+				System.err.println("Error while trying to load entities for chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + entityRegionFile.getAbsolutePath());
+				e.printStackTrace();
+			}
 		}
 
-		Chunk chunk = null;
-		try (InputStream in = new ByteArrayInputStream(chunkData, 0, chunkData.length)) {
-			chunk = new Chunk(chunkCoord, biomeCache);
-			chunk.loadRaw(in, compression, filter, worldStats);
-		} catch (Exception e) {
+		try {
+			chunk.loadRaw(chunkData, filter, worldStats);
+		} catch (IOException e) {
 			System.err.println("Error while trying to load chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + regionFile.getAbsolutePath());
 			e.printStackTrace();
 		}
@@ -263,11 +274,37 @@ public class Region {
 		return chunk;
 	}
 
-	private int readInt(final int position) {
-		final byte b0 = bytes[position];
-		final byte b1 = bytes[position + 1];
-		final byte b2 = bytes[position + 2];
-		final byte b3 = bytes[position + 3];
+	private ChunkData getChunkData(int sectorOffset, long fileSizeBytes, byte[] regionBytes) {
+		final long byteOffset = sectorOffset * 4 * 1024L;
+		assert (byteOffset < fileSizeBytes);
+
+		final int actualLengthBytes = readInt((int) byteOffset, regionBytes);
+		final int compressionByte = regionBytes[(int) (byteOffset + 4)];
+
+		assert (byteOffset + actualLengthBytes <= MAX_SIZE_BYTES);
+
+		Compression compressionType;
+		if (compressionByte == COMPRESSION_TYPE_GZIP)
+			compressionType = Compression.Gzip;
+		else if (compressionByte == COMPRESSION_TYPE_DEFLATE)
+			compressionType = Compression.Deflate;
+		else
+			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionByte);
+
+		// Make a new byte array of the chunk data
+		byte[] chunkData = new byte[actualLengthBytes];
+		for (int i = 0; i < chunkData.length; i++) {
+			chunkData[i] = regionBytes[(int) (byteOffset + i + 4 + 1)]; // +4 to skip chunk length, +1 to skip compression type
+		}
+
+		return new ChunkData(chunkData, compressionType);
+	}
+
+	private int readInt(final int position, byte[] regionBytes) {
+		final byte b0 = regionBytes[position];
+		final byte b1 = regionBytes[position + 1];
+		final byte b2 = regionBytes[position + 2];
+		final byte b3 = regionBytes[position + 3];
 
 		return ((b0 & 0xFF) << 24)
 				| ((b1 & 0xFF) << 16)

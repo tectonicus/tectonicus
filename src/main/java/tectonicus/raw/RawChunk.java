@@ -28,14 +28,17 @@ import org.jnbt.Tag;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
+import tectonicus.ChunkData;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.util.FileUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -88,13 +91,25 @@ public class RawChunk {
 		clear();
 	}
 
-	public RawChunk(File file) throws Exception {
-		FileInputStream fileIn = new FileInputStream(file);
-		init(fileIn, Compression.Gzip, null);
+	public RawChunk(File file) throws IOException {
+		init(new ChunkData(Files.readAllBytes(file.toPath()), Compression.Gzip), null);
 	}
 
-	public RawChunk(InputStream in, Compression compression, WorldStats worldStats) throws Exception {
-		init(in, compression, worldStats);
+	public RawChunk(ChunkData chunkData, WorldStats worldStats) throws IOException {
+		init(chunkData, worldStats);
+	}
+
+	public RawChunk(ChunkData chunkData, ChunkData entityChunkData, WorldStats worldStats) throws IOException {
+		this(chunkData, worldStats);
+
+		byte[] chunkBytes = entityChunkData.getBytes();
+		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
+			 NBTInputStream nbtIn = new NBTInputStream(in, entityChunkData.getCompressionType())) {
+			Tag tag = nbtIn.readTag();
+			if (tag instanceof CompoundTag) {
+				loadEntities(NbtUtil.getChild((CompoundTag) tag, "Entities", ListTag.class));
+			}
+		}
 	}
 
 	public void setFilterMetadata(String id, Object data) {
@@ -124,10 +139,12 @@ public class RawChunk {
 		sections = new Section[MAX_SECTIONS];
 	}
 
-	private void init(InputStream in, Compression compression, WorldStats worldStats) throws Exception {
+	private void init(ChunkData chunkData, WorldStats worldStats) throws IOException {
 		clear();
 
-		try (NBTInputStream nbtIn = new NBTInputStream(in, compression)) {
+		byte [] chunkBytes = chunkData.getBytes();
+		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
+			 NBTInputStream nbtIn = new NBTInputStream(in, chunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag) {
 				CompoundTag root = (CompoundTag) tag;
@@ -154,80 +171,8 @@ public class RawChunk {
 					}
 
 					ListTag entitiesTag = NbtUtil.getChild(level, "Entities", ListTag.class);
-					if (entitiesTag != null) {
-						for (Tag t : entitiesTag.getValue()) {
-							if (t instanceof CompoundTag) {
-								CompoundTag entity = (CompoundTag) t;
-
-								StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
-								boolean painting = idTag.getValue().endsWith("Painting") || idTag.getValue().equals("minecraft:painting");
-								boolean itemFrame = idTag.getValue().equals("ItemFrame") || idTag.getValue().equals("minecraft:item_frame");
-								if (painting || itemFrame) {
-									IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
-									IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
-									IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
-									ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
-									ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
-
-									if (oldDir != null && dir == null) {
-										dir = oldDir;
-									}
-
-									boolean is18 = false;
-									if (dir == null) {
-										dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
-										is18 = true;
-									}
-
-									int direction = dir.getValue();  // Have to reverse 0 and 2 for the old Dir tag
-									if (oldDir != null && direction == 0) {
-										direction = 2;
-									} else if (oldDir != null && direction == 2) {
-										direction = 0;
-									}
-
-									int x = xTag.getValue();
-									final int y = yTag.getValue();
-									int z = zTag.getValue();
-
-									if (is18 && direction == 0) {
-										z = zTag.getValue() - 1;
-									} else if (is18 && direction == 1) {
-										x = xTag.getValue() + 1;
-									} else if (is18 && direction == 2) {
-										z = zTag.getValue() + 1;
-									} else if (is18 && direction == 3) {
-										x = xTag.getValue() - 1;
-									}
-
-									final int localX = x - (blockX * WIDTH);
-									final int localY = y - (blockY * HEIGHT);
-									final int localZ = z - (blockZ * DEPTH);
-
-
-									if (painting) {
-										StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
-										paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
-									} else {
-										String item = "";
-										Map<String, Tag> map = entity.getValue();
-										CompoundTag itemTag = (CompoundTag) map.get("Item");
-										if (itemTag != null) {
-											ShortTag itemIdTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
-											if (itemIdTag == null) {
-												StringTag stringItemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-												item = stringItemIdTag.getValue();
-											} else {
-												if (itemIdTag.getValue() == 358)
-													item = "minecraft:filled_map";
-											}
-										}
-
-										itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, item, direction));
-									}
-								}
-							}
-						}
+					if (entitiesTag != null && !entitiesTag.getValue().isEmpty()) {
+						loadEntities(entitiesTag);
 					}
 
 					ListTag tileEntitiesTag = NbtUtil.getChild(level, "TileEntities", ListTag.class);
@@ -422,9 +367,82 @@ public class RawChunk {
 					}
 				}
 			}
-		} finally {
-			if (in != null)
-				in.close();
+		}
+	}
+
+	private void loadEntities(ListTag entitiesTag) {
+		for (Tag t : entitiesTag.getValue()) {
+			if (t instanceof CompoundTag) {
+				CompoundTag entity = (CompoundTag) t;
+
+				StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
+				boolean painting = idTag.getValue().endsWith("Painting") || idTag.getValue().equals("minecraft:painting");
+				boolean itemFrame = idTag.getValue().equals("ItemFrame") || idTag.getValue().equals("minecraft:item_frame");
+				if (painting || itemFrame) {
+					IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
+					IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
+					IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
+					ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
+					ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
+
+					if (oldDir != null && dir == null) {
+						dir = oldDir;
+					}
+
+					boolean is18 = false;
+					if (dir == null) {
+						dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
+						is18 = true;
+					}
+
+					int direction = dir.getValue();  // Have to reverse 0 and 2 for the old Dir tag
+					if (oldDir != null && direction == 0) {
+						direction = 2;
+					} else if (oldDir != null && direction == 2) {
+						direction = 0;
+					}
+
+					int x = xTag.getValue();
+					final int y = yTag.getValue();
+					int z = zTag.getValue();
+
+					if (is18 && direction == 0) {
+						z = zTag.getValue() - 1;
+					} else if (is18 && direction == 1) {
+						x = xTag.getValue() + 1;
+					} else if (is18 && direction == 2) {
+						z = zTag.getValue() + 1;
+					} else if (is18 && direction == 3) {
+						x = xTag.getValue() - 1;
+					}
+
+					final int localX = x - (blockX * WIDTH);
+					final int localY = y - (blockY * HEIGHT);
+					final int localZ = z - (blockZ * DEPTH);
+
+
+					if (painting) {
+						StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
+						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
+					} else {
+						String item = "";
+						Map<String, Tag> map = entity.getValue();
+						CompoundTag itemTag = (CompoundTag) map.get("Item");
+						if (itemTag != null) {
+							ShortTag itemIdTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
+							if (itemIdTag == null) {
+								StringTag stringItemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
+								item = stringItemIdTag.getValue();
+							} else {
+								if (itemIdTag.getValue() == 358)
+									item = "minecraft:filled_map";
+							}
+						}
+
+						itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, item, direction));
+					}
+				}
+			}
 		}
 	}
 
