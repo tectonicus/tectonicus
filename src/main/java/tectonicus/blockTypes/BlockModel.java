@@ -227,7 +227,8 @@ public class BlockModel
 
 					//These are hard-coded in as I'm not sure how to programmatically tell the difference between these and solid blocks
 					if (modelName.contains("stained_glass") || modelName.contains("block/ice")
-							|| modelName.contains("block/packed_ice") || modelName.contains("nether_portal") || modelName.contains("slime_block")) {
+							|| modelName.contains("block/packed_ice") || modelName.contains("nether_portal")
+							|| modelName.contains("slime_block") || modelName.contains("tinted_glass")) {
 						blockModel.setSolid(false);
 						blockModel.setTranslucent(true);
 					} else if (blockModel.isSolid() && ImageUtils.containsTransparency(pt.getImage())) {
