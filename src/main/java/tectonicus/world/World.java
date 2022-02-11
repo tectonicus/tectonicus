@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -45,7 +45,10 @@ import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.BiomeUtils;
+import tectonicus.raw.Biomes;
 import tectonicus.raw.Biome;
+import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BiomeIds;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
@@ -898,19 +901,19 @@ public class World implements BlockContext
 	}
 	
 	@Override
-	public int getBiomeId(ChunkCoord chunkCoord, int x, int y, int z)
+	public Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z)
 	{
 		if (y < 0 || y >= RawChunk.HEIGHT)
-			return BiomeIds.UNKNOWN;
-		
+			return Biomes.THE_VOID;
+
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		if (c == null)
 		{
-			return BiomeIds.UNKNOWN;
+			return Biomes.THE_VOID;
 		}
 		else
-			return c.getBiomeId(loc.x, loc.y, loc.z);
+			return c.getBiome(loc.x, loc.y, loc.z);
 	}
 	
 	@Override
@@ -1157,23 +1160,22 @@ public class World implements BlockContext
 	}
 
 	@Override
-	public Colour4f getGrassColour(ChunkCoord chunkCoord, int x, int y, int z)
-	{
-		final int biomeId = getBiomeId(chunkCoord, x, y, z);
-		final int northId = getBiomeId(chunkCoord, x, y, z-1);
-		final int southId = getBiomeId(chunkCoord, x, y, z+1);
-		final int eastId = getBiomeId(chunkCoord, x+1, y, z);
-		final int westId = getBiomeId(chunkCoord, x-1, y, z);
-		final int northEastId = getBiomeId(chunkCoord, x+1, y, z-1);
-		final int northWestId = getBiomeId(chunkCoord, x-1, y, z-1);
-		final int southEastId = getBiomeId(chunkCoord, x+1, y, z+1);
-		final int southWestId = getBiomeId(chunkCoord, x-1, y, z+1);
+	public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage) {
+		final Biome biome = getBiome(chunkCoord, x, y, z);
+		final Biome northBiome = getBiome(chunkCoord, x, y, z-1);
+		final Biome southBiome = getBiome(chunkCoord, x, y, z+1);
+		final Biome eastBiome = getBiome(chunkCoord, x+1, y, z);
+		final Biome westBiome = getBiome(chunkCoord, x-1, y, z);
+		final Biome northEastBiome = getBiome(chunkCoord, x+1, y, z-1);
+		final Biome northWestBiome = getBiome(chunkCoord, x-1, y, z-1);
+		final Biome southEastBiome = getBiome(chunkCoord, x+1, y, z+1);
+		final Biome southWestBiome = getBiome(chunkCoord, x-1, y, z+1);
 
-		Colour4f centerColour;
-		Colour4f northColour;
-		Colour4f southColour;
-		Colour4f eastColour;
-		Colour4f westColour;
+		Colour4f centerColor;
+		Colour4f northColor;
+		Colour4f southColor;
+		Colour4f eastColor;
+		Colour4f westColor;
 		Colour4f northEastColor;
 		Colour4f northWestColor;
 		Colour4f southEastColor;
@@ -1182,106 +1184,115 @@ public class World implements BlockContext
 		//The new way to find biome colors was actually only added in 1.7.2, but for my own
 		//sanity I'm not going to worry about letting the new method work with 1.6
 		if (textureVersion.getNumVersion() < VERSIONS_6_TO_8.getNumVersion()) {
-			centerColour = getGrassColour(biomeId);
-			northColour = getGrassColour(northId);
-			southColour = getGrassColour(southId);
-			eastColour = getGrassColour(eastId);
-			westColour = getGrassColour(westId);
-			northEastColor = getGrassColour(northEastId);
-			northWestColor = getGrassColour(northWestId);
-			southEastColor = getGrassColour(southEastId);
-			southWestColor = getGrassColour(southWestId);
+			centerColor = getGrassColorOld(biome.getNumericId(), isFoliage);
+			northColor = getGrassColorOld(northBiome.getNumericId(), isFoliage);
+			southColor = getGrassColorOld(southBiome.getNumericId(), isFoliage);
+			eastColor = getGrassColorOld(eastBiome.getNumericId(), isFoliage);
+			westColor = getGrassColorOld(westBiome.getNumericId(), isFoliage);
+			northEastColor = getGrassColorOld(northEastBiome.getNumericId(), isFoliage);
+			northWestColor = getGrassColorOld(northWestBiome.getNumericId(), isFoliage);
+			southEastColor = getGrassColorOld(southEastBiome.getNumericId(), isFoliage);
+			southWestColor = getGrassColorOld(southWestBiome.getNumericId(), isFoliage);
 		} else {
-			int elevation = Math.max(y - 64, 0);
+			if (textureVersion.getNumVersion() < VERSION_15.getNumVersion()) {
+				int elevation = Math.max(y - 64, 0);
 
-			centerColour = getGrassColour(biomeId, elevation);
-			northColour = getGrassColour(northId, elevation);
-			southColour = getGrassColour(southId, elevation);
-			eastColour = getGrassColour(eastId, elevation);
-			westColour = getGrassColour(westId, elevation);
-			northEastColor = getGrassColour(northEastId, elevation);
-			northWestColor = getGrassColour(northWestId, elevation);
-			southEastColor = getGrassColour(southEastId, elevation);
-			southWestColor = getGrassColour(southWestId, elevation);
+				centerColor = getGrassColor(biome, elevation, isFoliage);
+				northColor = getGrassColor(northBiome, elevation, isFoliage);
+				southColor = getGrassColor(southBiome, elevation, isFoliage);
+				eastColor = getGrassColor(eastBiome, elevation, isFoliage);
+				westColor = getGrassColor(westBiome, elevation, isFoliage);
+				northEastColor = getGrassColor(northEastBiome, elevation, isFoliage);
+				northWestColor = getGrassColor(northWestBiome, elevation, isFoliage);
+				southEastColor = getGrassColor(southEastBiome, elevation, isFoliage);
+				southWestColor = getGrassColor(southWestBiome, elevation, isFoliage);
+			} else { //1.15+
+				centerColor = getGrassColor(biome, isFoliage);
+				northColor = getGrassColor(northBiome, isFoliage);
+				southColor = getGrassColor(southBiome, isFoliage);
+				eastColor = getGrassColor(eastBiome, isFoliage);
+				westColor = getGrassColor(westBiome, isFoliage);
+				northEastColor = getGrassColor(northEastBiome, isFoliage);
+				northWestColor = getGrassColor(northWestBiome, isFoliage);
+				southEastColor = getGrassColor(southEastBiome, isFoliage);
+				southWestColor = getGrassColor(southWestBiome, isFoliage);
+			}
 		}
 
-		Colour4f colour = new Colour4f(centerColour);
-		colour.add(northColour);
-		colour.add(southColour);
-		colour.add(eastColour);
-		colour.add(westColour);
-		colour.add(northEastColor);
-		colour.add(northWestColor);
-		colour.add(southEastColor);
-		colour.add(southWestColor);
-		colour.divide(9);
+		Colour4f color = new Colour4f(centerColor);
+		color.add(northColor);
+		color.add(southColor);
+		color.add(eastColor);
+		color.add(westColor);
+		color.add(northEastColor);
+		color.add(northWestColor);
+		color.add(southEastColor);
+		color.add(southWestColor);
+		color.divide(9);
 
-		return colour;
-	}
-	
-	private Colour4f getGrassColour(final int id)
-	{
-		Point colourCoord = BiomeIds.getColourCoord(id);
-		Color awtColour = texturePack.getGrassColour(colourCoord.x, colourCoord.y);
-		return new Colour4f(awtColour);
+		return color;
 	}
 
-	private Colour4f getGrassColour(final int id, int elevation)
+	// 1.6 and earlier
+	private Colour4f getGrassColorOld(final int id, boolean isFoliage) {
+		Point colorCoords = BiomeIds.getColourCoord(id);
+		return getPlantTintColor(colorCoords.x, colorCoords.y, isFoliage);
+	}
+
+	//versions 1.7.2 - 1.14.4
+	private Colour4f getGrassColor(Biome biome, int elevation, boolean isFoliage)
 	{
-		Biome biome = Biome.byId(id);
-		//Swamp color actually varies but I would basically have to copy the Minecraft code in order to get it working correctly
-		if (biome == Biome.SWAMP || biome == Biome.SWAMP_HILLS) {
+		if (biome == BiomesOld.SWAMP || biome == BiomesOld.SWAMP_HILLS) {
 			return new Colour4f(106, 112, 57);
 		}
-		float temperature = biome.getTemperature();
-		float rainfall = biome.getRainfall();
 
-		float adjTemp = clamp(temperature - elevation * 0.00166667f, 0.0f, 1.0f);
-		float adjRainfall = clamp(rainfall, 0.0f, 1.0f) * adjTemp;
+		float adjTemp = BiomeUtils.clamp(biome.getTemperature() - elevation * 0.00166667f);
+		float adjRainfall = BiomeUtils.clamp(biome.getRainfall()) * adjTemp;
 
-		int tempInt = Math.round(255 - adjTemp * 255);
-		int tempRain = Math.round(255 - adjRainfall * 255);
-
-		Color awtColour = texturePack.getGrassColour(tempInt, tempRain);
-		return new Colour4f(awtColour);
+		return getPlantTintColor(BiomeUtils.normalize(adjTemp), BiomeUtils.normalize(adjRainfall), isFoliage);
 	}
 
-	public float clamp(float val, float min, float max) {
-		return Math.max(min, Math.min(max, val));
+	// 1.15+
+	private Colour4f getGrassColor(Biome biome, boolean isFoliage) {
+		if (biome == Biomes.SWAMP || biome == BiomesOld.SWAMP || biome == BiomesOld.SWAMP_HILLS) {
+			return new Colour4f(106, 112, 57);
+		}
+
+		Point colorCoords = biome.getColorCoords();
+		return getPlantTintColor(colorCoords.x, colorCoords.y, isFoliage);
+	}
+
+	private Colour4f getPlantTintColor(int x, int y, boolean isFoliage) {
+		Color awtColour;
+		if (isFoliage) {
+			awtColour = texturePack.getFoliageColour(x, y);
+		} else {
+			awtColour = texturePack.getGrassColour(x, y);
+		}
+		return new Colour4f(awtColour);
 	}
 
 	@Override
-	public Colour4f getWaterColor(ChunkCoord chunkCoord, int x, int y, int z)
-	{
-		final int biomeId = getBiomeId(chunkCoord, x, y, z);
-		final int northId = getBiomeId(chunkCoord, x, y, z-1);
-		final int southId = getBiomeId(chunkCoord, x, y, z+1);
-		final int eastId = getBiomeId(chunkCoord, x+1, y, z);
-		final int westId = getBiomeId(chunkCoord, x-1, y, z);
-		final int northEastId = getBiomeId(chunkCoord, x+1, y, z-1);
-		final int northWestId = getBiomeId(chunkCoord, x-1, y, z-1);
-		final int southEastId = getBiomeId(chunkCoord, x+1, y, z+1);
-		final int southWestId = getBiomeId(chunkCoord, x-1, y, z+1);
+	public Colour4f getWaterColor(ChunkCoord chunkCoord, int x, int y, int z) {
+		final Biome biome = getBiome(chunkCoord, x, y, z);
+		final Biome northBiome = getBiome(chunkCoord, x, y, z-1);
+		final Biome southBiome = getBiome(chunkCoord, x, y, z+1);
+		final Biome eastBiome = getBiome(chunkCoord, x+1, y, z);
+		final Biome westBiome = getBiome(chunkCoord, x-1, y, z);
+		final Biome northEastBiome = getBiome(chunkCoord, x+1, y, z-1);
+		final Biome northWestBiome = getBiome(chunkCoord, x-1, y, z-1);
+		final Biome southEastBiome = getBiome(chunkCoord, x+1, y, z+1);
+		final Biome southWestBiome = getBiome(chunkCoord, x-1, y, z+1);
 
-		Colour4f centerColour = Biome.byId(biomeId).getWaterColor();
-		Colour4f northColour = Biome.byId(northId).getWaterColor();
-		Colour4f southColour = Biome.byId(southId).getWaterColor();
-		Colour4f eastColour = Biome.byId(eastId).getWaterColor();
-		Colour4f westColour = Biome.byId(westId).getWaterColor();
-		Colour4f northEastColor = Biome.byId(northEastId).getWaterColor();
-		Colour4f northWestColor = Biome.byId(northWestId).getWaterColor();
-		Colour4f southEastColor = Biome.byId(southEastId).getWaterColor();
-		Colour4f southWestColor = Biome.byId(southWestId).getWaterColor();
-
-		Colour4f colour = new Colour4f(centerColour);
-		colour.add(northColour);
-		colour.add(southColour);
-		colour.add(eastColour);
-		colour.add(westColour);
-		colour.add(northEastColor);
-		colour.add(northWestColor);
-		colour.add(southEastColor);
-		colour.add(southWestColor);
+		Colour4f colour = new Colour4f(biome.getWaterColor());
+		colour.add(northBiome.getWaterColor());
+		colour.add(southBiome.getWaterColor());
+		colour.add(eastBiome.getWaterColor());
+		colour.add(westBiome.getWaterColor());
+		colour.add(northEastBiome.getWaterColor());
+		colour.add(northWestBiome.getWaterColor());
+		colour.add(southEastBiome.getWaterColor());
+		colour.add(southWestBiome.getWaterColor());
 		colour.divide(9);
 
 		return colour;

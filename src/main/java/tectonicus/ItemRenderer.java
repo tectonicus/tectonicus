@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -35,6 +35,8 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BedEntity;
+import tectonicus.raw.Biome;
+import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
@@ -548,13 +550,13 @@ public class ItemRenderer
 		}
 
 		@Override
-		public int getBiomeId(ChunkCoord chunkCoord, int x, int y, int z)
+		public Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z)
 		{
-			return 0;
+			return BiomesOld.OCEAN;
 		}
 
 		@Override
-		public Colour4f getGrassColour(ChunkCoord chunkCoord, int x, int y, int z)
+		public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage)
 		{
 			return new Colour4f(1, 1, 1, 1);
 		}

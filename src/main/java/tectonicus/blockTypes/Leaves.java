@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,7 +15,6 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.cache.BiomeCache;
-import tectonicus.cache.BiomeData;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -76,7 +75,7 @@ public class Leaves implements BlockType
 		Color rawColour = this.color;
 		if (rawColour == null)
 		{
-			colour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
+			colour = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, true);
 			/*BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 			rawColour = texturePack.getFoliageColour(colourCoord.getX(), colourCoord.getY());*/

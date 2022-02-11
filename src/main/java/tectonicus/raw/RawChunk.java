@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
@@ -117,7 +116,7 @@ public class RawChunk {
 			 NBTInputStream nbtIn = new NBTInputStream(in, entityChunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag) {
-				parseEntities(NbtUtil.getChild((CompoundTag) tag, "Entities", ListTag.class));
+				parseEntities(NbtUtil.getChild((CompoundTag) tag, "Entities", ListTag.class), true);
 			}
 		}
 	}
@@ -174,7 +173,7 @@ public class RawChunk {
 
 					ListTag entitiesTag = NbtUtil.getChild(level, "Entities", ListTag.class);
 					if (entitiesTag != null && !entitiesTag.getValue().isEmpty()) {
-						parseEntities(entitiesTag);
+						parseEntities(entitiesTag, false);
 					}
 
 					ListTag tileEntitiesTag = NbtUtil.getChild(level, "TileEntities", ListTag.class);
@@ -212,7 +211,7 @@ public class RawChunk {
 			minSectionY = yPosTag.getValue();
 	}
 
-	private void parseEntities(ListTag entitiesTag) {
+	private void parseEntities(ListTag entitiesTag, boolean is118) {
 		for (Tag t : entitiesTag.getValue()) {
 			if (t instanceof CompoundTag) {
 				CompoundTag entity = (CompoundTag) t;
@@ -259,7 +258,12 @@ public class RawChunk {
 					}
 
 					final int localX = x - (chunkX * WIDTH);
-					final int localY = y - (chunkY * HEIGHT);
+					int localY;
+					if (is118) {
+						localY = y + 64;
+					} else {
+						localY = y - (chunkY * HEIGHT);
+					}
 					final int localZ = z - (chunkZ * DEPTH);
 
 
@@ -500,10 +504,15 @@ public class RawChunk {
 			ByteArrayTag blocklightTag = NbtUtil.getChild(compound, "BlockLight", ByteArrayTag.class);
 
 			CompoundTag blockStatesContainer = NbtUtil.getChild(compound, "block_states", CompoundTag.class);
-			ListTag paletteTag = NbtUtil.getChild(blockStatesContainer, "palette", ListTag.class);
-			LongArrayTag dataTag = NbtUtil.getChild(blockStatesContainer, "data", LongArrayTag.class);
+			ListTag blockPaletteTag = NbtUtil.getChild(blockStatesContainer, "palette", ListTag.class);
+			LongArrayTag blockDataTag = NbtUtil.getChild(blockStatesContainer, "data", LongArrayTag.class);
 
-			List<BlockState> blockStatesPalette = parseBlockStates(paletteTag);
+			CompoundTag biomesContainer = NbtUtil.getChild(compound, "biomes", CompoundTag.class);
+			ListTag biomePaletteTag = NbtUtil.getChild(biomesContainer, "palette", ListTag.class);
+			LongArrayTag biomeDataTag = NbtUtil.getChild(biomesContainer, "data", LongArrayTag.class);
+
+
+			List<BlockState> blockStatesPalette = parseBlockStates(blockPaletteTag);
 
 			Section newSection = new Section();
 			sections[sectionY] = newSection;
@@ -514,9 +523,9 @@ public class RawChunk {
 			boolean packedBits = false;
 			BlockState singleBlockState = null;
 
-			if (dataTag != null) {
+			if (blockDataTag != null) {
 				int sectionVolume = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
-				int dataTagLength = dataTag.getValue().length;
+				int dataTagLength = blockDataTag.getValue().length;
 				bitsPerBlock = dataTagLength * 64 / sectionVolume;
 				blockBitMask = (1 << bitsPerBlock) - 1;
 
@@ -531,13 +540,13 @@ public class RawChunk {
 
 			for (int x = 0; x < SECTION_WIDTH; x++) {
 				for (int y = 0; y < SECTION_HEIGHT; y++) {
-					if (dataTag == null) {
+					if (blockDataTag == null && singleBlockState != null) {
 						//If no data tag the section should be filled with the only block in the palette
 						Arrays.fill(newSection.blockNames[x][y], singleBlockState.name);
 						Arrays.fill(newSection.blockStates[x][y], singleBlockState.properties);
 					}
 					for (int z = 0; z < SECTION_DEPTH; z++) {
-						if (dataTag != null && dataTag.getValue() != null) {
+						if (blockDataTag != null && blockDataTag.getValue() != null) {
 							final int index = calcAnvilIndex(x, y, z);
 							int longIndex;
 							int bitOffset;
@@ -550,7 +559,7 @@ public class RawChunk {
 								bitOffset = (index % blocksPerLong) * bitsPerBlock;
 							}
 
-							long paletteIndex = (dataTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
+							long paletteIndex = (blockDataTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
 
 							BlockState blockState = blockStatesPalette.get((int) paletteIndex);
 							newSection.blockNames[x][y][z] = blockState.name;
@@ -571,42 +580,28 @@ public class RawChunk {
 					}
 				}
 			}
-		}
 
-		//TODO: Fix biomes for 1.18
 
-		// Parse "Biomes" data (16x16) or 1.15+ (one int is biome id for 4x4x4 volume)
-		ByteArrayTag biomeDataTag = NbtUtil.getChild(tag, "Biomes", ByteArrayTag.class);
-		IntArrayTag intBiomeDataTag = NbtUtil.getChild(tag, "Biomes", IntArrayTag.class);
+			// one string id per 4x4x4 volume within the section
+			List<Tag> palette = biomePaletteTag.getValue();
+			if (biomeDataTag != null) {
+				/* The code for dealing with the new biomes palette comes from piegamesde in an Overviewer Github issue
+				*  https://github.com/overviewer/Minecraft-Overviewer/issues/2022 */
+				long[] data = biomeDataTag.getValue();
+				int paletteSize = palette.size();
+				int bitsPerEntry = Integer.SIZE - Integer.numberOfLeadingZeros(paletteSize - 1);
+				int entriesPerLong = Math.floorDiv(64, bitsPerEntry);
+				int mask = (1 << bitsPerEntry) - 1;
 
-		if (biomeDataTag != null || (intBiomeDataTag != null && intBiomeDataTag.getValue().length == 256)) {
-			biomes = new int[SECTION_WIDTH][SECTION_DEPTH];
-
-			for (int x = 0; x < SECTION_WIDTH; x++) {
-				for (int z = 0; z < SECTION_DEPTH; z++) {
-					final int index = z * SECTION_WIDTH + x;
-					if (biomeDataTag != null) {
-						biomes[x][z] = biomeDataTag.getValue()[index];
-					} else {
-						biomes[x][z] = intBiomeDataTag.getValue()[index];
+				int index = 0;
+				for (long l : data) {
+					for (int i = 0; i < entriesPerLong && index < 64; i++) {
+						newSection.biomeIds[index++] = (String) palette.get((int) (l & mask)).getValue();
+						l >>= bitsPerEntry;
 					}
 				}
-			}
-		} else if (intBiomeDataTag != null && intBiomeDataTag.getValue().length == 1024) {
-			int width = 4;
-			int height = 64;
-			int depth = 4;
-
-			// 1.15+
-			biomes3d = new int[width][height][depth];
-
-			for (int x = 0; x < width; x++) {
-				for (int y = 0; y < height; y++) {
-					for (int z = 0; z < depth; z++) {
-						final int index = (z * width + x) + y * SECTION_HEIGHT;
-						biomes3d[x][y][z] = intBiomeDataTag.getValue()[index];
-					}
-				}
+			} else { //only a single entry in the biome palette
+				Arrays.fill(newSection.biomeIds, palette.get(0).getValue());
 			}
 		}
 	}
@@ -1188,17 +1183,29 @@ public class RawChunk {
 		}
 	}
 
-	public int getBiomeId(final int x, final int y, final int z) {
-		if (biomes != null) {
-			return biomes[x][z];
-		} else if (biomes3d != null) {
+	public Biome getBiome(final int x, final int y, final int z) {
+		if (biomes3d != null) { //1.16-1.17
 			int xIndex = Math.floorDiv(x, 4);
 			int yIndex = Math.floorDiv(y, 4);
 			int zIndex = Math.floorDiv(z, 4);
 
-			return biomes3d[xIndex][yIndex][zIndex];
-		} else {
-			return BiomeIds.UNKNOWN;
+			return BiomesOld.byId(biomes3d[xIndex][yIndex][zIndex]);
+		} else if (biomes != null) { //1.15 and older
+			return BiomesOld.byId(biomes[x][z]);
+		} else { //1.18+
+			final int sectionY = y / SECTION_HEIGHT;
+			final int localY = y % SECTION_HEIGHT;
+
+			Section s = sections[sectionY];
+			if (s != null) {
+				int xIndex = Math.floorDiv(x, 4);
+				int yIndex = Math.floorDiv(localY, 4);
+				int zIndex = Math.floorDiv(z, 4);
+
+				return Biomes.byId(s.biomeIds[(yIndex * 4 + zIndex) * 4 + xIndex].substring(10));
+			} else {
+				return Biomes.THE_VOID;
+			}
 		}
 	}
 
@@ -1208,6 +1215,8 @@ public class RawChunk {
 		public String[][][] blockNames;
 		public BlockProperties[][][] blockStates;
 
+		private final String[] biomeIds;
+
 		public byte[][][] skylight;
 		public byte[][][] blocklight;
 
@@ -1216,11 +1225,37 @@ public class RawChunk {
 			blockData = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blockNames = new String[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blockStates = new BlockProperties[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+			biomeIds = new String[64];
 
 			skylight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 			blocklight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 		}
 	}
+
+	//TODO: for versions newer than 1.13 can we switch to using sections without the blockId and blockData arrays?
+//	private static class SectionNew {
+//		public int[][][] blockIds;
+//		public byte[][][] blockData;
+//		public String[][][] blockNames;
+//		public BlockProperties[][][] blockStates;
+//
+//		@Getter
+//		private final String[] biomeIds;
+//
+//		public byte[][][] skylight;
+//		public byte[][][] blocklight;
+//
+//		public Section118() {
+//			blockIds = new int[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//			blockData = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//			blockNames = new String[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//			blockStates = new BlockProperties[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//			biomeIds = new String[64];
+//
+//			skylight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//			blocklight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//		}
+//	}
 
 	@RequiredArgsConstructor
 	private static class BlockState {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -638,38 +638,16 @@ public class TexturePack
 	{
 		return font;
 	}
-	
-	public Color getGrassColour(final int x, final int y)
-	{
+
+	public Color getGrassColour(final int x, final int y) { //TODO: add precomputed color values to texture pack object
 		final int actualX = x & 0xff;
 		final int actualY = y & 0xff;
-		
-		final int rgb = grassLookupImage.getRGB(actualX, actualY);
-		return new Color(rgb);
-		/*
-		final float xPer = (float)actualX / (float)(grassLookupImage.getWidth()-1);
-		final float yPer = (float)actualY / (float)(grassLookupImage.getHeight()-1);
-		
-		final int red = (int)(xPer * 255);
-		final int green = (int)(yPer * 255);
-		return new Color(red, green, 0); */
+
+		return new Color(grassLookupImage.getRGB(actualX, actualY));
 	}
-	
-	public Color getFoliageColour(final int x, final int y)
-	{
-		final int actualX = clamp(x, 0, foliageLookupImage.getWidth()-1);
-		final int actualY = clamp(y, 0, foliageLookupImage.getHeight()-1);
-		
-		return new Color( foliageLookupImage.getRGB(actualX, actualY) );
-	}
-	
-	private static int clamp(final int value, final int min, final int max)
-	{
-		if (value < min)
-			return min;
-		if (value > max)
-			return max;
-		return value;
+
+	public Color getFoliageColour(final int x, final int y) {
+		return new Color(foliageLookupImage.getRGB(x, y));
 	}
 	
 	/** Makes a copy of the input image. Also converts to INT_ARGB so that we're always
@@ -695,8 +673,8 @@ public class TexturePack
 	
 	private Point iconVirtualToActual(final int virtualX, final int virtualY)
 	{
-		final float normX = (float)virtualX / 256.0f;
-		final float normY = (float)virtualY / 256.0f;
+		final float normX = virtualX / 256.0f;
+		final float normY = virtualY / 256.0f;
 		
 		final int actualX = Math.round(normX * iconSheet.getWidth());
 		final int actualY = Math.round(normY * iconSheet.getHeight());

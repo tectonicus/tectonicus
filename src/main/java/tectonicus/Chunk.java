@@ -18,6 +18,7 @@ import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.Biome;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
@@ -329,9 +330,9 @@ public class Chunk
 			return rawChunk.getBlockId(x, y, z);
 	}
 	
-	public int getBiomeId(final int x, final int y, final int z)
+	public Biome getBiome(final int x, final int y, final int z)
 	{
-		return rawChunk.getBiomeId(x, y, z);
+		return rawChunk.getBiome(x, y, z);
 	}
 
 	public int getSkyLight(final int x, final int y, final int z)

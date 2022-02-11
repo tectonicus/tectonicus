@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -86,7 +86,7 @@ public class Vines implements BlockType
 		/*BiomeData biomeData = biomeCache.loadBiomeData(chunk.getChunkCoord());
 		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 		Colour4f grassColour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
-		Colour4f grassColour = world.getGrassColour(chunk.getChunkCoord(), x, y, z);
+		Colour4f grassColour = world.getPlantTintColor(chunk.getChunkCoord(), x, y, z, true);
 		
 		final float ewLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z);
 		Vector4f eastWestLightness = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);

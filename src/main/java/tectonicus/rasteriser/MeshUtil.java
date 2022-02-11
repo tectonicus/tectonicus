@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -564,9 +564,11 @@ public class MeshUtil
 					tintColor = new Colour4f(97/255f, 153/255f, 97/255f);
 				} else if (modelName.contains("birch_leaves")) {
 					tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
+				} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves")
+						|| modelName.contains("acacia_leaves") || modelName.contains("vines")) {
+					tintColor = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, true);
 				} else {
-					tintColor = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z); //TODO: this method needs to handle swamp grass
-
+					tintColor = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, false);
 					//Grass block side overlay hack
 					if (model.getName().contains("grass_block") && element.getFaces().size() == 4) {
 						isGrassOverlay = true;

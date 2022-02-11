@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -139,7 +139,7 @@ public class Plant implements BlockType
 			/*BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 			Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
-			Colour4f colour = world.getGrassColour(rawChunk.getChunkCoord(), x, y, z);
+			Colour4f colour = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, false);
 			return colour;
 			
 			//return new Colour4f(1, 1, 1, 1);

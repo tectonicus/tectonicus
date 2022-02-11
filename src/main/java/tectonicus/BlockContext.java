@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,6 +14,7 @@ import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.raw.Biome;
 import tectonicus.raw.BlockProperties;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
@@ -33,9 +34,9 @@ public interface BlockContext
 	
 	TexturePack getTexturePack();
 
-	int getBiomeId(ChunkCoord chunkCoord, int x, int y, int z);
+	Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z);
 	
-	Colour4f getGrassColour(ChunkCoord chunkCoord, final int x, final int y, final int z);
+	Colour4f getPlantTintColor(ChunkCoord chunkCoord, final int x, final int y, final int z, boolean isFoliage);
 	Colour4f getWaterColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
 	
 	PlayerSkinCache getPlayerSkinCache();
