@@ -566,9 +566,9 @@ public class MeshUtil
 					tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
 				} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves")
 						|| modelName.contains("acacia_leaves") || modelName.contains("vines")) {
-					tintColor = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, true);
+					tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
 				} else {
-					tintColor = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, false);
+					tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 					//Grass block side overlay hack
 					if (model.getName().contains("grass_block") && element.getFaces().size() == 4) {
 						isGrassOverlay = true;

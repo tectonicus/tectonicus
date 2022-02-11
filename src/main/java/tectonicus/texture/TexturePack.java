@@ -19,7 +19,11 @@ import tectonicus.exceptions.MissingMinecraftJarException;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
+import tectonicus.raw.Biome;
+import tectonicus.raw.Biomes;
+import tectonicus.raw.BiomesOld;
 import tectonicus.renderer.Font;
+import tectonicus.util.Colour4f;
 import tectonicus.util.FileUtils;
 
 import javax.imageio.ImageIO;
@@ -38,6 +42,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +74,10 @@ public class TexturePack
 	
 	private final BufferedImage grassLookupImage;
 	private final BufferedImage foliageLookupImage;
+	private final Map<Biomes, Colour4f> grassColors = new EnumMap<>(Biomes.class);
+	private final Map<Biomes, Colour4f> foliageColors = new EnumMap<>(Biomes.class);
+	private final Map<BiomesOld, Colour4f> grassColorsOld = new EnumMap<>(BiomesOld.class);
+	private final Map<BiomesOld, Colour4f> foliageColorsOld = new EnumMap<>(BiomesOld.class);
 	
 	private final Font font;
 	
@@ -210,6 +219,8 @@ public class TexturePack
 			} catch (IllegalArgumentException e) {
 				throw new MissingAssetException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, texturePack));
 			}
+
+			loadBiomeColors();
 			
 			//TODO: The font stuff needs some work
 			try {
@@ -567,7 +578,52 @@ public class TexturePack
 			log.error("No shulker textures found. You may be using an older Minecraft jar file");
 		}
 	}
-	
+
+	private void loadBiomeColors() {
+		for (Biomes biome : Biomes.values()) {
+			Point colorCoords = biome.getColorCoords();
+			grassColors.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
+			foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
+		}
+
+		for (BiomesOld biome : BiomesOld.values()) {
+			Point colorCoords = biome.getColorCoords();
+			grassColorsOld.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
+			foliageColorsOld.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
+		}
+	}
+
+	public Colour4f getGrassColor(Biome biome) {
+		if (biome instanceof Biomes) {
+			return grassColors.get(biome);
+		} else if (biome instanceof BiomesOld) {
+			return grassColorsOld.get(biome);
+		} else {
+			return grassColors.get(Biomes.THE_VOID);
+		}
+	}
+
+	public Colour4f getFoliageColor(Biome biome) {
+		if (biome instanceof Biomes) {
+			return foliageColors.get(biome);
+		} else if (biome instanceof BiomesOld) {
+			return foliageColorsOld.get(biome);
+		} else {
+			return foliageColors.get(Biomes.THE_VOID);
+		}
+	}
+
+	public Color getGrassColour(final int x, final int y) {
+		final int actualX = x & 0xff;
+		final int actualY = y & 0xff;
+
+		return new Color(grassLookupImage.getRGB(actualX, actualY));
+	}
+
+	public Color getFoliageColour(final int x, final int y) {
+		return new Color(foliageLookupImage.getRGB(x, y));
+	}
+
 	public ZipStack getZipStack()
 	{
 		return zipStack;
@@ -637,17 +693,6 @@ public class TexturePack
 	public Font getFont()
 	{
 		return font;
-	}
-
-	public Color getGrassColour(final int x, final int y) { //TODO: add precomputed color values to texture pack object
-		final int actualX = x & 0xff;
-		final int actualY = y & 0xff;
-
-		return new Color(grassLookupImage.getRGB(actualX, actualY));
-	}
-
-	public Color getFoliageColour(final int x, final int y) {
-		return new Color(foliageLookupImage.getRGB(x, y));
 	}
 	
 	/** Makes a copy of the input image. Also converts to INT_ARGB so that we're always

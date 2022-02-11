@@ -75,7 +75,7 @@ public class Leaves implements BlockType
 		Color rawColour = this.color;
 		if (rawColour == null)
 		{
-			colour = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, true);
+			colour = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
 			/*BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 			rawColour = texturePack.getFoliageColour(colourCoord.getX(), colourCoord.getY());*/

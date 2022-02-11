@@ -139,10 +139,7 @@ public class Plant implements BlockType
 			/*BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 			BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 			Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
-			Colour4f colour = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, false);
-			return colour;
-			
-			//return new Colour4f(1, 1, 1, 1);
+			return world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 		}
 		else
 		{

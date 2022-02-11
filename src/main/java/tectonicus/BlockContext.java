@@ -19,27 +19,27 @@ import tectonicus.raw.BlockProperties;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 
-public interface BlockContext
-{
+public interface BlockContext {
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
-	
+
 	BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);
 	BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z);
 	String getBlockName(ChunkCoord chunkCoord, int x, int y, int z);
 	BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z);
-	
+
 	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
-	
+
 	LightStyle getLightStyle();
-	
+
 	TexturePack getTexturePack();
 
 	Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z);
-	
-	Colour4f getPlantTintColor(ChunkCoord chunkCoord, final int x, final int y, final int z, boolean isFoliage);
+
+	Colour4f getGrassColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
+	Colour4f getFoliageColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
 	Colour4f getWaterColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
-	
+
 	PlayerSkinCache getPlayerSkinCache();
-	
+
 	BlockRegistry getModelRegistry();
 }

@@ -79,19 +79,13 @@ public class Grass implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		//TODO: decide if we want to support backwards compatibility with McRegion worlds
 		/*
 		BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
 		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
 		Color awtColour = texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY());
 		Colour4f colour = new Colour4f(awtColour);
 		*/
-		/*
-		final int biomeId = rawChunk.getBiomeId(x, y, z);
-		Point colourCoord = BiomeIds.getColourCoord(biomeId);
-		Color awtColour = texturePack.getGrassColour(colourCoord.x, colourCoord.y);
-		Colour4f colour = new Colour4f(awtColour);
-		*/
-		Colour4f colour = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, false);
 		
 		/*
 		try
@@ -118,9 +112,8 @@ public class Grass implements BlockType
 			e.printStackTrace();
 		}
 		*/
-		
-		
-		
+
+		Colour4f colour = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 		Colour4f white = new Colour4f(1, 1, 1, 1);
 		
 		final int aboveId = rawChunk.getBlockIdClamped(x, y+1, z, BlockIds.AIR);

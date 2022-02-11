@@ -181,7 +181,7 @@ public class FlowerPot implements BlockType
 								   new Vector3f(x+1-width,	y,   z+1-offset),
 								   colour, side);
 		
-		String xyz = "x" +String.valueOf(x) + "y" + String.valueOf(y) + "z" + String.valueOf(z);
+		String xyz = "x" + x + "y" + y + "z" + z;
 		FlowerPotEntity entity = rawChunk.getFlowerPots().get(xyz);
 		if (entity != null)
 		{
@@ -208,7 +208,7 @@ public class FlowerPot implements BlockType
 			else if(data == 11)
 			{
 				plantMesh = geometry.getMesh(plant.texture, Geometry.MeshType.AlphaTest);
-				Colour4f baseColour = world.getPlantTintColor(rawChunk.getChunkCoord(), x, y, z, false);
+				Colour4f baseColour = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 				final float lightVal = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
 				colour = new Vector4f(baseColour.r * lightVal, baseColour.g * lightVal, baseColour.b * lightVal, baseColour.a);
 				

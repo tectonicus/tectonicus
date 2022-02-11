@@ -556,8 +556,12 @@ public class ItemRenderer
 		}
 
 		@Override
-		public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage)
-		{
+		public Colour4f getGrassColor(ChunkCoord chunkCoord, int x, int y, int z) {
+			return new Colour4f(1, 1, 1, 1);
+		}
+
+		@Override
+		public Colour4f getFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
 			return new Colour4f(1, 1, 1, 1);
 		}
 
