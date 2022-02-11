@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -123,7 +123,7 @@ public class Beacon implements BlockType
 			final int localY = entity.getLocalY();
 			
 			Colour4f color = new Colour4f(1, 1, 1, 1);
-			for (int i=1; i<256-localY; i++)
+			for (int i=1; i<RawChunk.HEIGHT-localY; i++)
 			{
 				final int blockID = world.getBlockId(rawChunk.getChunkCoord(), x, localY+i, z);
 				final String blockName = rawChunk.getBlockName(x, localY+i, z);
