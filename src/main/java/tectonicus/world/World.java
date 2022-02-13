@@ -1254,20 +1254,29 @@ public class World implements BlockContext
 	{
 		if (biome == BiomesOld.SWAMP || biome == BiomesOld.SWAMP_HILLS) {
 			return new Colour4f(106, 112, 57);
+		} else if (biome == BiomesOld.BADLANDS || biome == BiomesOld.ERODED_BADLANDS || biome == BiomesOld.BADLANDS_PLATEAU
+				|| biome == BiomesOld.WOODED_BADLANDS_PLATEAU || biome == BiomesOld.MODIFIED_BADLANDS_PLATEAU
+				|| biome == BiomesOld.MODIFIED_WOODED_BADLANDS_PLATEAU) {
+			if (isFoliage) {
+				return new Colour4f(158, 129, 77);
+			} else {
+				return new Colour4f(144, 129, 77);
+			}
 		}
 
 		float adjTemp = BiomeUtils.clamp(biome.getTemperature() - elevation * 0.00166667f);
 		float adjRainfall = BiomeUtils.clamp(biome.getRainfall()) * adjTemp;
 
-		return getTintColorFromBiomeTextures(BiomeUtils.normalize(adjTemp), BiomeUtils.normalize(adjRainfall), isFoliage);
+		if(!isFoliage && (biome == BiomesOld.DARK_FOREST || biome == BiomesOld.DARK_FOREST_HILLS)) {
+			Colour4f origColor = getTintColorFromBiomeTextures(BiomeUtils.normalize(adjTemp), BiomeUtils.normalize(adjRainfall), false);
+			return new Colour4f((origColor.toInt() & 16711422) + 2634762 >> 1);
+		} else {
+			return getTintColorFromBiomeTextures(BiomeUtils.normalize(adjTemp), BiomeUtils.normalize(adjRainfall), isFoliage);
+		}
 	}
 
 	// 1.15+
 	private Colour4f getTintColor(Biome biome, boolean isFoliage) {
-		if (biome == Biomes.SWAMP || biome == BiomesOld.SWAMP || biome == BiomesOld.SWAMP_HILLS) {
-			return new Colour4f(106, 112, 57);
-		}
-
 		if (isFoliage) {
 			return texturePack.getFoliageColor(biome);
 		} else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -49,10 +49,10 @@ public class Colour4f
 	
 	public Colour4f(Color src)
 	{
-		this.r = (float)(src.getRed()) / 255.0f;
-		this.g = (float)(src.getGreen()) / 255.0f;
-		this.b = (float)(src.getBlue()) / 255.0f;
-		this.a = (float)(src.getAlpha()) / 255.0f;
+		this.r = src.getRed() / 255.0f;
+		this.g = src.getGreen() / 255.0f;
+		this.b = src.getBlue() / 255.0f;
+		this.a = src.getAlpha() / 255.0f;
 	}
 
 	public Colour4f(int red, int green , int blue)
@@ -61,6 +61,10 @@ public class Colour4f
 		this.g = green / 255.0f;
 		this.b = blue / 255.0f;
 		this.a = 1;
+	}
+
+	public Colour4f(int color) {
+		this((color >> 16) & 255, (color >> 8) & 255, color & 255);
 	}
 	
 	public void add(Colour4f other)
@@ -92,5 +96,13 @@ public class Colour4f
 		this.g = (this.g + other.g) / 2;
 		this.b = (this.b + other.b) / 2;
 		this.a = (this.a + other.a) / 2;
+	}
+
+	public int toInt() {
+		int rgb = (int)(this.r * 255);
+		rgb = (rgb << 8) + (int)(this.g * 255);
+		rgb = (rgb << 8) + (int)(this.b * 255);
+
+		return rgb;
 	}
 }

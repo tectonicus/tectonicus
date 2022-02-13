@@ -542,38 +542,13 @@ public class MeshUtil
 					|| (eastFace != null && eastFace.isTinted()) || (westFace != null && westFace.isTinted())) {
 
 				String modelName = model.getName();
-				if (modelName.contains("cauldron")) {
-					tintColor = world.getWaterColor(rawChunk.getChunkCoord(), x, y, z);
-				} else if (modelName.contains("redstone")) {
-					final float power = (Integer.parseInt(rawChunk.getBlockState(x, y, z).get("power")) / 16.0f);
-					tintColor = new Colour4f(Util.clamp(power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
-				} else if (modelName.contains("stem") && !modelName.contains("mushroom")) {
-					BlockProperties stemProperties = rawChunk.getBlockState(x, y, z);
-					int age;
-					if (stemProperties.containsKey("age")) {
-						age = Integer.parseInt(rawChunk.getBlockState(x, y, z).get("age"));
-					} else {
-						age = 7;
-					}
-					tintColor = new Colour4f(age*32/255f, (255-age*8)/255f, age*4/255f);
-				} else if (modelName.contains("lilypad")) {
-					tintColor = new Colour4f(32/255f, 128/255f, 48/255f);
-				} else if (modelName.contains("stonecutter")) {
-					// do nothing, I have no idea why tintindex is set for this block
-				} else if (modelName.contains("spruce_leaves")) {
-					tintColor = new Colour4f(97/255f, 153/255f, 97/255f);
-				} else if (modelName.contains("birch_leaves")) {
-					tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
-				} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves")
-						|| modelName.contains("acacia_leaves") || modelName.contains("vines")) {
-					tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
-				} else {
-					tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
-					//Grass block side overlay hack
-					if (model.getName().contains("grass_block") && element.getFaces().size() == 4) {
-						isGrassOverlay = true;
-						fudgeFactor = 0.0001f;
-					}
+
+				tintColor = getTintColor(modelName, rawChunk, world, x, y, z, element);
+
+				//Grass block side overlay hack
+				if (modelName.contains("grass_block") && element.getFaces().size() == 4) {
+					isGrassOverlay = true;
+					fudgeFactor = 0.0001f;
 				}
 			}
 
@@ -667,6 +642,46 @@ public class MeshUtil
 		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
 	        }
 		}
+	}
+
+	private Colour4f getTintColor(String modelName, RawChunk rawChunk, BlockContext world, int x, int y, int z, BlockElement element) {
+		Colour4f tintColor;
+
+		if (modelName.contains("cauldron")) {
+			tintColor = world.getWaterColor(rawChunk.getChunkCoord(), x, y, z);
+		} else if (modelName.contains("redstone")) {
+			final float power = (Integer.parseInt(rawChunk.getBlockState(x, y, z).get("power")) / 16.0f);
+			tintColor = new Colour4f(Util.clamp(power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
+		} else if (modelName.contains("stem") && !modelName.contains("mushroom")) {
+			BlockProperties stemProperties = rawChunk.getBlockState(x, y, z);
+			int age;
+			if (stemProperties.containsKey("age")) {
+				age = Integer.parseInt(rawChunk.getBlockState(x, y, z).get("age"));
+			} else {
+				age = 7;
+			}
+			tintColor = new Colour4f(age*32/255f, (255-age*8)/255f, age*4/255f);
+		} else if (modelName.contains("lily_pad")) {
+			tintColor = new Colour4f(32/255f, 128/255f, 48/255f);
+		} else if (modelName.contains("spruce_leaves")) {
+			tintColor = new Colour4f(97/255f, 153/255f, 97/255f);
+		} else if (modelName.contains("birch_leaves")) {
+			tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
+		} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves")
+				|| modelName.contains("acacia_leaves") || modelName.contains("vines")) {
+			tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
+		} else {
+			tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
+			//Grass block side overlay hack
+//			if (modelName.contains("grass_block") && element.getFaces().size() == 4) {
+//				isGrassOverlay = true;
+//				fudgeFactor = 0.0001f;
+//			}
+		}
+
+		//Stonecutter has tintindex but does not need tint
+
+		return tintColor;
 	}
 	
 	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,

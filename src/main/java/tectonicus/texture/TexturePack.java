@@ -580,16 +580,48 @@ public class TexturePack
 	}
 
 	private void loadBiomeColors() {
+		log.info("Loading biome colors");
 		for (Biomes biome : Biomes.values()) {
+			//These are hardcoded in Minecraft
+			if(biome == Biomes.BADLANDS || biome == Biomes.ERODED_BADLANDS || biome == Biomes.WOODED_BADLANDS) {
+				grassColors.put(biome, new Colour4f(144, 129, 77));
+				foliageColors.put(biome, new Colour4f(158, 129, 77));
+				continue;
+			} else if(biome == Biomes.SWAMP) {
+				foliageColors.put(biome, new Colour4f(106, 112, 57));
+				grassColors.put(biome, new Colour4f(106, 112, 57));
+				continue;
+			}
+
 			Point colorCoords = biome.getColorCoords();
 			grassColors.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
 			foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
+
+			if(biome == Biomes.DARK_FOREST) {
+				grassColors.replace(biome, new Colour4f((grassColors.get(biome).toInt() & 16711422) + 2634762 >> 1));
+			}
 		}
 
 		for (BiomesOld biome : BiomesOld.values()) {
+			if(biome == BiomesOld.BADLANDS || biome == BiomesOld.ERODED_BADLANDS || biome == BiomesOld.BADLANDS_PLATEAU
+					|| biome == BiomesOld.WOODED_BADLANDS_PLATEAU || biome == BiomesOld.MODIFIED_BADLANDS_PLATEAU
+					|| biome == BiomesOld.MODIFIED_WOODED_BADLANDS_PLATEAU) {
+				grassColorsOld.put(biome, new Colour4f(144, 129, 77));
+				foliageColorsOld.put(biome, new Colour4f(158, 129, 77));
+				continue;
+			} else if(biome == BiomesOld.SWAMP) {
+				foliageColorsOld.put(biome, new Colour4f(106, 112, 57));
+				grassColorsOld.put(biome, new Colour4f(106, 112, 57));
+				continue;
+			}
+
 			Point colorCoords = biome.getColorCoords();
 			grassColorsOld.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
 			foliageColorsOld.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
+
+			if(biome == BiomesOld.DARK_FOREST || biome == BiomesOld.DARK_FOREST_HILLS) {
+				grassColorsOld.replace(biome, new Colour4f((grassColorsOld.get(biome).toInt() & 16711422) + 2634762 >> 1));
+			}
 		}
 	}
 
