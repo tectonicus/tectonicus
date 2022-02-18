@@ -153,16 +153,12 @@ public class MeshUtil
 		boolean east;
 		boolean west;
 
-		float selfTopLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
-		float selfNorthSouthLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z);
-		float selfEastWestLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z);
-		float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-		float bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y-1, z, LightFace.Top);
-		float northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z-1, LightFace.NorthSouth);
-		float southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z+1, LightFace.NorthSouth);
-		float eastLight = world.getLight(rawChunk.getChunkCoord(), x+1, y, z, LightFace.EastWest);
-		float westLight = world.getLight(rawChunk.getChunkCoord(), x-1, y, z, LightFace.EastWest);
-
+		float topLight;
+		float bottomLight;
+		float northLight;
+		float southLight;
+		float eastLight;
+		float westLight;
 
 		Version textureVersion = world.getTexturePack().getVersion();
 		if (textureVersion.getNumVersion() <= Version.VERSION_12.getNumVersion()) {
@@ -172,8 +168,15 @@ public class MeshUtil
 			south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z + 1).isSolid();
 			east = world.getBlockType(rawChunk.getChunkCoord(), x + 1, y, z).isSolid();
 			west = world.getBlockType(rawChunk.getChunkCoord(), x - 1, y, z).isSolid();
+
+			topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z, LightFace.Top);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z - 1, LightFace.NorthSouth);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z + 1, LightFace.NorthSouth);
+			eastLight = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z, LightFace.EastWest);
+			westLight = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z, LightFace.EastWest);
 		} else {
-			BlockStateWrapper selfBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z);
+			BlockStateWrapper selfBlock = world.getBlock(rawChunk, x, y, z);
 			BlockStateWrapper aboveBlock = world.getBlock(rawChunk.getChunkCoord(), x, y+1, z);
 			BlockStateWrapper belowBlock = world.getBlock(rawChunk.getChunkCoord(), x, y-1, z);
 			BlockStateWrapper northBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1);
@@ -198,10 +201,21 @@ public class MeshUtil
 				west = westBlock.isFullBlock() && !westBlock.isTransparent();
 			}
 
+			//If the block is covered by solid blocks then skip it
+			if (above && north && south && east && west)
+				return;
+
 			//Handle some special cases e.g. double slabs, 8 layer snow
 			if (!selfFull && model.isFullBlock()) {
 				selfFull = true;
 			}
+
+			topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z, LightFace.Top);
+			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z - 1, LightFace.NorthSouth);
+			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z + 1, LightFace.NorthSouth);
+			eastLight = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z, LightFace.EastWest);
+			westLight = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z, LightFace.EastWest);
 
 			String blockName = selfBlock.getBlockName();
 			if(!selfFull) {
@@ -248,6 +262,9 @@ public class MeshUtil
 
 					topLight = bottomLight = northLight = southLight = eastLight = westLight = lightAvg;
 				} else {
+					float selfTopLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+					float selfNorthSouthLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z);
+					float selfEastWestLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z);
 					topLight = bottomLight = selfTopLight;
 					northLight = southLight = selfNorthSouthLight;
 					eastLight = westLight = selfEastWestLight;
@@ -648,7 +665,7 @@ public class MeshUtil
 		Colour4f tintColor;
 
 		if (modelName.contains("cauldron")) {
-			tintColor = world.getWaterColor(rawChunk.getChunkCoord(), x, y, z);
+			tintColor = world.getWaterColor(rawChunk, x, y, z);
 		} else if (modelName.contains("redstone")) {
 			final float power = (Integer.parseInt(rawChunk.getBlockState(x, y, z).get("power")) / 16.0f);
 			tintColor = new Colour4f(Util.clamp(power + 0.25f, 0, 1), 0.2f * power, 0.2f * power, 1);
@@ -672,11 +689,6 @@ public class MeshUtil
 			tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
 		} else {
 			tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
-			//Grass block side overlay hack
-//			if (modelName.contains("grass_block") && element.getFaces().size() == 4) {
-//				isGrassOverlay = true;
-//				fudgeFactor = 0.0001f;
-//			}
 		}
 
 		//Stonecutter has tintindex but does not need tint

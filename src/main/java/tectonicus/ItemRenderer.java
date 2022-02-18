@@ -526,7 +526,7 @@ public class ItemRenderer
 		public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z) { return null; }
 
 		@Override
-		public String getBlockName(ChunkCoord chunkCoord, int x, int y, int z) { return StringUtils.EMPTY; }
+		public BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z) { return null; }
 
 		@Override
 		public BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z) { return null; }
@@ -566,7 +566,7 @@ public class ItemRenderer
 		}
 
 		@Override
-		public Colour4f getWaterColor(ChunkCoord chunkCoord, int x, int y, int z)
+		public Colour4f getWaterColor(RawChunk rawChunk, int x, int y, int z)
 		{
 			return new Colour4f(1, 1, 1, 1);
 		}

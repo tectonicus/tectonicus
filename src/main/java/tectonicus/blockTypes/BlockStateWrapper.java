@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,14 +17,13 @@ import tectonicus.raw.BlockProperties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
 public class BlockStateWrapper {
 	private final String blockName;
 	private final List<BlockStateCase> cases = new ArrayList<>();
 	private final List<BlockVariant> variants = new ArrayList<>();
-	private final Random random = new Random();
 	@Setter
 	private boolean fullBlock = true;
 	@Setter
@@ -60,7 +59,7 @@ public class BlockStateWrapper {
 							}
 						}
 						if (addModel) {
-							models.add(getBlockStateModel(bsc));
+							models.add(getBlockStateModel(bsc.getModels()));
 							break;
 						}
 					}
@@ -71,7 +70,7 @@ public class BlockStateWrapper {
 				String variantProperties = variant.getName();
 				if (variantProperties.equals(StringUtils.EMPTY) || properties.contains(variantProperties)
 						|| properties.containsAll(variant.getStates())) {
-					models.add(getBlockStateModel(variant));
+					models.add(getBlockStateModel(variant.getModels()));
 					break;
 				}
 			}
@@ -79,13 +78,12 @@ public class BlockStateWrapper {
 		return models;
 	}
 
-	private BlockStateModel getBlockStateModel(BlockState state) {
-		List<BlockStateModel> variantModels = state.getModels();
-		int size = variantModels.size();
+	public static BlockStateModel getBlockStateModel(List<BlockStateModel> models) {
+		int size = models.size();
 		if (size > 1) {
-			return variantModels.get(random.nextInt(size));
+			return models.get(ThreadLocalRandom.current().nextInt(0, size));
 		} else {
-			return variantModels.get(0);
+			return models.get(0);
 		}
 	}
 }

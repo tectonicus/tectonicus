@@ -13,7 +13,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
@@ -825,50 +824,29 @@ public class RawChunk {
 	private static int calcAnvilIndex(final int x, final int y, final int z) {
 		// Note that the old format is XZY ((x * 16 + z) * 128 + y)
 		// and the new format is       YZX ((y * 16 + z) * 16 + x)
-
 		return x + (z * SECTION_HEIGHT) + (y * SECTION_HEIGHT * SECTION_DEPTH);
 	}
 
-	private static int calc4BitIndex(final int x, final int y, final int z) {
-		// Math.floor is bloody slow!
-		// Since calcIndex should always be +ive, we can just cast to int and get the same result 
-		return (int) (calcIndex(x, y, z) / 2);
-	}
-
-	private static int calcAnvil4BitIndex(final int x, final int y, final int z) {
-		// Math.floor is bloody slow!
-		// Since calcIndex should always be +ive, we can just cast to int and get the same result 
-		return (int) (calcAnvilIndex(x, y, z) / 2);
-	}
-
 	private static byte getAnvil4Bit(ByteArrayTag tag, final int x, final int y, final int z) {
-		byte half = 0;
-		final int index = calcAnvil4BitIndex(x, y, z);
-		if (index == 2048)
-			System.out.println();
+		final int index = calcAnvilIndex(x, y, z) / 2; //4 bit index
 
-		if (tag != null && tag.getValue() != null) {
-			final int doublet = tag.getValue()[index];
+		// Upper or lower half?
+		final boolean isUpper = x % 2 == 1;
 
-			// Upper or lower half?
-			final boolean isUpper = (x % 2 == 1);
-
-			if (isUpper) {
-				half = (byte) ((doublet >> 4) & 0xF);
-			} else {
-				half = (byte) (doublet & 0xF);
-			}
-		}
-
-		return half;
+		return getHalf(tag, index, isUpper);
 	}
 
 	private static byte get4Bit(ByteArrayTag tag, final int x, final int y, final int z) {
-		final int index = calc4BitIndex(x, y, z);
-		final int doublet = tag.getValue()[index];
+		final int index = calcIndex(x, y, z) / 2; //4 bit index
 
 		// Upper or lower half?
-		final boolean isUpper = (y % 2 == 1);
+		final boolean isUpper = y % 2 == 1;
+
+		return getHalf(tag, index, isUpper);
+	}
+
+	private static byte getHalf(ByteArrayTag tag, int index, boolean isUpper) {
+		final int doublet = tag.getValue()[index];
 
 		byte half;
 		if (isUpper) {
@@ -936,9 +914,6 @@ public class RawChunk {
 	}
 
 	public String getBlockName(final int x, final int y, final int z) {
-		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH)
-			return Block.AIR.getName();
-
 		final int sectionY = y / SECTION_HEIGHT;
 		final int localY = y % SECTION_HEIGHT;
 

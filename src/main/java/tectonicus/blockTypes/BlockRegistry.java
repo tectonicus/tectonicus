@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static tectonicus.blockTypes.BlockStateWrapper.getBlockStateModel;
+
 
 @Log4j2
 @NoArgsConstructor
@@ -50,6 +52,8 @@ public class BlockRegistry
 	private final Map<String, BlockStateWrapper> blockStates = new HashMap<>();
 	@Getter
 	private final Map<String, BlockModel> blockModels = new HashMap<>();
+	@Getter
+	private final Map<String, List<BlockStateModel>> singleVariantBlocks = new HashMap<>();
 	private TexturePack texturePack;
 	private ZipStack zips;
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -91,14 +95,19 @@ public class BlockRegistry
 	public BlockStateWrapper getBlock(String blockName) {
 		return blockStates.get(blockName);
 	}
+	public BlockStateModel getSingleVariantModel(String blockName) {
+		return getBlockStateModel(singleVariantBlocks.get(blockName));
+	}
 	public BlockModel getModel(String model) { return blockModels.get(model); }
-	
+	public boolean containsSingleVariantBlock(String blockName) {
+		return singleVariantBlocks.containsKey(blockName);
+	}
 	
 	public void deserializeBlockstates()
 	{
 		//TODO: need to use override pack blockstate files first
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
-			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"));)
+			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates")))
 		{
 			for (Path blockStateFile : entries)
 			{
@@ -127,11 +136,14 @@ public class BlockRegistry
 					while (iter.hasNext()) {
 						Map.Entry<String, JsonNode> entry = iter.next();
 						String key = entry.getKey();
+						if (key.equals("")) {
+							singleVariantBlocks.put(name, deserializeBlockStateModels(entry.getValue()));
+						}
 						BlockVariant blockVariant = new BlockVariant(key, deserializeBlockStateModels(entry.getValue()));
 						states.addVariant(blockVariant);
 					}
-
 				}
+
 				blockStates.put(name, states);
 			}				
 		} catch (Exception e)
@@ -158,7 +170,7 @@ public class BlockRegistry
 			if (models.isArray()) {
 				stateModels = OBJECT_MAPPER.readValue(models.toString(), new TypeReference<List<BlockStateModel>>(){});
 			} else {
-				stateModels = OBJECT_MAPPER.readValue("[" + models.toString() + "]", new TypeReference<List<BlockStateModel>>(){});
+				stateModels = OBJECT_MAPPER.readValue("[" + models + "]", new TypeReference<List<BlockStateModel>>(){});
 			}
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
@@ -209,7 +221,7 @@ public class BlockRegistry
 
 		JsonNode json = OBJECT_MAPPER.readTree(new InputStreamReader(zips.getStream("assets/minecraft/models/" + modelPath + ".json")));
 		
-		String parent = "";
+		String parent;
 		if(json.has("parent")) // Get texture information and then load parent file
 		{
 			parent = json.get("parent").asText();

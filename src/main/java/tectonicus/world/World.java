@@ -45,11 +45,11 @@ import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.Biome;
+import tectonicus.raw.BiomeIds;
 import tectonicus.raw.BiomeUtils;
 import tectonicus.raw.Biomes;
-import tectonicus.raw.Biome;
 import tectonicus.raw.BiomesOld;
-import tectonicus.raw.BiomeIds;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
@@ -122,7 +122,7 @@ public class World implements BlockContext
 	private RegionCache regionCache;
 	private ChunkLocator chunkLocator;
 	
-	private RawCache rawLoadedChunks;
+	private final RawCache rawLoadedChunks;
 	private GeometryCache geometryLoadedChunks;
 	
 	private LightStyle lightStyle;
@@ -580,8 +580,7 @@ public class World implements BlockContext
 	private void draw(Camera camera, List<ChunkCoord> visible, final boolean genAlphaMask)
 	{
 		// Find adjacent chunks (need adjacent chunks loaded for proper geometry gen)
-		Set<ChunkCoord> adjacent = new HashSet<>();
-		adjacent.addAll(visible);
+		Set<ChunkCoord> adjacent = new HashSet<>(visible);
 		for (ChunkCoord base : visible)
 		{
 			adjacent.add( new ChunkCoord(base.x+1, base.z) );
@@ -841,44 +840,31 @@ public class World implements BlockContext
 		{
 			final String name = c.getRawChunk().getBlockName(location.x, location.y, location.z);
 
-			if (StringUtils.isNotEmpty(name)) {
-				BlockStateWrapper block = modelRegistry.getBlock(name);
-				if (block != null) {
-					return modelRegistry.getBlock(name);
-				} else {
-					unknownBlocks.computeIfAbsent(location, loc -> {
-						log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
-						return name;
-					});
-
-					return modelRegistry.getBlock(defaultBlockName);
-				}
+			BlockStateWrapper block = modelRegistry.getBlock(name);
+			if (block != null) {
+				return block;
 			} else {
+				unknownBlocks.computeIfAbsent(location, loc -> {
+					log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
+					return name;
+				});
+
 				return modelRegistry.getBlock(defaultBlockName);
 			}
 		}
 	}
 
-	@Override
-	public String getBlockName(ChunkCoord chunkCoord, int x, int y, int z)
+	//Use with xyz that coords that don't go outside the chunk
+	public BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT)
-			return StringUtils.EMPTY;
+		final String name = rawChunk.getBlockName(x, y, z);
 
-		Location loc = resolve(chunkCoord, x, y, z);
-		Chunk c = rawLoadedChunks.get(loc.coord);
-		if (c == null)
-		{
-			return StringUtils.EMPTY;
-		}
-		else
-		{
-			final String name = c.getRawChunk().getBlockName(loc.x, loc.y, loc.z);
-
-			if (name != null)
-				return name;
-			else
-				return StringUtils.EMPTY;
+		BlockStateWrapper block = modelRegistry.getBlock(name);
+		if (block != null) {
+			return block;
+		} else {
+			log.warn("Unable to find {} block in registry.", name);
+			return modelRegistry.getBlock(defaultBlockName);
 		}
 	}
 
@@ -1295,8 +1281,9 @@ public class World implements BlockContext
 	}
 
 	@Override
-	public Colour4f getWaterColor(ChunkCoord chunkCoord, int x, int y, int z) {
-		final Biome biome = getBiome(chunkCoord, x, y, z);
+	public Colour4f getWaterColor(RawChunk rawChunk, int x, int y, int z) {
+		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
+		final Biome biome = rawChunk.getBiome(x, y, z);
 		final Biome northBiome = getBiome(chunkCoord, x, y, z-1);
 		final Biome southBiome = getBiome(chunkCoord, x, y, z+1);
 		final Biome eastBiome = getBiome(chunkCoord, x+1, y, z);

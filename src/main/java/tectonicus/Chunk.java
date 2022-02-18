@@ -111,7 +111,7 @@ public class Chunk
 		if (geometry != null)
 			return false;
 		
-		BlockMask mask = maskFactory.createMask(coord, rawChunk); 
+		BlockMask mask = maskFactory.createMask(coord, rawChunk);
 		
 		geometry = new Geometry(rasteriser);
 		
@@ -125,7 +125,7 @@ public class Chunk
 					{
 						BlockType type = null;
 						final String blockName = rawChunk.getBlockName(x, y, z);
-						if (blockName != null && !blockName.equals(Block.AIR.getName()))
+						if (blockName != null && !blockName.contains("air"))
 						{
 							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
 
@@ -139,13 +139,17 @@ public class Chunk
 									|| blockName.equals("minecraft:conduit") || blockName.equals("minecraft:bell")) {
 								type = registry.find(blockName);
 							} else {
-								//TODO: This is quite slow. Need to profile and figure out if it can be sped up
-								List<BlockStateModel> models;
-								BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
-								models = stateWrapper.getModels(properties);
+								if (modelRegistry.containsSingleVariantBlock(blockName)) {
+									modelRegistry.getSingleVariantModel(blockName).createGeometry(x, y, z, world, rawChunk, geometry);
+								} else {
+									//TODO: This is quite slow. Need to profile and figure out if it can be sped up
+									List<BlockStateModel> models;
+									BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
+									models = stateWrapper.getModels(properties);
 
-								for (BlockStateModel model : models) {
-									model.createGeometry(x, y, z, world, rawChunk, geometry);
+									for (BlockStateModel model : models) {
+										model.createGeometry(x, y, z, world, rawChunk, geometry);
+									}
 								}
 							}
 
@@ -180,7 +184,7 @@ public class Chunk
 				}
 			}
 		}
-		
+
 		// Create painting geometry
 		BlockType type = registry.find(-1, 0);
 		if (type != null)
@@ -342,21 +346,17 @@ public class Chunk
 	
 	public static int getSkyLight(RawChunk rawChunk, final int x, final int y, final int z)
 	{
-		if (rawChunk == null)
-			return RawChunk.MAX_LIGHT;
-		else
-		{
-			int actualY = y;
-			if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
-			{
-				if (y == RawChunk.HEIGHT-1)
-					return RawChunk.MAX_LIGHT;
-				else
-					actualY++;
-			}
+		//TODO: do we need this for backwards compatibility?
+//		int actualY = y;
+//		if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
+//		{
+//			if (y == RawChunk.HEIGHT-1)
+//				return RawChunk.MAX_LIGHT;
+//			else
+//				actualY++;
+//		}
 			
-			return rawChunk.getSkyLight(x, actualY, z);
-		}
+		return rawChunk.getSkyLight(x, y, z);
 	}
 	
 	public int getBlockLight(final int x, final int y, final int z)
@@ -365,21 +365,21 @@ public class Chunk
 	}
 	public static int getBlockLight(RawChunk rawChunk, final int x, final int y, final int z)
 	{
-		if (rawChunk == null)
-			return RawChunk.MAX_LIGHT;
-		else
-		{
-			int actualY = y;
-			if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
-			{
-				if (y == RawChunk.HEIGHT-1)
-					return RawChunk.MAX_LIGHT;
-				else
-					actualY++;
-			}
+//		if (rawChunk == null)
+//			return RawChunk.MAX_LIGHT;
+//		else
+//		{
+			//int actualY = y;
+//			if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
+//			{
+//				if (y == RawChunk.HEIGHT-1)
+//					return RawChunk.MAX_LIGHT;
+//				else
+//					actualY++;
+//			}
 			
-			return rawChunk.getBlockLight(x, actualY, z);
-		}
+		return rawChunk.getBlockLight(x, y, z);
+//		}
 	}
 	
 	public long getRawMemorySize()
@@ -444,7 +444,8 @@ public class Chunk
 			}
 		}
 	}
-	
+
+	//TODO: is there any way to make this method faster?
 	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z)
 	{
 		float result = 0;
@@ -459,10 +460,10 @@ public class Chunk
 				}
 				else
 				{
-					final float skyLight = getSkyLight(c, x, y, z) / (float)RawChunk.MAX_LIGHT;
-					final float blockLight = getBlockLight(c, x, y, z) / (float)RawChunk.MAX_LIGHT;
-					
-					result = Util.clamp( skyLight * 0.7f + blockLight * 0.3f + 0.3f, 0, 1 );
+					final int skyLight = c.getSkyLight(x, y, z);
+					final int blockLight = c.getBlockLight(x, y, z);
+
+					result = Util.clamp( (skyLight * 0.7f + blockLight * 0.3f) / RawChunk.MAX_LIGHT + 0.3f, 0, 1 );
 				}
 
 				if (face == LightFace.NorthSouth)
@@ -545,8 +546,9 @@ public class Chunk
 			default:
 				assert false;
 		}
-		
-		result = Util.clamp(result, 0, 1);
+
+		if(result < 0)
+			result = 0;
 		
 		return result;
 	}

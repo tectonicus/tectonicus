@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -59,7 +59,7 @@ public class BlockTypeRegistry
 
 	public BlockType find(final int id, final int data)
 	{
-		BlockType result = null;
+		BlockType result;
 		
 		// Check bound blocks first
 		result = boundBlocks.get(new IdDataPair(id, data));
@@ -77,14 +77,12 @@ public class BlockTypeRegistry
 
 	public BlockType find(final String name)
 	{
-		BlockType result = null;
-
-		result = blocksByName.get(name);
+		BlockType result = blocksByName.get(name);
 		if (result != null)
 			return result;
 
 		// Not found at all, return default block
-		return defaultBlock;
+		return new Air(name); // Hack to make working with Water easier in 1.13+
 	}
 
 	public Set<BlockType> getTypes()

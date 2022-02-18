@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -19,9 +19,11 @@ import java.util.TreeMap;
 @NoArgsConstructor
 public class BlockProperties {
     private Map<String, String> properties = new TreeMap<>();
+    private String propertiesString;
 
     public BlockProperties(Map<String, String> properties) {
         this.properties.putAll(properties);
+        this.propertiesString = this.toString();
     }
 
     @Override
@@ -42,7 +44,7 @@ public class BlockProperties {
     }
 
     public boolean contains(String props) {
-        return this.toString().contains(props);
+        return propertiesString.contains(props);
     }
     public boolean containsAll(Map<String, String> props) {
         return properties.entrySet().containsAll(props.entrySet());
