@@ -532,7 +532,7 @@ public class TileRenderer
 					{
 						// For every chunk coord...
 						
-						Chunk c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getVersion());
+						Chunk c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
 						if (c != null)
 						{
 							c.calculateHash(hashAlgorithm);
@@ -609,7 +609,7 @@ public class TileRenderer
 		{			
 			for (int x=0; x<RawChunk.WIDTH; x++)
 			{
-				for (int y=1; y<RawChunk.HEIGHT-1; y++)
+				for (int y=1; y<Minecraft.getChunkHeight()-1; y++)
 				{
 					for (int z=0; z<RawChunk.DEPTH; z++)
 					{
@@ -843,7 +843,7 @@ public class TileRenderer
 				{
 					if (coord != null && world.contains(coord))
 					{
-						BoundingBox bounds = new BoundingBox(new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
+						BoundingBox bounds = new BoundingBox(new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
 						ArrayList<Vector3f> cornerPoints = bounds.getCornerPoints();
 						
 						int minX = Integer.MAX_VALUE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,6 +11,7 @@ package tectonicus.world.filter;
 
 import tectonicus.BlockIds;
 import tectonicus.CaveMaskFactory;
+import tectonicus.Minecraft;
 import tectonicus.raw.RawChunk;
 
 public class ExploredCaveFilter implements BlockFilter
@@ -28,11 +29,11 @@ public class ExploredCaveFilter implements BlockFilter
 	@Override
 	public void filter(RawChunk rawChunk)
 	{
-		boolean[][][] nonNaturalBlocks = new boolean[RawChunk.WIDTH][RawChunk.HEIGHT][RawChunk.DEPTH];
+		boolean[][][] nonNaturalBlocks = new boolean[RawChunk.WIDTH][Minecraft.getChunkHeight()][RawChunk.DEPTH];
 		
 		for (int x=0; x<RawChunk.WIDTH; x++)
 		{
-			for (int y=0; y<RawChunk.HEIGHT; y++)
+			for (int y = 0; y< Minecraft.getChunkHeight(); y++)
 			{
 				for (int z=0; z<RawChunk.DEPTH; z++)
 				{
@@ -50,7 +51,7 @@ public class ExploredCaveFilter implements BlockFilter
 		// TODO Auto-generated method stub
 		// Build an uber array of all the adjacent blocks
 		
-		int[][][] distanceGrid = new int[RawChunk.WIDTH*3][RawChunk.HEIGHT][RawChunk.DEPTH*3];
+		int[][][] distanceGrid = new int[RawChunk.WIDTH*3][Minecraft.getChunkHeight()][RawChunk.DEPTH*3];
 		copy(distanceGrid, center,	RawChunk.WIDTH, 		RawChunk.DEPTH);
 		copy(distanceGrid, north,	0,						RawChunk.DEPTH);
 		copy(distanceGrid, south,	RawChunk.WIDTH * 2, 	RawChunk.DEPTH);
@@ -71,7 +72,7 @@ public class ExploredCaveFilter implements BlockFilter
 		// Now use the distance grid to replace everything out of range with stone
 		for (int x=0; x<RawChunk.WIDTH; x++)
 		{
-			for (int y=0; y<RawChunk.HEIGHT; y++)
+			for (int y=0; y<Minecraft.getChunkHeight(); y++)
 			{
 				for (int z=0; z<RawChunk.DEPTH; z++)
 				{
@@ -104,7 +105,7 @@ public class ExploredCaveFilter implements BlockFilter
 		
 		for (int x=0; x<RawChunk.WIDTH; x++)
 		{
-			for (int y=0; y<RawChunk.HEIGHT; y++)
+			for (int y=0; y<Minecraft.getChunkHeight(); y++)
 			{
 				for (int z=0; z<RawChunk.DEPTH; z++)
 				{

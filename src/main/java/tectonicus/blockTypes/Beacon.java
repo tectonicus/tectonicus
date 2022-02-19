@@ -9,24 +9,23 @@
 
 package tectonicus.blockTypes;
 
-import java.awt.Color;
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.rasteriser.MeshUtil;
+import tectonicus.Minecraft;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
-import tectonicus.raw.RawChunk;
 import tectonicus.raw.BeaconEntity;
+import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 import tectonicus.world.Colors;
+
+import java.awt.Color;
+import java.util.List;
 
 import static tectonicus.Version.VERSION_4;
 
@@ -123,7 +122,7 @@ public class Beacon implements BlockType
 			final int localY = entity.getLocalY();
 			
 			Colour4f color = new Colour4f(1, 1, 1, 1);
-			for (int i=1; i<RawChunk.HEIGHT-localY; i++)
+			for (int i = 1; i< Minecraft.getChunkHeight()-localY; i++)
 			{
 				final int blockID = world.getBlockId(rawChunk.getChunkCoord(), x, localY+i, z);
 				final String blockName = rawChunk.getBlockName(x, localY+i, z);

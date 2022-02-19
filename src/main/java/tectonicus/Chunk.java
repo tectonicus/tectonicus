@@ -28,6 +28,7 @@ import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.world.World;
+import tectonicus.world.WorldInfo;
 import tectonicus.world.filter.BlockFilter;
 
 import java.io.IOException;
@@ -58,7 +59,7 @@ public class Chunk
 		this.biomeCache = biomeCache;
 		
 		Vector3f origin = new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH);
-		this.bounds = new BoundingBox(origin, RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
+		this.bounds = new BoundingBox(origin, RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
 	}
 	
 	public ChunkCoord getCoord() { return coord; }
@@ -78,10 +79,10 @@ public class Chunk
 		return rawChunk;
 	}
 	
-	public void loadRaw(ChunkData chunkData, BlockFilter filter, WorldStats worldStats, Version version) throws IOException {
+	public void loadRaw(ChunkData chunkData, BlockFilter filter, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		if (rawChunk == null)
 		{
-			rawChunk = new RawChunk(chunkData, worldStats, version);
+			rawChunk = new RawChunk(chunkData, worldStats, worldInfo);
 			filter.filter(rawChunk);
 		}
 		
@@ -91,10 +92,10 @@ public class Chunk
 		}
 	}
 
-	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats, Version version) throws IOException {
+	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		if (rawChunk == null)
 		{
-			rawChunk = new RawChunk(chunkData, entityChunkData, worldStats, version);
+			rawChunk = new RawChunk(chunkData, entityChunkData, worldStats, worldInfo);
 			filter.filter(rawChunk);
 		}
 
@@ -115,7 +116,7 @@ public class Chunk
 		
 		geometry = new Geometry(rasteriser);
 		
-		for (int y=0; y<RawChunk.HEIGHT; y++)
+		for (int y=0; y<Minecraft.getChunkHeight(); y++)
 		{
 			for (int x=0; x<RawChunk.WIDTH; x++)
 			{
@@ -125,7 +126,7 @@ public class Chunk
 					{
 						BlockType type = null;
 						final String blockName = rawChunk.getBlockName(x, y, z);
-						if (blockName != null && !blockName.contains("air"))
+						if (blockName != null && !blockName.contains("minecraft:air") && !blockName.contains("_air"))
 						{
 							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
 
@@ -171,7 +172,7 @@ public class Chunk
 
 						if (type != null)
 						{
-							if (x == 0 || y == 0 || z == 0 || x == RawChunk.WIDTH-1 || y == RawChunk.HEIGHT-1 || z == RawChunk.DEPTH-1)
+							if (x == 0 || y == 0 || z == 0 || x == RawChunk.WIDTH-1 || y == Minecraft.getChunkHeight()-1 || z == RawChunk.DEPTH-1)
 							{
 								type.addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
 							}
@@ -350,7 +351,7 @@ public class Chunk
 //		int actualY = y;
 //		if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
 //		{
-//			if (y == RawChunk.HEIGHT-1)
+//			if (y == Minecraft.getChunkHeight()-1)
 //				return RawChunk.MAX_LIGHT;
 //			else
 //				actualY++;
@@ -372,7 +373,7 @@ public class Chunk
 			//int actualY = y;
 //			if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
 //			{
-//				if (y == RawChunk.HEIGHT-1)
+//				if (y == Minecraft.getChunkHeight()-1)
 //					return RawChunk.MAX_LIGHT;
 //				else
 //					actualY++;
@@ -429,7 +430,7 @@ public class Chunk
 		
 		if (rawChunk != null)
 		{
-			for (int y=0; y<RawChunk.HEIGHT; y++)
+			for (int y=0; y<Minecraft.getChunkHeight(); y++)
 			{
 				for (int x=0; x<RawChunk.WIDTH; x++)
 				{
@@ -454,7 +455,7 @@ public class Chunk
 		{
 			case Day:
 			{
-				if (c == null || y >= RawChunk.HEIGHT || y < 0)
+				if (c == null || y >= Minecraft.getChunkHeight() || y < 0)
 				{
 					result = 1.0f;
 				}
@@ -479,7 +480,7 @@ public class Chunk
 			}
 			case Night:
 			{
-				if (c == null || y >= RawChunk.HEIGHT || y < 0)
+				if (c == null || y >= Minecraft.getChunkHeight() || y < 0)
 				{
 					result = 0.1f;
 				}
@@ -504,14 +505,14 @@ public class Chunk
 			}
 			case Cave:
 			{
-				if (c == null || y >= RawChunk.HEIGHT || y < 0)
+				if (c == null || y >= Minecraft.getChunkHeight() || y < 0)
 				{
 					result = 0.1f;
 				}
 				else
 				{
 					final float blockLight = getBlockLight(c, x, y, z) / (float)RawChunk.MAX_LIGHT;
-					final float heightScale = (y / (float)RawChunk.HEIGHT) * 0.6f + 0.1f;
+					final float heightScale = (y / (float)Minecraft.getChunkHeight()) * 0.6f + 0.1f;
 					
 					result = Util.clamp(heightScale + blockLight * 0.5f, 0f, 1f);
 				}

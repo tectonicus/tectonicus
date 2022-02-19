@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -27,7 +27,7 @@ public class CaveMaskFactory113 implements BlockMaskFactory
 			{
 				final int surfaceHeight = heights[x][z];
 
-				for (int y=surfaceHeight; y<RawChunk.HEIGHT; y++)
+				for (int y = surfaceHeight; y< Minecraft.getChunkHeight(); y++)
 				{
 					mask.setVisible(x, y, z, false);
 				}
@@ -87,7 +87,7 @@ public class CaveMaskFactory113 implements BlockMaskFactory
 		int penetration = 0;
 
 		int y;
-		for (y=RawChunk.HEIGHT-1; y>=0; y--)
+		for (y=Minecraft.getChunkHeight()-1; y>=0; y--)
 		{
 			final String blockName = rawChunk.getBlockName(x, y, z);
 			if (blockName.equals("minecraft:air")

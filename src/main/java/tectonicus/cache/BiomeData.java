@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,25 +9,24 @@
 
 package tectonicus.cache;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.google.code.minecraftbiomeextractor.WorldProcessor;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.NBTOutputStream;
 import org.jnbt.Tag;
-
 import tectonicus.ChunkCoord;
+import tectonicus.Minecraft;
 import tectonicus.raw.NbtUtil;
 import tectonicus.raw.RawChunk;
 
-import com.google.code.minecraftbiomeextractor.WorldProcessor;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BiomeData
 {
@@ -53,7 +52,7 @@ public class BiomeData
 		colourCoords = new ColourCoord[RawChunk.WIDTH][RawChunk.DEPTH];
 		
 		final long baseX = coord.x * RawChunk.WIDTH;
-		final long baseZ = coord.z * RawChunk.HEIGHT;
+		final long baseZ = coord.z * Minecraft.getChunkHeight();
 		
 		for (int x=0; x<RawChunk.WIDTH; x++)
 		{

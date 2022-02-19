@@ -93,8 +93,10 @@ import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_15;
+import static tectonicus.Version.VERSION_18;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
+import static tectonicus.Version.VERSION_UNKNOWN;
 
 @Log4j2
 public class World implements BlockContext
@@ -111,9 +113,10 @@ public class World implements BlockContext
 	private BlockTypeRegistry registry;
 	private BlockRegistry modelRegistry;
 	
-	private LevelDat levelDat;
+	private final LevelDat levelDat;
+
 	@Getter
-	private Version version;
+	private WorldInfo worldInfo;
 	
 	private List<Player> players;
 	private PlayerSkinCache playerSkinCache;
@@ -122,11 +125,11 @@ public class World implements BlockContext
 	
 	private TexturePack texturePack;
 	
-	private RegionCache regionCache;
-	private ChunkLocator chunkLocator;
-	
+	private final RegionCache regionCache;
+	private final ChunkLocator chunkLocator;
+
 	private final RawCache rawLoadedChunks;
-	private GeometryCache geometryLoadedChunks;
+	private final GeometryCache geometryLoadedChunks;
 	
 	private LightStyle lightStyle;
 	
@@ -145,8 +148,6 @@ public class World implements BlockContext
 	private SignFilter signFilter;
 
 	private final Map<Location, String> unknownBlocks;
-
-	private final static String DEFAULT_BLOCK_ID = "minecraft:air";
 	
 	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile,
 				 List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName,
@@ -157,7 +158,7 @@ public class World implements BlockContext
 		
 		this.defaultBlockId = BlockIds.AIR;
 		this.blockFilter = new NullBlockFilter();
-		this.blockMaskFactory = new NullBlockMaskFactory();
+
 		
 		this.worldDir = baseDir;
 		
@@ -213,6 +214,8 @@ public class World implements BlockContext
 			levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 		}
 
+		Version version = VERSION_UNKNOWN;
+		int sectionArrayOffset = 0;
 		String worldVersion = levelDat.getVersion();
 		if (worldVersion != null) {
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
@@ -220,7 +223,19 @@ public class World implements BlockContext
 				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
 			}
 			version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
+
+			if (version.getNumVersion() < VERSION_18.getNumVersion() || dimension == Dimension.NETHER || dimension == Dimension.END) {
+				Minecraft.setChunkHeight(256);
+			} else {
+				Minecraft.setChunkHeight(384);
+				sectionArrayOffset = 4;
+			}
+			log.info("Current world max chunk height: " + Minecraft.getChunkHeight());
 		}
+
+		worldInfo = new WorldInfo(version, sectionArrayOffset);
+
+		this.blockMaskFactory = new NullBlockMaskFactory();
 
 		log.info("Loading textures");
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars, args);
@@ -317,7 +332,7 @@ public class World implements BlockContext
 	{
 		return biomeCache;
 	}
-	
+
 	public void setLightStyle(LightStyle style)
 	{
 		// Clear the geometry cache if style has changed
@@ -464,7 +479,7 @@ public class World implements BlockContext
 			for (long regionZ=minZ; regionZ<=maxZ; regionZ++)
 			{
 				BoundingBox regionBounds = new BoundingBox(new Vector3f(regionX*RegionCoord.REGION_WIDTH*RawChunk.WIDTH, 0, regionZ*RegionCoord.REGION_HEIGHT*RawChunk.DEPTH),
-																RawChunk.WIDTH*RegionCoord.REGION_WIDTH, RawChunk.HEIGHT,
+																RawChunk.WIDTH*RegionCoord.REGION_WIDTH, Minecraft.getChunkHeight(),
 																RawChunk.DEPTH*RegionCoord.REGION_HEIGHT);
 				if (regionBounds.isVisible(camera))
 				{
@@ -479,7 +494,7 @@ public class World implements BlockContext
 							
 							if (worldSubset.contains(chunkCoord))
 							{
-								BoundingBox chunkBounds = new BoundingBox(new Vector3f(chunkCoord.x*RawChunk.WIDTH, 0, chunkCoord.z*RawChunk.DEPTH), RawChunk.WIDTH, RawChunk.HEIGHT, RawChunk.DEPTH);
+								BoundingBox chunkBounds = new BoundingBox(new Vector3f(chunkCoord.x*RawChunk.WIDTH, 0, chunkCoord.z*RawChunk.DEPTH), RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
 								if (chunkBounds.isVisible(camera) && chunkLocator.exists(chunkCoord))
 								{
 									result.add(chunkCoord);
@@ -607,7 +622,7 @@ public class World implements BlockContext
 					composite.add(worldSubset.getBlockFilter(coord));
 					
 					// Not loaded, so load it now
-					Chunk c = chunkLocator.loadChunkFromRegion(coord, composite, version);
+					Chunk c = chunkLocator.loadChunkFromRegion(coord, composite, worldInfo);
 					if (c != null)
 					{	
 						rawLoadedChunks.put(coord, c);
@@ -791,7 +806,7 @@ public class World implements BlockContext
 	@Override
 	public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT)
+		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return defaultBlockId;
 		
 		Location loc = resolve(chunkCoord, x, y, z);
@@ -807,7 +822,7 @@ public class World implements BlockContext
 	@Override
 	public BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT)
+		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return registry.find(defaultBlockId, 0);
 		
 		Location loc = resolve(chunkCoord, x, y, z);
@@ -832,7 +847,7 @@ public class World implements BlockContext
 	@Override
 	public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT)
+		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return modelRegistry.getBlock(defaultBlockName);
 
 		Location location = resolve(chunkCoord, x, y, z);
@@ -876,7 +891,7 @@ public class World implements BlockContext
 	@Override
 	public BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT)
+		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return null;
 
 		Location loc = resolve(chunkCoord, x, y, z);
@@ -894,7 +909,7 @@ public class World implements BlockContext
 	@Override
 	public Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z)
 	{
-		if (y < 0 || y >= RawChunk.HEIGHT)
+		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return Biomes.THE_VOID;
 
 		Location loc = resolve(chunkCoord, x, y, z);
@@ -1042,7 +1057,7 @@ public class World implements BlockContext
 		private static float getDistance(Camera camera, ChunkCoord coord)
 		{
 			final float worldX = coord.x * RawChunk.WIDTH + (RawChunk.WIDTH / 2.0f);
-			final float worldY = RawChunk.HEIGHT / 2.0f;
+			final float worldY = Minecraft.getChunkHeight() / 2.0f;
 			final float worldZ = coord.z * RawChunk.DEPTH + (RawChunk.DEPTH / 2.0f);
 			final float centerDist = Chunk.getDistance(camera, worldX, worldY, worldZ);
 			return centerDist;

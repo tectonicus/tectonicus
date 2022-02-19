@@ -13,7 +13,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
@@ -32,10 +31,11 @@ import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.ChunkCoord;
 import tectonicus.ChunkData;
-import tectonicus.Version;
+import tectonicus.Minecraft;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.util.FileUtils;
+import tectonicus.world.WorldInfo;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -57,11 +57,7 @@ import static tectonicus.Version.VERSION_UNKNOWN;
 
 public class RawChunk {
 	public static final int WIDTH = 16;
-	//public static final int HEIGHT = 256;
-	public static final int HEIGHT = 384;
 	public static final int DEPTH = 16;
-	//public static final int NEW_HEIGHT = 384;
-	//TODO: Tile entities and entities may need y value adjustment
 
 	public static final int MC_REGION_HEIGHT = 128;
 
@@ -71,8 +67,7 @@ public class RawChunk {
 
 	public static final int MAX_LIGHT = 16;
 
-	private static final int MAX_SECTIONS = HEIGHT / SECTION_HEIGHT;
-	//public static final int NEW_MAX_SECTIONS = NEW_HEIGHT / SECTION_HEIGHT;
+	private final int maxSections;
 
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	private static final ObjectWriter OBJECT_WRITER = FileUtils.getOBJECT_MAPPER().writer();
@@ -84,7 +79,7 @@ public class RawChunk {
 
 	private Section[] sections;
 
-	private int chunkX, chunkY, chunkZ;
+	private int chunkX, chunkZ;
 	private int minSectionY;
 
 	private Map<String, SignEntity> signs;
@@ -101,26 +96,30 @@ public class RawChunk {
 	private final Map<String, Object> filterData = new HashMap<>();
 
 	public RawChunk() {
+		maxSections = Minecraft.getChunkHeight() / SECTION_HEIGHT;
 		clear();
 	}
 
 	public RawChunk(File file) throws IOException {
-		init(new ChunkData(Files.readAllBytes(file.toPath()), Compression.Gzip), null, VERSION_UNKNOWN);
+		maxSections = Minecraft.getChunkHeight() / SECTION_HEIGHT;
+		init(new ChunkData(Files.readAllBytes(file.toPath()), Compression.Gzip), null, new WorldInfo(VERSION_UNKNOWN, 0));
 	}
 
-	public RawChunk(ChunkData chunkData, WorldStats worldStats, Version version) throws IOException {
-		init(chunkData, worldStats, version);
+	public RawChunk(ChunkData chunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
+		maxSections = Minecraft.getChunkHeight() / SECTION_HEIGHT;
+		init(chunkData, worldStats, worldInfo);
 	}
 
-	public RawChunk(ChunkData chunkData, ChunkData entityChunkData, WorldStats worldStats, Version version) throws IOException {
-		this(chunkData, worldStats, version);
+	public RawChunk(ChunkData chunkData, ChunkData entityChunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
+		this(chunkData, worldStats, worldInfo);
 
 		byte[] chunkBytes = entityChunkData.getBytes();
 		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
 			 NBTInputStream nbtIn = new NBTInputStream(in, entityChunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag) {
-				parseEntities(NbtUtil.getChild((CompoundTag) tag, "Entities", ListTag.class), true);
+				parseEntities(NbtUtil.getChild((CompoundTag) tag, "Entities", ListTag.class),
+						worldInfo.getVersion().getNumVersion() >= VERSION_18.getNumVersion());
 			}
 		}
 	}
@@ -149,10 +148,10 @@ public class RawChunk {
 		itemFrames = new ArrayList<>();
 		chests = new ArrayList<>();
 
-		sections = new Section[MAX_SECTIONS];
+		sections = new Section[maxSections];
 	}
 
-	private void init(ChunkData chunkData, WorldStats worldStats, Version version) throws IOException {
+	private void init(ChunkData chunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		clear();
 
 		byte [] chunkBytes = chunkData.getBytes();
@@ -169,7 +168,7 @@ public class RawChunk {
 					ListTag sectionsTag = NbtUtil.getChild(level, "Sections", ListTag.class);
 					if (sectionsTag != null) {
 						// Parse as anvil format
-						parseAnvilData(level, sectionsTag, worldStats, version);
+						parseAnvilData(level, sectionsTag, worldStats, worldInfo);
 					} else {
 						// Parse as McRegion format
 						parseMcRegionData(level);
@@ -177,16 +176,19 @@ public class RawChunk {
 
 					ListTag entitiesTag = NbtUtil.getChild(level, "Entities", ListTag.class);
 					if (entitiesTag != null && !entitiesTag.getValue().isEmpty()) {
-						parseEntities(entitiesTag, version.getNumVersion() >= VERSION_18.getNumVersion());
+						parseEntities(entitiesTag, worldInfo.getVersion().getNumVersion() >= VERSION_18.getNumVersion());
 					}
 
 					ListTag tileEntitiesTag = NbtUtil.getChild(level, "TileEntities", ListTag.class);
 					if (tileEntitiesTag != null) {
-						parseBlockEntities(tileEntitiesTag, version.getNumVersion() >= VERSION_18.getNumVersion());
+						parseBlockEntities(tileEntitiesTag, worldInfo.getVersion().getNumVersion() >= VERSION_18.getNumVersion());
 					}
 				}
 				else { //Chunk was generated by Minecraft 1.18+
 					parseChunkPosition(root);
+
+					//yPos is the minimum or lowest section position in the chunk (-4 in 1.18)
+					minSectionY = NbtUtil.getInt(root, "yPos", -4);
 
 					ListTag sectionsTag = NbtUtil.getChild(root, "sections", ListTag.class);
 					parseAnvilDataNew(root, sectionsTag, worldStats);
@@ -199,20 +201,8 @@ public class RawChunk {
 	}
 
 	private void parseChunkPosition(CompoundTag tag) {
-		chunkX = chunkY = chunkZ = 0;
-
-		IntTag xPosTag = NbtUtil.getChild(tag, "xPos", IntTag.class);
-		if (xPosTag != null)
-			chunkX = xPosTag.getValue();
-
-		IntTag zPosTag = NbtUtil.getChild(tag, "zPos", IntTag.class);
-		if (zPosTag != null)
-			chunkZ = zPosTag.getValue();
-
-		//yPos is the minimum or lowest section position in the chunk (added in 1.18, with -4 as lowest)
-		IntTag yPosTag = NbtUtil.getChild(tag, "yPos", IntTag.class);
-		if (yPosTag != null)
-			minSectionY = yPosTag.getValue();
+		chunkX = NbtUtil.getInt(tag, "xPos", 0);
+		chunkZ = NbtUtil.getInt(tag, "zPos", 0);
 	}
 
 	private void parseEntities(ListTag entitiesTag, boolean is118) {
@@ -266,7 +256,7 @@ public class RawChunk {
 					if (is118) {
 						localY = y + 64;
 					} else {
-						localY = y - (chunkY * HEIGHT);
+						localY = y;
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
@@ -318,7 +308,7 @@ public class RawChunk {
 					if (is118) {
 						localY = y + 64;
 					} else {
-						localY = y - (chunkY * HEIGHT);
+						localY = y;
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
@@ -501,7 +491,7 @@ public class RawChunk {
 
 			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) + 4;
 
-			if (sectionY < minSectionY || sectionY >= MAX_SECTIONS)
+			if (sectionY < minSectionY || sectionY >= maxSections)
 				continue;
 
 			ByteArrayTag skylightTag = NbtUtil.getChild(compound, "SkyLight", ByteArrayTag.class);
@@ -610,7 +600,7 @@ public class RawChunk {
 		}
 	}
 
-	private void parseAnvilData(CompoundTag tag, ListTag sectionsTag, WorldStats worldStats, Version version) {
+	private void parseAnvilData(CompoundTag tag, ListTag sectionsTag, WorldStats worldStats, WorldInfo worldInfo) {
 		for (Tag t : sectionsTag.getValue()) {
 			if (!(t instanceof CompoundTag))
 				continue;
@@ -621,11 +611,9 @@ public class RawChunk {
 
 			/* In order to get block checking between 1.17 and 1.18 chunks to work and to
 			   have chunks line up correctly when rendering we need to offset 1.17 or older chunks */
-			if (version.getNumVersion() >= VERSION_18.getNumVersion()) {
-				sectionY += 4;
-			}
+			sectionY += worldInfo.getSectionArrayOffset();
 
-			if (sectionY < 0 || sectionY >= MAX_SECTIONS)
+			if (sectionY < 0 || sectionY >= maxSections)
 				continue;
 
 			ByteArrayTag blocksTag = NbtUtil.getChild(compound, "Blocks", ByteArrayTag.class);
@@ -870,7 +858,7 @@ public class RawChunk {
 	}
 
 	public int getBlockId(final int x, final int y, final int z) {
-		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+		if (y < 0 || y >= Minecraft.getChunkHeight() || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
 			return 0;
 
 		final int sectionY = y / SECTION_HEIGHT;
@@ -911,7 +899,7 @@ public class RawChunk {
 	}
 
 	public int getBlockData(final int x, final int y, final int z) {
-		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+		if (y < 0 || y >= Minecraft.getChunkHeight() || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
 			return 0;
 
 		final int sectionY = y / SECTION_HEIGHT;
@@ -955,7 +943,7 @@ public class RawChunk {
 	}
 
 	public BlockProperties getBlockState(final int x, final int y, final int z) {
-		if (y < 0 || y >= RawChunk.HEIGHT || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
+		if (y < 0 || y >= Minecraft.getChunkHeight() || x < 0 || x > RawChunk.WIDTH || z < 0 || z > RawChunk.DEPTH)
 			return null;
 
 		final int sectionY = y / SECTION_HEIGHT;
@@ -1032,7 +1020,7 @@ public class RawChunk {
 	public int getBlockIdClamped(final int x, final int y, final int z, final int defaultId) {
 		if (x < 0 || x >= WIDTH)
 			return defaultId;
-		if (y < 0 || y >= HEIGHT)
+		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return defaultId;
 		if (z < 0 || z >= DEPTH)
 			return defaultId;
@@ -1220,8 +1208,6 @@ public class RawChunk {
 
 	//TODO: for versions newer than 1.13 can we switch to using sections without the blockId and blockData arrays?
 //	private static class SectionNew {
-//		public int[][][] blockIds;
-//		public byte[][][] blockData;
 //		public String[][][] blockNames;
 //		public BlockProperties[][][] blockStates;
 //
@@ -1231,9 +1217,7 @@ public class RawChunk {
 //		public byte[][][] skylight;
 //		public byte[][][] blocklight;
 //
-//		public Section118() {
-//			blockIds = new int[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
-//			blockData = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+//		public SectionNew() {
 //			blockNames = new String[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 //			blockStates = new BlockProperties[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
 //			biomeIds = new String[64];

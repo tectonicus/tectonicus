@@ -9,20 +9,8 @@
 
 package tectonicus;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import javax.imageio.ImageIO;
-
-import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
@@ -47,6 +35,15 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
 import tectonicus.util.Vector2f;
+
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ItemRenderer
 {	
@@ -117,7 +114,7 @@ public class ItemRenderer
 		rawChunk.setBlockId(2, 4, 0, (byte)BlockIds.OBSIDIAN);
 		rawChunk.setBlockId(3, 4, 0, (byte)BlockIds.OBSIDIAN);
 		
-		for (int y=0; y<RawChunk.HEIGHT; y++)
+		for (int y=0; y< Minecraft.getChunkHeight(); y++)
 		{
 			for (int x=0; x<RawChunk.WIDTH; x++)
 			{
@@ -129,7 +126,7 @@ public class ItemRenderer
 					BlockType type = registry.find(blockId, blockData);
 					if (type != null)
 					{
-						if (x == 0 || y == 0 || z == 0 || x == RawChunk.WIDTH-1 || y == RawChunk.HEIGHT-1 || z == RawChunk.DEPTH-1)
+						if (x == 0 || y == 0 || z == 0 || x == RawChunk.WIDTH-1 || y == Minecraft.getChunkHeight()-1 || z == RawChunk.DEPTH-1)
 						{
 							type.addEdgeGeometry(x, y, z, context, registry, rawChunk, geometry);
 						}
@@ -509,7 +506,7 @@ public class ItemRenderer
 			this.texturePack = texturePack;
 			this.registry = registry;
 		}
-		
+
 		@Override
 		public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z)
 		{

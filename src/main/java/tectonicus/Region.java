@@ -15,6 +15,7 @@ import org.jnbt.NBTInputStream.Compression;
 import tectonicus.cache.BiomeCache;
 import tectonicus.exceptions.RegionProcessingException;
 import tectonicus.exceptions.UnknownCompressionTypeException;
+import tectonicus.world.WorldInfo;
 import tectonicus.world.filter.BlockFilter;
 
 import java.io.File;
@@ -242,7 +243,7 @@ public class Region {
 		private int entityNumSectors;
 	}
 
-	public Chunk loadChunk(ChunkCoord chunkCoord, BiomeCache biomeCache, BlockFilter filter, WorldStats worldStats, Version version) {
+	public Chunk loadChunk(ChunkCoord chunkCoord, BiomeCache biomeCache, BlockFilter filter, WorldStats worldStats, WorldInfo worldInfo) {
 		if (!containsChunk(chunkCoord))
 			return null;
 
@@ -257,7 +258,7 @@ public class Region {
 		if (entitySectorOffset > 0) {
 			entityChunkData = getChunkData(entitySectorOffset, entityFileSizeBytes, entityBytes);
 			try {
-				chunk.loadRaw(chunkData, entityChunkData, filter, worldStats, version);
+				chunk.loadRaw(chunkData, entityChunkData, filter, worldStats, worldInfo);
 			} catch (IOException e) {
 				System.err.println("Error while trying to load entities for chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + entityRegionFile.getAbsolutePath());
 				e.printStackTrace();
@@ -265,7 +266,7 @@ public class Region {
 		}
 
 		try {
-			chunk.loadRaw(chunkData, filter, worldStats, version);
+			chunk.loadRaw(chunkData, filter, worldStats, worldInfo);
 		} catch (IOException e) {
 			System.err.println("Error while trying to load chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + regionFile.getAbsolutePath());
 			e.printStackTrace();

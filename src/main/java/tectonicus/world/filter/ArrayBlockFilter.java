@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,6 +10,7 @@
 package tectonicus.world.filter;
 
 import tectonicus.BlockIds;
+import tectonicus.Minecraft;
 import tectonicus.raw.RawChunk;
 
 public class ArrayBlockFilter implements BlockFilter
@@ -36,7 +37,7 @@ public class ArrayBlockFilter implements BlockFilter
 			{
 				if (!collumns[x][z])
 				{
-					for (int y=0; y<RawChunk.HEIGHT; y++)
+					for (int y = 0; y< Minecraft.getChunkHeight(); y++)
 					{
 						rawChunk.setBlockId(x, y, z, (byte)BlockIds.AIR);
 						rawChunk.setSkyLight(x, y, z, (byte)16);

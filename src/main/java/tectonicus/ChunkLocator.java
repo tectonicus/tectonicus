@@ -13,6 +13,7 @@ import java.io.File;
 
 import lombok.extern.log4j.Log4j2;
 import tectonicus.cache.BiomeCache;
+import tectonicus.world.WorldInfo;
 import tectonicus.world.filter.BlockFilter;
 
 @Log4j2
@@ -56,7 +57,7 @@ public class ChunkLocator
 		return found;
 	}
 	
-	public Chunk loadChunkFromRegion(ChunkCoord chunkCoord, BlockFilter filter, Version version)
+	public Chunk loadChunkFromRegion(ChunkCoord chunkCoord, BlockFilter filter, WorldInfo worldInfo)
 	{
 		Chunk chunk = null;
 		Region region = null;
@@ -68,7 +69,7 @@ public class ChunkLocator
 			region = regionCache.getRegion(regionCoord);
 			if (region != null)
 			{
-				chunk = region.loadChunk(chunkCoord, biomeCache, filter, null, version);
+				chunk = region.loadChunk(chunkCoord, biomeCache, filter, null, worldInfo);
 			}
 		}
 		catch (Exception e)
