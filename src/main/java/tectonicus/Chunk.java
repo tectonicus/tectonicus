@@ -78,10 +78,10 @@ public class Chunk
 		return rawChunk;
 	}
 	
-	public void loadRaw(ChunkData chunkData, BlockFilter filter, WorldStats worldStats) throws IOException {
+	public void loadRaw(ChunkData chunkData, BlockFilter filter, WorldStats worldStats, Version version) throws IOException {
 		if (rawChunk == null)
 		{
-			rawChunk = new RawChunk(chunkData, worldStats);
+			rawChunk = new RawChunk(chunkData, worldStats, version);
 			filter.filter(rawChunk);
 		}
 		
@@ -91,10 +91,10 @@ public class Chunk
 		}
 	}
 
-	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats) throws IOException {
+	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats, Version version) throws IOException {
 		if (rawChunk == null)
 		{
-			rawChunk = new RawChunk(chunkData, entityChunkData, worldStats);
+			rawChunk = new RawChunk(chunkData, entityChunkData, worldStats, version);
 			filter.filter(rawChunk);
 		}
 
@@ -295,7 +295,7 @@ public class Chunk
 	{
 		if (geometry == null)
 			return;
-		
+
 		geometry.drawSolidSurfaces(	coord.x * RawChunk.WIDTH,
 									0,
 									coord.z * RawChunk.DEPTH);
@@ -305,7 +305,7 @@ public class Chunk
 	{
 		if (geometry == null)
 			return;
-		
+
 		geometry.drawAlphaTestedSurfaces(	coord.x * RawChunk.WIDTH,
 											0,
 											coord.z * RawChunk.DEPTH);
@@ -315,7 +315,7 @@ public class Chunk
 	{
 		if (geometry == null)
 			return;
-		
+
 		geometry.drawTransparentSurfaces(	coord.x * RawChunk.WIDTH,
 											0,
 											coord.z * RawChunk.DEPTH);

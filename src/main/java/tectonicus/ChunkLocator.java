@@ -56,16 +56,7 @@ public class ChunkLocator
 		return found;
 	}
 	
-	public Chunk loadChunk(ChunkCoord coord, BlockFilter filter)
-	{
-		Chunk chunk = null;
-		
-		chunk = loadChunkFromRegion(coord, filter);
-		
-		return chunk;
-	}
-	
-	private Chunk loadChunkFromRegion(ChunkCoord chunkCoord, BlockFilter filter)
+	public Chunk loadChunkFromRegion(ChunkCoord chunkCoord, BlockFilter filter, Version version)
 	{
 		Chunk chunk = null;
 		Region region = null;
@@ -77,7 +68,7 @@ public class ChunkLocator
 			region = regionCache.getRegion(regionCoord);
 			if (region != null)
 			{
-				chunk = region.loadChunk(chunkCoord, biomeCache, filter, null);
+				chunk = region.loadChunk(chunkCoord, biomeCache, filter, null, version);
 			}
 		}
 		catch (Exception e)

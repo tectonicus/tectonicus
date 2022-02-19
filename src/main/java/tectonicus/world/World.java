@@ -9,6 +9,7 @@
 
 package tectonicus.world;
 
+import lombok.Getter;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -111,6 +112,8 @@ public class World implements BlockContext
 	private BlockRegistry modelRegistry;
 	
 	private LevelDat levelDat;
+	@Getter
+	private Version version;
 	
 	private List<Player> players;
 	private PlayerSkinCache playerSkinCache;
@@ -216,7 +219,9 @@ public class World implements BlockContext
 			if (StringUtils.isNotEmpty(versionNumber)) {
 				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
 			}
+			version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 		}
+
 		log.info("Loading textures");
 		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars, args);
 		this.textureVersion = texturePack.getVersion();
@@ -602,7 +607,7 @@ public class World implements BlockContext
 					composite.add(worldSubset.getBlockFilter(coord));
 					
 					// Not loaded, so load it now
-					Chunk c = chunkLocator.loadChunk(coord, composite);
+					Chunk c = chunkLocator.loadChunkFromRegion(coord, composite, version);
 					if (c != null)
 					{	
 						rawLoadedChunks.put(coord, c);

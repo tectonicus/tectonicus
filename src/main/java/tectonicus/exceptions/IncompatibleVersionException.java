@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,7 +20,7 @@ public class IncompatibleVersionException extends RuntimeException{
     }
 
     public IncompatibleVersionException(Version textureVersion, String worldVersion){
-        this(MessageFormat.format("The texture pack version ({0}) is incompatible with the world version ({1}).", textureVersion.getStrVersion(), worldVersion));
+        this(MessageFormat.format("The texture pack version ({0}) is incompatible with the world version ({1}).", textureVersion.getName(), worldVersion));
     }
 
 }
