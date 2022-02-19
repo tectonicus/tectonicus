@@ -5,6 +5,7 @@
 
 	<Water stringId="minecraft:flowing_water" name="Water" texture="water_still.png" />
 	<Water stringId="minecraft:water" name="Water" texture="water_still.png" />
+	<Water stringId="minecraft:bubble_column" name="Bubble Column" texture="water_still.png" />
 
 	<Solid stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" />
 	<Solid stringId="minecraft:lava" name="Lava" texture="lava_still.png" />

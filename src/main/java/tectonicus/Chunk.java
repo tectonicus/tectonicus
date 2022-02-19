@@ -132,7 +132,7 @@ public class Chunk
 
 							// These blocks don't have models or they require special handling so they are created by the old system
 							//TODO: we should be able to detect some of these programatically and not hard code all of these blocks
-							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:lava") //|| blockName.equals("minecraft:air") || blockName.equals("minecraft:cave_air")
+							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:bubble_column") || blockName.equals("minecraft:lava")
 									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
 									|| blockName.contains("skull") || blockName.contains("banner")
 									|| blockName.endsWith("bed") || blockName.contains("sign") || blockName.contains("chest")
