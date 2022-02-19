@@ -17,5 +17,5 @@ import tectonicus.Version;
 @RequiredArgsConstructor
 public class WorldInfo {
 	private final Version version;
-	private final int sectionArrayOffset;
+	private final boolean sectionArrayOffset;
 }

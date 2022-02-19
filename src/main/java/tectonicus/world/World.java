@@ -215,7 +215,7 @@ public class World implements BlockContext
 		}
 
 		Version version = VERSION_UNKNOWN;
-		int sectionArrayOffset = 0;
+		boolean sectionArrayOffset = false;
 		String worldVersion = levelDat.getVersion();
 		if (worldVersion != null) {
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
@@ -228,7 +228,7 @@ public class World implements BlockContext
 				Minecraft.setChunkHeight(256);
 			} else {
 				Minecraft.setChunkHeight(384);
-				sectionArrayOffset = 4;
+				sectionArrayOffset = true;
 			}
 			log.info("Current world max chunk height: " + Minecraft.getChunkHeight());
 		}

@@ -102,7 +102,7 @@ public class RawChunk {
 
 	public RawChunk(File file) throws IOException {
 		maxSections = Minecraft.getChunkHeight() / SECTION_HEIGHT;
-		init(new ChunkData(Files.readAllBytes(file.toPath()), Compression.Gzip), null, new WorldInfo(VERSION_UNKNOWN, 0));
+		init(new ChunkData(Files.readAllBytes(file.toPath()), Compression.Gzip), null, new WorldInfo(VERSION_UNKNOWN, false));
 	}
 
 	public RawChunk(ChunkData chunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
@@ -254,7 +254,7 @@ public class RawChunk {
 					final int localX = x - (chunkX * WIDTH);
 					int localY;
 					if (is118) {
-						localY = y + 64;
+						localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
 					} else {
 						localY = y;
 					}
@@ -306,7 +306,7 @@ public class RawChunk {
 					final int localX = x - (chunkX * WIDTH);
 					int localY;
 					if (is118) {
-						localY = y + 64;
+						localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
 					} else {
 						localY = y;
 					}
@@ -489,7 +489,7 @@ public class RawChunk {
 		for (Tag t : sectionsTag.getValue()) {
 			CompoundTag compound = (CompoundTag) t;
 
-			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) + 4;
+			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) + Math.abs(minSectionY);
 
 			if (sectionY < minSectionY || sectionY >= maxSections)
 				continue;
@@ -611,7 +611,8 @@ public class RawChunk {
 
 			/* In order to get block checking between 1.17 and 1.18 chunks to work and to
 			   have chunks line up correctly when rendering we need to offset 1.17 or older chunks */
-			sectionY += worldInfo.getSectionArrayOffset();
+			if (worldInfo.isSectionArrayOffset())
+				sectionY += Math.abs(minSectionY);
 
 			if (sectionY < 0 || sectionY >= maxSections)
 				continue;
