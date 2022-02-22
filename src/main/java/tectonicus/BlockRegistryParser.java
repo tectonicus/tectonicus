@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -833,7 +833,7 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			
 			String hasPostStr = element.getAttribute("hasPost");
-			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));
+			final boolean hasPost = (hasPostStr.equalsIgnoreCase("true"));
 
 			if (StringUtils.isNotEmpty(stringId)) {
 				blockType = new Banner(stringId, name, texture, hasPost, patternImages);
@@ -844,13 +844,14 @@ public class BlockRegistryParser
 		else if (nodeName.equals("itemframe") || nodeName.equals("itemframenew"))
 		{
 			SubTexture background = parseTexture(element, "background", null);
+			SubTexture glowBackground = parseTexture(element, "glowBackground", background);
 			SubTexture border = parseTexture(element, "border", null);
 			SubTexture map = parseTexture(element, "map", null);
 
 			if (nodeName.equals("itemframe")) {
 				blockType = new ItemFrame(name, background, border, map);
 			} else {
-				blockType = new ItemFrameNew(name, background, border, map);
+				blockType = new ItemFrameNew(name, background, glowBackground, border, map);
 			}
 		}
 		else if (nodeName.equals("endrod"))

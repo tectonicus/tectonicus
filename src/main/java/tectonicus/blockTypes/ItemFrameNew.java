@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -28,11 +28,11 @@ import static tectonicus.Version.VERSION_4;
 public class ItemFrameNew implements BlockType
 {
 	private final String name;
-	private final SubTexture background, border, map;
+	private final SubTexture background, glowBackground, border, map;
 
 	private static final String FILLED_MAP = "minecraft:filled_map";
 
-	public ItemFrameNew(String name, SubTexture background, SubTexture border, SubTexture map)
+	public ItemFrameNew(String name, SubTexture background, SubTexture glowBackground, SubTexture border, SubTexture map)
 	{
 		this.name = name;
 
@@ -42,7 +42,8 @@ public class ItemFrameNew implements BlockType
 		else
 			texel = 1.0f / 16.0f;
 
-		this.background = new SubTexture(background.texture, background.u0+texel*2, background.v0+texel*2, background.u1-texel*2, background.v1-texel*2);;
+		this.background = new SubTexture(background.texture, background.u0+texel*2, background.v0+texel*2, background.u1-texel*2, background.v1-texel*2);
+		this.glowBackground = new SubTexture(glowBackground.texture, glowBackground.u0+texel*2, glowBackground.v0+texel*2, glowBackground.u1-texel*2, glowBackground.v1-texel*2);
 		this.border = border;
 		this.map = map;
 	}
@@ -75,13 +76,19 @@ public class ItemFrameNew implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
 		Mesh mesh = geometry.getMesh(border.texture, Geometry.MeshType.Solid);
-		Mesh backgroundMesh = geometry.getMesh(background.texture, Geometry.MeshType.Solid);
+		Mesh backgroundMesh;
 		Mesh mapMesh = geometry.getMesh(map.texture, Geometry.MeshType.AlphaTest);
 
 		final float texel = 1.0f/16.0f;
 
 		for (PaintingEntity entity : rawChunk.getItemFrames())
 		{
+			if (entity.getId().equals("minecraft:glow_item_frame")) {
+				backgroundMesh = geometry.getMesh(glowBackground.texture, Geometry.MeshType.Solid);
+			} else {
+				backgroundMesh = geometry.getMesh(background.texture, Geometry.MeshType.Solid);
+			}
+
 			int tempX = entity.getLocalX();
 			int tempY = entity.getLocalY();
 			int tempZ = entity.getLocalZ();

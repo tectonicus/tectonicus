@@ -211,8 +211,10 @@ public class RawChunk {
 				CompoundTag entity = (CompoundTag) t;
 
 				StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
-				boolean painting = idTag.getValue().endsWith("Painting") || idTag.getValue().equals("minecraft:painting");
-				boolean itemFrame = idTag.getValue().equals("ItemFrame") || idTag.getValue().equals("minecraft:item_frame");
+				String id = idTag.getValue();
+				boolean painting = id.endsWith("Painting") || id.equals("minecraft:painting");
+				boolean itemFrame = id.equals("ItemFrame") || id.equals("minecraft:item_frame")
+						|| id.equals("minecraft:glow_item_frame");
 				if (painting || itemFrame) {
 					IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
 					IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
@@ -263,7 +265,7 @@ public class RawChunk {
 
 					if (painting) {
 						StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
-						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, motiveTag.getValue(), direction));
+						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, motiveTag.getValue(), direction));
 					} else {
 						String item = "";
 						Map<String, Tag> map = entity.getValue();
@@ -279,7 +281,7 @@ public class RawChunk {
 							}
 						}
 
-						itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, item, direction));
+						itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, item, direction));
 					}
 				}
 			}
