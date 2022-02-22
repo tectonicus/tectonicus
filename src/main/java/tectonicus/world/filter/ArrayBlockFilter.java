@@ -11,31 +11,34 @@ package tectonicus.world.filter;
 
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
+import tectonicus.raw.PaintingEntity;
 import tectonicus.raw.RawChunk;
+
+import java.util.List;
 
 public class ArrayBlockFilter implements BlockFilter
 {
 
-	private boolean[][] collumns;
+	private final boolean[][] columns;
 	
 	public ArrayBlockFilter()
 	{
-		collumns = new boolean[RawChunk.WIDTH][RawChunk.DEPTH];
+		columns = new boolean[RawChunk.WIDTH][RawChunk.DEPTH];
 	}
 	
 	public void set(final int x, final int z, final boolean allow)
 	{
-		collumns[x][z] = allow;
+		columns[x][z] = allow;
 	}
 	
 	@Override
 	public void filter(RawChunk rawChunk)
 	{
-		for (int x=0; x<collumns.length; x++)
+		for (int x = 0; x< columns.length; x++)
 		{
-			for (int z=0; z<collumns[0].length; z++)
+			for (int z = 0; z< columns[0].length; z++)
 			{
-				if (!collumns[x][z])
+				if (!columns[x][z])
 				{
 					for (int y = 0; y< Minecraft.getChunkHeight(); y++)
 					{
@@ -45,6 +48,11 @@ public class ArrayBlockFilter implements BlockFilter
 				}
 			}
 		}
+
+		List<PaintingEntity> paintings = rawChunk.getPaintings();
+		paintings.removeIf(p -> !columns[p.getLocalX()][p.getLocalZ()]);
+		List<PaintingEntity> itemFrames = rawChunk.getItemFrames();
+		itemFrames.removeIf(i -> !columns[i.getLocalX()][i.getLocalZ()]);
 	}
 	
 	@Override

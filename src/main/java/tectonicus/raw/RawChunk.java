@@ -1063,7 +1063,7 @@ public class RawChunk {
 	}
 
 	public List<PaintingEntity> getPaintings() {
-		return Collections.unmodifiableList(paintings);
+		return paintings;
 	}
 
 	public Map<String, SkullEntity> getSkulls() {
@@ -1079,7 +1079,7 @@ public class RawChunk {
 	}
 
 	public List<PaintingEntity> getItemFrames() {
-		return Collections.unmodifiableList(itemFrames);
+		return itemFrames;
 	}
 
 	public List<ContainerEntity> getChests() {
