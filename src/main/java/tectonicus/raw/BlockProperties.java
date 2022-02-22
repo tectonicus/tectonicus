@@ -18,7 +18,7 @@ import java.util.TreeMap;
 @Data
 @NoArgsConstructor
 public class BlockProperties {
-    private Map<String, String> properties = new TreeMap<>();
+    private Map<String, String> properties = new TreeMap<>();  // we use a TreeMap to get automatic sorting
     private String propertiesString;
 
     public BlockProperties(Map<String, String> properties) {
@@ -29,10 +29,6 @@ public class BlockProperties {
     @Override
     public String toString() {
         return properties.toString().replaceAll("^\\{|\\s+|}$", "");
-    }
-
-    public void put(String key, String value) {
-        properties.put(key, value);
     }
 
     public String get(String key) {
