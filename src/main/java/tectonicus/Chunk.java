@@ -10,6 +10,7 @@
 package tectonicus;
 
 import org.joml.Vector3f;
+import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockStateModel;
 import tectonicus.blockTypes.BlockStateWrapper;
@@ -124,22 +125,20 @@ public class Chunk
 				{
 					if (mask.isVisible(x, y, z))
 					{
-						BlockType type = null;
+						BlockType type;
 						final String blockName = rawChunk.getBlockName(x, y, z);
-						if (blockName != null && !blockName.contains("minecraft:air") && !blockName.contains("_air"))
+						if (blockName != null)
 						{
+							if (blockName.contains("minecraft:air") || blockName.contains("_air")) {
+								continue;
+							}
+
 							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
 
-							// These blocks don't have models or they require special handling so they are created by the old system
-							//TODO: we should be able to detect some of these programatically and not hard code all of these blocks
-							if (blockName.equals("minecraft:water") || blockName.equals("minecraft:bubble_column") || blockName.equals("minecraft:lava")
-									|| blockName.contains("shulker_box") || (blockName.contains("head") && !blockName.equals("minecraft:piston_head"))
-									|| blockName.contains("skull") || blockName.contains("banner")
-									|| blockName.endsWith("bed") || blockName.contains("sign") || blockName.contains("chest")
-									|| blockName.contains("beacon") || blockName.equals("minecraft:end_portal") || blockName.equals("minecraft:end_gateway")
-									|| blockName.equals("minecraft:conduit") || blockName.equals("minecraft:bell")) {
-								type = registry.find(blockName);
-							} else {
+							// Blocks in the old registry either don't have models or they require special handling
+							type = registry.find(blockName);
+
+							if(type instanceof Air) { // If the type is air then no block was found in the old registry
 								if (modelRegistry.containsSingleVariantBlock(blockName)) {
 									modelRegistry.getSingleVariantModel(blockName).createGeometry(x, y, z, world, rawChunk, geometry);
 								} else {
@@ -170,7 +169,7 @@ public class Chunk
 							type = registry.find(blockId, data);
 						}
 
-						if (type != null)
+						if (type != null && !(type instanceof Air))
 						{
 							if (x == 0 || y == 0 || z == 0 || x == RawChunk.WIDTH-1 || y == Minecraft.getChunkHeight()-1 || z == RawChunk.DEPTH-1)
 							{
