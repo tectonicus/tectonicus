@@ -180,7 +180,7 @@ public class TileRenderer
 			type = DisplayType.OFFSCREEN_EGL;
 		}
 
-		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), type, args.getTileSize(), args.getTileSize(), args.getColourDepth(), args.getAlphaBits(), 24, args.getNumSamples());
+		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), type, 2048, 2048, args.getColourDepth(), args.getAlphaBits(), 24, args.getNumSamples());
 
 		if (rasteriser != null)
 		{
