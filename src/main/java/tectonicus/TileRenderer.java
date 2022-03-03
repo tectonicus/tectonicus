@@ -668,7 +668,7 @@ public class TileRenderer
 						String above = chunk.getBlockName(x, y+1, z);
 						String below = chunk.getBlockName(x, y-1, z);
 
-						if (id.equals(netherPortalName) && !above.equals(netherPortalName)) //Find vertical center portal blocks
+						if (id != null && id.equals(netherPortalName) && !above.equals(netherPortalName)) //Find vertical center portal blocks
 						{
 							ChunkCoord coord = chunk.getChunkCoord();
 

@@ -860,15 +860,19 @@ public class World implements BlockContext
 		{
 			final String name = c.getRawChunk().getBlockName(location.x, location.y, location.z);
 
-			BlockStateWrapper block = modelRegistry.getBlock(name);
-			if (block != null) {
-				return block;
-			} else {
-				unknownBlocks.computeIfAbsent(location, loc -> {
-					log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
-					return name;
-				});
+			if (name != null) {
+				BlockStateWrapper block = modelRegistry.getBlock(name);
+				if (block != null) {
+					return block;
+				} else {
+					unknownBlocks.computeIfAbsent(location, loc -> {
+						log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
+						return name;
+					});
 
+					return modelRegistry.getBlock(defaultBlockName);
+				}
+			} else {
 				return modelRegistry.getBlock(defaultBlockName);
 			}
 		}
@@ -879,11 +883,15 @@ public class World implements BlockContext
 	{
 		final String name = rawChunk.getBlockName(x, y, z);
 
-		BlockStateWrapper block = modelRegistry.getBlock(name);
-		if (block != null) {
-			return block;
+		if (name != null) {
+			BlockStateWrapper block = modelRegistry.getBlock(name);
+			if (block != null) {
+				return block;
+			} else {
+				log.warn("Unable to find {} block in registry.", name);
+				return modelRegistry.getBlock(defaultBlockName);
+			}
 		} else {
-			log.warn("Unable to find {} block in registry.", name);
 			return modelRegistry.getBlock(defaultBlockName);
 		}
 	}
