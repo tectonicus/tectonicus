@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,7 +23,7 @@ class PlayerTests
 	{
 		Player player = new Player(Paths.get("src/test/resources/8aeb40ad-a60c-429e-b239-25b7223c5fb7.dat"));
 		assertThat(player.getUUID(), is("8aeb40ada60c429eb23925b7223c5fb7"));
-		assertThat(player.getHealth(), is(20));
+		assertThat((int)player.getHealth(), is(20));
 		assertThat(player.getXpTotal(), is(11));
 	}
 }
