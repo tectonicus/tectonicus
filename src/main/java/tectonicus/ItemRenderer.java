@@ -9,8 +9,10 @@
 
 package tectonicus;
 
+import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
@@ -45,6 +47,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+@Log4j2
 public class ItemRenderer
 {	
 	private final Rasteriser rasteriser;
@@ -56,7 +59,7 @@ public class ItemRenderer
 	
 	public void renderCompass(Map map, File outFile) throws Exception
 	{
-		System.out.println("Generating compass image...");
+		log.info("Generating compass image...");
 		
 		BufferedImage compassImage = null;
 		try
@@ -69,8 +72,8 @@ public class ItemRenderer
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error while trying to read custom compass rose image: "+e);
-			System.err.println("Tried to read:"+map.getCustomCompassRose().getAbsolutePath());
+			log.error("Error while trying to read custom compass rose image: " + e);
+			log.error("Tried to read:"+map.getCustomCompassRose().getAbsolutePath());
 			e.printStackTrace();
 		}
 		
@@ -84,7 +87,7 @@ public class ItemRenderer
 	
 	public void renderPortal(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
 	{
-		System.out.println("Generating portal image...");
+		log.info("Generating portal image...");
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
@@ -98,12 +101,20 @@ public class ItemRenderer
 		rawChunk.setBlockId(2, 0, 0, (byte)BlockIds.OBSIDIAN);
 		rawChunk.setBlockId(3, 0, 0, (byte)BlockIds.OBSIDIAN);
 		
-		// First collumn
+		// First column
 		rawChunk.setBlockId(0, 1, 0, (byte)BlockIds.OBSIDIAN);
 		rawChunk.setBlockId(0, 2, 0, (byte)BlockIds.OBSIDIAN);
 		rawChunk.setBlockId(0, 3, 0, (byte)BlockIds.OBSIDIAN);
+
+		//Portal
+		rawChunk.setBlockId(1, 1, 0, (byte)BlockIds.PORTAL);
+		rawChunk.setBlockId(1, 2, 0, (byte)BlockIds.PORTAL);
+		rawChunk.setBlockId(1, 3, 0, (byte)BlockIds.PORTAL);
+		rawChunk.setBlockId(2, 1, 0, (byte)BlockIds.PORTAL);
+		rawChunk.setBlockId(2, 2, 0, (byte)BlockIds.PORTAL);
+		rawChunk.setBlockId(2, 3, 0, (byte)BlockIds.PORTAL);
 		
-		// Second collumn
+		// Second column
 		rawChunk.setBlockId(3, 1, 0, (byte)BlockIds.OBSIDIAN);
 		rawChunk.setBlockId(3, 2, 0, (byte)BlockIds.OBSIDIAN);
 		rawChunk.setBlockId(3, 3, 0, (byte)BlockIds.OBSIDIAN);
@@ -144,26 +155,40 @@ public class ItemRenderer
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
 		renderItem(item, outFile, 4, getAngleRad(55), getAngleRad(35));
 	}
-	
-	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
-	{		
-		ItemContext context = new ItemContext(texturePack, registry);
-		
-		Geometry geometry = new Geometry(rasteriser);
-		
+
+	public void renderBlockOld(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
+	{
 		RawChunk rawChunk = new RawChunk();
-		
-		rawChunk.setBlockId(0, 0, 0, (byte)blockId);
-		rawChunk.setBlockData(0, 0, 0, (byte)blockData);
-		rawChunk.setBlockLight(0, 0, 0, (byte)16);
-		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
-		
+		rawChunk.setBlockId(0, 0, 0, (byte) blockId);
+		rawChunk.setBlockData(0, 0, 0, (byte) blockData);
 		BlockType type = registry.find(blockId, blockData);
+		renderBlock(outFile, registry, texturePack, rawChunk, type);
+	}
+
+	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception
+	{
+		String blockName = block.getName();
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockName(0, 0, 0, blockName);
+		rawChunk.setBlockState(0, 0, 0, properties);
+		BlockType type = registry.find(blockName);
+		renderBlock(outFile, registry, texturePack, rawChunk, type);
+	}
+
+	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, RawChunk rawChunk, BlockType type) throws Exception
+	{
+		ItemContext context = new ItemContext(texturePack, registry);
+
+		Geometry geometry = new Geometry(rasteriser);
+
+		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+
 		if (type != null)
 		{
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
 		}
-		
+
 		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.1f, 0), 1, 1, 1);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
@@ -172,7 +197,7 @@ public class ItemRenderer
 	
 	public void renderSign(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
 	{		
-		System.out.println("Generating sign icon...");
+		log.info("Generating sign icon...");
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
@@ -185,10 +210,11 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 0, (byte)16);
 		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		HashMap<String, SignEntity> signs = new HashMap<>();
-		signs.put("x0y0z0", new SignEntity(0, 0, 0, 0, 0, 0, "", "Tectonicus", "", "", blockData, "black"));
+		signs.put("x0y0z0", new SignEntity(0, 0, 0, 0, 0, 0, "", "Tectonicus", "", "", blockData, null, "black"));
 		rawChunk.setSigns(signs);
 		
-		BlockType type = registry.find(blockId, blockData);
+		//BlockType type = registry.find(blockId, blockData);
+		BlockType type = registry.find("minecraft:oak_sign");
 		if (type != null)
 		{
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
@@ -202,7 +228,7 @@ public class ItemRenderer
 	
 	public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
 	{
-		System.out.println("Generating bed icon...");
+		log.info("Generating bed icon...");
 		
 		ItemContext context = new ItemContext(texturePack, registry);
 		
@@ -224,6 +250,10 @@ public class ItemRenderer
 		rawChunk.setBeds(beds);
 		
 		BlockType type = registry.find(BlockIds.BED, 10);
+		if (type instanceof Air) {
+			type = registry.find("minecraft:red_bed");
+		}
+
 		if (type != null)
 		{
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
@@ -496,7 +526,7 @@ public class ItemRenderer
 		}
 	}
 	
-	private class ItemContext implements BlockContext  //TODO: why does this implement BlockContext when it does nothing with any of the implemented methods?
+	private class ItemContext implements BlockContext  //This implements BlockContext so that it can be passed in when rendering items
 	{
 		private TexturePack texturePack;
 		private BlockTypeRegistry registry;

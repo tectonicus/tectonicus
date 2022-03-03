@@ -39,6 +39,7 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.raw.BlockEntity;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
@@ -541,8 +542,12 @@ public class TileRenderer
 							worldStats.incNumChunks();
 							
 							findSigns(c.getRawChunk(), signs, signFilter);
-							
-							findPortals(c.getRawChunk(), portals, portalFilter, worldStats);
+
+							if (Minecraft.getWorldVersion() < 13) {
+								findPortalsOld(c.getRawChunk(), portals, portalFilter, worldStats);
+							} else {
+								findPortals(c.getRawChunk(), portals, portalFilter, worldStats);
+							}
 							
 							findViews(c.getRawChunk(), views, viewFilter);
 							
@@ -603,7 +608,7 @@ public class TileRenderer
 		}
 	}
 	
-	private static void findPortals(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter, WorldStats stats)
+	private static void findPortalsOld(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter, WorldStats stats)
 	{
 		try
 		{			
@@ -632,6 +637,52 @@ public class TileRenderer
 														y-Math.round((y-(tempY+1))/2),
 														coord.z * RawChunk.DEPTH + z);
 							
+							if (filter.passesFilter(coord, pos))
+							{
+								portals.add( new Portal(pos.x, pos.y, pos.z) );
+							}
+						}
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private static void findPortals(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter, WorldStats stats)
+	{
+		try
+		{
+			String netherPortalName = Block.NETHER_PORTAL.getName();
+
+			for (int x=0; x<RawChunk.WIDTH; x++)
+			{
+				for (int y=1; y<Minecraft.getChunkHeight()-1; y++)
+				{
+					for (int z=0; z<RawChunk.DEPTH; z++)
+					{
+						String id = chunk.getBlockName(x, y, z);
+						String above = chunk.getBlockName(x, y+1, z);
+						String below = chunk.getBlockName(x, y-1, z);
+
+						if (id.equals(netherPortalName) && !above.equals(netherPortalName)) //Find vertical center portal blocks
+						{
+							ChunkCoord coord = chunk.getChunkCoord();
+
+							int tempY = y;
+							while (below.equals(netherPortalName))
+							{
+								tempY -= 1;
+								below = chunk.getBlockName(x, tempY, z);
+							}
+
+							Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
+									y-Math.round((y-(tempY+1))/2),
+									coord.z * RawChunk.DEPTH + z);
+
 							if (filter.passesFilter(coord, pos))
 							{
 								portals.add( new Portal(pos.x, pos.y, pos.z) );
@@ -1633,6 +1684,7 @@ public class TileRenderer
 			case VERSION_RV:
 			case VERSIONS_9_TO_11:
 			case VERSION_12:
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
 				writeImage(texturePack.getItem("assets/minecraft/textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
 				writeImage(texturePack.getItem("assets/minecraft/textures/items/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
 				writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
@@ -1646,6 +1698,11 @@ public class TileRenderer
 				break;
 
 			default: //assume version is 1.13+
+				if (texturePackVersion == VERSION_13) {
+					writeImage(texturePack.getItem("assets/minecraft/textures/item/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				} else {
+					writeImage(texturePack.getItem("assets/minecraft/textures/item/oak_sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				}
 				writeImage(texturePack.getItem("assets/minecraft/textures/item/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
 				writeImage(texturePack.getItem("assets/minecraft/textures/item/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
 				writeImage(texturePack.getItem("assets/minecraft/textures/item/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
@@ -1697,7 +1754,7 @@ public class TileRenderer
 		// Write default player icon
 		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		
-		//Extract Leaflet/Vue resources
+		//Extract Leaflet resources
 		extractMapResources(exportDir);
 
 		ArrayList<String> scriptResources = new ArrayList<>();
@@ -1714,16 +1771,12 @@ public class TileRenderer
 		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptImagesDir.mkdirs();
 
-		FileUtils.extractResource("vue.min.js", new File(scriptsDir, "vue.min.js"));
-
 		FileUtils.extractResource("styles.css", new File(scriptsDir, "styles.css"));
 
 		FileUtils.extractResource("math.js", new File(scriptsDir, "math.js"));
 		FileUtils.extractResource("leaflet.js", new File(scriptsDir, "leaflet.js"));
 		FileUtils.extractResource("leaflet.css", new File(scriptsDir, "leaflet.css"));
-		FileUtils.extractResource("leafletMap.js", new File(scriptsDir, "leafletMap.js"));
 		FileUtils.extractResource("leafletStyles.css", new File(scriptsDir, "leafletStyles.css"));
-		FileUtils.extractResource("L.TileLayer.NoGap.js", new File(scriptsDir, "L.TileLayer.NoGap.js"));
 		FileUtils.extractResource("Images/layers.png", new File(scriptImagesDir, "layers.png"));
 		FileUtils.extractResource("Images/layers-2x.png", new File(scriptImagesDir, "layers-2x.png"));
 		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
@@ -2158,8 +2211,13 @@ public class TileRenderer
 		try
 		{
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
-			itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
-			itemRenderer.renderSign(new File(exportDir, "Images/Sign.png"), registry, texturePack, BlockIds.SIGN_POST, 14);
+			if (texturePack.getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
+				itemRenderer.renderBlockOld(new File(exportDir, "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
+			} else {
+				Map<String, String> properties = new HashMap<>();
+				properties.put("facing", "south");
+				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registry, texturePack, Block.CHEST, new BlockProperties(properties));
+			}
 			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registry, texturePack);
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registry, texturePack);

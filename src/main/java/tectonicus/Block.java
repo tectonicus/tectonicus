@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,8 +20,10 @@ public enum Block {
 	BASALT("minecraft:basalt"),
 	BEDROCK("minecraft:bedrock"),
 	BLACKSTONE("minecraft:blackstone"),
+	CHEST("minecraft:chest"),
 	LAVA("minecraft:lava"),
 	NETHER_GOLD_ORE("minecraft:nether_gold_ore"),
+	NETHER_PORTAL("minecraft:nether_portal"),
 	NETHER_QUARTZ_ORE("minecraft:nether_quartz_ore"),
 	NETHERRACK("minecraft:netherrack"),
 	RAIL("minecraft:rail"),

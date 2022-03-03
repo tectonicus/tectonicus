@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -51,7 +51,7 @@ public class Player
 	private Vector3d position;
 	/** Caution - may be null if the player hasn't built a bed yet! */
 	private Vector3l spawnPosition;
-	private int health; // 0-20
+	private float health; // 0-20
 	private int food; // 0-20
 	private int air; // 0-300
 	private int xpLevel;
@@ -116,7 +116,12 @@ public class Player
 		position = new Vector3d();
 		inventory = new ArrayList<>();
 
-		health = NbtUtil.getShort(root, "Health", (short)0);
+		ShortTag healthTag =  NbtUtil.getChild(root, "Health", ShortTag.class);
+		if (healthTag != null) {
+			health = healthTag.getValue();
+		} else { // Health switched to FloatTag in MC 1.9
+			health = NbtUtil.getFloat(root, "Health", 0);
+		}
 		air = NbtUtil.getShort(root, "Air", (short)0);
 		food = NbtUtil.getInt(root, "foodLevel", 0);
 

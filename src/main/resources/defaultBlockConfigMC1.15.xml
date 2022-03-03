@@ -10,6 +10,10 @@
 	<Solid stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" />
 	<Solid stringId="minecraft:lava" name="Lava" texture="lava_still.png" />
 
+	<!-- We only keep these here to make rendering the portal icon easier -->
+	<Solid id="49" name="Obsidian" texture="obsidian.png" />
+	<Portal id="90" name="Portal" texture="nether_portal.png" />
+
 	<BedNew stringId="minecraft:white_bed" name="White Bed" />
 	<BedNew stringId="minecraft:orange_bed" name="Orange Bed" />
 	<BedNew stringId="minecraft:magenta_bed" name="Magenta Bed" />

@@ -338,10 +338,16 @@ public class RawChunk {
 							color = colorTag.getValue();
 						}
 
-						final int data = getBlockData(localX, localY, localZ);
+						Integer data = null;
+						BlockProperties properties = null;
+						if (id.equals("Sign")) {
+							data = getBlockData(localX, localY, localZ);
+						} else { // 1.13+
+							properties = getBlockState(localX, localY, localZ);
+						}
 
 						signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
-								textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data, color));
+								textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data, properties, color));
 					} else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot")) {
 						IntTag dataTag = NbtUtil.getChild(entity, "Data", IntTag.class);
 						IntTag itemTag = NbtUtil.getChild(entity, "Item", IntTag.class);

@@ -6,33 +6,20 @@
 //	- only show signs/beds/players toggle control when there is data to toogle?
 //
 
-function size(obj)
-{
-    var size = 0, key;
-    for (key in obj)
-    {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
-};
+let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0)
+let tileLayers = [];
 
-function createTileUrlFunc(mapId, layerId, imageFormatWithoutDot)
-{
-	var urlFunc = function(coord, zoom)
-	{
-		var xBin = coord.x % 16;
-		var yBin = coord.y % 16;
-		
-		var url = mapId+"/"+layerId+"/Zoom"+zoom+"/"+xBin+"/"+yBin+"/tile_"+coord.x+"_"+coord.y+"."+imageFormatWithoutDot;
-		return url;
-	}
-	return urlFunc;
-}
+//function size(obj)
+//{
+//    var size = 0, key;
+//    for (key in obj)
+//    {
+//        if (obj.hasOwnProperty(key)) size++;
+//    }
+//    return size;
+//};
 
-// Only use a fraction of the latitude range so we stay clear of the date line (where things wrap and going weird)
-var lattitudeRange = 10;
 var compassControl = null;
-
 var viewToggleControl = null;
 var signToggleControl = null;
 var playerToggleControl = null;
@@ -46,139 +33,131 @@ function main()
 	var queryParams = getQueryParams();
 	var fragmentParams = getFragmentParams();
 	
-	var mapIds = [];
-	for (i in contents)
-	{
-		var tecMap = contents[i];
-		for (j in tecMap.layers)
-		{
-			var layer = tecMap.layers[j];
-			mapIds.push(layer.id);
-		}
-	}
-		
-	var myOptions =
-	{
-		zoom: 0,
-		center: new google.maps.LatLng(0, 0),		// initial center (overridden later)
-		mapTypeId: google.maps.MapTypeId.ROADMAP,	// initial map id (overridden later)
-		mapTypeControl: mapIds.length > 1,				// Only display the map type control if we have multiple maps
-		streetViewControl: false,
-		overviewMapControl: true,
-		backgroundColor: 'none',
-		mapTypeControlOptions:
-		{
-			mapTypeIds: mapIds,
-			style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-			position: google.maps.ControlPosition.RIGHT_TOP
-		}
-	};
-	
-	map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-	
-	
-	for (i in contents)
-	{
-		var tecMap = contents[i];
-		
-		for (j in tecMap.layers)
-		{
-			var layer = tecMap.layers[j];
-			var overlayOptions =
-			{
-				name: layer.name,
-				tileSize: new google.maps.Size(tileSize, tileSize),
-				maxZoom: maxZoom,
-				isPng: layer.isPng,
-				getTileUrl: createTileUrlFunc(tecMap.id, layer.id, layer.imageFormat)
-			};
-			var minecraftMapType = new google.maps.ImageMapType(overlayOptions);
-			minecraftMapType.projection = new MinecraftProjection(lattitudeRange, tecMap.worldVectors);
-			minecraftMapType.tectonicusMap = tecMap;
-			minecraftMapType.layer = layer;
-			map.mapTypes.set(layer.id, minecraftMapType);
-			
-			// Set the starting lat-long pos
-			var startPoint = minecraftMapType.projection.worldToMap(tecMap.worldVectors.startView);
-			var startLatLong = minecraftMapType.projection.fromPointToLatLng(startPoint);
-			tecMap.viewLatLong = startLatLong; // 'viewLatLong' stores view pos for a given map, so we don't end up looking at nothing when we toggle between terra and nether
-		}
-	}
-	
-	
-	signWindow = new google.maps.InfoWindow(
-	{
-		maxWidth: 1500
-	});
-	
-	google.maps.event.addListener(map, 'click', function() {
-        signWindow.close();
+	L.TileLayer.Tectonicus = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+            var xBin = coords.x % 16;
+            var yBin = coords.y % 16;
+
+            return this.mapId + "/" + this.layerId + "/Zoom"+coords.z
+                +"/"+xBin+"/"+yBin+"/tile_"+coords.x+"_"+coords.y+"."+this.imageFormat;
+        },
+        getAttribution: function() {
+            return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - ' + this.mapName;
+        },
+        initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, worldVectors, projection,
+            blockStats, worldStats) {
+            this.mapId = mapId;
+            this.layerId = layerId;
+            this.imageFormat = imageFormat;
+            this.mapName = mapName;
+            this.backgroundColor = backgroundColor;
+            this.signs = signs;
+            this.players = players;
+            this.chests = chests;
+            this.views = views;
+            this.portals = portals;
+            this.beds = beds;
+            this.worldVectors = worldVectors;
+            this.projection = projection;
+            this.blockStats = blockStats;
+            this.worldStats = worldStats;
+        }
     });
+
+    var baseMaps = {}
+    for (var i = 0; i < contents.length; i++) {
+        var tecMap = contents[i];
+        for (var j = 0; j < tecMap.layers.length; j++) {
+            let layer = tecMap.layers[j];
+            let projection = new MinecraftProjection(tecMap.worldVectors);
+            var tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
+                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats);
+            if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
+                baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
+            } else {
+                baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
+            }
+            tileLayers.push(tileLayer);
+        }
+    }
 	
-	// Find a default start layer
-	var startMap = contents[0];
-	var startLayer = startMap.layers[0];
-	
+//	for (i in contents)
+//	{
+//		var tecMap = contents[i];
+//
+//		for (j in tecMap.layers)
+//		{
+//			var layer = tecMap.layers[j];
+//			var overlayOptions =
+//			{
+//				name: layer.name,
+//				tileSize: new google.maps.Size(tileSize, tileSize),
+//				maxZoom: maxZoom,
+//				isPng: layer.isPng,
+//				getTileUrl: createTileUrlFunc(tecMap.id, layer.id, layer.imageFormat)
+//			};
+//			var minecraftMapType = new google.maps.ImageMapType(overlayOptions);
+//			minecraftMapType.projection = new MinecraftProjection(lattitudeRange, tecMap.worldVectors);
+//			minecraftMapType.tectonicusMap = tecMap;
+//			minecraftMapType.layer = layer;
+//			map.mapTypes.set(layer.id, minecraftMapType);
+//
+//			// Set the starting lat-long pos
+////			var startPoint = minecraftMapType.projection.worldToMap(tecMap.worldVectors.startView);
+////			var startLatLong = minecraftMapType.projection.fromPointToLatLng(startPoint);
+////			tecMap.viewLatLong = startLatLong; // 'viewLatLong' stores view pos for a given map, so we don't end up looking at nothing when we toggle between terra and nether
+//		}
+//	}
+
+	if (tileLayers.length > 1) {
+            L.control.layers(baseMaps).addTo(mymap);
+    }
+
+	tileLayers[0].addTo(mymap);
+
+    L.control.attribution({position: 'bottomleft'}).addTo(mymap);
+
+	//TODO: Fix this startView stuff
 	// Try and get a starting view from the fragment params, query params, or fall back to default
-	var startView;
-	if (size(fragmentParams) > 0)
-		startView = findStartView(fragmentParams, startLayer.id, startMap.worldVectors.startView);
-	else
-		startView = findStartView(queryParams, startLayer.id, startMap.worldVectors.startView);
+//	var startView;
+//	if (size(fragmentParams) > 0)
+//		startView = findStartView(fragmentParams, startLayer.id, startMap.worldVectors.startView);
+//	else
+//		startView = findStartView(queryParams, startLayer.id, startMap.worldVectors.startView);
 	
 	// Set the starting view
-	map.setMapTypeId(startView.layerId);
-	map.setCenter(startView.latLong);
-	map.setZoom(startView.zoom);
+//	map.setMapTypeId(startView.layerId);
+//	map.setCenter(startView.latLong);
+//	map.setZoom(startView.zoom);
+    mymap.setView(tileLayers[0].projection.worldToMap(tileLayers[0].worldVectors.spawnPosition))
 	
 	// And update the view latLong
-	var mapType = map.mapTypes.get( map.getMapTypeId() );
-	mapType.tectonicusMap.viewLatLong = startView.latLong;
+	//layer.viewLatLong = startView.latLong;
 	
 	// Create controls
-	
-	compassControl = CreateCompassControl(map, mapType.tectonicusMap.id + '/Compass.png');
+	compassControl = CreateCompassControl(tileLayers[0].mapId + '/Compass.png');
+    viewToggleControl = CreateToggleControl('Show views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
+    signToggleControl = CreateToggleControl('Show signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
+    playerToggleControl = CreateToggleControl('Show players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
+    bedToggleControl = CreateToggleControl('Show beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
+    portalToggleControl = CreateToggleControl('Show portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
+    spawnToggleControl = CreateToggleControl('Show spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
+    chestToggleControl = CreateToggleControl('Show chests', 'Images/Chest.png', chestMarkers, false);
 
-	viewToggleControl = CreateMarkerToggle(map, 'show views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);	
-	signToggleControl = CreateMarkerToggle(map, 'show signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
-	playerToggleControl = CreateMarkerToggle(map, 'show players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-	bedToggleControl = CreateMarkerToggle(map, 'show beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
-	portalToggleControl = CreateMarkerToggle(map, 'show portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
-	spawnToggleControl = CreateMarkerToggle(map, 'show spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);	
-	chestToggleControl = CreateMarkerToggle(map, 'show chests', 'Images/Chest.png', chestMarkers, false);
-	
-	CreateLinkControl(map);
+	//CreateLinkControl(map);
 	
 	// Add controls to the map
-	
-	map.controls[google.maps.ControlPosition.TOP_LEFT].push( compassControl.getDiv() );
-	map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
-	
-	var tecMap = getActiveMap();
-	
-	if (tecMap.chests.length != 0)
-		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(chestToggleControl);
-	if (tecMap.portals.length != 0)
-		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(portalToggleControl);
-	if (tecMap.beds.length != 0)
-		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(bedToggleControl);
-	if (tecMap.players.length != 0)
-		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(playerToggleControl);
-	if (tecMap.views.length != 0)
-		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(viewToggleControl);
-	if (tecMap.signs.length != 0)
-		map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(signToggleControl);	
-	map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(spawnToggleControl);
+	mymap.addControl(new compassControl());
+	//map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
+	mymap.addControl(new spawnToggleControl());
 
 	// Register these last so that they don't get called while we're still initialising
-	google.maps.event.addListener(map, 'projection_changed', onProjectionChanged);
-	google.maps.event.addListener(map, 'maptypeid_changed', onMapTypeChanged);
+	mymap.on('baselayerchange', onBaseLayerChange);
+//	google.maps.event.addListener(map, 'projection_changed', onProjectionChanged);
 	
-	// Manually call these to set the initial state
-	onMapTypeChanged();
-	onProjectionChanged();
-		
-	runGa();
+	// Manually fire this event to set the initial state
+    mymap.fireEvent('baselayerchange', {layer: tileLayers[0]});
+//	onProjectionChanged();
 }
 
 spawnMarkers = [];
@@ -189,480 +168,407 @@ portalMarkers = [];
 bedMarkers = [];
 chestMarkers = [];
 
-function onMapTypeChanged()
-{
-	var mapType = map.mapTypes.get( map.getMapTypeId() );
-	map.setCenter(mapType.tectonicusMap.viewLatLong);
+function onBaseLayerChange(e) {
+	changeBackgroundColor(e.layer.backgroundColor);
 
-	document.getElementById("map_canvas").style.backgroundColor = mapType.layer.backgroundColor;
-	
-	refreshSpawnMarker( spawnToggleControl.checked );
-	refreshSignMarkers( signToggleControl.checked );
-	refreshViewMarkers( viewToggleControl.checked );
-	refreshPlayerMarkers( playerToggleControl.checked );
-	refreshBedMarkers( bedToggleControl.checked );
-	refreshPortalMarkers( portalToggleControl.checked );
-	refreshChestMarkers( chestToggleControl.checked );
-	
-	if (compassControl)
-		compassControl.setCompassImage( mapType.tectonicusMap.id + '/Compass.png' );
+	if (e.layer.signs.length != 0) {
+		mymap.addControl(new signToggleControl());
+	}
+	if (e.layer.views.length != 0) {
+		mymap.addControl(new viewToggleControl());
+	}
+	if (e.layer.players.length != 0) {
+		mymap.addControl(new playerToggleControl());
+	}
+	if (e.layer.portals.length != 0) {
+		mymap.addControl(new portalToggleControl());
+	}
+	if (e.layer.beds.length != 0) {
+		mymap.addControl(new bedToggleControl());
+	}
+	if (e.layer.chests.length != 0) {
+		mymap.addControl(new chestToggleControl());
+	}
+
+	refreshSpawnMarker(e.layer, spawnInitiallyVisible);
+	refreshSignMarkers(e.layer, signsInitiallyVisible);
+	refreshViewMarkers(e.layer, viewsInitiallyVisible);
+	refreshPlayerMarkers(e.layer, playersInitiallyVisible);
+	refreshPortalMarkers(e.layer, portalsInitiallyVisible);
+	refreshBedMarkers(e.layer, bedsInitiallyVisible);
+	refreshChestMarkers(e.layer, false);
+
+	//compassControl.remove();
+	//mymap.removeControl(compassControl);
+	compassControl = CreateCompassControl(e.layer.mapId + '/Compass.png');
+	//mymap.addControl(compassControl);
 }
 
-function onProjectionChanged()
-{
-	// Store the previous latLong in the map
-	var mapType = map.mapTypes.get( map.getMapTypeId() );
-	mapType.tectonicusMap.viewLatLong = map.getCenter();
-	
-} // end onProjectionChanged callback
+function changeBackgroundColor(color) {
+	let mapContainer = document.querySelector("#map");
+	mapContainer.style.backgroundColor = color;
+}
 
-function refreshSpawnMarker(markersVisible)
-{
+//function onMapTypeChanged()
+//{
+//	var mapType = map.mapTypes.get( map.getMapTypeId() );
+//	map.setCenter(mapType.tectonicusMap.viewLatLong);
+//
+//	document.getElementById("map_canvas").style.backgroundColor = mapType.layer.backgroundColor;
+//
+//	refreshSpawnMarker( spawnToggleControl.checked );
+//	refreshSignMarkers( signToggleControl.checked );
+//	refreshViewMarkers( viewToggleControl.checked );
+//	refreshPlayerMarkers( playerToggleControl.checked );
+//	refreshBedMarkers( bedToggleControl.checked );
+//	refreshPortalMarkers( portalToggleControl.checked );
+//	refreshChestMarkers( chestToggleControl.checked );
+//
+//	if (compassControl)
+//		compassControl.setCompassImage( mapType.tectonicusMap.id + '/Compass.png' );
+//}
+//
+//function onProjectionChanged()
+//{
+//	// Store the previous latLong in the map
+//	var mapType = map.mapTypes.get( map.getMapTypeId() );
+//	mapType.tectonicusMap.viewLatLong = map.getCenter();
+//
+//} // end onProjectionChanged callback
+
+function refreshSpawnMarker(layer, markersVisible) {
 	destroyMarkers(spawnMarkers);
-	
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
-	// Spawn marker
-	if (showSpawn)
-	{
-		var point = projection.worldToMap(tecMap.worldVectors.spawnPosition);
-		var pos = projection.fromPointToLatLng(point);
-				
-		var marker = new google.maps.Marker(
-		{		
-			position: pos,
-			map: map, 
-			title: 'Spawn point',
-			icon: 'Images/Spawn.png',
-			optimized: false
-		});
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-			
-		spawnMarkers.push(marker);
-		
-		google.maps.event.addListener(marker, 'click', function()
-		{
-		//	var worldSizeMb = stats.worldSizeInBytes / 1024 / 1024;
-			var peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
-			
-			var statsHtml = '';
-		//	if (stats.worldName != '')
-		//	{
-		//		statsHtml += '<div><center><font size="+2">'+stats.worldName+'</font></center></div>'
-		//	}
-		//	statsHtml += '<div><center>Map Stats</center></div>';
-		//	statsHtml += 'World size: ' + worldSizeMb.toFixed(1) + 'Mb<br/>';
-		//	statsHtml += 'Surface area: ' + stats.surfaceArea + 'km&sup2;<br/>';
-		//	statsHtml += 'Total chunks: ' + stats.numChunks + '<br/>';
-		//	statsHtml += 'Total players: ' + stats.numPlayers + '<br/>';
-		//	statsHtml += '<br/>';
-			
-			statsHtml += '<div><center>Render Stats</center></div>';
-			statsHtml += 'Tectonicus version: ' + stats.tectonicusVersion + '<br/>';
-			statsHtml += 'Render time: ' + stats.renderTime + '<br/>';
-			statsHtml += 'Peak memory usage: ' + peakMemoryMb.toFixed(1) + 'Mb<br/>';
-			statsHtml += 'Created on ' + stats.renderedOnDate + '<br/>';
-			statsHtml += 'Created at ' + stats.renderedOnTime + '<br/>';
-			statsHtml += '<br/>';
 
-			statsHtml += '<div><center>World stats</center></div>';
-			statsHtml += 'Players: ' + tecMap.worldStats.numPlayers + '<br/>';
-			statsHtml += 'Chunks: ' + tecMap.worldStats.numChunks + '<br/>';
-			statsHtml += 'Portals: ' + tecMap.worldStats.numPortals + '<br/>';
-			statsHtml += 'Views: ' + tecMap.views.length + '<br/>';
-			statsHtml += 'Signs: ' + tecMap.signs.length + '<br/>';
-			statsHtml += 'Player Beds: ' + tecMap.beds.length + '<br/>';
-			statsHtml += '<br/>';
-			
-			statsHtml += '<div><center>Blocks</center></div>';
-			for (i in tecMap.blockStats)
-			{
-				var stat = tecMap.blockStats[i];
-				statsHtml += stat.name + ' ' + stat.count + '<br/>';
-			}
-			
-			var options =
-			{
-				content: statsHtml
-			};
-			signWindow.close();
-			signWindow.setOptions(options);
-			signWindow.open(map, this);
+	// Spawn marker
+	if (showSpawn) {
+		let spawn = layer.projection.worldVectors.spawnPosition;
+
+		let point = layer.projection.worldToMap(spawn);
+
+		let myIcon = L.icon({
+			iconUrl: 'Images/Spawn.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
 		});
+
+
+
+		let peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
+		let statsHtml = '';
+		statsHtml += '<center><h3>Spawn Point</h3></center>';
+		statsHtml += '<div><center>Render Stats</center></div>';
+		statsHtml += 'Tectonicus version: ' + stats.tectonicusVersion + '<br/>';
+		statsHtml += 'Render time: ' + stats.renderTime + '<br/>';
+		statsHtml += 'Peak memory usage: ' + peakMemoryMb.toFixed(1) + 'Mb<br/>';
+		statsHtml += 'Created on ' + stats.renderedOnDate + '<br/>';
+		statsHtml += 'Created at ' + stats.renderedOnTime + '<br/>';
+		statsHtml += '<br/>';
+
+		statsHtml += '<div><center>World stats</center></div>';
+		statsHtml += 'Players: ' + layer.worldStats.numPlayers + '<br/>';
+		statsHtml += 'Chunks: ' + layer.worldStats.numChunks + '<br/>';
+		statsHtml += 'Portals: ' + layer.worldStats.numPortals + '<br/>';
+		statsHtml += 'Views: ' + layer.views.length + '<br/>';
+		statsHtml += 'Signs: ' + layer.signs.length + '<br/>';
+		statsHtml += 'Player Beds: ' + layer.beds.length + '<br/>';
+		statsHtml += '<br/>';
+
+		statsHtml += '<div><center>Blocks</center></div>';
+		for (i in layer.blockStats) {
+			let stat = layer.blockStats[i];
+			statsHtml += stat.name + ' ' + stat.count + '<br/>';
+		}
+
+        let marker = L.marker(point, { icon: myIcon }).bindPopup(statsHtml).bindTooltip("Spawn Point");
+
+		// Add marker to map if spawn is initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
+		spawnMarkers.push(marker);
 	}
 }
 
-function refreshSignMarkers(markersVisible)
-{
+function refreshSignMarkers(layer, markersVisible) {
 	destroyMarkers(signMarkers);
-	
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
+
 	// Sign markers
-	for (i in tecMap.signs)
-	{
-		var sign = tecMap.signs[i];
-		
-		var point = projection.worldToMap(sign.worldPos);
-		var pos = projection.fromPointToLatLng(point);
-			
-		var marker = new google.maps.Marker(
-		{		
-			position: pos,
-			map: map, 
-			title: '',
-			icon: 'Images/Sign.png',
-			optimized: false
+	for (i in layer.signs) {
+		let sign = layer.signs[i];
+		let point = layer.projection.worldToMap(sign.worldPos);
+
+		let myIcon = L.icon({
+			iconUrl: 'Images/Sign.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
 		});
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-		
-		marker.sign = sign; // save this ref in the marker so we can fetch it in the bound function below
-		
-		google.maps.event.addListener(marker, 'click', function()
-		{
-			var options =
-			{
-				content: '<pre><center>' + this.sign.text1 + '<br/>' + this.sign.text2 + '<br/>' + this.sign.text3 + '<br/>' + this.sign.text4 + '</center></pre>'
-			};
-			signWindow.close();
-			signWindow.setOptions(options);
-			signWindow.open(map, this);
-		});
-		
+
+		let marker = L.marker(point, { icon: myIcon }).bindPopup(
+			'<pre><center>' + sign.text1 + '<br/>' + sign.text2 + '<br/>' + sign.text3 + '<br/>' + sign.text4 + '</center></pre>');
+
+		// Add marker to map if signs are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
 		signMarkers.push(marker);
 	}
 }
 
-function refreshViewMarkers(markersVisible)
-{
+function refreshViewMarkers(layer, markersVisible) {
 	destroyMarkers(viewMarkers);
-	
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
-	// View markers
-	for (i in tecMap.views)
-	{
-		var view = tecMap.views[i];
-		
-		var point = projection.worldToMap(view.worldPos);
-		var pos = projection.fromPointToLatLng(point);
-			
-		var marker = new google.maps.Marker(
-		{		
-			position: pos,
-			map: map, 
-			title: '',
-			icon: 'Images/Picture.png',
-			optimized: false
-		});
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-		
-		marker.view = view; // save this ref in the marker so we can fetch it in the bound function below
-		
-		google.maps.event.addListener(marker, 'click', function()
-		{
-			var html = '';
 
-			html += '<div>';
-			html += '<a href="' + this.view.imageFile + '">';
-			html += '<img width="512" height="288" src="' + this.view.imageFile + '"/>';
-			html += '</a>';
-			html += '</div>';
-			
-			html += '';
-			html += '<center>';
-			html += this.view.text;
-			html += '</center>';
-			html += '';
-		
-			
-			var options =
-			{
-				content: html
-			};
-			signWindow.close();
-			signWindow.setOptions(options);
-			signWindow.open(map, this);
+	// View markers
+	for (i in layer.views) {
+		let view = layer.views[i];
+
+		let point = layer.projection.worldToMap(view.worldPos);
+
+		let icon = L.icon({
+			iconUrl: 'Images/Picture.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
 		});
-		
+
+		let html = '';
+		html += '<div>';
+		html += '<a href="' + view.imageFile + '">';
+		html += '<img width="512" height="288" src="' + view.imageFile + '"/>';
+		html += '</a>';
+		html += '</div>';
+		html += '';
+		html += '<center>';
+		html += view.text;
+		html += '</center>';
+		html += '';
+
+		let marker = L.marker(point, { icon: icon }).bindPopup(html, {maxWidth: "auto"});
+
+		// Add marker to map if chests are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
 		viewMarkers.push(marker);
 	}
 }
 
-function loadIcon(src, player, pos, markersVisible) 
-{
+function loadIcon(src, player, pos, markersVisible) {
 	var icon = new Image();
-	icon.onload = function() {
+	icon.onload = function () {
 		player.icon = src;
-		var marker = createPlayerMarker(map, player, pos, signWindow);
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-			
-		playerMarkers.push(marker);
-    };
-	icon.onerror = function() {
-		player.icon = player.icon = "Images/PlayerIcons/Tectonicus_Default_Player_Icon.png";
-		var marker = createPlayerMarker(map, player, pos, signWindow);
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-			
+		var marker = createPlayerMarker(player, pos);
+
+		// Add marker to map if players are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
 		playerMarkers.push(marker);
 	};
-    icon.src = src;
+	icon.onerror = function () {
+		player.icon = player.icon = "Images/PlayerIcons/Tectonicus_Default_Player_Icon.png";
+		var marker = createPlayerMarker(player, pos);
+
+		// Add marker to map if players are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
+		playerMarkers.push(marker);
+	};
+	icon.src = src;
 }
 
-function refreshPlayerMarkers(markersVisible)
-{
+function refreshPlayerMarkers(layer, markersVisible) {
 	destroyMarkers(playerMarkers);
 
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
 	// Player markers
-	for (i in tecMap.players)
-	{
-		var player = tecMap.players[i];
-		
+	for (i in layer.players) {
+		let player = layer.players[i];
+
 		player.donation = '';
-		
-		var point = projection.worldToMap(player.worldPos);
-		var pos = projection.fromPointToLatLng(point);
-			
-		loadIcon("Images/PlayerIcons/"+player.name+".png", player, pos, markersVisible);
-	}	
+
+		let point = layer.projection.worldToMap(player.worldPos);
+
+		loadIcon("Images/PlayerIcons/" + player.name + ".png", player, point, markersVisible);
+	}
 }
 
-function refreshBedMarkers(markersVisible)
-{
+function refreshBedMarkers(layer, markersVisible) {
 	destroyMarkers(bedMarkers);
 
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
 	// Bed markers
-	for (i in tecMap.beds)
-	{
-		var bed = tecMap.beds[i];
-		
-		var point = projection.worldToMap(bed.worldPos);
-		var pos = projection.fromPointToLatLng(point);
-			
-		var marker = new google.maps.Marker(
-		{		
-			position: pos,
-			map: map, 
-			title: bed.playerName + "'s bed",
-			icon: 'Images/Bed.png',
-			optimized: false
+	for (i in layer.beds) {
+		let bed = layer.beds[i];
+		let point = layer.projection.worldToMap(bed.worldPos);
+
+		let icon = L.icon({
+			iconUrl: 'Images/Bed.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
 		});
 
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-		
-		marker.bed = bed; // save this ref in the marker so we can fetch it in the bound function below
-		
-		google.maps.event.addListener(marker, 'click', function()
-		{
-			var options =
-			{
-				content: '<center>' + this.bed.playerName + "'s bed</center>"
-			};
-			signWindow.close();
-			signWindow.setOptions(options);
-			signWindow.open(map, this);
-		});
-		
+		let marker = L.marker(point, { icon: icon }).bindPopup('<center>' + bed.playerName + "'s bed</center>");
+
+		// Add marker to map if beds are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
 		bedMarkers.push(marker);
 	}
 }
 
-function refreshPortalMarkers(markersVisible)
-{
+function refreshPortalMarkers(layer, markersVisible) {
 	destroyMarkers(portalMarkers);
 
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
 	// Portal markers
-	for (i in tecMap.portals)
-	{
-		var portal = tecMap.portals[i];
-		
-		var point = projection.worldToMap(portal.worldPos);
-		var pos = projection.fromPointToLatLng(point);
-			
-		var marker = new google.maps.Marker(
-		{		
-			position: pos,
-			map: map, 
-			title: '',
-			icon: 'Images/Portal.png',
-			optimized: false
+	for (i in layer.portals) {
+		let portal = layer.portals[i];
+
+		let point = layer.projection.worldToMap(portal.worldPos);
+
+		let icon = L.icon({
+			iconUrl: 'Images/Portal.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
 		});
-		
-		marker.portal = portal; // save this ref in the marker so we can fetch it in the bound function below
-		
-		google.maps.event.addListener(marker, 'click', function()
-		{
-			var options =
-			{
-				content: '<center>Portal</center><br/> position ('+this.portal.worldPos.x+', '+this.portal.worldPos.y+', '+this.portal.worldPos.z+')'
-			};
-			signWindow.close();
-			signWindow.setOptions(options);
-			signWindow.open(map, this);
-		});
-		
-		// Disable this marker if we don't want signs initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-			
+
+		let marker = L.marker(point, { icon: icon }).bindPopup(
+			'<div style=\"text-align:center\">Portal</div><br/> position (' + portal.worldPos.x + ', ' + portal.worldPos.y + ', ' + portal.worldPos.z + ')');
+
+		// Add marker to map if chests are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
 		portalMarkers.push(marker);
 	}
 }
 
-function refreshChestMarkers(markersVisible)
-{
+function refreshChestMarkers(layer, markersVisible) {
 	destroyMarkers(chestMarkers);
 
-	var tecMap = getActiveMap();
-	var projection = getActiveProjection();
-	
 	// Chest markers
-	for (i in tecMap.chests)
-	{
-		var chest = tecMap.chests[i];
-		
-		var point = projection.worldToMap(chest.worldPos);
-		var pos = projection.fromPointToLatLng(point);
-			
-		var marker = new google.maps.Marker(
-		{		
-			position: pos,
-			map: map, 
-			title: "Chest",
-			icon: 'Images/Chest.png',
-			optimized: false
+	for (i in layer.chests) {
+		let point = layer.projection.worldToMap(layer.chests[i].worldPos);
+
+		let icon = L.icon({
+			iconUrl: 'Images/Chest.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
 		});
 
-		// Disable this marker if we don't want chests initially visible						
-		if (!markersVisible)
-			marker.setMap(null);
-		
-		marker.chest = chest; // save this ref in the marker so we can fetch it in the bound function below
-		
-		google.maps.event.addListener(marker, 'click', function()
-		{
-			var options =
-			{
-				content: '<img width="300" height="131" src="Images/SmallChest.png"/>'
-			};
-			signWindow.close();
-			signWindow.setOptions(options);
-			signWindow.open(map, this);
-		});
-		
+		let marker = L.marker(point, { icon: icon }).bindPopup('<img width="300" height="131" src="Images/SmallChest.png"/>');
+
+		// Add marker to map if chests are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
 		chestMarkers.push(marker);
 	}
 }
 
-function getActiveLayer()
-{
-	var mapType = map.mapTypes.get( map.getMapTypeId() );
-	var layer = mapType.layer;
-	return layer;
-}
-
-function getActiveMap()
-{
-	var mapType = map.mapTypes.get( map.getMapTypeId() );
-	var tecMap = mapType.tectonicusMap;
-	return tecMap;
-}
-
-function getActiveProjection()
-{
-	var mapType = map.mapTypes.get( map.getMapTypeId() );
-	var projection = mapType.projection;
-	return projection;
-}
-
-function destroyMarkers(markers)
-{
-	for (i in markers)
-	{
-		var marker = markers[i];
-		marker.setMap(null);
-		
-		// remove marker from map?
-		// ..
+function destroyMarkers(markers) {
+	for (i in markers) {
+		let marker = markers[i];
+		marker.remove();
 	}
-	
-	markers.length = 0; // todo: check this works		
+
+	markers.length = 0;
 }
 
-function ViewPos(layerId, worldPos, zoom, latLong)
-{
-	this.layerId = layerId;
-	this.worldPos = worldPos;
-	this.zoom = zoom;
-	this.latLong = latLong;
-}
+//function ViewPos(layerId, worldPos, zoom, latLong)
+//{
+//	this.layerId = layerId;
+//	this.worldPos = worldPos;
+//	this.zoom = zoom;
+//	this.latLong = latLong;
+//}
+//
+//function findStartView(params, defaultLayerId, defaultSpawnPos)
+//{
+//	var queryLayerId = defaultLayerId;
+//	var queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
+//	var queryZoom = 0;
+//
+//	if (params.hasOwnProperty('layerId'))
+//	{
+//		queryLayerId = params['layerId'];
+//	}
+//
+//	if (params.hasOwnProperty('worldX')
+//		&& params.hasOwnProperty('worldY')
+//		&& params.hasOwnProperty('worldZ'))
+//	{
+//		queryPos.x = parseInt( params['worldX'] );
+//		queryPos.y = parseInt( params['worldY'] );
+//		queryPos.z = parseInt( params['worldZ'] );
+//	}
+//
+//	if (params.hasOwnProperty('zoom'))
+//	{
+//		queryZoom = parseInt( params['zoom'] );
+//	}
+//
+//	if (queryZoom < 0)
+//		queryZoom = 0;
+//	if (queryZoom > maxZoom)
+//		queryZoom = maxZoom;
+//
+//	var mapType = map.mapTypes.get(queryLayerId);
+//	var projection = mapType.projection;
+//
+//	var startPoint = projection.worldToMap(queryPos);
+//	var startLatLong = projection.fromPointToLatLng(startPoint);
+//
+//	return new ViewPos(queryLayerId, queryPos, queryZoom, startLatLong);
+//}
 
-function findStartView(params, defaultLayerId, defaultSpawnPos)
-{
-	var queryLayerId = defaultLayerId;
-	var queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
-	var queryZoom = 0;
-	
-	if (params.hasOwnProperty('layerId'))
-	{
-		queryLayerId = params['layerId'];
-	}
-	
-	if (params.hasOwnProperty('worldX')
-		&& params.hasOwnProperty('worldY')
-		&& params.hasOwnProperty('worldZ'))
-	{
-		queryPos.x = parseInt( params['worldX'] );
-		queryPos.y = parseInt( params['worldY'] );
-		queryPos.z = parseInt( params['worldZ'] );
-	}
-	
-	if (params.hasOwnProperty('zoom'))
-	{
-		queryZoom = parseInt( params['zoom'] );
-	}
-	
-	if (queryZoom < 0)
-		queryZoom = 0;
-	if (queryZoom > maxZoom)
-		queryZoom = maxZoom;
+/*
+ * Workaround for 1px lines appearing in some browsers due to fractional transforms
+ * and resulting anti-aliasing.
+ * https://github.com/Leaflet/Leaflet/issues/3575
+ */
+(function(){
+    var originalInitTile = L.GridLayer.prototype._initTile
+    L.GridLayer.include({
+        _initTile: function (tile) {
+            originalInitTile.call(this, tile);
 
-	var mapType = map.mapTypes.get(queryLayerId);
-	var projection = mapType.projection;
-	
-	var startPoint = projection.worldToMap(queryPos);
-	var startLatLong = projection.fromPointToLatLng(startPoint);
-	
-	return new ViewPos(queryLayerId, queryPos, queryZoom, startLatLong);
-}
+            var tileSize = this.getTileSize();
+
+            tile.style.width = tileSize.x + 1 + 'px';
+            tile.style.height = tileSize.y + 1 + 'px';
+        }
+    });
+})()
 
 window.onload = main;

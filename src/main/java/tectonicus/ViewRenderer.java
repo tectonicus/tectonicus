@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.ViewUtil.Viewpoint;
 import tectonicus.cache.FileViewCache;
 import tectonicus.cache.swap.HddObjectListReader;
@@ -29,6 +30,7 @@ import tectonicus.world.World;
 //	get image format out of map config node
 //	extract view height offset and elevation angle from sign text
 
+@Log4j2
 public class ViewRenderer
 {
 	private final Rasteriser rasteriser;
@@ -55,6 +57,8 @@ public class ViewRenderer
 		// Output changed views
 		
 		// TODO: Load custom blocks here
+		log.info("Creating fallback block registry for views");
+		world.loadBlockRegistry(null, true);
 		
 		world.flushChunkCache();
 		world.flushGeometryCache();
@@ -66,12 +70,12 @@ public class ViewRenderer
 		world.setLightStyle(LightStyle.Night);
 		draw(viewCache, world, mapDir, changedViews, viewsDir, viewConfig, LightStyle.Night, changedFiles);
 		
-		System.out.println("View rendering done!");
+		log.info("View rendering done!");
 	}
 	
 	private void draw(FileViewCache viewCache, World world, File mapDir, File viewsFile, File viewsDir, ViewConfig viewConfig, LightStyle lightStyle, ChangeFile changedFiles)
 	{
-		System.out.println("Drawing "+lightStyle+" views...");
+		log.info("Drawing "+lightStyle+" views...");
 		
 		final ImageFormat imageFormat = viewConfig.getImageFormat();
 		final float imageCompression = viewConfig.getImageCompressionLevel();
@@ -81,7 +85,7 @@ public class ViewRenderer
 		{
 			ImageWriteQueue imageWriteQueue = new ImageWriteQueue(numDownsampleThreads);
 			
-			viewsIn = new HddObjectListReader<Sign>(viewsFile);
+			viewsIn = new HddObjectListReader<>(viewsFile);
 			Sign sign = new Sign();
 			while (viewsIn.hasNext())
 			{
@@ -105,7 +109,7 @@ public class ViewRenderer
 				// TODO: Store size of object list in file so we can see how far through the list we are?
 				// May need to have separate day/night lists for this so it's accurate
 				
-				System.out.println("Drawing view at ("+view.lookAt.x+", "+view.lookAt.y+", "+view.lookAt.x+")");
+				log.info("Drawing view at ("+view.lookAt.x+", "+view.lookAt.y+", "+view.lookAt.z+")");
 				
 				PerspectiveCamera perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig.getViewDistance());
 				perspectiveCamera.apply();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -154,13 +154,13 @@ public class JsonWriter
 	
 	public void writeMapsPoint(String varName, Vector2f varValue)
 	{
-		String val = "new google.maps.Point("+varValue.x+", "+varValue.y+")";
+		String val = "new L.Point("+varValue.x+", "+varValue.y+")";
 		writeRawVariable(varName, val);
 	}
 	
 	public void writeMapsPoint(String varName, final long x, final long y)
 	{
-		String val = "new google.maps.Point("+x+", "+y+")";
+		String val = "new L.Point("+x+", "+y+")";
 		writeRawVariable(varName, val);
 	}
 	
