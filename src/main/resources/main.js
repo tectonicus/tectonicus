@@ -147,9 +147,8 @@ function main()
 	//CreateLinkControl(map);
 	
 	// Add controls to the map
-	mymap.addControl(new compassControl());
 	//map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
-	mymap.addControl(new spawnToggleControl());
+	mymap.addControl(spawnToggleControl);
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
@@ -171,23 +170,34 @@ chestMarkers = [];
 function onBaseLayerChange(e) {
 	changeBackgroundColor(e.layer.backgroundColor);
 
+    signToggleControl.remove();
 	if (e.layer.signs.length != 0) {
-		mymap.addControl(new signToggleControl());
+		mymap.addControl(signToggleControl);
 	}
+
+	viewToggleControl.remove();
 	if (e.layer.views.length != 0) {
-		mymap.addControl(new viewToggleControl());
+		mymap.addControl(viewToggleControl);
 	}
+
+	playerToggleControl.remove();
 	if (e.layer.players.length != 0) {
-		mymap.addControl(new playerToggleControl());
+		mymap.addControl(playerToggleControl);
 	}
+
+	portalToggleControl.remove();
 	if (e.layer.portals.length != 0) {
-		mymap.addControl(new portalToggleControl());
+		mymap.addControl(portalToggleControl);
 	}
+
+	bedToggleControl.remove();
 	if (e.layer.beds.length != 0) {
-		mymap.addControl(new bedToggleControl());
+		mymap.addControl(bedToggleControl);
 	}
+
+	chestToggleControl.remove();
 	if (e.layer.chests.length != 0) {
-		mymap.addControl(new chestToggleControl());
+		mymap.addControl(chestToggleControl);
 	}
 
 	refreshSpawnMarker(e.layer, spawnInitiallyVisible);
@@ -198,10 +208,9 @@ function onBaseLayerChange(e) {
 	refreshBedMarkers(e.layer, bedsInitiallyVisible);
 	refreshChestMarkers(e.layer, false);
 
-	//compassControl.remove();
-	//mymap.removeControl(compassControl);
+	compassControl.remove();
 	compassControl = CreateCompassControl(e.layer.mapId + '/Compass.png');
-	//mymap.addControl(compassControl);
+	mymap.addControl(compassControl);
 }
 
 function changeBackgroundColor(color) {
@@ -283,7 +292,7 @@ function refreshSpawnMarker(layer, markersVisible) {
 			statsHtml += stat.name + ' ' + stat.count + '<br/>';
 		}
 
-        let marker = L.marker(point, { icon: myIcon }).bindPopup(statsHtml).bindTooltip("Spawn Point");
+        let marker = L.marker(point, { icon: myIcon }).bindPopup(statsHtml, { maxHeight: 400, minWidth: 200 }).bindTooltip("Spawn Point");
 
 		// Add marker to map if spawn is initially visible
 		if (markersVisible) {

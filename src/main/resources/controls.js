@@ -56,7 +56,7 @@ function CreateCompassControl(initialImage) {
 		}
 	});
 
-	return compassControl;
+	return new compassControl();
 }
 
 // Creates a toggle box to turn on and off a set of markers
@@ -98,7 +98,7 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 		}
 	});
 
-	return toggleControl;
+	return new toggleControl();
 }
 
 function SetToggleBg(control) {
