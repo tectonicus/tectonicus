@@ -8,8 +8,7 @@ var playersInitiallyVisible = {{playersInitiallyVisible}};
 var portalsInitiallyVisible = {{portalsInitiallyVisible}};
 var bedsInitiallyVisible = {{bedsInitiallyVisible}};
 var spawnInitiallyVisible = {{spawnInitiallyVisible}};
-var viewsInitiallyVisible = true; // todo!
-
+var viewsInitiallyVisible = {{viewsInitiallyVisible}};
 
 
 function createPlayerMarker(player, pos) {

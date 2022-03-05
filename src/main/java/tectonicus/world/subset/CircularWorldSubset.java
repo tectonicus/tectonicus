@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,56 +9,42 @@
 
 package tectonicus.world.subset;
 
+import lombok.Data;
 import tectonicus.ChunkCoord;
 import tectonicus.SaveFormat;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
-import tectonicus.world.World;
 import tectonicus.world.filter.ArrayBlockFilter;
 import tectonicus.world.filter.BlockFilter;
 
+import java.io.File;
+
+@Data
 public class CircularWorldSubset implements WorldSubset
 {
-	private World world;
-	private Vector3l origin;
-	private long radius;
-	
-	public CircularWorldSubset(World world, Vector3l origin, final long radius)
-	{
-		this.world = world;
-		if (origin != null)
-			this.origin = new Vector3l(origin);
-		this.radius = radius;
-	}
-	
+	private final Vector3l origin;
+	private final long radius;
+
 	@Override
-	public String getDescription()
+	public RegionIterator createRegionIterator(SaveFormat saveFormat, File dimensionDir)
 	{
-		String originStr = "null";
-		if (origin != null)
-			originStr = "("+origin.x+", "+origin.z+")";
-		
-		return "CircularWorldSubset "+originStr+" "+ radius;
-	}
-	
-	@Override
-	public RegionIterator createRegionIterator(SaveFormat saveFormat)
-	{
-		Vector3l actualOrigin = origin != null ? origin : world.getSpawnPosition();
-		return new CircularRegionIterator(world.getDimensionDir(), saveFormat, actualOrigin, radius);
+		return new CircularRegionIterator(dimensionDir, saveFormat, origin, radius);
 	}
 	
 	@Override
 	public boolean contains(ChunkCoord coord)
 	{
-		Vector3l actualOrigin = origin != null ? origin : world.getSpawnPosition();
-		
 		Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + RawChunk.WIDTH/2, 0, coord.z * RawChunk.DEPTH + RawChunk.DEPTH/2);
-		final long dist = pos.separation(actualOrigin);
+		final long dist = pos.separation(origin);
 		
-		final float bufferedRadius = radius + (RawChunk.WIDTH + RawChunk.DEPTH + RawChunk.WIDTH);
+		final float bufferedRadius = radius + (float)(RawChunk.WIDTH + RawChunk.DEPTH + RawChunk.WIDTH);
 		
 		return dist <= bufferedRadius;
+	}
+
+	@Override
+	public boolean containsBlock(double x, double z) {
+		return Math.pow((x - origin.x), 2) + Math.pow((z - origin.z), 2) < Math.pow(radius,2);
 	}
 	
 	@Override
@@ -66,13 +52,11 @@ public class CircularWorldSubset implements WorldSubset
 	{
 		ArrayBlockFilter filter = new ArrayBlockFilter();
 		
-		Vector3l actualOrigin = origin != null ? origin : world.getSpawnPosition();
-		
 		for (int x=0; x<RawChunk.WIDTH; x++)
 		{
 			for (int z=0; z<RawChunk.DEPTH; z++)
 			{
-				final long dist = distance(coord, x, z, actualOrigin); 
+				final long dist = distance(coord, x, z, origin);
 				final boolean allow = dist <= radius;
 				filter.set(x, z, allow);
 			}

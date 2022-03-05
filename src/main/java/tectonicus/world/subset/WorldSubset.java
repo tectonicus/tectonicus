@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,13 +13,14 @@ import tectonicus.ChunkCoord;
 import tectonicus.SaveFormat;
 import tectonicus.world.filter.BlockFilter;
 
-public interface WorldSubset
-{
-	public RegionIterator createRegionIterator(SaveFormat format);
+import java.io.File;
 
-	public boolean contains(ChunkCoord coord);
+public interface WorldSubset {
+	RegionIterator createRegionIterator(SaveFormat format, File dimensionDir);
 
-	public BlockFilter getBlockFilter(ChunkCoord coord);
+	boolean contains(ChunkCoord coord);
 
-	public String getDescription();
+	boolean containsBlock(double x, double z);
+
+	BlockFilter getBlockFilter(ChunkCoord coord);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,41 +10,30 @@
 package tectonicus.world.subset;
 
 import tectonicus.ChunkCoord;
-import tectonicus.world.filter.NullBlockFilter;
 import tectonicus.SaveFormat;
-import tectonicus.world.World;
 import tectonicus.world.filter.BlockFilter;
+import tectonicus.world.filter.NullBlockFilter;
 
-public class FullWorldSubset implements WorldSubset
-{
-	private final World world;
-	
-	public FullWorldSubset(World world)
-	{
-		this.world = world;
-	}
-	
+import java.io.File;
+
+public class FullWorldSubset implements WorldSubset {
 	@Override
-	public RegionIterator createRegionIterator(SaveFormat saveFormat)
-	{
-		return new AllRegionsIterator(world.getDimensionDir(), saveFormat);
+	public RegionIterator createRegionIterator(SaveFormat saveFormat, File dimensionDir) {
+		return new AllRegionsIterator(dimensionDir, saveFormat);
 	}
-	
+
 	@Override
-	public boolean contains(ChunkCoord coord)
-	{
+	public boolean contains(ChunkCoord coord) {
 		return true;
 	}
-	
+
 	@Override
-	public BlockFilter getBlockFilter(ChunkCoord coord)
-	{
-		return new NullBlockFilter();
+	public boolean containsBlock(double x, double z) {
+		return true;
 	}
-	
+
 	@Override
-	public String getDescription()
-	{
-		return "FullWorldSubset";
+	public BlockFilter getBlockFilter(ChunkCoord coord) {
+		return new NullBlockFilter();
 	}
 }

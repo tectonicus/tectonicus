@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,7 +17,6 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.Configuration;
-import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.MutableConfiguration;
@@ -25,10 +24,8 @@ import tectonicus.configuration.MutableLayer;
 import tectonicus.configuration.MutableMap;
 import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
-import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
-import tectonicus.util.Vector3l;
 import tectonicus.world.World;
 
 import java.awt.Toolkit;
@@ -143,7 +140,7 @@ public class TectonicusApp
 				PlayerSkinCache skinCache = new PlayerSkinCache(args, hashAlgorithm);
 				
 				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(),
-						args.minecraftJar(), args.getTexturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubsetFactory(), skinCache, map.getSignFilter(), args);
+						args.minecraftJar(), args.getTexturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), skinCache, map.getSignFilter(), args);
 				TileRenderer.setupWorldForLayer(layer, world);
 				
 				interactiveRenderer.display(world);
@@ -155,7 +152,7 @@ public class TectonicusApp
 				// Do this first before we attempt to load any caches
 				if (args.eraseOutputDir())
 				{
-					System.out.println("Deleting output dir: "+args.getOutputDir().getAbsolutePath());
+					log.info("Deleting output dir: "+args.getOutputDir().getAbsolutePath());
 					
 					FileUtils.deleteDirectory(args.getOutputDir());
 				}
@@ -185,23 +182,15 @@ public class TectonicusApp
 					File playerDir = new File(mapDir, "players.js");
 					
 					File imagesDir = new File(args.getOutputDir(), "Images");
-					
-					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), "");
-					Vector3l spawnPosition = levelDat.getSpawnPosition();
-					
-					if (map.getDimension() == Dimension.END)
-					{
-						spawnPosition = new Vector3l(100, 49, 0);
-					}
-					
-					TileRenderer.outputPlayers(playerDir, imagesDir, map, map.getPlayerFilter(), players, iconAssembler, spawnPosition);
+
+					TileRenderer.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
 				}
 				
 				skinCache.destroy();
 				
 				final Date endTime = new Date();
 				String time = Util.getElapsedTime(startTime, endTime);
-				System.out.println("Player export took "+time);
+				log.debug("Player export took "+time);
 			}
 			else if (args.getMode() == Mode.GUI)
 			{

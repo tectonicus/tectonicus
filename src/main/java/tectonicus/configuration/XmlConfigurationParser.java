@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,31 +9,78 @@
 
 package tectonicus.configuration;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import static tectonicus.configuration.ParseUtil.*;
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
+import tectonicus.raw.LevelDat;
 import tectonicus.util.Vector3l;
-import tectonicus.world.subset.CircularWorldSubsetFactory;
-import tectonicus.world.subset.FullWorldSubsetFactory;
-import tectonicus.world.subset.WorldSubsetFactory;
+import tectonicus.world.subset.CircularWorldSubset;
+import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.WorldSubset;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import static tectonicus.configuration.ParseUtil.parseAlphaBits;
+import static tectonicus.configuration.ParseUtil.parseBackgroundColor;
+import static tectonicus.configuration.ParseUtil.parseCacheDir;
+import static tectonicus.configuration.ParseUtil.parseCameraAngle;
+import static tectonicus.configuration.ParseUtil.parseChestFilter;
+import static tectonicus.configuration.ParseUtil.parseClosestZoomSize;
+import static tectonicus.configuration.ParseUtil.parseColourDepth;
+import static tectonicus.configuration.ParseUtil.parseCustomBlockConfig;
+import static tectonicus.configuration.ParseUtil.parseDefaultSkin;
+import static tectonicus.configuration.ParseUtil.parseDimension;
+import static tectonicus.configuration.ParseUtil.parseDrawDistance;
+import static tectonicus.configuration.ParseUtil.parseElevationAngle;
+import static tectonicus.configuration.ParseUtil.parseEraseOutputDir;
+import static tectonicus.configuration.ParseUtil.parseFOV;
+import static tectonicus.configuration.ParseUtil.parseForceLoadAwt;
+import static tectonicus.configuration.ParseUtil.parseImageCompression;
+import static tectonicus.configuration.ParseUtil.parseImageFormat;
+import static tectonicus.configuration.ParseUtil.parseLightStyle;
+import static tectonicus.configuration.ParseUtil.parseLogFile;
+import static tectonicus.configuration.ParseUtil.parseMaxTiles;
+import static tectonicus.configuration.ParseUtil.parseMode;
+import static tectonicus.configuration.ParseUtil.parseNorthDirection;
+import static tectonicus.configuration.ParseUtil.parseNumDownsampleThreads;
+import static tectonicus.configuration.ParseUtil.parseNumSamples;
+import static tectonicus.configuration.ParseUtil.parseNumZoomLevels;
+import static tectonicus.configuration.ParseUtil.parseOutputDir;
+import static tectonicus.configuration.ParseUtil.parseOutputHtmlName;
+import static tectonicus.configuration.ParseUtil.parsePlayerFilterFile;
+import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
+import static tectonicus.configuration.ParseUtil.parsePortalFilter;
+import static tectonicus.configuration.ParseUtil.parseRasteriserType;
+import static tectonicus.configuration.ParseUtil.parseRenderStyle;
+import static tectonicus.configuration.ParseUtil.parseShowBeds;
+import static tectonicus.configuration.ParseUtil.parseShowPlayers;
+import static tectonicus.configuration.ParseUtil.parseShowPortals;
+import static tectonicus.configuration.ParseUtil.parseShowSigns;
+import static tectonicus.configuration.ParseUtil.parseShowSpawn;
+import static tectonicus.configuration.ParseUtil.parseShowViews;
+import static tectonicus.configuration.ParseUtil.parseSignFilter;
+import static tectonicus.configuration.ParseUtil.parseSinglePlayerName;
+import static tectonicus.configuration.ParseUtil.parseTileSize;
+import static tectonicus.configuration.ParseUtil.parseUseBiomeColours;
+import static tectonicus.configuration.ParseUtil.parseUseCache;
+import static tectonicus.configuration.ParseUtil.parseUseDefaultBlockConfig;
+import static tectonicus.configuration.ParseUtil.parseUseOldColorPalette;
+import static tectonicus.configuration.ParseUtil.parseViewFilter;
+
+@Log4j2
 public class XmlConfigurationParser
 {
 	private static final int VERSION = 2;
@@ -159,7 +206,7 @@ public class XmlConfigurationParser
 			map.setCameraElevationDeg(elevationAngle);
 			
 			Element subsetNode = getChild(mapElement, "subset");
-			map.setWorldSubsetFactory( parseWorldSubset(subsetNode) );
+			map.setWorldSubset( parseWorldSubset(subsetNode, map.getDimension(), map.getWorldDir().toPath()) );
 			
 			final boolean useBiomeColours = parseUseBiomeColours(getString(mapElement, "useBiomeColours"));
 			map.setUseBiomeColours(useBiomeColours);
@@ -226,7 +273,7 @@ public class XmlConfigurationParser
 			Element modsElement = getChild(mapElement, "mods");
 			if (modsElement != null)
 			{
-				List<File> modJars = new ArrayList<File>();
+				List<File> modJars = new ArrayList<>();
 				Element[] mods = getChildren(modsElement, "mod");
 				for (Element mod : mods)
 				{
@@ -456,50 +503,52 @@ public class XmlConfigurationParser
 
 		return elementString.equalsIgnoreCase("true");
 	}
-	
-	private static WorldSubsetFactory parseWorldSubset(Element subsetNode)
-	{
-		if (subsetNode != null)
-		{
+
+	private static WorldSubset parseWorldSubset(Element subsetNode, Dimension dimension, Path worldDir) {
+		if (subsetNode != null) {
 			Element circularNode = getChild(subsetNode, "CircularSubset");
-			if (circularNode != null)
-			{
+			if (circularNode != null) {
 				long radius = 0;
-				try
-				{
+				try {
 					radius = Long.parseLong(circularNode.getAttribute("radius"));
+				} catch (NumberFormatException e) {
+					log.error("Failed to parse subset radius", e);
 				}
-				catch (Exception e) {}
-				
+
 				Vector3l origin = null;
-				if (circularNode.hasAttribute("origin"))
-				{
+				if (circularNode.hasAttribute("origin")) {
 					String originStr = circularNode.getAttribute("origin");
 					final int commaPos = originStr.indexOf(',');
-					if (commaPos != -1 && commaPos < originStr.length()-1)
-					{
+					if (commaPos != -1 && commaPos < originStr.length() - 1) {
 						String xStr = originStr.substring(0, commaPos).trim();
-						String zStr = originStr.substring(commaPos+1).trim();
-						
-						try
-						{
+						String zStr = originStr.substring(commaPos + 1).trim();
+
+						try {
 							final long x = Long.parseLong(xStr);
 							final long z = Long.parseLong(zStr);
-							origin = new Vector3l(x, 0, z);
+							origin = new Vector3l(x, 64, z);
+						} catch (NumberFormatException e) {
+							log.error("Failed to parse subset origin", e);
 						}
-						catch (Exception e) {}
 					}
-				}
-				if (radius > 0)
-				{
-					CircularWorldSubsetFactory factory = new CircularWorldSubsetFactory();
-					factory.setOrigin(origin);
-					factory.setRadius(radius);
-					return factory;
+				} else if (dimension == Dimension.END) {
+					origin = new Vector3l(100, 49, 0); // Location of obsidian platform where the player spawns
+				} else {
+					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(worldDir), "");
+					origin = levelDat.getSpawnPosition();
+				} //TODO: how do we determine the origin for Nether maps?
+
+				if (radius > 0) {
+					return new CircularWorldSubset(origin, radius);
+
+//					CircularWorldSubsetFactory factory = new CircularWorldSubsetFactory();
+//					factory.setOrigin(origin);
+//					factory.setRadius(radius);
+//					return factory;
 				}
 			}
 		}
-		
-		return new FullWorldSubsetFactory();
+
+		return new FullWorldSubset();
 	}
 }

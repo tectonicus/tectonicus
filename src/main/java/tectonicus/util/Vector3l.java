@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,27 +9,20 @@
 
 package tectonicus.util;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
 public class Vector3l
 {
 	public long x, y, z;
-	
-	public Vector3l()
-	{
-		
-	}
 	
 	public Vector3l(Vector3l other)
 	{
 		this.x = other.x;
 		this.y = other.y;
 		this.z = other.z;
-	}
-	
-	public Vector3l(final long x, final long y, final long z)
-	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
 	}
 	
 	public long separation(Vector3l other)
@@ -40,9 +33,10 @@ public class Vector3l
 		
 		return (long)Math.sqrt(dx*dx + dy*dy + dz*dz);
 	}
-	
+
+	@Override
 	public String toString()
 	{
-		return "["+super.toString()+" ("+x+", "+y+") ]";
+		return "(" + x + ", " + y + ", " + z +")";
 	}
 }

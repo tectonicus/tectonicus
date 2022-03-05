@@ -60,9 +60,9 @@ import tectonicus.world.filter.ExploredCaveFilter;
 import tectonicus.world.filter.ExploredCaveFilter113;
 import tectonicus.world.filter.NetherBlockFilter;
 import tectonicus.world.filter.NetherBlockFilter113;
-import tectonicus.world.subset.CircularWorldSubsetFactory;
+import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.RegionIterator;
-import tectonicus.world.subset.WorldSubsetFactory;
+import tectonicus.world.subset.WorldSubset;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -220,7 +220,7 @@ public class TileRenderer
 	public Result output()
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
-		System.out.println("Starting tile renderer");
+		log.info("Starting tile renderer");
 		
 		Date startTime = new Date();
 		
@@ -244,11 +244,9 @@ public class TileRenderer
 			
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
 			
-			WorldSubsetFactory subset = map.getWorldSubsetFactory();
-			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter(), args);
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), playerSkinCache, map.getSignFilter(), args);
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -267,25 +265,17 @@ public class TileRenderer
 			
 			
 			// Figure out which tiles we need to render
-			System.out.println("Finding changed tiles since last render...");
+			log.info("Finding changed tiles since last render...");
 			progressListener.onTaskStarted(Task.FIND_CHANGED_TILES.toString());
-			
-			// Output signs
-			outputSigns(new File(mapDir, "signs.js"), signsFile, map, world.getSpawnPosition());
-			
-			// Output players
-			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, map.getPlayerFilter(), world.players(map.getDimension()), playerIconAssembler, world.getSpawnPosition());
-			
-			// Output beds
-			outputBeds(mapDir, map, map.getPlayerFilter(), world.players(null), world.getSpawnPosition());
-			
-			// Output portals
-			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map, world.getSpawnPosition())));
-			
-			// Output views
-			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
-			
-			outputChests(new File(mapDir, "chests.js"), map, world.getSpawnPosition(), world.getChests());
+
+			// Output entity javascript for creating map markers
+			//TODO: move all the code from these methods to a separate class
+			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
+			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, world.players(map.getDimension()), playerIconAssembler);
+			outputBeds(mapDir, map, world.players(null));
+			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
+			outputViews(new File(mapDir, "views.js"), viewsFile, map);
+			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
 			
 			// Render views
 			FileViewCache viewCache = createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
@@ -295,7 +285,7 @@ public class TileRenderer
 			TileCoordBounds bounds = null;
 			
 			if (map.getLayers().isEmpty())
-				System.out.println("No layers found!!!");
+				log.warn("No layers found!!!");
 			
 			for (Layer layer : map.getLayers())
 			{
@@ -356,7 +346,7 @@ public class TileRenderer
 		
 		outputChangedFile();
 		
-		System.out.println("Render complete - total time "+time);
+		log.info("Render complete - total time "+time);
 		
 		return new Result(abort, outputHtmlFile);
 	}
@@ -365,7 +355,7 @@ public class TileRenderer
 	public Result outputViews()
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
-		System.out.println("Starting view renderer");
+		log.info("Starting view renderer");
 		
 		Date startTime = new Date();
 		
@@ -383,11 +373,9 @@ public class TileRenderer
 			
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
 			
-			WorldSubsetFactory subset = map.getWorldSubsetFactory();
-			
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), subset, playerSkinCache, map.getSignFilter(), args);
+									biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), playerSkinCache, map.getSignFilter(), args);
 			
 			// TODO: Load custom blocks here
 			
@@ -399,7 +387,7 @@ public class TileRenderer
 			preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile);
 			
 			// Output views
-			outputViews(new File(mapDir, "views.js"), viewsFile, map, map.getViewConfig().getImageFormat());
+			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			
 			// Render views
 			FileViewCache viewCache = createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
@@ -412,14 +400,14 @@ public class TileRenderer
 		
 		outputChangedFile();
 		
-		System.out.println("View render complete - total time "+time);
+		log.info("View render complete - total time "+time);
 		
 		return new Result(abort, null);
 	}
 	
 	public static void setupWorldForLayer(Layer layer, World world)
 	{
-		System.out.println("Creating block registry");
+		log.info("Creating block registry");
 		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());
 		
 		world.setLightStyle(layer.getLightStyle());
@@ -1338,26 +1326,13 @@ public class TileRenderer
 			
 			Vector3l startView = new Vector3l();
 			
-			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
-			{
-				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
+			if (map.getWorldSubset() instanceof CircularWorldSubset) {
+				CircularWorldSubset subset = (CircularWorldSubset) map.getWorldSubset();
 
-				
-				if(subset.getOrigin() != null)
-				{
-					startView.x = subset.getOrigin().x;
-					startView.y = 64;  //sealevel
-					startView.z = subset.getOrigin().z;
-				}
-				else
-				{
-					startView.x = 0;
-					startView.y = 64;  //sealevel
-					startView.z = 0;
-				}
-			}
-			else
-			{
+				startView.x = subset.getOrigin().x;
+				startView.y = 64;  //sea level
+				startView.z = subset.getOrigin().z;
+			} else {
 				startView=levelDat.getSpawnPosition();
 			}
 			
@@ -1488,7 +1463,7 @@ public class TileRenderer
 		}
 	}
 	
-	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, PlayerFilter filter, List<Player> players, PlayerIconAssembler playerIconAssembler, Vector3l spawn)
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, List<Player> players, PlayerIconAssembler playerIconAssembler)
 	{
 		try {
 			Files.deleteIfExists(playersFile.toPath());
@@ -1498,7 +1473,7 @@ public class TileRenderer
 
 		FileUtils.ensureExists(imagesDir);
 		
-		System.out.println("Outputting players to "+playersFile.getAbsolutePath());
+		log.info("Outputting players to "+playersFile.getAbsolutePath());
 		
 		int numOutput = 0;
 		ExecutorService executor = Executors.newCachedThreadPool();
@@ -1506,31 +1481,17 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(playersFile, map.getId()+"_playerData");
-			
-			long radius = 0;
-			long originX = spawn.x;
-			long originZ = spawn.z;
-			
-			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
-			{
-				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
 
-				radius = subset.getRadius();
-				if(subset.getOrigin() != null)
-				{
-					originX = subset.getOrigin().x;
-					originZ = subset.getOrigin().z;
-				}
-			}
-			
+			PlayerFilter playerFilter = map.getPlayerFilter();
+			WorldSubset worldSubset = map.getWorldSubset();
 			for (Player player : players)
 			{
-				if (filter.passesFilter(player))
+				if (playerFilter.passesFilter(player))
 				{
 					Vector3d position = player.getPosition();
-					if (radius == 0 || radius != 0 && Math.pow((position.x - originX), 2) + Math.pow((position.z - originZ), 2) < Math.pow(radius,2))
+					if (worldSubset.containsBlock(position.x, position.z))
 					{
-						System.out.println("\toutputting "+player.getName());
+						log.debug("\toutputting "+player.getName());
 						
 						HashMap<String, String> args = new HashMap<>();
 						
@@ -1569,10 +1530,10 @@ public class TileRenderer
 			if (jsWriter != null)
 				jsWriter.close();
 		}
-		System.out.println("Outputted "+numOutput+" players");
+		log.debug("Outputted "+numOutput+" players");
 	}
 	
-	public void outputBeds(File exportDir, tectonicus.configuration.Map map, PlayerFilter filter, List<Player> players, Vector3l mapSpawn)
+	public void outputBeds(File exportDir, tectonicus.configuration.Map map, List<Player> players)
 	{
 		File bedsFile = new File(exportDir, "beds.js");
 		try {
@@ -1581,7 +1542,7 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		System.out.println("Outputting beds to "+bedsFile.getAbsolutePath());
+		log.info("Outputting beds to "+bedsFile.getAbsolutePath());
 		
 		int numOutput = 0;
 		
@@ -1590,24 +1551,10 @@ public class TileRenderer
 		{
 			jsWriter = new JsArrayWriter(bedsFile, map.getId()+"_bedData");
 			
-			long radius = 0;
-			long originX = mapSpawn.x;
-			long originZ = mapSpawn.z;
-			
-			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
-			{
-				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
-
-				radius = subset.getRadius();
-				if(subset.getOrigin() != null)
-				{
-					originX = subset.getOrigin().x;
-					originZ = subset.getOrigin().z;
-				}
-			}
-			
 			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the terra dimension for now
 			{
+				WorldSubset worldSubset = map.getWorldSubset();
+				PlayerFilter filter = map.getPlayerFilter();
 				for (Player player : players)
 				{
 					if (filter.passesFilter(player) && player.getSpawnPosition() != null)
@@ -1616,9 +1563,9 @@ public class TileRenderer
 						
 						Vector3l spawn = player.getSpawnPosition();
 						
-						if (radius == 0 || radius != 0 && Math.pow((spawn.x - originX), 2) + Math.pow((spawn.z - originZ), 2) < Math.pow(radius,2))
+						if (worldSubset.containsBlock(spawn.x, spawn.z))
 						{
-							System.out.println("\toutputting "+player.getName()+"'s bed");
+							log.debug("\toutputting "+player.getName()+"'s bed");
 							
 							bedArgs.put("playerName", "\"" + player.getName() + "\"");
 							
@@ -1643,7 +1590,7 @@ public class TileRenderer
 				jsWriter.close();
 		}
 		
-		System.out.println("Outputted "+numOutput+" beds");
+		log.debug("Outputted "+numOutput+" beds");
 	}
 	
 	private void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, String defaultSkin)
@@ -1834,13 +1781,13 @@ public class TileRenderer
 		return worldVectors;
 	}
 	
-	private void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map, Vector3l spawn)
+	private void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map)
 	{
 		HddObjectListReader<Sign> signsIn = null;
 		try
 		{
 			signsIn = new HddObjectListReader<>(signListFile);
-			outputSigns(outputFile, signsIn, map, spawn);
+			outputSigns(outputFile, signsIn, map);
 		}
 		catch (Exception e)
 		{
@@ -1853,8 +1800,8 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map, Vector3l spawn) throws IOException {
-		System.out.println("Writing signs to "+signFile.getAbsolutePath());
+	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map) throws IOException {
+		log.info("Writing signs to "+signFile.getAbsolutePath());
 
 		Files.deleteIfExists(signFile.toPath());
 		
@@ -1862,23 +1809,8 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(signFile, map.getId()+"_signData");
-			
-			long radius = 0;
-			long originX = spawn.x;
-			long originZ = spawn.z;
-			
-			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
-			{
-				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
 
-				radius = subset.getRadius();
-				if(subset.getOrigin() != null)
-				{
-					originX = subset.getOrigin().x;
-					originZ = subset.getOrigin().z;
-				}
-			}
-			
+			WorldSubset worldSubset = map.getWorldSubset();
 			Sign sign = new Sign();
 			while (signs.hasNext())
 			{				
@@ -1911,7 +1843,7 @@ public class TileRenderer
 					signArgs.put("text4", "\"" + sign.getText(3) + "\"");
 				}
 				
-				if (radius == 0 || radius != 0 && Math.pow((sign.getX() - originX), 2) + Math.pow((sign.getZ() - originZ), 2) < Math.pow(radius,2))
+				if (worldSubset.containsBlock(sign.getX(), sign.getZ()))
 				{
 					jsWriter.write(signArgs);
 				}
@@ -1928,14 +1860,14 @@ public class TileRenderer
 		}
 	}
 	
-	private int outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map, Vector3l spawn)
+	private int outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map)
 	{
 		int numPortals = 0;
 		
 		try
 		{
 			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<>(portalListFile);
-			numPortals = outputPortals(outFile, portalsIn, map, spawn);
+			numPortals = outputPortals(outFile, portalsIn, map);
 			portalsIn.close();
 		}
 		catch (Exception e)
@@ -1946,8 +1878,8 @@ public class TileRenderer
 		return numPortals;
 	}
 	
-	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map, Vector3l spawn) throws IOException {
-		System.out.println("Writing portals...");
+	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map) throws IOException {
+		log.info("Writing portals...");
 
 		Files.deleteIfExists(portalFile.toPath());
 		
@@ -1956,23 +1888,7 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(portalFile, map.getId()+"_portalData");
-			
-			long radius = 0;
-			long originX = spawn.x;
-			long originZ = spawn.z;
-			
-			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
-			{
-				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
 
-				radius = subset.getRadius();
-				if(subset.getOrigin() != null)
-				{
-					originX = subset.getOrigin().x;
-					originZ = subset.getOrigin().z;
-				}
-			}
-			
 			ArrayList<Portal> portals = new ArrayList<>();
 			
 			if (portalPositions.hasNext())
@@ -2016,7 +1932,7 @@ public class TileRenderer
 				portals.add(new Portal(portal.getX()+((firstX-prevX)/2), portal.getY(), portal.getZ()+(firstZ-prevZ)/2));
 				numPortals++;
 			
-			
+				WorldSubset worldSubset = map.getWorldSubset();
 				for (Portal p : portals)
 				{
 					final float worldX = p.getX();
@@ -2027,7 +1943,7 @@ public class TileRenderer
 					String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 					portalArgs.put("worldPos", posStr);
 					
-					if (radius == 0 || radius != 0 && Math.pow((p.getX() - originX), 2) + Math.pow((p.getZ() - originZ), 2) < Math.pow(radius,2))
+					if (worldSubset.containsBlock(p.getX(), p.getZ()))
 					{
 						jsWriter.write(portalArgs);
 					}
@@ -2044,17 +1960,17 @@ public class TileRenderer
 				jsWriter.close();
 		}
 		
-		System.out.println("Wrote "+numPortals+" portals");
+		log.debug("Wrote "+numPortals+" portals");
 		return numPortals;
 	}
 	
-	private void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.Map map, ImageFormat imageFormat)
+	private void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.Map map)
 	{
 		HddObjectListReader<Sign> viewsIn = null;
 		try
 		{
 			viewsIn = new HddObjectListReader<>(viewsListFile);
-			outputViews(outputFile, viewsIn, map, imageFormat);
+			outputViews(outputFile, viewsIn, map);
 		}
 		catch (Exception e)
 		{
@@ -2067,8 +1983,8 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map, ImageFormat imageFormat) throws IOException {
-		System.out.println("Writing views...");
+	private void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map) throws IOException {
+		log.info("Writing views...");
 		
 		Files.deleteIfExists(viewsFile.toPath());
 		
@@ -2076,7 +1992,9 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(viewsFile, map.getId()+"_viewData");
-			
+
+			WorldSubset worldSubset = map.getWorldSubset();
+			ImageFormat imageFormat = map.getViewConfig().getImageFormat();
 			Sign sign = new Sign();
 			while (views.hasNext())
 			{				
@@ -2104,8 +2022,10 @@ public class TileRenderer
 				
 				String filename = map.getId()+"/Views/View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension();
 				viewArgs.put("imageFile", "\"" + filename + "\"");
-				
-				jsWriter.write(viewArgs);
+
+				if (worldSubset.containsBlock(sign.getX(), sign.getZ())) {
+					jsWriter.write(viewArgs);
+				}
 			}
 		}
 		catch (Exception e)
@@ -2119,9 +2039,9 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChests(File chestFile, tectonicus.configuration.Map map, Vector3l spawn, List<ContainerEntity> chestList)
+	private void outputChests(File chestFile, tectonicus.configuration.Map map, List<ContainerEntity> chestList)
 	{
-		System.out.println("Writing chests to "+chestFile.getAbsolutePath());
+		log.info("Writing chests to "+chestFile.getAbsolutePath());
 
 		try {
 			Files.deleteIfExists(chestFile.toPath());
@@ -2133,22 +2053,7 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(chestFile, map.getId()+"_chestData");
-			
-			long radius = 0;
-			long originX = spawn.x;
-			long originZ = spawn.z;
-			
-			if (map.getWorldSubsetFactory().getClass() == CircularWorldSubsetFactory.class)
-			{
-				CircularWorldSubsetFactory subset = (CircularWorldSubsetFactory) map.getWorldSubsetFactory();
 
-				radius = subset.getRadius();
-				if(subset.getOrigin() != null)
-				{
-					originX = subset.getOrigin().x;
-					originZ = subset.getOrigin().z;
-				}
-			}
 			ArrayList<BlockEntity> removeList = new ArrayList<>();
 			for (BlockEntity entity : chestList)
 			{
@@ -2178,7 +2083,8 @@ public class TileRenderer
 			}
 			
 			chestList.removeAll(removeList);
-			
+
+			WorldSubset worldSubset = map.getWorldSubset();
 			for (BlockEntity entity : chestList)
 			{
 				float worldX = entity.getX() + 0.5f;
@@ -2189,7 +2095,7 @@ public class TileRenderer
 				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
 				chestArgs.put("worldPos", posStr);
 				
-				if (radius == 0 || radius != 0 && Math.pow((entity.getX() - originX), 2) + Math.pow((entity.getZ() - originZ), 2) < Math.pow(radius,2))
+				if (worldSubset.containsBlock(entity.getX(), entity.getZ()))
 				{
 					jsWriter.write(chestArgs);
 				}

@@ -1,23 +1,14 @@
 
-// TODO:
-//
-//	- make players/signs/portals/beds initially visible work again 
-//
-//	- only show signs/beds/players toggle control when there is data to toogle?
-//
-
 let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0)
-let tileLayers = [];
+let tileLayers = new Map();
 
-//function size(obj)
-//{
-//    var size = 0, key;
-//    for (key in obj)
-//    {
-//        if (obj.hasOwnProperty(key)) size++;
-//    }
-//    return size;
-//};
+function size(obj) {
+	var size = 0, key;
+	for (key in obj) {
+		if (obj.hasOwnProperty(key)) size++;
+	}
+	return size;
+}
 
 var compassControl = null;
 var viewToggleControl = null;
@@ -30,13 +21,13 @@ var chestToggleControl = null;
 
 function main()
 {
-	var queryParams = getQueryParams();
-	var fragmentParams = getFragmentParams();
+	let queryParams = getQueryParams();
+	let fragmentParams = getFragmentParams();
 	
 	L.TileLayer.Tectonicus = L.TileLayer.extend({
         getTileUrl: function(coords) {
-            var xBin = coords.x % 16;
-            var yBin = coords.y % 16;
+            let xBin = coords.x % 16;
+            let yBin = coords.y % 16;
 
             return this.mapId + "/" + this.layerId + "/Zoom"+coords.z
                 +"/"+xBin+"/"+yBin+"/tile_"+coords.x+"_"+coords.y+"."+this.imageFormat;
@@ -45,7 +36,7 @@ function main()
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - ' + this.mapName;
         },
         initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, worldVectors, projection,
-            blockStats, worldStats) {
+            blockStats, worldStats, startPoint) {
             this.mapId = mapId;
             this.layerId = layerId;
             this.imageFormat = imageFormat;
@@ -61,81 +52,54 @@ function main()
             this.projection = projection;
             this.blockStats = blockStats;
             this.worldStats = worldStats;
+			this.startPoint = startPoint;
         }
     });
 
-    var baseMaps = {}
-    for (var i = 0; i < contents.length; i++) {
-        var tecMap = contents[i];
-        for (var j = 0; j < tecMap.layers.length; j++) {
+    let baseMaps = {}
+    for (let i = 0; i < contents.length; i++) {
+        let tecMap = contents[i];
+        for (let j = 0; j < tecMap.layers.length; j++) {
             let layer = tecMap.layers[j];
             let projection = new MinecraftProjection(tecMap.worldVectors);
-            var tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats);
+			// 'startPoint' stores view pos for a given layer, so we don't end up looking at nothing when we toggle between terra and nether
+			let startPoint = projection.worldToMap(tecMap.worldVectors.startView);
+
+            let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
+                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPoint);
+
             if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
                 baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
             } else {
                 baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
             }
-            tileLayers.push(tileLayer);
+            tileLayers.set(layer.id, tileLayer);
         }
     }
-	
-//	for (i in contents)
-//	{
-//		var tecMap = contents[i];
-//
-//		for (j in tecMap.layers)
-//		{
-//			var layer = tecMap.layers[j];
-//			var overlayOptions =
-//			{
-//				name: layer.name,
-//				tileSize: new google.maps.Size(tileSize, tileSize),
-//				maxZoom: maxZoom,
-//				isPng: layer.isPng,
-//				getTileUrl: createTileUrlFunc(tecMap.id, layer.id, layer.imageFormat)
-//			};
-//			var minecraftMapType = new google.maps.ImageMapType(overlayOptions);
-//			minecraftMapType.projection = new MinecraftProjection(lattitudeRange, tecMap.worldVectors);
-//			minecraftMapType.tectonicusMap = tecMap;
-//			minecraftMapType.layer = layer;
-//			map.mapTypes.set(layer.id, minecraftMapType);
-//
-//			// Set the starting lat-long pos
-////			var startPoint = minecraftMapType.projection.worldToMap(tecMap.worldVectors.startView);
-////			var startLatLong = minecraftMapType.projection.fromPointToLatLng(startPoint);
-////			tecMap.viewLatLong = startLatLong; // 'viewLatLong' stores view pos for a given map, so we don't end up looking at nothing when we toggle between terra and nether
-//		}
-//	}
 
-	if (tileLayers.length > 1) {
-            L.control.layers(baseMaps).addTo(mymap);
+	if (tileLayers.size > 1) {
+        L.control.layers(baseMaps).addTo(mymap);
     }
 
-	tileLayers[0].addTo(mymap);
-
-    L.control.attribution({position: 'bottomleft'}).addTo(mymap);
-
-	//TODO: Fix this startView stuff
 	// Try and get a starting view from the fragment params, query params, or fall back to default
-//	var startView;
-//	if (size(fragmentParams) > 0)
-//		startView = findStartView(fragmentParams, startLayer.id, startMap.worldVectors.startView);
-//	else
-//		startView = findStartView(queryParams, startLayer.id, startMap.worldVectors.startView);
-	
+	let defaultLayer = tileLayers.get("LayerA");
+	let startView;
+	if (size(fragmentParams) > 0) {
+		startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.worldVectors.startView);
+	} else {
+		startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.worldVectors.startView);
+	}
+
 	// Set the starting view
-//	map.setMapTypeId(startView.layerId);
-//	map.setCenter(startView.latLong);
-//	map.setZoom(startView.zoom);
-    mymap.setView(tileLayers[0].projection.worldToMap(tileLayers[0].worldVectors.spawnPosition))
-	
-	// And update the view latLong
-	//layer.viewLatLong = startView.latLong;
-	
+	let startLayer = tileLayers.get(startView.layerId);
+	startLayer.addTo(mymap);
+	mymap.setView(startView.startPoint, startView.zoom);
+
+	// And store the updated start point in the layer
+	startLayer.startPoint = startView.startPoint;
+
 	// Create controls
-	compassControl = CreateCompassControl(tileLayers[0].mapId + '/Compass.png');
+	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
     viewToggleControl = CreateToggleControl('Show views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
     signToggleControl = CreateToggleControl('Show signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
     playerToggleControl = CreateToggleControl('Show players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
@@ -145,17 +109,20 @@ function main()
     chestToggleControl = CreateToggleControl('Show chests', 'Images/Chest.png', chestMarkers, false);
 
 	//CreateLinkControl(map);
-	
+
 	// Add controls to the map
+	L.control.attribution({position: 'bottomleft'}).addTo(mymap);
 	//map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
 	mymap.addControl(spawnToggleControl);
+	//TODO: don't add spawn toggle if spawn point is not in the world subset
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
 //	google.maps.event.addListener(map, 'projection_changed', onProjectionChanged);
-	
+	//TODO: on map move or zoom save the new coords to layer startView so if layers are switched we can return to the same place on the map
+
 	// Manually fire this event to set the initial state
-    mymap.fireEvent('baselayerchange', {layer: tileLayers[0]});
+    mymap.fireEvent('baselayerchange', {layer: startLayer});
 //	onProjectionChanged();
 }
 
@@ -514,52 +481,43 @@ function destroyMarkers(markers) {
 	markers.length = 0;
 }
 
-//function ViewPos(layerId, worldPos, zoom, latLong)
-//{
-//	this.layerId = layerId;
-//	this.worldPos = worldPos;
-//	this.zoom = zoom;
-//	this.latLong = latLong;
-//}
-//
-//function findStartView(params, defaultLayerId, defaultSpawnPos)
-//{
-//	var queryLayerId = defaultLayerId;
-//	var queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
-//	var queryZoom = 0;
-//
-//	if (params.hasOwnProperty('layerId'))
-//	{
-//		queryLayerId = params['layerId'];
-//	}
-//
-//	if (params.hasOwnProperty('worldX')
-//		&& params.hasOwnProperty('worldY')
-//		&& params.hasOwnProperty('worldZ'))
-//	{
-//		queryPos.x = parseInt( params['worldX'] );
-//		queryPos.y = parseInt( params['worldY'] );
-//		queryPos.z = parseInt( params['worldZ'] );
-//	}
-//
-//	if (params.hasOwnProperty('zoom'))
-//	{
-//		queryZoom = parseInt( params['zoom'] );
-//	}
-//
-//	if (queryZoom < 0)
-//		queryZoom = 0;
-//	if (queryZoom > maxZoom)
-//		queryZoom = maxZoom;
-//
-//	var mapType = map.mapTypes.get(queryLayerId);
-//	var projection = mapType.projection;
-//
-//	var startPoint = projection.worldToMap(queryPos);
-//	var startLatLong = projection.fromPointToLatLng(startPoint);
-//
-//	return new ViewPos(queryLayerId, queryPos, queryZoom, startLatLong);
-//}
+function ViewPos(layerId, zoom, startPoint) {
+	this.layerId = layerId;
+	this.zoom = zoom;
+	this.startPoint = startPoint;
+}
+
+function findStartView(params, defaultLayerId, defaultSpawnPos) {
+	let queryLayerId = defaultLayerId;
+	let queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
+	let queryZoom = 0;
+
+	if (params.hasOwnProperty('layerId')) {
+		queryLayerId = params['layerId'];
+	}
+
+	if (params.hasOwnProperty('worldX')
+		&& params.hasOwnProperty('worldY')
+		&& params.hasOwnProperty('worldZ')) {
+		queryPos.x = parseInt(params['worldX']);
+		queryPos.y = parseInt(params['worldY']);
+		queryPos.z = parseInt(params['worldZ']);
+	}
+
+	if (params.hasOwnProperty('zoom')) {
+		queryZoom = parseInt(params['zoom']);
+	}
+
+	if (queryZoom < 0)
+		queryZoom = 0;
+	if (queryZoom > maxZoom)
+		queryZoom = maxZoom;
+
+	let layer = tileLayers.get(queryLayerId);
+	let startPoint = layer.projection.worldToMap(queryPos);
+
+	return new ViewPos(queryLayerId, queryZoom, startPoint);
+}
 
 /*
  * Workaround for 1px lines appearing in some browsers due to fractional transforms

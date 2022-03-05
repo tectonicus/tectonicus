@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,44 +13,44 @@ import java.io.File;
 import java.util.List;
 
 import tectonicus.configuration.Configuration.Dimension;
-import tectonicus.world.subset.WorldSubsetFactory;
+import tectonicus.world.subset.WorldSubset;
 
 public interface Map
 {
-	public String getId();
+	String getId();
 	
-	public String getName();
+	String getName();
 	
-	public File getWorldDir();
+	File getWorldDir();
 	
-	public Dimension getDimension();
+	Dimension getDimension();
 	
-	public WorldSubsetFactory getWorldSubsetFactory();
+	WorldSubset getWorldSubset();
 	
-	public float getCameraAngleRad();
-	public int getCameraAngleDeg();
+	float getCameraAngleRad();
+	int getCameraAngleDeg();
 	
-	public float getCameraElevationRad();
-	public int getCameraElevationDeg();
+	float getCameraElevationRad();
+	int getCameraElevationDeg();
 	
-	public int getClosestZoomSize();
+	int getClosestZoomSize();
 	
-	public boolean useBiomeColours();
+	boolean useBiomeColours();
 	
-	public PlayerFilter getPlayerFilter();
-	public SignFilter getSignFilter();
-	public PortalFilter getPortalFilter();
-	public ViewFilter getViewFilter();
-	public ChestFilter getChestFilter();
+	PlayerFilter getPlayerFilter();
+	SignFilter getSignFilter();
+	PortalFilter getPortalFilter();
+	ViewFilter getViewFilter();
+	ChestFilter getChestFilter();
 	
-	public List<File> getModJars();
+	List<File> getModJars();
 	
-	public int numLayers();
-	public Layer getLayer(final int index);
-	public List<Layer> getLayers();
+	int numLayers();
+	Layer getLayer(final int index);
+	List<Layer> getLayers();
 	
-	public ViewConfig getViewConfig();
+	ViewConfig getViewConfig();
 	
-	public NorthDirection getNorthDirection();
-	public File getCustomCompassRose();
+	NorthDirection getNorthDirection();
+	File getCustomCompassRose();
 }

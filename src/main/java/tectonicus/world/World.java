@@ -24,6 +24,7 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.Chunk;
 import tectonicus.ChunkCoord;
 import tectonicus.ChunkLocator;
+import tectonicus.DirUtils;
 import tectonicus.Minecraft;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
@@ -69,7 +70,6 @@ import tectonicus.world.filter.CompositeBlockFilter;
 import tectonicus.world.filter.NullBlockFilter;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
-import tectonicus.world.subset.WorldSubsetFactory;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -103,12 +103,14 @@ public class World implements BlockContext
 {
 	private static final int BATCH_SIZE = 100;
 	
-	private Version textureVersion;
+	private final Version textureVersion;
 	
 	private final Rasteriser rasteriser;
 	
 	private final File worldDir;
 	private final File dimensionDir;
+	@Getter
+	private final Dimension dimension;
 	
 	private BlockTypeRegistry registry;
 	private BlockRegistry modelRegistry;
@@ -116,14 +118,14 @@ public class World implements BlockContext
 	private final LevelDat levelDat;
 
 	@Getter
-	private WorldInfo worldInfo;
+	private final WorldInfo worldInfo;
 	
-	private List<Player> players;
-	private PlayerSkinCache playerSkinCache;
+	private final List<Player> players;
+	private final PlayerSkinCache playerSkinCache;
 	
-	private List<ContainerEntity> chests;
+	private final List<ContainerEntity> chests;
 	
-	private TexturePack texturePack;
+	private final TexturePack texturePack;
 	
 	private final RegionCache regionCache;
 	private final ChunkLocator chunkLocator;
@@ -141,17 +143,17 @@ public class World implements BlockContext
 	
 	private final BiomeCache biomeCache;
 	
-	private WorldSubset worldSubset;
+	private final WorldSubset worldSubset;
 	
-	private Geometry daySkybox, nightSkybox;
+	private final Geometry daySkybox, nightSkybox;
 	
-	private SignFilter signFilter;
+	private final SignFilter signFilter;
 
 	private final Map<Location, String> unknownBlocks;
 	
 	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile,
 				 List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName,
-				 WorldSubsetFactory subsetFactory, PlayerSkinCache playerSkinCache, SignFilter signFilter, Configuration args)
+				 WorldSubset subset, PlayerSkinCache playerSkinCache, SignFilter signFilter, Configuration args)
 	{
 		this.rasteriser = rasteriser;
 		this.signFilter = signFilter;
@@ -161,27 +163,13 @@ public class World implements BlockContext
 
 		
 		this.worldDir = baseDir;
-		
+		this.dimension = dimension;
+
 		// Use the world dir and the dimension to find the dimension dir
-		if (dimension == Dimension.OVERWORLD)
-		{
-			dimensionDir = worldDir;
-		}
-		else if (dimension == Dimension.NETHER)
-		{
-			dimensionDir = new File(worldDir, "DIM-1");
-		}
-		else if (dimension == Dimension.END)
-		{
-			dimensionDir = new File(worldDir, "DIM1");
-		}
-		else
-		{
-			dimensionDir = worldDir;
-		}
+		dimensionDir = DirUtils.getDimensionDir(worldDir, dimension);
 		
-		System.out.println("Loading world from base dir "+worldDir.getPath()+" with dimension "+dimension);
-		System.out.println("\tFull dimension dir: "+dimensionDir.getAbsolutePath());
+		log.info("Loading world from base dir {} with dimension {}", worldDir.getPath(), dimension);
+		log.info("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
 		
 		this.biomeCache = biomeCache;
 		this.playerSkinCache = playerSkinCache;
@@ -196,7 +184,7 @@ public class World implements BlockContext
 		// World should throw Exception?
 		try
 		{
-			System.out.println("Loading level.dat");
+			log.info("Loading level.dat");
 			levelDat = new LevelDat(Minecraft.findLevelDat(baseDir.toPath()), singlePlayerName);
 			
 			if (levelDat.isAlpha())
@@ -230,7 +218,7 @@ public class World implements BlockContext
 				Minecraft.setChunkHeight(384);
 				sectionArrayOffset = true;
 			}
-			log.info("Current world max chunk height: " + Minecraft.getChunkHeight());
+			log.info("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		}
 
 		worldInfo = new WorldInfo(version, sectionArrayOffset);
@@ -278,7 +266,7 @@ public class World implements BlockContext
 		rawLoadedChunks = new RawCache(100);
 		geometryLoadedChunks = new GeometryCache(100);
 	
-		this.worldSubset = subsetFactory.create(this);
+		this.worldSubset = subset;
 		
 		this.lightStyle = LightStyle.None;
 		
@@ -321,11 +309,6 @@ public class World implements BlockContext
 		
 		flushChunkCache();
 		flushGeometryCache();
-	}
-	
-	public WorldSubset getWorldSubset()
-	{
-		return worldSubset;
 	}
 	
 	public BiomeCache getBiomeCache()
@@ -404,7 +387,7 @@ public class World implements BlockContext
 	
 	public RegionIterator createRegionIterator()
 	{
-		return worldSubset.createRegionIterator(regionCache.getFormat());
+		return worldSubset.createRegionIterator(regionCache.getFormat(), dimensionDir);
 	}
 	
 	public boolean contains(ChunkCoord coord)
@@ -1154,11 +1137,6 @@ public class World implements BlockContext
 	public File getWorldDir()
 	{
 		return worldDir;
-	}
-
-	public File getDimensionDir()
-	{
-		return dimensionDir;
 	}
 	
 	public SignEntity[] getLoadedSigns()

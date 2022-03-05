@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,13 +9,15 @@
 
 package tectonicus.configuration;
 
+import lombok.Getter;
+import lombok.Setter;
+import tectonicus.configuration.Configuration.Dimension;
+import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.WorldSubset;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import tectonicus.configuration.Configuration.Dimension;
-import tectonicus.world.subset.FullWorldSubsetFactory;
-import tectonicus.world.subset.WorldSubsetFactory;
 
 public class MutableMap implements Map
 {
@@ -37,8 +39,10 @@ public class MutableMap implements Map
 	private ChestFilter chestFilter;
 	
 	private MutableViewConfig viewConfig;
-	
-	private WorldSubsetFactory worldSubsetFactory;
+
+	@Getter
+	@Setter
+	private WorldSubset worldSubset;
 	
 	private List<File> modJars;
 	
@@ -62,9 +66,9 @@ public class MutableMap implements Map
 		
 		this.viewConfig = new MutableViewConfig();
 		
-		this.modJars = new ArrayList<File>();
+		this.modJars = new ArrayList<>();
 		
-		this.layers = new ArrayList<Layer>();
+		this.layers = new ArrayList<>();
 		
 		this.closestZoomSize = 32;
 		
@@ -73,7 +77,7 @@ public class MutableMap implements Map
 		
 		this.useBiomeColours = false;
 		
-		this.worldSubsetFactory = new FullWorldSubsetFactory();
+		this.worldSubset = new FullWorldSubset();
 		
 		this.northDirection = NorthDirection.MinusX;
 	}
@@ -97,7 +101,7 @@ public class MutableMap implements Map
 	@Override
 	public float getCameraAngleRad()
 	{
-		final float normalised = (float)cameraAngle / 360.0f;
+		final float normalised = cameraAngle / 360.0f;
 		final float rad = normalised * (float)Math.PI * 2.0f;
 		return rad;
 	}
@@ -114,7 +118,7 @@ public class MutableMap implements Map
 	@Override
 	public float getCameraElevationRad()
 	{
-		final float normalised = (float)cameraElevation / 360.0f;
+		final float normalised = cameraElevation / 360.0f;
 		final float rad = normalised * (float)Math.PI * 2.0f;
 		return rad;
 	}
@@ -194,23 +198,13 @@ public class MutableMap implements Map
 	@Override
 	public List<Layer> getLayers()
 	{
-		return new ArrayList<Layer>(layers);
+		return new ArrayList<>(layers);
 	}
 	
 	@Override
 	public MutableViewConfig getViewConfig()
 	{
 		return viewConfig;
-	}
-	
-	@Override
-	public WorldSubsetFactory getWorldSubsetFactory()
-	{
-		return worldSubsetFactory;
-	}
-	public void setWorldSubsetFactory(WorldSubsetFactory factory)
-	{
-		this.worldSubsetFactory = factory;
 	}
 	
 	@Override
