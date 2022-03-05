@@ -54,6 +54,7 @@ import tectonicus.util.TempArea;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
+import tectonicus.view.ViewRenderer;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.filter.ExploredCaveFilter;

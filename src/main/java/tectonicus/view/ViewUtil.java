@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -7,13 +7,17 @@
  *
  */
 
-package tectonicus;
+package tectonicus.view;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;
 
 import tectonicus.configuration.ImageFormat;
@@ -22,32 +26,23 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
 import tectonicus.world.Sign;
 
-public class ViewUtil
-{
-	public static final int viewWidth = 2048;
-	public static final int viewHeight = 1152;
+@UtilityClass
+public class ViewUtil {
+	public static final int VIEW_WIDTH = 2048;
+	public static final int VIEW_HEIGHT = 1152;
 
-	public static class Viewpoint
-	{
-		public Vector3f eye = new Vector3f();
-		public Vector3f lookAt = new Vector3f();
-		public Vector3f up = new Vector3f();
+	@Getter
+	@AllArgsConstructor
+	public static class Viewpoint {
+		private final Vector3f eye;
+		private final Vector3f lookAt;
+		private final Vector3f up;
 		
-		public float fov;
-		
-		public Viewpoint() {}
-		
-		public Viewpoint(Vector3f eye, Vector3f lookAt, Vector3f up, float fov)
-		{
-			this.eye.set(eye);
-			this.lookAt.set(lookAt);
-			this.up.set(up);
-			this.fov = fov;
-		}
+		@Setter
+		private float fov;
 	}
 	
-	private static Set<String> extractSettings(Sign sign)
-	{
+	private static Set<String> extractSettings(Sign sign) {
 		String toParse = "";
 		
 		if (sign.getText(0).startsWith("#") && sign.getText(0).length()>1)
@@ -62,7 +57,7 @@ public class ViewUtil
 		if (sign.getText(3).startsWith("#") && sign.getText(3).length()>1)
 			toParse += " " + sign.getText(3).substring(1);
 		
-		Set<String> settings = new HashSet<String>();
+		Set<String> settings = new HashSet<>();
 		
 		StringTokenizer tokeniser = new StringTokenizer(toParse);
 		while (tokeniser.hasMoreTokens())
@@ -78,8 +73,7 @@ public class ViewUtil
 		return settings;
 	}
 	
-	private static int parseHeight(Set<String> settings)
-	{
+	private static int parseHeight(Set<String> settings) {
 		int height = 0;
 		
 		for (String s : settings)
@@ -100,8 +94,7 @@ public class ViewUtil
 		return height;
 	}
 	
-	private static int parseElevation(Set<String> settings)
-	{
+	private static int parseElevation(Set<String> settings) {
 		int angle = 90;
 		
 		for (String s : settings)
@@ -127,8 +120,7 @@ public class ViewUtil
 		return angle;
 	}
 	
-	private static int parseFOV(Set<String> settings)
-	{
+	private static int parseFOV(Set<String> settings) {
 		int fov = 0;
 		
 		for (String s : settings)
@@ -149,8 +141,7 @@ public class ViewUtil
 		return fov;
 	}
 	
-	public static Viewpoint findView(Sign sign)
-	{	
+	public static Viewpoint findView(Sign sign) {
 		Set<String> settings = extractSettings(sign);
 		
 		final int heightOffset = parseHeight(settings);
@@ -181,7 +172,7 @@ public class ViewUtil
 			// Use elevation angle
 			
 			final int adjustedElevation = elevation - 90; // convert into 0 straight ahead, -90 as up, +90 as down
-			final float elevationRads = ((float)adjustedElevation / 360.0f) * 2.0f * (float)Math.PI;
+			final float elevationRads = (adjustedElevation / 360.0f) * 2.0f * (float)Math.PI;
 			
 			final float dy = -(float)Math.tan(elevationRads);
 			
@@ -200,29 +191,22 @@ public class ViewUtil
 	}
 	
 	
-	public static PerspectiveCamera createCamera(Rasteriser rasteriser, Viewpoint view, final int drawDistance)
-	{
-		PerspectiveCamera perspectiveCamera = new PerspectiveCamera(rasteriser, viewWidth, viewHeight);
-		perspectiveCamera.lookAt(view.eye, view.lookAt, view.up, view.fov, (float)viewWidth/(float)viewHeight, 0.1f, drawDistance);
+	public static PerspectiveCamera createCamera(Rasteriser rasteriser, Viewpoint view, final int drawDistance) {
+		PerspectiveCamera perspectiveCamera = new PerspectiveCamera(rasteriser, VIEW_WIDTH, VIEW_HEIGHT);
+		perspectiveCamera.lookAt(view.getEye(), view.getLookAt(), view.getUp(), view.getFov(), (float) VIEW_WIDTH /(float) VIEW_HEIGHT, 0.1f, drawDistance);
 		
 		return perspectiveCamera;
 	}
 	
-	public static File createViewFile(File viewsDir, Sign sign, ImageFormat imageFormat)
-	{
-		File viewFile = new File(viewsDir, "View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension());
-		return viewFile;
+	public static File createViewFile(File viewsDir, Sign sign, ImageFormat imageFormat) {
+		return new File(viewsDir, "View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension());
 	}
 
-	public static LightStyle parseLightStyle(Sign sign)
-	{
+	public static LightStyle parseLightStyle(Sign sign) {
 		LightStyle style = LightStyle.Day;
 		
 		Set<String> settings = extractSettings(sign);
-		
-		if (settings.contains("day"))
-			style = LightStyle.Day;
-		else if (settings.contains("night"))
+		if (settings.contains("night"))
 			style = LightStyle.Night;
 		
 		return style;

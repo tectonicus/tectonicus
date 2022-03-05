@@ -142,7 +142,8 @@ public class World implements BlockContext
 	private BlockMaskFactory blockMaskFactory;
 	
 	private final BiomeCache biomeCache;
-	
+
+	@Getter
 	private final WorldSubset worldSubset;
 	
 	private final Geometry daySkybox, nightSkybox;

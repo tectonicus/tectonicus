@@ -7,16 +7,13 @@
  *
  */
 
-package tectonicus;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.File;
+package tectonicus.view;
 
 import lombok.extern.log4j.Log4j2;
-import tectonicus.ViewUtil.Viewpoint;
+import tectonicus.ChangeFile;
+import tectonicus.ImageWriteQueue;
+import tectonicus.TileRenderer;
+import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.cache.FileViewCache;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.configuration.ImageFormat;
@@ -24,8 +21,15 @@ import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
+import tectonicus.util.TempArea;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 //	get image format out of map config node
 //	extract view height offset and elevation angle from sign text
@@ -52,30 +56,31 @@ public class ViewRenderer
 		viewsDir.mkdirs();
 		
 		// Find changed views
-		File changedViews = viewCache.findChangedViews(rasteriser, world, viewsFile, viewsDir, viewConfig.getImageFormat(), viewConfig.getViewDistance());
+		ChangedViews changedViews = viewCache.findChangedViews(rasteriser, world, viewsFile, viewsDir, viewConfig.getImageFormat(), viewConfig.getViewDistance());
 		
 		// Output changed views
-		
-		// TODO: Load custom blocks here
-		log.info("Creating fallback block registry for views");
-		world.loadBlockRegistry(null, true);
-		
-		world.flushChunkCache();
-		world.flushGeometryCache();
-		world.setLightStyle(LightStyle.Day);
-		draw(viewCache, world, mapDir, changedViews, viewsDir, viewConfig, LightStyle.Day, changedFiles);
-		
-		world.flushChunkCache();
-		world.flushGeometryCache();
-		world.setLightStyle(LightStyle.Night);
-		draw(viewCache, world, mapDir, changedViews, viewsDir, viewConfig, LightStyle.Night, changedFiles);
-		
-		log.info("View rendering done!");
+		if (changedViews.getCount() > 0) {
+			// TODO: Load custom blocks here
+			log.info("Creating fallback block registry for views");
+			world.loadBlockRegistry(null, true);
+
+			world.flushChunkCache();
+			world.flushGeometryCache();
+			world.setLightStyle(LightStyle.Day);
+			draw(viewCache, world, changedViews.getViewsFile(), viewsDir, viewConfig, LightStyle.Day, changedFiles);
+
+			world.flushChunkCache();
+			world.flushGeometryCache();
+			world.setLightStyle(LightStyle.Night);
+			draw(viewCache, world, changedViews.getViewsFile(), viewsDir, viewConfig, LightStyle.Night, changedFiles);
+
+			log.info("View rendering done!");
+		}
 	}
 	
-	private void draw(FileViewCache viewCache, World world, File mapDir, File viewsFile, File viewsDir, ViewConfig viewConfig, LightStyle lightStyle, ChangeFile changedFiles)
+	private void draw(FileViewCache viewCache, World world, File viewsFile, File viewsDir, ViewConfig viewConfig, LightStyle lightStyle, ChangeFile changedFiles)
 	{
-		log.info("Drawing "+lightStyle+" views...");
+		log.info("Drawing {} views...", lightStyle);
 		
 		final ImageFormat imageFormat = viewConfig.getImageFormat();
 		final float imageCompression = viewConfig.getImageCompressionLevel();
@@ -101,51 +106,46 @@ public class ViewRenderer
 				
 				Viewpoint view = ViewUtil.findView(sign);
 				
-				if (view.fov < 30 || view.fov > 110)  //if FOV is not set on sign or is in invalid range use config file FOV
-				{
-					view.fov = viewConfig.getFOV();
+				if (view.getFov() < 30 || view.getFov() > 110) { //if FOV is not set on sign or is in invalid range use config file FOV
+					view.setFov(viewConfig.getFOV());
 				}
 				
 				// TODO: Store size of object list in file so we can see how far through the list we are?
 				// May need to have separate day/night lists for this so it's accurate
 				
-				log.info("Drawing view at ("+view.lookAt.x+", "+view.lookAt.y+", "+view.lookAt.z+")");
+				log.info("Drawing view at ({}, {}, {})", view.getLookAt().x, view.getLookAt().y, view.getLookAt().z);
 				
 				PerspectiveCamera perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig.getViewDistance());
 				perspectiveCamera.apply();
 				
 				rasteriser.resetState();
 				rasteriser.clear(new Color(0, 0, 0));
-				rasteriser.setViewport(0, 0, ViewUtil.viewWidth, ViewUtil.viewHeight);
+				rasteriser.setViewport(0, 0, ViewUtil.VIEW_WIDTH, ViewUtil.VIEW_HEIGHT);
 				
 				world.draw(perspectiveCamera, true, false);
 				
 				
-				BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, ViewUtil.viewWidth, ViewUtil.viewHeight, imageFormat);
+				BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, ViewUtil.VIEW_WIDTH, ViewUtil.VIEW_HEIGHT, imageFormat);
 				if (tileImage != null)
 				{
 					File outputFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);
 					
-					writeScaled(tileImage, ViewUtil.viewWidth/2, ViewUtil.viewHeight/2, outputFile, imageFormat, imageCompression, imageWriteQueue);
+					writeScaled(tileImage, ViewUtil.VIEW_WIDTH /2, ViewUtil.VIEW_HEIGHT /2, outputFile, imageFormat, imageCompression, imageWriteQueue);
 					
 					changedFiles.writeLine( outputFile.getAbsolutePath() );
 				}
 				else
 				{
-					System.err.println("Error: Rasteriser.takeScreenshot gave us a null image (format:"+imageFormat+")");
+					log.error("Error: Rasteriser.takeScreenshot gave us a null image (format: {})", imageFormat);
 				}
 				
 				viewCache.writeHash(sign, rasteriser, world, viewConfig.getViewDistance());
 			}
 			
 			imageWriteQueue.waitUntilFinished();
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
+		} finally {
 			if (viewsIn != null)
 				viewsIn.close();
 		}
@@ -155,7 +155,7 @@ public class ViewRenderer
 	{
 		final int pixelFormat = imageFormat.hasAlpha() ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;
 		
-		BufferedImage outImg = new BufferedImage(ViewUtil.viewWidth/2, ViewUtil.viewHeight/2, pixelFormat);
+		BufferedImage outImg = new BufferedImage(ViewUtil.VIEW_WIDTH /2, ViewUtil.VIEW_HEIGHT /2, pixelFormat);
 		Graphics2D g = (Graphics2D)outImg.getGraphics();
 		g.setColor(TileRenderer.clearColour);
 		g.fillRect(0, 0, outImg.getWidth(), outImg.getHeight());
@@ -164,7 +164,7 @@ public class ViewRenderer
 		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		
-		g.drawImage(originalImage, 0, 0, ViewUtil.viewWidth/2, ViewUtil.viewHeight/2, null);
+		g.drawImage(originalImage, 0, 0, ViewUtil.VIEW_WIDTH /2, ViewUtil.VIEW_HEIGHT /2, null);
 		
 		imageWriteQueue.write(outputFile, outImg, imageFormat, imageCompression);
 	}
