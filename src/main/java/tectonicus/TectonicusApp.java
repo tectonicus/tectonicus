@@ -333,7 +333,7 @@ public class TectonicusApp
 		app.closeLog();
 	}
 
-
+	//TODO: this needs to be updated
 	private static void updateToLeaflet(Path renderDir) {
 		if (renderDir.resolve("Scripts").toFile().exists()) {
 			TileRenderer.extractMapResources(renderDir.toFile());

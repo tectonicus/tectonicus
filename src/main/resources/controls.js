@@ -72,8 +72,8 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 			container.src = image;
 			container.title = text;
 			container.style.padding = '5px';
-			container.style.width = '35px';
-			container.style.height = '35px';
+			container.style.width = '30px';
+			container.style.height = '30px';
 			container.checked = startEnabled;
 			SetToggleBg(container);
 
@@ -90,6 +90,12 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 					else
 						marker.addTo(mymap);
 				}
+
+				if (this.checked) {
+                    this._tippy.setContent('Hide ' + text);
+                } else {
+                    this._tippy.setContent('Show ' + text);
+                }
 			}
 
 			L.DomEvent.disableClickPropagation(container);

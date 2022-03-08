@@ -10,3 +10,7 @@ html, body, #map {
 .button:hover {
 	border-color: rgb(137, 132, 209);
 }
+
+.center {
+	text-align: center;
+}

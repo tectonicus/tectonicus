@@ -1128,7 +1128,7 @@ public class TileRenderer
 					{
 						if (first.value.equals("includes"))
 						{
-							String templateStart = "		<script type=\"text/javascript\" src=\"";
+							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
 							
 							for (tectonicus.configuration.Map map : args.getMaps())
@@ -1319,9 +1319,12 @@ public class TileRenderer
 			json.writeVariable("numChunks", numChunks);
 			json.writeVariable("surfaceArea", surfaceArea);
 			json.writeVariable("numPlayers", numPlayers);
-			
-			// Spawn point
-			json.writeWorldCoord("spawnPosition", levelDat.getSpawnPosition());
+
+			Vector3l spawnPos = levelDat.getSpawnPosition();
+			if (map.getWorldSubset().containsBlock(spawnPos.x, spawnPos.z)) {
+				// Spawn point
+				json.writeWorldCoord("spawnPosition", levelDat.getSpawnPosition());
+			}
 			
 			// Start view
 			
@@ -1730,6 +1733,9 @@ public class TileRenderer
 		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
 		FileUtils.extractResource("Images/marker-icon-2x.png", new File(scriptImagesDir, "marker-icon-2x.png"));
 		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));
+		FileUtils.extractResource("popper.min.js", new File(scriptsDir, "popper.min.js"));
+		FileUtils.extractResource("tippy-bundle.umd.min.js", new File(scriptsDir, "tippy-bundle.umd.min.js"));
+		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
 	}
 
 	public static void writeImage(BufferedImage img, final int width, final int height, File file)

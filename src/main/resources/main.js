@@ -33,7 +33,7 @@ function main()
                 +"/"+xBin+"/"+yBin+"/tile_"+coords.x+"_"+coords.y+"."+this.imageFormat;
         },
         getAttribution: function() {
-            return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - ' + this.mapName;
+            return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
         initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, worldVectors, projection,
             blockStats, worldStats, startPoint) {
@@ -100,21 +100,54 @@ function main()
 
 	// Create controls
 	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
-    viewToggleControl = CreateToggleControl('Show views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
-    signToggleControl = CreateToggleControl('Show signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
-    playerToggleControl = CreateToggleControl('Show players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-    bedToggleControl = CreateToggleControl('Show beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
-    portalToggleControl = CreateToggleControl('Show portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
-    spawnToggleControl = CreateToggleControl('Show spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
-    chestToggleControl = CreateToggleControl('Show chests', 'Images/Chest.png', chestMarkers, false);
+    viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
+    signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
+    playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
+    bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
+    portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
+    spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
+    chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, false);
 
 	//CreateLinkControl(map);
 
 	// Add controls to the map
 	L.control.attribution({position: 'bottomleft'}).addTo(mymap);
 	//map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
-	mymap.addControl(spawnToggleControl);
-	//TODO: don't add spawn toggle if spawn point is not in the world subset
+
+	// Add map info popup
+    let peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
+    let statsHtml = '';
+    statsHtml += '<h4 class="center">Map Info</h4>';
+    statsHtml += '<div class="center">Render Stats</div>';
+    statsHtml += 'Tectonicus version: ' + stats.tectonicusVersion + '<br/>';
+    statsHtml += 'Render time: ' + stats.renderTime + '<br/>';
+    statsHtml += 'Peak memory usage: ' + peakMemoryMb.toFixed(1) + 'Mb<br/>';
+    statsHtml += 'Created on ' + stats.renderedOnDate + '<br/>';
+    statsHtml += 'Created at ' + stats.renderedOnTime + '<br/>';
+    statsHtml += '<br/>';
+
+    statsHtml += '<div class="center">World stats</div>';
+    statsHtml += 'Players: ' + startLayer.worldStats.numPlayers + '<br/>';
+    statsHtml += 'Chunks: ' + startLayer.worldStats.numChunks + '<br/>';
+    statsHtml += 'Portals: ' + startLayer.worldStats.numPortals + '<br/>';
+    statsHtml += 'Views: ' + startLayer.views.length + '<br/>';
+    statsHtml += 'Signs: ' + startLayer.signs.length + '<br/>';
+    statsHtml += 'Player Beds: ' + startLayer.beds.length + '<br/>';
+
+    //Do we care about the block counts anymore?
+//        statsHtml += '<div class="center">Blocks</div>';
+//        for (i in layer.blockStats) {
+//            let stat = layer.blockStats[i];
+//            statsHtml += stat.name + ' ' + stat.count + '<br/>';
+//        }
+
+    tippy('#mapInfo', {
+        content: statsHtml,
+        allowHTML: true,
+        interactive: true,
+        theme: 'light',
+        maxWidth: 500
+    });
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
@@ -136,6 +169,11 @@ chestMarkers = [];
 
 function onBaseLayerChange(e) {
 	changeBackgroundColor(e.layer.backgroundColor);
+
+    spawnToggleControl.remove();
+    if (e.layer.worldVectors.hasOwnProperty('spawnPosition')) {
+        mymap.addControl(spawnToggleControl);
+    }
 
     signToggleControl.remove();
 	if (e.layer.signs.length != 0) {
@@ -166,6 +204,21 @@ function onBaseLayerChange(e) {
 	if (e.layer.chests.length != 0) {
 		mymap.addControl(chestToggleControl);
 	}
+
+	// Add tooltips to the toggle buttons
+	tippy('.button', {
+        content(reference) {
+          const title = reference.getAttribute('title');
+          reference.removeAttribute('title');
+          if (reference.checked) {
+            return 'Hide ' + title;
+          } else {
+              return 'Show ' + title;
+          }
+        },
+        placement: 'left',
+        theme: 'light',
+    });
 
 	refreshSpawnMarker(e.layer, spawnInitiallyVisible);
 	refreshSignMarkers(e.layer, signsInitiallyVisible);
@@ -216,9 +269,8 @@ function refreshSpawnMarker(layer, markersVisible) {
 	destroyMarkers(spawnMarkers);
 
 	// Spawn marker
-	if (showSpawn) {
+	if (showSpawn && layer.worldVectors.hasOwnProperty('spawnPosition')) {
 		let spawn = layer.projection.worldVectors.spawnPosition;
-
 		let point = layer.projection.worldToMap(spawn);
 
 		let myIcon = L.icon({
@@ -231,35 +283,7 @@ function refreshSpawnMarker(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-
-
-		let peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
-		let statsHtml = '';
-		statsHtml += '<center><h3>Spawn Point</h3></center>';
-		statsHtml += '<div><center>Render Stats</center></div>';
-		statsHtml += 'Tectonicus version: ' + stats.tectonicusVersion + '<br/>';
-		statsHtml += 'Render time: ' + stats.renderTime + '<br/>';
-		statsHtml += 'Peak memory usage: ' + peakMemoryMb.toFixed(1) + 'Mb<br/>';
-		statsHtml += 'Created on ' + stats.renderedOnDate + '<br/>';
-		statsHtml += 'Created at ' + stats.renderedOnTime + '<br/>';
-		statsHtml += '<br/>';
-
-		statsHtml += '<div><center>World stats</center></div>';
-		statsHtml += 'Players: ' + layer.worldStats.numPlayers + '<br/>';
-		statsHtml += 'Chunks: ' + layer.worldStats.numChunks + '<br/>';
-		statsHtml += 'Portals: ' + layer.worldStats.numPortals + '<br/>';
-		statsHtml += 'Views: ' + layer.views.length + '<br/>';
-		statsHtml += 'Signs: ' + layer.signs.length + '<br/>';
-		statsHtml += 'Player Beds: ' + layer.beds.length + '<br/>';
-		statsHtml += '<br/>';
-
-		statsHtml += '<div><center>Blocks</center></div>';
-		for (i in layer.blockStats) {
-			let stat = layer.blockStats[i];
-			statsHtml += stat.name + ' ' + stat.count + '<br/>';
-		}
-
-        let marker = L.marker(point, { icon: myIcon }).bindPopup(statsHtml, { maxHeight: 400, minWidth: 200 }).bindTooltip("Spawn Point");
+        let marker = L.marker(point, { icon: myIcon }).bindPopup('<p class="center">' + spawn.x + ', ' + spawn.y + ', ' + spawn.z + '</p>').bindTooltip("Spawn Point");
 
 		// Add marker to map if spawn is initially visible
 		if (markersVisible) {
