@@ -1,6 +1,7 @@
 
 let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0)
 let tileLayers = new Map();
+let activeBaseLayer = null;
 
 function size(obj) {
 	var size = 0, key;
@@ -36,7 +37,7 @@ function main()
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
         initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, worldVectors, projection,
-            blockStats, worldStats, startPoint) {
+            blockStats, worldStats, viewPosition) {
             this.mapId = mapId;
             this.layerId = layerId;
             this.imageFormat = imageFormat;
@@ -52,7 +53,7 @@ function main()
             this.projection = projection;
             this.blockStats = blockStats;
             this.worldStats = worldStats;
-			this.startPoint = startPoint;
+			this.viewPosition = viewPosition;
         }
     });
 
@@ -62,11 +63,11 @@ function main()
         for (let j = 0; j < tecMap.layers.length; j++) {
             let layer = tecMap.layers[j];
             let projection = new MinecraftProjection(tecMap.worldVectors);
-			// 'startPoint' stores view pos for a given layer, so we don't end up looking at nothing when we toggle between terra and nether
-			let startPoint = projection.worldToMap(tecMap.worldVectors.startView);
+			// 'startPosition' stores view pos for a given layer, so we remember where we were when switching layers
+			let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
             let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPoint);
+                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition);
 
             if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
                 baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
@@ -85,18 +86,19 @@ function main()
 	let defaultLayer = tileLayers.get("LayerA");
 	let startView;
 	if (size(fragmentParams) > 0) {
-		startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.worldVectors.startView);
+		startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
 	} else {
-		startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.worldVectors.startView);
+		startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
 	}
 
 	// Set the starting view
 	let startLayer = tileLayers.get(startView.layerId);
+	activeBaseLayer = startLayer;
 	startLayer.addTo(mymap);
 	mymap.setView(startView.startPoint, startView.zoom);
 
 	// And store the updated start point in the layer
-	startLayer.startPoint = startView.startPoint;
+	startLayer.viewPosition = startView;
 
 	// Create controls
 	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
@@ -112,16 +114,14 @@ function main()
 
 	// Add controls to the map
 	L.control.attribution({position: 'bottomleft'}).addTo(mymap);
-	//map.controls[google.maps.ControlPosition.RIGHT_TOP].push( CreateHomeControl(map) );
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
-//	google.maps.event.addListener(map, 'projection_changed', onProjectionChanged);
-	//TODO: on map move or zoom save the new coords to layer startView so if layers are switched we can return to the same place on the map
+	mymap.on('zoomend', onProjectionChanged);
+    mymap.on('moveend', onProjectionChanged);
 
 	// Manually fire this event to set the initial state
     mymap.fireEvent('baselayerchange', {layer: startLayer});
-//	onProjectionChanged();
 }
 
 spawnMarkers = [];
@@ -133,6 +133,10 @@ bedMarkers = [];
 chestMarkers = [];
 
 function onBaseLayerChange(e) {
+    activeBaseLayer = e.layer;
+
+	mymap.setView(e.layer.viewPosition.startPoint, e.layer.viewPosition.zoom);
+
 	changeBackgroundColor(e.layer.backgroundColor);
 
     spawnToggleControl.remove();
@@ -238,32 +242,11 @@ function changeBackgroundColor(color) {
 	mapContainer.style.backgroundColor = color;
 }
 
-//function onMapTypeChanged()
-//{
-//	var mapType = map.mapTypes.get( map.getMapTypeId() );
-//	map.setCenter(mapType.tectonicusMap.viewLatLong);
-//
-//	document.getElementById("map_canvas").style.backgroundColor = mapType.layer.backgroundColor;
-//
-//	refreshSpawnMarker( spawnToggleControl.checked );
-//	refreshSignMarkers( signToggleControl.checked );
-//	refreshViewMarkers( viewToggleControl.checked );
-//	refreshPlayerMarkers( playerToggleControl.checked );
-//	refreshBedMarkers( bedToggleControl.checked );
-//	refreshPortalMarkers( portalToggleControl.checked );
-//	refreshChestMarkers( chestToggleControl.checked );
-//
-//	if (compassControl)
-//		compassControl.setCompassImage( mapType.tectonicusMap.id + '/Compass.png' );
-//}
-//
-//function onProjectionChanged()
-//{
-//	// Store the previous latLong in the map
-//	var mapType = map.mapTypes.get( map.getMapTypeId() );
-//	mapType.tectonicusMap.viewLatLong = map.getCenter();
-//
-//} // end onProjectionChanged callback
+function onProjectionChanged(e) {
+	// Store the previous coords in the layer
+	activeBaseLayer.viewPosition.startPoint = mymap.getCenter();
+	activeBaseLayer.viewPosition.zoom = mymap.getZoom();
+}
 
 function refreshSpawnMarker(layer, markersVisible) {
 	destroyMarkers(spawnMarkers);
@@ -505,8 +488,9 @@ function destroyMarkers(markers) {
 	markers.length = 0;
 }
 
-function ViewPos(layerId, zoom, startPoint) {
+function ViewPos(layerId, worldPos, zoom, startPoint) {
 	this.layerId = layerId;
+	this.worldPos = worldPos;
 	this.zoom = zoom;
 	this.startPoint = startPoint;
 }
@@ -540,7 +524,7 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	let layer = tileLayers.get(queryLayerId);
 	let startPoint = layer.projection.worldToMap(queryPos);
 
-	return new ViewPos(queryLayerId, queryZoom, startPoint);
+	return new ViewPos(queryLayerId, queryPos, queryZoom, startPoint);
 }
 
 /*
