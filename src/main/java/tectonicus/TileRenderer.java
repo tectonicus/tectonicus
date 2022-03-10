@@ -1796,7 +1796,9 @@ public class TileRenderer
 		worldVectors.mapYUnit = new Vector2f(mapYUnit.x - base.x, mapYUnit.z - base.z);
 
 		// For 1.18 and higher we need to offset the map markers
-		worldVectors.yOffset = 64;
+		if (Minecraft.getChunkHeight() > 256) {
+			worldVectors.yOffset = 64;
+		}
 		
 		return worldVectors;
 	}
