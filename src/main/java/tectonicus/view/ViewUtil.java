@@ -20,6 +20,7 @@ import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;
 
+import tectonicus.Minecraft;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightStyle;
 import tectonicus.rasteriser.Rasteriser;
@@ -90,7 +91,12 @@ public class ViewUtil {
 				{}
 			}
 		}
-		
+
+		// For 1.18 or higher we need to add 64 to get the correct height
+		if (Minecraft.getChunkHeight() > 256) {
+			height += 64;
+		}
+
 		return height;
 	}
 	
