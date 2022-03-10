@@ -21,6 +21,7 @@ import org.lwjgl.opengl.EXTFramebufferObject;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
+import org.lwjgl.system.Configuration;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
@@ -233,6 +234,9 @@ public class LwjglRasteriser implements Rasteriser
 //		checkOpenGLCompatability(3, 1);
 
 		if(type == DisplayType.WINDOW || type == DisplayType.OFFSCREEN) {
+			//TODO: only if (MAC_OS) use this
+			Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
+
 			log.debug("GLFW version: {}", GLFW::glfwGetVersionString);
 			glfwSetErrorCallback((error, description) ->
 					log.error("GLFW error [{}]: {}", String.format("0x%08X", error), GLFWErrorCallback.getDescription(description)));
@@ -357,6 +361,7 @@ public class LwjglRasteriser implements Rasteriser
 			eglReleaseThread();
 			eglTerminate(eglDisplay);
 		} else {
+			glfwPollEvents();
 			glfwTerminate();
 		}
 	}
