@@ -11,8 +11,13 @@ MinecraftProjection.prototype.worldToMap = function (world) {
 	point.x += this.worldVectors.xAxis.x * world.x;
 	point.y += this.worldVectors.xAxis.y * world.x;
 
-	point.x += this.worldVectors.yAxis.x * world.y;
-	point.y += this.worldVectors.yAxis.y * world.y;
+	if (this.worldVectors.yOffset > 0) {
+        point.x += this.worldVectors.yAxis.x * (world.y + this.worldVectors.yOffset);
+        point.y += this.worldVectors.yAxis.y * (world.y + this.worldVectors.yOffset);
+    } else {
+        point.x += this.worldVectors.yAxis.x * world.y;
+        point.y += this.worldVectors.yAxis.y * world.y;
+    }
 
 	point.x += this.worldVectors.zAxis.x * world.z;
 	point.y += this.worldVectors.zAxis.y * world.z;

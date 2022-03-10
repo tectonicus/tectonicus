@@ -668,8 +668,16 @@ public class TileRenderer
 								below = chunk.getBlockName(x, tempY, z);
 							}
 
+							// For 1.18 and higher we need to subtract 64 from the y value to get the actual y value
+							long finalY;
+							if (Minecraft.getChunkHeight() > 256) {
+								finalY = (y-(y-(tempY+1))/2) - 64L;
+							} else {
+								finalY = y-(y-(tempY+1))/2L;
+							}
+
 							Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
-									y-Math.round((y-(tempY+1))/2),
+									finalY,
 									coord.z * RawChunk.DEPTH + z);
 
 							if (filter.passesFilter(coord, pos))
@@ -1377,6 +1385,8 @@ public class TileRenderer
 			json.writeMapsPoint("mapMin", mapXMin, mapYMin);
 			
 			json.writeMapsPoint("mapSize", +mapWidth, mapHeight);
+
+			json.writeVariable("yOffset", worldVectors.yOffset);
 			
 			json.endObject();
 		}
@@ -1784,6 +1794,9 @@ public class TileRenderer
 		
 		worldVectors.mapXUnit = new Vector2f(mapXUnit.x - base.x, mapXUnit.z - base.z);
 		worldVectors.mapYUnit = new Vector2f(mapYUnit.x - base.x, mapYUnit.z - base.z);
+
+		// For 1.18 and higher we need to offset the map markers
+		worldVectors.yOffset = 64;
 		
 		return worldVectors;
 	}
@@ -2270,6 +2283,7 @@ public class TileRenderer
 		Vector2f zAxis;
 		Vector2f mapXUnit;
 		Vector2f mapYUnit;
+		int yOffset;
 		
 		public WorldVectors()
 		{
