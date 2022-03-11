@@ -17,7 +17,6 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.opengl.EXTFramebufferObject;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -31,6 +30,7 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
+import tectonicus.util.OsDetect;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
@@ -42,7 +42,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,7 +209,7 @@ public class LwjglRasteriser implements Rasteriser
 		
 		prevKeyStates = new HashMap<>();
 		
-		// Make a list of pixel formats to try (in preferance order)
+		// Make a list of pixel formats to try (in preference order)
 		List<LwjglPixelFormat> pixelFormats = new ArrayList<>();
 		
 		// As requested
@@ -232,10 +231,12 @@ public class LwjglRasteriser implements Rasteriser
 		pixelFormats.add( new LwjglPixelFormat(0, 0, 1, 0, 0) );
 
 //		checkOpenGLCompatability(3, 1);
+		boolean isMac = OsDetect.isMac();
 
 		if(type == DisplayType.WINDOW || type == DisplayType.OFFSCREEN) {
-			//TODO: only if (MAC_OS) use this
-			Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
+			if (isMac) {
+				Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
+			}
 
 			log.debug("GLFW version: {}", GLFW::glfwGetVersionString);
 			glfwSetErrorCallback((error, description) ->
@@ -245,9 +246,14 @@ public class LwjglRasteriser implements Rasteriser
 				throw new RuntimeException("Failed to init GLFW");
 			}
 
-			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 2);
-			glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
-			//glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
+			if (isMac) {
+				glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 2);
+				glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
+			} else {
+				glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+				glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
+				glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
+			}
 		}
 
 		if (type == DisplayType.OFFSCREEN) {
@@ -318,27 +324,18 @@ public class LwjglRasteriser implements Rasteriser
 
 		GL.createCapabilities();
 
-		String[] extensions = glGetString(GL11.GL_EXTENSIONS).split(" ");
-		boolean frameBufferExt = false;
-		for (String extension : extensions) {
-			if (extension.equals("GL_EXT_framebuffer_object")){
-				log.debug("Found GL_EXT_framebuffer_object");
-
-			}
-		}
-
-//		if (frameBufferExt != true && (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL)) {
-//			int fbo = glGenFramebuffers();
-//			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-//			int rbo = glGenRenderbuffers();
-//			int rboDepth = glGenRenderbuffers();
-//			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-//			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16, displayWidth, displayHeight);
-//			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
-//			glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-//			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, displayWidth, displayHeight);
-//			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-//		} else {
+		if (!isMac && (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL)) {
+			int fbo = glGenFramebuffers();
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			int rbo = glGenRenderbuffers();
+			int rboDepth = glGenRenderbuffers();
+			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16, displayWidth, displayHeight);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
+			glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, displayWidth, displayHeight);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+		} else if (isMac && type == DisplayType.OFFSCREEN){
 			int fbo = glGenFramebuffersEXT();
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
 			int rbo = glGenRenderbuffersEXT();
@@ -349,7 +346,7 @@ public class LwjglRasteriser implements Rasteriser
 			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rboDepth);
 			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, displayWidth, displayHeight);
 			glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rboDepth);
-//		}
+		}
 		
 		log.info("\tdisplay created ok");
 	}
@@ -361,7 +358,9 @@ public class LwjglRasteriser implements Rasteriser
 			eglReleaseThread();
 			eglTerminate(eglDisplay);
 		} else {
-			glfwPollEvents();
+			if (OsDetect.isMac()) {
+				glfwPollEvents();
+			}
 			glfwTerminate();
 		}
 	}

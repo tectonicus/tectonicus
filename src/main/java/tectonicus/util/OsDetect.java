@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,27 +9,24 @@
 
 package tectonicus.util;
 
-public class OsDetect
-{
+import lombok.experimental.UtilityClass;
 
-	public static boolean isWindows()
-	{
-		String os = System.getProperty("os.name").toLowerCase();
-		// windows
-		return (os.indexOf("win") >= 0);
+@UtilityClass
+public class OsDetect {
+	public static final String OS_NAME = "os.name";
+
+	public static boolean isWindows() {
+		String os = System.getProperty(OS_NAME).toLowerCase();
+		return (os.contains("win"));
 	}
-	
-	public static boolean isMac()
-	{
-		String os = System.getProperty("os.name").toLowerCase();
-		// Mac
-		return (os.indexOf("mac") >= 0);
+
+	public static boolean isMac() {
+		String os = System.getProperty(OS_NAME).toLowerCase();
+		return (os.contains("mac"));
 	}
-	
-	public static boolean isUnix()
-	{
-		String os = System.getProperty("os.name").toLowerCase();
-		// linux or unix
-		return (os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0);
+
+	public static boolean isUnix() {
+		String os = System.getProperty(OS_NAME).toLowerCase();
+		return (os.contains("nix") || os.contains("nux"));
 	}
 }
