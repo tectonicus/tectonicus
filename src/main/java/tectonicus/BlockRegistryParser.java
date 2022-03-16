@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -49,7 +50,6 @@ import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.DaylightSensor;
 import tectonicus.blockTypes.Dispenser;
 import tectonicus.blockTypes.Door;
-import tectonicus.blockTypes.DoubleSlab;
 import tectonicus.blockTypes.DragonEgg;
 import tectonicus.blockTypes.EnchantmentTable;
 import tectonicus.blockTypes.EndRod;
@@ -113,6 +113,7 @@ import tectonicus.texture.TexturePack;
 
 import static tectonicus.Version.VERSION_5;
 
+@Log4j2
 public class BlockRegistryParser
 {
 	private final TexturePack texturePack;
@@ -156,7 +157,7 @@ public class BlockRegistryParser
 				}
 				catch (Exception e)
 				{
-					System.err.println("Error while parsing blockConfig element: "+n+"\n");
+					log.error("Error while parsing blockConfig element: "+n+"\n");
 				}
 			}
 		}
@@ -197,22 +198,7 @@ public class BlockRegistryParser
 		
 		String nodeName = element.getTagName().toLowerCase();
 		
-		if(nodeName.equals("block"))
-		{
-			String values[] = stringId.split(":");
-			System.out.println(values[1]);
-			
-			try
-			{
-				
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-			
-		}
-		else if (nodeName.equals("solid"))
+		if (nodeName.equals("solid"))
 		{
 			SubTexture tex = parseTexture(element, "texture", null);
 			SubTexture side = parseTexture(element, "side", tex);
@@ -388,30 +374,6 @@ public class BlockRegistryParser
 			
 			// upsidedown half-slab has bit 0x8
 			registry.register(id.id, id.data | 0x8, blockType);
-		}
-		else if (nodeName.equals("doubleslab"))
-		{
-			System.out.println("Warning: DoubleSlab block type is obsolete. It will be removed in a future version. Use Solid instead.");
-			
-			SubTexture stoneSide = parseTexture(element, "stoneSide", null);
-			SubTexture stoneTop = parseTexture(element, "stoneTop", null);
-			
-			SubTexture sandSide = parseTexture(element, "sandSide", null);
-			SubTexture sandTop = parseTexture(element, "sandTop", null);
-			
-			SubTexture woodenSide = parseTexture(element, "woodenSide", null);
-			SubTexture woodenTop = parseTexture(element, "woodenTop", null);
-			
-			SubTexture cobblestoneSide = parseTexture(element, "cobblestoneSide", null);
-			SubTexture cobblestoneTop = parseTexture(element, "cobblestoneTop", null);
-			
-			SubTexture brickSide = parseTexture(element, "brickSide", null);
-			SubTexture brickTop = parseTexture(element, "brickTop", null);
-			
-			SubTexture stoneBrickSide = parseTexture(element, "stoneBrickSide", null);
-			SubTexture stoneBrickTop = parseTexture(element, "stoneBrickTop", null);
-			
-			blockType = new DoubleSlab(name, stoneSide, stoneTop, sandSide, sandTop, woodenSide, woodenTop, cobblestoneSide, cobblestoneTop, brickSide, brickTop, stoneBrickSide, stoneBrickTop);
 		}
 		else if (nodeName.equals("torch"))
 		{
@@ -895,7 +857,7 @@ public class BlockRegistryParser
 		}
 		else
 		{
-			System.err.println("Unrecognised block type: "+nodeName);
+			log.warn("Unrecognised block type: {}", nodeName);
 		}
 		
 		if (blockType != null)

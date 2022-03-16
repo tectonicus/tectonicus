@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,6 +12,7 @@ package tectonicus.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import tectonicus.TectonicusApp;
 
 import java.io.File;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Set;
 
+@Log4j2
 @UtilityClass
 public class FileUtils
 {
@@ -81,8 +83,7 @@ public class FileUtils
 		}
 		
 		// is this a directory copy?
-		if (src.isDirectory())
-		{
+		if (src.isDirectory()) {
 			if (!dest.exists())
 			{ // does the destination already exist?
 				// if not we need to make it exist if possible (note this is
@@ -101,9 +102,7 @@ public class FileUtils
 				File src1 = new File(src, list[i]);
 				copyFiles(src1, dest1, excludeExtensions);
 			}
-		}
-		else
-		{
+		} else {
 			String extension = getExtension(src.getName());
 			if (!excludeExtensions.contains(extension))
 			{
@@ -122,10 +121,8 @@ public class FileUtils
 					wrapper.setStackTrace(e.getStackTrace());
 					throw wrapper;
 				}
-			}
-			else
-			{
-				System.out.println("Skipping "+src.getAbsolutePath());
+			} else {
+				log.warn("Skipping {}", src.getAbsolutePath());
 			}
 		}
 	}

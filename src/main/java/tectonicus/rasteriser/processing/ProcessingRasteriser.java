@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus.rasteriser.processing;
 
+import lombok.extern.log4j.Log4j2;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import processing.core.PApplet;
@@ -40,6 +41,7 @@ import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.Set;
 
+@Log4j2
 public class ProcessingRasteriser implements Rasteriser
 {
 	private final DisplayType type;
@@ -128,10 +130,10 @@ public class ProcessingRasteriser implements Rasteriser
 	@Override
 	public void printInfo()
 	{
-		System.out.println(" -- Processing Rasteriser -- ");
-		System.out.println("\t type:" + type);
-		System.out.println("\t width: "+displayWidth);
-		System.out.println("\t height: "+displayHeight);
+		log.info(" -- Processing Rasteriser -- ");
+		log.info("\t type:" + type);
+		log.info("\t width: "+displayWidth);
+		log.info("\t height: "+displayHeight);
 	}
 	
 	public void setViewport(final int x, final int y, final int width, final int height)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus.blockTypes;
 
+import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -25,6 +26,7 @@ import tectonicus.texture.SubTexture;
 
 import static tectonicus.Version.VERSION_4;
 
+@Log4j2
 public class CocoaPod implements BlockType
 {
 	private final String name;
@@ -130,7 +132,7 @@ public class CocoaPod implements BlockType
 			zpos = 4;
 		}
 		else
-			System.out.println("Wrong cocoa pod size!");
+			log.warn("Wrong cocoa pod size!");
 		//final float lightness = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
 	
 		Mesh stemMesh = geometry.getMesh(stem.texture, Geometry.MeshType.AlphaTest);

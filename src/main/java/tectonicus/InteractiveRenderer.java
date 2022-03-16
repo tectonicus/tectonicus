@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
+import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -31,6 +32,7 @@ import tectonicus.renderer.OrthoCamera;
 import tectonicus.renderer.PerspectiveCamera;
 import tectonicus.world.World;
 
+@Log4j2
 public class InteractiveRenderer
 {
 	private enum ViewMode
@@ -59,7 +61,7 @@ public class InteractiveRenderer
 	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight)
 	{
 		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.WINDOW, displayWidth, displayHeight, 24, 8, 24, 4);
-		System.out.println("Using rasteriser: "+rasteriser);
+		log.info("Using rasteriser: "+rasteriser);
 		rasteriser.printInfo();
 		
 		viewMode = ViewMode.OrthoView;
@@ -69,7 +71,7 @@ public class InteractiveRenderer
 		orthoCamera = new OrthoCamera(rasteriser, displayWidth, displayHeight);
 		perspectiveCamera = new PerspectiveCamera(rasteriser, displayWidth, displayHeight);
 		
-		views = new ArrayList<SignEntity>();
+		views = new ArrayList<>();
 	}
 	
 	public void destroy()

@@ -89,7 +89,7 @@ public class XmlConfigurationParser
 	{
 		MutableConfiguration config = new MutableConfiguration();
 		
-		System.out.println("Parsing config from "+file.getAbsolutePath());
+		log.info("Parsing config from {}", file.getAbsolutePath());
 		
 		Element root = loadXml(file, "tectonicus");
 		if (root == null)

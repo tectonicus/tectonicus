@@ -9,6 +9,7 @@
 
 package tectonicus.cache;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.BlockRegistryParser;
 import tectonicus.ChunkCoord;
 import tectonicus.TileCoord;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Log4j2
 public class FileTileCache implements TileCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
@@ -59,14 +61,14 @@ public class FileTileCache implements TileCache
 		if (isCacheValid(tileCacheDir, CacheUtil.hash(cacheString, hashAlgorithm), hashAlgorithm))
 		{
 			// Ok!
-			System.out.println("Tile cache directory found and is valid. Using cache at "+tileCacheDir.getAbsolutePath());
+			log.info("Tile cache directory found and is valid. Using cache at {}", tileCacheDir.getAbsolutePath());
 			wasExistingCacheValid = true;
 		}
 		else
 		{
 			// Not valid! Delete the directory and start from scratch
-			System.out.println("Settings changed! Deleting tile cache at "+tileCacheDir.getAbsolutePath());
-			System.out.println("New tile cache will be created for this render");
+			log.info("Settings changed! Deleting tile cache at {}", tileCacheDir.getAbsolutePath());
+			log.info("New tile cache will be created for this render");
 			FileUtils.deleteDirectory(tileCacheDir);
 			tileCacheDir.mkdirs();
 			CacheUtil.writeCacheFile(getMasterCacheFile(tileCacheDir), cacheString.getBytes());
@@ -256,7 +258,7 @@ public class FileTileCache implements TileCache
 			if (count % 100 == 0)
 			{
 				final int percentage = (int)Math.floor((count / (float)visibleTiles.size()) * 100);
-				System.out.print(percentage+"%\r"); //prints a carraige return after line
+				System.out.print(percentage+"%\r"); //prints a carriage return after line
 			}
 		}
 		
@@ -264,7 +266,7 @@ public class FileTileCache implements TileCache
 		
 		final long end = System.currentTimeMillis();
 		final long diff = end - start;
-		System.out.println("FindChangedTiles took: "+(diff/1000.0f)+" seconds");
+		log.debug("FindChangedTiles took: "+(diff/1000.0f)+" seconds");
 		
 		return result;
 	}

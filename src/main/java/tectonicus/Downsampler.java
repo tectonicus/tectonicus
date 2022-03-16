@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -42,7 +42,7 @@ public class Downsampler
 		// 2 threads = 1m 9s
 		// 3 threads = 1m 9s 
 		
-		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(64), new ResubmitHandler());
+		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(64), new ResubmitHandler());
 	}
 	
 	public void downsample(File inputDir, File outputDir, HddTileList tiles, Layer layer, final int tileWidth, final int tileHeight, ProgressListener progressListener)
@@ -60,16 +60,16 @@ public class Downsampler
 			if (count % 20 == 0)
 			{
 				final int percentage = (int)Math.floor((count / (float)tiles.size()) * 100);
-				System.out.print(percentage+"%\r"); //prints a carraige return after line
+				System.out.print("\t" + percentage + "%\r"); //prints a carriage return after line
 			}
 			progressListener.onTaskUpdate(count, tiles.size());
 		}
 		
-		System.out.println("100%");
+		System.out.println("\t100%");
 		
 		try
 		{
-			System.out.println("Finalizing downsampling...");
+			log.debug("\tFinalizing downsampling...");
 			executor.shutdown();
 			executor.awaitTermination(1, TimeUnit.DAYS);
 		}
@@ -78,7 +78,7 @@ public class Downsampler
 			e.printStackTrace();
 		}
 		
-		System.out.println("Downsampling complete");
+		log.debug("\tDownsampling complete");
 	}
 	
 	private static BufferedImage getTile(File file)

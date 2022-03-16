@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,10 +13,12 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 
+@Log4j2
 public class Geometry
 {
 	public enum MeshType
@@ -146,10 +148,10 @@ public class Geometry
 		final int alphaTestVerts = countVertices(MeshType.AlphaTest);
 		final int transparentVerts = countVertices(MeshType.Transparent);
 		
-		System.out.println("Geometry:");
-		System.out.println("\tbase vertices: "+ (baseMesh.getTotalVertices() + baseVerts));
-		System.out.println("\talpha vertices: "+ alphaTestVerts);
-		System.out.println("\ttransparent vertices: "+ (transparentMesh.getTotalVertices() + transparentVerts));
+		log.info("Geometry:");
+		log.info("\tbase vertices: {}", baseMesh.getTotalVertices() + baseVerts);
+		log.info("\talpha vertices: {}", alphaTestVerts);
+		log.info("\ttransparent vertices: {}", transparentMesh.getTotalVertices() + transparentVerts);
 	}
 	
 	private int countVertices(MeshType type)

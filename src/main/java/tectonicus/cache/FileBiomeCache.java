@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,10 +17,12 @@ import java.util.LinkedHashMap;
 
 import com.google.code.minecraftbiomeextractor.WorldProcessor;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.ChunkCoord;
 import tectonicus.Util;
 import tectonicus.util.FileUtils;
 
+@Log4j2
 public class FileBiomeCache implements BiomeCache
 {
 	private static final int VERSION = 2;
@@ -37,12 +39,12 @@ public class FileBiomeCache implements BiomeCache
 		
 		if (isCacheValid(cacheDir, hashAlgo))
 		{
-			System.out.println("Biome cache directory found and is valid. Using cache at "+cacheDir.getAbsolutePath());
+			log.info("Biome cache directory found and is valid. Using cache at {}", cacheDir.getAbsolutePath());
 		}
 		else
 		{
-			System.out.println("Biome cache not present or outdated. Deleting biome cache at "+cacheDir.getAbsolutePath());
-			System.out.println("New biome cache will be created for this render");
+			log.info("Biome cache not present or outdated. Deleting biome cache at {}", cacheDir.getAbsolutePath());
+			log.info("New biome cache will be created for this render");
 			
 			// Recreate the biome cache dir
 			FileUtils.deleteDirectory(cacheDir);
@@ -134,7 +136,7 @@ public class FileBiomeCache implements BiomeCache
 			}
 			else
 			{
-				System.out.println("Creating biome cache for chunk @ "+coord.x+", "+coord.z);
+				log.debug("Creating biome cache for chunk @ "+coord.x+", "+coord.z);
 				
 				// Generate from world processor
 				data = new BiomeData(worldProcessor, coord);

@@ -11,6 +11,7 @@ package tectonicus;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
 import tectonicus.cache.BiomeCache;
@@ -46,13 +47,13 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Log4j2
 public class TectonicusApp
 {
 	private final Configuration args;
 	private CompositePrintStream newOut;
 	private CompositePrintStream newErr;
-	
+	private static org.apache.logging.log4j.Logger log;
+
 	private TectonicusApp(Configuration args)
 	{
 		this.args = args;
@@ -60,8 +61,12 @@ public class TectonicusApp
 		if (args.isVerbose()) {
 			args.setLoggingLevel(Level.TRACE);
 		}
+
+
+
+//		Configurator.reconfigure();
 		Configurator.setRootLevel(args.getLoggingLevel());
-		openLog( args.getLogFile() );
+//		openLog( args.getLogFile() );
 		
 		BuildInfo.print();
 		
@@ -256,13 +261,16 @@ public class TectonicusApp
 				interactiveRenderer.destroy();
 		}
 		
-		System.out.println("Finished");
+		log.info("Finished");
 
 		return 0;
 	}
 
 	public static void main(String[] argArray) throws Exception
 	{
+		System.setProperty("logFilename", "tectonicus.log");
+		log = org.apache.logging.log4j.LogManager.getLogger(TectonicusApp.class);
+
 		//Parse command line to get config file
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
@@ -301,8 +309,11 @@ public class TectonicusApp
 			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
 		}
 
+		System.setProperty("logFilename", args.getLogFile());
+		Configurator.reconfigure();
+
 		if (args.getMinecraftJar() == null) {
-			System.out.println("No Minecraft jar specified.");
+			log.info("No Minecraft jar specified.");
 			args.setMinecraftJar(Minecraft.findMinecraftJar());
 		}
 
@@ -329,8 +340,6 @@ public class TectonicusApp
 		}
 
 		app.run();
-
-		app.closeLog();
 	}
 
 	//TODO: this needs to be updated
@@ -357,7 +366,7 @@ public class TectonicusApp
 			e.printStackTrace();
 		}
 		File outputHtmlFile = new File(exportDir, htmlFile.getFileName().toString());
-		System.out.println("\twriting html to "+outputHtmlFile.getAbsolutePath());
+		log.info("\twriting html to "+outputHtmlFile.getAbsolutePath());
 
 		URL url = TectonicusApp.class.getClassLoader().getResource("mapWithSigns.html");
 		try (Scanner scanner = new Scanner(url.openStream());

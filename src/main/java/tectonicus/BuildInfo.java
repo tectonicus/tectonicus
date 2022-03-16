@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,6 +10,7 @@
 package tectonicus;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import picocli.CommandLine.IVersionProvider;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
+@Log4j2
 @UtilityClass
 public class BuildInfo
 {
@@ -49,14 +51,13 @@ public class BuildInfo
 	
 	public static void print()
 	{
-		System.out.println(" + + + + + + + + + + + + + + + + + + + + + + +");
-		System.out.println("                  Tectonicus");
-		System.out.println("   Version: "+getVersion());
-		System.out.println("   Build "+getBuildNumber());
-		System.out.println("   Constructed on "+getBuildDate()+" at "+getBuildTime());
-		System.out.println();
-		System.out.println("   www.github.com/tectonicus/tectonicus  ");
-		System.out.println(" + + + + + + + + + + + + + + + + + + + + + + +");
+		log.info(" + + + + + + + + + + + + + + + + + + + + + + +");
+		log.info("                  Tectonicus");
+		log.info("   Version: "+getVersion());
+		log.info("   Build "+getBuildNumber());
+		log.info("   Constructed on "+getBuildDate()+" at "+getBuildTime());
+		log.info("\n   www.github.com/tectonicus/tectonicus  ");
+		log.info(" + + + + + + + + + + + + + + + + + + + + + + +");
 	}
 	
 	public static String getBuildNumber()

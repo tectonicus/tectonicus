@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,8 @@
  */
 
 package tectonicus.texture;
+
+import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+@Log4j2
 public class ZipStack
 {
 	private List<File> modJars;
@@ -36,7 +39,7 @@ public class ZipStack
 				override = FileSystems.newFileSystem(Paths.get(overrideFile.getPath()), null);
 			}
 			else
-				System.out.println("Couldn't open \""+overrideFile.getAbsolutePath()+"\"");
+				log.error("Couldn't open {}", overrideFile.getAbsolutePath());
 		}
 		
 		this.modJars = modJars;

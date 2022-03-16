@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,9 +9,12 @@
 
 package tectonicus;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.File;
 import java.util.LinkedHashMap;
 
+@Log4j2
 public class RegionCache
 {
 	private final SaveFormat format;
@@ -38,7 +41,7 @@ public class RegionCache
 		else
 			format = SaveFormat.McRegion;
 		
-		System.out.println("Detected "+format+" save format");
+		log.info("Detected {} save format", format);
 		
 		this.cache = new RegionCacheMap(8);
 		this.cache.setMinSize(4);

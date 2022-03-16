@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,6 +10,7 @@
 package tectonicus.configuration;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
@@ -53,6 +54,7 @@ import static tectonicus.configuration.ParseUtil.parseTileSize;
 import static tectonicus.configuration.ParseUtil.parseUseBiomeColours;
 import static tectonicus.configuration.ParseUtil.parseUseCache;
 
+@Log4j2
 @UtilityClass
 public class CommandLineParser
 {
@@ -69,7 +71,7 @@ public class CommandLineParser
 		map.addLayer(layer);
 		config.addMap(map);
 		
-		System.out.println("Parsing old style command line...");
+		log.info("Parsing old style command line...");
 		
 		Mode mode = parseMode( parser.getString("mode", "") );
 		config.setMode(mode);
@@ -159,7 +161,7 @@ public class CommandLineParser
 		File outputDir = parseOutputDir( parser.get("outputDir") );
 		config.setOutputDir(outputDir);
 		
-		File logFile = parseLogFile( parser.getString("logFile", "") );
+		String logFile = parseLogFile( parser.getString("logFile", "") );
 		config.setLogFile(logFile);
 		
 		config.setUseCache( parseUseCache(parser.getString("useCache", "") ) );

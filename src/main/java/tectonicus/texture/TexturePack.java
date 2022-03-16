@@ -144,7 +144,7 @@ public class TexturePack
 			version = VERSION_UNKNOWN;
 		}
 
-		System.out.println("Texture pack version: " + version);
+		log.info("Texture pack version: " + version);
 
 		try
 		{
@@ -183,7 +183,7 @@ public class TexturePack
 				try {
 					itemSheet = copy(ImageIO.read(zipStack.getStream(path + "gui/items.png")));
 				} catch (IllegalArgumentException e) {
-					System.out.println("Could not find items.png.  This is only required if using a Minecraft 1.4 or older jar file.");
+					log.warn("Could not find items.png.  This is only required if using a Minecraft 1.4 or older jar file.");
 				}
 			}
 
@@ -348,7 +348,7 @@ public class TexturePack
 			} 
 			catch (FileNotFoundException e)
 			{
-				System.err.println("\nThe texture file '" + request.path + "' could not be found.");
+				log.warn("\nThe texture file '" + request.path + "' could not be found.");
 			}
 		}
 		
@@ -494,7 +494,7 @@ public class TexturePack
 		}
 		catch (IOException e)
 		{
-			System.out.println("No banner patterns found. You may be using an older Minecraft jar file");
+			log.warn("No banner patterns found. You may be using an older Minecraft jar file");
 		}
 
 		return patterns;

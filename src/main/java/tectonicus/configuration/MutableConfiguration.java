@@ -54,7 +54,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private boolean eraseOutputDir;
 
 	@Option(names = {"-l", "--logFile", "logFile"}, paramLabel = "<String>")
-	private File logFile;
+	private String logFile;
 
 	@Option(names = {"-o", "--outputDir", "outputDir"}, paramLabel = "<String>")
 	private File outputDir;
@@ -156,7 +156,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		bedsInitiallyVisible = true;
 		spawnInitiallyVisible = true;
 		viewsInitiallyVisible = true;
-		logFile = new File("./TectonicusLog.txt");
+		logFile = "tectonicus.log";
 		loggingLevel = Level.DEBUG;
 		outputHtmlName = "map.html";
 		outputDir = new File(".");
@@ -199,7 +199,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
 		log.debug("\teraseOutputDir:"+eraseOutputDir());
 		log.debug("\tforceLoadAwt:"+forceLoadAwt());
-		log.debug("\tlogFile:"+getLogFile().getAbsolutePath());
+		log.debug("\tlogFile: log/"+getLogFile());
 		log.debug("\toutputHtmlName:"+getOutputHtmlName());
 		log.debug("\tnumDownsampleThreads:"+getNumDownsampleThreads());
 		log.debug("\tsinglePlayerName:"+getSinglePlayerName());

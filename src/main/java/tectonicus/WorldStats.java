@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,8 +17,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.mutable.MutableLong;
 
+@Log4j2
 public class WorldStats
 {
 	private int numChunks;
@@ -78,7 +80,7 @@ public class WorldStats
 		if (statsFile.exists())
 			statsFile.delete();
 		
-		System.out.println("Outputting block stats to "+statsFile.getAbsolutePath());
+		log.debug("Writing block stats to {}", statsFile.getAbsolutePath());
 		
 		// First merge with block id names (so that 'flowing lava' and 'stationary lava' becomes 'lava'
 		Map<String, Long> nameCounts = new HashMap<>();
@@ -145,13 +147,13 @@ public class WorldStats
 				jsWriter.close();
 		}
 		
-		System.out.println("Outputted "+nameCounts.size()+" block counts");
+		log.info("Wrote {} block counts", nameCounts.size());
 
 		if (!unknownBlockIds.isEmpty())
 		{
-			System.out.println("Unknown block types:");
+			log.warn("Unknown block types:");
 			for (IdDataPair id : unknownBlockIds.keySet())
-				System.out.println("\t" + id.id + ":" + id.data);
+				log.warn("\t" + id.id + ":" + id.data);
 		}
 	}
 	
@@ -160,7 +162,7 @@ public class WorldStats
 		if (statsFile.exists())
 			statsFile.delete();
 		
-		System.out.println("Outputting world stats to "+statsFile.getAbsolutePath());
+		log.debug("Writing world stats to {}", statsFile.getAbsolutePath());
 		
 		JsonWriter jsWriter = null;
 		try
@@ -184,7 +186,7 @@ public class WorldStats
 				jsWriter.close();
 		}
 		
-		System.out.println("Outputted world stats");
+		log.info("Wrote world stats");
 	}
 
 	private static class IdDataPair implements Comparable<IdDataPair>

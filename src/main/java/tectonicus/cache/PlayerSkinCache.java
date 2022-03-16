@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,6 +24,7 @@ import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import lombok.extern.log4j.Log4j2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -33,6 +34,7 @@ import tectonicus.raw.Player;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.FileUtils;
 
+@Log4j2
 public class PlayerSkinCache
 {
 	private static final int INDEX_VERSION = 1;
@@ -48,7 +50,7 @@ public class PlayerSkinCache
 		cacheDir = new File(config.getCacheDir(), "skinCache");
 		cacheDir.mkdirs();
 		
-		skinCache = new HashMap<String, PlayerSkinCache.CacheEntry>();
+		skinCache = new HashMap<>();
 		
 		boolean indexOk = false;
 		
@@ -103,12 +105,12 @@ public class PlayerSkinCache
 		
 		if (indexOk)
 		{
-			System.out.println("Using existing player skin cache");
+			log.info("Using existing player skin cache");
 		}
 		else
 		{
 			// Wipe cache dir
-			System.out.println("Player skin cache is corrupt, cleaning...");
+			log.info("Player skin cache is corrupt, cleaning...");
 			
 			FileUtils.deleteDirectory(cacheDir);
 			cacheDir.mkdirs();
@@ -117,7 +119,7 @@ public class PlayerSkinCache
 	
 	public void destroy()
 	{
-		System.out.println("Writing player skin cache info ("+skinCache.size()+" skin"+ (skinCache.size()>1?"s":"") + " to write)");
+		log.info("Writing player skin cache info ("+skinCache.size()+" skin"+ (skinCache.size()>1?"s":"") + " to write)");
 		
 		try (PrintWriter writer = new PrintWriter(new File(cacheDir, "skins.cache")))
 		{
@@ -148,7 +150,7 @@ public class PlayerSkinCache
 			e.printStackTrace();
 		}
 		
-		System.out.println("Player skin cache written");
+		log.info("Player skin cache written");
 	}
 	
 	public CacheEntry getCacheEntry(String playerUUID)
@@ -179,7 +181,7 @@ public class PlayerSkinCache
 				}
 				catch (Exception e)
 				{
-					System.err.println("Couldn't read skin cache file: "+e);
+					log.warn("Couldn't read skin cache file: ", e);
 				}
 			}
 		}
@@ -206,7 +208,7 @@ public class PlayerSkinCache
 		else
 		{
 			newEntry.skinFile = "Tectonicus_Default_Player_Skin.png";
-			System.out.println("No custom skin found for player "+player.getName());
+			log.info("No custom skin found for player {}", player.getName());
 		}
 		
 		newEntry.playerName = player.getName();

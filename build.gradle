@@ -90,7 +90,7 @@ distributions {
 	shadow {
 		distributionBaseName = archivesBaseName
 		contents {
-			from files('Data/defaultBlockConfig.xml')
+			from files('src/main/resources/defaultBlockConfig.xml')
 			from('Docs') {
 				include('*.xml', '*.txt')
 				exclude('notes.txt')

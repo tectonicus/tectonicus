@@ -169,7 +169,7 @@ public class TileRenderer
 		
 		hddTileListFactory = new HddTileListFactory( new File(args.getCacheDir(), "tileLists") );
 		
-		System.out.println("Creating player icon assembler");
+		log.debug("Creating player icon assembler");
 		playerIconAssembler = new PlayerIconAssembler(playerSkinCache);
 		
 		memoryMonitor = new MemoryMonitor();
@@ -221,7 +221,6 @@ public class TileRenderer
 	public Result output()
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
-		log.info("Starting tile renderer");
 		
 		Date startTime = new Date();
 		
@@ -266,7 +265,6 @@ public class TileRenderer
 			
 			
 			// Figure out which tiles we need to render
-			log.info("Finding changed tiles since last render...");
 			progressListener.onTaskStarted(Task.FIND_CHANGED_TILES.toString());
 
 			// Output entity javascript for creating map markers
@@ -456,7 +454,7 @@ public class TileRenderer
 			
 			stats = preProcess(world, signFilter, portalFilter, viewFilter, chestFilter, portals, signs, views);
 			
-			System.out.println("Found "+views.size()+" views");
+			log.debug("Found "+views.size()+" views");
 		}
 		catch (Exception e)
 		{
@@ -488,14 +486,14 @@ public class TileRenderer
 		
 		regionHashStore = new RegionHashStore(args.getCacheDir());
 		
-		System.out.println("Discovering chunks...");
+		log.info("Discovering chunks...");
 		//	Iterate over regions, then over chunks
 		//		hash each chunk and store in region hashes file
 		//		gather world stats and signs for each chunk
 		
 		RegionIterator it = world.createRegionIterator();
 		
-		System.out.println("Looking for chunks in "+it.getBaseDir().getAbsolutePath());
+		log.debug("Looking for chunks in "+it.getBaseDir().getAbsolutePath());
 		final Date beginTime = new Date();
 		while (it.hasNext())
 		{
@@ -542,8 +540,10 @@ public class TileRenderer
 							
 							findChests(c.getRawChunk(), chestFilter, world.getChests());
 							
-							if (worldStats.numChunks() % 100 == 0)
-								System.out.print("\tfound "+worldStats.numChunks()+" chunks so far\r"); //prints a carraige return after line
+							if (worldStats.numChunks() % 100 == 0) {
+								System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
+								log.trace("found {} chunks so far", worldStats.numChunks());
+							}
 						}
 					}
 					
@@ -555,22 +555,22 @@ public class TileRenderer
 		final Date endTime = new Date();
 		final String searchTime = Util.getElapsedTime(beginTime, endTime);
 		
-		System.out.println("\nFound "+worldStats.numChunks()+" chunks in total");
-		System.out.println("Chunk search took: " + searchTime);
+		log.debug("\nFound "+worldStats.numChunks()+" chunks in total");
+		log.debug("Chunk search took: " + searchTime);
 		
 		if (worldStats.numChunks() == 0)
 		{
 			// Uh oh, didn't find any chunks!
 			// Print some debugging info to help people figure out what they're doing wrong
 			
-			System.out.println("Failed to find any chunks!");
-			System.out.println("Contents of "+it.getBaseDir().getAbsolutePath());
+			log.error("Failed to find any chunks!");
+			log.error("Contents of "+it.getBaseDir().getAbsolutePath());
 			File[] contents = it.getBaseDir().listFiles();
 			if (contents != null)
 			{
 				for (File f : contents)
 				{
-					System.out.println("\t"+f.getName());
+					log.error("\t"+f.getName());
 				}
 			}
 		}
@@ -742,7 +742,7 @@ public class TileRenderer
 		final int zoom = map.getClosestZoomSize();
 		final ImageFormat imageFormat = layer.getImageFormat();
 		
-		System.out.println("Base render is at zoom "+zoom+" with "+tileWidth+"x"+tileHeight+" tiles");
+		log.debug("Base render is at zoom "+zoom+" with "+tileWidth+"x"+tileHeight+" tiles");
 		
 		setupInitialCamera(map);
 		
@@ -753,6 +753,7 @@ public class TileRenderer
 		for (TileCoord t : tiles)
 		{
 			System.out.print("Rendering tile @ "+t.x+","+t.y+" (tile "+(done+1)+" of "+tiles.size()+")\r"); //prints a carriage return after line
+			log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
 			progressListener.onTaskUpdate(done, tiles.size());
 			
 			setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
@@ -770,7 +771,7 @@ public class TileRenderer
 			}
 			else
 			{
-				System.err.println("Error: Rasteriser.takeScreenshot gave us a null image (width:"+tileWidth+" height:"+tileHeight+" format:"+imageFormat+")");
+				log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:"+tileWidth+" height:"+tileHeight+" format:"+imageFormat+")");
 			}
 			
 			tileCache.writeImageCache(t);
@@ -785,7 +786,7 @@ public class TileRenderer
 		
 		imageWriteQueue.waitUntilFinished();
 		
-		System.out.println("\nBase tile render complete");
+		log.info("\nBase tile render complete");
 	}
 
 	public static void setupCameraForTile(OrthoCamera camera, TileCoord tile, final int tileWidth, final int tileHeight, final float cameraAngleRads, final float cameraElevationRads, final int zoom)
@@ -856,7 +857,6 @@ public class TileRenderer
 		if (abort)
 			return visible;
 		
-		System.out.println("Finding visible tiles...");
 		progressListener.onTaskStarted(Task.FIND_VISIBLE_TILES.toString());
 		
 		// Method:
@@ -911,7 +911,7 @@ public class TileRenderer
 							maxY = Math.max(screenPos.y, maxY);
 						}
 						
-						// Find tiles that scren rect overlaps
+						// Find tiles that screen rect overlaps
 						for (int x=minX; x<=maxX+tileWidth; x+=tileWidth)
 						{
 							for (int y=minY; y<=maxY+tileHeight; y+=tileHeight)
@@ -925,7 +925,7 @@ public class TileRenderer
 						if (count % 100 == 0)
 						{
 							final int percentage = (int)Math.floor((count / (float)numChunks) * 100);
-							System.out.print(percentage+"%\r"); //prints a carraige return after line
+							System.out.print(percentage+"%\r"); //prints a carriage return after line
 						}
 						progressListener.onTaskUpdate(count, numChunks);
 					}
@@ -937,7 +937,7 @@ public class TileRenderer
 		}
 		System.out.println("100%");
 		
-		System.out.println("found "+visible.size()+" total tiles to output");
+		log.info("found {} total tiles to output", visible.size());
 		
 		return visible;
 	}
@@ -975,9 +975,8 @@ public class TileRenderer
 		{
 			if (abort)
 				break;
-			
-			System.out.println("Downsampling to create zoom level "+zoomLevel);
-			progressListener.onTaskStarted(Task.DOWNSAMPLING.toString() + " level " + zoomLevel);
+
+			progressListener.onTaskStarted(Task.DOWNSAMPLING + " zoom level " + zoomLevel);
 			
 			HddTileList nextTiles = findNextZoomTiles(prevTiles, hddTileListFactory);
 			File nextDir = DirUtils.getZoomDir(exportDir, layer, zoomLevel);
@@ -992,7 +991,7 @@ public class TileRenderer
 					throw new RuntimeException("Couldn't create dir:"+nextDir.getAbsolutePath());
 			}
 			
-			System.out.println("\tDownsampling "+prevTiles.size()+" tiles into "+nextTiles.size()+" tiles");
+			log.debug("\tDownsampling {} tiles into {} tiles", prevTiles.size(), nextTiles.size());
 			
 			Downsampler downsampler = new Downsampler(args.getNumDownsampleThreads(), changedFileList);
 			downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener);
@@ -1004,7 +1003,7 @@ public class TileRenderer
 		
 		final Date downsampleEnd = new Date();
 		final String downsampleTime = Util.getElapsedTime(downsampleStart, downsampleEnd);
-		System.out.println("Downsampling took "+downsampleTime);
+		log.debug("Downsampling took "+downsampleTime);
 		
 		return new TileCoordBounds(prevTiles.getAbsoluteMinCoord(), prevTiles.getAbsoluteMaxCoord());
 	}
@@ -1045,10 +1044,7 @@ public class TileRenderer
 		}
 	}
 	
-	private static HddTileList findNextZoomTiles(HddTileList baseTiles, HddTileListFactory factory)
-	{
-		System.out.println("\tScanning for next zoom tiles...");
-		
+	private static HddTileList findNextZoomTiles(HddTileList baseTiles, HddTileListFactory factory) {
 		HddTileList result = factory.createList();
 		
 		for (TileCoord c : baseTiles)
@@ -1066,8 +1062,6 @@ public class TileRenderer
 	
 	private void outputRenderStats(final String timeTaken)
 	{
-		System.out.println("Exporting stats...");
-		
 		File statsFile = new File(new File(exportDir, "Scripts"), "stats.js");
 		try {
 			Files.deleteIfExists(statsFile.toPath());
@@ -1075,7 +1069,7 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		System.out.println("Outputting stats to "+statsFile.getAbsolutePath());
+		log.info("Exporting stats to {}", statsFile.getAbsolutePath());
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy");
 		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm z");
@@ -1110,11 +1104,10 @@ public class TileRenderer
 	}
 	
 	private File outputHtml() throws IOException {
-		System.out.println("Exporting html...");
 		progressListener.onTaskStarted(Task.OUTPUT_HTML.toString());
 		
 		File outputHtmlFile = new File(exportDir, args.getOutputHtmlName());
-		System.out.println("\twriting html to "+outputHtmlFile.getAbsolutePath());
+		log.info("Writing html to {}", outputHtmlFile.getAbsolutePath());
 		
 		URL url = getClass().getClassLoader().getResource("mapWithSigns.html");
 		if (url == null)
@@ -1212,7 +1205,7 @@ public class TileRenderer
 				
 				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 				
-				String line = null;
+				String line;
 				while ((line = reader.readLine()) != null)
 				{
 					StringBuilder outLine = new StringBuilder();
@@ -1305,7 +1298,7 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		System.out.println("Outputting world vectors to "+vectorsFile.getAbsolutePath());
+		log.info("Exporting world vectors to {}", vectorsFile.getAbsolutePath());
 		
 		final int scale = (int)Math.pow(2, numZoomLevels);
 		
@@ -1399,8 +1392,6 @@ public class TileRenderer
 			if (json != null)
 				json.close();
 		}
-		
-		System.out.println("World vectors done");
 	}
 	
 	private void outputContents(File outputFile, Configuration config)
@@ -1411,7 +1402,7 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		System.out.println("Outputting master contents to "+outputFile.getAbsolutePath());
+		log.info("Writing master contents to {}", outputFile.getAbsolutePath());
 
 		try (PrintWriter writer = new PrintWriter(outputFile))
 		{
@@ -1487,7 +1478,7 @@ public class TileRenderer
 
 		FileUtils.ensureExists(imagesDir);
 		
-		log.info("Outputting players to "+playersFile.getAbsolutePath());
+		log.info("Exporting players to {}", playersFile.getAbsolutePath());
 		
 		int numOutput = 0;
 		ExecutorService executor = Executors.newCachedThreadPool();
@@ -1544,7 +1535,7 @@ public class TileRenderer
 			if (jsWriter != null)
 				jsWriter.close();
 		}
-		log.debug("Outputted "+numOutput+" players");
+		log.debug("Exported {} players", numOutput);
 	}
 	
 	public void outputBeds(File exportDir, tectonicus.configuration.Map map, List<Player> players)
@@ -1556,7 +1547,7 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		log.info("Outputting beds to "+bedsFile.getAbsolutePath());
+		log.info("Exporting beds to {}", bedsFile.getAbsolutePath());
 		
 		int numOutput = 0;
 		
@@ -1604,11 +1595,13 @@ public class TileRenderer
 				jsWriter.close();
 		}
 		
-		log.debug("Outputted "+numOutput+" beds");
+		log.debug("Exported {} beds", numOutput);
 	}
 	
 	private void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, String defaultSkin)
 	{
+		log.info("Writing javascript and image resources...");
+
 		File imagesDir = new File(exportDir, "Images");
 		imagesDir.mkdirs();
 		
@@ -1772,7 +1765,7 @@ public class TileRenderer
 	
 	private WorldVectors calcWorldVectors()
 	{
-		// Calculate origin and axies needed for the js to convert from world to map coords
+		// Calculate origin and axes needed for the js to convert from world to map coords
 		
 		WorldVectors worldVectors = new WorldVectors();
 		
@@ -1823,7 +1816,7 @@ public class TileRenderer
 	}
 	
 	private void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map) throws IOException {
-		log.info("Writing signs to "+signFile.getAbsolutePath());
+		log.info("Exporting signs to {}", signFile.getAbsolutePath());
 
 		Files.deleteIfExists(signFile.toPath());
 		
@@ -1982,7 +1975,7 @@ public class TileRenderer
 				jsWriter.close();
 		}
 		
-		log.debug("Wrote "+numPortals+" portals");
+		log.debug("Wrote {} portals", numPortals);
 		return numPortals;
 	}
 	
@@ -2063,7 +2056,7 @@ public class TileRenderer
 	
 	private void outputChests(File chestFile, tectonicus.configuration.Map map, List<ContainerEntity> chestList)
 	{
-		log.info("Writing chests to "+chestFile.getAbsolutePath());
+		log.info("Writing chests to {}", chestFile.getAbsolutePath());
 
 		try {
 			Files.deleteIfExists(chestFile.toPath());
@@ -2156,9 +2149,8 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputChangedFile()
-	{
-		System.out.println("Writing changed file list...");
+	private void outputChangedFile() {
+		log.info("Writing changed file list...");
 		progressListener.onTaskStarted(Task.OUTPUT_CHANGED_LIST.toString());
 		
 		changedFileList.close();

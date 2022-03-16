@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
 import org.jnbt.DoubleTag;
@@ -39,6 +40,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+@Log4j2
 @Getter
 public class Player
 {
@@ -65,7 +67,7 @@ public class Player
 	
 	public Player(Path playerFile) throws Exception
 	{
-		System.out.println("Loading raw player from "+playerFile);
+		log.debug("Loading raw player from {}", playerFile);
 		
 		dimension = Dimension.OVERWORLD;
 		position = new Vector3d();
@@ -202,9 +204,9 @@ public class Player
 				connection.connect();
 				int responseCode = connection.getResponseCode();
 				if (responseCode == 204)
-					System.err.println("ERROR: Unrecognized UUID");
-				else if (responseCode == 429) //Is this error still necessary?  It doesn't seem to occur any more
-					System.err.println("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
+					log.error("ERROR: Unrecognized UUID");
+				else if (responseCode == 429) //Is this error still necessary?  It doesn't seem to occur anymore
+					log.error("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
 
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 				StringBuilder builder = new StringBuilder();
@@ -227,7 +229,7 @@ public class Player
 					textureUrl = node.get("textures").get("SKIN").get("url").asText();
 				Player.this.setSkinURL(textureUrl);
 			}
-			System.out.println("Loaded " + Player.this.getName());
+			log.debug("Loaded " + Player.this.getName());
 			return null;
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,6 +10,7 @@
 package tectonicus.configuration;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.log4j.Log4j2;
 import tectonicus.Minecraft;
 import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
@@ -20,7 +21,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Log4j2
 public class PlayerFilter
 {
 	private final PlayerFilterType filter;
@@ -63,12 +64,11 @@ public class PlayerFilter
 	
 	private void loadPlayerList(Path playerFile)
 	{
-		System.out.println("Loading players from " + playerFile);
+		log.info("Loading players from {}", playerFile);
 		
 		playerList = new ArrayList<>();
 		
-		try
-		{
+		try {
 			if (playerFile.toString().toLowerCase().endsWith(".json"))
 			{
 				JsonNode node = FileUtils.getOBJECT_MAPPER().reader().readTree(new String(Files.readAllBytes(playerFile)));
@@ -86,12 +86,9 @@ public class PlayerFilter
 					playerList.add( line.trim().toLowerCase() );
 			}
 			
-			System.out.println("\tfound " + playerList.size() + " players");
-		}
-		catch (Exception e)
-		{
-			System.out.println("Error while loading players from " + playerFile);
-			e.printStackTrace();
+			log.debug("\tfound {} players", playerList.size());
+		} catch (Exception e) {
+			log.error("Error while loading players from {}", playerFile, e);
 		}
 	}
 	

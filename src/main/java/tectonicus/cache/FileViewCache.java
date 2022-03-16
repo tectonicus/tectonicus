@@ -94,7 +94,7 @@ public class FileViewCache
 				}
 			}
 			
-			log.info("Found {} changed views (out of {} total views)", viewsOut.size(), totalViews);
+			log.debug("Found {} changed views (out of {} total views)", viewsOut.size(), totalViews);
 		}
 		catch (Exception e)
 		{

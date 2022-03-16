@@ -12,6 +12,7 @@ package tectonicus;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.OsDetect;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 
+@Log4j2
 @UtilityClass
 public class Minecraft
 {
@@ -73,7 +75,7 @@ public class Minecraft
 		
 		if(versionsDir.exists())
 		{
-			System.out.println("Searching for most recent Minecraft jar...");
+			log.info("Searching for most recent Minecraft jar...");
 			List<Path> jars = new ArrayList<>();
 			try (Stream<Path> paths = Files.find(versionsDir.toPath(), 2,
 					(path, attr) -> attr.isRegularFile() && path.getFileName().toString().toLowerCase().endsWith(".jar"))){
@@ -125,7 +127,7 @@ public class Minecraft
 				}
 				catch(NumberFormatException e)
 				{
-					System.out.println("Error parsing version number: " + jar);
+					log.error("Error parsing version number: {}", jar);
 				}
 			}
 			
@@ -135,7 +137,7 @@ public class Minecraft
 			else
 				version = major + "." + minor + "." + patch;
 
-			System.out.println("Minecraft jar version: " + version);
+			log.info("Minecraft jar version: {}", version);
 			return new File(findMinecraftDir(), "versions/" + version + "/" + version + ".jar");
 		}
 		else	

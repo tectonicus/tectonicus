@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,8 +16,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.MessageDigest;
 
+import lombok.extern.log4j.Log4j2;
 import tectonicus.configuration.Map;
 
+@Log4j2
 public class CacheUtil
 {
 
@@ -192,7 +194,7 @@ public class CacheUtil
 			}
 			catch (Exception e)
 			{
-				System.out.println("Couldn't create biome cache - biome colours will be disabled");
+				log.warn("Couldn't create biome cache - biome colours will be disabled");
 				e.printStackTrace();
 			}
 		}

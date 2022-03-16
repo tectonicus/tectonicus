@@ -723,7 +723,7 @@ public class LwjglRasteriser implements Rasteriser
 	private void checkOpenGLCompatability(int major, int minor) {
 		log.debug("Attempting to create window for OpenGL {}.{}", major, minor);
 
-		glfwSetErrorCallback((arg0, arg1) -> System.out.println("GLFW error: " + String.format("0x%08X", arg0)));
+		glfwSetErrorCallback((arg0, arg1) -> log.error("GLFW error: " + String.format("0x%08X", arg0)));
 
 		if (!glfwInit()) {
 			throw new RuntimeException("Failed to init GLFW");

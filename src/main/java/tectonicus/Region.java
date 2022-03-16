@@ -11,6 +11,7 @@ package tectonicus;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.jnbt.NBTInputStream.Compression;
 import tectonicus.cache.BiomeCache;
 import tectonicus.exceptions.RegionProcessingException;
@@ -27,6 +28,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 public class Region {
 	private static final int COMPRESSION_TYPE_GZIP = 1;
 	private static final int COMPRESSION_TYPE_DEFLATE = 2;
@@ -146,7 +148,7 @@ public class Region {
 			}
 		}
 		if (count != result.size()) {
-			System.out.println("Mismatch!");
+			log.error("Chunk count mismatch!");
 		}
 
 		return result.toArray(new ChunkCoord[0]);
@@ -260,7 +262,7 @@ public class Region {
 			try {
 				chunk.loadRaw(chunkData, entityChunkData, filter, worldStats, worldInfo);
 			} catch (IOException e) {
-				System.err.println("Error while trying to load entities for chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + entityRegionFile.getAbsolutePath());
+				log.error("Error while trying to load entities for chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath());
 				e.printStackTrace();
 			}
 		}
@@ -268,7 +270,7 @@ public class Region {
 		try {
 			chunk.loadRaw(chunkData, filter, worldStats, worldInfo);
 		} catch (IOException e) {
-			System.err.println("Error while trying to load chunk at (" + chunkCoord.getX() + ", " + chunkCoord.getZ() + ") from region " + regionFile.getAbsolutePath());
+			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath());
 			e.printStackTrace();
 		}
 

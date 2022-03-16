@@ -170,7 +170,7 @@ public class World implements BlockContext
 		dimensionDir = DirUtils.getDimensionDir(worldDir, dimension);
 		
 		log.info("Loading world from base dir {} with dimension {}", worldDir.getPath(), dimension);
-		log.info("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
+		log.debug("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
 		
 		this.biomeCache = biomeCache;
 		this.playerSkinCache = playerSkinCache;
@@ -255,8 +255,7 @@ public class World implements BlockContext
 				default:
 			}
 		}
-		
-		log.info("Loading players");
+
 		players = loadPlayers(worldDir, playerSkinCache);
 		
 		chests = new ArrayList<>();
@@ -721,8 +720,7 @@ public class World implements BlockContext
 	
 	public static ChunkCoord getTileCoord(File datFile)
 	{
-		try
-		{
+		try {
 			// "c.0.0.dat"
 			String name = datFile.getName();
 			
@@ -733,19 +731,16 @@ public class World implements BlockContext
 				final int dotPos = name.indexOf('.');
 				if (dotPos != -1 && dotPos < name.length()-1)
 				{
-					name = name.substring(dotPos+1, name.length());
+					name = name.substring(dotPos+1);
 					
 					long first = Util.fromBase36( name.substring(0, name.indexOf('.')));
-					long second = Util.fromBase36( name.substring(name.indexOf('.')+1, name.length()));
+					long second = Util.fromBase36( name.substring(name.indexOf('.')+1));
 					
 					return new ChunkCoord(first, second);
 				}
 			}
-		}
-		catch (Exception e)
-		{
-			System.err.println("Couldn't get tile coord from "+datFile.getAbsolutePath()+" ("+e+")");
-			System.err.println("File will be ignored");
+		} catch (Exception e) {
+			log.warn("Couldn't get tile coord from {}. File will be ignored", datFile.getAbsolutePath(), e);
 		}
 		
 		return null;
@@ -1077,7 +1072,7 @@ public class World implements BlockContext
 	{
 		File playersDir = Minecraft.findPlayersDir(worldDir);
 		
-		System.out.println("Loading players from "+playersDir.getAbsolutePath());
+		log.info("Loading players from {}", playersDir.getAbsolutePath());
 		
 		ArrayList<Player> players = new ArrayList<>();
 		File[] playerFiles = playersDir.listFiles();
@@ -1118,14 +1113,14 @@ public class World implements BlockContext
 					}
 					catch (Exception e)
 					{
-						System.err.println("Couldn't load player info from "+playerFile.getName());
+						log.warn("Couldn't load player info from {}", playerFile.getName());
 					}
 				}
 			}
 			executor.shutdown();
 		}
 		
-		System.out.println("\tloaded "+players.size()+" players");
+		log.debug("\tloaded {} players", players.size());
 		
 		return players;
 	}
