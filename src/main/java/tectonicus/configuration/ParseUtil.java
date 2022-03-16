@@ -466,7 +466,7 @@ public class ParseUtil
 	public static String parseLogFile(String logFileStr)
 	{
 		if (logFileStr == null || logFileStr.length() == 0)
-			return "tectonicus.log";
+			return "log/tectonicus.log";
 		
 		return logFileStr;
 	}

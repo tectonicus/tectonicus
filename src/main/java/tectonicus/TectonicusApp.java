@@ -50,8 +50,6 @@ import java.util.stream.Stream;
 public class TectonicusApp
 {
 	private final Configuration args;
-	private CompositePrintStream newOut;
-	private CompositePrintStream newErr;
 	private static org.apache.logging.log4j.Logger log;
 
 	private TectonicusApp(Configuration args)
@@ -62,11 +60,7 @@ public class TectonicusApp
 			args.setLoggingLevel(Level.TRACE);
 		}
 
-
-
-//		Configurator.reconfigure();
 		Configurator.setRootLevel(args.getLoggingLevel());
-//		openLog( args.getLogFile() );
 		
 		BuildInfo.print();
 		
@@ -92,32 +86,6 @@ public class TectonicusApp
 		}
 		catch (Exception e) {}
 		return result;
-	}
-	
-	private void openLog(File logFile)
-	{
-		try
-		{
-			logFile.getAbsoluteFile().getParentFile().mkdirs();
-
-			PrintStream fileOut = new PrintStream( new FileOutputStream(logFile) );
-
-			newOut = new CompositePrintStream(System.out, fileOut);
-			newErr = new CompositePrintStream(System.err, fileOut);
-			
-			System.setOut(newOut);
-			System.setErr(newErr);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public void closeLog()
-	{
-		newOut.close();
-		newErr.close();
 	}
 
 	public Integer run()
@@ -268,7 +236,8 @@ public class TectonicusApp
 
 	public static void main(String[] argArray) throws Exception
 	{
-		System.setProperty("logFilename", "tectonicus.log");
+		// Init the logging framework
+		System.setProperty("logFilename", "log/tectonicus.log");
 		log = org.apache.logging.log4j.LogManager.getLogger(TectonicusApp.class);
 
 		//Parse command line to get config file
@@ -309,6 +278,7 @@ public class TectonicusApp
 			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
 		}
 
+		// Reset log file name
 		System.setProperty("logFilename", args.getLogFile());
 		Configurator.reconfigure();
 
