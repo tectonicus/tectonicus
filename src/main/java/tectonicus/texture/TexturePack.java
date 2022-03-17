@@ -47,17 +47,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static tectonicus.Version.VERSION_UNKNOWN;
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
-import static tectonicus.Version.VERSION_15;
-import static tectonicus.Version.VERSION_16;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
+import static tectonicus.Version.VERSION_UNKNOWN;
 
 @Log4j2
 public class TexturePack
@@ -85,7 +83,8 @@ public class TexturePack
 	
 	private final Map<String, PackTexture> loadedPackTextures;
 
-	private final ObjectReader objectReader = FileUtils.getOBJECT_MAPPER().readerFor(Pack.class);
+	private final ObjectReader packMcmetaReader = FileUtils.getOBJECT_MAPPER().readerFor(Pack.class);
+	private final ObjectReader versionJsonReader = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class);
 	
 	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
 	{
@@ -113,18 +112,23 @@ public class TexturePack
 		Pack packMcMeta = new Pack();
 		if (zipStack.hasFile("pack.mcmeta")) {
 			try {
-				packMcMeta = objectReader.readValue(zipStack.getStream("pack.mcmeta"));
+				packMcMeta = packMcmetaReader.readValue(zipStack.getStream("pack.mcmeta"));
 			} catch (IOException e) {
 				log.error("Failed to read pack.mcmeta file.", e);
 			}
 		}
 
+		VersionJson versionJson = new VersionJson();
+		if (zipStack.hasFile("version.json")) {
+			try {
+				versionJson = versionJsonReader.readValue(zipStack.getStream("version.json"));
+			} catch (IOException e) {
+				log.error("Failed to read version.json file.", e);
+			}
+		}
+
 		//TODO: Clean up this version stuff
-		if (packMcMeta.getPackVersion() >= 5 && zipStack.hasFile("assets/minecraft/textures/block/ancient_debris_side.png")) {
-			version = VERSION_16;
-		} else if (packMcMeta.getPackVersion() >= 5 && zipStack.hasFile("assets/minecraft/textures/block/bee_nest_bottom.png")) {
-			version = VERSION_15;
-		} else if (packMcMeta.getPackVersion() >= 4 && zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
+		if (packMcMeta.getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
 			version = VERSION_14;
 		} else if (packMcMeta.getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
@@ -144,7 +148,10 @@ public class TexturePack
 			version = VERSION_UNKNOWN;
 		}
 
-		log.info("Texture pack version: " + version);
+		log.debug("Texture pack version: {}", version);
+		if (versionJson.getPackVersion() != null) {
+			log.debug("Pack version: {}", versionJson.getPackVersion().getResource());
+		}
 
 		try
 		{
@@ -258,17 +265,36 @@ public class TexturePack
 	public PackTexture getTexture(String path) {
 		return loadedPackTextures.get(path);
 	}
-	
-	public SubTexture findTexture(String texturePath)
+
+	public SubTexture findTextureOrDefault(String texturePath, SubTexture defaultTexture)
 	{
-		SubTexture result = null;
-		
+		SubTexture result;
+
 		TextureRequest request = parseRequest(texturePath);
 
-		PackTexture tex = findTexture(request); // find existing or load
+		PackTexture tex = findTexture(request); // find existing PackTexture or load
 
-		result = tex.find(request, version); // find existing or load
-		assert (result != null);
+		if (tex != null) {
+			result = tex.find(request, version); // find existing SubTexture or load
+			assert (result != null);
+		} else {
+			result = defaultTexture;
+		}
+
+		return result;
+	}
+
+	public SubTexture findTexture(String texturePath) {
+		SubTexture result = null;
+
+		TextureRequest request = parseRequest(texturePath);
+
+		PackTexture tex = findTexture(request); // find existing PackTexture or load
+
+		if (tex != null) {
+			result = tex.find(request, version); // find existing SubTexture or load
+			assert (result != null);
+		}
 		
 		return result;
 	}
@@ -333,21 +359,18 @@ public class TexturePack
 		return pathPrefix;
 	}
 	
-	private PackTexture findTexture(TextureRequest request)
-	{
+	private PackTexture findTexture(TextureRequest request) {
 		PackTexture tex = loadedPackTextures.get(request.path);
 		
-		if (tex == null)
-		{
+		if (tex == null) {
 			BufferedImage img;
-			try 
-			{
+			try {
 				img = loadTexture(request.path);
-				tex = new PackTexture(rasteriser, request.path, img);
-				loadedPackTextures.put(request.path, tex);
-			} 
-			catch (FileNotFoundException e)
-			{
+				if (img != null){
+					tex = new PackTexture(rasteriser, request.path, img);
+					loadedPackTextures.put(request.path, tex);
+				}
+			} catch (FileNotFoundException e) {
 				log.warn("\nThe texture file '" + request.path + "' could not be found.");
 			}
 		}
@@ -369,62 +392,45 @@ public class TexturePack
 		return tex.getFullTexture();
 	}
 	
-	public BufferedImage loadTexture(String path) throws FileNotFoundException
-	{
+	public BufferedImage loadTexture(String path) throws FileNotFoundException {
 		InputStream in = null;
-		
-		try
-		{
-			// Check texture pack and minecraft jar
+
+		try { // Check texture pack and minecraft jar
 			InputStream stream = zipStack.getStream(path);
-			if (stream != null)
-			{
+			if (stream != null) {
 				in = stream;
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		if (in == null)
-		{
-			try
-			{
-				// Check classpath
+
+		if (in == null) {
+			try { // Check classpath
 				in = getClass().getClassLoader().getResourceAsStream(path);
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		
-		if (in == null)
-		{
-			in = new FileInputStream(new File(path));
+
+		if (in == null) { // Check computer
+			Path filePath = Paths.get(path);
+			if (Files.exists(filePath)) {
+				in = new FileInputStream(path);
+			} else {
+				return null;
+			}
 		}
 		
 		BufferedImage img = null;
-		
-		if (in != null)
-		{
-			try
-			{
-		
-				img = ImageIO.read(in);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-			finally
-			{
-				try
-				{
-					in.close();
-				}
-				catch (Exception e) {}
+
+		try {
+			img = ImageIO.read(in);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				in.close();
+			} catch (Exception e) {
 			}
 		}
 		

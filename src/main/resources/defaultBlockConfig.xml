@@ -47,6 +47,8 @@
 	<Sign stringId="minecraft:crimson_wall_sign" name="Crimson Wall Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" />
 	<Sign stringId="minecraft:warped_sign" name="Warped Sign" texture="assets/minecraft/textures/entity/signs/warped.png" hasPost="true" />
 	<Sign stringId="minecraft:warped_wall_sign" name="Warped Wall Sign" texture="assets/minecraft/textures/entity/signs/warped.png" />
+	<Sign stringId="minecraft:mangrove_sign" name="Mangrove Sign" texture="assets/minecraft/textures/entity/signs/mangrove.png" hasPost="true" />
+	<Sign stringId="minecraft:mangrove_wall_sign" name="Mangrove Wall Sign" texture="assets/minecraft/textures/entity/signs/mangrove.png" />
 
 	<EnderPortal stringId="minecraft:end_portal" name="EnderPortal" texture="Images/EnderPortal.png" />
 

@@ -33,7 +33,8 @@ public enum Version {
     VERSION_15("1.15", 15, 2225),
     VERSION_16("1.16", 16, 2566),
     VERSION_17("1.17", 17, 2724),
-    VERSION_18("1.18", 18, 2860);
+    VERSION_18("1.18", 18, 2860),
+    VERSION_19("1.19", 19, 3080);
 
     private final String name;
     private final int numVersion;

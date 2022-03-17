@@ -210,8 +210,8 @@ public class World implements BlockContext
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
 			if (StringUtils.isNotEmpty(versionNumber)) {
 				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
+				version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 			}
-			version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 
 			if (version.getNumVersion() < VERSION_18.getNumVersion() || dimension == Dimension.NETHER || dimension == Dimension.END) {
 				Minecraft.setChunkHeight(256);
@@ -232,6 +232,7 @@ public class World implements BlockContext
 
 
 		log.info("World version: " + worldVersion);
+		// Is this actually helpful?
 		if (worldVersion != null && textureVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion()) {
 			switch (worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "") {
 				case "9":
@@ -246,10 +247,6 @@ public class World implements BlockContext
 					break;
 				case "13":
 					if (!textureVersion.equals(VERSION_13))
-						throw new IncompatibleVersionException(textureVersion, worldVersion);
-					break;
-				case "14":
-					if (!textureVersion.equals(VERSION_14))
 						throw new IncompatibleVersionException(textureVersion, worldVersion);
 					break;
 				default:
@@ -299,8 +296,6 @@ public class World implements BlockContext
 			parser.parse("defaultBlockConfigMC1.13.xml", registry);
 		else if (useDefaultBlocks && this.textureVersion == VERSION_14)
 			parser.parse("defaultBlockConfigMC1.14.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSION_15)
-			parser.parse("defaultBlockConfigMC1.15.xml", registry);
 		else
 			parser.parse("defaultBlockConfig.xml", registry);
 		

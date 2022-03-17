@@ -9,24 +9,12 @@
 
 package tectonicus;
 
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.Anvil;
 import tectonicus.blockTypes.Banner;
@@ -46,6 +34,7 @@ import tectonicus.blockTypes.ChorusFlower;
 import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
 import tectonicus.blockTypes.Conduit;
+import tectonicus.blockTypes.Crops;
 import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.DaylightSensor;
 import tectonicus.blockTypes.Dispenser;
@@ -104,13 +93,23 @@ import tectonicus.blockTypes.TripwireHook;
 import tectonicus.blockTypes.Vines;
 import tectonicus.blockTypes.Wall;
 import tectonicus.blockTypes.Water;
-import tectonicus.blockTypes.Crops;
 import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
 import tectonicus.configuration.SignFilter;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Map;
+
+import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_5;
 
 @Log4j2
@@ -157,7 +156,7 @@ public class BlockRegistryParser
 				}
 				catch (Exception e)
 				{
-					log.error("Error while parsing blockConfig element: "+n+"\n");
+					log.error("Error while parsing blockConfig element: "+n+"\n", e);
 				}
 			}
 		}
@@ -465,7 +464,15 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("sign"))
 		{
-			SubTexture texture = parseTexture(element, "texture", null);
+			Version texturePackVersion = texturePack.getVersion();
+
+			SubTexture defaultTex;
+			if (texturePackVersion.getNumVersion() < VERSION_14.getNumVersion()) {
+				defaultTex = texturePack.findTexture("assets/minecraft/textures/entity/sign.png");
+			} else {
+				defaultTex = texturePack.findTexture("assets/minecraft/textures/entity/signs/oak.png");
+			}
+			SubTexture texture = parseTexture(element, "texture", defaultTex);
 			
 			boolean obey = signFilter == SignFilter.Obey;
 			if(signFilter == SignFilter.Obey)
@@ -474,7 +481,7 @@ public class BlockRegistryParser
 			}
 			
 			String hasPostStr = element.getAttribute("hasPost");
-			final boolean hasPost = (hasPostStr != null && hasPostStr.equalsIgnoreCase("true"));
+			final boolean hasPost = (hasPostStr.equalsIgnoreCase("true"));
 			
 			blockType = new Sign(name, texture, hasPost, obey);
 		}
@@ -880,7 +887,8 @@ public class BlockRegistryParser
 			return defaultTex;
 
 		String texName = element.getAttribute(attribName);
-		SubTexture result = texturePack.findTexture(texName);
+
+		SubTexture result = texturePack.findTextureOrDefault(texName, defaultTex);
 		
 		if (result == null)
 			return defaultTex;
