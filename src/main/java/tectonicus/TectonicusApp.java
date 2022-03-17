@@ -9,9 +9,7 @@
 
 package tectonicus;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
 import tectonicus.cache.BiomeCache;
@@ -33,7 +31,6 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
@@ -64,7 +61,7 @@ public class TectonicusApp
 		
 		BuildInfo.print();
 		
-		log.info("Started on {}", new Date().toString());
+		log.info("Started on {}", new Date());
 
 		log.debug("System:\n\tOS Name: {}\n\tOS Architecture: {}\n\tOS Version: {}",
 				getProperty("os.name"),
@@ -125,7 +122,7 @@ public class TectonicusApp
 				// Do this first before we attempt to load any caches
 				if (args.eraseOutputDir())
 				{
-					log.info("Deleting output dir: "+args.getOutputDir().getAbsolutePath());
+					log.info("Deleting output dir: {}", args.getOutputDir().getAbsolutePath());
 					
 					FileUtils.deleteDirectory(args.getOutputDir());
 				}
@@ -163,7 +160,7 @@ public class TectonicusApp
 				
 				final Date endTime = new Date();
 				String time = Util.getElapsedTime(startTime, endTime);
-				log.debug("Player export took "+time);
+				log.debug("Player export took {}", time);
 			}
 			else if (args.getMode() == Mode.GUI)
 			{
@@ -336,7 +333,7 @@ public class TectonicusApp
 			e.printStackTrace();
 		}
 		File outputHtmlFile = new File(exportDir, htmlFile.getFileName().toString());
-		log.info("\twriting html to "+outputHtmlFile.getAbsolutePath());
+		log.info("\twriting html to {}", outputHtmlFile.getAbsolutePath());
 
 		URL url = TectonicusApp.class.getClassLoader().getResource("mapWithSigns.html");
 		try (Scanner scanner = new Scanner(url.openStream());
