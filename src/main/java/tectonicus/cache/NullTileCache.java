@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,11 +20,13 @@ import tectonicus.world.World;
 
 public class NullTileCache implements TileCache
 {
+	@Override
 	public void reset()
 	{
 		
 	}
-	
+
+	@Override
 	public boolean isUsingExistingCache()
 	{
 		return false;
@@ -36,9 +38,15 @@ public class NullTileCache implements TileCache
 	{
 		return visibleTiles;
 	}
-	
+
+	@Override
 	public void writeImageCache(TileCoord coord)
 	{
 		
+	}
+
+	@Override
+	public void closeTileCache() {
+
 	}
 }

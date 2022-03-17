@@ -10,6 +10,8 @@
 package tectonicus.cache;
 
 import lombok.extern.log4j.Log4j2;
+import org.h2.mvstore.MVMap;
+import org.h2.mvstore.MVStore;
 import tectonicus.BlockRegistryParser;
 import tectonicus.ChunkCoord;
 import tectonicus.TileCoord;
@@ -36,18 +38,21 @@ import java.util.Map;
 public class FileTileCache implements TileCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
-	private static final int RENDERER_VERSION = 15;
-	
+	private static final int RENDERER_VERSION = 16;
+
 	private final File tileCacheDir;
 	
 	private final ImageFormat imageFormat;
 	
 	private final MessageDigest hashAlgorithm;
 	
-	private Map<TileCoord, byte[]> tileHashes;
+	private final Map<TileCoord, byte[]> tileHashes;
 	
 	private boolean wasExistingCacheValid;
-	
+
+	private final MVStore store;
+	private final MVMap<String, byte[]> hashCache;
+
 	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.Map map, Layer layer, String optionString, MessageDigest hashAlgorithm)
 	{
 		this.hashAlgorithm = hashAlgorithm;
@@ -73,7 +78,10 @@ public class FileTileCache implements TileCache
 			tileCacheDir.mkdirs();
 			CacheUtil.writeCacheFile(getMasterCacheFile(tileCacheDir), cacheString.getBytes());
 		}
-		
+
+		store = MVStore.open(tileCacheDir + "/tileHashes.cache");
+		hashCache = store.openMap("tileHashes");
+
 		tileHashes = new HashMap<>();
 	}
 	
@@ -219,7 +227,11 @@ public class FileTileCache implements TileCache
 	{
 		tileHashes.clear();
 	}
-	
+
+	public void closeTileCache() {
+		store.close();
+	}
+
 	@Override
 	public HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles, RegionHashStore regionHashStore, World world, tectonicus.configuration.Map map, OrthoCamera camera, final int zoom, final int tileWidth, final int tileHeight, File layerDir)
 	{
@@ -238,12 +250,12 @@ public class FileTileCache implements TileCache
 			final byte[] newHash = calculateTileHash(world, map, regionHashStore, camera, coord, zoom, tileWidth, tileHeight);
 			
 			File imgFile = TileRenderer.getImageFile(layerDir, coord.x, coord.y, imageFormat);
-			if (imgFile.exists())
-			{
-				File hashFile = getCacheFile(tileCacheDir, coord);
-				final byte[] cachedHash = CacheUtil.readHash(hashFile);
-				
-				cacheOk = CacheUtil.equal(cachedHash, newHash);
+			if (imgFile.exists()) {
+				final byte[] cachedHash = hashCache.get("tile_"+coord.x+"_"+coord.y);
+
+				if (cachedHash != null){
+					cacheOk = CacheUtil.equal(cachedHash, newHash);
+				}
 			}
 			
 			if (!cacheOk)
@@ -274,13 +286,12 @@ public class FileTileCache implements TileCache
 	public void writeImageCache(TileCoord coord)
 	{
 		assert (coord != null);
-		
+
 		byte[] hash = tileHashes.get(coord);
 		if (hash == null)
 			throw new RuntimeException("No hash for tile coord "+coord);
-		
-		File hashFile = getCacheFile(tileCacheDir, coord);
-		CacheUtil.writeCacheFile(hashFile, hash);
+
+		hashCache.put("tile_"+coord.x+"_"+coord.y, hash);
 	}
 	
 	private byte[] calculateTileHash(World world, tectonicus.configuration.Map map, RegionHashStore regionHashStore, OrthoCamera camera, TileCoord tile, final int zoom, final int tileWidth, final int tileHeight)

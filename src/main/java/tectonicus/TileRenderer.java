@@ -17,7 +17,6 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
 import tectonicus.cache.FileViewCache;
-import tectonicus.cache.NullTileCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.TileCache;
@@ -243,7 +242,7 @@ public class TileRenderer
 			FileUtils.ensureExists(mapDir);
 			
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
-			
+
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
 									biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), playerSkinCache, map.getSignFilter(), args);
@@ -275,9 +274,9 @@ public class TileRenderer
 			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
-			
+
 			// Render views
-			FileViewCache viewCache = createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+			FileViewCache viewCache = CacheUtil.createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
 			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, args.getNumDownsampleThreads(), map.getViewConfig());
 			viewRenderer.output(world, mapDir, viewsFile, changedFileList);
 			
@@ -293,7 +292,7 @@ public class TileRenderer
 				
 				// Set new tile cache for this layer
 				String optionString = FileTileCache.calcOptionsString(args);
-				TileCache tileCache = createTileCache(args.useCache(), optionString, layer.getImageFormat(), args.getCacheDir(), map, layer, hashAlgorithm);
+				TileCache tileCache = CacheUtil.createTileCache(args.useCache(), optionString, layer.getImageFormat(), args.getCacheDir(), map, layer, hashAlgorithm);
 			
 				File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
 				FileUtils.ensureExists(baseTilesDir);
@@ -371,7 +370,7 @@ public class TileRenderer
 			FileUtils.ensureExists(mapDir);
 			
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
-			
+
 			// Create the world for this map
 			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
 									biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), playerSkinCache, map.getSignFilter(), args);
@@ -389,7 +388,7 @@ public class TileRenderer
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			
 			// Render views
-			FileViewCache viewCache = createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+			FileViewCache viewCache = CacheUtil.createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
 			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, args.getNumDownsampleThreads(), map.getViewConfig());
 			viewRenderer.output(world, mapDir, viewsFile, changedFileList);
 		}
@@ -747,44 +746,41 @@ public class TileRenderer
 		setupInitialCamera(map);
 		
 		int done = 0;
-		
+
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(args.getNumDownsampleThreads());
-		
-		for (TileCoord t : tiles)
-		{
-			System.out.print("Rendering tile @ "+t.x+","+t.y+" (tile "+(done+1)+" of "+tiles.size()+")\r"); //prints a carriage return after line
+
+		for (TileCoord t : tiles) {
+			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")\r"); //prints a carriage return after line
 			log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
 			progressListener.onTaskUpdate(done, tiles.size());
-			
+
 			setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
 
 			rasteriser.resetState();
 			rasteriser.clear(layer.getBackgroundColorRGB());
-			
+
 			world.draw(camera, false, true);
-			
+
 			File outputFile = getImageFile(layerDir, t.x, t.y, imageFormat);
 			BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, tileWidth, tileHeight, imageFormat);
-			if (tileImage != null)
-			{
+			if (tileImage != null) {
 				imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel());
+			} else {
+				log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:" + tileWidth + " height:" + tileHeight + " format:" + imageFormat + ")");
 			}
-			else
-			{
-				log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:"+tileWidth+" height:"+tileHeight+" format:"+imageFormat+")");
-			}
-			
+
 			tileCache.writeImageCache(t);
-			
-			changedFileList.writeLine( outputFile.getAbsolutePath() );
-			
+
+			changedFileList.writeLine(outputFile.getAbsolutePath());
+
 			done++;
-			
+
 			if (abort)
 				break;
 		}
-		
+
 		imageWriteQueue.waitUntilFinished();
+		tileCache.closeTileCache();
 		
 		log.info("\nBase tile render complete");
 	}
@@ -856,7 +852,7 @@ public class TileRenderer
 		
 		if (abort)
 			return visible;
-		
+
 		progressListener.onTaskStarted(Task.FIND_VISIBLE_TILES.toString());
 		
 		// Method:
@@ -1007,31 +1003,7 @@ public class TileRenderer
 		
 		return new TileCoordBounds(prevTiles.getAbsoluteMinCoord(), prevTiles.getAbsoluteMaxCoord());
 	}
-	
-	private static TileCache createTileCache(final boolean useCache, String optionString, ImageFormat imageFormat, File rootCacheDir, tectonicus.configuration.Map map, Layer layer, MessageDigest hashAlgorithm)
-	{
-		if (useCache)
-		{
-			File subDir = new File(rootCacheDir, "tileHashes");
-			File mapDir = new File(subDir, layer.getMapId());
-			File layerDir = new File(mapDir, layer.getId());
-			
-			return new FileTileCache(layerDir, imageFormat, map, layer, optionString, hashAlgorithm);
-		}
-		else
-		{
-			return new NullTileCache();
-		}
-	}
-	
-	private static FileViewCache createViewCache(File cacheDir, tectonicus.configuration.Map map, TempArea tempArea, MessageDigest hashAlgorithm, RegionHashStore regionHashStore)
-	{
-		File viewsCache = new File(cacheDir, "views");
-		File mapViewsCache = new File(viewsCache, map.getId());
-		
-		return new FileViewCache(mapViewsCache, tempArea, hashAlgorithm, regionHashStore);
-	}
-	
+
 	private static class TileCoordBounds
 	{
 		public TileCoord min;
@@ -1380,7 +1352,7 @@ public class TileRenderer
 			json.writeMapsPoint("mapSize", +mapWidth, mapHeight);
 
 			json.writeVariable("yOffset", worldVectors.yOffset);
-			
+
 			json.endObject();
 		}
 		catch (Exception e)
@@ -1555,7 +1527,7 @@ public class TileRenderer
 		try
 		{
 			jsWriter = new JsArrayWriter(bedsFile, map.getId()+"_bedData");
-			
+
 			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the terra dimension for now
 			{
 				WorldSubset worldSubset = map.getWorldSubset();
@@ -1792,7 +1764,7 @@ public class TileRenderer
 		if (Minecraft.getChunkHeight() > 256) {
 			worldVectors.yOffset = 64;
 		}
-		
+
 		return worldVectors;
 	}
 	
@@ -2278,7 +2250,7 @@ public class TileRenderer
 		Vector2f mapXUnit;
 		Vector2f mapYUnit;
 		int yOffset;
-		
+
 		public WorldVectors()
 		{
 			origin = new Vector2f();

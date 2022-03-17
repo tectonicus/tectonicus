@@ -17,9 +17,14 @@ import java.io.FileOutputStream;
 import java.security.MessageDigest;
 
 import lombok.extern.log4j.Log4j2;
+import lombok.experimental.UtilityClass;
+import tectonicus.configuration.ImageFormat;
+import tectonicus.configuration.Layer;
 import tectonicus.configuration.Map;
+import tectonicus.util.TempArea;
 
 @Log4j2
+@UtilityClass
 public class CacheUtil
 {
 
@@ -205,5 +210,24 @@ public class CacheUtil
 		}
 		
 		return biomeCache;
+	}
+
+	public static TileCache createTileCache(final boolean useCache, String optionString, ImageFormat imageFormat, File rootCacheDir, tectonicus.configuration.Map map, Layer layer, MessageDigest hashAlgorithm) {
+		if (useCache) {
+			File subDir = new File(rootCacheDir, "tileHashes");
+			File mapDir = new File(subDir, layer.getMapId());
+			File layerDir = new File(mapDir, layer.getId());
+
+			return new FileTileCache(layerDir, imageFormat, map, layer, optionString, hashAlgorithm);
+		} else {
+			return new NullTileCache();
+		}
+	}
+
+	public static FileViewCache createViewCache(File cacheDir, tectonicus.configuration.Map map, TempArea tempArea, MessageDigest hashAlgorithm, RegionHashStore regionHashStore) {
+		File viewsCache = new File(cacheDir, "views");
+		File mapViewsCache = new File(viewsCache, map.getId());
+
+		return new FileViewCache(mapViewsCache, tempArea, hashAlgorithm, regionHashStore);
 	}
 }
