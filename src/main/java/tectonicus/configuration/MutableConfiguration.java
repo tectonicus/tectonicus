@@ -86,6 +86,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-f", "--outputHtmlName", "outputHtmlName"}, paramLabel = "<string>")
 	private String outputHtmlName;
 
+	@Option(names = {"--htmlTitle"}, paramLabel = "<string>")
+	private String htmlTitle;
+
 	@Option(names = {"--defaultSkin", "defaultSkin"}, paramLabel = "<string>")
 	private String defaultSkin;
 
@@ -204,6 +207,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\tforceLoadAwt:"+forceLoadAwt());
 		log.debug("\tlogFile: log/"+getLogFile());
 		log.debug("\toutputHtmlName:"+getOutputHtmlName());
+		log.debug("\thtmlTitle: {}", getHtmlTitle());
 		log.debug("\tnumDownsampleThreads:"+getNumDownsampleThreads());
 		log.debug("\tsinglePlayerName:"+getSinglePlayerName());
 

@@ -57,7 +57,6 @@ import static tectonicus.configuration.ParseUtil.parseNumDownsampleThreads;
 import static tectonicus.configuration.ParseUtil.parseNumSamples;
 import static tectonicus.configuration.ParseUtil.parseNumZoomLevels;
 import static tectonicus.configuration.ParseUtil.parseOutputDir;
-import static tectonicus.configuration.ParseUtil.parseOutputHtmlName;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterFile;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
 import static tectonicus.configuration.ParseUtil.parsePortalFilter;
@@ -122,9 +121,9 @@ public class XmlConfigurationParser
 			
 			File outputDir = parseOutputDir( getString(configNode, "outputDir") );
 			config.setOutputDir(outputDir);
-			
-			String outputHtml = parseOutputHtmlName( getString(configNode, "outputHtmlName") );
-			config.setOutputHtmlName(outputHtml);
+
+			config.setOutputHtmlName(getString(configNode, "outputHtmlName", "map.html"));
+			config.setHtmlTitle(getString(configNode, "htmlTitle", "Tectonicus Map"));
 			
 			String defaultSkin = parseDefaultSkin( getString(configNode, "defaultSkin") );
 			config.setDefaultSkin(defaultSkin);
@@ -477,8 +476,20 @@ public class XmlConfigurationParser
 		return element.getAttribute(attributeName);
 	}
 
-	public static boolean getBoolean(Element element, String attributeName, boolean defaultValue)
-	{
+	public static String getString(Element element, String attributeName, String defaultValue) {
+		if (element == null || attributeName == null) {
+			return defaultValue;
+		}
+
+		String value = element.getAttribute(attributeName);
+		if (value.equals("")) {
+			value = defaultValue;
+		}
+
+		return value;
+	}
+
+	public static boolean getBoolean(Element element, String attributeName, boolean defaultValue) {
 		if (element == null || attributeName == null)
 			return defaultValue;
 

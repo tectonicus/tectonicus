@@ -1102,8 +1102,9 @@ public class TileRenderer
 					Util.Token first = tokens.remove(0);
 					if (first.isReplaceable)
 					{
-						if (first.value.equals("includes"))
-						{
+						if (first.value.equals("title")) {
+							outLine.append(args.getHtmlTitle());
+						} else if (first.value.equals("includes")) {
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
 							
@@ -1152,13 +1153,11 @@ public class TileRenderer
 								// Any per layer includes?
 							}
 						}
-					}
-					else
-					{
+					} else {
 						outLine.append(first.value);
 					}
 				}
-				
+
 				writer.write(outLine.append("\n").toString());
 			}
 			

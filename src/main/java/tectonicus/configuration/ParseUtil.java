@@ -357,14 +357,6 @@ public class ParseUtil
 		return new File(cacheDir);
 	}
 	
-	public static String parseOutputHtmlName(String name)
-	{
-		if (name == null || name.equals(""))
-			return "map.html";
-		
-		return name;
-	}
-	
 	public static String parseDefaultSkin(String skin)
 	{
 		if (skin == null || skin.equals(""))

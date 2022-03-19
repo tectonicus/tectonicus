@@ -37,7 +37,6 @@ import static tectonicus.configuration.ParseUtil.parseNumDownsampleThreads;
 import static tectonicus.configuration.ParseUtil.parseNumSamples;
 import static tectonicus.configuration.ParseUtil.parseNumZoomLevels;
 import static tectonicus.configuration.ParseUtil.parseOutputDir;
-import static tectonicus.configuration.ParseUtil.parseOutputHtmlName;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterFile;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
 import static tectonicus.configuration.ParseUtil.parsePortalFilter;
@@ -162,7 +161,7 @@ public class CommandLineParser
 		config.setCacheDir(cacheDir);
 		
 		
-		String htmlName = parseOutputHtmlName( parser.getString("outputHtmlName", "") );
+		String htmlName = parser.getString("outputHtmlName", "map.html");
 		config.setOutputHtmlName(htmlName);
 		
 		LightStyle lightStyle = parseLightStyle( parser.getString("lighting", "") );

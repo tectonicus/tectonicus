@@ -72,6 +72,7 @@ public interface Configuration  //TODO: is this interface needed?
 	File getTexturePack();
 	
 	String getOutputHtmlName();
+	String getHtmlTitle();
 	
 	String getDefaultSkin();
 	
