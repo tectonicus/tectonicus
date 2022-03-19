@@ -22,7 +22,7 @@
 		eraseOutputDir="false / true"
 		useCache="true / false"
 		cacheDir="outputDir/cache"
-		logFile="./TectonicusLog.txt"
+		logFile="./log/tectonicus.log"
 		loggingLevel="DEBUG / OFF / FATAL / ERROR / WARN / INFO / TRACE / ALL"
 		spawnInitiallyVisible="true / false"
 		playersInitiallyVisible="true / false"
@@ -80,6 +80,8 @@
 		<players
 			filter="all / none / ops / whitelist / blacklist"
 			playerFilterFile="." <!-- required only for whitelist or blacklist -->
+			showBeds="true / false"
+			showRespawnAnchors="true / false"
 		/>
 
 		<portals
