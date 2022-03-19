@@ -11,5 +11,6 @@ org.eclipse.jdt.core.prefs
 .settings
 .idea
 *.iml
-/TectonicusLog.txt
+*.log
 /out
+/.vscode
