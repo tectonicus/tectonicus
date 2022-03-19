@@ -12,7 +12,6 @@ package tectonicus.configuration;
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import tectonicus.Minecraft;
-import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
@@ -27,12 +26,8 @@ import static tectonicus.configuration.ParseUtil.parseClosestZoomSize;
 import static tectonicus.configuration.ParseUtil.parseColourDepth;
 import static tectonicus.configuration.ParseUtil.parseDimension;
 import static tectonicus.configuration.ParseUtil.parseElevationAngle;
-import static tectonicus.configuration.ParseUtil.parseEraseOutputDir;
-import static tectonicus.configuration.ParseUtil.parseForceLoadAwt;
 import static tectonicus.configuration.ParseUtil.parseImageCompression;
 import static tectonicus.configuration.ParseUtil.parseImageFormat;
-import static tectonicus.configuration.ParseUtil.parseInitiallyVisible;
-import static tectonicus.configuration.ParseUtil.parseIsVerbose;
 import static tectonicus.configuration.ParseUtil.parseLightStyle;
 import static tectonicus.configuration.ParseUtil.parseLogFile;
 import static tectonicus.configuration.ParseUtil.parseMaxTiles;
@@ -48,11 +43,8 @@ import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
 import static tectonicus.configuration.ParseUtil.parsePortalFilter;
 import static tectonicus.configuration.ParseUtil.parseRasteriserType;
 import static tectonicus.configuration.ParseUtil.parseRenderStyle;
-import static tectonicus.configuration.ParseUtil.parseShowSpawn;
 import static tectonicus.configuration.ParseUtil.parseSignFilter;
 import static tectonicus.configuration.ParseUtil.parseTileSize;
-import static tectonicus.configuration.ParseUtil.parseUseBiomeColours;
-import static tectonicus.configuration.ParseUtil.parseUseCache;
 
 @Log4j2
 @UtilityClass
@@ -116,7 +108,7 @@ public class CommandLineParser
 		RasteriserType rasteriser = parseRasteriserType( parser.getString("rasteriser", "") );
 		config.setRasteriserType(rasteriser);
 		
-		config.setVerbose( parseIsVerbose( parser.getString("verbose", "") ) );
+		config.setVerbose(parser.getBoolean("verbose", false));
 		
 		File minecraftJar;
 		if (parser.hasValue("minecraftJar"))
@@ -146,17 +138,17 @@ public class CommandLineParser
 		SignFilter signFilter = parseSignFilter( parser.getString("signs", "") );
 		map.setSignFilter(signFilter);
 		
-		config.setShowPlayerSpawn( parseShowSpawn( parser.getString("showSpawn", "") ) );
+		config.setShowPlayerSpawn( parser.getBoolean("showSpawn", true));
 		
 		PlayerFilterType playerFilterType = parsePlayerFilterType( parser.getString("players", "") );
 		Path playerFilterFile = parsePlayerFilterFile( parser.getString("playerFilterFile", "") );
-		PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir().toPath());
+		PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir().toPath(), true, true);
 		map.setPlayerFilter(playerFilter);
 		
 		PortalFilterType portalFilterType = parsePortalFilter( parser.getString("portals", "") );
 		map.setPortalFilter( new PortalFilter(portalFilterType) );
 		
-		config.setEraseOutputDir( parseEraseOutputDir( parser.getString("eraseOutputDir", "") ) );
+		config.setEraseOutputDir( parser.getBoolean("eraseOutputDir", false));
 		
 		File outputDir = parseOutputDir( parser.get("outputDir") );
 		config.setOutputDir(outputDir);
@@ -164,7 +156,7 @@ public class CommandLineParser
 		String logFile = parseLogFile( parser.getString("logFile", "") );
 		config.setLogFile(logFile);
 		
-		config.setUseCache( parseUseCache(parser.getString("useCache", "") ) );
+		config.setUseCache( parser.getBoolean("useCache", true));
 		
 		File cacheDir = parseCacheDir(parser.getString("cacheDir", ""), config.getOutputDir());
 		config.setCacheDir(cacheDir);
@@ -190,15 +182,15 @@ public class CommandLineParser
 		
 		config.setMaxTiles( parseMaxTiles( parser.getString("maxTiles", "") ) );
 		
-		config.setForceLoadAwt( parseForceLoadAwt( parser.getString("forceLoadAwt", "") ) );
+		config.setForceLoadAwt( parser.getBoolean("forceLoadAwt", false));
 		
-		map.setUseBiomeColours( parseUseBiomeColours( parser.getString("useBiomeColours", "") ) );
+		map.setUseBiomeColours( parser.getBoolean("useBiomeColours", false));
 		
-		config.setSignsInitiallyVisible( parseInitiallyVisible( parser.getString("signsInitiallyVisible", "") ) );
-		config.setPlayersInitiallyVisible( parseInitiallyVisible( parser.getString("playersInitiallyVisible", "") ) );
-		config.setPortalsInitiallyVisible( parseInitiallyVisible( parser.getString("portalsInitiallyVisible", "") ) );
-		config.setBedsInitiallyVisible( parseInitiallyVisible( parser.getString("bedsInitiallyVisible", "") ) );
-		config.setSpawnInitiallyVisible( parseInitiallyVisible( parser.getString("spawnInitiallyVisible", "") ) );
+		config.setSignsInitiallyVisible( parser.getBoolean("signsInitiallyVisible", true));
+		config.setPlayersInitiallyVisible( parser.getBoolean("playersInitiallyVisible", true));
+		config.setPortalsInitiallyVisible( parser.getBoolean("portalsInitiallyVisible", true));
+		config.setBedsInitiallyVisible( parser.getBoolean("bedsInitiallyVisible", true));
+		config.setSpawnInitiallyVisible( parser.getBoolean("spawnInitiallyVisible", true));
 		
 		final int numDownsampleThreads = parseNumDownsampleThreads( parser.getString("numDownsampleThreads", "") );
 		config.setNumDownsampleThreads(numDownsampleThreads);

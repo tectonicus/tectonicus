@@ -38,7 +38,7 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
 import tectonicus.configuration.Configuration;
-import tectonicus.configuration.Configuration.Dimension;
+import tectonicus.configuration.Dimension;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.SignFilter;
@@ -113,6 +113,7 @@ public class World implements BlockContext
 	private final Dimension dimension;
 	
 	private BlockTypeRegistry registry;
+	@Getter
 	private BlockRegistry modelRegistry;
 	
 	private final LevelDat levelDat;
@@ -420,11 +421,6 @@ public class World implements BlockContext
 	public TexturePack getTexturePack()
 	{
 		return texturePack;
-	}
-	
-	public BlockRegistry getModelRegistry()
-	{
-		return modelRegistry;
 	}
 	
 	/* New, optimised version.

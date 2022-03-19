@@ -10,6 +10,7 @@
 package tectonicus.configuration;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import tectonicus.Minecraft;
 import tectonicus.raw.Player;
@@ -26,35 +27,42 @@ public class PlayerFilter
 {
 	private final PlayerFilterType filter;
 	private Path filterFile;
+	@Getter
+	private final boolean showBeds;
+	@Getter
+	private final boolean showRespawnAnchors;
 	private List<String> playerList;
 	
-	public PlayerFilter()
-	{
-		this.filter = PlayerFilterType.All;
+	public PlayerFilter() {
+		this.filter = PlayerFilterType.ALL;
+		this.showBeds = true;
+		this.showRespawnAnchors = true;
 	}
 	
-	public PlayerFilter(final PlayerFilterType type, Path playersFile, Path worldDir)
+	public PlayerFilter(final PlayerFilterType type, Path playersFile, Path worldDir, boolean showBeds, boolean showRespawnAnchors)
 	{
 		this.filter = type;
 		this.filterFile = playersFile;
+		this.showBeds = showBeds;
+		this.showRespawnAnchors = showRespawnAnchors;
 		
-		if ((filter == PlayerFilterType.Whitelist || filter == PlayerFilterType.Blacklist || filter == PlayerFilterType.Ops) && (Files.exists(playersFile) && !Files.isDirectory(playersFile)))
+		if ((filter == PlayerFilterType.WHITELIST || filter == PlayerFilterType.BLACKLIST || filter == PlayerFilterType.OPS) && (Files.exists(playersFile) && !Files.isDirectory(playersFile)))
 		{
 			loadPlayerList(playersFile);
 		}
 		else
 		{
-			if (filter == PlayerFilterType.Ops)
+			if (filter == PlayerFilterType.OPS)
 			{
 				Path opsFile = Minecraft.findServerPlayerFile(worldDir, "ops");
 				loadPlayerList(opsFile);
 			}
-			else if (filter == PlayerFilterType.Whitelist)
+			else if (filter == PlayerFilterType.WHITELIST)
 			{
 				Path whitelist = Minecraft.findServerPlayerFile(worldDir, "whitelist");
 				loadPlayerList(whitelist);
 			}
-			else if (filter == PlayerFilterType.Blacklist)
+			else if (filter == PlayerFilterType.BLACKLIST)
 			{
 				Path blacklist = Minecraft.findServerPlayerFile(worldDir, "banned-players");
 				loadPlayerList(blacklist);
@@ -94,19 +102,19 @@ public class PlayerFilter
 	
 	public boolean passesFilter(Player player)
 	{
-		if (filter == PlayerFilterType.None)
+		if (filter == PlayerFilterType.NONE)
 		{
 			return false;
 		}
-		else if (filter == PlayerFilterType.All)
+		else if (filter == PlayerFilterType.ALL)
 		{
 			return true;
 		}
-		else if (filter == PlayerFilterType.Ops || filter == PlayerFilterType.Whitelist)
+		else if (filter == PlayerFilterType.OPS || filter == PlayerFilterType.WHITELIST)
 		{
 			return playerList.contains(player.getName());
 		}
-		else if (filter == PlayerFilterType.Blacklist)
+		else if (filter == PlayerFilterType.BLACKLIST)
 		{
 			return !playerList.contains(player.getName());
 		}

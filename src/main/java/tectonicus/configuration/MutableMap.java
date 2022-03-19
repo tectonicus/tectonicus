@@ -11,7 +11,6 @@ package tectonicus.configuration;
 
 import lombok.Getter;
 import lombok.Setter;
-import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.WorldSubset;
 
@@ -24,6 +23,8 @@ public class MutableMap implements Map
 	private String id;
 	private String name;
 	private File worldDir;
+	@Getter
+	@Setter
 	private Dimension dimension;
 	
 	private int closestZoomSize;
@@ -153,17 +154,6 @@ public class MutableMap implements Map
 	public void setWorldDir(final File worldDir)
 	{
 		this.worldDir = worldDir;
-	}
-	
-	@Override
-	public Dimension getDimension()
-	{
-		return dimension;
-	}
-	
-	public void setDimension(final Dimension dimension)
-	{
-		this.dimension = dimension;
 	}
 	
 	public void setModJars(List<File> modJars)

@@ -48,13 +48,6 @@ public interface Configuration  //TODO: is this interface needed?
 		NETHER
 	}
 	
-	enum Dimension
-	{
-		OVERWORLD,
-		NETHER,
-		END
-	}
-	
 	void printActive();
 	
 	Mode getMode();
@@ -101,6 +94,8 @@ public interface Configuration  //TODO: is this interface needed?
 	boolean arePortalsInitiallyVisible();
 	
 	boolean areBedsInitiallyVisible();
+
+	boolean areRespawnAnchorsInitiallyVisible();
 	
 	boolean isSpawnInitiallyVisible();
 	

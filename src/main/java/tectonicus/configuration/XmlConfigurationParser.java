@@ -9,6 +9,7 @@
 
 package tectonicus.configuration;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
@@ -17,7 +18,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import tectonicus.Minecraft;
-import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.raw.LevelDat;
@@ -45,9 +45,7 @@ import static tectonicus.configuration.ParseUtil.parseDefaultSkin;
 import static tectonicus.configuration.ParseUtil.parseDimension;
 import static tectonicus.configuration.ParseUtil.parseDrawDistance;
 import static tectonicus.configuration.ParseUtil.parseElevationAngle;
-import static tectonicus.configuration.ParseUtil.parseEraseOutputDir;
 import static tectonicus.configuration.ParseUtil.parseFOV;
-import static tectonicus.configuration.ParseUtil.parseForceLoadAwt;
 import static tectonicus.configuration.ParseUtil.parseImageCompression;
 import static tectonicus.configuration.ParseUtil.parseImageFormat;
 import static tectonicus.configuration.ParseUtil.parseLightStyle;
@@ -65,22 +63,14 @@ import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
 import static tectonicus.configuration.ParseUtil.parsePortalFilter;
 import static tectonicus.configuration.ParseUtil.parseRasteriserType;
 import static tectonicus.configuration.ParseUtil.parseRenderStyle;
-import static tectonicus.configuration.ParseUtil.parseShowBeds;
-import static tectonicus.configuration.ParseUtil.parseShowPlayers;
-import static tectonicus.configuration.ParseUtil.parseShowPortals;
-import static tectonicus.configuration.ParseUtil.parseShowSigns;
-import static tectonicus.configuration.ParseUtil.parseShowSpawn;
-import static tectonicus.configuration.ParseUtil.parseShowViews;
 import static tectonicus.configuration.ParseUtil.parseSignFilter;
 import static tectonicus.configuration.ParseUtil.parseSinglePlayerName;
 import static tectonicus.configuration.ParseUtil.parseTileSize;
-import static tectonicus.configuration.ParseUtil.parseUseBiomeColours;
-import static tectonicus.configuration.ParseUtil.parseUseCache;
 import static tectonicus.configuration.ParseUtil.parseUseDefaultBlockConfig;
-import static tectonicus.configuration.ParseUtil.parseUseOldColorPalette;
 import static tectonicus.configuration.ParseUtil.parseViewFilter;
 
 @Log4j2
+@UtilityClass
 public class XmlConfigurationParser
 {
 	private static final int VERSION = 2;
@@ -125,7 +115,7 @@ public class XmlConfigurationParser
 			boolean useOldColorPalette = false;
 			if (configNode.hasAttribute("useOldColorPalette"))
 			{
-				useOldColorPalette = parseUseOldColorPalette(getString(configNode, "useOldColorPalette"));
+				useOldColorPalette = getBoolean(configNode, "useOldColorPalette", false);
 			}
 			config.setUseOldColorPalette(useOldColorPalette);
 			Minecraft.setUseOldColorPalette(useOldColorPalette);
@@ -146,9 +136,9 @@ public class XmlConfigurationParser
 			final int numDownsampleThreads = parseNumDownsampleThreads( getString(configNode, "numDownsampleThreads") );
 			config.setNumDownsampleThreads(numDownsampleThreads);
 			
-			config.setEraseOutputDir( parseEraseOutputDir( getString(configNode, "eraseOutputDir") ) );
+			config.setEraseOutputDir(getBoolean(configNode, "eraseOutputDir", false));
 			
-			config.setUseCache( parseUseCache( getString(configNode, "useCache") ) );
+			config.setUseCache(getBoolean(configNode, "useCache", true));
 			
 			config.setCacheDir( parseCacheDir( getString(configNode, "cacheDir"), config.getOutputDir() ) );
 			
@@ -158,13 +148,14 @@ public class XmlConfigurationParser
 				logLevel = getString(configNode, "logLevel");
 			}
 			config.setLoggingLevel(Level.toLevel(logLevel));
-			
-			config.setSpawnInitiallyVisible( parseShowSpawn( getString(configNode, "spawnInitiallyVisible")) );
-			config.setPlayersInitiallyVisible( parseShowPlayers( getString(configNode, "playersInitiallyVisible")) );
-			config.setBedsInitiallyVisible( parseShowBeds( getString(configNode, "bedsInitiallyVisible")) );
-			config.setSignsInitiallyVisible( parseShowSigns( getString(configNode, "signsInitiallyVisible")) );
-			config.setPortalsInitiallyVisible( parseShowPortals( getString(configNode, "portalsInitiallyVisible")) );
-			config.setViewsInitiallyVisible( parseShowViews( getString(configNode, "viewsInitiallyVisible")) );
+
+			config.setSpawnInitiallyVisible(getBoolean(configNode, "spawnInitiallyVisible", true));
+			config.setPlayersInitiallyVisible(getBoolean(configNode, "playersInitiallyVisible", true));
+			config.setBedsInitiallyVisible(getBoolean(configNode, "bedsInitiallyVisible", true));
+			config.setRespawnAnchorsInitiallyVisible(getBoolean(configNode, "respawnAnchorsInitiallyVisible", true));
+			config.setSignsInitiallyVisible(getBoolean(configNode, "signsInitiallyVisible", true));
+			config.setPortalsInitiallyVisible(getBoolean(configNode, "portalsInitiallyVisible", true));
+			config.setViewsInitiallyVisible(getBoolean(configNode, "viewsInitiallyVisible", true));
 		}
 		
 		// Parse rasteriser config
@@ -208,7 +199,7 @@ public class XmlConfigurationParser
 			Element subsetNode = getChild(mapElement, "subset");
 			map.setWorldSubset( parseWorldSubset(subsetNode, map.getDimension(), map.getWorldDir().toPath()) );
 			
-			final boolean useBiomeColours = parseUseBiomeColours(getString(mapElement, "useBiomeColours"));
+			final boolean useBiomeColours = getBoolean(mapElement, "useBiomeColours", false);
 			map.setUseBiomeColours(useBiomeColours);
 			
 			map.setNorthDirection( parseNorthDirection( getString(mapElement, "north")));
@@ -249,8 +240,10 @@ public class XmlConfigurationParser
 			{
 				PlayerFilterType playerFilterType = parsePlayerFilterType( getString(playersNode, "filter") );
 				Path playerFilterFile = parsePlayerFilterFile( getString(playersNode, "playerFilterFile") );
+				boolean showBeds = getBoolean(playersNode, "showBeds", true);
+				boolean showRespawnAnchors = getBoolean(playersNode, "showRespawnAnchors", true);
 				
-				PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir().toPath());
+				PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile, map.getWorldDir().toPath(), showBeds, showRespawnAnchors);
 				map.setPlayerFilter(playerFilter);
 			}
 			
@@ -415,7 +408,7 @@ public class XmlConfigurationParser
 		}
 		if (tweaksNode != null)
 		{
-			config.setForceLoadAwt( parseForceLoadAwt( getString(tweaksNode, "forceLoadAwt")) );
+			config.setForceLoadAwt(getBoolean(tweaksNode, "forceLoadAwt", false));
 		}
 		
 		Element debugNode = getChild(root, "debug");
@@ -435,8 +428,7 @@ public class XmlConfigurationParser
 			
 			Document doc = docBuilder.parse(file);
 			NodeList nodeList = doc.getElementsByTagName(rootName);
-			Element root = (Element)nodeList.item(0);
-			return root;
+			return (Element)nodeList.item(0);
 		}
 		catch (Exception e)
 		{
@@ -451,12 +443,9 @@ public class XmlConfigurationParser
 		for (int i=0; i<list.getLength(); i++)
 		{
 			Node n = list.item(i);
-			if (n.getNodeType() == Node.ELEMENT_NODE)
+			if (n.getNodeType() == Node.ELEMENT_NODE && n.getNodeName().equals(name))
 			{
-				if (n.getNodeName().equals(name))
-				{
-					return (Element)n;
-				}
+				return (Element)n;
 			}
 		}
 		
@@ -465,18 +454,15 @@ public class XmlConfigurationParser
 	
 	public static Element[] getChildren(Element parent, String name)
 	{
-		ArrayList<Element> result = new ArrayList<Element>();
+		List<Element> result = new ArrayList<>();
 		
 		NodeList list = parent.getChildNodes();
 		for (int i=0; i<list.getLength(); i++)
 		{
 			Node n = list.item(i);
-			if (n.getNodeType() == Node.ELEMENT_NODE)
+			if (n.getNodeType() == Node.ELEMENT_NODE && n.getNodeName().equals(name))
 			{
-				if (n.getNodeName().equals(name))
-				{
-					result.add( (Element)n );
-				}
+				result.add( (Element)n );
 			}
 		}
 		
@@ -498,7 +484,7 @@ public class XmlConfigurationParser
 
 		String elementString = element.getAttribute(attributeName);
 
-		if (elementString == null || elementString.length() == 0)
+		if (elementString.isEmpty())
 			return defaultValue;
 
 		return elementString.equalsIgnoreCase("true");
@@ -540,11 +526,6 @@ public class XmlConfigurationParser
 
 				if (radius > 0) {
 					return new CircularWorldSubset(origin, radius);
-
-//					CircularWorldSubsetFactory factory = new CircularWorldSubsetFactory();
-//					factory.setOrigin(origin);
-//					factory.setRadius(radius);
-//					return factory;
 				}
 			}
 		}

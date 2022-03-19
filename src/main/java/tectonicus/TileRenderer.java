@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
 import tectonicus.PlayerIconAssembler.WriteIconTask;
+import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
@@ -26,8 +27,8 @@ import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ChestFilter;
 import tectonicus.configuration.Configuration;
-import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.RenderStyle;
+import tectonicus.configuration.Dimension;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.PlayerFilter;
@@ -91,6 +92,7 @@ import java.util.concurrent.Executors;
 
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
+import static tectonicus.Version.VERSION_16;
 
 @Log4j2
 public class TileRenderer
@@ -271,6 +273,7 @@ public class TileRenderer
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
 			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, world.players(map.getDimension()), playerIconAssembler);
 			outputBeds(mapDir, map, world.players(null));
+			outputRespawnAnchors(mapDir, map, world.players(null));
 			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
@@ -310,7 +313,7 @@ public class TileRenderer
 				bounds = downsample(changedTiles, exportDir, layer, baseTilesDir, tileCache);
 			}
 			
-			outputIcons(map, world.getBlockTypeRegistry(), world.getTexturePack());			
+			outputIcons(map, world);
 			
 			// Output world stats
 			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
@@ -625,7 +628,7 @@ public class TileRenderer
 														y-Math.round((y-(tempY+1))/2),
 														coord.z * RawChunk.DEPTH + z);
 							
-							if (filter.passesFilter(coord, pos))
+							if (filter.passesFilter())
 							{
 								portals.add( new Portal(pos.x, pos.y, pos.z) );
 							}
@@ -679,7 +682,7 @@ public class TileRenderer
 									finalY,
 									coord.z * RawChunk.DEPTH + z);
 
-							if (filter.passesFilter(coord, pos))
+							if (filter.passesFilter())
 							{
 								portals.add( new Portal(pos.x, pos.y, pos.z) );
 							}
@@ -1113,6 +1116,10 @@ public class TileRenderer
 								outLine.append(templateStart);
 								outLine.append(map.getId()).append("/beds.js");
 								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/respawnAnchors.js");
+								outLine.append(templateEnd);
 								
 								outLine.append(templateStart);
 								outLine.append(map.getId()).append("/portals.js");
@@ -1225,6 +1232,10 @@ public class TileRenderer
 							else if (first.value.equals("bedsInitiallyVisible"))
 							{
 								outLine.append(args.areBedsInitiallyVisible());
+							}
+							else if (first.value.equals("respawnAnchorsInitiallyVisible"))
+							{
+								outLine.append(args.areRespawnAnchorsInitiallyVisible());
 							}
 							else if (first.value.equals("spawnInitiallyVisible"))
 							{
@@ -1396,6 +1407,7 @@ public class TileRenderer
 				writer.println("\t\tname: \""+m.getName()+"\",");
 				writer.println("\t\tplayers: "+m.getId()+"_playerData,");
 				writer.println("\t\tbeds: "+m.getId()+"_bedData,");
+				writer.println("\t\trespawnAnchors: "+m.getId()+"_respawnAnchorData,");
 				writer.println("\t\tsigns: "+m.getId()+"_signData,");
 				writer.println("\t\tportals: "+m.getId()+"_portalData,");
 				writer.println("\t\tviews: "+m.getId()+"_viewData,");
@@ -1454,58 +1466,45 @@ public class TileRenderer
 		
 		int numOutput = 0;
 		ExecutorService executor = Executors.newCachedThreadPool();
-		JsArrayWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsArrayWriter(playersFile, map.getId()+"_playerData");
+		try (JsArrayWriter jsWriter = new JsArrayWriter(playersFile, map.getId() + "_playerData")) {
 
 			PlayerFilter playerFilter = map.getPlayerFilter();
 			WorldSubset worldSubset = map.getWorldSubset();
-			for (Player player : players)
-			{
-				if (playerFilter.passesFilter(player))
-				{
+			for (Player player : players) {
+				if (playerFilter.passesFilter(player)) {
 					Vector3d position = player.getPosition();
-					if (worldSubset.containsBlock(position.x, position.z))
-					{
-						log.debug("\toutputting "+player.getName());
-						
+					if (worldSubset.containsBlock(position.x, position.z)) {
+						log.debug("\texporting {}", player.getName());
+
 						HashMap<String, String> args = new HashMap<>();
-						
+
 						Vector3d pos = player.getPosition();
 						args.put("name", "\"" + player.getName() + "\"");
-						
-						String posStr = "new WorldCoord("+pos.x+", "+pos.y+", "+pos.z+")";
+
+						String posStr = "new WorldCoord(" + pos.x + ", " + pos.y + ", " + pos.z + ")";
 						args.put("worldPos", posStr);
-						
-						args.put("health", ""+player.getHealth());
-						args.put("food", ""+player.getFood());
-						args.put("air", ""+player.getAir());
-						
-						args.put("xpLevel", ""+player.getXpLevel());
-						args.put("xpTotal", ""+player.getXpTotal());
-						
+
+						args.put("health", "" + player.getHealth());
+						args.put("food", "" + player.getFood());
+						args.put("air", "" + player.getAir());
+
+						args.put("xpLevel", "" + player.getXpLevel());
+						args.put("xpTotal", "" + player.getXpTotal());
+
 						jsWriter.write(args);
-						
-						File iconFile = new File(imagesDir, player.getName()+".png");
+
+						File iconFile = new File(imagesDir, player.getName() + ".png");
 						WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
 						executor.submit(task);
-						
+
 						numOutput++;
 					}
 				}
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
+		} finally {
 			executor.shutdown();
-			
-			if (jsWriter != null)
-				jsWriter.close();
 		}
 		log.debug("Exported {} players", numOutput);
 	}
@@ -1522,52 +1521,86 @@ public class TileRenderer
 		log.info("Exporting beds to {}", bedsFile.getAbsolutePath());
 		
 		int numOutput = 0;
-		
-		JsArrayWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsArrayWriter(bedsFile, map.getId()+"_bedData");
 
-			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the terra dimension for now
+		try (JsArrayWriter jsWriter = new JsArrayWriter(bedsFile, map.getId() + "_bedData")) {
+
+			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the overworld dimension
 			{
 				WorldSubset worldSubset = map.getWorldSubset();
 				PlayerFilter filter = map.getPlayerFilter();
-				for (Player player : players)
-				{
-					if (filter.passesFilter(player) && player.getSpawnPosition() != null)
-					{
+				for (Player player : players) {
+					if (filter.isShowBeds() && filter.passesFilter(player) && player.getSpawnDimension() == Dimension.OVERWORLD && player.getSpawnPosition() != null) {
 						HashMap<String, String> bedArgs = new HashMap<>();
-						
+
 						Vector3l spawn = player.getSpawnPosition();
-						
-						if (worldSubset.containsBlock(spawn.x, spawn.z))
-						{
-							log.debug("\toutputting "+player.getName()+"'s bed");
-							
+
+						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
+							log.debug("\texporting {}'s bed", player.getName());
+
 							bedArgs.put("playerName", "\"" + player.getName() + "\"");
-							
-							String posStr = "new WorldCoord("+spawn.x+", "+spawn.y+", "+spawn.z+")";
+
+							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
 							bedArgs.put("worldPos", posStr);
-						
-						
+
+
 							jsWriter.write(bedArgs);
 							numOutput++;
 						}
 					}
 				}
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (jsWriter != null)
-				jsWriter.close();
 		}
 		
 		log.debug("Exported {} beds", numOutput);
+	}
+
+	public void outputRespawnAnchors(File exportDir, tectonicus.configuration.Map map, List<Player> players)
+	{
+		File anchorsFile = new File(exportDir, "respawnAnchors.js");
+		try {
+			Files.deleteIfExists(anchorsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log.info("Exporting respawn anchors to {}", anchorsFile.getAbsolutePath());
+
+		int numOutput = 0;
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(anchorsFile, map.getId() + "_respawnAnchorData")) {
+
+			if (map.getDimension() == Dimension.NETHER) // Respawn anchors only work in the nether dimension
+			{
+				WorldSubset worldSubset = map.getWorldSubset();
+				PlayerFilter filter = map.getPlayerFilter();
+				for (Player player : players) {
+					if (filter.isShowRespawnAnchors() && filter.passesFilter(player) && player.getSpawnDimension() == Dimension.NETHER && player.getSpawnPosition() != null) {
+						HashMap<String, String> anchorArgs = new HashMap<>();
+
+						Vector3l spawn = player.getSpawnPosition();
+
+						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
+							log.debug("\texporting {}'s respawn anchor", player.getName());
+
+							anchorArgs.put("playerName", "\"" + player.getName() + "\"");
+
+							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
+							anchorArgs.put("worldPos", posStr);
+
+
+							jsWriter.write(anchorArgs);
+							numOutput++;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		log.debug("Exported {} respawn anchors", numOutput);
 	}
 	
 	private void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, String defaultSkin)
@@ -2036,31 +2069,25 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		JsArrayWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsArrayWriter(chestFile, map.getId()+"_chestData");
+		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getId() + "_chestData")) {
 
 			ArrayList<BlockEntity> removeList = new ArrayList<>();
-			for (BlockEntity entity : chestList)
-			{
+			for (BlockEntity entity : chestList) {
 				final int x = entity.getX();
 				final int y = entity.getY();
 				final int z = entity.getZ();
-				
-				for (BlockEntity newEntity : chestList)
-				{
+
+				for (BlockEntity newEntity : chestList) {
 					final int newX = newEntity.getX();
 					final int newY = newEntity.getY();
 					final int newZ = newEntity.getZ();
-					
+
 					if (newX == x + 1 && newY == y && newZ == z) //north south chest
 					{
 						entity.setX(newX);
 						if (!removeList.contains(entity))
 							removeList.add(newEntity);
-					}
-					else if (newZ == z + 1 && newY == y && newX == x) //east west chest
+					} else if (newZ == z + 1 && newY == y && newX == x) //east west chest
 					{
 						entity.setZ(z);
 						if (!removeList.contains(entity))
@@ -2068,55 +2095,51 @@ public class TileRenderer
 					}
 				}
 			}
-			
+
 			chestList.removeAll(removeList);
 
 			WorldSubset worldSubset = map.getWorldSubset();
-			for (BlockEntity entity : chestList)
-			{
+			for (BlockEntity entity : chestList) {
 				float worldX = entity.getX() + 0.5f;
 				float worldY = entity.getY();
 				float worldZ = entity.getZ() + 0.5f;
 				HashMap<String, String> chestArgs = new HashMap<>();
 
-				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
+				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 				chestArgs.put("worldPos", posStr);
-				
-				if (worldSubset.containsBlock(entity.getX(), entity.getZ()))
-				{
+
+				if (worldSubset.containsBlock(entity.getX(), entity.getZ())) {
 					jsWriter.write(chestArgs);
 				}
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (jsWriter != null)
-				jsWriter.close();
 		}
 	}
 	
-	private void outputIcons(tectonicus.configuration.Map map, BlockTypeRegistry registry, TexturePack texturePack)
+	private void outputIcons(tectonicus.configuration.Map map, World world)
 	{
-		try
-		{
+		BlockTypeRegistry registryOld = world.getBlockTypeRegistry();
+		BlockRegistry registry = world.getModelRegistry();
+		TexturePack texturePack = world.getTexturePack();
+		Version version = world.getWorldInfo().getVersion();
+
+		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			if (texturePack.getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
-				itemRenderer.renderBlockOld(new File(exportDir, "Images/Chest.png"), registry, texturePack, BlockIds.CHEST, 5);
+				itemRenderer.renderBlockOld(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, BlockIds.CHEST, 5);
 			} else {
 				Map<String, String> properties = new HashMap<>();
 				properties.put("facing", "south");
-				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registry, texturePack, Block.CHEST, new BlockProperties(properties));
+				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
-			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registry, texturePack);
+			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
-			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registry, texturePack);
-		}
-		catch (Exception e)
-		{
+			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
+			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
+				itemRenderer.renderBlockModel(new File(args.getOutputDir(), "Images/RespawnAnchor.png"), registry, texturePack, Block.RESPAWN_ANCHOR, "_4");
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

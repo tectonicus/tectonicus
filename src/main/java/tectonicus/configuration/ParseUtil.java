@@ -9,17 +9,17 @@
 
 package tectonicus.configuration;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
-
-import tectonicus.configuration.Configuration.Dimension;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+@UtilityClass
 public class ParseUtil
 {
 	public static Mode parseMode(String modeStr)
@@ -31,8 +31,6 @@ public class ParseUtil
 			mode = Mode.INTERACTIVE;
 		else if (modeStr.equals("gui"))
 			mode = Mode.GUI;
-		else if (modeStr.equals("cmd"))
-			mode = Mode.CMD;
 		else if (modeStr.equals("players"))
 			mode = Mode.PLAYERS;
 		else if (modeStr.equals("views"))
@@ -48,10 +46,8 @@ public class ParseUtil
 		renderStyleStr = renderStyleStr.toLowerCase();
 		
 		RenderStyle renderStyle = RenderStyle.REGULAR;
-		
-		if (renderStyleStr.equalsIgnoreCase("regular"))
-			renderStyle = RenderStyle.REGULAR;
-		else if (renderStyleStr.equalsIgnoreCase("cave"))
+
+		if (renderStyleStr.equalsIgnoreCase("cave"))
 			renderStyle = RenderStyle.CAVE;
 		else if (renderStyleStr.equalsIgnoreCase("exploredCaves"))
 			renderStyle = RenderStyle.EXPLORED_CAVES;
@@ -66,10 +62,8 @@ public class ParseUtil
 		dimensionStr = dimensionStr.toLowerCase();
 		
 		Dimension dimension = Dimension.OVERWORLD;
-		
-		if (dimensionStr.equalsIgnoreCase("terra"))
-			dimension = Dimension.OVERWORLD;
-		else if (dimensionStr.equalsIgnoreCase("nether"))
+
+		if (dimensionStr.equalsIgnoreCase("nether"))
 			dimension = Dimension.NETHER;
 		else if (dimensionStr.equalsIgnoreCase("ender") || dimensionStr.equals("end"))
 			dimension = Dimension.END;
@@ -82,10 +76,8 @@ public class ParseUtil
 		rasteriserStr = rasteriserStr.toLowerCase();
 		
 		RasteriserType rasteriser = RasteriserType.LWJGL;
-		
-		if (rasteriserStr.equals("lwjgl"))
-			rasteriser = RasteriserType.LWJGL;
-		else if (rasteriserStr.equals("processing"))
+
+		if (rasteriserStr.equals("processing"))
 			rasteriser = RasteriserType.PROCESSING;
 		
 		return rasteriser;
@@ -101,8 +93,6 @@ public class ParseUtil
 			imageFormat = ImageFormat.Jpg;
 		else if (imageStr.equalsIgnoreCase("gif"))
 			imageFormat = ImageFormat.Gif;
-		else if (imageStr.equalsIgnoreCase("png"))
-			imageFormat = ImageFormat.Png;
 		
 		return imageFormat;
 	}
@@ -225,27 +215,27 @@ public class ParseUtil
 	{
 		playerStr = playerStr.toLowerCase();
 		
-		PlayerFilterType playerFilterType = PlayerFilterType.All;
+		PlayerFilterType playerFilterType = PlayerFilterType.ALL;
 		
 		if (playerStr.equalsIgnoreCase("none"))
 		{
-			playerFilterType = PlayerFilterType.None;
+			playerFilterType = PlayerFilterType.NONE;
 		}
 		else if (playerStr.equalsIgnoreCase("ops"))
 		{
-			playerFilterType = PlayerFilterType.Ops;
+			playerFilterType = PlayerFilterType.OPS;
 		}
 		else if (playerStr.equalsIgnoreCase("all"))
 		{
-			playerFilterType = PlayerFilterType.All;
+			playerFilterType = PlayerFilterType.ALL;
 		}
 		else if (playerStr.equalsIgnoreCase("whitelist"))
 		{
-			playerFilterType = PlayerFilterType.Whitelist;
+			playerFilterType = PlayerFilterType.WHITELIST;
 		}
 		else if (playerStr.equalsIgnoreCase("blacklist"))
 		{
-			playerFilterType = PlayerFilterType.Blacklist;
+			playerFilterType = PlayerFilterType.BLACKLIST;
 		}
 		
 		return playerFilterType;
@@ -342,93 +332,13 @@ public class ParseUtil
 		
 		return 45;
 	}
-	
-	public static boolean parseIsVerbose(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
+
 	public static String parseSinglePlayerName(String name)
 	{
 		if (name == null)
 			return "";
 		
 		return name;
-	}
-	
-	public static boolean parseShowSpawn(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseShowPlayers(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseShowBeds(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseShowSigns(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseShowPortals(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseShowViews(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default;
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseEraseOutputDir(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseUseCache(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseUseOldColorPalette(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
 	}
 	
 	public static File parseOutputDir(String outputDirStr)
@@ -561,14 +471,6 @@ public class ParseUtil
 		return -1;
 	}
 	
-	public static boolean parseUseBiomeColours(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
 	public static String parseBackgroundColor (String string, Dimension dimension)
 	{
 		if (StringUtils.isEmpty(string))
@@ -580,46 +482,6 @@ public class ParseUtil
 		}
 		
 		return string;
-	}
-	
-	public static boolean parseExtractLwjglNatives(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseForceLoadAwt(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseForce32BitNatives(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseForce64BitNatives(String string)
-	{
-		if (string == null || string.length() == 0)
-			return false; // default
-		
-		return string.equalsIgnoreCase("true");
-	}
-	
-	public static boolean parseInitiallyVisible(String string)
-	{
-		if (string == null || string.length() == 0)
-			return true; // default
-		
-		return string.equalsIgnoreCase("true");
 	}
 	
 	public static int parseVersion(String str)

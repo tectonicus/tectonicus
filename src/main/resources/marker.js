@@ -7,6 +7,7 @@ var signsInitiallyVisible = {{signsInitiallyVisible}};
 var playersInitiallyVisible = {{playersInitiallyVisible}};
 var portalsInitiallyVisible = {{portalsInitiallyVisible}};
 var bedsInitiallyVisible = {{bedsInitiallyVisible}};
+var respawnAnchorsInitiallyVisible = {{respawnAnchorsInitiallyVisible}};
 var spawnInitiallyVisible = {{spawnInitiallyVisible}};
 var viewsInitiallyVisible = {{viewsInitiallyVisible}};
 

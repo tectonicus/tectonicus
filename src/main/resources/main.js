@@ -16,6 +16,7 @@ var viewToggleControl = null;
 var signToggleControl = null;
 var playerToggleControl = null;
 var bedToggleControl = null;
+var respawnAnchorToggleControl = null;
 var portalToggleControl = null;
 var spawnToggleControl = null;
 var chestToggleControl = null;
@@ -36,7 +37,7 @@ function main()
         getAttribution: function() {
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
-        initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, worldVectors, projection,
+        initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, worldVectors, projection,
             blockStats, worldStats, viewPosition) {
             this.mapId = mapId;
             this.layerId = layerId;
@@ -49,6 +50,7 @@ function main()
             this.views = views;
             this.portals = portals;
             this.beds = beds;
+            this.anchors = anchors;
             this.worldVectors = worldVectors;
             this.projection = projection;
             this.blockStats = blockStats;
@@ -67,7 +69,7 @@ function main()
 			let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
             let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition);
+                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition);
 
             if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
                 baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
@@ -106,6 +108,7 @@ function main()
     signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
     playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
     bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
+    respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
     portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
     spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
     chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, false);
@@ -130,6 +133,7 @@ viewMarkers = [];
 playerMarkers = [];
 portalMarkers = [];
 bedMarkers = [];
+respawnAnchorMarkers = [];
 chestMarkers = [];
 
 function onBaseLayerChange(e) {
@@ -169,6 +173,11 @@ function onBaseLayerChange(e) {
 		mymap.addControl(bedToggleControl);
 	}
 
+    respawnAnchorToggleControl.remove();
+	if (e.layer.anchors.length != 0) {
+		mymap.addControl(respawnAnchorToggleControl);
+	}
+
 	chestToggleControl.remove();
 	if (e.layer.chests.length != 0) {
 		mymap.addControl(chestToggleControl);
@@ -195,6 +204,7 @@ function onBaseLayerChange(e) {
 	refreshPlayerMarkers(e.layer, playersInitiallyVisible);
 	refreshPortalMarkers(e.layer, portalsInitiallyVisible);
 	refreshBedMarkers(e.layer, bedsInitiallyVisible);
+	refreshRespawnAnchorMarkers(e.layer, respawnAnchorsInitiallyVisible);
 	refreshChestMarkers(e.layer, false);
 
 	compassControl.remove();
@@ -248,6 +258,7 @@ function onProjectionChanged(e) {
 	activeBaseLayer.viewPosition.zoom = mymap.getZoom();
 }
 
+//TODO: refactor these refresh marker methods to use Leaflet LayerGroups
 function refreshSpawnMarker(layer, markersVisible) {
 	destroyMarkers(spawnMarkers);
 
@@ -409,7 +420,7 @@ function refreshBedMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = L.marker(point, { icon: icon }).bindPopup('<center>' + bed.playerName + "'s bed</center>");
+		let marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">' + bed.playerName + "'s bed</p>");
 
 		// Add marker to map if beds are initially visible
 		if (markersVisible) {
@@ -417,6 +428,35 @@ function refreshBedMarkers(layer, markersVisible) {
 		}
 
 		bedMarkers.push(marker);
+	}
+}
+
+function refreshRespawnAnchorMarkers(layer, markersVisible) {
+	destroyMarkers(respawnAnchorMarkers);
+
+	// Respawn anchor markers
+	for (i in layer.anchors) {
+		let anchor = layer.anchors[i];
+		let point = layer.projection.worldToMap(anchor.worldPos);
+
+		let icon = L.icon({
+			iconUrl: 'Images/RespawnAnchor.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
+		});
+
+		let marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">' + anchor.playerName + "'s respawn anchor</p>");
+
+		// Add marker to map if beds are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
+		respawnAnchorMarkers.push(marker);
 	}
 }
 

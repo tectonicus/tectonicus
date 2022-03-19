@@ -9,12 +9,12 @@
 
 package tectonicus;
 
-import java.io.File;
-
 import lombok.experimental.UtilityClass;
-import tectonicus.configuration.Configuration;
+import tectonicus.configuration.Dimension;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.Map;
+
+import java.io.File;
 
 @UtilityClass
 public class DirUtils
@@ -36,14 +36,14 @@ public class DirUtils
 		return new File(layerDir, "Zoom"+zoomLevel);
 	}
 
-	public static File getDimensionDir(File worldDir, Configuration.Dimension dimension) {
+	public static File getDimensionDir(File worldDir, Dimension dimension) {
 		File dimensionDir;
 
-		if (dimension == Configuration.Dimension.OVERWORLD) {
+		if (dimension == Dimension.OVERWORLD) {
 			dimensionDir = worldDir;
-		} else if (dimension == Configuration.Dimension.NETHER) {
+		} else if (dimension == Dimension.NETHER) {
 			dimensionDir = new File(worldDir, "DIM-1");
-		} else if (dimension == Configuration.Dimension.END) {
+		} else if (dimension == Dimension.END) {
 			dimensionDir = new File(worldDir, "DIM1");
 		} else {
 			dimensionDir = worldDir;

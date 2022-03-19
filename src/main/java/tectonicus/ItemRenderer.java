@@ -9,10 +9,12 @@
 
 package tectonicus;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.BlockModel;
 import tectonicus.blockTypes.BlockRegistry;
 import tectonicus.blockTypes.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
@@ -21,6 +23,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.Map;
 import tectonicus.configuration.NorthDirection;
+import tectonicus.rasteriser.MeshUtil;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -89,7 +92,7 @@ public class ItemRenderer
 	{
 		log.info("Generating portal image...");
 		
-		ItemContext context = new ItemContext(texturePack, registry);
+		ItemContext context = new ItemContext(texturePack, registry, null);
 		
 		Geometry geometry = new Geometry(rasteriser);
 		
@@ -156,29 +159,35 @@ public class ItemRenderer
 		renderItem(item, outFile, 4, getAngleRad(55), getAngleRad(35));
 	}
 
-	public void renderBlockOld(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
-	{
+	public void renderBlockOld(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockId(0, 0, 0, (byte) blockId);
 		rawChunk.setBlockData(0, 0, 0, (byte) blockData);
 		BlockType type = registry.find(blockId, blockData);
-		renderBlock(outFile, registry, texturePack, rawChunk, type);
+		ItemContext context = new ItemContext(texturePack, registry, null);
+		renderBlock(outFile, registry, context, rawChunk, type, null);
 	}
 
-	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception
-	{
+	public void renderBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, Block block, String modelVariant) throws Exception {
+		String blockModelName = block.getName().replace("minecraft:", "minecraft:block/") + modelVariant;
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockName(0, 0, 0, block.getName());
+		BlockModel model = registry.getModel(blockModelName);
+		ItemContext context = new ItemContext(texturePack, null, registry);
+		renderBlock(outFile, null, context, rawChunk, null, model);
+	}
+
+	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
 		String blockName = block.getName();
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		rawChunk.setBlockState(0, 0, 0, properties);
 		BlockType type = registry.find(blockName);
-		renderBlock(outFile, registry, texturePack, rawChunk, type);
+		ItemContext context = new ItemContext(texturePack, registry, null);
+		renderBlock(outFile, registry, context, rawChunk, type, null);
 	}
 
-	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, RawChunk rawChunk, BlockType type) throws Exception
-	{
-		ItemContext context = new ItemContext(texturePack, registry);
-
+	public void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model) throws Exception {
 		Geometry geometry = new Geometry(rasteriser);
 
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
@@ -187,9 +196,11 @@ public class ItemRenderer
 		if (type != null)
 		{
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
+		} else if (model != null) {
+			MeshUtil.addBlock(context, rawChunk, 0, 0, 0, model, geometry, 0, 0);
 		}
 
-		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.1f, 0), 1, 1, 1);
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.17f, 0), 1, 1, 1);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
 		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
@@ -199,7 +210,7 @@ public class ItemRenderer
 	{		
 		log.info("Generating sign icon...");
 		
-		ItemContext context = new ItemContext(texturePack, registry);
+		ItemContext context = new ItemContext(texturePack, registry, null);
 		
 		Geometry geometry = new Geometry(rasteriser);
 		
@@ -230,7 +241,7 @@ public class ItemRenderer
 	{
 		log.info("Generating bed icon...");
 		
-		ItemContext context = new ItemContext(texturePack, registry);
+		ItemContext context = new ItemContext(texturePack, registry, null);
 		
 		Geometry geometry = new Geometry(rasteriser);
 		
@@ -513,29 +524,18 @@ public class ItemRenderer
 		
 		return out;
 	}
-	
-	private static class ItemGeometry
-	{
-		private Geometry geometry;
-		private BoundingBox bounds;
-		
-		public ItemGeometry(Geometry g, BoundingBox b)
-		{
-			this.geometry = g;
-			this.bounds = b;
-		}
+
+	@RequiredArgsConstructor
+	private static class ItemGeometry {
+		private final Geometry geometry;
+		private final BoundingBox bounds;
 	}
-	
-	private class ItemContext implements BlockContext  //This implements BlockContext so that it can be passed in when rendering items
-	{
-		private TexturePack texturePack;
-		private BlockTypeRegistry registry;
-		
-		public ItemContext(TexturePack texturePack, BlockTypeRegistry registry)
-		{
-			this.texturePack = texturePack;
-			this.registry = registry;
-		}
+
+	@RequiredArgsConstructor
+	private static class ItemContext implements BlockContext { //This implements BlockContext so that it can be passed in when rendering items
+		private final TexturePack texturePack;
+		private final BlockTypeRegistry registry;
+		private final BlockRegistry blockRegistry;
 
 		@Override
 		public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z)
@@ -550,10 +550,10 @@ public class ItemRenderer
 		}
 
 		@Override
-		public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z) { return null; }
+		public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z) { return blockRegistry.getBlock(Block.AIR.getName()); }
 
 		@Override
-		public BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z) { return null; }
+		public BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z) { return blockRegistry.getBlock(Block.AIR.getName()); }
 
 		@Override
 		public BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z) { return null; }

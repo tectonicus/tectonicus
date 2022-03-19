@@ -21,8 +21,9 @@ import org.jnbt.IntTag;
 import org.jnbt.ListTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.ShortTag;
+import org.jnbt.StringTag;
 import org.jnbt.Tag;
-import tectonicus.configuration.Configuration.Dimension;
+import tectonicus.configuration.Dimension;
 import tectonicus.util.FileUtils;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
@@ -53,6 +54,7 @@ public class Player
 	private Vector3d position;
 	/** Caution - may be null if the player hasn't built a bed yet! */
 	private Vector3l spawnPosition;
+	private Dimension spawnDimension;
 	private float health; // 0-20
 	private int food; // 0-20
 	private int air; // 0-300
@@ -70,6 +72,7 @@ public class Player
 		log.debug("Loading raw player from {}", playerFile);
 		
 		dimension = Dimension.OVERWORLD;
+		spawnDimension = Dimension.OVERWORLD;
 		position = new Vector3d();
 		inventory = new ArrayList<>();
 		
@@ -154,6 +157,11 @@ public class Player
 		if (spawnXTag != null && spawnYTag != null && spawnZTag != null)
 		{
 			spawnPosition = new Vector3l(spawnXTag.getValue(), spawnYTag.getValue(), spawnZTag.getValue());
+		}
+
+		StringTag spawnDimensionTag = NbtUtil.getChild(root, "SpawnDimension", StringTag.class);
+		if (spawnDimensionTag != null) {
+			spawnDimension = Dimension.byId(spawnDimensionTag.getValue());
 		}
 
 		xpLevel = NbtUtil.getInt(root, "XpLevel", 0);

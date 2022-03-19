@@ -9,11 +9,10 @@
 
 package tectonicus.configuration;
 
+import tectonicus.world.subset.WorldSubset;
+
 import java.io.File;
 import java.util.List;
-
-import tectonicus.configuration.Configuration.Dimension;
-import tectonicus.world.subset.WorldSubset;
 
 public interface Map
 {

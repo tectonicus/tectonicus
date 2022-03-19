@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,7 +23,7 @@ class PlayerFilterTests
 	@Test
 	void testCreatePlayerFilter()
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.WHITELIST, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"), true, true);
 		assertThat(pf.toString(), containsString("whitelist.json"));
 	}
 	
@@ -38,7 +38,7 @@ class PlayerFilterTests
 	@Test
 	void passesFilterWithJsonWhitelist()
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.WHITELIST, Paths.get("src/test/resources/whitelist.json"), Paths.get("src/test/resources/Canned"), true, true);
 		boolean pass = pf.passesFilter(new Player("androidz", "", ""));
 		assertThat(pass, is(true));
 	}
@@ -46,7 +46,7 @@ class PlayerFilterTests
 	@Test
 	void passesFilterWithTxtWhitelist()
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("src/test/resources/whitelist.txt"), Paths.get("src/test/resources/Canned"));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.WHITELIST, Paths.get("src/test/resources/whitelist.txt"), Paths.get("src/test/resources/Canned"), true, true);
 		boolean pass = pf.passesFilter(new Player("androidz", "", ""));
 		assertThat(pass, is(true));
 	}
@@ -54,7 +54,7 @@ class PlayerFilterTests
 	@Test
 	void createPlayerFilterWithDefaultWhitelist()
 	{
-		PlayerFilter pf = new PlayerFilter(PlayerFilterType.Whitelist, Paths.get("."), Paths.get("src/test/resources/Canned"));
+		PlayerFilter pf = new PlayerFilter(PlayerFilterType.WHITELIST, Paths.get("."), Paths.get("src/test/resources/Canned"), true, true);
 		assertThat(pf.toString(), is("Whitelist: ."));
 		assertThat(pf.passesFilter(new Player("androidz", "", "")), is(true));
 	}

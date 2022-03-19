@@ -111,40 +111,29 @@ public class WorldStats
 			}
 		}
 
-		JsArrayWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsArrayWriter(statsFile, varNamePrefix+"_blockStats");
-			
+		try (JsArrayWriter jsWriter = new JsArrayWriter(statsFile, varNamePrefix + "_blockStats")) {
+
 			// Get the names and sort them so they're output in alphabetical order
-			List<String> names = new ArrayList<>( nameCounts.keySet() );
+			List<String> names = new ArrayList<>(nameCounts.keySet());
 			Collections.sort(names);
-			
-			for (String key : names)
-			{
+
+			for (String key : names) {
 				long count = nameCounts.get(key);
-				
+
 				Map<String, String> args = new HashMap<>();
-				
-				args.put("name", "\""+key+"\"");
-				
+
+				args.put("name", "\"" + key + "\"");
+
 				if (key.equals("Bed"))
 					count /= 2;
-				
+
 				String countStr = NumberFormat.getInstance().format(count);
-				args.put("count", "\""+countStr+"\"");
-			
+				args.put("count", "\"" + countStr + "\"");
+
 				jsWriter.write(args);
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (jsWriter != null)
-				jsWriter.close();
 		}
 		
 		log.info("Wrote {} block counts", nameCounts.size());

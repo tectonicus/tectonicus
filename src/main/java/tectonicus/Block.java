@@ -27,6 +27,7 @@ public enum Block {
 	NETHER_QUARTZ_ORE("minecraft:nether_quartz_ore"),
 	NETHERRACK("minecraft:netherrack"),
 	RAIL("minecraft:rail"),
+	RESPAWN_ANCHOR("minecraft:respawn_anchor"),
 	SOUL_SAND("minecraft:soul_sand"),
 	SOUL_SOIL("minecraft:soul_soil"),
 	STONE("minecraft:stone"),

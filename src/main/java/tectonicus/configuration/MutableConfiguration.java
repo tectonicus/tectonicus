@@ -97,6 +97,8 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private boolean portalsInitiallyVisible;
 	@Option(names = {"--bedsInitiallyVisible", "bedsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean bedsInitiallyVisible;
+	@Option(names = {"--respawnAnchorsInitiallyVisible", "respawnAnchorsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
+	private boolean respawnAnchorsInitiallyVisible;
 	@Option(names = {"--viewsInitiallyVisible", "viewsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean viewsInitiallyVisible;
 	@Option(names = {"--spawnInitiallyVisible", "spawnInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
@@ -195,6 +197,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\tsignsInitiallyVisible:"+areSignsInitiallyVisible());
 		log.debug("\tplayersInitiallyVisible:"+arePlayersInitiallyVisible());
 		log.debug("\tbedsInitiallyVisible:"+areBedsInitiallyVisible());
+		log.debug("\trespawnAnchorsInitiallyVisible:"+areRespawnAnchorsInitiallyVisible());
 		log.debug("\tspawnInitiallyVisible:"+isSpawnInitiallyVisible());
 		log.debug("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
 		log.debug("\teraseOutputDir:"+eraseOutputDir());
@@ -302,6 +305,12 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.bedsInitiallyVisible = visible;
 	}
 	public boolean areBedsInitiallyVisible() { return bedsInitiallyVisible; }
+
+	public void setRespawnAnchorsInitiallyVisible(final boolean visible)
+	{
+		this.respawnAnchorsInitiallyVisible = visible;
+	}
+	public boolean areRespawnAnchorsInitiallyVisible() { return respawnAnchorsInitiallyVisible; }
 
 	public void setSpawnInitiallyVisible(final boolean visible)
 	{
