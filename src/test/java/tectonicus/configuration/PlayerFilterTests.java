@@ -55,7 +55,7 @@ class PlayerFilterTests
 	void createPlayerFilterWithDefaultWhitelist()
 	{
 		PlayerFilter pf = new PlayerFilter(PlayerFilterType.WHITELIST, Paths.get("."), Paths.get("src/test/resources/Canned"), true, true);
-		assertThat(pf.toString(), is("Whitelist: ."));
+		assertThat(pf.toString(), is("WHITELIST: ."));
 		assertThat(pf.passesFilter(new Player("androidz", "", "")), is(true));
 	}
 }
