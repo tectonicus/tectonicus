@@ -27,7 +27,7 @@ public class WorldStats
 	private int numPortals;
 	private int numPlayers;
 	
-	private Map<IdDataPair, MutableLong> blockIdCounts;
+	private final Map<IdDataPair, MutableLong> blockIdCounts;
 	
 	public WorldStats()
 	{
@@ -65,11 +65,6 @@ public class WorldStats
 			blockIdCounts.put(key, new MutableLong(1L));
 	}
 	
-//	public Map<Integer, Long> getStats()
-//	{
-//		return new HashMap<Integer, Long>( blockIdCounts );
-//	}
-	
 	public int numChunks()
 	{
 		return numChunks;
@@ -85,8 +80,10 @@ public class WorldStats
 		// First merge with block id names (so that 'flowing lava' and 'stationary lava' becomes 'lava'
 		Map<String, Long> nameCounts = new HashMap<>();
 		Map<IdDataPair, Boolean> unknownBlockIds = new HashMap<>();
-		for (IdDataPair id : blockIdCounts.keySet())  //TODO: would using the entryset instead of keyset make this faster?
+		for (Map.Entry<IdDataPair, MutableLong> entry : blockIdCounts.entrySet())
 		{
+			IdDataPair id = entry.getKey();
+
 			// Find the name
 			BlockType type = registry.find(id.id, id.data);
 			if (type != null)
@@ -99,7 +96,7 @@ public class WorldStats
 				
 				// Get the existing count
 				long count = nameCounts.get(name);
-				count += blockIdCounts.get(id).toLong();
+				count += entry.getValue().toLong();
 				
 				// Update the count
 				nameCounts.put(name, count);
@@ -146,33 +143,22 @@ public class WorldStats
 		}
 	}
 	
-	public void outputWorldStats(File statsFile, String varNamePrefix)
-	{
+	public void outputWorldStats(File statsFile, String varNamePrefix) {
 		if (statsFile.exists())
 			statsFile.delete();
 		
 		log.debug("Writing world stats to {}", statsFile.getAbsolutePath());
-		
-		JsonWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsonWriter(statsFile);
-			jsWriter.startObject(varNamePrefix+"_worldStats");
-			
-			jsWriter.writeVariable("numChunks", ""+numChunks);
-			jsWriter.writeVariable("numPortals", ""+numPortals);
-			jsWriter.writeVariable("numPlayers", ""+numPlayers);
-			
+
+		try (JsonWriter jsWriter = new JsonWriter(statsFile)) {
+			jsWriter.startObject(varNamePrefix + "_worldStats");
+
+			jsWriter.writeVariable("numChunks", "" + numChunks);
+			jsWriter.writeVariable("numPortals", "" + numPortals);
+			jsWriter.writeVariable("numPlayers", "" + numPlayers);
+
 			jsWriter.endObject();
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (jsWriter != null)
-				jsWriter.close();
 		}
 		
 		log.info("Wrote world stats");

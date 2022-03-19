@@ -1288,16 +1288,12 @@ public class TileRenderer
 		final int surfaceAreaM = numChunks * RawChunk.WIDTH * RawChunk.DEPTH;
 		final DecimalFormat formatter = new DecimalFormat("####.#");
 		final String surfaceArea = formatter.format(surfaceAreaM / 1000.0f / 1000.0f);
-		
-		
-		JsonWriter json = null;
-		try
-		{
-			json = new JsonWriter(vectorsFile);
-			
-			json.startObject(varNamePrefix+"_worldVectors");
-			
-			// World name and size 
+
+
+		try (JsonWriter json = new JsonWriter(vectorsFile)) {
+			json.startObject(varNamePrefix + "_worldVectors");
+
+			// World name and size
 			json.writeVariable("worldName", levelDat.getWorldName());
 			json.writeVariable("worldSizeInBytes", levelDat.getSizeOnDisk());
 			json.writeVariable("numChunks", numChunks);
@@ -1309,11 +1305,10 @@ public class TileRenderer
 				// Spawn point
 				json.writeWorldCoord("spawnPosition", levelDat.getSpawnPosition());
 			}
-			
+
 			// Start view
-			
 			Vector3l startView = new Vector3l();
-			
+
 			if (map.getWorldSubset() instanceof CircularWorldSubset) {
 				CircularWorldSubset subset = (CircularWorldSubset) map.getWorldSubset();
 
@@ -1321,59 +1316,52 @@ public class TileRenderer
 				startView.y = 64;  //sea level
 				startView.z = subset.getOrigin().z;
 			} else {
-				startView=levelDat.getSpawnPosition();
+				startView = levelDat.getSpawnPosition();
 			}
-			
+
 			json.writeWorldCoord("startView", startView);
-						
+
 			Vector2f origin = new Vector2f();
 			origin.x = (worldVectors.origin.x / scale);
 			origin.y = (worldVectors.origin.y / scale);
 			json.writeMapsPoint("origin", origin);
-			
+
 			// Axes
 			Vector2f xAxis = new Vector2f(worldVectors.xAxis.x / scale, worldVectors.xAxis.y / scale);
 			json.writeMapsPoint("xAxis", xAxis);
-			
+
 			Vector2f yAxis = new Vector2f(worldVectors.yAxis.x / scale, worldVectors.yAxis.y / scale);
 			json.writeMapsPoint("yAxis", yAxis);
-			
+
 			Vector2f zAxis = new Vector2f(worldVectors.zAxis.x / scale, worldVectors.zAxis.y / scale);
 			json.writeMapsPoint("zAxis", zAxis);
-			
+
 			// Units
 			Vector2f mapXUnit = new Vector2f(worldVectors.mapXUnit.x * scale, worldVectors.mapXUnit.y * scale);
 			json.writeMapsPoint("mapXUnit", mapXUnit);
-			
+
 			Vector2f mapYUnit = new Vector2f(worldVectors.mapYUnit.x * scale, worldVectors.mapYUnit.y * scale);
 			json.writeMapsPoint("mapYUnit", mapYUnit);
-			
+
 			// Min and max bounds
 			final long mapXMin = bounds.min.x * tileWidth;
 			final long mapYMin = bounds.min.y * tileHeight;
-			
+
 			final long mapXMax = bounds.max.x * tileWidth + tileWidth;
 			final long mapYMax = bounds.max.y * tileHeight + tileHeight;
-			
+
 			final long mapWidth = (mapXMax - mapXMin);
 			final long mapHeight = (mapYMax - mapYMin);
-			
+
 			json.writeMapsPoint("mapMin", mapXMin, mapYMin);
-			
+
 			json.writeMapsPoint("mapSize", +mapWidth, mapHeight);
 
 			json.writeVariable("yOffset", worldVectors.yOffset);
 
 			json.endObject();
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (json != null)
-				json.close();
 		}
 	}
 	

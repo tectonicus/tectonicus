@@ -9,59 +9,56 @@
 
 package tectonicus;
 
+import tectonicus.util.Vector2f;
+import tectonicus.util.Vector3l;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.Stack;
 
-import tectonicus.util.Vector2f;
-import tectonicus.util.Vector3l;
-
-public class JsonWriter
+public class JsonWriter implements AutoCloseable
 {
 	private enum State
 	{
-		ObjectStart,
-		ObjectContinue,
-		ArrayStart,
-		ArrayContinue
+		OBJECT_START,
+		OBJECT_CONTINUE,
+		ARRAY_START,
+		ARRAY_CONTINUE
 	}
 	
-	private OutputStream out;
-	private PrintWriter writer;
+	private final OutputStream out;
+	private final PrintWriter writer;
 	
 	private int indent;
 	
-	private Stack<State> stateStack;
+	private final Stack<State> stateStack;
 	
-	public JsonWriter(File file) throws FileNotFoundException, IOException
+	public JsonWriter(File file) throws IOException
 	{
-		if (file.exists())
-			file.delete();
+		if (file.exists()) {
+			Files.delete(file.toPath());
+		}
 		
 		out = new FileOutputStream(file);
 		writer = new PrintWriter(out);
 		
-		stateStack = new Stack<State>();
-		stateStack.push(State.ObjectStart);
+		stateStack = new Stack<>();
+		stateStack.push(State.OBJECT_START);
 		
 		writer.println();
 	}
-	
-	public void close()
-	{
-		try
-		{
-			if (writer != null)
-				writer.close();
-		
-			if (out != null)
-				out.close();
-		}
-		catch (IOException e) {}
+
+	@Override
+	public void close() throws IOException {
+		if (writer != null)
+			writer.close();
+
+		if (out != null)
+			out.close();
 	}
 	
 	public void startObject(String name)
@@ -78,12 +75,12 @@ public class JsonWriter
 		{
 			// Start an embedded object
 			
-			if (stateStack.peek() == State.ObjectContinue)
+			if (stateStack.peek() == State.OBJECT_CONTINUE)
 			{
 				writer.println(",");
 				
 				stateStack.pop();
-				stateStack.push(State.ObjectContinue);
+				stateStack.push(State.OBJECT_CONTINUE);
 			}
 			
 			writer.println(indent()+name+": ");
@@ -92,7 +89,7 @@ public class JsonWriter
 		
 		indent++;
 		
-		stateStack.push(State.ObjectStart);
+		stateStack.push(State.OBJECT_START);
 	}
 	
 	public void endObject()
@@ -100,10 +97,10 @@ public class JsonWriter
 		stateStack.pop();
 		indent--;
 		
-		if (stateStack.peek() == State.ObjectStart)
+		if (stateStack.peek() == State.OBJECT_START)
 		{
 			stateStack.pop();
-			stateStack.push(State.ObjectContinue);
+			stateStack.push(State.OBJECT_CONTINUE);
 		}
 		
 		writer.println();
@@ -112,7 +109,7 @@ public class JsonWriter
 	
 	public void writeRawVariable(String varName, String varValue)
 	{
-		if (stateStack.size() > 1 && stateStack.peek() == State.ObjectContinue)
+		if (stateStack.size() > 1 && stateStack.peek() == State.OBJECT_CONTINUE)
 			writer.println(",");
 		else
 			writer.println();
@@ -128,7 +125,7 @@ public class JsonWriter
 		}
 		
 		stateStack.pop();
-		stateStack.push(State.ObjectContinue);
+		stateStack.push(State.OBJECT_CONTINUE);
 	}
 	
 	public void writeVariable(String varName, String varValue)
@@ -178,12 +175,12 @@ public class JsonWriter
 		{
 			// Start an embedded array
 			
-			if (stateStack.peek() == State.ObjectContinue)
+			if (stateStack.peek() == State.OBJECT_CONTINUE)
 			{
 				writer.println(indent()+",");
 				
 				stateStack.pop();
-				stateStack.push(State.ObjectContinue);
+				stateStack.push(State.OBJECT_CONTINUE);
 			}
 			
 			writer.println(indent()+arrayName+": ");
@@ -191,12 +188,12 @@ public class JsonWriter
 		writer.println(indent()+"[");
 		
 		indent++;
-		stateStack.push(State.ArrayStart);
+		stateStack.push(State.ARRAY_START);
 	}
 	
 	public void startArrayObject()
 	{
-		if (stateStack.peek() == State.ArrayContinue)
+		if (stateStack.peek() == State.ARRAY_CONTINUE)
 			writer.println(",");
 	//	else
 	//		writer.println();
@@ -204,8 +201,8 @@ public class JsonWriter
 		writer.println(indent()+"{");
 		
 		stateStack.pop();
-		stateStack.push(State.ArrayContinue);
-		stateStack.push(State.ObjectStart);
+		stateStack.push(State.ARRAY_CONTINUE);
+		stateStack.push(State.OBJECT_START);
 		
 		indent++;
 	}
