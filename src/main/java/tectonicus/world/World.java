@@ -259,7 +259,7 @@ public class World implements BlockContext
 		chests = new ArrayList<>();
 		
 		regionCache = new RegionCache(dimensionDir);
-		chunkLocator = new ChunkLocator(dimensionDir, biomeCache, regionCache);
+		chunkLocator = new ChunkLocator(biomeCache, regionCache);
 		
 		rawLoadedChunks = new RawCache(100);
 		geometryLoadedChunks = new GeometryCache(100);

@@ -11,6 +11,7 @@ package tectonicus.configuration;
 
 import lombok.Getter;
 import lombok.Setter;
+import tectonicus.util.Vector3l;
 import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.WorldSubset;
 
@@ -20,7 +21,7 @@ import java.util.List;
 
 public class MutableMap implements Map
 {
-	private String id;
+	private final String id;
 	private String name;
 	private File worldDir;
 	@Getter
@@ -51,6 +52,10 @@ public class MutableMap implements Map
 	
 	private NorthDirection northDirection;
 	private String compassRoseFile;
+
+	@Getter
+	@Setter
+	private Vector3l origin;
 	
 	public MutableMap(String id)
 	{
@@ -81,6 +86,8 @@ public class MutableMap implements Map
 		this.worldSubset = new FullWorldSubset();
 		
 		this.northDirection = NorthDirection.MinusX;
+
+		this.origin = new Vector3l(0, 0, 0);
 	}
 	
 	@Override

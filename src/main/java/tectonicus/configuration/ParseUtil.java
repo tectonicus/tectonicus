@@ -10,15 +10,18 @@
 package tectonicus.configuration;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
+import tectonicus.util.Vector3l;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Log4j2
 @UtilityClass
 public class ParseUtil
 {
@@ -515,5 +518,25 @@ public class ParseUtil
 		}
 		
 		return dir;
+	}
+
+	public static Vector3l parseOrigin(String originStr) {
+		Vector3l origin = null;
+
+		final int commaPos = originStr.indexOf(',');
+		if (commaPos != -1 && commaPos < originStr.length() - 1) {
+			String xStr = originStr.substring(0, commaPos).trim();
+			String zStr = originStr.substring(commaPos + 1).trim();
+
+			try {
+				final long x = Long.parseLong(xStr);
+				final long z = Long.parseLong(zStr);
+				origin = new Vector3l(x, 64, z);
+			} catch (NumberFormatException e) {
+				log.error("Failed to parse origin", e);
+			}
+		}
+
+		return origin;
 	}
 }

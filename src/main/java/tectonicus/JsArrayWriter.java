@@ -24,9 +24,7 @@ public class JsArrayWriter implements AutoCloseable {
 	private boolean hasWrittenEntry;
 
 	public JsArrayWriter(File file, String arrayName) throws IOException {
-		if (file.exists()) {
-			Files.delete(file.toPath());
-		}
+		Files.deleteIfExists(file.toPath());
 
 		out = new FileOutputStream(file);
 		writer = new PrintWriter(out);

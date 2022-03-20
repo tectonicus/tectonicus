@@ -1314,6 +1314,8 @@ public class TileRenderer
 				startView.x = subset.getOrigin().x;
 				startView.y = 64;  //sea level
 				startView.z = subset.getOrigin().z;
+			} else if (map.getOrigin() != null) {
+				startView = map.getOrigin();
 			} else {
 				startView = levelDat.getSpawnPosition();
 			}
@@ -1886,20 +1888,16 @@ public class TileRenderer
 	}
 	
 	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map) throws IOException {
-		log.info("Writing portals...");
+		log.info("Exporting portals...");
 
 		Files.deleteIfExists(portalFile.toPath());
 		
 		int numPortals = 0;
-		JsArrayWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsArrayWriter(portalFile, map.getId()+"_portalData");
+		try (JsArrayWriter jsWriter = new JsArrayWriter(portalFile, map.getId() + "_portalData")) {
 
 			ArrayList<Portal> portals = new ArrayList<>();
-			
-			if (portalPositions.hasNext())
-			{
+
+			if (portalPositions.hasNext()) {
 				long prevX;
 				long prevY;
 				long prevZ;
@@ -1913,21 +1911,17 @@ public class TileRenderer
 				prevX = portal.getX();
 				prevY = portal.getY();
 				prevZ = portal.getZ();
-				
-				while (portalPositions.hasNext())
-				{				
+
+				while (portalPositions.hasNext()) {
 					portalPositions.read(portal);
-					
+
 					//Find the horizontal center portal block location
-					if((portal.getX() == prevX && portal.getZ() == prevZ+1) || (portal.getX() == prevX+1 && portal.getZ() == prevZ))
-					{
+					if ((portal.getX() == prevX && portal.getZ() == prevZ + 1) || (portal.getX() == prevX + 1 && portal.getZ() == prevZ)) {
 						prevX = portal.getX();
 						prevY = portal.getY();
 						prevZ = portal.getZ();
-					}
-					else
-					{
-						portals.add(new Portal(prevX+(firstX-prevX)/2, prevY, prevZ+(firstZ-prevZ)/2));
+					} else {
+						portals.add(new Portal(prevX + (firstX - prevX) / 2, prevY, prevZ + (firstZ - prevZ) / 2));
 						numPortals++;
 						prevX = portal.getX();
 						prevY = portal.getY();
@@ -1936,38 +1930,29 @@ public class TileRenderer
 						firstZ = portal.getZ();
 					}
 				}
-				portals.add(new Portal(portal.getX()+((firstX-prevX)/2), portal.getY(), portal.getZ()+(firstZ-prevZ)/2));
+				portals.add(new Portal(portal.getX() + ((firstX - prevX) / 2), portal.getY(), portal.getZ() + (firstZ - prevZ) / 2));
 				numPortals++;
-			
+
 				WorldSubset worldSubset = map.getWorldSubset();
-				for (Portal p : portals)
-				{
+				for (Portal p : portals) {
 					final float worldX = p.getX();
 					final float worldY = p.getY();
 					final float worldZ = p.getZ();
-					
+
 					HashMap<String, String> portalArgs = new HashMap<>();
-					String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
+					String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 					portalArgs.put("worldPos", posStr);
-					
-					if (worldSubset.containsBlock(p.getX(), p.getZ()))
-					{
+
+					if (worldSubset.containsBlock(p.getX(), p.getZ())) {
 						jsWriter.write(portalArgs);
 					}
 				}
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		finally
-		{
-			if (jsWriter != null)
-				jsWriter.close();
-		}
 		
-		log.debug("Wrote {} portals", numPortals);
+		log.debug("Exported {} portals", numPortals);
 		return numPortals;
 	}
 	
@@ -1991,64 +1976,51 @@ public class TileRenderer
 	}
 	
 	private void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map) throws IOException {
-		log.info("Writing views...");
+		log.info("Exporting views...");
 		
 		Files.deleteIfExists(viewsFile.toPath());
-		
-		JsArrayWriter jsWriter = null;
-		try
-		{
-			jsWriter = new JsArrayWriter(viewsFile, map.getId()+"_viewData");
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(viewsFile, map.getId() + "_viewData")) {
 
 			WorldSubset worldSubset = map.getWorldSubset();
 			ImageFormat imageFormat = map.getViewConfig().getImageFormat();
 			Sign sign = new Sign();
-			while (views.hasNext())
-			{				
+			while (views.hasNext()) {
 				views.read(sign);
-				
+
 				HashMap<String, String> viewArgs = new HashMap<>();
-				
+
 				final float worldX = sign.getX() + 0.5f;
 				final float worldY = sign.getY();
-				final float worldZ = sign.getZ() + 0.5f;				
-				
-				String posStr = "new WorldCoord("+worldX+", "+worldY+", "+worldZ+")";
+				final float worldZ = sign.getZ() + 0.5f;
+
+				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 				viewArgs.put("worldPos", posStr);
-				
+
 				StringBuilder text = new StringBuilder();
-				for(int i=0; i<4; i++)
-				{
-					if (!sign.getText(i).startsWith("#"))
-					{
+				for (int i = 0; i < 4; i++) {
+					if (!sign.getText(i).startsWith("#")) {
 						text.append(sign.getText(i)).append(" ");
 					}
 				}
 
 				viewArgs.put("text", "\"" + text.toString().trim() + "\"");
-				
-				String filename = map.getId()+"/Views/View_"+sign.getX()+"_"+sign.getY()+"_"+sign.getZ()+"."+imageFormat.getExtension();
+
+				String filename = map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
 				viewArgs.put("imageFile", "\"" + filename + "\"");
 
 				if (worldSubset.containsBlock(sign.getX(), sign.getZ())) {
 					jsWriter.write(viewArgs);
 				}
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		finally
-		{
-			if (jsWriter != null)
-				jsWriter.close();
 		}
 	}
 	
 	private void outputChests(File chestFile, tectonicus.configuration.Map map, List<ContainerEntity> chestList)
 	{
-		log.info("Writing chests to {}", chestFile.getAbsolutePath());
+		log.info("Exporting chests to {}", chestFile.getAbsolutePath());
 
 		try {
 			Files.deleteIfExists(chestFile.toPath());

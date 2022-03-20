@@ -22,10 +22,8 @@ public class ChunkLocator
 	private final BiomeCache biomeCache;
 	private final RegionCache regionCache;
 	
-	public ChunkLocator(File worldDir, BiomeCache biomeCache, RegionCache regionCache)
+	public ChunkLocator(BiomeCache biomeCache, RegionCache regionCache)
 	{
-		if (worldDir == null)
-			throw new NullPointerException("World dir is null");
 		if (biomeCache == null)
 			throw new NullPointerException("Biome cache is null");
 		if (regionCache == null)

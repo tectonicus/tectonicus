@@ -37,11 +37,8 @@ public class JsonWriter implements AutoCloseable
 	
 	private final Stack<State> stateStack;
 	
-	public JsonWriter(File file) throws IOException
-	{
-		if (file.exists()) {
-			Files.delete(file.toPath());
-		}
+	public JsonWriter(File file) throws IOException {
+		Files.deleteIfExists(file.toPath());
 		
 		out = new FileOutputStream(file);
 		writer = new PrintWriter(out);

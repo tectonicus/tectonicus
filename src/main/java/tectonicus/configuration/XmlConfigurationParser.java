@@ -56,6 +56,7 @@ import static tectonicus.configuration.ParseUtil.parseNorthDirection;
 import static tectonicus.configuration.ParseUtil.parseNumDownsampleThreads;
 import static tectonicus.configuration.ParseUtil.parseNumSamples;
 import static tectonicus.configuration.ParseUtil.parseNumZoomLevels;
+import static tectonicus.configuration.ParseUtil.parseOrigin;
 import static tectonicus.configuration.ParseUtil.parseOutputDir;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterFile;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
@@ -194,6 +195,8 @@ public class XmlConfigurationParser
 			
 			final int elevationAngle = parseElevationAngle( getString(mapElement, "cameraElevation") );
 			map.setCameraElevationDeg(elevationAngle);
+
+			map.setOrigin(parseOrigin(getString(mapElement, "origin")));
 			
 			Element subsetNode = getChild(mapElement, "subset");
 			map.setWorldSubset( parseWorldSubset(subsetNode, map.getDimension(), map.getWorldDir().toPath()) );
@@ -514,20 +517,7 @@ public class XmlConfigurationParser
 
 				Vector3l origin = null;
 				if (circularNode.hasAttribute("origin")) {
-					String originStr = circularNode.getAttribute("origin");
-					final int commaPos = originStr.indexOf(',');
-					if (commaPos != -1 && commaPos < originStr.length() - 1) {
-						String xStr = originStr.substring(0, commaPos).trim();
-						String zStr = originStr.substring(commaPos + 1).trim();
-
-						try {
-							final long x = Long.parseLong(xStr);
-							final long z = Long.parseLong(zStr);
-							origin = new Vector3l(x, 64, z);
-						} catch (NumberFormatException e) {
-							log.error("Failed to parse subset origin", e);
-						}
-					}
+					origin = parseOrigin(circularNode.getAttribute("origin"));
 				} else if (dimension == Dimension.END) {
 					origin = new Vector3l(100, 49, 0); // Location of obsidian platform where the player spawns
 				} else {

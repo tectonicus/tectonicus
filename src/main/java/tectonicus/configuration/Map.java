@@ -9,6 +9,7 @@
 
 package tectonicus.configuration;
 
+import tectonicus.util.Vector3l;
 import tectonicus.world.subset.WorldSubset;
 
 import java.io.File;
@@ -52,4 +53,6 @@ public interface Map
 	
 	NorthDirection getNorthDirection();
 	File getCustomCompassRose();
+
+	Vector3l getOrigin();
 }
