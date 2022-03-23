@@ -37,10 +37,11 @@ function main()
         getAttribution: function() {
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
-        initialize: function(mapId, layerId, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, worldVectors, projection,
+        initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, worldVectors, projection,
             blockStats, worldStats, viewPosition) {
             this.mapId = mapId;
             this.layerId = layerId;
+            this.dimension = dimension;
             this.imageFormat = imageFormat;
             this.mapName = mapName;
             this.backgroundColor = backgroundColor;
@@ -68,7 +69,7 @@ function main()
 			// 'startPosition' stores view pos for a given layer, so we remember where we were when switching layers
 			let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
-            let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
+            let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
                 tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition);
 
             if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
@@ -144,7 +145,7 @@ function onBaseLayerChange(e) {
 	changeBackgroundColor(e.layer.backgroundColor);
 
     spawnToggleControl.remove();
-    if (e.layer.worldVectors.hasOwnProperty('spawnPosition')) {
+    if (e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER") {
         mymap.addControl(spawnToggleControl);
     }
 
@@ -198,7 +199,11 @@ function onBaseLayerChange(e) {
         theme: 'light',
     });
 
-	refreshSpawnMarker(e.layer, spawnInitiallyVisible);
+	if (e.layer.dimension === "NETHER") {
+        destroyMarkers(spawnMarkers);
+    } else {
+        refreshSpawnMarker(e.layer, spawnInitiallyVisible);
+    }
 	refreshSignMarkers(e.layer, signsInitiallyVisible);
 	refreshViewMarkers(e.layer, viewsInitiallyVisible);
 	refreshPlayerMarkers(e.layer, playersInitiallyVisible);

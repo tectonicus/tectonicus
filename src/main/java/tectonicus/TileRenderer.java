@@ -1405,7 +1405,7 @@ public class TileRenderer
 					
 					writer.println("\t\t\t\tid: \""+l.getId()+"\",");
 					writer.println("\t\t\t\tname: \""+l.getName()+"\",");
-					
+					writer.println("\t\t\t\tdimension: \"" + m.getDimension() + "\",");
 					writer.println("\t\t\t\tbackgroundColor: \""+l.getBackgroundColor()+"\",");
 					writer.println("\t\t\t\timageFormat: \""+l.getImageFormat().getExtension()+"\",");
 					writer.println("\t\t\t\tisPng: \""+l.getImageFormat().isPng()+"\"");
