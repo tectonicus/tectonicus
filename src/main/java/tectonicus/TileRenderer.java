@@ -308,9 +308,10 @@ public class TileRenderer
 				
 				// Render base tiles
 				renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
-				
+
 				// Create downsampled layers
-				bounds = downsample(changedTiles, exportDir, layer, baseTilesDir, tileCache);
+				bounds = downsample(visibleTiles, exportDir, layer, baseTilesDir, tileCache);
+				tileCache.closeTileCache();
 			}
 			
 			outputIcons(map, world);
@@ -783,8 +784,7 @@ public class TileRenderer
 		}
 
 		imageWriteQueue.waitUntilFinished();
-		tileCache.closeTileCache();
-		
+
 		log.info("\nBase tile render complete");
 	}
 
@@ -967,6 +967,10 @@ public class TileRenderer
 		final Date downsampleStart = new Date();
 		
 		int zoomLevel = args.getNumZoomLevels() - 1;
+
+		if (!tileCache.hasCreatedDownsampleCache()) {
+			tileCache.calculateDownsampledTileCoordinates(baseTiles, zoomLevel);
+		}
 		
 		File prevDir = baseDir;
 		HddTileList prevTiles = baseTiles;
@@ -977,23 +981,25 @@ public class TileRenderer
 
 			progressListener.onTaskStarted(Task.DOWNSAMPLING + " zoom level " + zoomLevel);
 			
-			HddTileList nextTiles = findNextZoomTiles(prevTiles, hddTileListFactory);
+			HddTileList nextTiles = tileCache.findTilesForDownsampling(hddTileListFactory, zoomLevel);
 			File nextDir = DirUtils.getZoomDir(exportDir, layer, zoomLevel);
-			if (!tileCache.isUsingExistingCache())
-			{
-				FileUtils.deleteDirectory(nextDir);
+			if (nextTiles.size() == 0) {
+				log.info("\tNo downsampling needed");
+			} else {
+				if (!tileCache.isUsingExistingCache()) {
+					FileUtils.deleteDirectory(nextDir);
+				}
+				if (!nextDir.exists()) {
+					final boolean mkOk = nextDir.mkdirs();
+					if (!mkOk)
+						throw new RuntimeException("Couldn't create dir:" + nextDir.getAbsolutePath());
+				}
+
+				log.debug("\tDownsampling {} tiles into {} tiles", prevTiles.size(), nextTiles.size());
+
+				Downsampler downsampler = new Downsampler(args.getNumDownsampleThreads(), changedFileList);
+				downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener, tileCache, zoomLevel);
 			}
-			if (!nextDir.exists())
-			{
-				final boolean mkOk = nextDir.mkdirs();
-				if (!mkOk)
-					throw new RuntimeException("Couldn't create dir:"+nextDir.getAbsolutePath());
-			}
-			
-			log.debug("\tDownsampling {} tiles into {} tiles", prevTiles.size(), nextTiles.size());
-			
-			Downsampler downsampler = new Downsampler(args.getNumDownsampleThreads(), changedFileList);
-			downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener);
 			
 			zoomLevel--;
 			prevDir = nextDir;
@@ -1018,22 +1024,6 @@ public class TileRenderer
 			this.max = max;
 		}
 	}
-	
-	private static HddTileList findNextZoomTiles(HddTileList baseTiles, HddTileListFactory factory) {
-		HddTileList result = factory.createList();
-		
-		for (TileCoord c : baseTiles)
-		{
-			final int x = (int)Math.floor(c.x / 2.0f);
-			final int y = (int)Math.floor(c.y / 2.0f);
-			result.add( new TileCoord(x, y) );
-		}
-		
-		return result;
-	}
-
-	
-	
 	
 	private void outputRenderStats(final String timeTaken)
 	{

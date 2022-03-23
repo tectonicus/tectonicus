@@ -31,8 +31,10 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Log4j2
 public class FileTileCache implements TileCache
@@ -52,6 +54,7 @@ public class FileTileCache implements TileCache
 
 	private final MVStore store;
 	private final MVMap<String, byte[]> hashCache;
+	private final MVMap<String, Boolean> downsampleCache;
 
 	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.Map map, Layer layer, String optionString, MessageDigest hashAlgorithm)
 	{
@@ -79,8 +82,9 @@ public class FileTileCache implements TileCache
 			CacheUtil.writeCacheFile(getMasterCacheFile(tileCacheDir), cacheString.getBytes());
 		}
 
-		store = MVStore.open(tileCacheDir + "/tileHashes.cache");
+		store = new MVStore.Builder().fileName(tileCacheDir + "/tileRender.cache").compressHigh().open();
 		hashCache = store.openMap("tileHashes");
+		downsampleCache = store.openMap("tileDownsample");
 
 		tileHashes = new HashMap<>();
 	}
@@ -88,6 +92,11 @@ public class FileTileCache implements TileCache
 	public boolean isUsingExistingCache()
 	{
 		return wasExistingCacheValid;
+	}
+
+	@Override
+	public boolean hasCreatedDownsampleCache() {
+		return downsampleCache.size() > 0;
 	}
 	
 	private static boolean isCacheValid(File cacheDir, byte[] expectedHash, MessageDigest hashAlgo)
@@ -185,10 +194,10 @@ public class FileTileCache implements TileCache
 			try
 			{
 				in = BlockRegistryParser.openStream(layer.getCustomBlockConfig());
-				
+
 				MessageDigest hashAlgo = MessageDigest.getInstance("sha1");
 				hashAlgo.reset();
-				
+
 				while (true)
 				{
 					byte[] buffer = new byte[1024 * 4];
@@ -197,14 +206,14 @@ public class FileTileCache implements TileCache
 						break;
 					hashAlgo.update(buffer, 0, bytesRead);
 				}
-				
+
 				byte[] result = hashAlgo.digest();
-				
+
 				configStr += "custom-blocks";
-				
+
 				for (byte b : result)
 					configStr += b;
-				
+
 				configStr += '\n';
 			}
 			catch (Exception e) {}
@@ -253,7 +262,7 @@ public class FileTileCache implements TileCache
 			if (imgFile.exists()) {
 				final byte[] cachedHash = hashCache.get("tile_"+coord.x+"_"+coord.y);
 
-				if (cachedHash != null){
+				if (cachedHash != null) {
 					cacheOk = CacheUtil.equal(cachedHash, newHash);
 				}
 			}
@@ -282,6 +291,40 @@ public class FileTileCache implements TileCache
 		
 		return result;
 	}
+
+	@Override
+	public void calculateDownsampledTileCoordinates(HddTileList baseTiles, int zoomLevel) {
+		Set<TileCoord> prevTiles = baseTiles.toSet();
+
+		while (zoomLevel >= 0) {
+			Set<TileCoord> nextTiles = new HashSet<>();
+			for (TileCoord c : prevTiles) {
+				final int x = (int) Math.floor(c.x / 2.0f);
+				final int y = (int) Math.floor(c.y / 2.0f);
+				nextTiles.add(new TileCoord(x, y));
+				downsampleCache.put("tile_" + x + "_" + y + "_zoom" + zoomLevel, false);
+			}
+
+			zoomLevel--;
+			prevTiles = nextTiles;
+		}
+	}
+
+	@Override
+	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel) {
+		HddTileList result = factory.createList();
+
+		for (Map.Entry<String, Boolean> entry : downsampleCache.entrySet()) {
+			String key = entry.getKey();
+			if (key.contains("zoom" + zoomLevel) && Boolean.TRUE.equals(!entry.getValue())) {
+				String[] keyStr = key.split("_");
+				TileCoord coord = new TileCoord(Integer.parseInt(keyStr[1]), Integer.parseInt(keyStr[2]));
+				result.add(coord);
+			}
+		}
+
+		return result;
+	}
 	
 	public void writeImageCache(TileCoord coord)
 	{
@@ -291,7 +334,12 @@ public class FileTileCache implements TileCache
 		if (hash == null)
 			throw new RuntimeException("No hash for tile coord "+coord);
 
-		hashCache.put("tile_"+coord.x+"_"+coord.y, hash);
+		hashCache.put("tile_" + coord.x + "_" + coord.y, hash);
+	}
+
+	@Override
+	public void updateTileDownsampleStatus(TileCoord coord, int zoomLevel) {
+		downsampleCache.put("tile_" + coord.x + "_" + coord.y + "_zoom" + zoomLevel, true);
 	}
 	
 	private byte[] calculateTileHash(World world, tectonicus.configuration.Map map, RegionHashStore regionHashStore, OrthoCamera camera, TileCoord tile, final int zoom, final int tileWidth, final int tileHeight)
@@ -335,7 +383,7 @@ public class FileTileCache implements TileCache
 	{
 		return new File(cacheDir, "tile_"+coord.x+"_"+coord.y+".cache");
 	}
-	
+
 	public static class ChunkSorter implements Comparator<ChunkCoord>
 	{
 		public static final ChunkSorter instance = new ChunkSorter();

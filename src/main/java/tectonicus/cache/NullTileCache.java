@@ -9,14 +9,14 @@
 
 package tectonicus.cache;
 
-import java.io.File;
-
 import tectonicus.TileCoord;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.Map;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.world.World;
+
+import java.io.File;
 
 public class NullTileCache implements TileCache
 {
@@ -31,6 +31,12 @@ public class NullTileCache implements TileCache
 	{
 		return false;
 	}
+
+	@Override
+	public boolean hasCreatedDownsampleCache()
+	{
+		return false;
+	}
 	
 	@Override
 	public HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles,
@@ -40,9 +46,24 @@ public class NullTileCache implements TileCache
 	}
 
 	@Override
+	public void calculateDownsampledTileCoordinates(HddTileList baseTiles, int zoomLevel) {
+
+	}
+
+	@Override
+	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel) {
+		return null;
+	}
+
+	@Override
 	public void writeImageCache(TileCoord coord)
 	{
 		
+	}
+
+	@Override
+	public void updateTileDownsampleStatus(TileCoord coord, int zoomLevel) {
+
 	}
 
 	@Override

@@ -9,6 +9,14 @@
 
 package tectonicus;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import tectonicus.cache.TileCache;
+import tectonicus.cache.swap.HddTileList;
+import tectonicus.configuration.ImageFormat;
+import tectonicus.configuration.Layer;
+
+import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -20,22 +28,12 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.imageio.ImageIO;
-
-import lombok.extern.log4j.Log4j2;
-import tectonicus.cache.swap.HddTileList;
-import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
-
 @Log4j2
-public class Downsampler
-{
-	private ChangeFile changedFileList;
+public class Downsampler {
+	private final ChangeFile changedFileList;
+	private final ThreadPoolExecutor executor;
 	
-	private ThreadPoolExecutor executor;
-	
-	public Downsampler(final int numThreads, ChangeFile changedFileList)
-	{
+	public Downsampler(final int numThreads, ChangeFile changedFileList) {
 		this.changedFileList = changedFileList;
 		
 		// 1 thread  = 1m 52s
@@ -45,20 +43,17 @@ public class Downsampler
 		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(64), new ResubmitHandler());
 	}
 	
-	public void downsample(File inputDir, File outputDir, HddTileList tiles, Layer layer, final int tileWidth, final int tileHeight, ProgressListener progressListener)
-	{
+	public void downsample(File inputDir, File outputDir, HddTileList tiles, Layer layer, final int tileWidth, final int tileHeight, ProgressListener progressListener, TileCache tileCache, int zoomLevel) {
 		int count = 0;
 		
-		Shared state = new Shared(inputDir, outputDir, layer.getImageFormat(), layer.getImageCompressionLevel(), layer.getBackgroundColorRGB(), tileWidth, tileHeight);
+		Shared state = new Shared(inputDir, outputDir, layer.getImageFormat(), layer.getImageCompressionLevel(), layer.getBackgroundColorRGB(), tileWidth, tileHeight, zoomLevel);
 		
-		for (TileCoord tile : tiles)
-		{
-			DownsampleTask task = new DownsampleTask(tile, state, changedFileList);
+		for (TileCoord tile : tiles) {
+			DownsampleTask task = new DownsampleTask(tile, state, changedFileList, tileCache);
 			executor.submit(task);
 			
 			count++;
-			if (count % 20 == 0)
-			{
+			if (count % 20 == 0) {
 				final int percentage = (int)Math.floor((count / (float)tiles.size()) * 100);
 				System.out.print("\t" + percentage + "%\r"); //prints a carriage return after line
 			}
@@ -67,76 +62,40 @@ public class Downsampler
 		
 		System.out.println("\t100%");
 		
-		try
-		{
+		try {
 			log.debug("\tFinalizing downsampling...");
 			executor.shutdown();
 			executor.awaitTermination(1, TimeUnit.DAYS);
-		}
-		catch (InterruptedException e)
-		{
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		
 		log.debug("\tDownsampling complete");
 	}
-	
-	private static BufferedImage getTile(File file)
-	{
-		try
-		{
-			BufferedImage img = ImageIO.read(file);
-			return img;
-		}
-		catch (Exception e)
-		{
-		//	e.printStackTrace();
-		}
-		return null;
-	}
-	
-	private static class Shared
-	{
+
+	@RequiredArgsConstructor
+	private static class Shared {
 		public final File inputDir;
 		public final File outputDir;
-		
-		public final int tileWidth;
-		public final int tileHeight;
-		
+
 		public final ImageFormat imageFormat;
 		public final float imageCompressionLevel;
 		public final Color backgroundColor;
-		
-		public Shared(File inputDir, File outputDir, ImageFormat format, float compressionLevel, Color backgroundColor, final int tileWidth, final int tileHeight)
-		{
-			this.inputDir = inputDir;
-			this.outputDir = outputDir;
-			
-			this.tileWidth = tileWidth;
-			this.tileHeight = tileHeight;
-			
-			this.imageFormat = format;
-			this.imageCompressionLevel = compressionLevel;
-			this.backgroundColor = backgroundColor;
-		}
+
+		public final int tileWidth;
+		public final int tileHeight;
+		public final int zoomLevel;
 	}
-	
-	private static class DownsampleTask implements Callable<Void>
-	{
+
+	@RequiredArgsConstructor
+	private static class DownsampleTask implements Callable<Void> {
 		private final TileCoord tile;
 		private final Shared state;
 		private final ChangeFile changedFileList;
-		
-		public DownsampleTask(TileCoord tile, Shared state, ChangeFile changedFileList)
-		{
-			this.tile = tile;
-			this.state = state;
-			this.changedFileList = changedFileList;
-		}
+		private final TileCache tileCache;
 		
 		@Override
-		public Void call() throws Exception
-		{
+		public Void call() throws Exception {
 			// Find the four input files
 			BufferedImage in00 = getTile( TileRenderer.getImageFile(state.inputDir, tile.x * 2, tile.y * 2, state.imageFormat) );
 			BufferedImage in10 = getTile( TileRenderer.getImageFile(state.inputDir, tile.x * 2 + 1, tile.y * 2, state.imageFormat) );
@@ -153,8 +112,7 @@ public class Downsampler
 			BufferedImage outImg = new BufferedImage(state.tileWidth, state.tileHeight, pixelFormat);
 			Graphics2D g = (Graphics2D)outImg.getGraphics();
 			
-			if (!hasAlpha)
-			{
+			if (!hasAlpha) {
 				g.setColor(state.backgroundColor);
 				g.fillRect(0, 0, state.tileWidth, state.tileHeight);
 			}
@@ -175,19 +133,26 @@ public class Downsampler
 			if (in11 != null)
 				g.drawImage(in11, halfWidth, halfHeight, halfWidth, halfHeight, null);
 			
-			try
-			{
+			try {
 				File outputFile = TileRenderer.getImageFile(state.outputDir, tile.x, tile.y, state.imageFormat);
 				
 				Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel);
 				
 				changedFileList.writeLine( outputFile.getAbsolutePath() );
-			}
-			catch (Exception e)
-			{
+				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel);
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			
+			return null;
+		}
+
+		private static BufferedImage getTile(File file) {
+			try {
+				return ImageIO.read(file);
+			} catch (Exception e) {
+				//	e.printStackTrace();
+			}
 			return null;
 		}
 	}

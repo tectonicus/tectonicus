@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,11 +9,13 @@
 
 package tectonicus.cache.swap;
 
-import java.io.File;
-import java.io.FileOutputStream;
-
 import tectonicus.TileCoord;
 import tectonicus.util.FileUtils;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 public class HddTileList implements Iterable<TileCoord>
 {
@@ -49,29 +51,17 @@ public class HddTileList implements Iterable<TileCoord>
 		if (!coordFile.exists())
 		{
 			coordFile.getParentFile().mkdirs();
-			
-			FileOutputStream fOut = null;
-			try
-			{
-				fOut = new FileOutputStream(coordFile);
-				
+
+			try (FileOutputStream fOut = new FileOutputStream(coordFile)) {
+
 				minTileX = Math.min(coord.x, minTileX);
 				maxTileX = Math.max(coord.x, maxTileX);
-				
+
 				minTileY = Math.min(coord.y, minTileY);
 				maxTileY = Math.max(coord.y, maxTileY);
-				
+
 				size++;
-			}
-			catch (Exception e) {}
-			finally
-			{
-				try
-				{
-					if (fOut != null)
-						fOut.close();
-				}
-				catch (Exception e) {}
+			} catch (Exception e) {
 			}
 		}
 	}
@@ -103,9 +93,7 @@ public class HddTileList implements Iterable<TileCoord>
 		final int yBucket = coord.y / 4;
 		File first = new File(baseDir, ""+xBucket);
 		File second = new File(first, ""+yBucket);
-		File path = new File(second, "t_"+coord.x+"_"+coord.y+".tile");
-		
-		return path;
+		return new File(second, "t_"+coord.x+"_"+coord.y+".tile");
 	}
 	
 	public static TileCoord fileToTileCoord(File file)
@@ -136,5 +124,15 @@ public class HddTileList implements Iterable<TileCoord>
 		}
 		
 		return null;
+	}
+
+	public Set<TileCoord> toSet() {
+		Set<TileCoord> tileCoords = new HashSet<>();
+
+		for (TileCoord c : this) {
+			tileCoords.add(c);
+		}
+
+		return tileCoords;
 	}
 }
