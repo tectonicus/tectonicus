@@ -49,6 +49,7 @@ import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.FileUtils;
+import tectonicus.util.ImageUtils;
 import tectonicus.util.JsObjectWriter;
 import tectonicus.util.TempArea;
 import tectonicus.util.Vector2f;
@@ -1655,10 +1656,10 @@ public class TileRenderer
 			BufferedImage halfHeart = texturePack.getIcon(61, 0, 9, 9);
 			BufferedImage fullHeart = texturePack.getIcon(52, 0, 9, 9);
 			
-			BufferedImage composedHalf = TexturePack.copy(emptyHeart);
+			BufferedImage composedHalf = ImageUtils.copy(emptyHeart);
 			composedHalf.getGraphics().drawImage(halfHeart, 0, 0, halfHeart.getWidth(), halfHeart.getHeight(), null);
 	
-			BufferedImage composedFull = TexturePack.copy(emptyHeart);
+			BufferedImage composedFull = ImageUtils.copy(emptyHeart);
 			composedFull.getGraphics().drawImage(fullHeart, 0, 0, fullHeart.getWidth(), fullHeart.getHeight(), null);
 			
 			writeImage(emptyHeart, 18, 18, new File(imagesDir, "EmptyHeart.png"));
@@ -1672,10 +1673,10 @@ public class TileRenderer
 			BufferedImage halfFood = texturePack.getIcon(61, 27, 9, 9);
 			BufferedImage fullFood = texturePack.getIcon(52, 27, 9, 9);
 			
-			BufferedImage composedHalfFood = TexturePack.copy(emptyFood);
+			BufferedImage composedHalfFood = ImageUtils.copy(emptyFood);
 			composedHalfFood.getGraphics().drawImage(halfFood, 0, 0, halfFood.getWidth(), halfFood.getHeight(), null);
 			
-			BufferedImage composedFullFood = TexturePack.copy(emptyFood);
+			BufferedImage composedFullFood = ImageUtils.copy(emptyFood);
 			composedFullFood.getGraphics().drawImage(fullFood, 0, 0, fullFood.getWidth(), fullFood.getHeight(), null);
 			
 			writeImage(emptyFood, 18, 18, new File(imagesDir, "EmptyFood.png"));

@@ -17,7 +17,6 @@ import tectonicus.raw.BlockProperties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
 public class BlockStateWrapper {
@@ -59,7 +58,7 @@ public class BlockStateWrapper {
 							}
 						}
 						if (addModel) {
-							models.add(getBlockStateModel(bsc.getModels()));
+							models.add(getRandomWeightedModel(bsc.getModels()));
 							break;
 						}
 					}
@@ -70,7 +69,7 @@ public class BlockStateWrapper {
 				String variantProperties = variant.getName();
 				if (variantProperties.equals(StringUtils.EMPTY) || properties.contains(variantProperties)
 						|| properties.containsAll(variant.getStates())) {
-					models.add(getBlockStateModel(variant.getModels()));
+					models.add(getRandomWeightedModel(variant.getModels()));
 					break;
 				}
 			}
@@ -92,12 +91,16 @@ public class BlockStateWrapper {
 		return models;
 	}
 
-	public static BlockStateModel getBlockStateModel(List<BlockStateModel> models) {
-		int size = models.size();
-		if (size > 1) {
-			return models.get(ThreadLocalRandom.current().nextInt(size));
-		} else {
-			return models.get(0);
+	//TODO: We need to do similar to whatever Minecraft does so that the same model is always chosen for specific block coordinates
+	public static BlockStateModel getRandomWeightedModel(List<BlockStateModel> models) {
+		int totalWeight = models.stream().mapToInt(BlockStateModel::getWeight).sum();
+
+		int idx = 0;
+		for (double r = Math.random() * totalWeight; idx < models.size() - 1; ++idx) {
+			r -= models.get(idx).getWeight();
+			if (r <= 0.0) break;
 		}
+
+		return models.get(idx);
 	}
 }

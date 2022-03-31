@@ -17,6 +17,28 @@ import java.awt.image.BufferedImage;
 @UtilityClass
 public class ImageUtils {
 
+	/** Makes a copy of the input image. Also converts to INT_ARGB so that we're always
+	 *  working in the same colour space.
+	 */
+	public static BufferedImage copy(BufferedImage in) {
+		if (in == null)
+			return null;
+
+		BufferedImage img = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		copy(img, in, 0, 0);
+
+		return img;
+	}
+
+	public static void copy(BufferedImage dest, BufferedImage src, int destX, int destY) {
+		for (int x=0; x<src.getWidth(); x++) {
+			for (int y=0; y<src.getHeight(); y++) {
+				final int rgb = src.getRGB(x, y);
+				dest.setRGB(destX + x, destY + y, rgb);
+			}
+		}
+	}
+
 	public BufferedImage convertSimpleTransparencyToARGB(BufferedImage image, Color transparentColor) {
 		BufferedImage newImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		for (int i = 0; i < image.getHeight(); i++) {

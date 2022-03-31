@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static tectonicus.blockTypes.BlockStateWrapper.getBlockStateModel;
+import static tectonicus.blockTypes.BlockStateWrapper.getRandomWeightedModel;
 
 
 @Log4j2
@@ -105,7 +105,7 @@ public class BlockRegistry
 		return blockStates.get(blockName);
 	}
 	public BlockStateModel getSingleVariantModel(String blockName) {
-		return getBlockStateModel(singleVariantBlocks.get(blockName));
+		return getRandomWeightedModel(singleVariantBlocks.get(blockName));
 	}
 	public BlockModel getModel(String model) { return blockModels.get(model); }
 	public boolean containsSingleVariantBlock(String blockName) {

@@ -63,6 +63,7 @@ import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
 import static tectonicus.Version.VERSION_UNKNOWN;
+import static tectonicus.util.ImageUtils.copy;
 
 @Log4j2
 public class TexturePack
@@ -804,27 +805,6 @@ public class TexturePack
 	{
 		return font;
 	}
-	
-	/** Makes a copy of the input image. Also converts to INT_ARGB so that we're always
-	 *  working in the same colour space.
-	 */
-	public static BufferedImage copy(BufferedImage in)
-	{
-		if (in == null)
-			return null;
-		
-		BufferedImage img = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		
-		for (int x=0; x<in.getWidth(); x++)
-		{
-			for (int y=0; y<in.getHeight(); y++)
-			{
-				img.setRGB(x, y, in.getRGB(x, y));
-			}
-		}
-		
-		return img;		
-	}	
 	
 	private Point iconVirtualToActual(final int virtualX, final int virtualY)
 	{

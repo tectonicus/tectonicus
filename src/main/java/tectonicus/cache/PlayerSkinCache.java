@@ -9,6 +9,18 @@
 
 package tectonicus.cache;
 
+import lombok.extern.log4j.Log4j2;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import tectonicus.configuration.Configuration;
+import tectonicus.raw.Player;
+import tectonicus.util.FileUtils;
+import tectonicus.util.ImageUtils;
+
+import javax.imageio.ImageIO;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -19,20 +31,6 @@ import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.imageio.ImageIO;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import lombok.extern.log4j.Log4j2;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import tectonicus.configuration.Configuration;
-import tectonicus.raw.Player;
-import tectonicus.texture.TexturePack;
-import tectonicus.util.FileUtils;
 
 @Log4j2
 public class PlayerSkinCache
@@ -218,7 +216,7 @@ public class PlayerSkinCache
 		
 		skinCache.put(player.getUUID(), newEntry);
 		
-		return TexturePack.copy(newSkin);
+		return ImageUtils.copy(newSkin);
 	}
 	
 	private BufferedImage fetchSkinFromNetwork(String skinURL)

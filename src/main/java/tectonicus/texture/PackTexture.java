@@ -22,6 +22,8 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.rasteriser.TextureFilter;
 
+import static tectonicus.util.ImageUtils.copy;
+
 public class PackTexture
 {
 	private final Rasteriser rasteriser;
@@ -227,17 +229,5 @@ public class PackTexture
 		}
 		
 		return dest;
-	}
-	
-	private static void copy(BufferedImage dest, BufferedImage src, int destX, int destY)
-	{
-		for (int x=0; x<src.getWidth(); x++)
-		{
-			for (int y=0; y<src.getHeight(); y++)
-			{
-				final int rgb = src.getRGB(x, y);
-				dest.setRGB(destX + x, destY + y, rgb);
-			}
-		}
 	}
 }

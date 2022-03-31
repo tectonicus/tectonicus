@@ -93,6 +93,7 @@ public class BlockModel
 			Vector3f toVector = new Vector3f(to.get(0).floatValue(), to.get(1).floatValue(), to.get(2).floatValue());
 
 			//Test if not full-block
+			//TODO: valid values are between -16 and 32, does this need to change?
 			if (fromVector.x() > 0 && fromVector.x() < 16 || fromVector.y() > 0 && fromVector.y() < 16 || fromVector.z() > 0 && fromVector.z() < 16
 					|| toVector.x() > 0 && toVector.x() < 16 || toVector.y() > 0 && toVector.y() < 16 || toVector.z() > 0 && toVector.z() < 16) {
 				blockModel.setFullBlock(false);
