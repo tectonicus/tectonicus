@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -67,8 +67,8 @@ public class PaintingNew implements BlockType
 			String motive = entity.getMotive().replace("minecraft:", "").toLowerCase();
 			SubTexture painting = world.getTexturePack().findTexture(null, motive);
 			SubTexture backing = world.getTexturePack().findTexture(null, "back");
-			Mesh mesh = geometry.getMesh(painting.texture, Geometry.MeshType.Solid);
-			Mesh backMesh = geometry.getMesh(backing.texture, Geometry.MeshType.Solid);
+			Mesh mesh = geometry.getMesh(painting.texture, Geometry.MeshType.AlphaTest);
+			Mesh backMesh = geometry.getMesh(backing.texture, Geometry.MeshType.AlphaTest);
 
 			int tempX = entity.getLocalX();
 			int tempY = entity.getLocalY();

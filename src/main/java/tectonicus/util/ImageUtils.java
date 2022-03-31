@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,28 +11,55 @@ package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 @UtilityClass
 public class ImageUtils {
 
-	public boolean hasAlphaChannel(BufferedImage image) {
-		return image.getColorModel().hasAlpha();
-	}
-
-	public boolean containsTransparency(BufferedImage image){
+	public BufferedImage convertSimpleTransparencyToARGB(BufferedImage image, Color transparentColor) {
+		BufferedImage newImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		for (int i = 0; i < image.getHeight(); i++) {
 			for (int j = 0; j < image.getWidth(); j++) {
-				if (isTransparent(image, j, i)){
-					return true;
+				int pixel = image.getRGB(j, i);
+				if (pixel == transparentColor.getRGB()){
+					newImg.setRGB(j, i, 0);
+				} else {
+					newImg.setRGB(j, i, pixel);
 				}
 			}
 		}
-		return false;
+
+		return newImg;
+	}
+
+	public Opacity testOpacity(BufferedImage image){
+		for (int i = 0; i < image.getHeight(); i++) {
+			for (int j = 0; j < image.getWidth(); j++) {
+				if (isTranslucent(image, j, i)) {
+					return Opacity.TRANSLUCENT;
+				} else if (isTransparent(image, j, i)) {
+					return Opacity.TRANSPARENT;
+				}
+			}
+		}
+		return Opacity.OPAQUE;
+	}
+
+	private boolean isTranslucent(BufferedImage image, int x, int y ) {
+		int pixel = image.getRGB(x, y);
+		int alpha = (pixel & 0xff000000) >>> 24;
+		return alpha > 0 && alpha < 255;
 	}
 
 	private boolean isTransparent(BufferedImage image, int x, int y ) {
 		int pixel = image.getRGB(x, y);
-		return (pixel>>24) == 0x00;
+		return (pixel & 0xff000000) >>> 24 == 0;
+	}
+
+	public enum Opacity {
+		OPAQUE,
+		TRANSPARENT,
+		TRANSLUCENT
 	}
 }

@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.Setter;
 import tectonicus.Version;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
@@ -29,24 +30,36 @@ public class PackTexture
 
 	@Getter
 	private BufferedImage image;
+
+	@Getter
+	@Setter
+	private boolean isTranslucent;
+	@Getter
+	@Setter
+	private boolean isTransparent;
 	
 	private Texture fullTexture;
 	private Texture tileTexture;
 	
 	private Map<TextureRequest, SubTexture> subTextures;
 	
-	public PackTexture(Rasteriser rasteriser, String path, BufferedImage image)
-	{
+	public PackTexture(Rasteriser rasteriser, String path, BufferedImage image) {
+		this(rasteriser, path, image, false, false);
+	}
+
+	public PackTexture(Rasteriser rasteriser, String path, BufferedImage image, boolean isTransparent, boolean isTranslucent) {
 		assert (rasteriser != null);
-		
+
 		this.rasteriser = rasteriser;
-		
+
 		this.path = path;
-		
+
 		this.image = image;
-		
+		this.isTransparent = isTransparent;
+		this.isTranslucent = isTranslucent;
+
 		subTextures = new HashMap<>();
-		
+
 		fullTexture = rasteriser.createTexture(image, TextureFilter.NEAREST);
 	}
 

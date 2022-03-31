@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import tectonicus.BlockContext;
 import tectonicus.ChunkCoord;
 import tectonicus.RegionCoord;
@@ -23,16 +22,17 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.PackTexture;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
-import tectonicus.util.ImageUtils;
 import tectonicus.util.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Log4j2
 @Getter
@@ -48,6 +48,8 @@ public class BlockModel
 	@Setter
 	private boolean isFullBlock = true;
 
+	private final Set<String> missingTextures = new HashSet<>();
+
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
 	private static final String ROTATION_FIELD = "rotation";
@@ -58,6 +60,7 @@ public class BlockModel
 		this.ambientlyOccluded = ambientlyOccluded;
 		if (elementsNode != null) {
 			this.elements = deserializeBlockElements(combineMap, elementsNode, texturePack, this);
+			missingTextures.forEach(s -> log.warn("Missing texture: {} for model: {}", s, name));
 		} else {
 			this.isFullBlock = false;  //This assumes that any block with no elements is not a full block, this isn't correct (shulker box) but works fine
 			this.elements = Collections.emptyList();
@@ -72,6 +75,10 @@ public class BlockModel
 			ChunkCoord cc = rawChunk.getChunkCoord();
 			log.error("Error adding block: {} in {} in {}", this.name, cc, RegionCoord.getFilenameFromChunkCoord(cc), e);
 		}
+	}
+
+	public void addMissingTexture(String missingTexture) {
+		missingTextures.add(missingTexture);
 	}
 
 	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap, JsonNode elements, TexturePack texturePack, BlockModel blockModel)
@@ -202,7 +209,6 @@ public class BlockModel
 				if(face.has(ROTATION_FIELD))
 					rotation = face.get(ROTATION_FIELD).asInt();
 
-				// TODO: Need to test more texture packs
 				final float texel = 1.0f/16.0f;
 				SubTexture subTexture = new SubTexture(null, u0*texel, v0*texel, u1*texel, v1*texel);
 
@@ -212,42 +218,41 @@ public class BlockModel
 				{
 					String texture = tex.deleteCharAt(0).toString();
 
-					//TODO: Can we use texture request object to do this instead of duplicating code?
-					String texturePath = combineMap.get(texture);
-					if (texturePath.contains("minecraft:block/")) { // 1.16+
-						texturePath = texturePath.replace("minecraft:block/", "") + ".png";
-					} else if (texturePath.contains("block/")) { // 1.13 - 1.15
-						texturePath = StringUtils.removeStart(combineMap.get(texture), "block/") + ".png";
-					} else { // 1.8 - 1.12
-						texturePath = StringUtils.removeStart(combineMap.get(texture), "blocks/") + ".png";
+					//TODO: For mod support we may need to keep this namespace
+					String texturePath = combineMap.get(texture) + ".png";
+					if (texturePath.contains("minecraft:")) {
+						texturePath = texturePath.replace("minecraft:", "");
 					}
 
-					SubTexture te = texturePack.findTexture(texturePath);
-					PackTexture pt = texturePack.getTexture(texturePack.getTexturePathPrefix("") + texturePath);
+					SubTexture te = texturePack.getSubTexture(texturePath);
+					PackTexture pt;
+					if (te == null) {
+						//TODO: add purple black texture for missing textures
+						te = texturePack.findTexture("red_mushroom_block.png");
+						pt = texturePack.getTexture("assets/minecraft/textures/block/red_mushroom_block.png");
+						blockModel.addMissingTexture(texturePath);
+					} else {
+						pt = texturePack.getTexture("assets/minecraft/textures/" + texturePath);
+					}
 
-					//These are hard-coded in as I'm not sure how to programmatically tell the difference between these and solid blocks
-					if (modelName.contains("stained_glass") || modelName.contains("block/ice")
-							|| modelName.contains("nether_portal") || modelName.contains("slime_block")
-							|| modelName.contains("tinted_glass")) {
+					if (pt.isTranslucent()) {
 						blockModel.setSolid(false);
 						blockModel.setTranslucent(true);
-					} else if (blockModel.isSolid() && ImageUtils.containsTransparency(pt.getImage())) {
+					} else if (pt.isTransparent()) {
 						blockModel.setSolid(false);
-						log.trace(key + ": " + texturePath + " contains transparency");
 					}
 
 					final float texHeight = te.texture.getHeight();
 					final float texWidth = te.texture.getWidth();
 					final int numTiles = te.texture.getHeight()/te.texture.getWidth();
 
-					u0 /= texWidth;
-					v0 = (v0 / texWidth) / numTiles;
-					u1 /= texWidth;
-					v1 = (v1 / texWidth) / numTiles;
+					//Get first frame of animated texture
+					u0 /= 16;
+					v0 = (v0 / 16) / numTiles;
+					u1 /= 16;
+					v1 = (v1 / 16) / numTiles;
 
-					if(face.has("uv"))
-					{
-						//System.out.println("Before: u0="+u0+" v0="+v0+" u1="+u1+" v1="+v1);
+					if(face.has("uv")) {
 						JsonNode uv = face.get("uv");
 						u0 = uv.get(0).floatValue()/16.0f;
 						v0 = (uv.get(1).floatValue()/16.0f) / numTiles;
@@ -255,28 +260,17 @@ public class BlockModel
 						v1 = (uv.get(3).floatValue()/16.0f) / numTiles;
 					}
 
-					//System.out.println(texWidth + " x " + texHeight);
-					int frame = 1;
-					if(numTiles > 1)
-					{
-						Random rand = new Random();
-						frame = rand.nextInt(numTiles)+1;
+					int frame = 0;
+					if(numTiles > 1) {
+						frame = ThreadLocalRandom.current().nextInt(numTiles);
 					}
 
-					subTexture = new SubTexture(te.texture, u0, v0+(float)(frame-1)*(texWidth/texHeight), u1, v1+(float)(frame-1)*(texWidth/texHeight));
-					//subTexture = new SubTexture(test, u0, v0, u1, v1);
-					//System.out.println("u0="+subTexture.u0+" v0="+subTexture.v0+" u1="+subTexture.u1+" v1="+subTexture.v1);
+					subTexture = new SubTexture(te.texture, u0, v0 + frame * (texWidth / texHeight), u1, v1 + frame * (texWidth / texHeight));
 				}
 
-				boolean cullFace = false;
-				if(face.has("cullface")) {
-					cullFace = true;
-				}
+				boolean cullFace = face.has("cullface");
 
-				boolean tintIndex = false;
-				if(face.has("tintindex") && !modelName.contains("powder_snow_cauldron") && !modelName.contains("lava_cauldron")) {  //Hack here to not tint lava or snow cauldrons
-					tintIndex = true;
-				}
+				boolean tintIndex = face.has("tintindex") && !modelName.contains("powder_snow_cauldron") && !modelName.contains("lava_cauldron"); //Hack to not tint lava or snow cauldrons
 
 				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex);
 				elementFaces.put(key, ef);

@@ -12,10 +12,12 @@ package tectonicus.blockTypes;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 import tectonicus.BlockContext;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 
+@Log4j2
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockStateModel {
@@ -29,6 +31,10 @@ public class BlockStateModel {
 	private boolean uvlock = false;
 
 	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry) {
-		blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation);  //TODO: pass in weight and uvlock
+		if(blockModel != null) {
+			blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation);  //TODO: pass in weight and uvlock
+		} else {
+			log.warn("No block model found for model: {}", model);
+		}
 	}
 }

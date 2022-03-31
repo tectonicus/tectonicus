@@ -9,6 +9,7 @@
 
 package tectonicus.texture;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
@@ -23,9 +24,12 @@ import java.util.List;
 @Log4j2
 public class ZipStack
 {
-	private List<File> modJars;
-	private String baseFileName;
-	private FileSystem base, override;
+	private final List<File> modJars;
+	private final String baseFileName;
+	private final FileSystem base;
+	@Getter
+	private String overrideFileName;
+	private FileSystem override;
 	
 	public ZipStack(File baseFile, File overrideFile, List<File> modJars) throws IOException
 	{
@@ -34,6 +38,7 @@ public class ZipStack
 		
 		if (overrideFile != null)
 		{
+			overrideFileName = overrideFile.getPath();
 			if (overrideFile.exists())
 			{
 				override = FileSystems.newFileSystem(Paths.get(overrideFile.getPath()), null);
@@ -44,10 +49,14 @@ public class ZipStack
 		
 		this.modJars = modJars;
 	}
-	
-	public InputStream getStream(String path) throws IOException
+
+	public InputStream getStream(String path) throws IOException {
+		return getStream(path, true);
+	}
+
+	public InputStream getStream(String path, boolean minecraftJarLoaded) throws IOException
 	{
-		if (hasFile(path, override))
+		if (hasFile(path, override) && minecraftJarLoaded)
 		{
 			return Files.newInputStream(override.getPath(path));
 		}

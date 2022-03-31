@@ -78,10 +78,24 @@ public class BlockStateWrapper {
 		return models;
 	}
 
+	public List<BlockStateModel> getAllModels() {
+		List<BlockStateModel> models = new ArrayList<>();
+		if (!cases.isEmpty()) {
+			for (BlockStateCase bsc : cases) {
+				models.addAll(bsc.getModels());
+			}
+		} else {
+			for (BlockVariant variant : variants) {
+				models.addAll(variant.getModels());
+			}
+		}
+		return models;
+	}
+
 	public static BlockStateModel getBlockStateModel(List<BlockStateModel> models) {
 		int size = models.size();
 		if (size > 1) {
-			return models.get(ThreadLocalRandom.current().nextInt(0, size));
+			return models.get(ThreadLocalRandom.current().nextInt(size));
 		} else {
 			return models.get(0);
 		}

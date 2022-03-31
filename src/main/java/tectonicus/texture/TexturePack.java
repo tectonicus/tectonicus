@@ -11,6 +11,9 @@ package tectonicus.texture;
 
 import com.fasterxml.jackson.databind.ObjectReader;
 import lombok.extern.log4j.Log4j2;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.Configuration;
@@ -25,8 +28,12 @@ import tectonicus.raw.BiomesOld;
 import tectonicus.renderer.Font;
 import tectonicus.util.Colour4f;
 import tectonicus.util.FileUtils;
+import tectonicus.util.ImageUtils;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.metadata.IIOMetadataNode;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -83,9 +90,6 @@ public class TexturePack
 	
 	private final Map<String, PackTexture> loadedPackTextures;
 
-	private final ObjectReader packMcmetaReader = FileUtils.getOBJECT_MAPPER().readerFor(Pack.class);
-	private final ObjectReader versionJsonReader = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class);
-	
 	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
 	{
 		if (!minecraftJar.exists())
@@ -94,7 +98,7 @@ public class TexturePack
 		this.rasteriser = rasteriser;
 		
 		loadedPackTextures = new HashMap<>();
-		
+
 		try
 		{
 			int worldVersion = Minecraft.getWorldVersion();
@@ -109,18 +113,22 @@ public class TexturePack
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 
-		Pack packMcMeta = new Pack();
+		// pack.mcmeta gives us the resource pack information (some older versions of Minecraft also have pack.mcmeta 1.13-1.16)
+		PackMcmeta packMcMeta = new PackMcmeta();
 		if (zipStack.hasFile("pack.mcmeta")) {
 			try {
+				ObjectReader packMcmetaReader = FileUtils.getOBJECT_MAPPER().readerFor(PackMcmeta.class);
 				packMcMeta = packMcmetaReader.readValue(zipStack.getStream("pack.mcmeta"));
 			} catch (IOException e) {
 				log.error("Failed to read pack.mcmeta file.", e);
 			}
 		}
 
+		// version.json gives us the Minecraft jar information (added in 1.14)
 		VersionJson versionJson = new VersionJson();
 		if (zipStack.hasFile("version.json")) {
 			try {
+				ObjectReader versionJsonReader = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class);
 				versionJson = versionJsonReader.readValue(zipStack.getStream("version.json"));
 			} catch (IOException e) {
 				log.error("Failed to read version.json file.", e);
@@ -128,9 +136,9 @@ public class TexturePack
 		}
 
 		//TODO: Clean up this version stuff
-		if (packMcMeta.getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
+		if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
 			version = VERSION_14;
-		} else if (packMcMeta.getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
+		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
 			version = VERSION_12;
@@ -138,7 +146,7 @@ public class TexturePack
 			version = VERSIONS_9_TO_11;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
 			version = VERSION_RV;
-		} else if (packMcMeta.getPackVersion() == 1 && zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
+		} else if (packMcMeta.getPack().getPackVersion() == 1 && zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
 			version = VERSIONS_6_TO_8;
 		} else if (zipStack.hasFile("textures/blocks/activatorRail.png")) {
 			version = VERSION_5;
@@ -229,7 +237,7 @@ public class TexturePack
 
 			loadBiomeColors();
 			
-			//TODO: The font stuff needs some work
+			//TODO: The font stuff needs a lot of work
 			try {
 				InputStream imgStream = zipStack.getStream(path + "font/default.png");
 				if (imgStream == null)
@@ -285,6 +293,9 @@ public class TexturePack
 	}
 
 	public SubTexture findTexture(String texturePath) {
+		if (texturePath == null)
+			return null;
+
 		SubTexture result = null;
 
 		TextureRequest request = parseRequest(texturePath);
@@ -296,6 +307,25 @@ public class TexturePack
 			assert (result != null);
 		}
 		
+		return result;
+	}
+
+	// Used by new rendering system
+	public SubTexture getSubTexture(String texturePath) {
+		if (texturePath == null)
+			return null;
+
+		SubTexture result = null;
+
+		TextureRequest request = new TextureRequest("assets/minecraft/textures/" + texturePath, "");
+
+		PackTexture tex = findTexture(request); // find existing PackTexture or load
+
+		if (tex != null) {
+			result = tex.find(request, version); // find existing SubTexture or load
+			assert (result != null);
+		}
+
 		return result;
 	}
 	
@@ -363,11 +393,33 @@ public class TexturePack
 		PackTexture tex = loadedPackTextures.get(request.path);
 		
 		if (tex == null) {
-			BufferedImage img;
 			try {
-				img = loadTexture(request.path);
-				if (img != null){
-					tex = new PackTexture(rasteriser, request.path, img);
+				IIOImage image = loadImage(request.path);
+				if (image != null) {
+					boolean convertedTransparency = false;
+					BufferedImage bufferedImage = (BufferedImage) image.getRenderedImage();
+					Color transparentColor = getTransparentColor(image);
+					if (transparentColor != null) {
+						bufferedImage = ImageUtils.convertSimpleTransparencyToARGB(bufferedImage, transparentColor);
+						convertedTransparency = true;
+					}
+
+					if (convertedTransparency) { // Already in ARGB format so no need to copy image
+						tex = new PackTexture(rasteriser, request.path, bufferedImage, true, false);
+						log.trace(request.path + " contains transparency");
+					} else {
+						BufferedImage testImg = copy(bufferedImage);
+						ImageUtils.Opacity opacity = ImageUtils.testOpacity(testImg);
+						if (opacity == ImageUtils.Opacity.TRANSPARENT) {
+							tex = new PackTexture(rasteriser, request.path, testImg, true, false);
+							log.trace(request.path + " contains transparency");
+						} else if (opacity == ImageUtils.Opacity.TRANSLUCENT) {
+							tex = new PackTexture(rasteriser, request.path, testImg, false, true);
+							log.trace(request.path + " contains translucency");
+						} else {
+							tex = new PackTexture(rasteriser, request.path, testImg);
+						}
+					}
 					loadedPackTextures.put(request.path, tex);
 				}
 			} catch (FileNotFoundException e) {
@@ -378,21 +430,15 @@ public class TexturePack
 		return tex;
 	}
 	
-	public SubTexture findTexture(BufferedImage img, String path)
-	{
-		PackTexture tex = loadedPackTextures.get(path);
-		
-		if (tex == null)
-		{			
-			tex = new PackTexture(rasteriser, path, img);
-			
-			loadedPackTextures.put(path, tex);
-		}
-		
-		return tex.getFullTexture();
+	public SubTexture findTexture(BufferedImage img, String path) {
+		return loadedPackTextures.computeIfAbsent(path, p -> new PackTexture(rasteriser, p, img)).getFullTexture();
 	}
-	
+
 	public BufferedImage loadTexture(String path) throws FileNotFoundException {
+		return copy((BufferedImage) loadImage(path).getRenderedImage());
+	}
+
+	public IIOImage loadImage(String path) throws FileNotFoundException {
 		InputStream in = null;
 
 		try { // Check texture pack and minecraft jar
@@ -420,21 +466,47 @@ public class TexturePack
 				return null;
 			}
 		}
-		
-		BufferedImage img = null;
 
+		IIOImage image = null;
 		try {
-			img = ImageIO.read(in);
-		} catch (Exception e) {
+			ImageReader imageReader = ImageIO.getImageReadersByFormatName("png").next();
+			imageReader.setInput(ImageIO.createImageInputStream(in));
+			image = imageReader.readAll(0, imageReader.getDefaultReadParam());
+		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
 				in.close();
-			} catch (Exception e) {
+			} catch (Exception ignored) {
 			}
 		}
-		
-		return copy( img );
+
+		return image;
+	}
+
+	public Color getTransparentColor(IIOImage image) {
+		Color transparentColor = null;
+
+		/* Because of Java ImageIO png reader limitations we have to check the tRNS chunk to figure out transparency
+		 * This is necessary because some resource packs like to save their textures in all kinds of png formats including some without alpha channels
+		 * See http://www.libpng.org/pub/png/spec/1.2/PNG-Chunks.html and Harald K's answer here https://stackoverflow.com/questions/31763853/trying-to-read-a-png-and-xuggler */
+		NodeList tRNS = ((IIOMetadataNode) image.getMetadata().getAsTree("javax_imageio_png_1.0")).getElementsByTagName("tRNS");
+		if (tRNS.getLength() > 0) {
+			Node node = tRNS.item(0).getFirstChild();
+			String nodeName = node.getNodeName();
+			if (nodeName.equals("tRNS_RGB")) {
+				NamedNodeMap attributes = node.getAttributes();
+				int red = Integer.parseInt(attributes.getNamedItem("red").getNodeValue());
+				int green = Integer.parseInt(attributes.getNamedItem("green").getNodeValue());
+				int blue = Integer.parseInt(attributes.getNamedItem("blue").getNodeValue());
+				transparentColor = new Color(red, green, blue, 255);
+			} else if (nodeName.equals("tRNS_Grayscale")) {
+				int gray = Integer.parseInt(node.getAttributes().getNamedItem("gray").getNodeValue());
+				transparentColor = new Color(gray, gray, gray, 255);
+			} // 'tRNS_Palette' is also a possibility but seems to work without any manual changes needed
+		}
+
+		return transparentColor;
 	}
 	
 	public Map<String, BufferedImage> loadPatterns()
@@ -545,7 +617,7 @@ public class TexturePack
 	private void loadShulkerTextures()
 	{		
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
-				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/shulker"));)
+				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/shulker")))
 		{
 			for (Path entry : entries)
 			{

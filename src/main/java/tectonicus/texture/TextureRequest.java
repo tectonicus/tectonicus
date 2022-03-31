@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,13 +20,7 @@ public class TextureRequest
 	{
 		this.path = path;
 		
-		if (params == null || params.equals(""))
-		{
-			// full texture
-			isTileRequest = false;
-			tileX = tileY = -1;
-		}
-		else if (params.startsWith("["))
+		if (params.startsWith("["))
 		{
 			isTileRequest = true;
 			
@@ -39,6 +33,7 @@ public class TextureRequest
 		}
 		else
 		{
+			// full texture
 			isTileRequest = false;
 			tileX = tileY = -1;
 		}
@@ -65,6 +60,12 @@ public class TextureRequest
 	@Override
 	public boolean equals(Object obj)
 	{
+		if (obj == null)
+			return false;
+
+		if (this.getClass() != obj.getClass())
+			return false;
+
 		TextureRequest other = (TextureRequest)obj;
 		
 		return this.path.equals(other.path)

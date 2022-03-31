@@ -466,13 +466,13 @@ public class BlockRegistryParser
 		{
 			Version texturePackVersion = texturePack.getVersion();
 
-			SubTexture defaultTex;
+			SubTexture texture;
 			if (texturePackVersion.getNumVersion() < VERSION_14.getNumVersion()) {
-				defaultTex = texturePack.findTexture("assets/minecraft/textures/entity/sign.png");
+				texture = parseTexture(element, "texture", null);
 			} else {
-				defaultTex = texturePack.findTexture("assets/minecraft/textures/entity/signs/oak.png");
+				SubTexture defaultTex = texturePack.findTexture("assets/minecraft/textures/entity/signs/oak.png");
+				texture = parseTexture(element, "texture", defaultTex);
 			}
-			SubTexture texture = parseTexture(element, "texture", defaultTex);
 			
 			boolean obey = signFilter == SignFilter.Obey;
 			if(signFilter == SignFilter.Obey)
