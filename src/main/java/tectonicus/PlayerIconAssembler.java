@@ -76,7 +76,7 @@ public class PlayerIconAssembler
 
 		g.drawImage(head, factor*12, 0, null);
 		g.drawImage(body, factor*12, factor*8, null);
-		g.drawImage(leftArm, 8, factor*9, factor*12, factor*21,   factor*4, 0, 0, factor*12, null); // flip the left arm
+		g.drawImage(leftArm, factor*8, factor*9, factor*12, factor*21,   factor*4, 0, 0, factor*12, null); // flip the left arm
 		g.drawImage(rightArm, factor*20, factor*9, null);
 		g.drawImage(leg, factor*12, factor*20, null);
 		g.drawImage(leg, factor*16, factor*20, null);
