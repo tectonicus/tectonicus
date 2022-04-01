@@ -7,15 +7,19 @@
  *
  */
 
-package tectonicus;
+package tectonicus.blockregistry;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.jnbt.NBTInputStream.Compression;
+import lombok.ToString;
 
+import java.util.List;
+import java.util.Map;
+
+@Builder
 @Getter
-@RequiredArgsConstructor
-public class ChunkData {
-	private final byte[] bytes;
-	private final Compression compressionType;
+@ToString
+public class BlockStateCase implements BlockState {
+	List<Map<String, String>> whenClauses;
+	List<BlockStateModel> models;
 }

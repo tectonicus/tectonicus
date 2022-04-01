@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus.blockTypes;
+package tectonicus.blockregistry;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static tectonicus.blockTypes.BlockStateWrapper.getRandomWeightedModel;
+import static tectonicus.blockregistry.BlockStateWrapper.getRandomWeightedModel;
 
 
 @Log4j2

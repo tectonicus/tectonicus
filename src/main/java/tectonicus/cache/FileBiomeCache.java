@@ -18,8 +18,8 @@ import java.util.LinkedHashMap;
 import com.google.code.minecraftbiomeextractor.WorldProcessor;
 
 import lombok.extern.log4j.Log4j2;
-import tectonicus.ChunkCoord;
-import tectonicus.Util;
+import tectonicus.chunk.ChunkCoord;
+import tectonicus.util.Util;
 import tectonicus.util.FileUtils;
 
 @Log4j2

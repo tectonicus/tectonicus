@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus.blockTypes;
+package tectonicus.blockregistry;
 
 import lombok.Getter;
 import lombok.Setter;

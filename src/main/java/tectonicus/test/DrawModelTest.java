@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,10 +15,10 @@ import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
-import tectonicus.blockTypes.BlockModel;
-import tectonicus.blockTypes.BlockModel.BlockElement;
-import tectonicus.blockTypes.BlockModel.BlockElement.ElementFace;
-import tectonicus.blockTypes.BlockRegistry;
+import tectonicus.blockregistry.BlockModel;
+import tectonicus.blockregistry.BlockModel.BlockElement;
+import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
+import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.Mesh;

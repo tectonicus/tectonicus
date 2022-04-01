@@ -7,13 +7,14 @@
  *
  */
 
-package tectonicus.blockTypes;
+package tectonicus.blockregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import tectonicus.BlockContext;
+import tectonicus.blockregistry.BlockModel;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 

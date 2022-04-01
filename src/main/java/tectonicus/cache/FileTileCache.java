@@ -13,7 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import tectonicus.BlockRegistryParser;
-import tectonicus.ChunkCoord;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.TileCoord;
 import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;

@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.RawChunk;
 
 public class CaveMaskFactory113 implements BlockMaskFactory

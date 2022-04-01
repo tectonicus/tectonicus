@@ -9,9 +9,10 @@
 
 package tectonicus;
 
-import tectonicus.blockTypes.BlockRegistry;
-import tectonicus.blockTypes.BlockStateWrapper;
+import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.raw.Biome;

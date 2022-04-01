@@ -16,7 +16,7 @@ import org.jnbt.IntTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.NBTOutputStream;
 import org.jnbt.Tag;
-import tectonicus.ChunkCoord;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.Minecraft;
 import tectonicus.raw.NbtUtil;
 import tectonicus.raw.RawChunk;

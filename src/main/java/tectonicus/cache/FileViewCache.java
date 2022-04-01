@@ -10,7 +10,7 @@
 package tectonicus.cache;
 
 import lombok.extern.log4j.Log4j2;
-import tectonicus.ChunkCoord;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.view.ChangedViews;
 import tectonicus.view.ViewUtil;
 import tectonicus.view.ViewUtil.Viewpoint;

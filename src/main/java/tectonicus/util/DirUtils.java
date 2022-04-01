@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus;
+package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
 import tectonicus.configuration.Dimension;

@@ -7,11 +7,15 @@
  *
  */
 
-package tectonicus.cache;
+package tectonicus.chunk;
 
-import tectonicus.chunk.ChunkCoord;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.jnbt.NBTInputStream.Compression;
 
-public interface BiomeCache
-{
-	public BiomeData loadBiomeData(ChunkCoord coord);
+@Getter
+@RequiredArgsConstructor
+public class ChunkData {
+	private final byte[] bytes;
+	private final Compression compressionType;
 }

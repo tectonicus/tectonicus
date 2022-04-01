@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus;
+package tectonicus.util;
 
 import java.util.ArrayList;
 import java.util.Date;

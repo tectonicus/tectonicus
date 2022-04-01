@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,10 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import org.lwjgl.glfw.GLFW;
-import tectonicus.configuration.Configuration;
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.RasteriserFactory;
+import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.BlockStateModel;
+import tectonicus.blockregistry.BlockVariant;
 
 import java.util.HashMap;
 import java.util.List;

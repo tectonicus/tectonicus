@@ -7,13 +7,19 @@
  *
  */
 
-package tectonicus;
+package tectonicus.chunk;
 
 import org.joml.Vector3f;
+import tectonicus.BlockMask;
+import tectonicus.BlockMaskFactory;
+import tectonicus.BlockType;
+import tectonicus.BlockTypeRegistry;
+import tectonicus.Minecraft;
+import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
-import tectonicus.blockTypes.BlockRegistry;
-import tectonicus.blockTypes.BlockStateModel;
-import tectonicus.blockTypes.BlockStateWrapper;
+import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.BlockStateModel;
+import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
@@ -28,6 +34,7 @@ import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
+import tectonicus.util.Util;
 import tectonicus.world.World;
 import tectonicus.world.WorldInfo;
 import tectonicus.world.filter.BlockFilter;

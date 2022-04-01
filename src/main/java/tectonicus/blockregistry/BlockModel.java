@@ -7,14 +7,14 @@
  *
  */
 
-package tectonicus.blockTypes;
+package tectonicus.blockregistry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import tectonicus.BlockContext;
-import tectonicus.ChunkCoord;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.RegionCoord;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;

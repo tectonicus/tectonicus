@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,7 +16,7 @@ import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.joml.Vector3f;
 
-import tectonicus.Util;
+import tectonicus.util.Util;
 import tectonicus.util.Plane;
 import tectonicus.util.Project;
 

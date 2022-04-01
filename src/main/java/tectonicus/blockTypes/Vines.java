@@ -14,7 +14,7 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.Chunk;
+import tectonicus.chunk.Chunk;
 import tectonicus.cache.BiomeCache;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;

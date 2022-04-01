@@ -10,6 +10,7 @@
 package tectonicus;
 
 import lombok.extern.log4j.Log4j2;
+import tectonicus.chunk.ChunkLocator;
 
 import java.io.File;
 import java.util.LinkedHashMap;

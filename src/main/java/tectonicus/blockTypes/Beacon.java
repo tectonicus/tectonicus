@@ -15,6 +15,8 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Minecraft;
+import tectonicus.blockregistry.BlockStateModel;
+import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BeaconEntity;

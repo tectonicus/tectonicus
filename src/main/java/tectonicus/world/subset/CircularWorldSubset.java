@@ -10,7 +10,7 @@
 package tectonicus.world.subset;
 
 import lombok.Data;
-import tectonicus.ChunkCoord;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.SaveFormat;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;

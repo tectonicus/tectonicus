@@ -9,7 +9,7 @@
 
 package tectonicus.world.subset;
 
-import tectonicus.ChunkCoord;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.SaveFormat;
 import tectonicus.world.filter.BlockFilter;
 

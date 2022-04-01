@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -7,10 +7,11 @@
  *
  */
 
-package tectonicus;
+package tectonicus.chunk;
 
 import lombok.Getter;
 import tectonicus.raw.RawChunk;
+import tectonicus.util.Util;
 
 public class ChunkCoord implements Comparable<ChunkCoord>
 {
@@ -83,6 +84,6 @@ public class ChunkCoord implements Comparable<ChunkCoord>
 	@Override
 	public String toString()
 	{
-		return "[ChunkCoord ("+x+", "+z+") / <"+Util.toBase36(x)+", "+Util.toBase36(z)+"> ]";
+		return "[ChunkCoord ("+x+", "+z+") / <"+ Util.toBase36(x)+", "+Util.toBase36(z)+"> ]";
 	}
 }

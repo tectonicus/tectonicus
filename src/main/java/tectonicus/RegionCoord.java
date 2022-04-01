@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,7 +10,9 @@
 package tectonicus;
 
 import lombok.Getter;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.RawChunk;
+import tectonicus.util.Util;
 
 public class RegionCoord implements Comparable<RegionCoord>
 {
@@ -98,6 +100,6 @@ public class RegionCoord implements Comparable<RegionCoord>
 	@Override
 	public String toString()
 	{
-		return "[RegionCoord ("+x+", "+z+") / <"+Util.toBase36(x)+", "+Util.toBase36(z)+"> ]";
+		return "[RegionCoord ("+x+", "+z+") / <"+ Util.toBase36(x)+", "+Util.toBase36(z)+"> ]";
 	}
 }
