@@ -226,21 +226,21 @@ public class BlockModel
 					}
 
 					SubTexture te = texturePack.getSubTexture(texturePath);
-					PackTexture pt;
+					PackTexture pt = null;
 					if (te == null) {
-						//TODO: add purple black texture for missing textures
-						te = texturePack.findTexture("red_mushroom_block.png");
-						pt = texturePack.getTexture("assets/minecraft/textures/block/red_mushroom_block.png");
+						te = texturePack.findTexture(null,"missing_texture");
 						blockModel.addMissingTexture(texturePath);
 					} else {
 						pt = texturePack.getTexture("assets/minecraft/textures/" + texturePath);
 					}
 
-					if (pt.isTranslucent()) {
-						blockModel.setSolid(false);
-						blockModel.setTranslucent(true);
-					} else if (pt.isTransparent()) {
-						blockModel.setSolid(false);
+					if (pt != null) {
+						if (pt.isTranslucent()) {
+							blockModel.setSolid(false);
+							blockModel.setTranslucent(true);
+						} else if (pt.isTransparent()) {
+							blockModel.setSolid(false);
+						}
 					}
 
 					final float texHeight = te.texture.getHeight();

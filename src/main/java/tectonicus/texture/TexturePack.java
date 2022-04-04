@@ -190,6 +190,7 @@ public class TexturePack
 			
 			loadBedTextures();
 			loadShulkerTextures();
+			loadMissingTexture();
 
 			if (version.getNumVersion() >= VERSION_14.getNumVersion()) {
 				loadPaintingTextures();
@@ -656,6 +657,20 @@ public class TexturePack
 		{
 			log.error("No shulker textures found. You may be using an older Minecraft jar file");
 		}
+	}
+
+	private void loadMissingTexture() {
+		BufferedImage outImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = (Graphics2D)outImg.getGraphics();
+
+		g.setColor(new Color(248, 0, 248)); //purple
+		g.fillRect(8, 0, 8, 8);
+		g.fillRect(0, 8, 8, 8);
+		g.setColor(new Color(0, 0, 0)); //black
+		g.fillRect(0, 0, 8, 8);
+		g.fillRect(8, 8, 8, 8);
+
+		findTexture(outImg, "missing_texture");
 	}
 
 	private void loadBiomeColors() {
