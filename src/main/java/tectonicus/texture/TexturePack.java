@@ -410,16 +410,17 @@ public class TexturePack
 						tex = new PackTexture(rasteriser, request.path, bufferedImage, true, false);
 						log.trace(request.path + " contains transparency");
 					} else {
-						BufferedImage testImg = copy(bufferedImage);
-						ImageUtils.Opacity opacity = ImageUtils.testOpacity(testImg);
+						BufferedImage argbImage = copy(bufferedImage);
+						ImageUtils.normalizeAlpha(argbImage); // We need to do this to handle some resource pack textures
+						ImageUtils.Opacity opacity = ImageUtils.testOpacity(argbImage);
 						if (opacity == ImageUtils.Opacity.TRANSPARENT) {
-							tex = new PackTexture(rasteriser, request.path, testImg, true, false);
+							tex = new PackTexture(rasteriser, request.path, argbImage, true, false);
 							log.trace(request.path + " contains transparency");
 						} else if (opacity == ImageUtils.Opacity.TRANSLUCENT) {
-							tex = new PackTexture(rasteriser, request.path, testImg, false, true);
+							tex = new PackTexture(rasteriser, request.path, argbImage, false, true);
 							log.trace(request.path + " contains translucency");
 						} else {
-							tex = new PackTexture(rasteriser, request.path, testImg);
+							tex = new PackTexture(rasteriser, request.path, argbImage);
 						}
 					}
 					loadedPackTextures.put(request.path, tex);
@@ -489,7 +490,8 @@ public class TexturePack
 	public Color getTransparentColor(IIOImage image) {
 		Color transparentColor = null;
 
-		/* Because of Java ImageIO png reader limitations we have to check the tRNS chunk to figure out transparency
+		//TODO: remove this when we move to Java 11
+		/* Because of Java 8 ImageIO png reader limitations we have to check the tRNS chunk to figure out transparency (this is fixed in Java 11 https://bugs.openjdk.java.net/browse/JDK-6788458)
 		 * This is necessary because some resource packs like to save their textures in all kinds of png formats including some without alpha channels
 		 * See http://www.libpng.org/pub/png/spec/1.2/PNG-Chunks.html and Harald K's answer here https://stackoverflow.com/questions/31763853/trying-to-read-a-png-and-xuggler */
 		NodeList tRNS = ((IIOMetadataNode) image.getMetadata().getAsTree("javax_imageio_png_1.0")).getElementsByTagName("tRNS");

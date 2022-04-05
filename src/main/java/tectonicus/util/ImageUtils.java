@@ -55,6 +55,22 @@ public class ImageUtils {
 		return newImg;
 	}
 
+	public void normalizeAlpha(BufferedImage image) {
+		for (int x = 0; x < image.getWidth(); x++) {
+			for (int y = 0; y < image.getHeight(); y++) {
+				int pixel = image.getRGB(x, y);
+				int alpha = (pixel & 0xff000000) >>> 24;
+
+				if (alpha < 25.5) {
+					pixel &= 0x00ffffff; // set alpha to 0
+				} else if (alpha >= 252) { //Kind of hacky
+					pixel |= (255 << 24);
+				}
+				image.setRGB(x, y, pixel);
+			}
+		}
+	}
+
 	public Opacity testOpacity(BufferedImage image){
 		for (int i = 0; i < image.getHeight(); i++) {
 			for (int j = 0; j < image.getWidth(); j++) {
