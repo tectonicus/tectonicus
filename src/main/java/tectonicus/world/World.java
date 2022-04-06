@@ -21,15 +21,10 @@ import tectonicus.BlockMaskFactory;
 import tectonicus.BlockRegistryParser;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
-import tectonicus.chunk.ChunkCoord;
-import tectonicus.chunk.ChunkLocator;
-import tectonicus.util.DirUtils;
 import tectonicus.Minecraft;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
-import tectonicus.util.Util;
 import tectonicus.Version;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockRegistry;
@@ -37,6 +32,9 @@ import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
+import tectonicus.chunk.Chunk;
+import tectonicus.chunk.ChunkCoord;
+import tectonicus.chunk.ChunkLocator;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.LightFace;
@@ -64,10 +62,14 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
+import tectonicus.util.DirUtils;
+import tectonicus.util.Util;
+import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
 import tectonicus.world.filter.BlockFilter;
 import tectonicus.world.filter.CompositeBlockFilter;
 import tectonicus.world.filter.NullBlockFilter;
+import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
 
@@ -86,6 +88,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
@@ -184,24 +187,18 @@ public class World implements BlockContext
 		
 		// TODO: Better error handling here.
 		// World should throw Exception?
-		try
-		{
+		try {
 			log.info("Loading level.dat");
 			levelDat = new LevelDat(Minecraft.findLevelDat(baseDir.toPath()), singlePlayerName);
+			if (dimension == Dimension.END) {
+				levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
+			}
 			
-			if (levelDat.isAlpha())
-			{
+			if (levelDat.isAlpha()) {
 				throw new RuntimeException("Error: Alpha map format no longer supported");
 			}
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			throw new RuntimeException(e);
-		}
-		
-		if (dimension == Dimension.END)
-		{
-			levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 		}
 
 		Version version = VERSION_UNKNOWN;
@@ -263,8 +260,25 @@ public class World implements BlockContext
 		
 		rawLoadedChunks = new RawCache(100);
 		geometryLoadedChunks = new GeometryCache(100);
-	
-		this.worldSubset = subset;
+
+		//Set subset origin if none was set in config file
+		if (subset instanceof CircularWorldSubset) {
+			CircularWorldSubset circularSubset = (CircularWorldSubset) subset;
+			if (circularSubset.getOrigin() == null) {
+				Vector3l origin = levelDat.getSpawnPosition();
+
+				//For the Nether we try to find a player or Respawn Anchor closest to overworld spawn and use that as the origin
+				//otherwise we just use the overworld spawn position as the origin
+				if (dimension == Dimension.NETHER) {
+					origin = getNetherOriginFromPlayers();
+				}
+
+				circularSubset.setOrigin(origin);
+			}
+			this.worldSubset = circularSubset;
+		} else {
+			this.worldSubset = subset;
+		}
 		
 		this.lightStyle = LightStyle.None;
 		
@@ -272,6 +286,35 @@ public class World implements BlockContext
 		this.nightSkybox = SkyboxUtil.generateNightSkybox(rasteriser);
 
 		this.unknownBlocks = new HashMap<>();
+	}
+
+	public Vector3l getNetherOriginFromPlayers() {
+		Vector3l spawnPosition = levelDat.getSpawnPosition();
+		Vector3l origin = new Vector3l(spawnPosition);
+		double prevDistance = 99999999999d;
+
+		//TODO: need to use player filter here
+		for (Player player : players) {
+			if (player.getDimension() == Dimension.NETHER) {
+				Vector3d position = player.getPosition();
+				double distance = Math.hypot(position.x - spawnPosition.x, position.z - spawnPosition.z);
+				if (distance < prevDistance) {
+					origin = new Vector3l((long) position.x, (long) position.y, (long) position.z);
+				}
+				prevDistance = distance;
+			}
+
+			if (player.getSpawnDimension() == Dimension.NETHER) {
+				Vector3l position = player.getSpawnPosition();
+				double distance = Math.hypot(position.x - (double) spawnPosition.x, position.z - (double) spawnPosition.z);
+				if (distance < prevDistance) {
+					origin = new Vector3l(position.x, position.y, position.z);
+				}
+				prevDistance = distance;
+			}
+		}
+
+		return origin;
 	}
 	
 	public void loadBlockRegistry(String customConfigPath, final boolean useDefaultBlocks)
@@ -390,22 +433,21 @@ public class World implements BlockContext
 	{
 		return worldSubset.contains(coord);
 	}
-	
-	/** Gets the players for a particular dimension, or null for all players */
-	public List<Player> players(Dimension dimension)
+
+	public List<Player> getAllPlayers()
+	{
+		return Collections.unmodifiableList(players);
+	}
+
+	/** Gets the players for a particular dimension */
+	public List<Player> getPlayers(Dimension dimension)
 	{
 		List<Player> result = new ArrayList<>();
-		for (Player p : players)
-		{
-			if (dimension == null || p.getDimension() == dimension)
+		for (Player p : players) {
+			if (p.getDimension() == dimension)
 				result.add(p);
 		}
 		return result;
-	}
-	
-	public int numPlayers()
-	{
-		return players.size();
 	}
 	
 	public List<ContainerEntity> getChests()
@@ -1108,7 +1150,13 @@ public class World implements BlockContext
 					}
 				}
 			}
-			executor.shutdown();
+
+			try {
+				executor.shutdown();
+				executor.awaitTermination(2, TimeUnit.HOURS);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		log.debug("\tloaded {} players", players.size());

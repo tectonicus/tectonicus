@@ -9,6 +9,7 @@
 
 package tectonicus.world.subset;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.SaveFormat;
@@ -20,9 +21,10 @@ import tectonicus.world.filter.BlockFilter;
 import java.io.File;
 
 @Data
+@AllArgsConstructor
 public class CircularWorldSubset implements WorldSubset
 {
-	private final Vector3l origin;
+	private Vector3l origin;
 	private final long radius;
 
 	@Override

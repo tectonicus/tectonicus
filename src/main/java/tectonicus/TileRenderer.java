@@ -276,10 +276,11 @@ public class TileRenderer
 			// Output entity javascript for creating map markers
 			//TODO: move all the code from these methods to a separate class
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
-			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, world.players(map.getDimension()), playerIconAssembler);
-			outputBeds(mapDir, map, world.players(null));
-			outputRespawnAnchors(mapDir, map, world.players(null));
-			worldStats.setNumPortals((outputPortals(new File(mapDir, "portals.js"), portalsFile, map)));
+			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, world.getPlayers(map.getDimension()), playerIconAssembler);
+			outputBeds(mapDir, map, world.getAllPlayers());
+			outputRespawnAnchors(mapDir, map, world.getAllPlayers());
+			List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
+			worldStats.setNumPortals(portals.size());
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
 
@@ -326,7 +327,7 @@ public class TileRenderer
 			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getId());
 			
 			// Output world vectors for this camera config
-			outputWorldVectors( new File(mapDir, "worldVectors.js"), map.getId(), worldVectors, bounds, world.getLevelDat(), worldStats.numChunks(), world.numPlayers(), map);
+			outputWorldVectors( new File(mapDir, "worldVectors.js"), map, worldVectors, bounds, world, worldStats.numChunks(), portals);
 		}
 		
 		// Output html resources
@@ -478,7 +479,7 @@ public class TileRenderer
 				views.close();
 		}
 		
-		final int numPlayers = world.players(dimension).size();
+		final int numPlayers = world.getPlayers(dimension).size();
 		stats.setNumPlayers(numPlayers);
 		
 		return stats;
@@ -498,7 +499,7 @@ public class TileRenderer
 		//	Iterate over regions, then over chunks
 		//		hash each chunk and store in region hashes file
 		//		gather world stats and signs for each chunk
-		
+
 		RegionIterator it = world.createRegionIterator();
 		
 		log.debug("Looking for chunks in "+it.getBaseDir().getAbsolutePath());
@@ -1267,8 +1268,13 @@ public class TileRenderer
 		}
 	}
 	
-	private void outputWorldVectors(File vectorsFile, String varNamePrefix, WorldVectors worldVectors, TileCoordBounds bounds, LevelDat levelDat, final int numChunks, final int numPlayers, tectonicus.configuration.Map map)
+	private void outputWorldVectors(File vectorsFile, tectonicus.configuration.Map map, WorldVectors worldVectors, TileCoordBounds bounds, World world, final int numChunks, List<Portal> portals)
 	{
+		String varNamePrefix = map.getId();
+		LevelDat levelDat = world.getLevelDat();
+		List<Player> players = world.getAllPlayers();
+		int numPlayers = players.size();
+
 		try {
 			Files.deleteIfExists(vectorsFile.toPath());
 		} catch (IOException e) {
@@ -1312,7 +1318,27 @@ public class TileRenderer
 			} else if (map.getOrigin() != null) {
 				startView = map.getOrigin();
 			} else {
+				Vector3l spawnPosition = levelDat.getSpawnPosition();
 				startView = levelDat.getSpawnPosition();
+
+				if (map.getDimension() == Dimension.NETHER) {
+					//For the Nether we try to find a portal, player or Respawn Anchor closest to overworld spawn and use that as the origin
+					//otherwise we just use the overworld spawn position as the origin
+					double prevDistance = 99999999999d;
+
+					//Prefer using portals as origin
+					if (!portals.isEmpty()) {
+						for (Portal portal : portals) {
+							double distance = Math.hypot(portal.getX() - (double) spawnPosition.x, portal.getZ() - (double) spawnPosition.z);
+							if (distance < prevDistance) {
+								startView = new Vector3l(portal.getX(), portal.getY(), portal.getZ());
+							}
+							prevDistance = distance;
+						}
+					} else { //If no portals then try players
+						startView = world.getNetherOriginFromPlayers();
+					}
+				}
 			}
 
 			json.writeWorldCoord("startView", startView);
@@ -1360,7 +1386,7 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void outputContents(File outputFile, Configuration config)
 	{
 		try {
@@ -1864,14 +1890,14 @@ public class TileRenderer
 		}
 	}
 	
-	private int outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map)
+	private List<Portal> outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map)
 	{
-		int numPortals = 0;
+		List<Portal> portals = new ArrayList<>();
 		
 		try
 		{
 			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<>(portalListFile);
-			numPortals = outputPortals(outFile, portalsIn, map);
+			portals = outputPortals(outFile, portalsIn, map);
 			portalsIn.close();
 		}
 		catch (Exception e)
@@ -1879,19 +1905,16 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 
-		return numPortals;
+		return portals;
 	}
 	
-	private int outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map) throws IOException {
+	private List<Portal> outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map) throws IOException {
 		log.info("Exporting portals...");
 
 		Files.deleteIfExists(portalFile.toPath());
 		
-		int numPortals = 0;
+		List<Portal> portals = new ArrayList<>();
 		try (JsArrayWriter jsWriter = new JsArrayWriter(portalFile, map.getId() + "_portalData")) {
-
-			ArrayList<Portal> portals = new ArrayList<>();
-
 			if (portalPositions.hasNext()) {
 				long prevX;
 				long prevY;
@@ -1917,7 +1940,6 @@ public class TileRenderer
 						prevZ = portal.getZ();
 					} else {
 						portals.add(new Portal(prevX + (firstX - prevX) / 2, prevY, prevZ + (firstZ - prevZ) / 2));
-						numPortals++;
 						prevX = portal.getX();
 						prevY = portal.getY();
 						prevZ = portal.getZ();
@@ -1926,7 +1948,6 @@ public class TileRenderer
 					}
 				}
 				portals.add(new Portal(portal.getX() + ((firstX - prevX) / 2), portal.getY(), portal.getZ() + (firstZ - prevZ) / 2));
-				numPortals++;
 
 				WorldSubset worldSubset = map.getWorldSubset();
 				for (Portal p : portals) {
@@ -1947,8 +1968,8 @@ public class TileRenderer
 			e.printStackTrace();
 		}
 		
-		log.debug("Exported {} portals", numPortals);
-		return numPortals;
+		log.debug("Exported {} portals", portals.size());
+		return portals;
 	}
 	
 	private void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.Map map)

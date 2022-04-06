@@ -199,7 +199,7 @@ public class XmlConfigurationParser
 			map.setOrigin(parseOrigin(getString(mapElement, "origin")));
 			
 			Element subsetNode = getChild(mapElement, "subset");
-			map.setWorldSubset( parseWorldSubset(subsetNode, map.getDimension(), map.getWorldDir().toPath()) );
+			map.setWorldSubset(parseWorldSubset(subsetNode));
 			
 			final boolean useBiomeColours = getBoolean(mapElement, "useBiomeColours", false);
 			map.setUseBiomeColours(useBiomeColours);
@@ -504,7 +504,7 @@ public class XmlConfigurationParser
 		return elementString.equalsIgnoreCase("true");
 	}
 
-	private static WorldSubset parseWorldSubset(Element subsetNode, Dimension dimension, Path worldDir) {
+	private static WorldSubset parseWorldSubset(Element subsetNode) {
 		if (subsetNode != null) {
 			Element circularNode = getChild(subsetNode, "CircularSubset");
 			if (circularNode != null) {
@@ -518,12 +518,7 @@ public class XmlConfigurationParser
 				Vector3l origin = null;
 				if (circularNode.hasAttribute("origin")) {
 					origin = parseOrigin(circularNode.getAttribute("origin"));
-				} else if (dimension == Dimension.END) {
-					origin = new Vector3l(100, 49, 0); // Location of obsidian platform where the player spawns
-				} else {
-					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(worldDir), "");
-					origin = levelDat.getSpawnPosition();
-				} //TODO: how do we determine the origin for Nether maps?
+				}
 
 				if (radius > 0) {
 					return new CircularWorldSubset(origin, radius);
