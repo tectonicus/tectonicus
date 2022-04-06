@@ -1,0 +1,952 @@
+/*
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ *
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution.  The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
+ *
+ */
+
+package tectonicus.util;
+
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
+import tectonicus.Block;
+import tectonicus.BlockIds;
+import tectonicus.BlockTypeRegistry;
+import tectonicus.BuildInfo;
+import tectonicus.ItemRenderer;
+import tectonicus.MemoryMonitor;
+import tectonicus.PlayerIconAssembler;
+import tectonicus.Portal;
+import tectonicus.TileRenderer;
+import tectonicus.Version;
+import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.cache.swap.HddObjectListReader;
+import tectonicus.configuration.Configuration;
+import tectonicus.configuration.Dimension;
+import tectonicus.configuration.ImageFormat;
+import tectonicus.configuration.Layer;
+import tectonicus.configuration.PlayerFilter;
+import tectonicus.configuration.SignFilter;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.BlockEntity;
+import tectonicus.raw.BlockProperties;
+import tectonicus.raw.ContainerEntity;
+import tectonicus.raw.Player;
+import tectonicus.texture.TexturePack;
+import tectonicus.world.Sign;
+import tectonicus.world.World;
+import tectonicus.world.subset.WorldSubset;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static tectonicus.Version.VERSION_12;
+import static tectonicus.Version.VERSION_13;
+import static tectonicus.Version.VERSION_16;
+
+@Log4j2
+@UtilityClass
+public class OutputResourcesUtil {
+	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map) {
+		HddObjectListReader<Sign> signsIn = null;
+		try {
+			signsIn = new HddObjectListReader<>(signListFile);
+			outputSigns(outputFile, signsIn, map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (signsIn != null)
+				signsIn.close();
+		}
+	}
+
+	private static void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map) throws IOException {
+		log.info("Exporting signs to {}", signFile.getAbsolutePath());
+
+		Files.deleteIfExists(signFile.toPath());
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(signFile, map.getId() + "_signData")) {
+
+			WorldSubset worldSubset = map.getWorldSubset();
+			Sign sign = new Sign();
+			while (signs.hasNext()) {
+				signs.read(sign);
+				String message = "\"" + sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
+				if (map.getSignFilter() == SignFilter.Obey)
+					message = "\"\\nOBEY\\n\\n\"";
+
+				HashMap<String, String> signArgs = new HashMap<>();
+
+				final float worldX = sign.getX() + 0.5f;
+				final float worldY = sign.getY();
+				final float worldZ = sign.getZ() + 0.5f;
+
+				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
+				signArgs.put("worldPos", posStr);
+				signArgs.put("message", message);
+				if (map.getSignFilter() == SignFilter.Obey) {
+					signArgs.put("text1", "\"\"");
+					signArgs.put("text2", "\"OBEY\"");
+					signArgs.put("text3", "\"\"");
+					signArgs.put("text4", "\"\"");
+				} else {
+					signArgs.put("text1", "\"" + sign.getText(0) + "\"");
+					signArgs.put("text2", "\"" + sign.getText(1) + "\"");
+					signArgs.put("text3", "\"" + sign.getText(2) + "\"");
+					signArgs.put("text4", "\"" + sign.getText(3) + "\"");
+				}
+
+				if (worldSubset.containsBlock(sign.getX(), sign.getZ())) {
+					jsWriter.write(signArgs);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, List<Player> players, PlayerIconAssembler playerIconAssembler) {
+		try {
+			Files.deleteIfExists(playersFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		FileUtils.ensureExists(imagesDir);
+
+		log.info("Exporting players to {}", playersFile.getAbsolutePath());
+
+		int numOutput = 0;
+		ExecutorService executor = Executors.newCachedThreadPool();
+		try (JsArrayWriter jsWriter = new JsArrayWriter(playersFile, map.getId() + "_playerData")) {
+
+			PlayerFilter playerFilter = map.getPlayerFilter();
+			WorldSubset worldSubset = map.getWorldSubset();
+			for (Player player : players) {
+				if (playerFilter.passesFilter(player)) {
+					Vector3d position = player.getPosition();
+					if (worldSubset.containsBlock(position.x, position.z)) {
+						log.debug("\texporting {}", player.getName());
+
+						HashMap<String, String> args = new HashMap<>();
+
+						Vector3d pos = player.getPosition();
+						args.put("name", "\"" + player.getName() + "\"");
+
+						String posStr = "new WorldCoord(" + pos.x + ", " + pos.y + ", " + pos.z + ")";
+						args.put("worldPos", posStr);
+
+						args.put("health", "" + player.getHealth());
+						args.put("food", "" + player.getFood());
+						args.put("air", "" + player.getAir());
+
+						args.put("xpLevel", "" + player.getXpLevel());
+						args.put("xpTotal", "" + player.getXpTotal());
+
+						jsWriter.write(args);
+
+						File iconFile = new File(imagesDir, player.getName() + ".png");
+						PlayerIconAssembler.WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
+						executor.submit(task);
+
+						numOutput++;
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			executor.shutdown();
+		}
+		log.debug("Exported {} players", numOutput);
+	}
+
+	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, List<Player> players) {
+		File bedsFile = new File(exportDir, "beds.js");
+		try {
+			Files.deleteIfExists(bedsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log.info("Exporting beds to {}", bedsFile.getAbsolutePath());
+
+		int numOutput = 0;
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(bedsFile, map.getId() + "_bedData")) {
+
+			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the overworld dimension
+			{
+				WorldSubset worldSubset = map.getWorldSubset();
+				PlayerFilter filter = map.getPlayerFilter();
+				for (Player player : players) {
+					if (filter.isShowBeds() && filter.passesFilter(player) && player.getSpawnDimension() == Dimension.OVERWORLD && player.getSpawnPosition() != null) {
+						HashMap<String, String> bedArgs = new HashMap<>();
+
+						Vector3l spawn = player.getSpawnPosition();
+
+						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
+							log.debug("\texporting {}'s bed", player.getName());
+
+							bedArgs.put("playerName", "\"" + player.getName() + "\"");
+
+							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
+							bedArgs.put("worldPos", posStr);
+
+
+							jsWriter.write(bedArgs);
+							numOutput++;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		log.debug("Exported {} beds", numOutput);
+	}
+
+	public static void outputRespawnAnchors(File exportDir, tectonicus.configuration.Map map, List<Player> players) {
+		File anchorsFile = new File(exportDir, "respawnAnchors.js");
+		try {
+			Files.deleteIfExists(anchorsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log.info("Exporting respawn anchors to {}", anchorsFile.getAbsolutePath());
+
+		int numOutput = 0;
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(anchorsFile, map.getId() + "_respawnAnchorData")) {
+
+			if (map.getDimension() == Dimension.NETHER) // Respawn anchors only work in the nether dimension
+			{
+				WorldSubset worldSubset = map.getWorldSubset();
+				PlayerFilter filter = map.getPlayerFilter();
+				for (Player player : players) {
+					if (filter.isShowRespawnAnchors() && filter.passesFilter(player) && player.getSpawnDimension() == Dimension.NETHER && player.getSpawnPosition() != null) {
+						HashMap<String, String> anchorArgs = new HashMap<>();
+
+						Vector3l spawn = player.getSpawnPosition();
+
+						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
+							log.debug("\texporting {}'s respawn anchor", player.getName());
+
+							anchorArgs.put("playerName", "\"" + player.getName() + "\"");
+
+							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
+							anchorArgs.put("worldPos", posStr);
+
+
+							jsWriter.write(anchorArgs);
+							numOutput++;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		log.debug("Exported {} respawn anchors", numOutput);
+	}
+
+	public static List<Portal> outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map) {
+		List<Portal> portals = new ArrayList<>();
+
+		try {
+			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<>(portalListFile);
+			portals = outputPortals(outFile, portalsIn, map);
+			portalsIn.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return portals;
+	}
+
+	private static List<Portal> outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map) throws IOException {
+		log.info("Exporting portals...");
+
+		Files.deleteIfExists(portalFile.toPath());
+
+		List<Portal> portals = new ArrayList<>();
+		try (JsArrayWriter jsWriter = new JsArrayWriter(portalFile, map.getId() + "_portalData")) {
+			if (portalPositions.hasNext()) {
+				long prevX;
+				long prevY;
+				long prevZ;
+				long firstX;
+				long firstZ;
+
+				Portal portal = new Portal();
+				portalPositions.read(portal);
+				firstX = portal.getX();
+				firstZ = portal.getZ();
+				prevX = portal.getX();
+				prevY = portal.getY();
+				prevZ = portal.getZ();
+
+				while (portalPositions.hasNext()) {
+					portalPositions.read(portal);
+
+					//Find the horizontal center portal block location
+					if ((portal.getX() == prevX && portal.getZ() == prevZ + 1) || (portal.getX() == prevX + 1 && portal.getZ() == prevZ)) {
+						prevX = portal.getX();
+						prevY = portal.getY();
+						prevZ = portal.getZ();
+					} else {
+						portals.add(new Portal(prevX + (firstX - prevX) / 2, prevY, prevZ + (firstZ - prevZ) / 2));
+						prevX = portal.getX();
+						prevY = portal.getY();
+						prevZ = portal.getZ();
+						firstX = portal.getX();
+						firstZ = portal.getZ();
+					}
+				}
+				portals.add(new Portal(portal.getX() + ((firstX - prevX) / 2), portal.getY(), portal.getZ() + (firstZ - prevZ) / 2));
+
+				WorldSubset worldSubset = map.getWorldSubset();
+				for (Portal p : portals) {
+					final float worldX = p.getX();
+					final float worldY = p.getY();
+					final float worldZ = p.getZ();
+
+					HashMap<String, String> portalArgs = new HashMap<>();
+					String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
+					portalArgs.put("worldPos", posStr);
+
+					if (worldSubset.containsBlock(p.getX(), p.getZ())) {
+						jsWriter.write(portalArgs);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		log.debug("Exported {} portals", portals.size());
+		return portals;
+	}
+
+	public static void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.Map map) {
+		HddObjectListReader<Sign> viewsIn = null;
+		try {
+			viewsIn = new HddObjectListReader<>(viewsListFile);
+			outputViews(outputFile, viewsIn, map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (viewsIn != null)
+				viewsIn.close();
+		}
+	}
+
+	private static void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map) throws IOException {
+		log.info("Exporting views...");
+
+		Files.deleteIfExists(viewsFile.toPath());
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(viewsFile, map.getId() + "_viewData")) {
+
+			WorldSubset worldSubset = map.getWorldSubset();
+			ImageFormat imageFormat = map.getViewConfig().getImageFormat();
+			Sign sign = new Sign();
+			while (views.hasNext()) {
+				views.read(sign);
+
+				HashMap<String, String> viewArgs = new HashMap<>();
+
+				final float worldX = sign.getX() + 0.5f;
+				final float worldY = sign.getY();
+				final float worldZ = sign.getZ() + 0.5f;
+
+				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
+				viewArgs.put("worldPos", posStr);
+
+				StringBuilder text = new StringBuilder();
+				for (int i = 0; i < 4; i++) {
+					if (!sign.getText(i).startsWith("#")) {
+						text.append(sign.getText(i)).append(" ");
+					}
+				}
+
+				viewArgs.put("text", "\"" + text.toString().trim() + "\"");
+
+				String filename = map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
+				viewArgs.put("imageFile", "\"" + filename + "\"");
+
+				if (worldSubset.containsBlock(sign.getX(), sign.getZ())) {
+					jsWriter.write(viewArgs);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void outputChests(File chestFile, tectonicus.configuration.Map map, List<ContainerEntity> chestList) {
+		log.info("Exporting chests to {}", chestFile.getAbsolutePath());
+
+		try {
+			Files.deleteIfExists(chestFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getId() + "_chestData")) {
+
+			ArrayList<BlockEntity> removeList = new ArrayList<>();
+			for (BlockEntity entity : chestList) {
+				final int x = entity.getX();
+				final int y = entity.getY();
+				final int z = entity.getZ();
+
+				for (BlockEntity newEntity : chestList) {
+					final int newX = newEntity.getX();
+					final int newY = newEntity.getY();
+					final int newZ = newEntity.getZ();
+
+					if (newX == x + 1 && newY == y && newZ == z) //north south chest
+					{
+						entity.setX(newX);
+						if (!removeList.contains(entity))
+							removeList.add(newEntity);
+					} else if (newZ == z + 1 && newY == y && newX == x) //east west chest
+					{
+						entity.setZ(z);
+						if (!removeList.contains(entity))
+							removeList.add(newEntity);
+					}
+				}
+			}
+
+			chestList.removeAll(removeList);
+
+			WorldSubset worldSubset = map.getWorldSubset();
+			for (BlockEntity entity : chestList) {
+				float worldX = entity.getX() + 0.5f;
+				float worldY = entity.getY();
+				float worldZ = entity.getZ() + 0.5f;
+				HashMap<String, String> chestArgs = new HashMap<>();
+
+				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
+				chestArgs.put("worldPos", posStr);
+
+				if (worldSubset.containsBlock(entity.getX(), entity.getZ())) {
+					jsWriter.write(chestArgs);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void outputIcons(File exportDir, Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser)
+	{
+		BlockTypeRegistry registryOld = world.getBlockTypeRegistry();
+		BlockRegistry registry = world.getModelRegistry();
+		TexturePack texturePack = world.getTexturePack();
+		Version version = world.getWorldInfo().getVersion();
+
+		try {
+			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
+			if (texturePack.getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
+				itemRenderer.renderBlockOld(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, BlockIds.CHEST, 5);
+			} else {
+				Map<String, String> properties = new HashMap<>();
+				properties.put("facing", "south");
+				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, Block.CHEST, new BlockProperties(properties));
+			}
+			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
+			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
+			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
+			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
+				itemRenderer.renderBlockModel(new File(args.getOutputDir(), "Images/RespawnAnchor.png"), registry, texturePack, Block.RESPAWN_ANCHOR, "_4");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration args, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
+		log.info("Writing javascript and image resources...");
+		String defaultSkin = args.getDefaultSkin();
+
+		File imagesDir = new File(exportDir, "Images");
+		imagesDir.mkdirs();
+
+		FileUtils.extractResource("Images/Spawn.png", new File(imagesDir, "Spawn.png"));
+		FileUtils.extractResource("Images/Logo.png", new File(imagesDir, "Logo.png"));
+
+		FileUtils.extractResource("Images/Spacer.png", new File(imagesDir, "Spacer.png"));
+
+		Version texturePackVersion = texturePack.getVersion();
+		switch (texturePackVersion) {
+			case VERSION_4:
+				writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
+				writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem(7, 2), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem(7, 3), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				writeImage(texturePack.getItem(13, 2), 32, 32, new File(imagesDir, "Bed.png"));
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "mob/char.png";
+				break;
+
+			case VERSION_5:
+				writeImage(texturePack.getItem("textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				writeImage(texturePack.getItem("textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem("textures/items/ingotIron.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem("textures/items/ingotGold.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem("textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				writeImage(texturePack.getItem("textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "mob/char.png";
+				break;
+
+			case VERSIONS_6_TO_8:
+			case VERSION_RV:
+			case VERSIONS_9_TO_11:
+			case VERSION_12:
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/items/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				if (texturePackVersion != VERSION_12) {
+					writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+				}
+
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "assets/minecraft/textures/entity/steve.png";
+				break;
+
+			default: //assume version is 1.13+
+				if (texturePackVersion == VERSION_13) {
+					writeImage(texturePack.getItem("assets/minecraft/textures/item/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				} else {
+					writeImage(texturePack.getItem("assets/minecraft/textures/item/oak_sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				}
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem("assets/minecraft/textures/item/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				if (defaultSkin.equals("steve"))
+					defaultSkin = "assets/minecraft/textures/entity/steve.png";
+		}
+
+		// Hearts need composing so they get the outline
+		{
+			BufferedImage emptyHeart = texturePack.getIcon(16, 0, 9, 9);
+			BufferedImage halfHeart = texturePack.getIcon(61, 0, 9, 9);
+			BufferedImage fullHeart = texturePack.getIcon(52, 0, 9, 9);
+
+			BufferedImage composedHalf = ImageUtils.copy(emptyHeart);
+			composedHalf.getGraphics().drawImage(halfHeart, 0, 0, halfHeart.getWidth(), halfHeart.getHeight(), null);
+
+			BufferedImage composedFull = ImageUtils.copy(emptyHeart);
+			composedFull.getGraphics().drawImage(fullHeart, 0, 0, fullHeart.getWidth(), fullHeart.getHeight(), null);
+
+			writeImage(emptyHeart, 18, 18, new File(imagesDir, "EmptyHeart.png"));
+			writeImage(composedHalf, 18, 18, new File(imagesDir, "HalfHeart.png"));
+			writeImage(composedFull, 18, 18, new File(imagesDir, "FullHeart.png"));
+		}
+
+		// Food needs composing like hearts
+		{
+			BufferedImage emptyFood = texturePack.getIcon(16, 27, 9, 9);
+			BufferedImage halfFood = texturePack.getIcon(61, 27, 9, 9);
+			BufferedImage fullFood = texturePack.getIcon(52, 27, 9, 9);
+
+			BufferedImage composedHalfFood = ImageUtils.copy(emptyFood);
+			composedHalfFood.getGraphics().drawImage(halfFood, 0, 0, halfFood.getWidth(), halfFood.getHeight(), null);
+
+			BufferedImage composedFullFood = ImageUtils.copy(emptyFood);
+			composedFullFood.getGraphics().drawImage(fullFood, 0, 0, fullFood.getWidth(), fullFood.getHeight(), null);
+
+			writeImage(emptyFood, 18, 18, new File(imagesDir, "EmptyFood.png"));
+			writeImage(composedHalfFood, 18, 18, new File(imagesDir, "HalfFood.png"));
+			writeImage(composedFullFood, 18, 18, new File(imagesDir, "FullFood.png"));
+		}
+
+		// Air just comes out direct
+		writeImage(texturePack.getIcon(16, 18, 9, 9), 18, 18, new File(imagesDir, "FullAir.png"));
+		writeImage(texturePack.getIcon(25, 18, 9, 9), 18, 18, new File(imagesDir, "EmptyAir.png"));
+
+		writeImage(texturePack.getChestImage(), 176, 77, new File(imagesDir, "SmallChest.png"));
+
+		// Write default player icon
+		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+
+		//Extract Leaflet resources
+		extractMapResources(exportDir);
+
+		ArrayList<String> scriptResources = new ArrayList<>();
+		scriptResources.add("marker.js");
+		scriptResources.add("controls.js");
+		scriptResources.add("minecraftProjection.js");
+		scriptResources.add("main.js");
+		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, args, tileWidth, tileHeight);
+	}
+
+	public static void writeImage(BufferedImage img, final int width, final int height, File file) {
+		try {
+			BufferedImage toWrite;
+			if (img.getWidth() != width || img.getHeight() != height) {
+				toWrite = new BufferedImage(width, height, img.getType());
+				toWrite.getGraphics().drawImage(img, 0, 0, width, height, null);
+			} else {
+				toWrite = img;
+			}
+			ImageIO.write(toWrite, "png", file);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void extractMapResources(File exportDir) {
+		File scriptsDir = new File(exportDir, "Scripts");
+		scriptsDir.mkdirs();
+		File scriptImagesDir = new File(scriptsDir, "images");
+		scriptImagesDir.mkdirs();
+
+		FileUtils.extractResource("styles.css", new File(scriptsDir, "styles.css"));
+
+		FileUtils.extractResource("math.js", new File(scriptsDir, "math.js"));
+		FileUtils.extractResource("leaflet.js", new File(scriptsDir, "leaflet.js"));
+		FileUtils.extractResource("leaflet.css", new File(scriptsDir, "leaflet.css"));
+		FileUtils.extractResource("leafletStyles.css", new File(scriptsDir, "leafletStyles.css"));
+		FileUtils.extractResource("Images/layers.png", new File(scriptImagesDir, "layers.png"));
+		FileUtils.extractResource("Images/layers-2x.png", new File(scriptImagesDir, "layers-2x.png"));
+		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
+		FileUtils.extractResource("Images/marker-icon-2x.png", new File(scriptImagesDir, "marker-icon-2x.png"));
+		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));
+		FileUtils.extractResource("popper.min.js", new File(scriptsDir, "popper.min.js"));
+		FileUtils.extractResource("tippy-bundle.umd.min.js", new File(scriptsDir, "tippy-bundle.umd.min.js"));
+		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
+	}
+
+	private void outputMergedJs(File outFile, ArrayList<String> inputResources, int numZoomLevels, Configuration args, int tileWidth, int tileHeight)
+	{
+		InputStream in = null;
+		final int scale = (int)Math.pow(2, numZoomLevels);
+		try (PrintWriter writer = new PrintWriter(new FileOutputStream(outFile)))
+		{
+			for (String res : inputResources)
+			{
+				in = TileRenderer.class.getClassLoader().getResourceAsStream(res);
+
+				assert in != null;
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+				String line;
+				while ((line = reader.readLine()) != null)
+				{
+					StringBuilder outLine = new StringBuilder();
+
+					List<Util.Token> tokens = Util.split(line);
+
+					while (!tokens.isEmpty())
+					{
+						Util.Token first = tokens.remove(0);
+						if (first.isReplaceable)
+						{
+							if (first.value.equals("tileWidth"))
+							{
+								outLine.append(tileWidth);
+							}
+							else if (first.value.equals("tileHeight"))
+							{
+								outLine.append(tileHeight);
+							}
+							else if (first.value.equals("maxZoom"))
+							{
+								outLine.append(numZoomLevels);
+							}
+							else if (first.value.equals("mapCoordScaleFactor"))
+							{
+								outLine.append(scale);
+								outLine.append(".0"); // Append .0 so that it's treated as float in the javascript
+							}
+							else if (first.value.equals("showSpawn"))
+							{
+								outLine.append(args.showSpawn());
+							}
+							else if (first.value.equals("signsInitiallyVisible"))
+							{
+								outLine.append(args.areSignsInitiallyVisible());
+							}
+							else if (first.value.equals("playersInitiallyVisible"))
+							{
+								outLine.append(args.arePlayersInitiallyVisible());
+							}
+							else if (first.value.equals("portalsInitiallyVisible"))
+							{
+								outLine.append(args.arePortalsInitiallyVisible());
+							}
+							else if (first.value.equals("bedsInitiallyVisible"))
+							{
+								outLine.append(args.areBedsInitiallyVisible());
+							}
+							else if (first.value.equals("respawnAnchorsInitiallyVisible"))
+							{
+								outLine.append(args.areRespawnAnchorsInitiallyVisible());
+							}
+							else if (first.value.equals("spawnInitiallyVisible"))
+							{
+								outLine.append(args.isSpawnInitiallyVisible());
+							}
+							else if (first.value.equals("viewsInitiallyVisible"))
+							{
+								outLine.append(args.areViewsInitiallyVisible());
+							}
+						}
+						else
+						{
+							outLine.append(first.value);
+						}
+					}
+					writer.write(outLine.append("\n").toString());
+				}
+
+				writer.flush();
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if (in != null) {
+					in.close();
+				}
+			}
+			catch (Exception e) {}
+		}
+	}
+
+	public static void outputContents(File outputFile, Configuration config)
+	{
+		try {
+			Files.deleteIfExists(outputFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log.info("Writing master contents to {}", outputFile.getAbsolutePath());
+
+		try (PrintWriter writer = new PrintWriter(outputFile))
+		{
+			writer.println("tileSize = "+config.getTileSize()+";");
+			writer.println("maxZoom = "+config.getNumZoomLevels()+";");
+			writer.println();
+
+			writer.println("var contents = ");
+			writer.println("[");
+
+			List<tectonicus.configuration.Map> maps = config.getMaps();
+			for (int i=0; i<maps.size(); i++)
+			{
+				tectonicus.configuration.Map m = maps.get(i);
+
+				writer.println("\t{");
+
+				writer.println("\t\tid: \""+m.getId()+"\",");
+				writer.println("\t\tname: \""+m.getName()+"\",");
+				writer.println("\t\tplayers: "+m.getId()+"_playerData,");
+				writer.println("\t\tbeds: "+m.getId()+"_bedData,");
+				writer.println("\t\trespawnAnchors: "+m.getId()+"_respawnAnchorData,");
+				writer.println("\t\tsigns: "+m.getId()+"_signData,");
+				writer.println("\t\tportals: "+m.getId()+"_portalData,");
+				writer.println("\t\tviews: "+m.getId()+"_viewData,");
+				writer.println("\t\tchests: "+m.getId()+"_chestData,");
+				writer.println("\t\tblockStats: "+m.getId()+"_blockStats,");
+				writer.println("\t\tworldStats: "+m.getId()+"_worldStats,");
+				writer.println("\t\tworldVectors: "+m.getId()+"_worldVectors,");
+
+				writer.println("\t\tlayers:");
+				writer.println("\t\t[");
+				for (int j=0; j<m.numLayers(); j++)
+				{
+					Layer l = m.getLayer(j);
+
+					writer.println("\t\t\t{");
+
+					writer.println("\t\t\t\tid: \""+l.getId()+"\",");
+					writer.println("\t\t\t\tname: \""+l.getName()+"\",");
+					writer.println("\t\t\t\tdimension: \"" + m.getDimension() + "\",");
+					writer.println("\t\t\t\tbackgroundColor: \""+l.getBackgroundColor()+"\",");
+					writer.println("\t\t\t\timageFormat: \""+l.getImageFormat().getExtension()+"\",");
+					writer.println("\t\t\t\tisPng: \""+l.getImageFormat().isPng()+"\"");
+
+					if (j < m.numLayers()-1)
+						writer.println("\t\t\t},");
+					else
+						writer.println("\t\t\t}");
+				}
+				writer.println("\t\t]");
+
+				if (i < maps.size()-1)
+					writer.println("\t},");
+				else
+					writer.println("\t}");
+			}
+
+			writer.println("]");
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public static File outputHtml(File exportDir, Configuration args) throws IOException {
+		File outputHtmlFile = new File(exportDir, args.getOutputHtmlName());
+		log.info("Writing html to {}", outputHtmlFile.getAbsolutePath());
+
+		URL url = OutputResourcesUtil.class.getClassLoader().getResource("mapWithSigns.html");
+		if (url == null)
+			throw new IOException("resource not found");
+		try (Scanner scanner = new Scanner(url.openStream());
+			 PrintWriter writer = new PrintWriter(new FileOutputStream(outputHtmlFile)))
+		{
+			while (scanner.hasNext())
+			{
+				String line = scanner.nextLine();
+				StringBuilder outLine = new StringBuilder();
+
+				List<Util.Token> tokens = Util.split(line);
+
+				while (!tokens.isEmpty())
+				{
+					Util.Token first = tokens.remove(0);
+					if (first.isReplaceable)
+					{
+						if (first.value.equals("title")) {
+							outLine.append(args.getHtmlTitle());
+						} else if (first.value.equals("includes")) {
+							String templateStart = "		<script src=\"";
+							String templateEnd = "\"></script>\n";
+
+							for (tectonicus.configuration.Map map : args.getMaps())
+							{
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/players.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/beds.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/respawnAnchors.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/portals.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/signs.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/views.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/chests.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/worldVectors.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/blockStats.js");
+								outLine.append(templateEnd);
+
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/worldStats.js");
+								outLine.append(templateEnd);
+
+								// Any per layer includes?
+							}
+						}
+					} else {
+						outLine.append(first.value);
+					}
+				}
+
+				writer.write(outLine.append("\n").toString());
+			}
+
+			writer.flush();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		return outputHtmlFile;
+	}
+
+	public static void outputRenderStats(File exportDir, MemoryMonitor memoryMonitor, final String timeTaken)
+	{
+		File statsFile = new File(new File(exportDir, "Scripts"), "stats.js");
+		try {
+			Files.deleteIfExists(statsFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		log.info("Exporting stats to {}", statsFile.getAbsolutePath());
+
+		SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy");
+		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm z");
+		final String renderedDateStr = dateFormat.format( new Date() );
+		final String renderedTimeStr = timeFormat.format( new Date() );
+
+		try (JsObjectWriter jsWriter = new JsObjectWriter(statsFile)) {
+
+			Map<String, Object> stats = new HashMap<>();
+
+			stats.put("tectonicusVersion", BuildInfo.getVersion());
+
+			stats.put("renderTime", timeTaken);
+			stats.put("renderedOnDate", renderedDateStr);
+			stats.put("renderedOnTime", renderedTimeStr);
+			stats.put("peakMemoryBytes", memoryMonitor.getPeakMemory());
+
+			jsWriter.write("stats", stats);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}

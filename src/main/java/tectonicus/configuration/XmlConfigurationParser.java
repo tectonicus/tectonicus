@@ -20,7 +20,6 @@ import org.w3c.dom.NodeList;
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
-import tectonicus.raw.LevelDat;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;

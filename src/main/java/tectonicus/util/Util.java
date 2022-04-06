@@ -11,6 +11,7 @@ package tectonicus.util;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import lombok.experimental.UtilityClass;
@@ -64,9 +65,9 @@ public class Util
 	    return result + seconds + " seconds";
 	}
 
-	public static ArrayList<Token> split(String original)
+	public static List<Token> split(String original)
 	{
-		ArrayList<Token> result = new ArrayList<>();
+		List<Token> result = new ArrayList<>();
 
 		int index = 0;
 		while (index < original.length())

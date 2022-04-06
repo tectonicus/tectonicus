@@ -9,6 +9,10 @@
 
 package tectonicus.cache;
 
+import tectonicus.RegionCoord;
+import tectonicus.chunk.ChunkCoord;
+import tectonicus.util.FileUtils;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -18,18 +22,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import tectonicus.chunk.ChunkCoord;
-import tectonicus.RegionCoord;
-
-import com.google.code.minecraftbiomeextractor.FileUtils;
 
 public class RegionHashStore
 {
-	private File hashStoreDir;
+	private final File hashStoreDir;
 	
 	private RegionHashes activeHashes;
 	
-	private HashCache hashCache;
+	private final HashCache hashCache;
 	
 	public RegionHashStore(File cacheDir)
 	{
@@ -92,13 +92,13 @@ public class RegionHashStore
 	private static class RegionHashes
 	{
 		private final RegionCoord regionCoord;
-		private Map<ChunkCoord, byte[]> chunkHashes;
+		private final Map<ChunkCoord, byte[]> chunkHashes;
 		
 		public RegionHashes(RegionCoord coord)
 		{
 			this.regionCoord = coord;
 			
-			chunkHashes = new HashMap<ChunkCoord, byte[]>();
+			chunkHashes = new HashMap<>();
 		}
 		
 		public RegionCoord getRegionCoord()
@@ -111,25 +111,16 @@ public class RegionHashStore
 			chunkHashes.put(chunkCoord, hash);
 		}
 		
-		public void write(File baseDir)
-		{
-			FileOutputStream fOut = null;
-			DataOutputStream out = null;
-			try
-			{
-				File outFile = getHashFile(baseDir, regionCoord);
-				
-				fOut = new FileOutputStream(outFile);
-				out = new DataOutputStream(fOut);
-				
+		public void write(File baseDir) {
+			File outFile = getHashFile(baseDir, regionCoord);
+			try(FileOutputStream fOut = new FileOutputStream(outFile); DataOutputStream out = new DataOutputStream(fOut)) {
 				// Magic
 				out.writeInt(0xCAFEBABE);
 				
 				// Num hashes
 				out.writeInt(chunkHashes.size());
 				
-				for (ChunkCoord coord : chunkHashes.keySet())
-				{
+				for (ChunkCoord coord : chunkHashes.keySet()) {
 					byte[] hash = chunkHashes.get(coord);
 					
 					// Chunk magic
@@ -145,42 +136,19 @@ public class RegionHashStore
 					// Hash
 					out.write(hash);
 				}
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				e.printStackTrace();
-			}
-			finally
-			{
-				try
-				{
-					if (out != null)
-						out.close();
-					if (fOut != null)
-						fOut.close();
-				}
-				catch (Exception e) {}
 			}
 		}
 		
-		public void read(File baseDir)
-		{
-			FileInputStream fIn = null;
-			DataInputStream in = null;
-			
-			try
-			{
-				File inFile = getHashFile(baseDir, regionCoord);
-				
-				fIn = new FileInputStream(inFile);
-				in = new DataInputStream(fIn);
-				
+		public void read(File baseDir) {
+			File inFile = getHashFile(baseDir, regionCoord);
+			try (FileInputStream fIn = new FileInputStream(inFile); DataInputStream in = new DataInputStream(fIn)) {
 				final int magic = in.readInt();
 				assert (magic == 0xCAFEBABE);
 				
 				final int numHashes = in.readInt();
-				for (int i=0; i<numHashes; i++)
-				{
+				for (int i=0; i<numHashes; i++) {
 					final int chunkMagic = in.readInt();
 					assert (chunkMagic == 0xFEEFEE);
 					
@@ -194,21 +162,8 @@ public class RegionHashStore
 					
 					addHash(new ChunkCoord(chunkX, chunkZ), hash);
 				}
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				e.printStackTrace();
-			}
-			finally
-			{
-				try
-				{
-					if (in != null)
-						in.close();
-					if (fIn != null)
-						fIn.close();
-				}
-				catch (Exception e) {}
 			}
 		}
 		

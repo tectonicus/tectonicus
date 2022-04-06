@@ -32,20 +32,16 @@ public class FileUtils
 	{
 		if (!path.exists())
 			return true;
-		
+
 		File[] files = path.listFiles();
-		for (int i=0; i<files.length; i++)
-		{
-			if (files[i].isDirectory())
-			{
-				deleteDirectory(files[i]);
-			}
-			else
-			{
-				files[i].delete();
+		for (File file : files) {
+			if (file.isDirectory()) {
+				deleteDirectory(file);
+			} else {
+				file.delete();
 			}
 		}
-		
+
 		return path.delete();
 	}
 	
@@ -96,10 +92,9 @@ public class FileUtils
 			// get a listing of files...
 			String list[] = src.list();
 			// copy all the files in the list.
-			for (int i = 0; i < list.length; i++)
-			{
-				File dest1 = new File(dest, list[i]);
-				File src1 = new File(src, list[i]);
+			for (String s : list) {
+				File dest1 = new File(dest, s);
+				File src1 = new File(src, s);
 				copyFiles(src1, dest1, excludeExtensions);
 			}
 		} else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,36 +10,31 @@
 package tectonicus.util;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.Map;
 
-public class JsObjectWriter
-{
-	private OutputStream out;
-	private PrintWriter writer;
+public class JsObjectWriter implements AutoCloseable {
+	private final OutputStream out;
+	private final PrintWriter writer;
 	
-	public JsObjectWriter(File file) throws FileNotFoundException, IOException
-	{
-		if (file.exists())
-			file.delete();
+	public JsObjectWriter(File file) throws IOException {
+		Files.deleteIfExists(file.toPath());
 		
 		out = new FileOutputStream(file);
 		writer = new PrintWriter(out);
 	}
 	
-	public void write(String objName, Map<String, Object> vars)
-	{
+	public void write(String objName, Map<String, Object> vars) {
 		writer.println("var "+objName+" =");
 		writer.println("{");
 		
 		boolean hasWrittenLine = false;
 		
-		for (String name : vars.keySet())
-		{
+		for (String name : vars.keySet()) {
 			Object value = vars.get(name);
 			
 			if (hasWrittenLine)
@@ -72,7 +67,7 @@ public class JsObjectWriter
 			else if (value instanceof Boolean)
 			{
 				Boolean boolValue = (Boolean)value;
-				writer.print(boolValue.booleanValue() ? "true" : "false");
+				writer.print(boolValue ? "true" : "false");
 			}
 			else
 			{
@@ -88,17 +83,14 @@ public class JsObjectWriter
 		
 		writer.println("};");
 	}
-	
-	public void close()
-	{	
-		try
-		{
-			if (writer != null)
-				writer.close();
-		
-			if (out != null)
-				out.close();
-		}
-		catch (IOException e) {}
+
+	@Override
+	public void close() throws IOException {
+		if (writer != null)
+			writer.close();
+
+		if (out != null)
+			out.close();
+
 	}
 }

@@ -19,6 +19,8 @@ import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.mutable.MutableLong;
+import tectonicus.util.JsArrayWriter;
+import tectonicus.util.JsonWriter;
 
 @Log4j2
 public class WorldStats

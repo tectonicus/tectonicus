@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus;
+package tectonicus.util;
 
 import java.io.File;
 import java.io.FileOutputStream;

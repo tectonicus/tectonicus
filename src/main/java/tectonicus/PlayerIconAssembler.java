@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.raw.Player;
+import tectonicus.util.OutputResourcesUtil;
 
 public class PlayerIconAssembler
 {
@@ -32,7 +33,7 @@ public class PlayerIconAssembler
 		try
 		{
 			BufferedImage icon = generateIcon(skin);
-			TileRenderer.writeImage(icon, 32, 32, file);
+			OutputResourcesUtil.writeImage(icon, 32, 32, file);
 		}
 		catch (Exception e)
 		{
@@ -48,7 +49,7 @@ public class PlayerIconAssembler
 			if (skin != null)
 			{
 				BufferedImage icon = generateIcon(skin);
-				TileRenderer.writeImage(icon, 32, 32, file);
+				OutputResourcesUtil.writeImage(icon, 32, 32, file);
 			}
 		}
 		catch (Exception e)

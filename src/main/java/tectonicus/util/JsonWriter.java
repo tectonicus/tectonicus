@@ -7,10 +7,7 @@
  *
  */
 
-package tectonicus;
-
-import tectonicus.util.Vector2f;
-import tectonicus.util.Vector3l;
+package tectonicus.util;
 
 import java.io.File;
 import java.io.FileOutputStream;

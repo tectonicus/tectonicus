@@ -25,6 +25,7 @@ import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
 import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
+import tectonicus.util.OutputResourcesUtil;
 import tectonicus.util.Util;
 import tectonicus.world.World;
 
@@ -136,7 +137,7 @@ public class TectonicusApp
 			{
 				tileRenderer = new TileRenderer(args, new CommandLineOutput(), hashAlgorithm);
 				
-				tileRenderer.outputViews();				
+				tileRenderer.renderViews();
 			}
 			else if (args.getMode() == Mode.PLAYERS)
 			{
@@ -154,7 +155,7 @@ public class TectonicusApp
 					
 					File imagesDir = new File(args.getOutputDir(), "Images");
 
-					TileRenderer.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
+					OutputResourcesUtil.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
 				}
 				
 				skinCache.destroy();
@@ -313,7 +314,7 @@ public class TectonicusApp
 	//TODO: this needs to be updated
 	private static void updateToLeaflet(Path renderDir) {
 		if (renderDir.resolve("Scripts").toFile().exists()) {
-			TileRenderer.extractMapResources(renderDir.toFile());
+			OutputResourcesUtil.extractMapResources(renderDir.toFile());
 			writeUpdatedHtmlFile(renderDir.toFile());
 			System.out.println("Finished updating map " + renderDir + " to use Leaflet.");
 		} else {
@@ -346,7 +347,7 @@ public class TectonicusApp
 				String line = scanner.nextLine();
 				StringBuilder outLine = new StringBuilder();
 
-				ArrayList<Util.Token> tokens = Util.split(line);
+				List<Util.Token> tokens = Util.split(line);
 
 				while (!tokens.isEmpty())
 				{
