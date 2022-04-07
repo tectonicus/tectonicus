@@ -208,10 +208,8 @@ public class XmlConfigurationParser
 			
 			// Sign filter
 			Element signsNode = getChild(mapElement, "signs");
-			if (signsNode != null)
-			{
-				SignFilter signFilter = parseSignFilter( getString(signsNode, "filter") );
-				map.setSignFilter(signFilter);
+			if (signsNode != null) {
+				map.setSignFilter(parseSignFilter(getString(signsNode, "filter")));
 			}
 			
 			Element viewsNode = getChild(mapElement, "views");

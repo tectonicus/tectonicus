@@ -96,6 +96,7 @@ import tectonicus.blockTypes.Water;
 import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
 import tectonicus.configuration.SignFilter;
+import tectonicus.configuration.SignFilterType;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 
@@ -474,9 +475,8 @@ public class BlockRegistryParser
 				texture = parseTexture(element, "texture", defaultTex);
 			}
 			
-			boolean obey = signFilter == SignFilter.Obey;
-			if(signFilter == SignFilter.Obey)
-			{
+			boolean obey = signFilter.getType() == SignFilterType.OBEY;
+			if(obey) {
 				texture = parseTexture(element, "obey", null);
 			}
 			

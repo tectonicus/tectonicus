@@ -35,6 +35,8 @@ public class MutableMap implements Map
 	private boolean useBiomeColours;
 	
 	private PlayerFilter playerFilter;
+	@Getter
+	@Setter
 	private SignFilter signFilter;
 	private PortalFilter portalFilter;
 	private ViewFilter viewFilter;
@@ -65,7 +67,7 @@ public class MutableMap implements Map
 		this.dimension = Dimension.OVERWORLD;
 		
 		this.playerFilter = new PlayerFilter();
-		this.signFilter = SignFilter.All;
+		this.signFilter = new SignFilter(SignFilterType.ALL);
 		this.portalFilter = new PortalFilter(PortalFilterType.All);
 		this.viewFilter = new ViewFilter(ViewFilterType.All);
 		this.chestFilter = new ChestFilter();
@@ -232,16 +234,6 @@ public class MutableMap implements Map
 	public void setViewFilter(ViewFilter filter)
 	{
 		this.viewFilter = filter;
-	}
-	
-	@Override
-	public SignFilter getSignFilter()
-	{
-		return signFilter;
-	}
-	public void setSignFilter(SignFilter filter)
-	{
-		this.signFilter = filter;
 	}
 	
 	@Override

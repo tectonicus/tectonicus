@@ -9,14 +9,9 @@
 
 package tectonicus.configuration;
 
-public interface ViewConfig
-{
-	ImageFormat getImageFormat();
-	
-	float getImageCompressionLevel();
-	
-	int getViewDistance();
-	
-	int getFOV();
-	void setFOV(int fov);
+public enum SignFilterType {
+	NONE,
+	SPECIAL,
+	ALL,
+	OBEY
 }

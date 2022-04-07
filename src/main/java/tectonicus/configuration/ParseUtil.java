@@ -169,31 +169,25 @@ public class ParseUtil
 		return 70;
 	}
 	
-	public static SignFilter parseSignFilter(String filterStr)
-	{
-		filterStr = filterStr.toLowerCase();
-		
-		SignFilter filter = SignFilter.Special;
-		
-		if (filterStr.equalsIgnoreCase("none")
-			|| filterStr.equalsIgnoreCase("off"))
-		{
-			filter = SignFilter.None;
-		}
-		else if (filterStr.equalsIgnoreCase("special"))
-		{
-			filter = SignFilter.Special;
-		}
-		else if (filterStr.equalsIgnoreCase("all"))
-		{
-			filter = SignFilter.All;
-		}
-		else if (filterStr.equalsIgnoreCase("obey"))
-		{
-			filter = SignFilter.Obey;
+	public static SignFilter parseSignFilter(String filterStr) {
+		SignFilterType filterType;
+
+		switch (filterStr.toLowerCase()) {
+			case "none":
+			case "off":
+				filterType = SignFilterType.NONE;
+				break;
+			case "all":
+				filterType = SignFilterType.ALL;
+				break;
+			case "obey":
+				filterType = SignFilterType.OBEY;
+				break;
+			default:
+				filterType = SignFilterType.SPECIAL;
 		}
 		
-		return filter;
+		return new SignFilter(filterType);
 	}
 	
 	public static ViewFilterType parseViewFilter(String filterStr)

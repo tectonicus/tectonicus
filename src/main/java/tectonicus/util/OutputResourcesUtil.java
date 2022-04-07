@@ -28,7 +28,7 @@ import tectonicus.configuration.Dimension;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.PlayerFilter;
-import tectonicus.configuration.SignFilter;
+import tectonicus.configuration.SignFilterType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BlockEntity;
 import tectonicus.raw.BlockProperties;
@@ -92,7 +92,7 @@ public class OutputResourcesUtil {
 			while (signs.hasNext()) {
 				signs.read(sign);
 				String message = "\"" + sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
-				if (map.getSignFilter() == SignFilter.Obey)
+				if (map.getSignFilter().getType() == SignFilterType.OBEY)
 					message = "\"\\nOBEY\\n\\n\"";
 
 				HashMap<String, String> signArgs = new HashMap<>();
@@ -104,7 +104,7 @@ public class OutputResourcesUtil {
 				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 				signArgs.put("worldPos", posStr);
 				signArgs.put("message", message);
-				if (map.getSignFilter() == SignFilter.Obey) {
+				if (map.getSignFilter().getType() == SignFilterType.OBEY) {
 					signArgs.put("text1", "\"\"");
 					signArgs.put("text2", "\"OBEY\"");
 					signArgs.put("text3", "\"\"");

@@ -133,9 +133,8 @@ public class CommandLineParser
 		
 		final float imageCompression = parseImageCompression( parser.getString("imageCompressionLevel", "") );
 		layer.setImageCompressionLevel(imageCompression);
-		
-		SignFilter signFilter = parseSignFilter( parser.getString("signs", "") );
-		map.setSignFilter(signFilter);
+
+		map.setSignFilter(parseSignFilter(parser.getString("signs", "special")));
 		
 		config.setShowPlayerSpawn( parser.getBoolean("showSpawn", true));
 		
