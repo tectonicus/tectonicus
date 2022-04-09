@@ -604,7 +604,7 @@ public class OutputResourcesUtil {
 		//Extract Leaflet resources
 		extractMapResources(exportDir);
 
-		ArrayList<String> scriptResources = new ArrayList<>();
+		List<String> scriptResources = new ArrayList<>();
 		scriptResources.add("marker.js");
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
@@ -633,12 +633,10 @@ public class OutputResourcesUtil {
 		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptImagesDir.mkdirs();
 
-		FileUtils.extractResource("styles.css", new File(scriptsDir, "styles.css"));
-
 		FileUtils.extractResource("math.js", new File(scriptsDir, "math.js"));
 		FileUtils.extractResource("leaflet.js", new File(scriptsDir, "leaflet.js"));
 		FileUtils.extractResource("leaflet.css", new File(scriptsDir, "leaflet.css"));
-		FileUtils.extractResource("leafletStyles.css", new File(scriptsDir, "leafletStyles.css"));
+		FileUtils.extractResource("tectonicusStyles.css", new File(scriptsDir, "tectonicusStyles.css"));
 		FileUtils.extractResource("Images/layers.png", new File(scriptImagesDir, "layers.png"));
 		FileUtils.extractResource("Images/layers-2x.png", new File(scriptImagesDir, "layers-2x.png"));
 		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
@@ -649,7 +647,7 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
 	}
 
-	private void outputMergedJs(File outFile, ArrayList<String> inputResources, int numZoomLevels, Configuration args, int tileWidth, int tileHeight)
+	private void outputMergedJs(File outFile, List<String> inputResources, int numZoomLevels, Configuration args, int tileWidth, int tileHeight)
 	{
 		InputStream in = null;
 		final int scale = (int)Math.pow(2, numZoomLevels);
