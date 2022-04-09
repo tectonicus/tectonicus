@@ -311,15 +311,16 @@ public class TectonicusApp
 		app.run();
 	}
 
-	//TODO: this needs to be updated
+	//TODO: this needs to be updated or removed
 	private static void updateToLeaflet(Path renderDir) {
-		if (renderDir.resolve("Scripts").toFile().exists()) {
-			OutputResourcesUtil.extractMapResources(renderDir.toFile());
-			writeUpdatedHtmlFile(renderDir.toFile());
-			System.out.println("Finished updating map " + renderDir + " to use Leaflet.");
-		} else {
-			System.err.println(renderDir + " is not a Tectonicus map render directory.");
-		}
+		System.out.println("updateToLeaflet command is temporarily disabled");
+//		if (renderDir.resolve("Scripts").toFile().exists()) {
+//			OutputResourcesUtil.extractMapResources(renderDir.toFile());
+//			writeUpdatedHtmlFile(renderDir.toFile());
+//			System.out.println("Finished updating map " + renderDir + " to use Leaflet.");
+//		} else {
+//			System.err.println(renderDir + " is not a Tectonicus map render directory.");
+//		}
 		System.exit(1);
 	}
 
