@@ -11,6 +11,7 @@ function size(obj) {
 	return size;
 }
 
+var layerControl = null;
 var compassControl = null;
 var viewToggleControl = null;
 var signToggleControl = null;
@@ -81,10 +82,6 @@ function main()
         }
     }
 
-	if (tileLayers.size > 1) {
-        L.control.layers(baseMaps).addTo(mymap);
-    }
-
 	// Try and get a starting view from the fragment params, query params, or fall back to default
 	let defaultLayer = tileLayers.get("LayerA");
 	let startView;
@@ -104,6 +101,9 @@ function main()
 	startLayer.viewPosition = startView;
 
 	// Create controls
+	if (tileLayers.size > 1) {
+        layerControl = L.control.layers(baseMaps);
+    }
 	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
     viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
     signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
@@ -116,7 +116,7 @@ function main()
 
 	//CreateLinkControl(map);
 
-	// Add controls to the map
+	// Add attribution control to the map
 	L.control.attribution({position: 'bottomleft'}).addTo(mymap);
 
 	// Register these last so that they don't get called while we're still initialising
@@ -183,6 +183,10 @@ function onBaseLayerChange(e) {
 	if (e.layer.chests.length != 0) {
 		mymap.addControl(chestToggleControl);
 	}
+
+	if (layerControl != null) {
+        mymap.addControl(layerControl);
+    }
 
 	// Add tooltips to the toggle buttons
 	tippy('.button', {

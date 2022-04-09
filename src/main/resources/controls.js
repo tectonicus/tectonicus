@@ -42,15 +42,15 @@
 function CreateCompassControl(initialImage) {
 	var compassControl = L.Control.extend({
 		options: {
-			position: 'topright'
+			position: 'topleft'
 		},
 
 		onAdd: function (map) {
-			var container = L.DomUtil.create('div', 'leaflet-control leaflet-control-custom');
-			container.style.backgroundImage = "url(" + initialImage + ")";
+			var container = L.DomUtil.create('div', 'compass leaflet-control leaflet-control-custom');
+			container.style.background = "url(" + initialImage + ") center";
 			container.style.backgroundSize = "128px 128px";
-			container.style.width = '128px';
-			container.style.height = '128px';
+			container.style.width = '100px';
+			container.style.height = '80px';
 
 			return container;
 		}
@@ -63,7 +63,7 @@ function CreateCompassControl(initialImage) {
 function CreateToggleControl(text, image, markers, startEnabled) {
 	let toggleControl = L.Control.extend({
 		options: {
-			position: 'bottomright'
+			position: 'topright'
 		},
 
 		onAdd: function (map) {
@@ -72,8 +72,8 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 			container.src = image;
 			container.title = text;
 			container.style.padding = '5px';
-			container.style.width = '30px';
-			container.style.height = '30px';
+			container.style.width = '34px';
+			container.style.height = '34px';
 			container.checked = startEnabled;
 			SetToggleBg(container);
 
@@ -111,7 +111,7 @@ function SetToggleBg(control) {
 	if (control.checked)
 		control.style.backgroundColor = '#CCCCFF';
 	else
-		control.style.backgroundColor = '#EEEEEE';
+		control.style.backgroundColor = '#FFFFFF';
 }
 
 

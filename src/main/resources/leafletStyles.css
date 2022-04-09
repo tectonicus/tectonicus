@@ -7,6 +7,23 @@ html, body, #map {
 	width: 100%;
 }
 
+.leaflet-control-layers {
+	clear: none;
+}
+
+.compass.leaflet-control-custom {
+	clear: none;
+}
+
+.button.leaflet-control-custom {
+	margin-right: 8px;
+	clear: none;
+}
+
+.leaflet-control-layers-expanded:hover {
+	border-color: rgb(137, 132, 209);
+}
+
 .button:hover {
 	border-color: rgb(137, 132, 209);
 }
