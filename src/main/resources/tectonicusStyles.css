@@ -7,16 +7,12 @@ html, body, #map {
 	width: 100%;
 }
 
-.leaflet-control-layers {
-	clear: none;
-}
-
 .compass.leaflet-control-custom {
 	clear: none;
 }
 
 .button.leaflet-control-custom {
-	margin-right: 8px;
+	margin-left: -2px;
 	clear: none;
 }
 
