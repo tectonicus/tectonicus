@@ -41,7 +41,7 @@ dependencies {
 				   "com.fasterxml.jackson.core:jackson-databind:2.13.2.2",
 				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
-				   "com.h2database:h2-mvstore:2.1.210")
+				   "com.h2database:h2-mvstore:2.1.212")
 	implementation files ('libs/jnbt.jar', 'libs/jpct.jar', 'libs/ProcessingCore.jar', 'libs/BiomeExtractor.jar')
 	shadow "org.apache.logging.log4j:log4j-core:$log4jVersion"
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
