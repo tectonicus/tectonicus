@@ -39,7 +39,7 @@ function main()
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
         initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, worldVectors, projection,
-            blockStats, worldStats, viewPosition) {
+            blockStats, worldStats, viewPosition, controlState) {
             this.mapId = mapId;
             this.layerId = layerId;
             this.dimension = dimension;
@@ -58,6 +58,7 @@ function main()
             this.blockStats = blockStats;
             this.worldStats = worldStats;
 			this.viewPosition = viewPosition;
+			this.controlState = JSON.parse(JSON.stringify(controlState));
         }
     });
 
@@ -71,7 +72,7 @@ function main()
 			let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
             let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition);
+                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
 
             if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
                 baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
@@ -138,7 +139,28 @@ respawnAnchorMarkers = [];
 chestMarkers = [];
 
 function onBaseLayerChange(e) {
+    //Save current control states to previous layer
+    if (spawnToggleControl.hasOwnProperty('_container')) // check if control exists on map
+        controlState.spawnControlChecked = spawnToggleControl._container.checked;
+    if (signToggleControl.hasOwnProperty('_container'))
+        controlState.signControlChecked = signToggleControl._container.checked;
+    if (viewToggleControl.hasOwnProperty('_container'))
+        controlState.viewControlChecked = viewToggleControl._container.checked;
+    if (playerToggleControl.hasOwnProperty('_container'))
+        controlState.playerControlChecked = playerToggleControl._container.checked;
+    if (portalToggleControl.hasOwnProperty('_container'))
+        controlState.portalControlChecked = portalToggleControl._container.checked;
+    if (bedToggleControl.hasOwnProperty('_container'))
+        controlState.bedControlChecked = bedToggleControl._container.checked;
+    if (respawnAnchorToggleControl.hasOwnProperty('_container'))
+        controlState.respawnAnchorControlChecked = respawnAnchorToggleControl._container.checked;
+    if (chestToggleControl.hasOwnProperty('_container'))
+        controlState.chestControlChecked = chestToggleControl._container.checked;
+
+    activeBaseLayer.controlState = JSON.parse(JSON.stringify(controlState));
+
     activeBaseLayer = e.layer;
+    controlState = e.layer.controlState;
 
 	mymap.setView(e.layer.viewPosition.startPoint, e.layer.viewPosition.zoom);
 
@@ -147,42 +169,50 @@ function onBaseLayerChange(e) {
     spawnToggleControl.remove();
     if (e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER") {
         mymap.addControl(spawnToggleControl);
+        spawnToggleControl.setChecked(controlState.spawnControlChecked);
     }
 
     signToggleControl.remove();
-	if (e.layer.signs.length != 0) {
-		mymap.addControl(signToggleControl);
-	}
+    if (e.layer.signs.length != 0) {
+        mymap.addControl(signToggleControl);
+        signToggleControl.setChecked(controlState.signControlChecked);
+    }
 
-	viewToggleControl.remove();
-	if (e.layer.views.length != 0) {
-		mymap.addControl(viewToggleControl);
-	}
+    viewToggleControl.remove();
+    if (e.layer.views.length != 0) {
+        mymap.addControl(viewToggleControl);
+        viewToggleControl.setChecked(controlState.viewControlChecked);
+    }
 
-	playerToggleControl.remove();
-	if (e.layer.players.length != 0) {
-		mymap.addControl(playerToggleControl);
-	}
+    playerToggleControl.remove();
+    if (e.layer.players.length != 0) {
+        mymap.addControl(playerToggleControl);
+        playerToggleControl.setChecked(controlState.playerControlChecked);
+    }
 
-	portalToggleControl.remove();
-	if (e.layer.portals.length != 0) {
-		mymap.addControl(portalToggleControl);
-	}
+    portalToggleControl.remove();
+    if (e.layer.portals.length != 0) {
+        mymap.addControl(portalToggleControl);
+        portalToggleControl.setChecked(controlState.portalControlChecked);
+    }
 
-	bedToggleControl.remove();
-	if (e.layer.beds.length != 0) {
-		mymap.addControl(bedToggleControl);
-	}
+    bedToggleControl.remove();
+    if (e.layer.beds.length != 0) {
+        mymap.addControl(bedToggleControl);
+        bedToggleControl.setChecked(controlState.bedControlChecked);
+    }
 
     respawnAnchorToggleControl.remove();
-	if (e.layer.anchors.length != 0) {
-		mymap.addControl(respawnAnchorToggleControl);
-	}
+    if (e.layer.anchors.length != 0) {
+        mymap.addControl(respawnAnchorToggleControl);
+        respawnAnchorToggleControl.setChecked(controlState.respawnAnchorChecked);
+    }
 
-	chestToggleControl.remove();
-	if (e.layer.chests.length != 0) {
-		mymap.addControl(chestToggleControl);
-	}
+    chestToggleControl.remove();
+    if (e.layer.chests.length != 0) {
+        mymap.addControl(chestToggleControl);
+        chestToggleControl.setChecked(controlState.chestControlChecked);
+    }
 
 	if (layerControl != null) {
         mymap.addControl(layerControl);
@@ -206,15 +236,15 @@ function onBaseLayerChange(e) {
 	if (e.layer.dimension === "NETHER") {
         destroyMarkers(spawnMarkers);
     } else {
-        refreshSpawnMarker(e.layer, spawnInitiallyVisible);
+        refreshSpawnMarker(e.layer, controlState.spawnControlChecked);
     }
-	refreshSignMarkers(e.layer, signsInitiallyVisible);
-	refreshViewMarkers(e.layer, viewsInitiallyVisible);
-	refreshPlayerMarkers(e.layer, playersInitiallyVisible);
-	refreshPortalMarkers(e.layer, portalsInitiallyVisible);
-	refreshBedMarkers(e.layer, bedsInitiallyVisible);
-	refreshRespawnAnchorMarkers(e.layer, respawnAnchorsInitiallyVisible);
-	refreshChestMarkers(e.layer, false);
+    refreshSignMarkers(e.layer, controlState.signControlChecked);
+    refreshViewMarkers(e.layer, controlState.viewControlChecked);
+    refreshPlayerMarkers(e.layer, controlState.playerControlChecked);
+    refreshPortalMarkers(e.layer, controlState.portalControlChecked);
+    refreshBedMarkers(e.layer, controlState.bedControlChecked);
+    refreshRespawnAnchorMarkers(e.layer, controlState.respawnAnchorControlChecked);
+    refreshChestMarkers(e.layer, controlState.chestControlChecked);
 
 	compassControl.remove();
 	compassControl = CreateCompassControl(e.layer.mapId + '/Compass.png');

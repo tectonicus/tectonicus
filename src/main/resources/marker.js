@@ -11,6 +11,16 @@ var respawnAnchorsInitiallyVisible = {{respawnAnchorsInitiallyVisible}};
 var spawnInitiallyVisible = {{spawnInitiallyVisible}};
 var viewsInitiallyVisible = {{viewsInitiallyVisible}};
 
+let controlState = {
+	spawnControlChecked: spawnInitiallyVisible,
+	signControlChecked: signsInitiallyVisible,
+	viewControlChecked: viewsInitiallyVisible,
+	playerControlChecked: playersInitiallyVisible,
+	portalControlChecked: portalsInitiallyVisible,
+	bedControlChecked: bedsInitiallyVisible,
+	respawnAnchorControlChecked: respawnAnchorsInitiallyVisible,
+	chestControlChecked: false,
+}
 
 function createPlayerMarker(player, pos) {
 	let icon = L.icon({

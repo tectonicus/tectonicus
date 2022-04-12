@@ -75,7 +75,6 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 			container.style.width = '34px';
 			container.style.height = '34px';
 			container.checked = startEnabled;
-			SetToggleBg(container);
 
 			container.onclick = function () {
 				this.checked = !this.checked;
@@ -101,6 +100,11 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 			L.DomEvent.disableClickPropagation(container);
 
 			return container;
+		},
+		setChecked: function(checked) {
+			let container = this._container;
+			container.checked = checked;
+			SetToggleBg(container);
 		}
 	});
 
