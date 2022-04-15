@@ -10,11 +10,8 @@
 package tectonicus.blockregistry;
 
 import lombok.Getter;
-import tectonicus.blockregistry.BlockState;
-import tectonicus.blockregistry.BlockStateModel;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -22,13 +19,13 @@ public class BlockVariant implements BlockState
 {
 	private final String name;
 	private final Map<String, String> states;
-	private final List<BlockStateModel> models;
+	private final BlockStateModelsWeight modelsAndWeight;
 	
-	public BlockVariant(String name, List<BlockStateModel> models)
+	public BlockVariant(String name, BlockStateModelsWeight models)
 	{
 		this.name = name;
 		this.states = new HashMap<>();
-		this.models = models;
+		this.modelsAndWeight = models;
 
 		String[] statesArray = name.split(",");
 		

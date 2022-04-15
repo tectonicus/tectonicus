@@ -58,8 +58,8 @@ public class BlockRegistry
 	@Getter
 	private final Map<String, BlockModel> blockModels = new HashMap<>();
 	@Getter
-	private final Map<String, List<BlockStateModel>> singleVariantBlocks = new HashMap<>();
-	private Set<String> missingBlockModels = new HashSet<>();
+	private final Map<String, BlockStateModelsWeight> singleVariantBlocks = new HashMap<>();
+	private final Set<String> missingBlockModels = new HashSet<>();
 	private TexturePack texturePack;
 	private ZipStack zips;
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -155,7 +155,7 @@ public class BlockRegistry
 							}
 						}
 
-						states.addCase(new BlockStateCase(whenClauses, deserializeBlockStateModels(node.get("apply"))));
+						states.addCase(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
 					});
 				} else if (root.has("variants")) {
 					JsonNode variants = root.get("variants");
@@ -165,10 +165,11 @@ public class BlockRegistry
 						Map.Entry<String, JsonNode> entry = iter.next();
 						String key = entry.getKey();
 						List<BlockStateModel> blockStateModels = deserializeBlockStateModels(entry.getValue());
+						BlockStateModelsWeight modelsAndWeight = new BlockStateModelsWeight(blockStateModels);
 						if (!key.contains("=")) {
-							singleVariantBlocks.put(name, blockStateModels);
+							singleVariantBlocks.put(name, modelsAndWeight);
 						}
-						BlockVariant blockVariant = new BlockVariant(key, blockStateModels);
+						BlockVariant blockVariant = new BlockVariant(key, modelsAndWeight);
 						states.addVariant(blockVariant);
 					}
 				} else {
@@ -342,11 +343,11 @@ public class BlockRegistry
 			List<BlockStateCase> cases = wrapper.getCases();
 			if (!cases.isEmpty()) {
 				for (BlockStateCase c : cases) {
-					setBlockAttributes(wrapper, c.getModels());
+					setBlockAttributes(wrapper, c.getModelsAndWeight().getModels());
 				}
 			} else {
 				for (BlockVariant variant : wrapper.getVariants()) {
-					setBlockAttributes(wrapper, variant.getModels());
+					setBlockAttributes(wrapper, variant.getModelsAndWeight().getModels());
 				}
 			}
 		}

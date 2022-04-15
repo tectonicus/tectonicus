@@ -46,7 +46,7 @@ public class BlockStateWrapper {
 			for (BlockStateCase bsc : cases) {
 				List<Map<String, String>> whenClauses = bsc.getWhenClauses();
 				if (whenClauses.isEmpty()) {  // If no when clauses then always apply models
-					models.addAll(bsc.getModels());
+					models.addAll(bsc.getModelsAndWeight().getModels());
 				} else {
 					for (Map<String, String> clause : whenClauses) {
 						boolean addModel = true;
@@ -58,7 +58,7 @@ public class BlockStateWrapper {
 							}
 						}
 						if (addModel) {
-							models.add(getRandomWeightedModel(bsc.getModels()));
+							models.add(getRandomWeightedModel(bsc.getModelsAndWeight()));
 							break;
 						}
 					}
@@ -69,7 +69,7 @@ public class BlockStateWrapper {
 				String variantProperties = variant.getName();
 				if (variantProperties.equals(StringUtils.EMPTY) || properties.contains(variantProperties)
 						|| properties.containsAll(variant.getStates())) {
-					models.add(getRandomWeightedModel(variant.getModels()));
+					models.add(getRandomWeightedModel(variant.getModelsAndWeight()));
 					break;
 				}
 			}
@@ -81,19 +81,20 @@ public class BlockStateWrapper {
 		List<BlockStateModel> models = new ArrayList<>();
 		if (!cases.isEmpty()) {
 			for (BlockStateCase bsc : cases) {
-				models.addAll(bsc.getModels());
+				models.addAll(bsc.getModelsAndWeight().getModels());
 			}
 		} else {
 			for (BlockVariant variant : variants) {
-				models.addAll(variant.getModels());
+				models.addAll(variant.getModelsAndWeight().getModels());
 			}
 		}
 		return models;
 	}
 
 	//TODO: We need to do similar to whatever Minecraft does so that the same model is always chosen for specific block coordinates
-	public static BlockStateModel getRandomWeightedModel(List<BlockStateModel> models) {
-		int totalWeight = models.stream().mapToInt(BlockStateModel::getWeight).sum();
+	public static BlockStateModel getRandomWeightedModel(BlockStateModelsWeight modelsAndWeight) {
+		int totalWeight = modelsAndWeight.getTextureWeightSum();
+		List<BlockStateModel> models = modelsAndWeight.getModels();
 
 		int idx = 0;
 		for (double r = Math.random() * totalWeight; idx < models.size() - 1; ++idx) {

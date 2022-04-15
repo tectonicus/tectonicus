@@ -9,6 +9,17 @@
 
 package tectonicus.blockregistry;
 
-public interface BlockState {
-	BlockStateModelsWeight getModelsAndWeight();
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class BlockStateModelsWeight {
+	private final List<BlockStateModel> models;
+	private final int textureWeightSum;
+
+	public BlockStateModelsWeight(List<BlockStateModel> models) {
+		this.models = models;
+		this.textureWeightSum = models.stream().mapToInt(BlockStateModel::getWeight).sum();
+	}
 }

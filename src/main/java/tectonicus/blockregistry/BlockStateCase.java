@@ -21,5 +21,5 @@ import java.util.Map;
 @ToString
 public class BlockStateCase implements BlockState {
 	List<Map<String, String>> whenClauses;
-	List<BlockStateModel> models;
+	BlockStateModelsWeight modelsAndWeight;
 }
