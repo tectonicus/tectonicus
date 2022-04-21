@@ -118,7 +118,7 @@ function main()
 	//CreateLinkControl(map);
 
 	// Add attribution control to the map
-	L.control.attribution({position: 'bottomleft'}).addTo(mymap);
+	L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
