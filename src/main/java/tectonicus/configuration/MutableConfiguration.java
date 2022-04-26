@@ -60,7 +60,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private File outputDir;
 
 	@Option(names = {"-w", "--worldDir", "worldDir"}, paramLabel = "<String>")
-	private MutableMap worldDir;
+	private File worldDir;
 
 	@Option(names = {"-d", "--dimension", "dimension"}, paramLabel = "<String>")
 	private Dimension dimension;
@@ -73,6 +73,9 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	@Option(names = {"-j", "--minecraftJar", "minecraftJar"}, paramLabel = "<String>")
 	private File minecraftJar;
+
+	@Option(names = {"--useSmoothLighting"}, paramLabel = "<boolean>")
+	private boolean smoothLit;
 
 	@Option(names = {"-t", "--texturePack", "texturePack"}, paramLabel = "<String>")
 	private File texturePack;
@@ -170,6 +173,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		numDownsampleThreads = 1;
 		singlePlayerName = "Player";
 		maps = new ArrayList<>();
+		smoothLit = false;
 	}
 
 	@Override
@@ -223,6 +227,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 			log.debug("\tcameraElevation: "+m.getCameraElevationDeg());
 			log.debug("\tclosestZoomSize: "+m.getClosestZoomSize());
 			log.debug("\tworldSubset: "+m.getWorldSubset());
+			log.debug("\tuseSmoothLighting:" + m.isSmoothLit());
 			log.debug("\tuseBiomeColours: "+m.useBiomeColours());
 
 			for (Layer l : m.getLayers())
@@ -258,7 +263,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	}
 	public boolean eraseOutputDir() { return eraseOutputDir; }
 
-	public MutableMap getWorldDir() { return worldDir; }
+	public File getWorldDir() { return worldDir; }
 
 	public void setUseCache(final boolean useCache)
 	{

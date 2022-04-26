@@ -78,7 +78,7 @@ public class Cauldron implements BlockType
 		Mesh bottomMesh = geometry.getMesh(bottom.texture, Geometry.MeshType.AlphaTest);
 		Mesh waterMesh = geometry.getMesh(water.texture, Geometry.MeshType.Transparent);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1.0f);
 		

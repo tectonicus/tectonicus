@@ -572,6 +572,14 @@ public class ItemRenderer
 		}
 
 		@Override
+		public float getNightLightAdjustment() {
+			return 0.1f;
+		}
+
+		@Override
+		public boolean isSmoothLit() { return true; }
+
+		@Override
 		public TexturePack getTexturePack()
 		{
 			return texturePack;

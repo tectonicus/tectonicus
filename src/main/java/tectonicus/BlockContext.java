@@ -32,6 +32,8 @@ public interface BlockContext {
 	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
 
 	LightStyle getLightStyle();
+	float getNightLightAdjustment();
+	boolean isSmoothLit();
 
 	TexturePack getTexturePack();
 

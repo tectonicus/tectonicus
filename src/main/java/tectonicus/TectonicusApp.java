@@ -48,18 +48,18 @@ import java.util.stream.Stream;
 
 public class TectonicusApp
 {
-	private final Configuration args;
+	private final Configuration config;
 	private static org.apache.logging.log4j.Logger log;
 
-	private TectonicusApp(Configuration args)
+	private TectonicusApp(Configuration config)
 	{
-		this.args = args;
+		this.config = config;
 
-		if (args.isVerbose()) {
-			args.setLoggingLevel(Level.TRACE);
+		if (config.isVerbose()) {
+			config.setLoggingLevel(Level.TRACE);
 		}
 
-		Configurator.setRootLevel(args.getLoggingLevel());
+		Configurator.setRootLevel(config.getLoggingLevel());
 		
 		BuildInfo.print();
 		
@@ -94,66 +94,58 @@ public class TectonicusApp
 		try
 		{
 			MessageDigest hashAlgorithm = MessageDigest.getInstance("sha1");
-			if (args.getMode() == Mode.INTERACTIVE)
+			if (config.getMode() == Mode.INTERACTIVE)
 			{
-				interactiveRenderer = new InteractiveRenderer(args, 512, 512);
+				interactiveRenderer = new InteractiveRenderer(config, 512, 512);
 
-				tectonicus.configuration.Map map;
-				Layer layer;
-				if (args.getWorldDir() != null) {
-					map = args.getWorldDir();
-					layer = new MutableLayer("LayerA", map.getId());
-				} else {
-					map = args.getMap(0);
-					layer = map.getLayer(0);
-				}
+				tectonicus.configuration.Map map = config.getMap(0);;
+				Layer layer = map.getLayer(0);
 				
-				BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
-				PlayerSkinCache skinCache = new PlayerSkinCache(args, hashAlgorithm);
+				BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
+				PlayerSkinCache skinCache = new PlayerSkinCache(config, hashAlgorithm);
 				
-				World world = new World(interactiveRenderer.getRasteriser(), map.getWorldDir(), map.getDimension(),
-						args.minecraftJar(), args.getTexturePack(), map.getModJars(), biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), skinCache, map.getSignFilter(), args);
+				World world = new World(interactiveRenderer.getRasteriser(), map, biomeCache, skinCache, config);
 				TileRenderer.setupWorldForLayer(layer, world);
 				
 				interactiveRenderer.display(world);
 				
 				interactiveRenderer.destroy();
 			}
-			else if (args.getMode() == Mode.CMD)
+			else if (config.getMode() == Mode.CMD)
 			{
 				// Do this first before we attempt to load any caches
-				if (args.eraseOutputDir())
+				if (config.eraseOutputDir())
 				{
-					log.info("Deleting output dir: {}", args.getOutputDir().getAbsolutePath());
+					log.info("Deleting output dir: {}", config.getOutputDir().getAbsolutePath());
 					
-					FileUtils.deleteDirectory(args.getOutputDir());
+					FileUtils.deleteDirectory(config.getOutputDir());
 				}
 				
-				tileRenderer = new TileRenderer(args, new CommandLineOutput(), hashAlgorithm);
+				tileRenderer = new TileRenderer(config, new CommandLineOutput(), hashAlgorithm);
 				
 				tileRenderer.output();
 			}
-			else if (args.getMode() == Mode.VIEWS)
+			else if (config.getMode() == Mode.VIEWS)
 			{
-				tileRenderer = new TileRenderer(args, new CommandLineOutput(), hashAlgorithm);
+				tileRenderer = new TileRenderer(config, new CommandLineOutput(), hashAlgorithm);
 				
 				tileRenderer.renderViews();
 			}
-			else if (args.getMode() == Mode.PLAYERS)
+			else if (config.getMode() == Mode.PLAYERS)
 			{
 				final Date startTime = new Date();
 				
-				PlayerSkinCache skinCache = new PlayerSkinCache(args, hashAlgorithm);
+				PlayerSkinCache skinCache = new PlayerSkinCache(config, hashAlgorithm);
 				PlayerIconAssembler iconAssembler = new PlayerIconAssembler(skinCache);
 				
-				for (tectonicus.configuration.Map map : args.getMaps())
+				for (tectonicus.configuration.Map map : config.getMaps())
 				{
 					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache);
 									
-					File mapDir = new File(args.getOutputDir(), map.getId());
+					File mapDir = new File(config.getOutputDir(), map.getId());
 					File playerDir = new File(mapDir, "players.js");
 					
-					File imagesDir = new File(args.getOutputDir(), "Images");
+					File imagesDir = new File(config.getOutputDir(), "Images");
 
 					OutputResourcesUtil.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
 				}
@@ -164,12 +156,12 @@ public class TectonicusApp
 				String time = Util.getElapsedTime(startTime, endTime);
 				log.debug("Player export took {}", time);
 			}
-			else if (args.getMode() == Mode.GUI)
+			else if (config.getMode() == Mode.GUI)
 			{
 				Gui gui = new Gui(hashAlgorithm);
 				gui.display();
 			}
-			else if (args.getMode() == Mode.PROFILE)
+			else if (config.getMode() == Mode.PROFILE)
 			{
 				/*
 				BiomeCache biomeCache = new NullBiomeCache();
@@ -242,32 +234,25 @@ public class TectonicusApp
 		//Parse command line to get config file
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
-		cmd.registerConverter(MutableMap.class, s -> new MutableMap("Throwaway"));
 		cmd.registerConverter(Level.class, Level::toLevel);
 		cmd.setCaseInsensitiveEnumValuesAllowed(true);
 		CommandLine.ParseResult parseResult = cmd.parseArgs(argArray);
+		//If no arguments print usage help
 		if (parseResult.originalArgs().isEmpty()) {
 			cmd.usage(cmd.getOut());
 			System.exit(cmd.getCommandSpec().exitCodeOnUsageHelp());
 		}
+
 		Path configFile = m.getConfigFile();
-		
-		MutableConfiguration args = new MutableConfiguration();
+		MutableConfiguration config = new MutableConfiguration();
 		if (configFile != null)
 		{
 			// Load config from xml first
-			args = XmlConfigurationParser.parseConfiguration(configFile.toFile());
+			config = XmlConfigurationParser.parseConfiguration(configFile.toFile());
 		}
 
 		// Load config from command line second.  Command line options will override config file options
-		CommandLine commandLine = new CommandLine(args);
-		commandLine.registerConverter(MutableMap.class, s -> {
-			MutableMap map = new MutableMap("Map0");
-			MutableLayer layer = new MutableLayer("LayerA", map.getId());
-			map.addLayer(layer);
-			map.setWorldDir(new File(s));
-			return map;
-		});
+		CommandLine commandLine = new CommandLine(config);
 		commandLine.registerConverter(Level.class, Level::toLevel);
 		commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 		commandLine.setExecutionStrategy(new CommandLine.RunFirst());
@@ -278,32 +263,41 @@ public class TectonicusApp
 		}
 
 		// Reset log file name
-		System.setProperty("logFilename", args.getLogFile());
+		System.setProperty("logFilename", config.getLogFile());
 		Configurator.reconfigure();
 
-		if (args.getMinecraftJar() == null) {
+		if (config.getMinecraftJar() == null) {
 			log.info("No Minecraft jar specified.");
-			args.setMinecraftJar(Minecraft.findMinecraftJar());
+			config.setMinecraftJar(Minecraft.findMinecraftJar());
 		}
 
-		if (args.getUpdateToLeaflet() != null) {
-			updateToLeaflet(args.getUpdateToLeaflet());
+		if (config.getUpdateToLeaflet() != null) {
+			updateToLeaflet(config.getUpdateToLeaflet());
 			System.exit(0);
 		}
 
-		if (args.getDimension() != null) {
-			args.getWorldDir().setDimension(args.getDimension());
+		if (config.numMaps() == 0) { //If no maps were specified in xml config add a single map and layer
+			MutableMap map = new MutableMap("Map0");
+			MutableLayer layer = new MutableLayer("LayerA", map.getId());
+			map.addLayer(layer);
+			map.setWorldDir(config.getWorldDir());
+			//TODO: add additional map config options from command line
+			config.addMap(map);
 		}
 
-		TectonicusApp app = new TectonicusApp(args);
+		if (config.getDimension() != null) {
+			config.getMap(0).setDimension(config.getDimension());
+		}
 
-		args.printActive();
+		TectonicusApp app = new TectonicusApp(config);
+
+		config.printActive();
 
 		// Workaround for sun bug 6539705 ( http://bugs.sun.com/view_bug.do?bug_id=6539705 )
 		// Trigger the load of the awt libraries before we load lwjgl
 		Toolkit.getDefaultToolkit();
 
-		if (args.forceLoadAwt())
+		if (config.forceLoadAwt())
 		{
 			System.loadLibrary("awt");
 		}

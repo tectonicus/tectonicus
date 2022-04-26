@@ -9,8 +9,6 @@
 
 package tectonicus.chunk;
 
-import java.io.File;
-
 import lombok.extern.log4j.Log4j2;
 import tectonicus.Region;
 import tectonicus.RegionCache;
@@ -20,6 +18,8 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.util.Util;
 import tectonicus.world.WorldInfo;
 import tectonicus.world.filter.BlockFilter;
+
+import java.io.File;
 
 @Log4j2
 public class ChunkLocator

@@ -59,7 +59,7 @@ public interface Configuration  //TODO: is this interface needed?
 	
 	File getOutputDir();
 	File getCacheDir();
-	MutableMap getWorldDir();
+	File getWorldDir();
 	
 	boolean useCache();
 	

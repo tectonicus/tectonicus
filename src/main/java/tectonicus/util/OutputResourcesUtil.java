@@ -95,7 +95,7 @@ public class OutputResourcesUtil {
 				if (map.getSignFilter().getType() == SignFilterType.OBEY)
 					message = "\"\\nOBEY\\n\\n\"";
 
-				HashMap<String, String> signArgs = new HashMap<>();
+				Map<String, String> signArgs = new HashMap<>();
 
 				final float worldX = sign.getX() + 0.5f;
 				final float worldY = sign.getY();
@@ -148,7 +148,7 @@ public class OutputResourcesUtil {
 					if (worldSubset.containsBlock(position.x, position.z)) {
 						log.debug("\texporting {}", player.getName());
 
-						HashMap<String, String> args = new HashMap<>();
+						Map<String, String> args = new HashMap<>();
 
 						Vector3d pos = player.getPosition();
 						args.put("name", "\"" + player.getName() + "\"");
@@ -201,7 +201,7 @@ public class OutputResourcesUtil {
 				PlayerFilter filter = map.getPlayerFilter();
 				for (Player player : players) {
 					if (filter.isShowBeds() && filter.passesFilter(player) && player.getSpawnDimension() == Dimension.OVERWORLD && player.getSpawnPosition() != null) {
-						HashMap<String, String> bedArgs = new HashMap<>();
+						Map<String, String> bedArgs = new HashMap<>();
 
 						Vector3l spawn = player.getSpawnPosition();
 
@@ -247,7 +247,7 @@ public class OutputResourcesUtil {
 				PlayerFilter filter = map.getPlayerFilter();
 				for (Player player : players) {
 					if (filter.isShowRespawnAnchors() && filter.passesFilter(player) && player.getSpawnDimension() == Dimension.NETHER && player.getSpawnPosition() != null) {
-						HashMap<String, String> anchorArgs = new HashMap<>();
+						Map<String, String> anchorArgs = new HashMap<>();
 
 						Vector3l spawn = player.getSpawnPosition();
 
@@ -334,7 +334,7 @@ public class OutputResourcesUtil {
 					final float worldY = p.getY();
 					final float worldZ = p.getZ();
 
-					HashMap<String, String> portalArgs = new HashMap<>();
+					Map<String, String> portalArgs = new HashMap<>();
 					String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 					portalArgs.put("worldPos", posStr);
 
@@ -370,14 +370,11 @@ public class OutputResourcesUtil {
 		Files.deleteIfExists(viewsFile.toPath());
 
 		try (JsArrayWriter jsWriter = new JsArrayWriter(viewsFile, map.getId() + "_viewData")) {
-
-			WorldSubset worldSubset = map.getWorldSubset();
-			ImageFormat imageFormat = map.getViewConfig().getImageFormat();
 			Sign sign = new Sign();
 			while (views.hasNext()) {
 				views.read(sign);
 
-				HashMap<String, String> viewArgs = new HashMap<>();
+				Map<String, String> viewArgs = new HashMap<>();
 
 				final float worldX = sign.getX() + 0.5f;
 				final float worldY = sign.getY();
@@ -395,10 +392,11 @@ public class OutputResourcesUtil {
 
 				viewArgs.put("text", "\"" + text.toString().trim() + "\"");
 
+				ImageFormat imageFormat = map.getViewConfig().getImageFormat();
 				String filename = map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
 				viewArgs.put("imageFile", "\"" + filename + "\"");
 
-				if (worldSubset.containsBlock(sign.getX(), sign.getZ())) {
+				if (map.getWorldSubset().containsBlock(sign.getX(), sign.getZ())) {
 					jsWriter.write(viewArgs);
 				}
 			}
@@ -450,7 +448,7 @@ public class OutputResourcesUtil {
 				float worldX = entity.getX() + 0.5f;
 				float worldY = entity.getY();
 				float worldZ = entity.getZ() + 0.5f;
-				HashMap<String, String> chestArgs = new HashMap<>();
+				Map<String, String> chestArgs = new HashMap<>();
 
 				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 				chestArgs.put("worldPos", posStr);
@@ -491,9 +489,9 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration args, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
+	public static void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
 		log.info("Writing javascript and image resources...");
-		String defaultSkin = args.getDefaultSkin();
+		String defaultSkin = config.getDefaultSkin();
 
 		File imagesDir = new File(exportDir, "Images");
 		imagesDir.mkdirs();
@@ -609,7 +607,7 @@ public class OutputResourcesUtil {
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
 		scriptResources.add("main.js");
-		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, args, tileWidth, tileHeight);
+		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, config, tileWidth, tileHeight);
 	}
 
 	public static void writeImage(BufferedImage img, final int width, final int height, File file) {
@@ -647,7 +645,7 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
 	}
 
-	private void outputMergedJs(File outFile, List<String> inputResources, int numZoomLevels, Configuration args, int tileWidth, int tileHeight)
+	private void outputMergedJs(File outFile, List<String> inputResources, int numZoomLevels, Configuration config, int tileWidth, int tileHeight)
 	{
 		InputStream in = null;
 		final int scale = (int)Math.pow(2, numZoomLevels);
@@ -691,35 +689,35 @@ public class OutputResourcesUtil {
 							}
 							else if (first.value.equals("showSpawn"))
 							{
-								outLine.append(args.showSpawn());
+								outLine.append(config.showSpawn());
 							}
 							else if (first.value.equals("signsInitiallyVisible"))
 							{
-								outLine.append(args.areSignsInitiallyVisible());
+								outLine.append(config.areSignsInitiallyVisible());
 							}
 							else if (first.value.equals("playersInitiallyVisible"))
 							{
-								outLine.append(args.arePlayersInitiallyVisible());
+								outLine.append(config.arePlayersInitiallyVisible());
 							}
 							else if (first.value.equals("portalsInitiallyVisible"))
 							{
-								outLine.append(args.arePortalsInitiallyVisible());
+								outLine.append(config.arePortalsInitiallyVisible());
 							}
 							else if (first.value.equals("bedsInitiallyVisible"))
 							{
-								outLine.append(args.areBedsInitiallyVisible());
+								outLine.append(config.areBedsInitiallyVisible());
 							}
 							else if (first.value.equals("respawnAnchorsInitiallyVisible"))
 							{
-								outLine.append(args.areRespawnAnchorsInitiallyVisible());
+								outLine.append(config.areRespawnAnchorsInitiallyVisible());
 							}
 							else if (first.value.equals("spawnInitiallyVisible"))
 							{
-								outLine.append(args.isSpawnInitiallyVisible());
+								outLine.append(config.isSpawnInitiallyVisible());
 							}
 							else if (first.value.equals("viewsInitiallyVisible"))
 							{
-								outLine.append(args.areViewsInitiallyVisible());
+								outLine.append(config.areViewsInitiallyVisible());
 							}
 						}
 						else
@@ -824,8 +822,8 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static File outputHtml(File exportDir, Configuration args) throws IOException {
-		File outputHtmlFile = new File(exportDir, args.getOutputHtmlName());
+	public static File outputHtml(File exportDir, Configuration config) throws IOException {
+		File outputHtmlFile = new File(exportDir, config.getOutputHtmlName());
 		log.info("Writing html to {}", outputHtmlFile.getAbsolutePath());
 
 		URL url = OutputResourcesUtil.class.getClassLoader().getResource("mapWithSigns.html");
@@ -847,12 +845,12 @@ public class OutputResourcesUtil {
 					if (first.isReplaceable)
 					{
 						if (first.value.equals("title")) {
-							outLine.append(args.getHtmlTitle());
+							outLine.append(config.getHtmlTitle());
 						} else if (first.value.equals("includes")) {
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
 
-							for (tectonicus.configuration.Map map : args.getMaps())
+							for (tectonicus.configuration.Map map : config.getMaps())
 							{
 								outLine.append(templateStart);
 								outLine.append(map.getId()).append("/players.js");

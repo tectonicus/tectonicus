@@ -91,7 +91,7 @@ public class PistonExtension implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final float height = 1.0f / 16.0f * 12.0f;

@@ -20,6 +20,7 @@ import lombok.extern.log4j.Log4j2;
 import lombok.experimental.UtilityClass;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
+import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Map;
 import tectonicus.util.TempArea;
 
@@ -187,15 +188,15 @@ public class CacheUtil
 		return true;
 	}
 	
-	public static BiomeCache createBiomeCache(File minecraftJar, File baseCacheDir, Map map, MessageDigest hashAlgorithm)
+	public static BiomeCache createBiomeCache(Configuration config, Map map, MessageDigest hashAlgorithm)
 	{
 		BiomeCache biomeCache = null;
 		if (map.useBiomeColours())
 		{
 			try
 			{
-				File actualDir = new File(baseCacheDir, map.getId());
-				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), minecraftJar, hashAlgorithm);
+				File actualDir = new File(config.getCacheDir(), map.getId());
+				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), config.minecraftJar(), hashAlgorithm);
 			}
 			catch (Exception e)
 			{

@@ -152,7 +152,11 @@ public class Chunk
 									//TODO: This is quite slow. Need to profile and figure out if it can be sped up
 									List<BlockStateModel> models;
 									BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
-									models = stateWrapper.getModels(properties);
+
+									if (stateWrapper != null)
+										models = stateWrapper.getModels(properties);
+									else
+										continue;
 
 									for (BlockStateModel model : models) {
 										model.createGeometry(x, y, z, world, rawChunk, geometry);
@@ -453,7 +457,7 @@ public class Chunk
 	}
 
 	//TODO: is there any way to make this method faster?
-	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z)
+	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z, float nightLightAdjustment)
 	{
 		float result = 0;
 
@@ -470,7 +474,7 @@ public class Chunk
 					final int skyLight = c.getSkyLight(x, y, z);
 					final int blockLight = c.getBlockLight(x, y, z);
 
-					result = Util.clamp( (skyLight * 0.7f + blockLight * 0.3f) / RawChunk.MAX_LIGHT + 0.3f, 0, 1 );
+					result = Util.clamp((skyLight * 0.7f + blockLight) / RawChunk.MAX_LIGHT + 0.3f, 0, 1);
 				}
 
 				if (face == LightFace.NorthSouth)
@@ -492,10 +496,10 @@ public class Chunk
 				}
 				else
 				{
-					final float skyLight = getSkyLight(c, x, y, z) / (float)RawChunk.MAX_LIGHT;
-					final float blockLight = getBlockLight(c, x, y, z) / (float)RawChunk.MAX_LIGHT;
+					final float skyLight = getSkyLight(c, x, y, z);
+					final float blockLight = getBlockLight(c, x, y, z);
 					
-					result = Util.clamp( skyLight * 0.1f + blockLight * 0.7f + 0.1f, 0, 1 );
+					result = Util.clamp((skyLight * 0.1f + blockLight * 0.7f) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
 				}
 
 				if (face == LightFace.NorthSouth)

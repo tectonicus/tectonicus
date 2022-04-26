@@ -68,7 +68,7 @@ public class Button implements BlockType
 		
 		final float texel = 1.0f / texture.texture.getWidth();
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		SubMesh subMesh = new SubMesh();

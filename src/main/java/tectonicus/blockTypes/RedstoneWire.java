@@ -99,7 +99,7 @@ public class RedstoneWire implements BlockType
 		final boolean hasEast = hasRedstone(x, y, z-1, world, chunk) || hasEastAbove || hasEastBelow;
 		final boolean hasWest = hasRedstone(x, y, z+1, world, chunk) || hasWestAbove || hasWestBelow;
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
 		final float intensity = ((float)data / 16.0f) * lightness;
 		
 		Vector4f colour = new Vector4f(1.0f * intensity + 0.25f, 0.2f * intensity, 0.2f * intensity, 1);

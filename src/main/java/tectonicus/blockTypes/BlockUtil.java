@@ -423,7 +423,7 @@ public class BlockUtil
 		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), blockX, blockY+1, blockZ);
 		if (!above.isSolid())
 		{
-			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, blockX, blockY+1, blockZ);
+			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, blockX, blockY+1, blockZ, world.getNightLightAdjustment());
 			
 			MeshUtil.addQuad(mesh,	new Vector3f(blockX,	blockY+1,	blockZ),
 									new Vector3f(blockX+1,	blockY+1,	blockZ),
@@ -439,7 +439,7 @@ public class BlockUtil
 		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), blockX, blockY-1, blockZ);
 		if (!below.isSolid())
 		{
-			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, blockX, blockY-1, blockZ);
+			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, blockX, blockY-1, blockZ, world.getNightLightAdjustment());
 			
 			MeshUtil.addQuad(mesh,	new Vector3f(blockX,	blockY,		blockZ+1),
 									new Vector3f(blockX+1,	blockY,		blockZ+1),
@@ -455,7 +455,7 @@ public class BlockUtil
 		BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
 		if (!north.isSolid())
 		{
-			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x-1, y, z);
+			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x-1, y, z, world.getNightLightAdjustment());
 			
 			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
 									new Vector3f(x,		y+1,	z+1),
@@ -471,7 +471,7 @@ public class BlockUtil
 		BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
 		if (!south.isSolid())
 		{
-			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x+1, y, z);
+			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x+1, y, z, world.getNightLightAdjustment());
 			
 			MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,	z+1),
 									new Vector3f(x+1,		y+1,	z),
@@ -487,7 +487,7 @@ public class BlockUtil
 		BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
 		if (!east.isSolid())
 		{
-			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z-1);
+			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z-1, world.getNightLightAdjustment());
 			
 			MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
 									new Vector3f(x,		y+1,	z),
@@ -503,7 +503,7 @@ public class BlockUtil
 		BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
 		if (!west.isSolid())
 		{
-			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z+1);
+			final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z+1, world.getNightLightAdjustment());
 			
 			MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
 									new Vector3f(x+1,	y+1,	z+1),

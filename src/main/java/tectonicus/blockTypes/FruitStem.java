@@ -111,7 +111,7 @@ public class FruitStem implements BlockType
 			isBent = false;
 		}
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
 		
 		BiomeData biomeData = biomeCache.loadBiomeData(chunk.getChunkCoord());
 		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);

@@ -262,14 +262,180 @@ public class MeshUtil
 
 					topLight = bottomLight = northLight = southLight = eastLight = westLight = lightAvg;
 				} else {
-					float selfTopLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
-					float selfNorthSouthLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z);
-					float selfEastWestLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z);
+					float selfTopLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+					float selfNorthSouthLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z, world.getNightLightAdjustment());
+					float selfEastWestLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z, world.getNightLightAdjustment());
 					topLight = bottomLight = selfTopLight;
 					northLight = southLight = selfNorthSouthLight;
 					eastLight = westLight = selfEastWestLight;
 				}
 			}
+		}
+
+		Vector4f topShaded = null;
+		Vector4f northShaded = null;
+		Vector4f southShaded = null;
+		Vector4f eastShaded = null;
+		Vector4f westShaded = null;
+		boolean useSmoothLighting = world.isSmoothLit();
+		if (useSmoothLighting && model.isAmbientlyOccluded()) {
+			float northAbove = world.getLight(rawChunk.getChunkCoord(), x, y + 1, z - 1, LightFace.Top);
+			float northEastAbove = world.getLight(rawChunk.getChunkCoord(), x + 1, y + 1, z - 1, LightFace.Top);
+			float northWestAbove = world.getLight(rawChunk.getChunkCoord(), x - 1, y + 1, z - 1, LightFace.Top);
+			float southAbove = world.getLight(rawChunk.getChunkCoord(), x, y + 1, z + 1, LightFace.Top);
+			float southEastAbove = world.getLight(rawChunk.getChunkCoord(), x + 1, y + 1, z + 1, LightFace.Top);
+			float southWestAbove = world.getLight(rawChunk.getChunkCoord(), x - 1, y + 1, z + 1, LightFace.Top);
+			float eastAbove = world.getLight(rawChunk.getChunkCoord(), x + 1, y + 1, z, LightFace.Top);
+			float westAbove = world.getLight(rawChunk.getChunkCoord(), x - 1, y + 1, z, LightFace.Top);
+			float northEast = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z - 1, LightFace.Top);
+			float northWest = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z - 1, LightFace.Top);
+			float southEast = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z + 1, LightFace.Top);
+			float southWest = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z + 1, LightFace.Top);
+			float northBelow = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z - 1, LightFace.Top);
+			float northEastBelow = world.getLight(rawChunk.getChunkCoord(), x + 1, y - 1, z - 1, LightFace.Top);
+			float northWestBelow = world.getLight(rawChunk.getChunkCoord(), x - 1, y - 1, z - 1, LightFace.Top);
+			float southBelow = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z + 1, LightFace.Top);
+			float southEastBelow = world.getLight(rawChunk.getChunkCoord(), x + 1, y - 1, z + 1, LightFace.Top);
+			float southWestBelow = world.getLight(rawChunk.getChunkCoord(), x - 1, y - 1, z + 1, LightFace.Top);
+			float eastBelow = world.getLight(rawChunk.getChunkCoord(), x + 1, y - 1, z, LightFace.Top);
+			float westBelow = world.getLight(rawChunk.getChunkCoord(), x - 1, y - 1, z, LightFace.Top);
+
+
+			float lightV1 = 0.0f;
+			lightV1 += northAbove;
+			lightV1 += westAbove;
+			lightV1 += northWestAbove;
+			lightV1 /= 3;
+			//System.out.println(lightV1);
+
+			float lightV2 = 0.0f;
+			lightV2 += northAbove;
+			lightV2 += eastAbove;
+			lightV2 += northEastAbove;
+			lightV2 /= 3;
+			//System.out.println(lightV2);
+
+			float lightV3 = 0.0f;
+			lightV3 += eastAbove;
+			lightV3 += southEastAbove;
+			lightV3 += southAbove;
+			lightV3 /= 3;
+
+			float lightV4 = 0.0f;
+			lightV4 += westAbove;
+			lightV4 += southWestAbove;
+			lightV4 += southAbove;
+			lightV4 /= 3;
+
+			topShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
+
+
+			lightV1 = 0.0f;
+			lightV1 += northEastAbove;
+			lightV1 += northEast;
+			lightV1 += northAbove;
+			lightV1 /= 3;
+
+			lightV2 = 0.0f;
+			lightV2 += northWestAbove;
+			lightV2 += northWest;
+			lightV2 += northAbove;
+			lightV2 /= 3;
+
+			lightV3 = 0.0f;
+			lightV3 += northBelow;
+			lightV3 += northWestBelow;
+			lightV3 += northWest;
+			lightV3 /= 3;
+
+			lightV4 = 0.0f;
+			lightV4 += northBelow;
+			lightV4 += northEastBelow;
+			lightV4 += northEast;
+			lightV4 /= 3;
+
+			northShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
+
+
+			lightV1 = 0.0f;
+			lightV1 += southWestAbove;
+			lightV1 += southWest;
+			lightV1 += southAbove;
+			lightV1 /= 3;
+
+			lightV2 = 0.0f;
+			lightV2 += southEastAbove;
+			lightV2 += southEast;
+			lightV2 += southAbove;
+			lightV2 /= 3;
+
+			lightV3 = 0.0f;
+			lightV3 += southBelow;
+			lightV3 += southEastBelow;
+			lightV3 += southEast;
+			lightV3 /= 3;
+
+			lightV4 = 0.0f;
+			lightV4 += southBelow;
+			lightV4 += southWestBelow;
+			lightV4 += southWest;
+			lightV4 /= 3;
+
+			southShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
+
+
+			lightV1 = 0.0f;
+			lightV1 += southEastAbove;
+			lightV1 += southEast;
+			lightV1 += eastAbove;
+			lightV1 /= 3;
+
+			lightV2 = 0.0f;
+			lightV2 += northEastAbove;
+			lightV2 += northEast;
+			lightV2 += eastAbove;
+			lightV2 /= 3;
+
+			lightV3 = 0.0f;
+			lightV3 += northEastBelow;
+			lightV3 += eastBelow;
+			lightV3 += northEast;
+			lightV3 /= 3;
+
+			lightV4 = 0.0f;
+			lightV4 += southEastBelow;
+			lightV4 += eastBelow;
+			lightV4 += southEast;
+			lightV4 /= 3;
+
+			eastShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
+
+
+			lightV1 = 0.0f;
+			lightV1 += northWestAbove;
+			lightV1 += northWest;
+			lightV1 += westAbove;
+			lightV1 /= 3;
+
+			lightV2 = 0.0f;
+			lightV2 += southWestAbove;
+			lightV2 += southWest;
+			lightV2 += westAbove;
+			lightV2 /= 3;
+
+			lightV3 = 0.0f;
+			lightV3 += southWestBelow;
+			lightV3 += westBelow;
+			lightV3 += southWest;
+			lightV3 /= 3;
+
+			lightV4 = 0.0f;
+			lightV4 += northWestBelow;
+			lightV4 += westBelow;
+			lightV4 += northWest;
+			lightV4 /= 3;
+
+			westShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
 		}
 
 
@@ -286,6 +452,12 @@ public class MeshUtil
 		float southLightTemp = southLight;
 		float eastLightTemp = eastLight;
 		float westLightTemp = westLight;
+
+		Vector4f topShadedTemp = topShaded;
+		Vector4f northShadedTemp = northShaded;
+		Vector4f southShadedTemp = southShaded;
+		Vector4f eastShadedTemp = eastShaded;
+		Vector4f westShadedTemp = westShaded;
 
 		Matrix4f blockRotation = null;
 
@@ -343,6 +515,14 @@ public class MeshUtil
 					southLightTemp = westLight;
 					eastLightTemp = southLight;
 					westLightTemp = northLight;
+
+					if (useSmoothLighting && model.isAmbientlyOccluded()) {
+						topShadedTemp = new Vector4f(topShaded.y, topShaded.z, topShaded.w, topShaded.x);
+						northShadedTemp = eastShaded;
+						southShadedTemp = westShaded;
+						eastShadedTemp = southShaded;
+						westShadedTemp = northShaded;
+					}
 				}
 			} else if (yRotation == 90 && xRotation == 90) {
 				upFaceCovered = east;
@@ -351,6 +531,7 @@ public class MeshUtil
 				southFaceCovered = above;
 				eastFaceCovered = south;
 				westFaceCovered = north;
+
 				if (selfFull) {
 					topLightTemp = eastLight;
 					bottomLightTemp = westLight;
@@ -402,6 +583,14 @@ public class MeshUtil
 					southLightTemp = northLight;
 					eastLightTemp = westLight;
 					westLightTemp = eastLight;
+
+					if (useSmoothLighting && model.isAmbientlyOccluded()) {
+						topShadedTemp = new Vector4f(topShaded.z, topShaded.w, topShaded.x, topShaded.y);
+						northShadedTemp = southShaded;
+						southShadedTemp = northShaded;
+						eastShadedTemp = westShaded;
+						westShadedTemp = eastShaded;
+					}
 				}
 			} else if (Math.abs(yRotation) == 180 && xRotation == 90) {
 				upFaceCovered = south;
@@ -458,6 +647,14 @@ public class MeshUtil
 					southLightTemp = eastLight;
 					eastLightTemp = northLight;
 					westLightTemp = southLight;
+
+					if (useSmoothLighting && model.isAmbientlyOccluded()) {
+						topShadedTemp = new Vector4f(topShaded.w, topShaded.x, topShaded.y, topShaded.z);
+						northShadedTemp = westShaded;
+						southShadedTemp = eastShaded;
+						eastShadedTemp = northShaded;
+						westShadedTemp = southShaded;
+					}
 				}
 			} else if (yRotation == 270 && xRotation == 90) {
 				upFaceCovered = west;
@@ -581,9 +778,14 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y2, z2);
 		        bottomLeft = new Vector3f(x1, y2, z2);
 
-		        addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, false);
+		        if (useSmoothLighting && model.isAmbientlyOccluded()) {
+					addVerticesShaded(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, topShadedTemp,
+							elementRotation, blockRotation, model, false);
+				} else {
+					addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, false);
+				}
 	        }
-			
+
 			if (downFace != null && !(downFaceCovered && downFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(bottomLightTemp, bottomLightTemp, bottomLightTemp, 1);
@@ -611,9 +813,14 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x1, y1, z1 - fudgeFactor);
 		        bottomLeft = new Vector3f(x2, y1, z1 - fudgeFactor);
 
-		        addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 ) {
+					addVerticesShaded(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, northShadedTemp,
+							elementRotation, blockRotation, model, isGrassOverlay);
+				} else {
+					addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				}
 	        }
-			
+
 			if (southFace != null && !(southFaceCovered && southFace.isFaceCulled()))
 	        {
 				Colour4f color = new Colour4f(southLightTemp, southLightTemp, southLightTemp, 1);
@@ -626,7 +833,12 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2, y1, z2 + fudgeFactor);
 		        bottomLeft = new Vector3f(x1, y1, z2 + fudgeFactor);
 
-		        addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 ) {
+					addVerticesShaded(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, southShadedTemp,
+							elementRotation, blockRotation, model, isGrassOverlay);
+				} else {
+					addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				}
 	        }
 
 			if (eastFace != null && !(eastFaceCovered && eastFace.isFaceCulled()))
@@ -641,7 +853,12 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x2 + fudgeFactor, y1, z1);
 		        bottomLeft = new Vector3f(x2 + fudgeFactor, y1, z2);
 
-		        addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0) {
+					addVerticesShaded(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, eastShadedTemp,
+							elementRotation, blockRotation, model, isGrassOverlay);
+				} else {
+					addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				}
 	        }
 
 			if (westFace != null && !(westFaceCovered && westFace.isFaceCulled()))
@@ -656,7 +873,12 @@ public class MeshUtil
 		        bottomRight = new Vector3f(x1 - fudgeFactor, y1, z2);
 		        bottomLeft = new Vector3f(x1 - fudgeFactor, y1, z1);
 
-		        addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 ) {
+					addVerticesShaded(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, westShadedTemp,
+							elementRotation, blockRotation, model, isGrassOverlay);
+				} else {
+					addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
+				}
 	        }
 		}
 	}
@@ -695,17 +917,16 @@ public class MeshUtil
 
 		return tintColor;
 	}
-	
-	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
-							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, BlockModel model, boolean isGrassOverlay)
-	{
+
+	private void doTransforms(Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft,
+							  Matrix4f elementRotation, Matrix4f blockRotation) {
 		if(elementRotation != null)
-        {
-	        elementRotation.transformPosition(topLeft);
-	        elementRotation.transformPosition(topRight);
-	        elementRotation.transformPosition(bottomRight);
-	        elementRotation.transformPosition(bottomLeft);
-        }
+		{
+			elementRotation.transformPosition(topLeft);
+			elementRotation.transformPosition(topRight);
+			elementRotation.transformPosition(bottomRight);
+			elementRotation.transformPosition(bottomLeft);
+		}
 
 		if (blockRotation != null) {
 			blockRotation.transformPosition(topLeft);
@@ -713,8 +934,9 @@ public class MeshUtil
 			blockRotation.transformPosition(bottomRight);
 			blockRotation.transformPosition(bottomLeft);
 		}
+	}
 
-		SubTexture tex = face.getTexture();
+	private Mesh getMesh(Geometry geometry, SubTexture tex, BlockModel model, boolean isGrassOverlay) {
 		Mesh mesh;
 		if (model.isSolid() || model.getName().contains("grass_block") && !isGrassOverlay) {
 			mesh = geometry.getMesh(tex.texture, MeshType.Solid);
@@ -724,8 +946,16 @@ public class MeshUtil
 			mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);
 		}
 
+		return mesh;
+	}
+	
+	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
+							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, BlockModel model, boolean isGrassOverlay)
+	{
+		doTransforms(topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 
-		//TODO: if the block has ambient occlusion we should figure out smooth lighting
+		SubTexture tex = face.getTexture();
+		Mesh mesh = getMesh(geometry, tex, model, isGrassOverlay);
 		
 		int texRotation = face.getTextureRotation();
 		if(texRotation == 0)
@@ -756,5 +986,76 @@ public class MeshUtil
 			mesh.addVertex(bottomRight, color, tex.u0, tex.v1);
 			mesh.addVertex(bottomLeft, color, tex.u0, tex.v0);
 		}
+	}
+
+	private void addVerticesShaded(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
+								   Vector3f bottomRight, Vector3f bottomLeft, Vector4f ao, Matrix4f elementRotation, Matrix4f blockRotation,
+								   BlockModel model, boolean isGrassOverlay)
+	{
+		doTransforms(topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
+
+		SubTexture tex = face.getTexture();
+		Mesh mesh = getMesh(geometry, tex, model, isGrassOverlay);
+
+		//TODO: if the block has ambient occlusion we should figure out smooth lighting
+
+		int texRotation = face.getTextureRotation();
+		if(texRotation == 0)
+		{
+			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u0, tex.v0);
+			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u1, tex.v0);
+			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u1, tex.v1);
+			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u0, tex.v1);
+		}
+		else if (texRotation == 90)
+		{
+			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u0, tex.v1);
+			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u0, tex.v0);
+			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u1, tex.v0);
+			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u1, tex.v1);
+		}
+		else if (texRotation == 180)
+		{
+			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u1, tex.v1);
+			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u0, tex.v1);
+			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u0, tex.v0);
+			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u1, tex.v0);
+		}
+		else if (texRotation == 270)
+		{
+			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u1, tex.v0);
+			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u1, tex.v1);
+			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u0, tex.v1);
+			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u0, tex.v0);
+		}
+
+//		if(texRotation == 0)
+//		{
+//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u0, tex.v0);
+//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u1, tex.v0);
+//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u1, tex.v1);
+//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u0, tex.v1);
+//		}
+//		else if (texRotation == 90)
+//		{
+//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u0, tex.v1);
+//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u0, tex.v0);
+//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u1, tex.v0);
+//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u1, tex.v1);
+//		}
+//		else if (texRotation == 180)
+//		{
+//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u1, tex.v1);
+//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u0, tex.v1);
+//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u0, tex.v0);
+//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u1, tex.v0);
+//		}
+//		else if (texRotation == 270)
+//		{
+//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u1, tex.v0);
+//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u1, tex.v1);
+//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u0, tex.v1);
+//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u0, tex.v0);
+//		}
 	}
 }

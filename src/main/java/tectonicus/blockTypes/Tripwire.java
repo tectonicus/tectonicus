@@ -92,7 +92,7 @@ public class Tripwire implements BlockType
 									world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z) instanceof TripwireHook;
 
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f light = new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a);
 		
 		final float nudge = 1.0f/16.0f;

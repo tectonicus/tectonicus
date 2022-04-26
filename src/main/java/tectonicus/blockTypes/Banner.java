@@ -180,7 +180,7 @@ public class Banner implements BlockType
 		final SubTexture frontTexture = new SubTexture(texture.texture, texture.u0+texel2, texture.v0+texel2, texture.u0+texel2*21, texture.v0+texel2*41);
 		final SubTexture backTexture = new SubTexture(texture.texture, texture.u0+texel2*22, texture.v0+texel2, texture.u0+texel2*42, texture.v0+texel2*41);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final float texel = 1.0f / 16.0f;

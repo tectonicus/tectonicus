@@ -33,7 +33,11 @@ public class MutableMap implements Map
 	private int cameraAngle, cameraElevation;
 	
 	private boolean useBiomeColours;
-	
+
+	@Getter
+	@Setter
+	private boolean smoothLit;
+
 	private PlayerFilter playerFilter;
 	@Getter
 	@Setter
@@ -90,6 +94,8 @@ public class MutableMap implements Map
 		this.northDirection = NorthDirection.MinusX;
 
 		this.origin = new Vector3l(0, 0, 0);
+
+		this.smoothLit = true;
 	}
 	
 	@Override

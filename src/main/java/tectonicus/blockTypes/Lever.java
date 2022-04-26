@@ -80,7 +80,7 @@ public class Lever implements BlockType
 	{	
 		final int data = rawChunk.getBlockData(x, y, z);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final boolean isOn = (data & 0x8) > 0;

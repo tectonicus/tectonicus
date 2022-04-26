@@ -405,12 +405,17 @@ public class RawChunk {
 
 							// Get skin URL
 							CompoundTag properties = NbtUtil.getChild(owner, "Properties", CompoundTag.class);
-							ListTag textures = NbtUtil.getChild(properties, "textures", ListTag.class);
-							CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
-							StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
-							byte[] decoded = Base64.getDecoder().decode(value.getValue());
-							JsonNode node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
-							textureURL = node.get("textures").get("SKIN").get("url").asText();
+							if (properties != null) {
+								ListTag textures = NbtUtil.getChild(properties, "textures", ListTag.class);
+								CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
+								StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
+								byte[] decoded = Base64.getDecoder().decode(value.getValue());
+								JsonNode node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
+								JsonNode skin = node.get("textures").get("SKIN");
+								if (skin != null) {
+									textureURL = skin.get("url").asText();
+								}
+							}
 						} else if (extraType != null && !(extraType.getValue().equals(""))) {
 							name = uuid = extraType.getValue();
 							textureURL = "http://www.minecraft.net/skin/" + extraType.getValue() + ".png";
@@ -503,111 +508,115 @@ public class RawChunk {
 
 			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) + Math.abs(minSectionY);
 
-			if (sectionY < minSectionY || sectionY >= maxSections)
+			if (sectionY < 0 || sectionY >= maxSections)
 				continue;
 
 			ByteArrayTag skylightTag = NbtUtil.getChild(compound, "SkyLight", ByteArrayTag.class);
 			ByteArrayTag blocklightTag = NbtUtil.getChild(compound, "BlockLight", ByteArrayTag.class);
 
-			CompoundTag blockStatesContainer = NbtUtil.getChild(compound, "block_states", CompoundTag.class);
-			ListTag blockPaletteTag = NbtUtil.getChild(blockStatesContainer, "palette", ListTag.class);
-			LongArrayTag blockDataTag = NbtUtil.getChild(blockStatesContainer, "data", LongArrayTag.class);
-
-			CompoundTag biomesContainer = NbtUtil.getChild(compound, "biomes", CompoundTag.class);
-			ListTag biomePaletteTag = NbtUtil.getChild(biomesContainer, "palette", ListTag.class);
-			LongArrayTag biomeDataTag = NbtUtil.getChild(biomesContainer, "data", LongArrayTag.class);
-
-
-			List<BlockState> blockStatesPalette = parseBlockStates(blockPaletteTag);
-
 			Section newSection = new Section();
 			sections[sectionY] = newSection;
 
-			int bitsPerBlock = 0;
-			int blockBitMask = 0;
-			int blocksPerLong = 0;
-			boolean packedBits = false;
-			BlockState singleBlockState = null;
+			CompoundTag blockStatesContainer = NbtUtil.getChild(compound, "block_states", CompoundTag.class);
+			if (blockStatesContainer != null) {
+				ListTag blockPaletteTag = NbtUtil.getChild(blockStatesContainer, "palette", ListTag.class);
+				LongArrayTag blockDataTag = NbtUtil.getChild(blockStatesContainer, "data", LongArrayTag.class);
+				List<BlockState> blockStatesPalette = parseBlockStates(blockPaletteTag);
 
-			if (blockDataTag != null) {
-				int sectionVolume = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
-				int dataTagLength = blockDataTag.getValue().length;
-				bitsPerBlock = dataTagLength * 64 / sectionVolume;
-				blockBitMask = (1 << bitsPerBlock) - 1;
+				int bitsPerBlock = 0;
+				int blockBitMask = 0;
+				int blocksPerLong = 0;
+				boolean packedBits = false;
+				BlockState singleBlockState = null;
 
-				if (Math.ceil(sectionVolume / (64f / bitsPerBlock)) == dataTagLength) {
-					packedBits = true;
-				}
-				blocksPerLong = 64 / bitsPerBlock;
-			} else {
-				//If the data tag doesn't exist that means there is only one block in the palette
-				singleBlockState = blockStatesPalette.get(0);
-			}
+				if (blockDataTag != null) {
+					int sectionVolume = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
+					int dataTagLength = blockDataTag.getValue().length;
+					bitsPerBlock = dataTagLength * 64 / sectionVolume;
+					blockBitMask = (1 << bitsPerBlock) - 1;
 
-			for (int x = 0; x < SECTION_WIDTH; x++) {
-				for (int y = 0; y < SECTION_HEIGHT; y++) {
-					if (blockDataTag == null && singleBlockState != null) {
-						//If no data tag the section should be filled with the only block in the palette
-						Arrays.fill(newSection.blockNames[x][y], singleBlockState.name);
-						Arrays.fill(newSection.blockStates[x][y], singleBlockState.properties);
+					if (Math.ceil(sectionVolume / (64f / bitsPerBlock)) == dataTagLength) {
+						packedBits = true;
 					}
-					for (int z = 0; z < SECTION_DEPTH; z++) {
-						if (blockDataTag != null && blockDataTag.getValue() != null) {
-							final int index = calcAnvilIndex(x, y, z);
-							int longIndex;
-							int bitOffset;
-							if (packedBits) {  // 1.13-1.15 format or 1.16+ when bitsPerBlock is power of 2
-								int bitIndex = index * bitsPerBlock;
-								longIndex = bitIndex / 64;
-								bitOffset = bitIndex % 64;
-							} else { // 1.16+ format when bitsPerBlock is not a power of 2
-								longIndex = index / blocksPerLong;
-								bitOffset = (index % blocksPerLong) * bitsPerBlock;
-							}
+					blocksPerLong = 64 / bitsPerBlock;
+				} else {
+					//If the data tag doesn't exist that means there is only one block in the palette
+					singleBlockState = blockStatesPalette.get(0);
+				}
 
-							long paletteIndex = (blockDataTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
+				for (int x = 0; x < SECTION_WIDTH; x++) {
+					for (int y = 0; y < SECTION_HEIGHT; y++) {
+						if (blockDataTag == null && singleBlockState != null) {
+							//If no data tag the section should be filled with the only block in the palette
+							Arrays.fill(newSection.blockNames[x][y], singleBlockState.name);
+							Arrays.fill(newSection.blockStates[x][y], singleBlockState.properties);
+						}
+						for (int z = 0; z < SECTION_DEPTH; z++) {
+							if (blockDataTag != null && blockDataTag.getValue() != null) {
+								final int index = calcAnvilIndex(x, y, z);
+								int longIndex;
+								int bitOffset;
+								if (packedBits) {  // 1.13-1.15 format or 1.16+ when bitsPerBlock is power of 2
+									int bitIndex = index * bitsPerBlock;
+									longIndex = bitIndex / 64;
+									bitOffset = bitIndex % 64;
+								} else { // 1.16+ format when bitsPerBlock is not a power of 2
+									longIndex = index / blocksPerLong;
+									bitOffset = (index % blocksPerLong) * bitsPerBlock;
+								}
 
-							BlockState blockState = blockStatesPalette.get((int) paletteIndex);
-							newSection.blockNames[x][y][z] = blockState.name;
-							newSection.blockStates[x][y][z] = blockState.properties;
+								long paletteIndex = (blockDataTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
 
-							//TODO: add back the block counting code here
+								BlockState blockState = blockStatesPalette.get((int) paletteIndex);
+								newSection.blockNames[x][y][z] = blockState.name;
+								newSection.blockStates[x][y][z] = blockState.properties;
+
+								//TODO: add back the block counting code here
 //							if (worldStats != null)
 //								worldStats.incBlockId(id, data);
-						}
+							}
 
-						if (skylightTag != null) {
-							newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
-						}
+							if (skylightTag != null) {
+								newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
+							}
 
-						if (blocklightTag != null) {
-							newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
+							if (blocklightTag != null) {
+								newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
+							}
 						}
 					}
 				}
 			}
 
 
-			// one string id per 4x4x4 volume within the section
-			List<Tag> palette = biomePaletteTag.getValue();
-			if (biomeDataTag != null) {
-				/* The code for dealing with the new biomes palette comes from piegamesde in an Overviewer Github issue
-				*  https://github.com/overviewer/Minecraft-Overviewer/issues/2022 */
-				long[] data = biomeDataTag.getValue();
-				int paletteSize = palette.size();
-				int bitsPerEntry = Integer.SIZE - Integer.numberOfLeadingZeros(paletteSize - 1);
-				int entriesPerLong = Math.floorDiv(64, bitsPerEntry);
-				int mask = (1 << bitsPerEntry) - 1;
 
-				int index = 0;
-				for (long l : data) {
-					for (int i = 0; i < entriesPerLong && index < 64; i++) {
-						newSection.biomeIds[index++] = (String) palette.get((int) (l & mask)).getValue();
-						l >>= bitsPerEntry;
+			CompoundTag biomesContainer = NbtUtil.getChild(compound, "biomes", CompoundTag.class);
+			if (biomesContainer != null) {
+				ListTag biomePaletteTag = NbtUtil.getChild(biomesContainer, "palette", ListTag.class);
+				LongArrayTag biomeDataTag = NbtUtil.getChild(biomesContainer, "data", LongArrayTag.class);
+				List<Tag> palette = biomePaletteTag.getValue();
+				// one string id per 4x4x4 volume within the section
+				if (biomeDataTag != null) {
+					/* The code for dealing with the new biomes palette comes from piegamesde in an Overviewer Github issue
+					 *  https://github.com/overviewer/Minecraft-Overviewer/issues/2022 */
+					long[] data = biomeDataTag.getValue();
+					int paletteSize = palette.size();
+					int bitsPerEntry = Integer.SIZE - Integer.numberOfLeadingZeros(paletteSize - 1);
+					int entriesPerLong = Math.floorDiv(64, bitsPerEntry);
+					int mask = (1 << bitsPerEntry) - 1;
+
+					int index = 0;
+					for (long l : data) {
+						for (int i = 0; i < entriesPerLong && index < 64; i++) {
+							newSection.biomeIds[index++] = (String) palette.get((int) (l & mask)).getValue();
+							l >>= bitsPerEntry;
+						}
 					}
+				} else { //only a single entry in the biome palette
+					Arrays.fill(newSection.biomeIds, palette.get(0).getValue());
 				}
-			} else { //only a single entry in the biome palette
-				Arrays.fill(newSection.biomeIds, palette.get(0).getValue());
+			} else {
+				Arrays.fill(newSection.biomeIds, "minecraft:plains");
 			}
 		}
 	}

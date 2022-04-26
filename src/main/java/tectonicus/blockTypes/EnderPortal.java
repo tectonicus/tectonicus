@@ -64,7 +64,7 @@ public class EnderPortal implements BlockType
 	{
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1.0f);
 		

@@ -202,6 +202,8 @@ public class XmlConfigurationParser
 			
 			final boolean useBiomeColours = getBoolean(mapElement, "useBiomeColours", false);
 			map.setUseBiomeColours(useBiomeColours);
+
+			map.setSmoothLit(getBoolean(mapElement, "useSmoothLighting", true));
 			
 			map.setNorthDirection( parseNorthDirection( getString(mapElement, "north")));
 			map.setCustomCompassRose( getString(mapElement, "compassRose"));

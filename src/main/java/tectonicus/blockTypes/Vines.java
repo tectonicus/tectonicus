@@ -88,12 +88,12 @@ public class Vines implements BlockType
 		Colour4f grassColour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
 		Colour4f grassColour = world.getFoliageColor(chunk.getChunkCoord(), x, y, z);
 		
-		final float ewLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z);
+		final float ewLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f eastWestLightness = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);
 		eastWestLightness.mul(ewLightness);
 		eastWestLightness.w = 1.0f;
 		
-		final float nsLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z);
+		final float nsLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z, world.getNightLightAdjustment());
 		Vector4f northSouthLightness = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);
 		northSouthLightness.mul(nsLightness);
 		northSouthLightness.w = 1.0f;

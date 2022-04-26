@@ -81,7 +81,7 @@ public class Cake implements BlockType
 		Mesh sideMesh = geometry.getMesh(side.texture, Geometry.MeshType.AlphaTest);
 		Mesh interiorMesh = geometry.getMesh(interior.texture, Geometry.MeshType.AlphaTest);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
 		
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		

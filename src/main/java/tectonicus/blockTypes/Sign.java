@@ -122,7 +122,7 @@ public class Sign implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		

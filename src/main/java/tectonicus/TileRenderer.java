@@ -110,7 +110,7 @@ public class TileRenderer
 	
 	public static final Color clearColour = new Color(229, 227, 223);
 	
-	private final Configuration args;
+	private final Configuration config;
 	
 	private final MessageDigest hashAlgorithm;
 	
@@ -141,23 +141,23 @@ public class TileRenderer
 	
 	private boolean abort;
 	
-	public TileRenderer(Configuration args, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
+	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
 	{
-		this.args = args;
+		this.config = config;
 		this.hashAlgorithm = hashAlgorithm;
 		
 		this.progressListener = listener;
 		
-		this.tileWidth = args.getTileSize();
-		this.tileHeight = args.getTileSize();
+		this.tileWidth = config.getTileSize();
+		this.tileHeight = config.getTileSize();
 		
-		this.numZoomLevels = args.getNumZoomLevels();
+		this.numZoomLevels = config.getNumZoomLevels();
 		
-		this.exportDir = args.getOutputDir();
+		this.exportDir = config.getOutputDir();
 		
-		playerSkinCache = new PlayerSkinCache(args, hashAlgorithm);
+		playerSkinCache = new PlayerSkinCache(config, hashAlgorithm);
 		
-		hddTileListFactory = new HddTileListFactory( new File(args.getCacheDir(), "tileLists") );
+		hddTileListFactory = new HddTileListFactory( new File(config.getCacheDir(), "tileLists") );
 		
 		log.debug("Creating player icon assembler");
 		playerIconAssembler = new PlayerIconAssembler(playerSkinCache);
@@ -167,11 +167,11 @@ public class TileRenderer
 		log.info("Initialising display...");
 
 		DisplayType type = DisplayType.OFFSCREEN;
-		if (args.isUseEGL()) {
+		if (config.isUseEGL()) {
 			type = DisplayType.OFFSCREEN_EGL;
 		}
 
-		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), type, 2048, 2048, args.getColourDepth(), args.getAlphaBits(), 24, args.getNumSamples());
+		rasteriser = RasteriserFactory.createRasteriser(config.getRasteriserType(), type, 2048, 2048, config.getColourDepth(), config.getAlphaBits(), 24, config.getNumSamples());
 
 		if (rasteriser != null)
 		{
@@ -215,13 +215,13 @@ public class TileRenderer
 		Date startTime = new Date();
 		
 		FileUtils.ensureExists(exportDir);
-		FileUtils.ensureExists(args.getCacheDir());
+		FileUtils.ensureExists(config.getCacheDir());
 		
-		TempArea tempArea = new TempArea( new File(args.getCacheDir(), "temp") );
+		TempArea tempArea = new TempArea( new File(config.getCacheDir(), "temp") );
 		
-		changedFileList = new ChangeFile(new File(args.getOutputDir(), "changed.txt"));
+		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
-		for (tectonicus.configuration.Map map : args.getMaps())
+		for (tectonicus.configuration.Map map : config.getMaps())
 		{
 			// Clear shared state?
 			// ..
@@ -231,12 +231,11 @@ public class TileRenderer
 			
 			File mapDir = new File(exportDir, map.getId());
 			FileUtils.ensureExists(mapDir);
-			
-			BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
+
+			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
 
 			// Create the world for this map
-			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), playerSkinCache, map.getSignFilter(), args);
+			World world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -247,8 +246,8 @@ public class TileRenderer
 			File portalsFile = tempArea.generateTempFile("portals", ".list");
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
-			
-			WorldStats worldStats = preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile);
+
+			WorldStats worldStats = preProcess(world, map, portalsFile, signsFile, viewsFile);
 			
 			// Find visible tiles
 			HddTileList visibleTiles = findVisibleTiles(world, camera, worldStats.numChunks());
@@ -268,8 +267,8 @@ public class TileRenderer
 			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
 
 			// Render views
-			FileViewCache viewCache = CacheUtil.createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
-			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, args.getNumDownsampleThreads(), map.getViewConfig());
+			FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
 			viewRenderer.output(world, mapDir, viewsFile, changedFileList);
 			
 			TileCoordBounds bounds = null;
@@ -283,8 +282,8 @@ public class TileRenderer
 				setupWorldForLayer(layer, world);
 				
 				// Set new tile cache for this layer
-				String optionString = FileTileCache.calcOptionsString(args);
-				TileCache tileCache = CacheUtil.createTileCache(args.useCache(), optionString, layer.getImageFormat(), args.getCacheDir(), map, layer, hashAlgorithm);
+				String optionString = FileTileCache.calcOptionsString(config);
+				TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
 			
 				File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
 				FileUtils.ensureExists(baseTilesDir);
@@ -293,7 +292,7 @@ public class TileRenderer
 				HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, regionHashStore, world, map, camera, map.getClosestZoomSize(), tileWidth, tileHeight, baseTilesDir);
 				
 				// Trim changed tiles to size
-				changedTiles = trimTileList(changedTiles, args.getMaxTiles());
+				changedTiles = trimTileList(changedTiles, config.getMaxTiles());
 				
 				// Render base tiles
 				renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
@@ -303,7 +302,7 @@ public class TileRenderer
 				tileCache.closeTileCache();
 			}
 			
-			outputIcons(exportDir, args, map, world, rasteriser);
+			outputIcons(exportDir, config, map, world, rasteriser);
 			
 			// Output world stats
 			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
@@ -315,17 +314,17 @@ public class TileRenderer
 		}
 
 		// TODO: Should only load texture pack once and share between this and world loading
-		outputHtmlResources(new TexturePack(rasteriser, args.minecraftJar(), args.getTexturePack(), args.getMap(0).getModJars(), args),
-				playerIconAssembler, args, exportDir, numZoomLevels, tileWidth, tileHeight);
+		outputHtmlResources(new TexturePack(rasteriser, config.minecraftJar(), config.getTexturePack(), config.getMap(0).getModJars(), config),
+				playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
 		
-		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), args);
+		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), config);
 		
 		
 		// Output html
 		File outputHtmlFile = null;
 		try {
 			progressListener.onTaskStarted(Task.OUTPUT_HTML.toString());
-			outputHtmlFile = outputHtml(exportDir, args);
+			outputHtmlFile = outputHtml(exportDir, config);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -353,22 +352,21 @@ public class TileRenderer
 		Date startTime = new Date();
 		
 		FileUtils.ensureExists(exportDir);
-		FileUtils.ensureExists(args.getCacheDir());
+		FileUtils.ensureExists(config.getCacheDir());
 		
-		TempArea tempArea = new TempArea( new File(args.getCacheDir(), "temp") );
+		TempArea tempArea = new TempArea( new File(config.getCacheDir(), "temp") );
 		
-		changedFileList = new ChangeFile(new File(args.getOutputDir(), "changed.txt"));
+		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
-		for (tectonicus.configuration.Map map : args.getMaps())
+		for (tectonicus.configuration.Map map : config.getMaps())
 		{
 			File mapDir = new File(exportDir, map.getId());
 			FileUtils.ensureExists(mapDir);
-			
-			BiomeCache biomeCache = CacheUtil.createBiomeCache(args.minecraftJar(), args.getCacheDir(), map, hashAlgorithm);
+
+			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
 
 			// Create the world for this map
-			World world = new World(rasteriser, map.getWorldDir(), map.getDimension(), args.minecraftJar(), args.getTexturePack(), map.getModJars(),
-									biomeCache, hashAlgorithm, args.getSinglePlayerName(), map.getWorldSubset(), playerSkinCache, map.getSignFilter(), args);
+			World world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
 			
 			// TODO: Load custom blocks here
 			
@@ -377,14 +375,14 @@ public class TileRenderer
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
 			
-			preProcess(world, map.getDimension(), map.getSignFilter(), map.getPortalFilter(), map.getViewFilter(), map.getChestFilter(), portalsFile, signsFile, viewsFile);
+			preProcess(world, map, portalsFile, signsFile, viewsFile);
 			
 			// Output views
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			
 			// Render views
-			FileViewCache viewCache = CacheUtil.createViewCache(args.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
-			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, args.getNumDownsampleThreads(), map.getViewConfig());
+			FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
 			viewRenderer.output(world, mapDir, viewsFile, changedFileList);
 		}
 		
@@ -432,7 +430,7 @@ public class TileRenderer
 		}	
 	}
 
-	private WorldStats preProcess(World world, Dimension dimension, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, File portalsFile, File signsFile, File viewsFile)
+	private WorldStats preProcess(World world, tectonicus.configuration.Map map, File portalsFile, File signsFile, File viewsFile)
 	{
 		WorldStats stats = null;
 		
@@ -446,7 +444,7 @@ public class TileRenderer
 			signs = new HddObjectListWriter<>(signsFile, true);
 			views = new HddObjectListWriter<>(viewsFile, true);
 			
-			stats = preProcess(world, signFilter, portalFilter, viewFilter, chestFilter, portals, signs, views);
+			stats = preProcess(world, map, portals, signs, views);
 			
 			log.debug("Found "+views.size()+" views");
 		}
@@ -464,13 +462,12 @@ public class TileRenderer
 				views.close();
 		}
 		
-		final int numPlayers = world.getPlayers(dimension).size();
-		stats.setNumPlayers(numPlayers);
+		stats.setNumPlayers(world.getPlayers(map.getDimension()).size());
 		
 		return stats;
 	}
 	
-	private WorldStats preProcess(World world, SignFilter signFilter, PortalFilter portalFilter, ViewFilter viewFilter, ChestFilter chestFilter, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
+	private WorldStats preProcess(World world, tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
 	{
 		// Pre-render pass - calc chunk hashes and project signs
 		if (progressListener != null)
@@ -478,7 +475,7 @@ public class TileRenderer
 		
 		WorldStats worldStats = new WorldStats();
 		
-		regionHashStore = new RegionHashStore(args.getCacheDir());
+		regionHashStore = new RegionHashStore(config.getCacheDir());
 		
 		log.info("Discovering chunks...");
 		//	Iterate over regions, then over chunks
@@ -522,17 +519,18 @@ public class TileRenderer
 							
 							worldStats.incNumChunks();
 							
-							findSigns(c.getRawChunk(), signs, signFilter);
+							findSigns(c.getRawChunk(), signs, map.getSignFilter());
 
+							PortalFilter portalFilter = map.getPortalFilter();
 							if (Minecraft.getWorldVersion() < 13) {
 								findPortalsOld(c.getRawChunk(), portals, portalFilter, worldStats);
 							} else {
 								findPortals(c.getRawChunk(), portals, portalFilter, worldStats);
 							}
 							
-							findViews(c.getRawChunk(), views, viewFilter);
+							findViews(c.getRawChunk(), views, map.getViewFilter());
 							
-							findChests(c.getRawChunk(), chestFilter, world.getChests());
+							findChests(c.getRawChunk(), map.getChestFilter(), world.getChests());
 							
 							if (worldStats.numChunks() % 100 == 0) {
 								System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
@@ -588,7 +586,7 @@ public class TileRenderer
 		
 		int done = 0;
 
-		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(args.getNumDownsampleThreads());
+		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
 
 		for (TileCoord t : tiles) {
 			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")\r"); //prints a carriage return after line
@@ -803,7 +801,7 @@ public class TileRenderer
 	{
 		final Date downsampleStart = new Date();
 		
-		int zoomLevel = args.getNumZoomLevels() - 1;
+		int zoomLevel = config.getNumZoomLevels() - 1;
 
 		if (!tileCache.hasCreatedDownsampleCache()) {
 			tileCache.calculateDownsampledTileCoordinates(baseTiles, zoomLevel);
@@ -834,7 +832,7 @@ public class TileRenderer
 
 				log.debug("\tDownsampling {} tiles into {} tiles", prevTiles.size(), nextTiles.size());
 
-				Downsampler downsampler = new Downsampler(args.getNumDownsampleThreads(), changedFileList);
+				Downsampler downsampler = new Downsampler(config.getNumDownsampleThreads(), changedFileList);
 				downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener, tileCache, zoomLevel);
 			}
 			

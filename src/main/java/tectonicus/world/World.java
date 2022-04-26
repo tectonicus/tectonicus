@@ -76,7 +76,6 @@ import tectonicus.world.subset.WorldSubset;
 import java.awt.Color;
 import java.awt.Point;
 import java.io.File;
-import java.security.MessageDigest;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,7 +137,11 @@ public class World implements BlockContext
 	private final GeometryCache geometryLoadedChunks;
 	
 	private LightStyle lightStyle;
-	
+	@Getter
+	private final boolean smoothLit;
+	@Getter
+	private final float nightLightAdjustment;
+
 	private int defaultBlockId;
 	private String defaultBlockName = Block.AIR.getName();
 	
@@ -156,19 +159,16 @@ public class World implements BlockContext
 
 	private final Map<Location, String> unknownBlocks;
 	
-	public World(Rasteriser rasteriser, File baseDir, Dimension dimension, File minecraftJar, File texturePackFile,
-				 List<File> modJars, BiomeCache biomeCache, MessageDigest hashAlgorithm, String singlePlayerName,
-				 WorldSubset subset, PlayerSkinCache playerSkinCache, SignFilter signFilter, Configuration args)
+	public World(Rasteriser rasteriser, tectonicus.configuration.Map map, BiomeCache biomeCache, PlayerSkinCache playerSkinCache, Configuration config)
 	{
 		this.rasteriser = rasteriser;
-		this.signFilter = signFilter;
+		this.signFilter = map.getSignFilter();
 		
 		this.defaultBlockId = BlockIds.AIR;
 		this.blockFilter = new NullBlockFilter();
 
-		
-		this.worldDir = baseDir;
-		this.dimension = dimension;
+		this.worldDir = map.getWorldDir();
+		this.dimension = map.getDimension();
 
 		// Use the world dir and the dimension to find the dimension dir
 		dimensionDir = DirUtils.getDimensionDir(worldDir, dimension);
@@ -180,8 +180,8 @@ public class World implements BlockContext
 		this.playerSkinCache = playerSkinCache;
 		
 		// Check that this looks like a world dir
-		if (!Minecraft.isValidWorldDir(baseDir.toPath()))
-			throw new RuntimeException("Invalid world dir! No level.dat found at "+Minecraft.findLevelDat(baseDir.toPath()));
+		if (!Minecraft.isValidWorldDir(worldDir.toPath()))
+			throw new RuntimeException("Invalid world dir! No level.dat found at "+Minecraft.findLevelDat(worldDir.toPath()));
 		if (!Minecraft.isValidDimensionDir(dimensionDir))
 			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 		
@@ -189,7 +189,7 @@ public class World implements BlockContext
 		// World should throw Exception?
 		try {
 			log.info("Loading level.dat");
-			levelDat = new LevelDat(Minecraft.findLevelDat(baseDir.toPath()), singlePlayerName);
+			levelDat = new LevelDat(Minecraft.findLevelDat(worldDir.toPath()), config.getSinglePlayerName());
 			if (dimension == Dimension.END) {
 				levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 			}
@@ -225,7 +225,7 @@ public class World implements BlockContext
 		this.blockMaskFactory = new NullBlockMaskFactory();
 
 		log.info("Loading textures");
-		texturePack = new TexturePack(rasteriser, minecraftJar, texturePackFile, modJars, args);
+		texturePack = new TexturePack(rasteriser, config.minecraftJar(), config.getTexturePack(), map.getModJars(), config);
 		this.textureVersion = texturePack.getVersion();
 
 
@@ -262,6 +262,7 @@ public class World implements BlockContext
 		geometryLoadedChunks = new GeometryCache(100);
 
 		//Set subset origin if none was set in config file
+		WorldSubset subset = map.getWorldSubset();
 		if (subset instanceof CircularWorldSubset) {
 			CircularWorldSubset circularSubset = (CircularWorldSubset) subset;
 			if (circularSubset.getOrigin() == null) {
@@ -286,6 +287,9 @@ public class World implements BlockContext
 		this.nightSkybox = SkyboxUtil.generateNightSkybox(rasteriser);
 
 		this.unknownBlocks = new HashMap<>();
+
+		this.smoothLit = map.isSmoothLit();
+		this.nightLightAdjustment = smoothLit ? 0.3f : 0.1f;
 	}
 
 	public Vector3l getNetherOriginFromPlayers() {
@@ -949,7 +953,7 @@ public class World implements BlockContext
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
 		
-		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z);
+		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
 	}
 
 	/*

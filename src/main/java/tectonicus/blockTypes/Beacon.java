@@ -133,7 +133,12 @@ public class Beacon implements BlockType
 				{
 					Color c;
 					if (blockName != null) {
-						c = Colors.byName(blockName.replace("minecraft:", "").replace("_stained_glass", "")).getColor();
+						Colors glassColor = Colors.byName(blockName.replace("minecraft:", "").replace("_stained_glass", "").toLowerCase());
+						if (glassColor != null) {
+							c = glassColor.getColor();
+						} else {
+							c = Colors.WHITE.getColor();
+						}
 					} else {
 						final int colorID = rawChunk.getBlockData(x, localY + i, z);
 						c = Colors.byId(colorID).getColor();

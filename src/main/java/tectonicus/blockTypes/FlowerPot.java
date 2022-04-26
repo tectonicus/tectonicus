@@ -92,7 +92,7 @@ public class FlowerPot implements BlockType
 		Mesh dirtMesh = geometry.getMesh(dirt.texture, Geometry.MeshType.Solid);
 		Mesh plantMesh = null;
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1.0f);
 		

@@ -74,7 +74,7 @@ public class Hopper implements BlockType
 		Mesh insideMesh = geometry.getMesh(side.texture, Geometry.MeshType.AlphaTest);
 		Mesh insideBottomMesh = geometry.getMesh(inside.texture, Geometry.MeshType.AlphaTest);
 		SubMesh sideMesh = new SubMesh();
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z);
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
 		
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1.0f);
 		

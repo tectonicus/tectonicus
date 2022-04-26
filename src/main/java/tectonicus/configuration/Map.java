@@ -36,7 +36,8 @@ public interface Map
 	int getClosestZoomSize();
 	
 	boolean useBiomeColours();
-	
+	boolean isSmoothLit();
+
 	PlayerFilter getPlayerFilter();
 	SignFilter getSignFilter();
 	PortalFilter getPortalFilter();
