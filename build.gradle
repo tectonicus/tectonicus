@@ -27,7 +27,7 @@ dependencies {
 	def picocliVersion = "4.7.0"
 	def lombokVersion = "1.18.24"
 	def junitVersion = "5.9.2"
-	def log4jVersion = "2.19.0"
+	def log4jVersion = "2.20.0"
 
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 	implementation("org.lwjgl:lwjgl",
