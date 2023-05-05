@@ -489,7 +489,7 @@ public class TileRenderer
 		while (it.hasNext())
 		{
 			File regionFile = it.next();
-			if (regionFile != null)
+			if (regionFile != null && regionFile.length() > 0)
 			{
 				Region region = null;
 				try
@@ -511,7 +511,19 @@ public class TileRenderer
 					{
 						// For every chunk coord...
 						
-						Chunk c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
+						Chunk c = null;
+
+                                                try
+                                                {
+                                                        c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
+                                                }
+                                                catch (Exception e)
+                                                {
+                                                        // Catch exception, log it and skip the chunk
+                                                        log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z));
+                                                        e.printStackTrace();
+                                                }
+                                                
 						if (c != null)
 						{
 							c.calculateHash(hashAlgorithm);
