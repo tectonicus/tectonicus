@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -300,23 +301,15 @@ public class Region {
 			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionByte);
 
 		// Make a new byte array of the chunk data
-		byte[] chunkData = new byte[chunkDataLengthBytes];
-		for (int i = 0; i < chunkData.length; i++) {
-			chunkData[i] = regionBytes[(int) (byteOffset + i + 4 + 1)]; // +4 to skip chunk length, +1 to skip compression type
-		}
+		byte[] chunkData = new byte[chunkDataLengthBytes];     
+                // +4 to skip chunk length, +1 to skip compression type
+                System.arraycopy(regionBytes, (int)(byteOffset + 4 + 1), chunkData, 0, chunkDataLengthBytes);
 
 		return new ChunkData(chunkData, compressionType);
 	}
 
 	private int readInt(final int position, byte[] regionBytes) {
-		final byte b0 = regionBytes[position];
-		final byte b1 = regionBytes[position + 1];
-		final byte b2 = regionBytes[position + 2];
-		final byte b3 = regionBytes[position + 3];
-
-		return ((b0 & 0xFF) << 24)
-				| ((b1 & 0xFF) << 16)
-				| ((b2 & 0xFF) << 8)
-				| (b3 & 0xFF);
-	}
+		ByteBuffer buffer = ByteBuffer.wrap(regionBytes, position, 4).order(ByteOrder.BIG_ENDIAN);
+                return buffer.getInt();
+        }
 }
