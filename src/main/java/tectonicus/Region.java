@@ -87,7 +87,7 @@ public class Region {
 
 			// Read chunk locations
 			if (!read(file, buffer))
-				throw new RegionProcessingException("Failed to read chunk locations");
+				throw new RegionProcessingException(String.format("Failed to read chunk locations for region file %s", regionFile.getAbsolutePath()));
 
 			buffer.rewind();
 
@@ -286,6 +286,8 @@ public class Region {
 
 		final int actualLengthBytes = readInt((int) byteOffset, regionBytes);
 		final int compressionByte = regionBytes[(int) (byteOffset + 4)];
+                // Length includes +1 byte (compression byte). We already read compression byte and the actual chunk data is 1 byte smaller...
+                final int chunkDataLengthBytes = actualLengthBytes - 1;
 
 		assert (byteOffset + actualLengthBytes <= MAX_SIZE_BYTES);
 
@@ -298,7 +300,7 @@ public class Region {
 			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionByte);
 
 		// Make a new byte array of the chunk data
-		byte[] chunkData = new byte[actualLengthBytes];
+		byte[] chunkData = new byte[chunkDataLengthBytes];
 		for (int i = 0; i < chunkData.length; i++) {
 			chunkData[i] = regionBytes[(int) (byteOffset + i + 4 + 1)]; // +4 to skip chunk length, +1 to skip compression type
 		}
