@@ -61,7 +61,7 @@ public class RegionCache
 		if (region == null)
 		{
 			File regionFile = ChunkLocator.findRegionFile(worldDir, coord, format);
-			if (regionFile.exists())
+			if (regionFile.exists() && regionFile.length() > 0)
 			{
 				try
 				{
