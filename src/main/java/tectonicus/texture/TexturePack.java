@@ -466,7 +466,7 @@ public class TexturePack
 			if (Files.exists(filePath)) {
 				in = new FileInputStream(path);
 			} else {
-				return null;
+                                throw new FileNotFoundException(String.format("File {0} not found", path));
 			}
 		}
 

@@ -597,7 +597,15 @@ public class OutputResourcesUtil {
 		writeImage(texturePack.getChestImage(), 176, 77, new File(imagesDir, "SmallChest.png"));
 
 		// Write default player icon
-		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+                BufferedImage defaultSkinIcon = texturePack.getItem(defaultSkin);
+                if (defaultSkinIcon == null)
+                {
+                        log.warn("Unable to find default skin!");
+                }
+                else
+                {
+                        playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+                }
 
 		//Extract Leaflet resources
 		extractMapResources(exportDir);
