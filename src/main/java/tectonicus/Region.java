@@ -74,7 +74,7 @@ public class Region {
 		bytes = loadRegionFile(regionFile, false);
 
 		Path entityFile = regionFile.toPath().getParent().getParent().resolve("entities/" + regionFile.getName());
-		if (Files.exists(entityFile)) {
+		if (Files.exists(entityFile) && Files.size(entityFile) > 0) {
 			this.entityRegionFile = entityFile.toFile();
 			entityFileSizeBytes = Files.size(entityFile);
 			entityBytes = loadRegionFile(entityFile.toFile(), true);
