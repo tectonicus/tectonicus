@@ -232,7 +232,12 @@ public class RawChunk {
 
 					boolean is18 = false;
 					if (dir == null) {
-						dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
+						dir = NbtUtil.getChild(entity, "facing", ByteTag.class);
+                                                if (dir == null)
+                                                {
+                                                        // Facing was renamed to facing, but leave both for compatibility
+                                                        dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
+                                                }
 						is18 = true;
 					}
 
@@ -268,7 +273,7 @@ public class RawChunk {
 
 
 					if (painting) {
-						StringTag motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
+						StringTag motiveTag = NbtUtil.getChild(entity, "variant", StringTag.class);
 						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, motiveTag.getValue(), direction));
 					} else {
 						String item = "";
