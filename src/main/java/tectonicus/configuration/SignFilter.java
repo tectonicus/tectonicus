@@ -43,7 +43,10 @@ public class SignFilter {
 		} else if (type == SignFilterType.SPECIAL) {
 			String line = "" + text1 + text2 + text3 + text4;
 			line = line.trim();
-			if (line.length() > 0) {
+                        if (line.startsWith("!!!POI!!!")) {
+                                return true;
+                        }
+                        else if (line.length() > 0) {
 				final char first = line.charAt(0);
 				final char last = line.charAt(line.length() - 1);
 
