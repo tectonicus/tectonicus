@@ -14,8 +14,11 @@ import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import lombok.extern.log4j.Log4j2;
+
 import tectonicus.TileCoord;
 
+@Log4j2
 public class HddTileListIterator implements Iterator<TileCoord>
 {
 	private File[] xDirs;
@@ -157,6 +160,12 @@ public class HddTileListIterator implements Iterator<TileCoord>
 	private static TileCoord[] fetchTiles(File dir)
 	{
 		File[] files = dir.listFiles( new TileCoordFilter() );
+                
+                if (files == null)
+                {
+                    log.warn(String.format("Unable to read tiles from directory %s", dir.getAbsolutePath()));
+                    return new TileCoord[0];
+                }
 		
 		ArrayList<TileCoord> coords = new ArrayList<TileCoord>();
 		
