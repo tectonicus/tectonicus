@@ -718,7 +718,7 @@ public class TileRenderer
 		while (it.hasNext())
 		{
 			File regionFile = it.next();
-			if (regionFile == null)
+			if (regionFile == null || regionFile.length() == 0)
 				continue;
 			
 			Region region = null;
