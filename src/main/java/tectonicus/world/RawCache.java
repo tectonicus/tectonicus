@@ -9,38 +9,49 @@
 
 package tectonicus.world;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
+
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.function.Function;
 
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
 
 class RawCache
 {
-	private int maxSize;
+        private class RawCacheRemovalListener implements RemovalListener<ChunkCoord, Chunk> {
+
+                @Override
+                public void onRemoval(ChunkCoord coord, Chunk chunk, RemovalCause rc) {
+                        chunk.unloadRaw();
+                }
+        
+        }
+    
+	private final Cache<ChunkCoord, Chunk> chunks;
+        private final Function<ChunkCoord, Chunk> getChunk;
 	
-	private LinkedHashMap<ChunkCoord, Chunk> chunks;
-	
-	public RawCache(int maxSize)
+	public RawCache(int maxSize, Function<ChunkCoord, Chunk> getChunk)
 	{
-		this.maxSize = maxSize;
-		
-		chunks = new LinkedHashMap<ChunkCoord, Chunk>(16, 0.75f, true);
+		chunks = Caffeine.newBuilder()
+                        .maximumSize(maxSize)
+                        .evictionListener(new RawCacheRemovalListener())
+                        .build();
+                this.getChunk = getChunk;
 	}
 	
 	public void unloadAll()
 	{
-		for (Chunk c : chunks.values())
-		{
-			c.unloadRaw();
-		}
-		chunks.clear();
+		chunks.invalidateAll();
 	}
 	
 	public long getRawMemorySize()
 	{
 		long rawMemTotal = 0;
-		for (Chunk c : chunks.values())
+		for (Chunk c : chunks.asMap().values())
 		{
 			rawMemTotal += c.getRawMemorySize();
 		}
@@ -49,44 +60,16 @@ class RawCache
 	
 	public int size()
 	{
-		return chunks.size();
-	}
-	
-	public boolean contains(ChunkCoord coord)
-	{
-		return chunks.containsKey(coord);
-	}
-	
-	public void put(ChunkCoord coord, Chunk chunk)
-	{
-		assert (chunk != null);
-		
-		chunks.put(coord, chunk);
-		chunks.get(coord);
+		return chunks.asMap().size();
 	}
 	
 	public Chunk get(ChunkCoord coord)
 	{
-		return chunks.get(coord);
-	}
-	
-	public void touch(ChunkCoord coord)
-	{
-		chunks.get(coord);
-	}
-	
-	public void trimToMaxSize()
-	{
-		while (size() > maxSize)
-		{
-			Chunk oldestChunk = chunks.values().iterator().next();
-			oldestChunk.unloadRaw();
-			chunks.remove(oldestChunk.getCoord());
-		}
+		return chunks.get(coord, getChunk);
 	}
 	
 	public Collection<Chunk> values()
 	{
-		return chunks.values();
+		return chunks.asMap().values();
 	}
 }

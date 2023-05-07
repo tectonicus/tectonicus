@@ -12,7 +12,7 @@ project.gradle.startParameter.excludedTaskNames.addAll(["jar", "distTar", "distZ
 
 java {
 	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(8))
+		languageVersion.set(JavaLanguageVersion.of(11))
 	}
 }
 
@@ -28,6 +28,7 @@ dependencies {
 	def lombokVersion = "1.18.24"
 	def junitVersion = "5.9.2"
 	def log4jVersion = "2.19.0"
+        def caffeineVersion = "3.1.6"
 
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 	implementation("org.lwjgl:lwjgl",
@@ -41,7 +42,8 @@ dependencies {
 				   "com.fasterxml.jackson.core:jackson-databind:2.14.1",
 				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
-				   "com.h2database:h2-mvstore:2.1.214")
+				   "com.h2database:h2-mvstore:2.1.214",
+                                   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 	implementation files ('libs/jnbt.jar', 'libs/jpct.jar', 'libs/ProcessingCore.jar', 'libs/BiomeExtractor.jar')
 	shadow "org.apache.logging.log4j:log4j-core:$log4jVersion"
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
@@ -84,6 +86,7 @@ shadowJar {
 	exclude ('processing/**', 'com/threed/**')
 	minimize {
 		exclude(dependency('com.fasterxml.jackson.core:jackson-databind:.*'))
+                exclude(dependency('com.github.ben-manes.caffeine:caffeine:.*'))
 	}
 }
 
