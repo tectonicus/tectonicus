@@ -64,6 +64,8 @@ public class RawChunk {
 	public static final int SECTION_WIDTH = 16;
 	public static final int SECTION_HEIGHT = 16;
 	public static final int SECTION_DEPTH = 16;
+        
+        public static final int SECTION_SIZE = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
 
 	public static final int MAX_LIGHT = 16;
 
@@ -553,8 +555,9 @@ public class RawChunk {
 					for (int y = 0; y < SECTION_HEIGHT; y++) {
 						if (blockDataTag == null && singleBlockState != null) {
 							//If no data tag the section should be filled with the only block in the palette
-							Arrays.fill(newSection.blockNames[x][y], singleBlockState.name);
-							Arrays.fill(newSection.blockStates[x][y], singleBlockState.properties);
+                                                        final int fromIndex = Section.getIndex(x, y, 0);
+							Arrays.fill(newSection.blockNames, fromIndex, fromIndex + SECTION_DEPTH, singleBlockState.name);
+							Arrays.fill(newSection.blockStates, fromIndex, fromIndex + SECTION_DEPTH, singleBlockState.properties);
 						}
 						for (int z = 0; z < SECTION_DEPTH; z++) {
 							if (blockDataTag != null && blockDataTag.getValue() != null) {
@@ -573,8 +576,8 @@ public class RawChunk {
 								long paletteIndex = (blockDataTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
 
 								BlockState blockState = blockStatesPalette.get((int) paletteIndex);
-								newSection.blockNames[x][y][z] = blockState.name;
-								newSection.blockStates[x][y][z] = blockState.properties;
+								newSection.blockNames[Section.getIndex(x, y, z)] = blockState.name;
+								newSection.blockStates[Section.getIndex(x, y, z)] = blockState.properties;
 
 								//TODO: add back the block counting code here
 //							if (worldStats != null)
@@ -582,11 +585,11 @@ public class RawChunk {
 							}
 
 							if (skylightTag != null) {
-								newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
+								newSection.skylight[Section.getIndex(x, y, z)] = getAnvil4Bit(skylightTag, x, y, z);
 							}
 
 							if (blocklightTag != null) {
-								newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
+								newSection.blocklight[Section.getIndex(x, y, z)] = getAnvil4Bit(blocklightTag, x, y, z);
 							}
 						}
 					}
@@ -686,15 +689,15 @@ public class RawChunk {
 
 						if (blocksTag != null) {
 							int id = blocksTag.getValue()[index] & 0xFF;
-							newSection.blockIds[x][y][z] = id;
+							newSection.blockIds[Section.getIndex(x, y, z)] = id;
 
 							if (addTag != null) {
 								id = id | (getAnvil4Bit(addTag, x, y, z) << 8);
-								newSection.blockIds[x][y][z] = id;
+								newSection.blockIds[Section.getIndex(x, y, z)] = id;
 							}
 
 							final byte data = getAnvil4Bit(dataTag, x, y, z);
-							newSection.blockData[x][y][z] = data;
+							newSection.blockData[Section.getIndex(x, y, z)] = data;
 
 							if (worldStats != null)
 								worldStats.incBlockId(id, data);
@@ -723,16 +726,16 @@ public class RawChunk {
 								}
 
 								BlockState blockState = blockStatesPalette.get((int) paletteIndex);
-								newSection.blockNames[x][y][z] = blockState.name;
-								newSection.blockStates[x][y][z] = blockState.properties;
+								newSection.blockNames[Section.getIndex(x, y, z)] = blockState.name;
+								newSection.blockStates[Section.getIndex(x, y, z)] = blockState.properties;
 							}
 						}
 
 						if (skylightTag != null && newSection != null) {
-							newSection.skylight[x][y][z] = getAnvil4Bit(skylightTag, x, y, z);
+							newSection.skylight[Section.getIndex(x, y, z)] = getAnvil4Bit(skylightTag, x, y, z);
 						}
 						if (blocklightTag != null && newSection != null) {
-							newSection.blocklight[x][y][z] = getAnvil4Bit(blocklightTag, x, y, z);
+							newSection.blocklight[Section.getIndex(x, y, z)] = getAnvil4Bit(blocklightTag, x, y, z);
 						}
 					}
 				}
@@ -893,7 +896,7 @@ public class RawChunk {
 
 		Section s = sections[sectionY];
 		if (s != null)
-			return s.blockIds[x][localY][z];
+			return s.blockIds[Section.getIndex(x, localY, z)];
 		else
 			return BlockIds.AIR;
 	}
@@ -908,8 +911,8 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.blockIds[x][localY][z] = blockId;
-		s.blockNames[x][localY][z] = null;
+		s.blockIds[Section.getIndex(x, localY, z)] = blockId;
+		s.blockNames[Section.getIndex(x, localY, z)] = null;
 	}
 
 	public void setBlockData(final int x, final int y, final int z, final byte val) {
@@ -922,7 +925,7 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.blockData[x][localY][z] = val;
+		s.blockData[Section.getIndex(x, localY, z)] = val;
 	}
 
 	public int getBlockData(final int x, final int y, final int z) {
@@ -934,7 +937,7 @@ public class RawChunk {
 
 		Section s = sections[sectionY];
 		if (s != null && x >= 0 && x <= 15 && z >= 0 && z <= 15)  //TODO:  Fix this (workaround for painting and stair problems)
-			return s.blockData[x][localY][z];
+			return s.blockData[Section.getIndex(x, localY, z)];
 		else
 			return 0;
 	}
@@ -945,7 +948,7 @@ public class RawChunk {
 
 		Section s = sections[sectionY];
 		if (s != null) {
-			return s.blockNames[x][localY][z];
+			return s.blockNames[Section.getIndex(x, localY, z)];
 		} else {
 			return null;
 		}
@@ -961,7 +964,7 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.blockNames[x][localY][z] = blockName;
+		s.blockNames[Section.getIndex(x, localY, z)] = blockName;
 	}
 
 	public BlockProperties getBlockState(final int x, final int y, final int z) {
@@ -973,7 +976,7 @@ public class RawChunk {
 
 		Section s = sections[sectionY];
 		if (s != null)
-			return s.blockStates[x][localY][z];
+			return s.blockStates[Section.getIndex(x, localY, z)];
 		else
 			return null;
 	}
@@ -988,7 +991,7 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.blockStates[x][localY][z] = blockState;
+		s.blockStates[Section.getIndex(x, localY, z)] = blockState;
 	}
 
 	public void setSkyLight(final int x, final int y, final int z, final byte val) {
@@ -1001,7 +1004,7 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.skylight[x][localY][z] = val;
+		s.skylight[Section.getIndex(x, localY, z)] = val;
 	}
 
 	public byte getSkyLight(final int x, final int y, final int z) {
@@ -1010,7 +1013,7 @@ public class RawChunk {
 
 		Section s = sections[sectionY];
 		if (s != null && x >= 0 && localY >= 0 && z >= 0)  //TODO: Fix this (workaround for painting and stair problems)
-			return s.skylight[x][localY][z];
+			return s.skylight[Section.getIndex(x, localY, z)];
 		else
 			return MAX_LIGHT - 1;
 	}
@@ -1025,7 +1028,7 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.blocklight[x][localY][z] = val;
+		s.blocklight[Section.getIndex(x, localY, z)] = val;
 	}
 
 	public byte getBlockLight(final int x, final int y, final int z) {
@@ -1034,7 +1037,7 @@ public class RawChunk {
 
 		Section s = sections[sectionY];
 		if (s != null && x >= 0 && localY >= 0 && z >= 0)  //TODO: Fix this (workaround for painting and stair problems)
-			return s.blocklight[x][localY][z];
+			return s.blocklight[Section.getIndex(x, localY, z)];
 		else
 			return 0;
 	}
@@ -1061,10 +1064,10 @@ public class RawChunk {
 		int blockDataTotal = 0;
 		for (Section s : sections) {
 			if (s != null) {
-				blockIdTotal += s.blockIds.length * s.blockIds[0].length * s.blockIds[0][0].length;
-				skyLightTotal += s.skylight.length * s.skylight[0].length * s.skylight[0][0].length;
-				blockLightTotal += s.blocklight.length * s.blocklight[0].length * s.blocklight[0][0].length;
-				blockDataTotal += s.blockData.length * s.blockData[0].length * s.blockData[0][0].length;
+				blockIdTotal += s.blockIds.length;
+				skyLightTotal += s.skylight.length;
+				blockLightTotal += s.blocklight.length;
+				blockDataTotal += s.blockData.length;
 			}
 		}
 
@@ -1127,7 +1130,7 @@ public class RawChunk {
 				update(hashAlgorithm, s.skylight);
 				update(hashAlgorithm, s.blocklight);
 			} else {
-				byte[][][] dummy = new byte[1][1][1];
+				byte[] dummy = new byte[3];
 				update(hashAlgorithm, dummy);
 			}
 		}
@@ -1145,38 +1148,25 @@ public class RawChunk {
 		return hashAlgorithm.digest();
 	}
 
-	private static void update(MessageDigest hashAlgorithm, int[][][] data) {
-		for (int x = 0; x < data.length; x++) {
-			for (int y = 0; y < data[0].length; y++) {
-				for (int z = 0; y < data[0][0].length; y++) {
-					final int val = data[x][y][z];
-
-					hashAlgorithm.update((byte) ((val) & 0xFF));
-					hashAlgorithm.update((byte) ((val >> 8) & 0xFF));
-					hashAlgorithm.update((byte) ((val >> 16) & 0xFF));
-					hashAlgorithm.update((byte) ((val >> 24) & 0xFF));
-				}
-			}
+	private static void update(MessageDigest hashAlgorithm, int[] data) {
+                for (int val : data) {
+                        hashAlgorithm.update((byte) ((val) & 0xFF));
+                        hashAlgorithm.update((byte) ((val >> 8) & 0xFF));
+                        hashAlgorithm.update((byte) ((val >> 16) & 0xFF));
+                        hashAlgorithm.update((byte) ((val >> 24) & 0xFF));
 		}
 	}
 
-	private static void update(MessageDigest hashAlgorithm, String[][][] data) {
-		for (int x = 0; x < data.length; x++) {
-			for (int y = 0; y < data[0].length; y++) {
-				for (int z = 0; y < data[0][0].length; y++) {
-					if (data[x][y][z] != null)
-						hashAlgorithm.update(data[x][y][z].getBytes());
-				}
-			}
-		}
+	private static void update(MessageDigest hashAlgorithm, String[] data) {
+            for (String s : data) {
+                if (s != null) {
+                    hashAlgorithm.update(s.getBytes());
+                }
+            }
 	}
 
-	private static void update(MessageDigest hashAlgorithm, byte[][][] data) {
-		for (int x = 0; x < data.length; x++) {
-			for (int y = 0; y < data[0].length; y++) {
-				hashAlgorithm.update(data[x][y]);
-			}
-		}
+	private static void update(MessageDigest hashAlgorithm, byte[] data) {
+                hashAlgorithm.update(data);
 	}
 
 	public Biome getBiome(final int x, final int y, final int z) {
@@ -1206,26 +1196,30 @@ public class RawChunk {
 	}
 
 	private static class Section {
-		public int[][][] blockIds;
-		public byte[][][] blockData;
-		public String[][][] blockNames;
-		public BlockProperties[][][] blockStates;
+		public int[] blockIds;
+		public byte[] blockData;
+		public String[] blockNames;
+		public BlockProperties[] blockStates;
 
 		private final String[] biomeIds;
 
-		public byte[][][] skylight;
-		public byte[][][] blocklight;
+		public byte[] skylight;
+		public byte[] blocklight;
 
-		public Section() {
-			blockIds = new int[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
-			blockData = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
-			blockNames = new String[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
-			blockStates = new BlockProperties[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+		public Section() {                    
+			blockIds = new int[SECTION_SIZE];
+			blockData = new byte[SECTION_SIZE];
+			blockNames = new String[SECTION_SIZE];
+			blockStates = new BlockProperties[SECTION_SIZE];
 			biomeIds = new String[64];
 
-			skylight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
-			blocklight = new byte[SECTION_WIDTH][SECTION_HEIGHT][SECTION_DEPTH];
+			skylight = new byte[SECTION_SIZE];
+			blocklight = new byte[SECTION_SIZE];
 		}
+                
+                public static int getIndex(int x, int y, int z) {
+                    return x * SECTION_WIDTH * SECTION_WIDTH + y * SECTION_HEIGHT + z;
+                }
 	}
 
 	//TODO: for versions newer than 1.13 can we switch to using sections without the blockId and blockData arrays?
