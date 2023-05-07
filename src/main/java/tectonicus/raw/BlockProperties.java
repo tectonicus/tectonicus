@@ -14,6 +14,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 @NoArgsConstructor
@@ -26,9 +29,10 @@ public class BlockProperties {
         this.propertiesString = this.toString();
     }
 
+    private static final Pattern toStringReplacePattern = Pattern.compile("^\\{|\\s+|}$");
     @Override
     public String toString() {
-        return properties.toString().replaceAll("^\\{|\\s+|}$", "");
+        return toStringReplacePattern.matcher(properties.toString()).replaceAll(StringUtils.EMPTY);
     }
 
     public String get(String key) {
