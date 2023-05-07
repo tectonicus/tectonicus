@@ -290,7 +290,7 @@ public class TileRenderer
 				renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
 
 				// Create downsampled layers
-				bounds = downsample(visibleTiles, exportDir, layer, baseTilesDir, tileCache);
+				bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
 				tileCache.closeTileCache();
 			}
 			
@@ -807,7 +807,7 @@ public class TileRenderer
 		}
 	}
 	
-	private TileCoordBounds downsample(HddTileList baseTiles, File exportDir, Layer layer, File baseDir, TileCache tileCache)
+	private TileCoordBounds downsample(HddTileList baseTiles, HddTileList changedTiles, File exportDir, Layer layer, File baseDir, TileCache tileCache)
 	{
 		final Date downsampleStart = new Date();
 		
@@ -816,6 +816,9 @@ public class TileRenderer
 		if (!tileCache.hasCreatedDownsampleCache()) {
 			tileCache.calculateDownsampledTileCoordinates(baseTiles, zoomLevel);
 		}
+                else {
+                        tileCache.calculateDownsampledTileCoordinates(changedTiles, zoomLevel);
+                }
 		
 		File prevDir = baseDir;
 		HddTileList prevTiles = baseTiles;
@@ -828,7 +831,7 @@ public class TileRenderer
 			
 			HddTileList nextTiles = tileCache.findTilesForDownsampling(hddTileListFactory, zoomLevel);
 			File nextDir = DirUtils.getZoomDir(exportDir, layer, zoomLevel);
-			if (nextTiles.size() == 0) {
+                        if (nextTiles.size() == 0) {
 				log.info("\tNo downsampling needed");
 			} else {
 				if (!tileCache.isUsingExistingCache()) {
