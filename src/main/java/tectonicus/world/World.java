@@ -85,6 +85,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -126,7 +127,7 @@ public class World implements BlockContext
 	private final List<Player> players;
 	private final PlayerSkinCache playerSkinCache;
 	
-	private final List<ContainerEntity> chests;
+	private final ConcurrentLinkedQueue<ContainerEntity> chests;
 	
 	private final TexturePack texturePack;
 	
@@ -253,7 +254,7 @@ public class World implements BlockContext
 
 		players = loadPlayers(worldDir, playerSkinCache);
 		
-		chests = new ArrayList<>();
+		chests = new ConcurrentLinkedQueue<ContainerEntity>();
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(biomeCache, regionCache);
@@ -280,7 +281,7 @@ public class World implements BlockContext
 		} else {
 			this.worldSubset = subset;
 		}
-		
+                
 		this.lightStyle = LightStyle.None;
 		
 		this.daySkybox = SkyboxUtil.generateDaySkybox(rasteriser);
@@ -454,7 +455,7 @@ public class World implements BlockContext
 		return result;
 	}
 	
-	public List<ContainerEntity> getChests()
+	public ConcurrentLinkedQueue<ContainerEntity> getChests()
 	{
 		return chests;
 	}
@@ -635,8 +636,8 @@ public class World implements BlockContext
 			// Load raw if not present
 			if (!rawLoadedChunks.contains(coord))
 			{
-				if (worldSubset.contains(coord))
-				{
+                        if (worldSubset.contains(coord))
+                        {
 					CompositeBlockFilter composite = new CompositeBlockFilter();
 					composite.add(blockFilter);
 					composite.add(worldSubset.getBlockFilter(coord));
@@ -646,8 +647,8 @@ public class World implements BlockContext
 					if (c != null)
 					{	
 						rawLoadedChunks.put(coord, c);
-					}
-				}
+                        }			
+		}
 			}
 			else
 			{

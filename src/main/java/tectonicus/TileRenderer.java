@@ -24,15 +24,10 @@ import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
-import tectonicus.configuration.ChestFilter;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.RenderStyle;
-import tectonicus.configuration.Dimension;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
-import tectonicus.configuration.PortalFilter;
-import tectonicus.configuration.SignFilter;
-import tectonicus.configuration.ViewFilter;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -63,13 +58,10 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
-import static tectonicus.util.FindEntityUtil.findChests;
-import static tectonicus.util.FindEntityUtil.findPortals;
-import static tectonicus.util.FindEntityUtil.findPortalsOld;
-import static tectonicus.util.FindEntityUtil.findSigns;
-import static tectonicus.util.FindEntityUtil.findViews;
+import tectonicus.raw.ContainerEntity;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
@@ -505,6 +497,8 @@ public class TileRenderer
 					// For every region...
 					
 					regionHashStore.startRegion(region.getRegionCoord());
+                                        
+                                        RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
 					
 					ChunkCoord[] chunkCoords = region.getContainedChunks();
 					for (ChunkCoord coord : chunkCoords)
@@ -526,31 +520,35 @@ public class TileRenderer
                                                 
 						if (c != null)
 						{
-							c.calculateHash(hashAlgorithm);
-							regionHashStore.addHash(c.getCoord(), c.getHash());
-							
-							worldStats.incNumChunks();
-							
-							findSigns(c.getRawChunk(), signs, map.getSignFilter());
+                                                        worldStats.incNumChunks();
+                                                        
+                                                        ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
 
-							PortalFilter portalFilter = map.getPortalFilter();
-							if (Minecraft.getWorldVersion() < 13) {
-								findPortalsOld(c.getRawChunk(), portals, portalFilter, worldStats);
-							} else {
-								findPortals(c.getRawChunk(), portals, portalFilter, worldStats);
-							}
-							
-							findViews(c.getRawChunk(), views, map.getViewFilter());
-							
-							findChests(c.getRawChunk(), map.getChestFilter(), world.getChests());
-							
-							if (worldStats.numChunks() % 100 == 0) {
-								System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
-								log.trace("found {} chunks so far", worldStats.numChunks());
-							}
+                                                        try
+                                                        {
+                                                                // MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
+                                                                regionLoadQueue.load(c, regionHashStore, (MessageDigest)hashAlgorithm.clone(), map, portals, signs, views, chests);
+                                                        }
+                                                        catch (CloneNotSupportedException e)
+                                                        {
+                                                                e.printStackTrace();
+                                                        }
 						}
 					}
 					
+                                        regionLoadQueue.waitUntilFinished();
+
+                                        System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
+                                        log.trace("found {} chunks so far", worldStats.numChunks());
+                                        
+                                        try {
+                                                portals.flush();
+                                                signs.flush();
+                                                views.flush();
+                                        } catch (Exception e) {
+                                                e.printStackTrace();
+                                        }
+                                        
 					regionHashStore.endRegion();
 				}
 			}

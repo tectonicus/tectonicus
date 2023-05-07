@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -405,7 +406,7 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static void outputChests(File chestFile, tectonicus.configuration.Map map, List<ContainerEntity> chestList) {
+	public static void outputChests(File chestFile, tectonicus.configuration.Map map, ConcurrentLinkedQueue<ContainerEntity> chestList) {
 		log.info("Exporting chests to {}", chestFile.getAbsolutePath());
 
 		try {

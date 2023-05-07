@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class HddObjectListWriter<T extends Swappable>
 {	
@@ -22,6 +23,8 @@ public class HddObjectListWriter<T extends Swappable>
 	private DataOutputStream dataOutput;
 	
 	private int size;
+        
+        private ConcurrentLinkedQueue<T> queue;
 	
 	public HddObjectListWriter(File file, final boolean deleteExisting) throws Exception
 	{
@@ -30,9 +33,11 @@ public class HddObjectListWriter<T extends Swappable>
 		
 		fileOutput = new FileOutputStream(file);
 		dataOutput = new DataOutputStream(fileOutput);
+                
+                queue = new ConcurrentLinkedQueue<T>();
 	}
 	
-	public void close()
+	public synchronized void close()
 	{
 		closeWriters();
 	}
@@ -61,22 +66,28 @@ public class HddObjectListWriter<T extends Swappable>
 	}
 	
 	
-	public void add(T t) throws Exception
+	public void add(T t)
 	{
-		ByteArrayOutputStream writtenBytes = new ByteArrayOutputStream();
-		DataOutputStream tempOut = new DataOutputStream(writtenBytes);
-		
-		t.writeTo(tempOut);
-		
-		tempOut.flush();
-		byte[] packet = writtenBytes.toByteArray();
-		
-		dataOutput.writeInt(MAGIC);
-		dataOutput.writeInt(packet.length);
-		dataOutput.write(packet);
-		
+                queue.add(t);
 		size++;
 	}
+        
+        public synchronized void flush() throws Exception {
+                T t;
+                while ((t = queue.poll()) != null) {
+                        ByteArrayOutputStream writtenBytes = new ByteArrayOutputStream();
+                        DataOutputStream tempOut = new DataOutputStream(writtenBytes);
+
+                        t.writeTo(tempOut);
+
+                        tempOut.flush();
+                        byte[] packet = writtenBytes.toByteArray();
+
+                        dataOutput.writeInt(MAGIC);
+                        dataOutput.writeInt(packet.length);
+                        dataOutput.write(packet);
+                }
+        }
 	
 	public int size()
 	{

@@ -18,7 +18,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -98,7 +98,7 @@ public class RegionHashStore
 		{
 			this.regionCoord = coord;
 			
-			chunkHashes = new HashMap<>();
+			chunkHashes = new ConcurrentHashMap<>();
 		}
 		
 		public RegionCoord getRegionCoord()
