@@ -39,12 +39,16 @@ public class HddObjectListWriter<T extends Swappable>
 	
 	public synchronized void close()
 	{
-		closeWriters();
-	}
-	
-	private void closeWriters()
-	{
-		try
+                try
+                {
+                        flush();
+                }
+                catch (Exception e)
+                {
+                        e.printStackTrace();
+                }
+                
+                try
 		{
 			if (dataOutput != null)
 			{
@@ -64,7 +68,6 @@ public class HddObjectListWriter<T extends Swappable>
 		}
 		catch (Exception e) {}
 	}
-	
 	
 	public void add(T t)
 	{

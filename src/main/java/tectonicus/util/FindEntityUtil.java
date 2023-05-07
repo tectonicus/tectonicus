@@ -14,7 +14,6 @@ import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
 import tectonicus.Portal;
-import tectonicus.WorldStats;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.ChestFilter;
@@ -26,7 +25,6 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.world.Sign;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @UtilityClass
