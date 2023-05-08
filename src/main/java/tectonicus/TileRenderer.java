@@ -829,8 +829,8 @@ public class TileRenderer
 
 			progressListener.onTaskStarted(Task.DOWNSAMPLING + " zoom level " + zoomLevel);
 			
-			HddTileList nextTiles = tileCache.findTilesForDownsampling(hddTileListFactory, zoomLevel);
 			File nextDir = DirUtils.getZoomDir(exportDir, layer, zoomLevel);
+			HddTileList nextTiles = tileCache.findTilesForDownsampling(hddTileListFactory, zoomLevel, nextDir, layer.getImageFormat());
                         if (nextTiles.size() == 0) {
 				log.info("\tNo downsampling needed");
 			} else {
