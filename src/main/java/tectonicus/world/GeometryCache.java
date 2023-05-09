@@ -9,52 +9,16 @@
 
 package tectonicus.world;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.RemovalListener;
-
 import java.util.function.Function;
 
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
 
-class GeometryCache
+class GeometryCache extends ChunkCache
 {	
-        private class GeometryCacheRemovalListener implements RemovalListener<ChunkCoord, Chunk> {
-
-                @Override
-                public void onRemoval(ChunkCoord coord, Chunk chunk, RemovalCause rc) {
-                        chunk.unloadGeometry();
-                }
-        
-        }
-
-	private final Cache<ChunkCoord, Chunk> chunks;
-        private final Function<ChunkCoord, Chunk> getChunk;
-	
-	public GeometryCache(final int maxSize, Function<ChunkCoord, Chunk> getChunk)
-	{
-		chunks = Caffeine.newBuilder()
-                        .maximumSize(maxSize)
-                        .evictionListener(new GeometryCacheRemovalListener())
-                        .build();
-                this.getChunk = getChunk;
-	}
-	
-	public void unloadAll()
-	{
-		chunks.invalidateAll();
-	}
-	
-	public Chunk get(ChunkCoord coord)
-	{
-		return chunks.get(coord, getChunk);
-	}
-	
-	public int size()
-	{
-		return chunks.asMap().size();
+	public GeometryCache(int maxSize, Function<ChunkCoord, Chunk> getChunk)
+        {		
+                super(maxSize, getChunk);
 	}
 	
 	public long getGeometryMemorySize()
@@ -66,5 +30,10 @@ class GeometryCache
 		}
 		return total;
 	}
-	
+        
+        @Override
+        protected void unloadInvalidatedChunk(Chunk chunk)
+        {
+                chunk.unloadGeometry();
+        }	
 }

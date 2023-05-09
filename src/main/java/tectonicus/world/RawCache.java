@@ -9,45 +9,18 @@
 
 package tectonicus.world;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.RemovalListener;
-
-import java.util.Collection;
 import java.util.function.Function;
 
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
 
-class RawCache
+class RawCache extends ChunkCache
 {
-        private class RawCacheRemovalListener implements RemovalListener<ChunkCoord, Chunk> {
-
-                @Override
-                public void onRemoval(ChunkCoord coord, Chunk chunk, RemovalCause rc) {
-                        chunk.unloadRaw();
-                }
+    	public RawCache(int maxSize, Function<ChunkCoord, Chunk> getChunk)
+	{
+		super(maxSize, getChunk);
+	}
         
-        }
-    
-	private final Cache<ChunkCoord, Chunk> chunks;
-        private final Function<ChunkCoord, Chunk> getChunk;
-	
-	public RawCache(int maxSize, Function<ChunkCoord, Chunk> getChunk)
-	{
-		chunks = Caffeine.newBuilder()
-                        .maximumSize(maxSize)
-                        .evictionListener(new RawCacheRemovalListener())
-                        .build();
-                this.getChunk = getChunk;
-	}
-	
-	public void unloadAll()
-	{
-		chunks.invalidateAll();
-	}
-	
 	public long getRawMemorySize()
 	{
 		long rawMemTotal = 0;
@@ -57,19 +30,10 @@ class RawCache
 		}
 		return rawMemTotal;
 	}
-	
-	public int size()
-	{
-		return chunks.asMap().size();
-	}
-	
-	public Chunk get(ChunkCoord coord)
-	{
-		return chunks.get(coord, getChunk);
-	}
-	
-	public Collection<Chunk> values()
-	{
-		return chunks.asMap().values();
-	}
+        
+        @Override
+        protected void unloadInvalidatedChunk(Chunk chunk)
+        {
+                chunk.unloadRaw();
+        }	
 }

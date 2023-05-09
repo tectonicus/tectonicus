@@ -648,6 +648,10 @@ public class World implements BlockContext
 			
 			rasteriser.enableColourWriting(true, false);
 		}
+                
+                // Unload raw data and geometry from chunks that were evicted from cache
+                rawLoadedChunks.unloadInvalidatedChunks();
+                geometryLoadedChunks.unloadInvalidatedChunks();
 	}
 	
 	private void drawGeometry(Camera camera, List<ChunkCoord> visible)
