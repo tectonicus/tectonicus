@@ -144,6 +144,12 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	@Option(names = {"-u", "--updateToLeaflet"}, paramLabel = "<String>")
 	private Path updateToLeaflet;
+        
+        @Option(names = {"-css", "--customStyle", "customStyle"}, paramLabel = "<String>")
+	private String customStyle;
+
+        @Option(names = {"-js", "--customScript", "customScript"}, paramLabel = "<String>")
+	private String customScript;
 
 	private List<MutableMap> maps;
 
@@ -332,7 +338,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		this.viewsInitiallyVisible = visible;
 	}
 	public boolean areViewsInitiallyVisible() { return viewsInitiallyVisible; }
-
+        
 	public int numMaps()
 	{
 		return maps.size();
