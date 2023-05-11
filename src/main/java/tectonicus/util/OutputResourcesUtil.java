@@ -855,9 +855,22 @@ public class OutputResourcesUtil {
 					{
 						if (first.value.equals("title")) {
 							outLine.append(config.getHtmlTitle());
-						} else if (first.value.equals("includes")) {
+                                                } else if (first.value.equals("styleIncludes")) {
+                                                        if (config.getCustomStyle() != null)
+                                                        {
+                                                                outLine.append("<link rel=\"stylesheet\" href=\"Scripts/");
+                                                                outLine.append(config.getCustomStyle());
+                                                                outLine.append("\" />");
+                                                        }
+						} else if (first.value.equals("scriptIncludes")) {
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
+                                                        
+                                                        if (config.getCustomScript() != null) {
+                                                                outLine.append(templateStart);
+								outLine.append("Scripts/").append(config.getCustomScript());
+								outLine.append(templateEnd);
+                                                        }
 
 							for (tectonicus.configuration.Map map : config.getMaps())
 							{
