@@ -327,27 +327,49 @@ public class RawChunk {
 
 					if (id.equals("Sign") || id.equals("minecraft:sign")) {
 						List<String> textLines = new ArrayList<>();
-
-						for (int i = 1; i <= 4; i++) {
-							String text = NbtUtil.getChild(entity, "Text" + i, StringTag.class).getValue();
-
-							if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
-							{
-								textLines.add(textFromJSON(text));
-							} else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
-							{
-								text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
-								textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
-							} else {
-								textLines.add("");
-							}
-						}
-
-						StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
 						String color = "black";
-						if (colorTag != null) {
-							color = colorTag.getValue();
-						}
+
+                                                CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
+                                                CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
+
+                                                if (frontText == null) {
+                                                        // Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
+                                                        for (int i = 1; i <= 4; i++) {
+                                                                String text = NbtUtil.getChild(entity, "Text" + i, StringTag.class).getValue();
+
+                                                                if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
+                                                                {
+                                                                        textLines.add(textFromJSON(text));
+                                                                } else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
+                                                                {
+                                                                        text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
+                                                                        textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+                                                                } else {
+                                                                        textLines.add("");
+                                                                }
+                                                        }
+
+                                                        StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
+                                                        if (colorTag != null) {
+                                                                color = colorTag.getValue();
+                                                        }
+                                                } else {
+                                                        // Process 1.20 or older sign
+                                                        ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
+                                                        ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
+                                                        
+                                                        for (int i = 0; i < 4; i++) {
+                                                                textLines.add(textFromJSON(NbtUtil.getChild(frontMessages, i, StringTag.class).getValue()));
+                                                        }
+                                                        for (int i = 0; i < 4; i++) {
+                                                                textLines.add(textFromJSON(NbtUtil.getChild(backMessages, i, StringTag.class).getValue()));
+                                                        }
+                                                        
+                                                        StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
+                                                        if (colorTag != null) {
+                                                                color = colorTag.getValue();
+                                                        }
+                                                }
 
 						Integer data = null;
 						BlockProperties properties = null;
