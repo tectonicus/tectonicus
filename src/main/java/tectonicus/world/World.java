@@ -206,6 +206,7 @@ public class World implements BlockContext
 		if (worldVersion != null) {
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
 			if (StringUtils.isNotEmpty(versionNumber)) {
+                                versionNumber = versionNumber.split(" Release Candidate ")[0];
 				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
 				version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 			}
