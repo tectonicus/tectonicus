@@ -145,15 +145,24 @@ public class HddTileListIterator implements Iterator<TileCoord>
 	
 	private void refreshTiles()
 	{
-		// Refresh the tiles array
-		tiles = fetchTiles(yDirs[yPosition]);
-		tilePosition = -1;
+                if (yDirs != null && yDirs.length > 0)
+                {
+                        // Refresh the tiles array
+                        tiles = fetchTiles(yDirs[yPosition]);
+                        tilePosition = -1;
+                }
 	}
 	
 	private void refreshYDir()
 	{
 		// Refresh the y dir
 		yDirs = xDirs[xPosition].listFiles( new DirectoryFilter() );
+                
+                if (yDirs == null)
+                {
+                    log.warn(String.format("Unable to read directories from directory %s", xDirs[xPosition].getAbsolutePath()));
+                }
+                
 		yPosition = 0;
 	}
 	
