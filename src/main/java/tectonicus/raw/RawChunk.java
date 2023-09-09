@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -276,6 +276,9 @@ public class RawChunk {
 
 					if (painting) {
 						StringTag motiveTag = NbtUtil.getChild(entity, "variant", StringTag.class);
+						if (motiveTag == null) {
+							motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
+						}
 						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, motiveTag.getValue(), direction));
 					} else {
 						String item = "";
