@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -43,6 +43,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -466,7 +467,7 @@ public class TexturePack
 			if (Files.exists(filePath)) {
 				in = new FileInputStream(path);
 			} else {
-                                throw new FileNotFoundException(String.format("File %s not found", path));
+				throw new FileNotFoundException(String.format("File %s not found", path));
 			}
 		}
 
@@ -485,6 +486,23 @@ public class TexturePack
 		}
 
 		return image;
+	}
+
+	public boolean fileExists(String path) {
+		boolean hasFile = zipStack.hasFile(path); // Check texture pack and minecraft jar
+
+		if (!hasFile) {
+			URL u = TexturePack.class.getResource(path); //Check classpath
+			if (u != null) {
+				hasFile = true;
+			}
+		}
+
+		if (!hasFile) { // Check computer
+			hasFile = Files.exists(Paths.get(path));
+		}
+
+		return hasFile;
 	}
 
 	public Color getTransparentColor(IIOImage image) {
