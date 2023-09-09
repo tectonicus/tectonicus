@@ -12,6 +12,7 @@ package tectonicus.cache;
 import tectonicus.TileCoord;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
+import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Map;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.world.World;
@@ -51,7 +52,7 @@ public class NullTileCache implements TileCache
 	}
 
 	@Override
-	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel) {
+	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel, File baseDir, ImageFormat imageFormat) {
 		return null;
 	}
 

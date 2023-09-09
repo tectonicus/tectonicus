@@ -155,6 +155,9 @@ public class XmlConfigurationParser
 			config.setSignsInitiallyVisible(getBoolean(configNode, "signsInitiallyVisible", true));
 			config.setPortalsInitiallyVisible(getBoolean(configNode, "portalsInitiallyVisible", true));
 			config.setViewsInitiallyVisible(getBoolean(configNode, "viewsInitiallyVisible", true));
+                        
+                        config.setCustomStyle(getString(configNode, "customStyle", null));
+                        config.setCustomScript(getString(configNode, "customScript", null));
 		}
 		
 		// Parse rasteriser config

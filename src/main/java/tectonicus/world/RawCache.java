@@ -9,84 +9,31 @@
 
 package tectonicus.world;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.function.Function;
 
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
 
-class RawCache
+class RawCache extends ChunkCache
 {
-	private int maxSize;
-	
-	private LinkedHashMap<ChunkCoord, Chunk> chunks;
-	
-	public RawCache(int maxSize)
+    	public RawCache(int maxSize, Function<ChunkCoord, Chunk> getChunk)
 	{
-		this.maxSize = maxSize;
-		
-		chunks = new LinkedHashMap<ChunkCoord, Chunk>(16, 0.75f, true);
+		super(maxSize, getChunk);
 	}
-	
-	public void unloadAll()
-	{
-		for (Chunk c : chunks.values())
-		{
-			c.unloadRaw();
-		}
-		chunks.clear();
-	}
-	
+        
 	public long getRawMemorySize()
 	{
 		long rawMemTotal = 0;
-		for (Chunk c : chunks.values())
+		for (Chunk c : chunks.asMap().values())
 		{
 			rawMemTotal += c.getRawMemorySize();
 		}
 		return rawMemTotal;
 	}
-	
-	public int size()
-	{
-		return chunks.size();
-	}
-	
-	public boolean contains(ChunkCoord coord)
-	{
-		return chunks.containsKey(coord);
-	}
-	
-	public void put(ChunkCoord coord, Chunk chunk)
-	{
-		assert (chunk != null);
-		
-		chunks.put(coord, chunk);
-		chunks.get(coord);
-	}
-	
-	public Chunk get(ChunkCoord coord)
-	{
-		return chunks.get(coord);
-	}
-	
-	public void touch(ChunkCoord coord)
-	{
-		chunks.get(coord);
-	}
-	
-	public void trimToMaxSize()
-	{
-		while (size() > maxSize)
-		{
-			Chunk oldestChunk = chunks.values().iterator().next();
-			oldestChunk.unloadRaw();
-			chunks.remove(oldestChunk.getCoord());
-		}
-	}
-	
-	public Collection<Chunk> values()
-	{
-		return chunks.values();
-	}
+        
+        @Override
+        protected void unloadInvalidatedChunk(Chunk chunk)
+        {
+                chunk.unloadRaw();
+        }	
 }

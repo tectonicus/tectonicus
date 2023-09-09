@@ -67,9 +67,9 @@ public class FileViewCache
 			viewsIn = new HddObjectListReader<>(viewsFile);
 			viewsOut = new HddObjectListWriter<>(changedViewsFile, true);
 			
-			Sign sign = new Sign();
 			while (viewsIn.hasNext())
 			{
+                                Sign sign = new Sign();
 				viewsIn.read(sign);
 
 				if (world.getWorldSubset().containsBlock(sign.getX(), sign.getZ())) {

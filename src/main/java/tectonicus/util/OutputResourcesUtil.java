@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -405,7 +406,7 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static void outputChests(File chestFile, tectonicus.configuration.Map map, List<ContainerEntity> chestList) {
+	public static void outputChests(File chestFile, tectonicus.configuration.Map map, ConcurrentLinkedQueue<ContainerEntity> chestList) {
 		log.info("Exporting chests to {}", chestFile.getAbsolutePath());
 
 		try {
@@ -597,7 +598,15 @@ public class OutputResourcesUtil {
 		writeImage(texturePack.getChestImage(), 176, 77, new File(imagesDir, "SmallChest.png"));
 
 		// Write default player icon
-		playerIconAssembler.writeDefaultIcon(texturePack.getItem(defaultSkin), new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+                BufferedImage defaultSkinIcon = texturePack.getItem(defaultSkin);
+                if (defaultSkinIcon == null)
+                {
+                        log.warn("Unable to find default skin!");
+                }
+                else
+                {
+                        playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+                }
 
 		//Extract Leaflet resources
 		extractMapResources(exportDir);
@@ -846,10 +855,23 @@ public class OutputResourcesUtil {
 					{
 						if (first.value.equals("title")) {
 							outLine.append(config.getHtmlTitle());
-						} else if (first.value.equals("includes")) {
+                                                } else if (first.value.equals("customStyleIncludes")) {
+                                                        if (config.getCustomStyle() != null)
+                                                        {
+                                                                outLine.append("<link rel=\"stylesheet\" href=\"Scripts/");
+                                                                outLine.append(config.getCustomStyle());
+                                                                outLine.append("\" />");
+                                                        }
+                                                } else if (first.value.equals("customScriptIncludes")) {
+                                                        if (config.getCustomScript() != null) {
+                                                                outLine.append("<script src=\"Scripts/");
+								outLine.append(config.getCustomScript());
+								outLine.append("\"></script>");
+                                                        }
+                                                } else if (first.value.equals("scriptIncludes")) {
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
-
+                                                        
 							for (tectonicus.configuration.Map map : config.getMaps())
 							{
 								outLine.append(templateStart);

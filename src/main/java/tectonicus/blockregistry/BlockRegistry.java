@@ -9,6 +9,8 @@
 
 package tectonicus.blockregistry;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -54,11 +56,11 @@ import static tectonicus.blockregistry.BlockStateWrapper.getRandomWeightedModel;
 public class BlockRegistry
 {
 	@Getter
-	private final Map<String, BlockStateWrapper> blockStates = new HashMap<>();
+	private final Cache<String, BlockStateWrapper> blockStates = Caffeine.newBuilder().build();
 	@Getter
-	private final Map<String, BlockModel> blockModels = new HashMap<>();
+	private final Cache<String, BlockModel> blockModels = Caffeine.newBuilder().build();
 	@Getter
-	private final Map<String, BlockStateModelsWeight> singleVariantBlocks = new HashMap<>();
+	private final Cache<String, BlockStateModelsWeight> singleVariantBlocks = Caffeine.newBuilder().build();
 	private final Set<String> missingBlockModels = new HashSet<>();
 	private TexturePack texturePack;
 	private ZipStack zips;
@@ -102,14 +104,14 @@ public class BlockRegistry
 	}
 
 	public BlockStateWrapper getBlock(String blockName) {
-		return blockStates.get(blockName);
+		return blockStates.getIfPresent(blockName);
 	}
 	public BlockStateModel getSingleVariantModel(String blockName) {
-		return getRandomWeightedModel(singleVariantBlocks.get(blockName));
+		return getRandomWeightedModel(singleVariantBlocks.getIfPresent(blockName));
 	}
-	public BlockModel getModel(String model) { return blockModels.get(model); }
+	public BlockModel getModel(String model) { return blockModels.getIfPresent(model); }
 	public boolean containsSingleVariantBlock(String blockName) {
-		return singleVariantBlocks.containsKey(blockName);
+		return singleVariantBlocks.getIfPresent(blockName) != null;
 	}
 	
 	public void deserializeBlockstates() {
@@ -138,7 +140,7 @@ public class BlockRegistry
 		for (Path blockStateFile : entries) {
 			if (blockStateFile.getFileName().toString().toLowerCase().endsWith(".json")) {
 				String name = "minecraft:" + StringUtils.removeEnd(blockStateFile.getFileName().toString(), ".json");
-				singleVariantBlocks.remove(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
+				singleVariantBlocks.invalidate(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
 				log.trace("Parsing {}.json", name);
 				JsonNode root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
 
@@ -184,7 +186,7 @@ public class BlockRegistry
 	public void deserializeModels() {
 		log.debug("Loading model json");
 		try {
-			for (BlockStateWrapper blockStateWrapper : blockStates.values()) {
+			for (BlockStateWrapper blockStateWrapper : blockStates.asMap().values()) {
 				List<BlockStateModel> models = blockStateWrapper.getAllModels();
 				for (BlockStateModel model : models) {
 					log.trace("Loading model: {} for {}", model, blockStateWrapper.getBlockName());
@@ -229,16 +231,17 @@ public class BlockRegistry
 			modelName = "block/" + modelName;
 		}
 
-		if (blockModels.containsKey(modelName)){
-			return blockModels.get(modelName);
-		}
-
-		BlockModel model = loadModel(modelName, StringUtils.EMPTY, new HashMap<>(), null);
-
-		if (model != null) {
-			blockModels.put(modelName, model);
-		}
-		return model;
+                return blockModels.get(modelName, (mn) -> {
+                        try
+                        {
+                                return loadModel(mn, StringUtils.EMPTY, new HashMap<>(), null);
+                        }
+                        catch (Exception e)
+                        {
+                                e.printStackTrace();
+                                return null;
+                        }
+                });
 	}
 	
 	// Recurse through model files and get block model information
@@ -339,7 +342,7 @@ public class BlockRegistry
 	}
 
 	private void checkBlockAttributes() {
-		for (BlockStateWrapper wrapper : blockStates.values()) {
+		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
 			List<BlockStateCase> cases = wrapper.getCases();
 			if (!cases.isEmpty()) {
 				for (BlockStateCase c : cases) {

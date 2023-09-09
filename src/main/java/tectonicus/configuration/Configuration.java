@@ -115,6 +115,10 @@ public interface Configuration  //TODO: is this interface needed?
 	String getSinglePlayerName();
 
 	Path getUpdateToLeaflet();
+        
+        String getCustomStyle();
+        
+        String getCustomScript();
 	
 	int numMaps();
 	Map getMap(final int index);

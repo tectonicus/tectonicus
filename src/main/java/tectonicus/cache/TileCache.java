@@ -12,6 +12,7 @@ package tectonicus.cache;
 import tectonicus.TileCoord;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
+import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Map;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.world.World;
@@ -30,7 +31,7 @@ public interface TileCache {
 	HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles, RegionHashStore regionHashStore, World world, Map map, OrthoCamera camera, final int zoom, final int tileWidth, final int tileHeight, File layerDir);
 
 	void calculateDownsampledTileCoordinates(HddTileList baseTiles, int zoomLevel);
-	HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel);
+	HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel, File baseDir, ImageFormat imageFormat);
 
 	void writeImageCache(TileCoord coord);
 	void updateTileDownsampleStatus(TileCoord coord, int zoomLevel);

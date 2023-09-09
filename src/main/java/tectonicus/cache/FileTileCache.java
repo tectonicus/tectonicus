@@ -311,14 +311,17 @@ public class FileTileCache implements TileCache
 	}
 
 	@Override
-	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel) {
+	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel, File baseDir, ImageFormat imageFormat) {
 		HddTileList result = factory.createList();
 
 		for (Map.Entry<String, Boolean> entry : downsampleCache.entrySet()) {
 			String key = entry.getKey();
-			if (key.contains("zoom" + zoomLevel) && Boolean.TRUE.equals(!entry.getValue())) {
-				String[] keyStr = key.split("_");
-				TileCoord coord = new TileCoord(Integer.parseInt(keyStr[1]), Integer.parseInt(keyStr[2]));
+                        String[] keyStr = key.split("_");
+                        
+                        TileCoord coord = new TileCoord(Integer.parseInt(keyStr[1]), Integer.parseInt(keyStr[2]));
+                        File tileFile = TileRenderer.getImageFile(baseDir, coord.x, coord.y, imageFormat);
+                        
+                        if (key.contains("zoom" + zoomLevel) && (Boolean.TRUE.equals(!entry.getValue()) || !tileFile.exists())) {
 				result.add(coord);
 			}
 		}

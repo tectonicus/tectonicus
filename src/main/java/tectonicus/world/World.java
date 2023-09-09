@@ -81,10 +81,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -103,7 +102,7 @@ import static tectonicus.Version.VERSION_UNKNOWN;
 @Log4j2
 public class World implements BlockContext
 {
-	private static final int BATCH_SIZE = 100;
+	private static final int BATCH_SIZE = 128;
 	
 	private final Version textureVersion;
 	
@@ -126,7 +125,7 @@ public class World implements BlockContext
 	private final List<Player> players;
 	private final PlayerSkinCache playerSkinCache;
 	
-	private final List<ContainerEntity> chests;
+	private final ConcurrentLinkedQueue<ContainerEntity> chests;
 	
 	private final TexturePack texturePack;
 	
@@ -207,6 +206,7 @@ public class World implements BlockContext
 		if (worldVersion != null) {
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
 			if (StringUtils.isNotEmpty(versionNumber)) {
+                                versionNumber = versionNumber.split(" Release Candidate ")[0];
 				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
 				version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 			}
@@ -253,14 +253,11 @@ public class World implements BlockContext
 
 		players = loadPlayers(worldDir, playerSkinCache);
 		
-		chests = new ArrayList<>();
+		chests = new ConcurrentLinkedQueue<ContainerEntity>();
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(biomeCache, regionCache);
 		
-		rawLoadedChunks = new RawCache(100);
-		geometryLoadedChunks = new GeometryCache(100);
-
 		//Set subset origin if none was set in config file
 		WorldSubset subset = map.getWorldSubset();
 		if (subset instanceof CircularWorldSubset) {
@@ -280,6 +277,22 @@ public class World implements BlockContext
 		} else {
 			this.worldSubset = subset;
 		}
+                
+         	rawLoadedChunks = new RawCache(2048, (coord) -> {
+                        CompositeBlockFilter composite = new CompositeBlockFilter();
+                        composite.add(blockFilter);
+                        composite.add(worldSubset.getBlockFilter(coord));
+
+                        return chunkLocator.loadChunkFromRegion(coord, composite, worldInfo);
+                });
+		geometryLoadedChunks = new GeometryCache(512, (coord) -> {
+                        Chunk chunk = rawLoadedChunks.get(coord);
+
+                        final boolean ok = chunk.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
+                        assert ok;
+
+                        return chunk;
+                });
 		
 		this.lightStyle = LightStyle.None;
 		
@@ -454,7 +467,7 @@ public class World implements BlockContext
 		return result;
 	}
 	
-	public List<ContainerEntity> getChests()
+	public ConcurrentLinkedQueue<ContainerEntity> getChests()
 	{
 		return chests;
 	}
@@ -530,24 +543,6 @@ public class World implements BlockContext
 		return result;
 	}
 	
-	/*
-	private void unloadAll()
-	{
-		for (Chunk c : geometryLoadedChunks.values())
-		{
-			c.unloadGeometry();
-		}
-		
-		for (Chunk c : rawLoadedChunks.values())
-		{
-			c.unloadRaw();
-		}
-		
-		geometryLoadedChunks.clear();
-		rawLoadedChunks.clear();
-	}
-	*/
-	
 	public void draw(Camera camera, final boolean showSky, final boolean genAlphaMask)
 	{
 		// Find visible chunks
@@ -619,71 +614,14 @@ public class World implements BlockContext
 	
 	private void draw(Camera camera, List<ChunkCoord> visible, final boolean genAlphaMask)
 	{
-		// Find adjacent chunks (need adjacent chunks loaded for proper geometry gen)
-		Set<ChunkCoord> adjacent = new HashSet<>(visible);
-		for (ChunkCoord base : visible)
-		{
-			adjacent.add( new ChunkCoord(base.x+1, base.z) );
-			adjacent.add( new ChunkCoord(base.x-1, base.z) );
-			adjacent.add( new ChunkCoord(base.x, base.z+1) );
-			adjacent.add( new ChunkCoord(base.x, base.z-1) );
-		}
-		adjacent.remove(null);
-		
-		for (ChunkCoord coord : adjacent)
-		{
-			// Load raw if not present
-			if (!rawLoadedChunks.contains(coord))
-			{
-				if (worldSubset.contains(coord))
-				{
-					CompositeBlockFilter composite = new CompositeBlockFilter();
-					composite.add(blockFilter);
-					composite.add(worldSubset.getBlockFilter(coord));
-					
-					// Not loaded, so load it now
-					Chunk c = chunkLocator.loadChunkFromRegion(coord, composite, worldInfo);
-					if (c != null)
-					{	
-						rawLoadedChunks.put(coord, c);
-					}
-				}
-			}
-			else
-			{
-				rawLoadedChunks.touch(coord);
-			}
-		}
-
+		// Find all visible chunks coordinates
+		List<ChunkCoord> visibleChunks = new ArrayList<>();
 		for (ChunkCoord coord : visible)
 		{
-			// Create geometry if not present
-			if (!geometryLoadedChunks.contains(coord))
-			{
-				Chunk c = rawLoadedChunks.get(coord);
-				if (c != null)
-				{	
-					// Actually create the geometry
-					
-					final boolean ok = c.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
-					assert ok;
-					
-					geometryLoadedChunks.put(coord, c);
-				}
-			}
-			else
-			{
-				geometryLoadedChunks.touch(coord);
-			}
-		}
-		
-		// Now actually find all visible chunks we've managed to load
-		List<Chunk> visibleChunks = new ArrayList<>();
-		for (ChunkCoord coord : visible)
-		{
-			Chunk c = geometryLoadedChunks.get(coord);
-			if (c != null)
-				visibleChunks.add(c);
+                        if (worldSubset.contains(coord))
+                        {
+                                visibleChunks.add(coord);
+                        }			
 		}
 		//System.out.println("Num visible chunks: " + visibleChunks.size());
 		rasteriser.enableDepthTest(true);
@@ -711,12 +649,13 @@ public class World implements BlockContext
 			
 			rasteriser.enableColourWriting(true, false);
 		}
-		
-		rawLoadedChunks.trimToMaxSize();
-		geometryLoadedChunks.trimToMaxSize();
+                
+                // Unload raw data and geometry from chunks that were evicted from cache
+                rawLoadedChunks.unloadInvalidatedChunks();
+                geometryLoadedChunks.unloadInvalidatedChunks();
 	}
 	
-	private void drawGeometry(Camera camera, List<Chunk> visible)
+	private void drawGeometry(Camera camera, List<ChunkCoord> visible)
 	{
 		rasteriser.enableDepthWriting(true);
 		
@@ -725,9 +664,9 @@ public class World implements BlockContext
 		rasteriser.enableBlending(false);
 		rasteriser.enableAlphaTest(false);
 		
-		for (Chunk c : visible)
+		for (ChunkCoord coord : visible)
 		{
-			c.drawSolid(camera);
+                        geometryLoadedChunks.get(coord).drawSolid(camera);
 		}
 		
 		// Alpha test pass
@@ -736,9 +675,9 @@ public class World implements BlockContext
 		rasteriser.setAlphaFunc(AlphaFunc.Greater, 0.4f);
 		rasteriser.enableBlending(false);
 		
-		for (Chunk c : visible)
+		for (ChunkCoord coord : visible)
 		{	
-			c.drawAlphaTestedSurfaces(camera);
+			geometryLoadedChunks.get(coord).drawAlphaTestedSurfaces(camera);
 		}
 		
 		// Transparency pass
@@ -747,9 +686,9 @@ public class World implements BlockContext
 		rasteriser.enableBlending(true);
 		rasteriser.enableAlphaTest(false);
 		
-		for (Chunk c : visible)
+		for (ChunkCoord coord : visible)
 		{	
-			c.drawTransparentSurfaces(camera);
+			geometryLoadedChunks.get(coord).drawTransparentSurfaces(camera);
 		}
 		
 		rasteriser.enableDepthWriting(true);
