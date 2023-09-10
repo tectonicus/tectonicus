@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -783,6 +783,10 @@ public class BlockRegistryParser
 		else if (nodeName.equals("skull"))
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
+			if (texture == null && element.hasAttribute("newTexture")) {
+				texture = parseTexture(element, "newTexture", null);
+			}
+
 			SubTexture ctexture = parseTexture(element, "ctexture", texture);
 			SubTexture stexture = parseTexture(element, "stexture", texture);
 			SubTexture wtexture = parseTexture(element, "wtexture", texture);
@@ -894,6 +898,13 @@ public class BlockRegistryParser
 			return defaultTex;
 		
 		return result;
+	}
+
+	private boolean hasTexture(Element element, String attribName) {
+		if (!element.hasAttribute(attribName))
+			return false;
+
+		return texturePack.fileExists(element.getAttribute(attribName));
 	}
 	
 	private Color parseColor(Element element, String attribName, Color defaultColor)

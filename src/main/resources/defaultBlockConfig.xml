@@ -68,13 +68,13 @@
 	<Skull stringId="minecraft:skeleton_skull" name="Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/skeleton.png" />
 	<Skull stringId="minecraft:wither_skeleton_skull" name="Wither Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png" />
 	<Skull stringId="minecraft:zombie_head" name="Zombie Head" texture="assets/minecraft/textures/entity/zombie/zombie.png" />
-	<Skull stringId="minecraft:player_head" name="Player Head" texture="assets/minecraft/textures/entity/steve.png" />
+	<Skull stringId="minecraft:player_head" name="Player Head" texture="assets/minecraft/textures/entity/steve.png" newTexture="assets/minecraft/textures/entity/player/wide/steve.png"/>
 	<Skull stringId="minecraft:creeper_head" name="Creeper Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
 	<Skull stringId="minecraft:dragon_head" name="Dragon Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
 	<Skull stringId="minecraft:skeleton_wall_skull" name="Skeleton Wall Skull" texture="assets/minecraft/textures/entity/skeleton/skeleton.png" />
 	<Skull stringId="minecraft:wither_skeleton_wall_skull" name="Wither Skeleton Wall Skull" texture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png" />
 	<Skull stringId="minecraft:zombie_wall_head" name="Zombie Wall Head" texture="assets/minecraft/textures/entity/zombie/zombie.png" />
-	<Skull stringId="minecraft:player_wall_head" name="Player Wall Head" texture="assets/minecraft/textures/entity/steve.png" />
+	<Skull stringId="minecraft:player_wall_head" name="Player Wall Head" texture="assets/minecraft/textures/entity/steve.png" newTexture="assets/minecraft/textures/entity/player/wide/steve.png"/>
 	<Skull stringId="minecraft:creeper_wall_head" name="Creeper Wall Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
 	<Skull stringId="minecraft:dragon_wall_head" name="Dragon Wall Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
 
