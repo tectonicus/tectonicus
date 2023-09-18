@@ -44,7 +44,7 @@ dependencies {
 				   "com.fasterxml.jackson.core:jackson-databind:2.15.2",
 				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
-				   "com.h2database:h2-mvstore:2.2.222",
+				   "com.h2database:h2-mvstore:2.2.224",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 	implementation files ('libs/jnbt.jar', 'libs/jpct.jar', 'libs/ProcessingCore.jar', 'libs/BiomeExtractor.jar')
 	shadow "org.apache.logging.log4j:log4j-core:$log4jVersion"
