@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,6 +69,10 @@ public class BlockRegistry
 	private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.readerFor(JsonNode.class).with(JsonReadFeature.ALLOW_TRAILING_COMMA);
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
+        
+        private static final Map<String, String> renamedBlocks = Map.ofEntries(
+                new AbstractMap.SimpleImmutableEntry<>("minecraft:grass", "minecraft:short_grass") // Was renamed in 1.20.3
+        );
 
 
 	public BlockRegistry(String blah)
@@ -104,7 +109,14 @@ public class BlockRegistry
 	}
 
 	public BlockStateWrapper getBlock(String blockName) {
-		return blockStates.getIfPresent(blockName);
+                BlockStateWrapper result = blockStates.getIfPresent(blockName);
+                
+                String newName;
+                if (result == null && (newName = renamedBlocks.get(blockName)) != null) {
+                    result = getBlock(newName);
+                }
+                
+                return result;
 	}
 	public BlockStateModel getSingleVariantModel(String blockName) {
 		return getRandomWeightedModel(singleVariantBlocks.getIfPresent(blockName));
