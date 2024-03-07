@@ -556,43 +556,16 @@ public class OutputResourcesUtil {
 				}
 		}
 
-		// Hearts need composing so they get the outline
-		{
-			BufferedImage emptyHeart = texturePack.getIcon(16, 0, 9, 9);
-			BufferedImage halfHeart = texturePack.getIcon(61, 0, 9, 9);
-			BufferedImage fullHeart = texturePack.getIcon(52, 0, 9, 9);
+                writeImage(texturePack.getEmptyHeartImage(), 18, 18, new File(imagesDir, "EmptyHeart.png"));
+                writeImage(texturePack.getHalfHeartImage(), 18, 18, new File(imagesDir, "HalfHeart.png"));
+                writeImage(texturePack.getFullHeartImage(), 18, 18, new File(imagesDir, "FullHeart.png"));
 
-			BufferedImage composedHalf = ImageUtils.copy(emptyHeart);
-			composedHalf.getGraphics().drawImage(halfHeart, 0, 0, halfHeart.getWidth(), halfHeart.getHeight(), null);
+                writeImage(texturePack.getEmptyFoodImage(), 18, 18, new File(imagesDir, "EmptyFood.png"));
+                writeImage(texturePack.getHalfFoodImage(), 18, 18, new File(imagesDir, "HalfFood.png"));
+                writeImage(texturePack.getFullFoodImage(), 18, 18, new File(imagesDir, "FullFood.png"));
 
-			BufferedImage composedFull = ImageUtils.copy(emptyHeart);
-			composedFull.getGraphics().drawImage(fullHeart, 0, 0, fullHeart.getWidth(), fullHeart.getHeight(), null);
-
-			writeImage(emptyHeart, 18, 18, new File(imagesDir, "EmptyHeart.png"));
-			writeImage(composedHalf, 18, 18, new File(imagesDir, "HalfHeart.png"));
-			writeImage(composedFull, 18, 18, new File(imagesDir, "FullHeart.png"));
-		}
-
-		// Food needs composing like hearts
-		{
-			BufferedImage emptyFood = texturePack.getIcon(16, 27, 9, 9);
-			BufferedImage halfFood = texturePack.getIcon(61, 27, 9, 9);
-			BufferedImage fullFood = texturePack.getIcon(52, 27, 9, 9);
-
-			BufferedImage composedHalfFood = ImageUtils.copy(emptyFood);
-			composedHalfFood.getGraphics().drawImage(halfFood, 0, 0, halfFood.getWidth(), halfFood.getHeight(), null);
-
-			BufferedImage composedFullFood = ImageUtils.copy(emptyFood);
-			composedFullFood.getGraphics().drawImage(fullFood, 0, 0, fullFood.getWidth(), fullFood.getHeight(), null);
-
-			writeImage(emptyFood, 18, 18, new File(imagesDir, "EmptyFood.png"));
-			writeImage(composedHalfFood, 18, 18, new File(imagesDir, "HalfFood.png"));
-			writeImage(composedFullFood, 18, 18, new File(imagesDir, "FullFood.png"));
-		}
-
-		// Air just comes out direct
-		writeImage(texturePack.getIcon(16, 18, 9, 9), 18, 18, new File(imagesDir, "FullAir.png"));
-		writeImage(texturePack.getIcon(25, 18, 9, 9), 18, 18, new File(imagesDir, "EmptyAir.png"));
+		writeImage(texturePack.getEmptyAirImage(), 18, 18, new File(imagesDir, "EmptyAir.png"));
+		writeImage(texturePack.getFullAirImage(), 18, 18, new File(imagesDir, "FullAir.png"));
 
 		writeImage(texturePack.getChestImage(), 176, 77, new File(imagesDir, "SmallChest.png"));
 
