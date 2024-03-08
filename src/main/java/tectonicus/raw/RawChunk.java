@@ -47,6 +47,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -335,10 +337,9 @@ public class RawChunk {
                                                 CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
                                                 CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
 
-                                                if (frontText == null) {
-                                                        // Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
-                                                        for (int i = 1; i <= 4; i++) {
-                                                                String text = NbtUtil.getChild(entity, "Text" + i, StringTag.class).getValue();
+                                                Consumer<Function<Integer, String>> parseSignText = (getText) -> {
+                                                        for (int i = 0; i < 4; i++) {
+                                                                String text = getText.apply(i);
 
                                                                 if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
                                                                 {
@@ -346,27 +347,43 @@ public class RawChunk {
                                                                 } else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
                                                                 {
                                                                         text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
-                                                                        textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+                                                                        try {
+                                                                                textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+                                                                        }
+                                                                        catch (JsonProcessingException e) {
+                                                                                throw new RuntimeException(e);
+                                                                        }
                                                                 } else {
                                                                         textLines.add("");
                                                                 }
                                                         }
-
+                                                };
+                                                
+                                                if (frontText == null) {
+                                                        // Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
+                                                        parseSignText.accept((i) -> {
+                                                                return NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue();
+                                                        });
+                                                        
                                                         StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
                                                         if (colorTag != null) {
                                                                 color = colorTag.getValue();
                                                         }
                                                 } else {
-                                                        // Process 1.20 or older sign
+                                                        // Process 1.20 or newer sign
                                                         ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
                                                         ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
                                                         
-                                                        for (int i = 0; i < 4; i++) {
-                                                                textLines.add(textFromJSON(NbtUtil.getChild(frontMessages, i, StringTag.class).getValue()));
-                                                        }
-                                                        for (int i = 0; i < 4; i++) {
-                                                                textLines.add(textFromJSON(NbtUtil.getChild(backMessages, i, StringTag.class).getValue()));
-                                                        }
+                                                        parseSignText.accept((i) -> {
+                                                                if (NbtUtil.getChild(frontMessages, i, StringTag.class) == null) {
+                                                                        return null;
+                                                                } else {
+                                                                        return NbtUtil.getChild(frontMessages, i, StringTag.class).getValue();
+                                                                }
+                                                        });
+                                                        parseSignText.accept((i) -> {
+                                                                return NbtUtil.getChild(backMessages, i, StringTag.class).getValue();
+                                                        });
                                                         
                                                         StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
                                                         if (colorTag != null) {
