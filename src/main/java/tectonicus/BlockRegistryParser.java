@@ -54,6 +54,7 @@ import tectonicus.blockTypes.Glass;
 import tectonicus.blockTypes.GlassPane;
 import tectonicus.blockTypes.GlazedTerracotta;
 import tectonicus.blockTypes.Grass;
+import tectonicus.blockTypes.HangingSign;
 import tectonicus.blockTypes.Hopper;
 import tectonicus.blockTypes.HugeMushroom;
 import tectonicus.blockTypes.Ice;
@@ -475,15 +476,29 @@ public class BlockRegistryParser
 				texture = parseTexture(element, "texture", defaultTex);
 			}
 			
-			boolean obey = signFilter.getType() == SignFilterType.OBEY;
-			if(obey) {
+			final boolean obey = signFilter.getType() == SignFilterType.OBEY;
+			if (obey) {
 				texture = parseTexture(element, "obey", null);
 			}
 			
-			String hasPostStr = element.getAttribute("hasPost");
-			final boolean hasPost = (hasPostStr.equalsIgnoreCase("true"));
+			String isWallStr = element.getAttribute("isWall");
+			final boolean isWall = (isWallStr.equalsIgnoreCase("true"));
+                        			
+			blockType = new Sign(name, texture, isWall, obey);
+		}
+                else if (nodeName.equals("hangingsign"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Sign(name, texture, hasPost, obey);
+			final boolean obey = signFilter.getType() == SignFilterType.OBEY;
+			if (obey) {
+				texture = parseTexture(element, "obey", null);
+			}
+			
+			String isWallStr = element.getAttribute("isWall");
+			final boolean isWall = (isWallStr.equalsIgnoreCase("true"));
+                        			
+			blockType = new HangingSign(name, texture, isWall, obey);
 		}
 		else if (nodeName.equals("door"))
 		{

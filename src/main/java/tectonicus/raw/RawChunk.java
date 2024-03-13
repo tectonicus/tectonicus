@@ -330,7 +330,7 @@ public class RawChunk {
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
-					if (id.equals("Sign") || id.equals("minecraft:sign")) {
+					if (id.equals("Sign") || id.equals("minecraft:sign") || id.equals("minecraft:hanging_sign")) {
 						List<String> textLines = new ArrayList<>();
 						String color = "black";
 
@@ -398,7 +398,7 @@ public class RawChunk {
 						} else {
 							data = getBlockData(localX, localY, localZ);
 						}
-
+                                                
 						signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
 								textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data, properties, color));
 					} else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot")) {

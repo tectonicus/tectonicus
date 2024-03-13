@@ -34,8 +34,8 @@
 	<Chest stringId="minecraft:chest" name="Chest" small="assets/minecraft/textures/entity/chest/normal.png" large="assets/minecraft/textures/entity/chest/normal_double.png"
 		   xmassmall="assets/minecraft/textures/entity/chest/christmas.png" xmaslarge="assets/minecraft/textures/entity/chest/christmas_double.png" />
 
-	<Sign stringId="minecraft:sign" name="Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" hasPost="true" />
-	<Sign stringId="minecraft:wall_sign" name="Wall Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" />
+	<Sign stringId="minecraft:sign" name="Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" />
+	<Sign stringId="minecraft:wall_sign" name="Wall Sign" texture="assets/minecraft/textures/entity/sign.png" obey="assets/minecraft/textures/entity/sign2.png" isWall="true" />
 
 	<EnderPortal stringId="minecraft:end_portal" name="EnderPortal" texture="Images/EnderPortal.png" />
 
