@@ -103,6 +103,8 @@
 	<Skull stringId="minecraft:player_wall_head" name="Player Wall Head" texture="assets/minecraft/textures/entity/steve.png" newTexture="assets/minecraft/textures/entity/player/wide/steve.png"/>
 	<Skull stringId="minecraft:creeper_wall_head" name="Creeper Wall Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
 	<Skull stringId="minecraft:dragon_wall_head" name="Dragon Wall Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
+        <Skull stringId="minecraft:piglin_head" name="Piglin Head" texture="assets/minecraft/textures/entity/piglin/piglin.png" />
+        <Skull stringId="minecraft:piglin_wall_head" name="Piglin Wall Head" texture="assets/minecraft/textures/entity/piglin/piglin.png" />
 
 <!--	<Plant stringId="minecraft:barrier" name="Barrier" texture="assets/minecraft/textures/item/barrier.png" />-->
 
