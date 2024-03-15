@@ -94,6 +94,7 @@ public class RawChunk {
 	private Map<String, BeaconEntity> beacons;
 	private Map<String, BannerEntity> banners;
 	private Map<String, BedEntity> beds;
+        private Map<String, DecoratedPotEntity> decoratedPots;
 
 	private List<PaintingEntity> paintings;
 	private List<PaintingEntity> itemFrames;
@@ -149,6 +150,7 @@ public class RawChunk {
 		beacons = new HashMap<>();
 		banners = new HashMap<>();
 		beds = new HashMap<>();
+                decoratedPots = new HashMap<>();
 
 		paintings = new ArrayList<>();
 		itemFrames = new ArrayList<>();
@@ -533,7 +535,27 @@ public class RawChunk {
 						if (color != null)
 							colorVal = color.getValue();
 						beds.put(createKey(localX, localY, localZ), new BedEntity(x, y, z, localX, localY, localZ, colorVal));
-					}
+					} else if (id.equals("minecraft:decorated_pot")) {
+                                                final ListTag sherds = NbtUtil.getChild(entity, "sherds", ListTag.class);
+                                                
+                                                String sherd1 = "minecraft:brick";
+                                                String sherd2 = "minecraft:brick";
+                                                String sherd3 = "minecraft:brick";
+                                                String sherd4 = "minecraft:brick";
+                                                
+                                                if (sherds != null) {
+                                                        StringTag sherd1Tag = NbtUtil.getChild(sherds, 0, StringTag.class);
+                                                        sherd1 = sherd1Tag == null ? sherd1 : sherd1Tag.getValue();
+                                                        StringTag sherd2Tag = NbtUtil.getChild(sherds, 1, StringTag.class);
+                                                        sherd2 = sherd2Tag == null ? sherd2 : sherd2Tag.getValue();
+                                                        StringTag sherd3Tag = NbtUtil.getChild(sherds, 2, StringTag.class);
+                                                        sherd3 = sherd3Tag == null ? sherd3 : sherd3Tag.getValue();
+                                                        StringTag sherd4Tag = NbtUtil.getChild(sherds, 3, StringTag.class);
+                                                        sherd4 = sherd4Tag == null ? sherd4 : sherd4Tag.getValue();
+                                                }
+                                                
+                                                decoratedPots.put(createKey(localX, localY, localZ), new DecoratedPotEntity(x, y, z, localX, localY, localZ, sherd1, sherd2, sherd3, sherd4));
+                                        }
 					//	else if (id.equals("Furnace"))
 					//	{
 					//
@@ -1158,6 +1180,10 @@ public class RawChunk {
 
 	public void setBeds(Map<String, BedEntity> beds) {
 		this.beds = beds;
+	}
+        
+        public Map<String, DecoratedPotEntity> getDecoratedPots() {
+		return Collections.unmodifiableMap(decoratedPots);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm) {
