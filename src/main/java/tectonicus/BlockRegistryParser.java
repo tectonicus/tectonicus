@@ -884,36 +884,7 @@ public class BlockRegistryParser
 			blockType = new Bell(name, stringId, texture);
 		}
                 else if (nodeName.equals("decoratedpot")) {
-                        final SubTexture baseTexture = texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/decorated_pot_base.png", null);
-                        final HashMap<String, SubTexture> textures = new HashMap<>();
-                        
-                        textures.put("minecraft:brick", texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/decorated_pot_side.png", null));
-                        for (var pattern : new String[] {
-                            "angler",
-                            "archer",
-                            "arms_up",
-                            "blade",
-                            "brewer",
-                            "burn",
-                            "danger",
-                            "explorer",
-                            "friend",
-                            "heart",
-                            "heartbreak",
-                            "howl",
-                            "miner",
-                            "mourner",
-                            "plenty",
-                            "prize",
-                            "sheaf",
-                            "shelter",
-                            "skull",
-                            "snort"
-                        }) {
-                                textures.put("minecraft:"+pattern+"_pottery_sherd", texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/"+pattern+"_pottery_pattern.png", null));
-                        }
-                        
-                        blockType = new DecoratedPot(name, baseTexture, textures);
+                        blockType = new DecoratedPot(name, texturePack);
                 }
 		else
 		{

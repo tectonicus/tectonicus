@@ -23,6 +23,7 @@ import tectonicus.raw.DecoratedPotEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.texture.TexturePack;
 
 public class DecoratedPot implements BlockType
 {
@@ -35,12 +36,38 @@ public class DecoratedPot implements BlockType
         private final SubTexture neckTopTexture;
         private final SubTexture neckSideTexture;
 
-	public DecoratedPot(String name, SubTexture baseTexture, HashMap<String, SubTexture> textures)
+	public DecoratedPot(String name, TexturePack texturePack)
 	{
 		this.name = name;
-
-                this.baseTexture = baseTexture;
-                this.textures = textures;
+                
+                baseTexture = texturePack.findTexture("assets/minecraft/textures/entity/decorated_pot/decorated_pot_base.png");
+                
+                textures = new HashMap<>();
+                textures.put("minecraft:brick", texturePack.findTexture("assets/minecraft/textures/entity/decorated_pot/decorated_pot_side.png"));
+                for (var pattern : new String[] {
+                    "angler",
+                    "archer",
+                    "arms_up",
+                    "blade",
+                    "brewer",
+                    "burn",
+                    "danger",
+                    "explorer",
+                    "friend",
+                    "heart",
+                    "heartbreak",
+                    "howl",
+                    "miner",
+                    "mourner",
+                    "plenty",
+                    "prize",
+                    "sheaf",
+                    "shelter",
+                    "skull",
+                    "snort"
+                }) {
+                        textures.put("minecraft:"+pattern+"_pottery_sherd", texturePack.findTexture("assets/minecraft/textures/entity/decorated_pot/"+pattern+"_pottery_pattern.png"));
+                }
                 
                 final float widthTexel = 1.0f / 32.0f;
                 final float heightTexel = 1.0f / 32.0f;
