@@ -86,7 +86,7 @@ public class DecoratedPot implements BlockType
 	@Override
 	public boolean isSolid()
 	{
-		return true;
+		return false;
 	}
 	
 	@Override
