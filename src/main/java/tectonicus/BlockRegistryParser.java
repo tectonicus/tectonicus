@@ -37,6 +37,7 @@ import tectonicus.blockTypes.Conduit;
 import tectonicus.blockTypes.Crops;
 import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.DaylightSensor;
+import tectonicus.blockTypes.DecoratedPot;
 import tectonicus.blockTypes.Dispenser;
 import tectonicus.blockTypes.Door;
 import tectonicus.blockTypes.DragonEgg;
@@ -54,6 +55,7 @@ import tectonicus.blockTypes.Glass;
 import tectonicus.blockTypes.GlassPane;
 import tectonicus.blockTypes.GlazedTerracotta;
 import tectonicus.blockTypes.Grass;
+import tectonicus.blockTypes.HangingSign;
 import tectonicus.blockTypes.Hopper;
 import tectonicus.blockTypes.HugeMushroom;
 import tectonicus.blockTypes.Ice;
@@ -108,6 +110,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import static tectonicus.Version.VERSION_14;
@@ -475,15 +478,29 @@ public class BlockRegistryParser
 				texture = parseTexture(element, "texture", defaultTex);
 			}
 			
-			boolean obey = signFilter.getType() == SignFilterType.OBEY;
-			if(obey) {
+			final boolean obey = signFilter.getType() == SignFilterType.OBEY;
+			if (obey) {
 				texture = parseTexture(element, "obey", null);
 			}
 			
-			String hasPostStr = element.getAttribute("hasPost");
-			final boolean hasPost = (hasPostStr.equalsIgnoreCase("true"));
+			String isWallStr = element.getAttribute("isWall");
+			final boolean isWall = (isWallStr.equalsIgnoreCase("true"));
+                        			
+			blockType = new Sign(name, texture, isWall, obey);
+		}
+                else if (nodeName.equals("hangingsign"))
+		{
+			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Sign(name, texture, hasPost, obey);
+			final boolean obey = signFilter.getType() == SignFilterType.OBEY;
+			if (obey) {
+				texture = parseTexture(element, "obey", null);
+			}
+			
+			String isWallStr = element.getAttribute("isWall");
+			final boolean isWall = (isWallStr.equalsIgnoreCase("true"));
+                        			
+			blockType = new HangingSign(name, texture, isWall, obey);
 		}
 		else if (nodeName.equals("door"))
 		{
@@ -866,6 +883,38 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			blockType = new Bell(name, stringId, texture);
 		}
+                else if (nodeName.equals("decoratedpot")) {
+                        final SubTexture baseTexture = texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/decorated_pot_base.png", null);
+                        final HashMap<String, SubTexture> textures = new HashMap<>();
+                        
+                        textures.put("minecraft:brick", texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/decorated_pot_side.png", null));
+                        for (var pattern : new String[] {
+                            "angler",
+                            "archer",
+                            "arms_up",
+                            "blade",
+                            "brewer",
+                            "burn",
+                            "danger",
+                            "explorer",
+                            "friend",
+                            "heart",
+                            "heartbreak",
+                            "howl",
+                            "miner",
+                            "mourner",
+                            "plenty",
+                            "prize",
+                            "sheaf",
+                            "shelter",
+                            "skull",
+                            "snort"
+                        }) {
+                                textures.put("minecraft:"+pattern+"_pottery_sherd", texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/"+pattern+"_pottery_pattern.png", null));
+                        }
+                        
+                        blockType = new DecoratedPot(name, baseTexture, textures);
+                }
 		else
 		{
 			log.warn("Unrecognised block type: {}", nodeName);

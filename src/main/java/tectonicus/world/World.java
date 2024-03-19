@@ -343,22 +343,43 @@ public class World implements BlockContext
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
 		
-		if (useDefaultBlocks && this.textureVersion == VERSION_4)
-			parser.parse("defaultBlockConfigMC1.4.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSION_5)
-			parser.parse("defaultBlockConfigMC1.5.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSIONS_6_TO_8)
-			parser.parse("defaultBlockConfigMC1.8.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSIONS_9_TO_11)
-			parser.parse("defaultBlockConfigMC1.9.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSION_12)
-			parser.parse("defaultBlockConfigMC1.12.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSION_13)
-			parser.parse("defaultBlockConfigMC1.13.xml", registry);
-		else if (useDefaultBlocks && this.textureVersion == VERSION_14)
-			parser.parse("defaultBlockConfigMC1.14.xml", registry);
-		else
-			parser.parse("defaultBlockConfig.xml", registry);
+                if (useDefaultBlocks) {                    
+                        switch (this.textureVersion) {
+                                case VERSION_4:
+                                        parser.parse("defaultBlockConfigMC1.4.xml", registry);
+                                        break;
+                                case VERSION_5:
+                                        parser.parse("defaultBlockConfigMC1.5.xml", registry);
+                                        break;
+                                case VERSIONS_6_TO_8:
+                                        parser.parse("defaultBlockConfigMC1.8.xml", registry);
+                                        break;
+                                case VERSIONS_9_TO_11:
+                                        parser.parse("defaultBlockConfigMC1.9.xml", registry);
+                                        break;
+                                case VERSION_12:
+                                        parser.parse("defaultBlockConfigMC1.12.xml", registry);
+                                        break;
+                                case VERSION_13:
+                                        parser.parse("defaultBlockConfigMC1.13.xml", registry);
+                                        break;
+                                case VERSION_14:
+                                        parser.parse("defaultBlockConfigMC1.14.xml", registry);
+                                        break;
+                                case VERSION_15:
+                                case VERSION_16:
+                                case VERSION_17:
+                                case VERSION_18:
+                                case VERSION_19:
+                                        parser.parse("defaultBlockConfigMC1.15-1.19.xml", registry);
+                                        break;
+                                default:
+                                        parser.parse("defaultBlockConfig.xml", registry);
+                                        break;
+                        }
+                } else {
+                        parser.parse("defaultBlockConfig.xml", registry);
+                }
 		
 		if (customConfigPath != null && customConfigPath.length() > 0)
 			parser.parse(customConfigPath, registry);

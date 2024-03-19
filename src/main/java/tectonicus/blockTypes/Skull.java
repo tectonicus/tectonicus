@@ -123,11 +123,6 @@ public class Skull implements BlockType
 		
 		int blockId = entity.getSkullType();
 
-		// For 1.13+ we don't care about any blockId except for dragon heads since we no longer pass in all the different textures
-		if (blockId == -1 && (blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head"))) {
-			blockId = 5;
-		}
-
 		SubTexture currentTexture = texture;
 		if (blockId == 0)
 			currentTexture = stexture;
@@ -141,7 +136,8 @@ public class Skull implements BlockType
 		else if (blockId == 5)
 			currentTexture = dtexture;
 		
-		boolean dragonHead = blockId == 5;
+		final boolean dragonHead = blockId == 5 || blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head");
+                final boolean piglinHead = blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head");
 		
 		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
 		if(!player.getSkinURL().equals(""))
@@ -175,8 +171,9 @@ public class Skull implements BlockType
 		
 		SubTexture mouthTexture = null;
 		SubTexture earTexture = null;
+                SubTexture teethTexture = null;
 		
-		if(dragonHead)
+		if (dragonHead)
 		{
 			widthTexel = heightTexel = 1.0f / 16.0f;
 			float texel = 1.0f / 16.0f / 16.0f;
@@ -190,6 +187,19 @@ public class Skull implements BlockType
 			earTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+texel*6, texture.u0+texel*16, texture.v0+texel*12);
 			mouthTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+texel*16, texture.u0+texel*16, texture.v0+texel*35); // Not the actual texture, but it looks close enough
 		}
+                else if (piglinHead)
+                {
+                        topTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0, texture.u0+widthTexel*18, texture.v0+heightTexel*8);
+                        bottomTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*18, texture.v0, texture.u0+widthTexel*28, texture.v0+heightTexel*8);
+                        faceTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*8, texture.u0+widthTexel*18, texture.v0+heightTexel*16);
+                        rearTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*26, texture.v0+heightTexel*8, texture.u0+widthTexel*36, texture.v0+heightTexel*16);
+                        rightSideTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*18, texture.v0+heightTexel*8, texture.u0+widthTexel*26, texture.v0+heightTexel*16);
+                        leftSideTexture = new SubTexture(currentTexture.texture, texture.u0, texture.v0+widthTexel*8, texture.u0+heightTexel*8, texture.v0+heightTexel*16);
+                        
+                        earTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*40, texture.v0+heightTexel*10, texture.u0+widthTexel*44, texture.v0+heightTexel*15);
+                        mouthTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*32, texture.v0+heightTexel*2, texture.u0+widthTexel*36, texture.v0+heightTexel*6);
+                        teethTexture = new SubTexture(currentTexture.texture, texture.u0+widthTexel*3, texture.v0+heightTexel*1, texture.u0+widthTexel*4, texture.v0+heightTexel*3);
+                }
 		
 		
 		if (data > 1 || facing != null)
@@ -228,46 +238,46 @@ public class Skull implements BlockType
 		{
 			//Top
 			subMesh.addQuad(new Vector3f(offSet*2,	offSet*12,	offSet*3),
-							new Vector3f(offSet*14,	offSet*12,	offSet*3),
-							new Vector3f(offSet*14,	offSet*12,	offSet*15),
-							new Vector3f(offSet*2,	offSet*12,	offSet*15),
-							light, topTexture);
+                                        new Vector3f(offSet*14,	offSet*12,	offSet*3),
+                                        new Vector3f(offSet*14,	offSet*12,	offSet*15),
+                                        new Vector3f(offSet*2,	offSet*12,	offSet*15),
+                                        light, topTexture);
 			
 			//Bottom
 			subMesh.addQuad(new Vector3f(offSet*2,	0,	offSet*15),
-							new Vector3f(offSet*14,	0,	offSet*15),
-							new Vector3f(offSet*14,	0,	offSet*3),
-							new Vector3f(offSet*2,	0,	offSet*3),
-							light, bottomTexture);
+                                        new Vector3f(offSet*14,	0,	offSet*15),
+                                        new Vector3f(offSet*14,	0,	offSet*3),
+                                        new Vector3f(offSet*2,	0,	offSet*3),
+                                        light, bottomTexture);
 			
 			//North
 			subMesh.addQuad(new Vector3f(offSet*14,	offSet*12,	offSet*3),
-							new Vector3f(offSet*2,	offSet*12,	offSet*3),
-							new Vector3f(offSet*2,	0,			offSet*3),
-							new Vector3f(offSet*14,	0,			offSet*3),
-							light, rearTexture);
+                                        new Vector3f(offSet*2,	offSet*12,	offSet*3),
+                                        new Vector3f(offSet*2,	0,		offSet*3),
+                                        new Vector3f(offSet*14,	0,		offSet*3),
+                                        light, rearTexture);
 
 			
 			//South
 			subMesh.addQuad(new Vector3f(offSet*2,	offSet*12,	offSet*15),
-							new Vector3f(offSet*14,	offSet*12,	offSet*15),
-							new Vector3f(offSet*14,	0,			offSet*15),
-							new Vector3f(offSet*2,	0,			offSet*15),
-							light, faceTexture);
+                                        new Vector3f(offSet*14,	offSet*12,	offSet*15),
+                                        new Vector3f(offSet*14,	0,		offSet*15),
+                                        new Vector3f(offSet*2,	0,		offSet*15),
+                                        light, faceTexture);
 			
 			//East
 			subMesh.addQuad(new Vector3f(offSet*14,	offSet*12,	offSet*15),
-							new Vector3f(offSet*14,	offSet*12,	offSet*3),
-							new Vector3f(offSet*14,	0,			offSet*3),
-							new Vector3f(offSet*14,	0,			offSet*15),
-							light, rightSideTexture);
+                                        new Vector3f(offSet*14,	offSet*12,	offSet*3),
+                                        new Vector3f(offSet*14,	0,		offSet*3),
+                                        new Vector3f(offSet*14,	0,		offSet*15),
+                                        light, rightSideTexture);
 				
 			//West
 			subMesh.addQuad(new Vector3f(offSet*2,	offSet*12,	offSet*3),
-							new Vector3f(offSet*2,	offSet*12,	offSet*15),
-							new Vector3f(offSet*2,		0,		offSet*15),
-							new Vector3f(offSet*2,		0,		offSet*3),
-							light, leftSideTexture);
+                                        new Vector3f(offSet*2,	offSet*12,	offSet*15),
+                                        new Vector3f(offSet*2,		0,	offSet*15),
+                                        new Vector3f(offSet*2,		0,	offSet*3),
+                                        light, leftSideTexture);
 			
 			SubMesh.addBlock(subMesh, offSet*4.25f, offSet*12, offSet*6, offSet*1.5f, offSet*3.25f, offSet*4.25f, light, earTexture, earTexture, earTexture); // Left ear
 			SubMesh.addBlock(subMesh, offSet*10.25f, offSet*12, offSet*6, offSet*1.5f, offSet*3.25f, offSet*4.25f, light, earTexture, earTexture, earTexture); // Right ear			
@@ -276,58 +286,169 @@ public class Skull implements BlockType
 			SubMesh.addBlock(subMesh, offSet*4, offSet*7, offSet*21, offSet*2, offSet*2, offSet*3.5f, light, rightSideTexture, rightSideTexture, rightSideTexture); // Left nostril
 			SubMesh.addBlock(subMesh, offSet*10, offSet*7, offSet*21, offSet*2, offSet*2, offSet*3.5f, light, rightSideTexture, rightSideTexture, rightSideTexture); // Right nostril
 		}
-		else
+                else if (piglinHead)
+                {
+                    	//Top
+			subMesh.addQuad(new Vector3f(offSet*3,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*13,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*13,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*3,	offSet*8,	offSet*12),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);
+	
+			
+			//Bottom
+			subMesh.addQuad(new Vector3f(offSet*3,	0,	offSet*12),
+                                        new Vector3f(offSet*13,	0,	offSet*12),
+                                        new Vector3f(offSet*13,	0,	offSet*4),
+                                        new Vector3f(offSet*3,	0,	offSet*4),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        bottomTexture);
+	
+		
+			//North
+			subMesh.addQuad(new Vector3f(offSet*13,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*3,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*3,	0,		offSet*4),
+                                        new Vector3f(offSet*13,	0,		offSet*4),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        rearTexture);
+	
+			
+			//South
+			subMesh.addQuad(new Vector3f(offSet*3,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*13,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*13,	0,		offSet*12),
+                                        new Vector3f(offSet*3,	0,		offSet*12),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        faceTexture);
+			
+			//East
+			subMesh.addQuad(new Vector3f(offSet*13,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*13,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*13,	0,		offSet*4),
+                                        new Vector3f(offSet*13,	0,		offSet*12),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        rightSideTexture);
+				
+			//West
+			subMesh.addQuad(new Vector3f(offSet*3,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*3,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*3,		0,	offSet*12),
+                                        new Vector3f(offSet*3,		0,	offSet*4),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        leftSideTexture);
+                        
+                        
+                        // Right ear
+                        subMesh.addQuad(new Vector3f(offSet*3,	offSet*7,	offSet*6),
+                                        new Vector3f(offSet*3,	offSet*7,	offSet*10),
+                                        new Vector3f(0,     	offSet*3,	offSet*10),
+                                        new Vector3f(0,     	offSet*3,	offSet*6),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        earTexture);
+                        subMesh.addQuad(new Vector3f(offSet*3, 	offSet*7,	offSet*10),
+                                        new Vector3f(offSet*4,	offSet*6,	offSet*10),
+                                        new Vector3f(offSet*1,	offSet*2,	offSet*10),
+                                        new Vector3f(0,         offSet*3,	offSet*10),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);
+                        subMesh.addQuad(new Vector3f(offSet*3, 	offSet*7,	offSet*6),
+                                        new Vector3f(0, 	offSet*3,	offSet*6),
+                                        new Vector3f(offSet*1,	offSet*2,	offSet*6),
+                                        new Vector3f(offSet*4,	offSet*6,	offSet*6),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);
+                        
+                        // Left ear
+			subMesh.addQuad(new Vector3f(offSet*13,	offSet*7,	offSet*10),
+                                        new Vector3f(offSet*13,	offSet*7,	offSet*6),
+                                        new Vector3f(offSet*16,	offSet*3,	offSet*6),
+                                        new Vector3f(offSet*16,	offSet*3,	offSet*10),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        earTexture);
+                        subMesh.addQuad(new Vector3f(offSet*13, offSet*7,	offSet*10),
+                                        new Vector3f(offSet*16,	offSet*3,	offSet*10),
+                                        new Vector3f(offSet*15,	offSet*2,	offSet*10),
+                                        new Vector3f(offSet*12,	offSet*6,	offSet*10),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);
+                        subMesh.addQuad(new Vector3f(offSet*13, offSet*7,	offSet*6),
+                                        new Vector3f(offSet*12,	offSet*6,	offSet*6),
+                                        new Vector3f(offSet*15,	offSet*2,	offSet*6),
+                                        new Vector3f(offSet*16,	offSet*3,	offSet*6),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);                        
+                        // Snout
+                        subMesh.addQuad(new Vector3f(offSet*6,	offSet*4,	offSet*13),
+                                        new Vector3f(offSet*10,	offSet*4,	offSet*13),
+                                        new Vector3f(offSet*10,	0,		offSet*13),
+                                        new Vector3f(offSet*6,	0,		offSet*13),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        mouthTexture);
+                        subMesh.addQuad(new Vector3f(offSet*6,	offSet*4,	offSet*12),
+                                        new Vector3f(offSet*10,	offSet*4,	offSet*12),
+                                        new Vector3f(offSet*10,	offSet*4,	offSet*13),
+                                        new Vector3f(offSet*6,	offSet*4,	offSet*13),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);
+                        
+                        // Teeth
+                        SubMesh.addBlock(subMesh, offSet*5, 0, offSet*12, offSet, offSet*2, offSet, light, teethTexture, teethTexture, teethTexture);
+                        SubMesh.addBlock(subMesh, offSet*10, 0, offSet*12, offSet, offSet*2, offSet, light, teethTexture, teethTexture, teethTexture);
+                }
+                else
 		{
 			//Top
 			subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
-							new Vector3f(offSet*12,	offSet*8,	offSet*4),
-							new Vector3f(offSet*12,	offSet*8,	offSet*12),
-							new Vector3f(offSet*4,	offSet*8,	offSet*12),
-							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-							topTexture);
+                                        new Vector3f(offSet*12,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*12,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*4,	offSet*8,	offSet*12),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        topTexture);
 	
 			
 			//Bottom
 			subMesh.addQuad(new Vector3f(offSet*4,	0,	offSet*12),
-							new Vector3f(offSet*12,	0,	offSet*12),
-							new Vector3f(offSet*12,	0,	offSet*4),
-							new Vector3f(offSet*4,	0,	offSet*4),
-							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-							bottomTexture);
+                                        new Vector3f(offSet*12,	0,	offSet*12),
+                                        new Vector3f(offSet*12,	0,	offSet*4),
+                                        new Vector3f(offSet*4,	0,	offSet*4),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        bottomTexture);
 	
 		
 			//North
 			subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*4),
-							new Vector3f(offSet*4,	offSet*8,	offSet*4),
-							new Vector3f(offSet*4,	0,			offSet*4),
-							new Vector3f(offSet*12,	0,			offSet*4),
-							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-							rearTexture);
+                                        new Vector3f(offSet*4,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*4,	0,		offSet*4),
+                                        new Vector3f(offSet*12,	0,		offSet*4),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        rearTexture);
 	
 			
 			//South
 			subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*12),
-							new Vector3f(offSet*12,	offSet*8,	offSet*12),
-							new Vector3f(offSet*12,	0,			offSet*12),
-							new Vector3f(offSet*4,	0,			offSet*12),
-							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-							faceTexture);
+                                        new Vector3f(offSet*12,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*12,	0,		offSet*12),
+                                        new Vector3f(offSet*4,	0,		offSet*12),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        faceTexture);
 			
 			//East
 			subMesh.addQuad(new Vector3f(offSet*12,	offSet*8,	offSet*12),
-							new Vector3f(offSet*12,	offSet*8,	offSet*4),
-							new Vector3f(offSet*12,	0,			offSet*4),
-							new Vector3f(offSet*12,	0,			offSet*12),
-							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-							rightSideTexture);
+                                        new Vector3f(offSet*12,	offSet*8,	offSet*4),
+                                        new Vector3f(offSet*12,	0,		offSet*4),
+                                        new Vector3f(offSet*12,	0,		offSet*12),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        rightSideTexture);
 				
 			//West
 			subMesh.addQuad(new Vector3f(offSet*4,	offSet*8,	offSet*4),
-							new Vector3f(offSet*4,	offSet*8,	offSet*12),
-							new Vector3f(offSet*4,		0,		offSet*12),
-							new Vector3f(offSet*4,		0,		offSet*4),
-							new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
-							leftSideTexture);
+                                        new Vector3f(offSet*4,	offSet*8,	offSet*12),
+                                        new Vector3f(offSet*4,		0,		offSet*12),
+                                        new Vector3f(offSet*4,		0,		offSet*4),
+                                        new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a),
+                                        leftSideTexture);
 		}
 
 		if(data > 1 || facing != null)

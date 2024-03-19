@@ -9,6 +9,7 @@
 
 package tectonicus.util;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
@@ -136,18 +137,18 @@ public class FileUtils
 	
 	public boolean isJSONValid(String json)
 	{
-		boolean valid = true;
-		try 
-		{
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.readTree(json);
-		}
-		catch(Exception ex)
-		{ 
-			valid = false;
-		}
-
-		return valid;
+            // Check if the string starts and ends with curly braces or square brackets
+            if ((json.startsWith("{") && json.endsWith("}")) || 
+                (json.startsWith("[") && json.endsWith("]"))) {
+                    try {
+                            OBJECT_MAPPER.readTree(json);
+                            return true;
+                    } catch (Exception e) {
+                            return false;
+                    }
+            } else {
+                    return false; // Not a JSON object or array
+            }
 	}
 	
 	public String getExtension(String file)

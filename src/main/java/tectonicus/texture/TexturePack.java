@@ -60,6 +60,7 @@ import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
+import static tectonicus.Version.VERSION_20;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
@@ -76,8 +77,15 @@ public class TexturePack
 	private Texture vignetteTexture;
 	
 	private BufferedImage itemSheet;
-	private final BufferedImage iconSheet;
-	private final BufferedImage chestImage;
+	private final BufferedImage emptyHeart;
+	private final BufferedImage halfHeart;
+	private final BufferedImage fullHeart;
+	private final BufferedImage emptyFood;
+	private final BufferedImage halfFood;
+	private final BufferedImage fullFood;
+	private final BufferedImage emptyAir;
+	private final BufferedImage fullAir;
+        private final BufferedImage chestImage;
 	
 	private final BufferedImage grassLookupImage;
 	private final BufferedImage foliageLookupImage;
@@ -137,9 +145,10 @@ public class TexturePack
 			}
 		}
 
-		//TODO: Clean up this version stuff
-		if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/bamboo_stalk.png")) {
-			version = VERSION_14;
+		if (versionJson.getPackVersion() != null) {
+                        String name = versionJson.getName();
+                        name = name.substring(0, name.lastIndexOf("."));
+			version = Version.byName(name);
 		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
@@ -205,11 +214,33 @@ public class TexturePack
 				}
 			}
 
-			try {
-				iconSheet = copy( ImageIO.read( zipStack.getStream(path + "gui/icons.png") ) );
-			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find icons.png in "+formatPaths(minecraftJar, texturePack));
-			}
+                        // From version 1.20.2 resource pack version was increased to 18 and there was a following change:
+                        // All textures containing multiple sprites in a sheet for GUI have been split into individual sprites under textures/gui/sprites (automated by Slicer tool).
+                        if (versionJson.getPackVersion() != null && versionJson.getPackVersion().getResource() >= 18) {
+                                emptyHeart = loadTexture(path + "gui/sprites/hud/heart/container.png", minecraftJar, texturePack);
+                                halfHeart = loadTexture(path + "gui/sprites/hud/heart/half.png", minecraftJar, texturePack);
+                                fullHeart = loadTexture(path + "gui/sprites/hud/heart/full.png", minecraftJar, texturePack);
+
+                                emptyFood = loadTexture(path + "gui/sprites/hud/food_empty.png", minecraftJar, texturePack);
+                                halfFood = loadTexture(path + "gui/sprites/hud/food_half.png", minecraftJar, texturePack);
+                                fullFood = loadTexture(path + "gui/sprites/hud/food_full.png", minecraftJar, texturePack);
+
+                                emptyAir = loadTexture(path + "gui/sprites/hud/air_bursting.png", minecraftJar, texturePack);
+                                fullAir = loadTexture(path + "gui/sprites/hud/air.png", minecraftJar, texturePack);
+                        } else {
+                                BufferedImage iconSheet = loadTexture(path + "gui/icons.png", minecraftJar, texturePack);
+                            
+                                emptyHeart = getIcon(iconSheet, 16, 0, 9, 9);
+                                halfHeart = getIcon(iconSheet, 61, 0, 9, 9);
+                                fullHeart = getIcon(iconSheet, 52, 0, 9, 9);
+
+                                emptyFood = getIcon(iconSheet, 16, 27, 9, 9);
+                                halfFood = getIcon(iconSheet, 61, 27, 9, 9);
+                                fullFood = getIcon(iconSheet, 52, 27, 9, 9);
+
+                                emptyAir = getIcon(iconSheet, 25, 18, 9, 9);
+                                fullAir = getIcon(iconSheet, 16, 18, 9, 9);
+                        }                        
 			
 			try {
 				InputStream imgStream = zipStack.getStream(path + "gui/container.png");
@@ -441,6 +472,14 @@ public class TexturePack
 	public BufferedImage loadTexture(String path) throws FileNotFoundException {
 		return copy((BufferedImage) loadImage(path).getRenderedImage());
 	}
+        
+        private BufferedImage loadTexture(String path, File minecraftJar, File texturePack) throws MissingAssetException, IOException {
+                try {
+                        return copy( ImageIO.read( zipStack.getStream(path) ) );
+                } catch (IllegalArgumentException e) {
+                        throw new MissingAssetException("Couldn't find "+path+" in "+formatPaths(minecraftJar, texturePack));
+                }
+        }
 
 	public IIOImage loadImage(String path) throws FileNotFoundException {
 		InputStream in = null;
@@ -816,15 +855,55 @@ public class TexturePack
 		}
 	}
 	
-	public BufferedImage getIcon(final int virtualX, final int virtualY, final int width, final int height)
+	private BufferedImage getIcon(final BufferedImage iconSheet, final int virtualX, final int virtualY, final int width, final int height)
 	{
-		Point actual = iconVirtualToActual(virtualX, virtualY);
-		Point size = iconVirtualToActual(width, height);
+		Point actual = iconVirtualToActual(iconSheet, virtualX, virtualY);
+		Point size = iconVirtualToActual(iconSheet, width, height);
 		
 		return iconSheet.getSubimage(actual.x, actual.y, size.x, size.y);
 	}
-	
-	public BufferedImage getChestImage()
+        
+        public BufferedImage getEmptyHeartImage() {
+                return emptyHeart;
+        }
+
+        public BufferedImage getHalfHeartImage() {
+                BufferedImage composedHalf = ImageUtils.copy(emptyHeart);
+                composedHalf.getGraphics().drawImage(halfHeart, 0, 0, halfHeart.getWidth(), halfHeart.getHeight(), null);
+                return composedHalf;
+        }
+
+        public BufferedImage getFullHeartImage() {
+                BufferedImage composedFull = ImageUtils.copy(emptyHeart);
+                composedFull.getGraphics().drawImage(fullHeart, 0, 0, fullHeart.getWidth(), fullHeart.getHeight(), null);
+                return composedFull;
+        }
+
+        public BufferedImage getEmptyFoodImage() {
+                return emptyFood;
+        }
+
+        public BufferedImage getHalfFoodImage() {
+                BufferedImage composedHalf = ImageUtils.copy(emptyFood);
+                composedHalf.getGraphics().drawImage(halfFood, 0, 0, halfFood.getWidth(), halfFood.getHeight(), null);
+                return composedHalf;
+        }
+
+        public BufferedImage getFullFoodImage() {
+                BufferedImage composedFull = ImageUtils.copy(emptyFood);
+                composedFull.getGraphics().drawImage(fullFood, 0, 0, fullFood.getWidth(), fullFood.getHeight(), null);
+                return composedFull;
+        }
+        
+        public BufferedImage getFullAirImage() {
+                return fullAir;
+        }
+
+        public BufferedImage getEmptyAirImage() {
+                return emptyAir;
+        }
+
+        public BufferedImage getChestImage()
 	{
 		int factor = (int) (chestImage.getWidth() / 256.0f);
 		BufferedImage top = chestImage.getSubimage(0, 0, factor*176, factor*71);
@@ -841,7 +920,7 @@ public class TexturePack
 		return font;
 	}
 	
-	private Point iconVirtualToActual(final int virtualX, final int virtualY)
+	private Point iconVirtualToActual(final BufferedImage iconSheet, final int virtualX, final int virtualY)
 	{
 		final float normX = virtualX / 256.0f;
 		final float normY = virtualY / 256.0f;

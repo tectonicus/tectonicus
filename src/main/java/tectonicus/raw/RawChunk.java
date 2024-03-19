@@ -47,6 +47,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +94,7 @@ public class RawChunk {
 	private Map<String, BeaconEntity> beacons;
 	private Map<String, BannerEntity> banners;
 	private Map<String, BedEntity> beds;
+        private Map<String, DecoratedPotEntity> decoratedPots;
 
 	private List<PaintingEntity> paintings;
 	private List<PaintingEntity> itemFrames;
@@ -147,6 +150,7 @@ public class RawChunk {
 		beacons = new HashMap<>();
 		banners = new HashMap<>();
 		beds = new HashMap<>();
+                decoratedPots = new HashMap<>();
 
 		paintings = new ArrayList<>();
 		itemFrames = new ArrayList<>();
@@ -328,17 +332,16 @@ public class RawChunk {
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
-					if (id.equals("Sign") || id.equals("minecraft:sign")) {
+					if (id.equals("Sign") || id.equals("minecraft:sign") || id.equals("minecraft:hanging_sign")) {
 						List<String> textLines = new ArrayList<>();
 						String color = "black";
 
                                                 CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
                                                 CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
 
-                                                if (frontText == null) {
-                                                        // Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
-                                                        for (int i = 1; i <= 4; i++) {
-                                                                String text = NbtUtil.getChild(entity, "Text" + i, StringTag.class).getValue();
+                                                Consumer<Function<Integer, String>> parseSignText = (getText) -> {
+                                                        for (int i = 0; i < 4; i++) {
+                                                                String text = getText.apply(i);
 
                                                                 if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
                                                                 {
@@ -346,27 +349,43 @@ public class RawChunk {
                                                                 } else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
                                                                 {
                                                                         text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
-                                                                        textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+                                                                        try {
+                                                                                textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+                                                                        }
+                                                                        catch (JsonProcessingException e) {
+                                                                                throw new RuntimeException(e);
+                                                                        }
                                                                 } else {
                                                                         textLines.add("");
                                                                 }
                                                         }
-
+                                                };
+                                                
+                                                if (frontText == null) {
+                                                        // Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
+                                                        parseSignText.accept((i) -> {
+                                                                return NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue();
+                                                        });
+                                                        
                                                         StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
                                                         if (colorTag != null) {
                                                                 color = colorTag.getValue();
                                                         }
                                                 } else {
-                                                        // Process 1.20 or older sign
+                                                        // Process 1.20 or newer sign
                                                         ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
                                                         ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
                                                         
-                                                        for (int i = 0; i < 4; i++) {
-                                                                textLines.add(textFromJSON(NbtUtil.getChild(frontMessages, i, StringTag.class).getValue()));
-                                                        }
-                                                        for (int i = 0; i < 4; i++) {
-                                                                textLines.add(textFromJSON(NbtUtil.getChild(backMessages, i, StringTag.class).getValue()));
-                                                        }
+                                                        parseSignText.accept((i) -> {
+                                                                if (NbtUtil.getChild(frontMessages, i, StringTag.class) == null) {
+                                                                        return null;
+                                                                } else {
+                                                                        return NbtUtil.getChild(frontMessages, i, StringTag.class).getValue();
+                                                                }
+                                                        });
+                                                        parseSignText.accept((i) -> {
+                                                                return NbtUtil.getChild(backMessages, i, StringTag.class).getValue();
+                                                        });
                                                         
                                                         StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
                                                         if (colorTag != null) {
@@ -381,7 +400,7 @@ public class RawChunk {
 						} else {
 							data = getBlockData(localX, localY, localZ);
 						}
-
+                                                
 						signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
 								textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data, properties, color));
 					} else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot")) {
@@ -516,7 +535,27 @@ public class RawChunk {
 						if (color != null)
 							colorVal = color.getValue();
 						beds.put(createKey(localX, localY, localZ), new BedEntity(x, y, z, localX, localY, localZ, colorVal));
-					}
+					} else if (id.equals("minecraft:decorated_pot")) {
+                                                final ListTag sherds = NbtUtil.getChild(entity, "sherds", ListTag.class);
+                                                
+                                                String sherd1 = "minecraft:brick";
+                                                String sherd2 = "minecraft:brick";
+                                                String sherd3 = "minecraft:brick";
+                                                String sherd4 = "minecraft:brick";
+                                                
+                                                if (sherds != null) {
+                                                        StringTag sherd1Tag = NbtUtil.getChild(sherds, 0, StringTag.class);
+                                                        sherd1 = sherd1Tag == null ? sherd1 : sherd1Tag.getValue();
+                                                        StringTag sherd2Tag = NbtUtil.getChild(sherds, 1, StringTag.class);
+                                                        sherd2 = sherd2Tag == null ? sherd2 : sherd2Tag.getValue();
+                                                        StringTag sherd3Tag = NbtUtil.getChild(sherds, 2, StringTag.class);
+                                                        sherd3 = sherd3Tag == null ? sherd3 : sherd3Tag.getValue();
+                                                        StringTag sherd4Tag = NbtUtil.getChild(sherds, 3, StringTag.class);
+                                                        sherd4 = sherd4Tag == null ? sherd4 : sherd4Tag.getValue();
+                                                }
+                                                
+                                                decoratedPots.put(createKey(localX, localY, localZ), new DecoratedPotEntity(x, y, z, localX, localY, localZ, sherd1, sherd2, sherd3, sherd4));
+                                        }
 					//	else if (id.equals("Furnace"))
 					//	{
 					//
@@ -1141,6 +1180,10 @@ public class RawChunk {
 
 	public void setBeds(Map<String, BedEntity> beds) {
 		this.beds = beds;
+	}
+        
+        public Map<String, DecoratedPotEntity> getDecoratedPots() {
+		return Collections.unmodifiableMap(decoratedPots);
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm) {

@@ -31,24 +31,50 @@
 	<BedNew stringId="minecraft:red_bed" name="Red Bed" />
 	<BedNew stringId="minecraft:black_bed" name="Black Bed" />
 
-	<Sign stringId="minecraft:oak_sign" name="Oak Sign" texture="assets/minecraft/textures/entity/signs/oak.png" hasPost="true" />
-	<Sign stringId="minecraft:oak_wall_sign" name="Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/oak.png" />
-	<Sign stringId="minecraft:spruce_sign" name="Spruce Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" hasPost="true" />
-	<Sign stringId="minecraft:spruce_wall_sign" name="Spruce Wall Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" />
-	<Sign stringId="minecraft:birch_sign" name="Birch Sign" texture="assets/minecraft/textures/entity/signs/birch.png" hasPost="true" />
-	<Sign stringId="minecraft:birch_wall_sign" name="Birch Wall Sign" texture="assets/minecraft/textures/entity/signs/birch.png" />
-	<Sign stringId="minecraft:jungle_sign" name="Jungle Sign" texture="assets/minecraft/textures/entity/signs/jungle.png" hasPost="true" />
-	<Sign stringId="minecraft:jungle_wall_sign" name="Jungle Wall Sign" texture="assets/minecraft/textures/entity/signs/jungle.png" />
-	<Sign stringId="minecraft:acacia_sign" name="Acacia Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" hasPost="true" />
-	<Sign stringId="minecraft:acacia_wall_sign" name="Acacia Wall Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" />
-	<Sign stringId="minecraft:dark_oak_sign" name="Dark Oak Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" hasPost="true" />
-	<Sign stringId="minecraft:dark_oak_wall_sign" name="Dark Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" />
-	<Sign stringId="minecraft:crimson_sign" name="Crimson Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" hasPost="true" />
-	<Sign stringId="minecraft:crimson_wall_sign" name="Crimson Wall Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" />
-	<Sign stringId="minecraft:warped_sign" name="Warped Sign" texture="assets/minecraft/textures/entity/signs/warped.png" hasPost="true" />
-	<Sign stringId="minecraft:warped_wall_sign" name="Warped Wall Sign" texture="assets/minecraft/textures/entity/signs/warped.png" />
-	<Sign stringId="minecraft:mangrove_sign" name="Mangrove Sign" texture="assets/minecraft/textures/entity/signs/mangrove.png" hasPost="true" />
-	<Sign stringId="minecraft:mangrove_wall_sign" name="Mangrove Wall Sign" texture="assets/minecraft/textures/entity/signs/mangrove.png" />
+	<Sign stringId="minecraft:oak_sign" name="Oak Sign" texture="assets/minecraft/textures/entity/signs/oak.png" />
+	<Sign stringId="minecraft:oak_wall_sign" name="Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/oak.png" isWall="true" />
+	<HangingSign stringId="minecraft:oak_hanging_sign" name="Oak Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/oak.png" />
+	<HangingSign stringId="minecraft:oak_wall_hanging_sign" name="Oak Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/oak.png" isWall="true" />
+	<Sign stringId="minecraft:spruce_sign" name="Spruce Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" />
+	<Sign stringId="minecraft:spruce_wall_sign" name="Spruce Wall Sign" texture="assets/minecraft/textures/entity/signs/spruce.png" isWall="true" />
+	<HangingSign stringId="minecraft:spruce_hanging_sign" name="Spruce Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/spruce.png" />
+	<HangingSign stringId="minecraft:spruce_wall_hanging_sign" name="Spruce Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/spruce.png" isWall="true" />
+	<Sign stringId="minecraft:birch_sign" name="Birch Sign" texture="assets/minecraft/textures/entity/signs/birch.png" />
+	<Sign stringId="minecraft:birch_wall_sign" name="Birch Wall Sign" texture="assets/minecraft/textures/entity/signs/birch.png" isWall="true" />
+	<HangingSign stringId="minecraft:birch_hanging_sign" name="Birch Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/birch.png" />
+	<HangingSign stringId="minecraft:birch_wall_hanging_sign" name="Birch Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/birch.png" isWall="true" />
+	<Sign stringId="minecraft:jungle_sign" name="Jungle Sign" texture="assets/minecraft/textures/entity/signs/jungle.png" />
+	<Sign stringId="minecraft:jungle_wall_sign" name="Jungle Wall Sign" texture="assets/minecraft/textures/entity/signs/jungle.png" isWall="true" />
+	<HangingSign stringId="minecraft:jungle_hanging_sign" name="Jungle Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/jungle.png" />
+	<HangingSign stringId="minecraft:jungle_wall_hanging_sign" name="Jungle Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/jungle.png" isWall="true" />
+	<Sign stringId="minecraft:acacia_sign" name="Acacia Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" />
+	<Sign stringId="minecraft:acacia_wall_sign" name="Acacia Wall Sign" texture="assets/minecraft/textures/entity/signs/acacia.png" isWall="true" />
+	<HangingSign stringId="minecraft:acacia_hanging_sign" name="Acacia Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/acacia.png" />
+	<HangingSign stringId="minecraft:acacia_wall_hanging_sign" name="Acacia Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/acacia.png" isWall="true" />
+	<Sign stringId="minecraft:dark_oak_sign" name="Dark Oak Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" />
+	<Sign stringId="minecraft:dark_oak_wall_sign" name="Dark Oak Wall Sign" texture="assets/minecraft/textures/entity/signs/dark_oak.png" isWall="true" />
+	<HangingSign stringId="minecraft:dark_oak_hanging_sign" name="Dark Oak Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/dark_oak.png" />
+	<HangingSign stringId="minecraft:dark_oak_wall_hanging_sign" name="Dark Oak Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/dark_oak.png" isWall="true" />
+	<Sign stringId="minecraft:crimson_sign" name="Crimson Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" />
+	<Sign stringId="minecraft:crimson_wall_sign" name="Crimson Wall Sign" texture="assets/minecraft/textures/entity/signs/crimson.png" isWall="true" />
+	<HangingSign stringId="minecraft:crimson_hanging_sign" name="Crimson Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/crimson.png" />
+	<HangingSign stringId="minecraft:crimson_wall_hanging_sign" name="Crimson Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/crimson.png" isWall="true" />
+	<Sign stringId="minecraft:warped_sign" name="Warped Sign" texture="assets/minecraft/textures/entity/signs/warped.png" />
+	<Sign stringId="minecraft:warped_wall_sign" name="Warped Wall Sign" texture="assets/minecraft/textures/entity/signs/warped.png" isWall="true" />
+	<HangingSign stringId="minecraft:warped_hanging_sign" name="Warped Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/warped.png" />
+	<HangingSign stringId="minecraft:warped_wall_hanging_sign" name="Warped Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/warped.png" isWall="true" />
+	<Sign stringId="minecraft:mangrove_sign" name="Mangrove Sign" texture="assets/minecraft/textures/entity/signs/mangrove.png" />
+	<Sign stringId="minecraft:mangrove_wall_sign" name="Mangrove Wall Sign" texture="assets/minecraft/textures/entity/signs/mangrove.png" isWall="true" />
+	<HangingSign stringId="minecraft:mangrove_hanging_sign" name="Mangrove Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/mangrove.png" />
+	<HangingSign stringId="minecraft:mangrove_wall_hanging_sign" name="Mangrove Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/mangrove.png" isWall="true" />
+	<Sign stringId="minecraft:cherry_sign" name="Cherry Sign" texture="assets/minecraft/textures/entity/signs/cherry.png" />
+	<Sign stringId="minecraft:cherry_wall_sign" name="Cherry Wall Sign" texture="assets/minecraft/textures/entity/signs/cherry.png" isWall="true" />
+	<HangingSign stringId="minecraft:cherry_hanging_sign" name="Cherry Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/cherry.png" />
+	<HangingSign stringId="minecraft:cherry_wall_hanging_sign" name="Cherry Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/cherry.png" isWall="true" />
+	<Sign stringId="minecraft:bamboo_sign" name="Bamboo Sign" texture="assets/minecraft/textures/entity/signs/bamboo.png" />
+	<Sign stringId="minecraft:bamboo_wall_sign" name="Bamboo Wall Sign" texture="assets/minecraft/textures/entity/signs/bamboo.png" isWall="true" />
+	<HangingSign stringId="minecraft:bamboo_hanging_sign" name="Bamboo Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/bamboo.png" />
+	<HangingSign stringId="minecraft:bamboo_wall_hanging_sign" name="Bamboo Wall Hanging Sign" texture="assets/minecraft/textures/entity/signs/hanging/bamboo.png" isWall="true" />
 
 	<EnderPortal stringId="minecraft:end_portal" name="EnderPortal" texture="Images/EnderPortal.png" />
 
@@ -77,6 +103,8 @@
 	<Skull stringId="minecraft:player_wall_head" name="Player Wall Head" texture="assets/minecraft/textures/entity/steve.png" newTexture="assets/minecraft/textures/entity/player/wide/steve.png"/>
 	<Skull stringId="minecraft:creeper_wall_head" name="Creeper Wall Head" texture="assets/minecraft/textures/entity/creeper/creeper.png" />
 	<Skull stringId="minecraft:dragon_wall_head" name="Dragon Wall Head" texture="assets/minecraft/textures/entity/enderdragon/dragon.png" />
+        <Skull stringId="minecraft:piglin_head" name="Piglin Head" texture="assets/minecraft/textures/entity/piglin/piglin.png" />
+        <Skull stringId="minecraft:piglin_wall_head" name="Piglin Wall Head" texture="assets/minecraft/textures/entity/piglin/piglin.png" />
 
 <!--	<Plant stringId="minecraft:barrier" name="Barrier" texture="assets/minecraft/textures/item/barrier.png" />-->
 
@@ -139,6 +167,8 @@
 	<Conduit stringId="minecraft:conduit" name="Conduit" texture="assets/minecraft/textures/entity/conduit/base.png" />
 
 	<Bell stringId="minecraft:bell" name="Bell" texture="assets/minecraft/textures/entity/bell/bell_body.png" />
+        
+        <DecoratedPot stringId="minecraft:decorated_pot" name="Decorated pot" />
 
 	<PaintingNew id="-1" name="Paintings" />
 	<ItemFrameNew id="-2" name="Item Frame" background="item_frame.png" glowBackground="glow_item_frame.png" border="birch_planks.png" map="assets/minecraft/textures/map/map_background.png" />

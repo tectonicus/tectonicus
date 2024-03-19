@@ -227,7 +227,7 @@
 	
 	<Furnace id="62" name="Furnace" top="terrain[14, 3]" side="terrain[13, 2]" front="terrain[13, 3]" />
 	
-	<Sign id="63" name="Sign Post" texture="terrain[4, 0]" hasPost="true" />
+	<Sign id="63" name="Sign Post" texture="terrain[4, 0]" />
 	
 	<Door id="64" name="Wooden Door" top="terrain[1, 5]" bottom="terrain[1, 6]" />
 	

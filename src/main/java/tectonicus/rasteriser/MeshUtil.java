@@ -909,6 +909,8 @@ public class MeshUtil
 		} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves")
 				|| modelName.contains("acacia_leaves") || modelName.contains("vines")) {
 			tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
+                } else if (modelName.contains("cherry_leaves")) {                    
+                        tintColor = new Colour4f(255/255f, 255/255f, 255/255f);
 		} else {
 			tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 		}
