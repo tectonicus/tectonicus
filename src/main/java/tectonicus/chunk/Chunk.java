@@ -205,6 +205,11 @@ public class Chunk
 		type = registry.find(-2, 0);
 		if (type != null)
 			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
+                
+                // Create armor stand geometry
+		type = registry.find(-3, 0);
+		if (type != null)
+			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
 		
 		/*
 		for (int y=0; y<RawChunk.HEIGHT; y++)

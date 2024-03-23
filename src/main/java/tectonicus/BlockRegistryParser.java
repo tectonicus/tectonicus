@@ -17,6 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.Anvil;
+import tectonicus.blockTypes.ArmorStand;
 import tectonicus.blockTypes.Banner;
 import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
@@ -889,6 +890,9 @@ public class BlockRegistryParser
                 }
                 else if (nodeName.equals("chiseledbookshelf")) {
                         blockType = new ChiseledBookshelf(name, texturePack);
+                }
+                else if (nodeName.equals("armorstand")) {
+                        blockType = new ArmorStand(name, texturePack);
                 }
 		else
 		{

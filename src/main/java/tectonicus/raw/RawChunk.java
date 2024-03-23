@@ -99,6 +99,7 @@ public class RawChunk {
 	private List<PaintingEntity> paintings;
 	private List<PaintingEntity> itemFrames;
 	private List<ContainerEntity> chests;
+        private List<ArmorStandEntity> armorStands;
 
 	private final Map<String, Object> filterData = new HashMap<>();
 
@@ -155,6 +156,7 @@ public class RawChunk {
 		paintings = new ArrayList<>();
 		itemFrames = new ArrayList<>();
 		chests = new ArrayList<>();
+                armorStands = new ArrayList<>();
 
 		sections = new Section[maxSections];
 	}
@@ -222,9 +224,11 @@ public class RawChunk {
 
 				StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
 				String id = idTag.getValue();
-				boolean painting = id.endsWith("Painting") || id.equals("minecraft:painting");
-				boolean itemFrame = id.equals("ItemFrame") || id.equals("minecraft:item_frame")
-						|| id.equals("minecraft:glow_item_frame");
+				
+                                boolean painting = id.endsWith("Painting") || id.equals("minecraft:painting");
+				boolean itemFrame = id.equals("ItemFrame") || id.equals("minecraft:item_frame") || id.equals("minecraft:glow_item_frame");
+                                boolean armorStand = id.equals("ArmorStand") || id.equals("minecraft:armor_stand");
+                                
 				if (painting || itemFrame) {
 					IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
 					IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
@@ -284,7 +288,7 @@ public class RawChunk {
 							motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
 						}
 						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, motiveTag.getValue(), direction));
-					} else {
+					} else if (itemFrame) {
 						String item = "";
 						Map<String, Tag> map = entity.getValue();
 						CompoundTag itemTag = (CompoundTag) map.get("Item");
@@ -301,7 +305,28 @@ public class RawChunk {
 
 						itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, item, direction));
 					}
-				}
+				} else if (armorStand) {
+                                        ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
+                                        
+                                        if (posTag != null) {
+                                                List<Tag> pos = posTag.getValue();
+
+                                                int x = (int)Math.round(Math.floor((double)pos.get(0).getValue()));
+                                                int y = (int)Math.round(Math.floor((double)pos.get(1).getValue()));
+                                                int z = (int)Math.round(Math.floor((double)pos.get(2).getValue()));
+                                                
+                                                final int localX = x - (chunkX * WIDTH);
+                                                int localY;
+                                                if (is118) {
+                                                        localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
+                                                } else {
+                                                        localY = y;
+                                                }
+                                                final int localZ = z - (chunkZ * DEPTH);
+
+                                                armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ));
+                                        }                                        
+                                }
 			}
 		}
 	}
@@ -1153,6 +1178,10 @@ public class RawChunk {
 	public List<PaintingEntity> getPaintings() {
 		return paintings;
 	}
+        
+        public List<ArmorStandEntity> getArmorStands() {
+                return armorStands;
+        }
 
 	public Map<String, SkullEntity> getSkulls() {
 		return Collections.unmodifiableMap(skulls);
