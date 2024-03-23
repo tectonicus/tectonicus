@@ -9,10 +9,14 @@
 
 package tectonicus.blockTypes;
 
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.SubMesh;
+import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -113,5 +117,81 @@ public class ChiseledBookshelf implements BlockType
 		BlockUtil.addSouth(world, rawChunk, southMesh, x, y, z, colour, southTexture, registry);
 		BlockUtil.addEast(world, rawChunk, eastMesh, x, y, z, colour, westTexture, registry);
 		BlockUtil.addWest(world, rawChunk, westMesh, x, y, z, colour, eastTexture, registry);
+                
+                if (isSlotOccupied(0, properties)) {
+                        drawOccupiedSlot(x, y, z, geometry, properties, 1, 1);
+                }
+                if (isSlotOccupied(1, properties)) {
+                        drawOccupiedSlot(x, y, z, geometry, properties, 6, 1);
+                }
+                if (isSlotOccupied(2, properties)) {
+                        drawOccupiedSlot(x, y, z, geometry, properties, 11, 1);
+                }
+                if (isSlotOccupied(3, properties)) {
+                        drawOccupiedSlot(x, y, z, geometry, properties, 1, 9);
+                }
+                if (isSlotOccupied(4, properties)) {
+                        drawOccupiedSlot(x, y, z, geometry, properties, 6, 9);
+                }
+                if (isSlotOccupied(5, properties)) {
+                        drawOccupiedSlot(x, y, z, geometry, properties, 11, 9);
+                }
 	}
+        
+        private static Boolean isSlotOccupied(int slotIndex, BlockProperties properties) {
+                final String propertyName = String.format("slot_%d_occupied", slotIndex);
+            
+                if (properties != null && properties.containsKey(propertyName)) {
+			final String slotOccupied = properties.get(propertyName);
+                        return "true".equals(slotOccupied);
+                }
+
+                return false;
+        }
+        
+        private void drawOccupiedSlot(int x, int y, int z, Geometry geometry, BlockProperties properties, int wOffset, int hOffset) {
+                Vector4f white = new Vector4f(1, 1, 1, 1);
+                float angle = getRotationDataFromFacing(properties);
+                
+                final float widthTexel = 1.0f / 16.0f;
+		final float heightTexel = 1.0f / 16.0f;
+
+                SubTexture texture = new SubTexture(occupiedTexture.texture, occupiedTexture.u0+widthTexel*wOffset, occupiedTexture.v0+heightTexel*hOffset, occupiedTexture.u0+widthTexel*(wOffset+4), occupiedTexture.v0+heightTexel*(hOffset+6));
+                
+                final float unit = 1.0f / 16.0f;
+                final float epsilon = 0.0051f / 16.0f; // So that book texture and front texture are not on the same plane
+                
+                SubMesh subMesh = new SubMesh();
+		subMesh.addQuad(new Vector3f(wOffset*unit, (16-hOffset)*unit, 16*unit+epsilon),
+                                new Vector3f((wOffset+4)*unit, (16-hOffset)*unit, 16*unit+epsilon),
+                                new Vector3f((wOffset+4)*unit, (16-hOffset-6)*unit, 16*unit+epsilon),
+                                new Vector3f(wOffset*unit, (16-hOffset-6)*unit, 16*unit+epsilon),
+                                white, texture);
+		subMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.AntiClockwise, angle);
+        }
+        
+        private static float getRotationDataFromFacing(BlockProperties properties) {
+                int data = 0;
+		
+                if (properties != null && properties.containsKey("facing")) {
+			final String facing = properties.get("facing");
+			switch (facing) {
+				case "north":
+					data = 180;
+					break;
+				case "south":
+					data = 0;
+					break;
+				case "west":
+					data = 90;
+					break;
+				case "east":
+					data = 270;
+					break;
+				default:
+			}
+		}
+                
+                return data;
+        }
 }
