@@ -169,6 +169,8 @@
 	<Bell stringId="minecraft:bell" name="Bell" texture="assets/minecraft/textures/entity/bell/bell_body.png" />
         
         <DecoratedPot stringId="minecraft:decorated_pot" name="Decorated pot" />
+        
+        <ChiseledBookshelf stringId="minecraft:chiseled_bookshelf" name="Chiseled bookshelf" />
 
 	<PaintingNew id="-1" name="Paintings" />
 	<ItemFrameNew id="-2" name="Item Frame" background="item_frame.png" glowBackground="glow_item_frame.png" border="birch_planks.png" map="assets/minecraft/textures/map/map_background.png" />

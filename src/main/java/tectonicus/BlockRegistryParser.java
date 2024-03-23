@@ -30,6 +30,7 @@ import tectonicus.blockTypes.Carpet;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.ChestNew;
+import tectonicus.blockTypes.ChiseledBookshelf;
 import tectonicus.blockTypes.ChorusFlower;
 import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
@@ -885,6 +886,9 @@ public class BlockRegistryParser
 		}
                 else if (nodeName.equals("decoratedpot")) {
                         blockType = new DecoratedPot(name, texturePack);
+                }
+                else if (nodeName.equals("chiseledbookshelf")) {
+                        blockType = new ChiseledBookshelf(name, texturePack);
                 }
 		else
 		{
