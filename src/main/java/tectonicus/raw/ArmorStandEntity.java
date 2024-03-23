@@ -11,8 +11,14 @@ package tectonicus.raw;
 
 public class ArmorStandEntity extends BlockEntity
 {
-	public ArmorStandEntity(int x, int y, int z, int localX, int localY, int localZ)
+        private final float yaw;
+    
+	public ArmorStandEntity(int x, int y, int z, int localX, int localY, int localZ, float yaw)
 	{
 		super(x, y, z, localX, localY, localZ);
+                
+                this.yaw = yaw;
 	}
+        
+        public float getYaw() { return yaw; }
 }

@@ -30,6 +30,14 @@ public class ArmorStand implements BlockType
 	
         private final SubTexture baseTopTexture;
         private final SubTexture baseSideTexture;
+        private final SubTexture legSideTexture;
+        private final SubTexture hipsFrontTexture;
+        private final SubTexture hipsSideTexture;
+        private final SubTexture torsoSideTexture;
+        private final SubTexture shouldersFrontTexture;
+        private final SubTexture shouldersSideTexture;
+        private final SubTexture neckTopTexture;
+        private final SubTexture neckSideTexture;
 
         public ArmorStand(String name, TexturePack texturePack)
 	{
@@ -42,6 +50,14 @@ public class ArmorStand implements BlockType
                 
 		baseTopTexture = new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*32, texture.u0+widthTexel*24, texture.v0+heightTexel*44);
 		baseSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*44, texture.u0+widthTexel*24, texture.v0+heightTexel*45);
+		legSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*10, texture.v0+heightTexel*2, texture.u0+widthTexel*12, texture.v0+heightTexel*13);
+		hipsFrontTexture = new SubTexture(texture.texture, texture.u0+widthTexel*2, texture.v0+heightTexel*50, texture.u0+widthTexel*10, texture.v0+heightTexel*52);
+		hipsSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*50, texture.u0+widthTexel*2, texture.v0+heightTexel*52);
+                torsoSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*16, texture.v0+heightTexel*2, texture.u0+widthTexel*18, texture.v0+heightTexel*9);
+		shouldersFrontTexture = new SubTexture(texture.texture, texture.u0+widthTexel*3, texture.v0+heightTexel*29, texture.u0+widthTexel*15, texture.v0+heightTexel*32);
+		shouldersSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*29, texture.u0+widthTexel*3, texture.v0+heightTexel*32);
+                neckTopTexture = new SubTexture(texture.texture, texture.u0+widthTexel*2, texture.v0+heightTexel*0, texture.u0+widthTexel*4, texture.v0+heightTexel*2);
+                neckSideTexture = new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*2, texture.u0+widthTexel*2, texture.v0+heightTexel*8);
 	}
 	
 	@Override
@@ -79,25 +95,124 @@ public class ArmorStand implements BlockType
                     
                         final Vector4f colour = new Vector4f(1, 1, 1, 1);
                         final float unit = 1.0f / 16.0f;
+                        final float angle = entity.getYaw();
 
                         buildBaseMesh(x, y, z, geometry, colour, unit);
+                        buildStandMesh(x, y, z, geometry, colour, unit, angle);
                 }
 	}
         
         private void buildBaseMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit) {
-                SubMesh baseMesh = new SubMesh();
+                SubMesh mesh = new SubMesh();
 		
 		// Front
-		baseMesh.addDoubleSidedQuad(new Vector3f(2*unit, 1*unit, 14*unit), new Vector3f(14*unit, 1*unit, 14*unit), new Vector3f(14*unit, 0*unit, 14*unit), new Vector3f(2*unit, 0*unit, 14*unit), colour, baseSideTexture);
+		mesh.addQuad(new Vector3f(2*unit, 1*unit, 14*unit), new Vector3f(14*unit, 1*unit, 14*unit), new Vector3f(14*unit, 0*unit, 14*unit), new Vector3f(2*unit, 0*unit, 14*unit), colour, baseSideTexture);
 		// Back
-		baseMesh.addDoubleSidedQuad(new Vector3f(14*unit, 1*unit, 2*unit), new Vector3f(2*unit, 1*unit, 2*unit), new Vector3f(2*unit, 0*unit, 2*unit), new Vector3f(14*unit, 0*unit, 2*unit), colour, baseSideTexture);
+		mesh.addQuad(new Vector3f(14*unit, 1*unit, 2*unit), new Vector3f(2*unit, 1*unit, 2*unit), new Vector3f(2*unit, 0*unit, 2*unit), new Vector3f(14*unit, 0*unit, 2*unit), colour, baseSideTexture);
 		// Top
-		baseMesh.addDoubleSidedQuad(new Vector3f(2*unit, 1*unit, 2*unit), new Vector3f(14*unit, 1*unit, 2*unit), new Vector3f(14*unit, 1*unit, 14*unit), new Vector3f(2*unit, 1*unit, 14*unit), colour, baseTopTexture);
+		mesh.addQuad(new Vector3f(2*unit, 1*unit, 2*unit), new Vector3f(14*unit, 1*unit, 2*unit), new Vector3f(14*unit, 1*unit, 14*unit), new Vector3f(2*unit, 1*unit, 14*unit), colour, baseTopTexture);
 		// Left edge
-		baseMesh.addDoubleSidedQuad(new Vector3f(2*unit, 1*unit, 2*unit), new Vector3f(2*unit, 1*unit, 14*unit), new Vector3f(2*unit, 0*unit, 14*unit), new Vector3f(2*unit, 0*unit, 2*unit), colour, baseSideTexture);
+		mesh.addQuad(new Vector3f(2*unit, 1*unit, 2*unit), new Vector3f(2*unit, 1*unit, 14*unit), new Vector3f(2*unit, 0*unit, 14*unit), new Vector3f(2*unit, 0*unit, 2*unit), colour, baseSideTexture);
 		// Right edge
-		baseMesh.addDoubleSidedQuad(new Vector3f(14*unit, 1*unit, 14*unit), new Vector3f(14*unit, 1*unit, 2*unit), new Vector3f(14*unit, 0*unit, 2*unit), new Vector3f(14*unit, 0*unit, 14*unit), colour, baseSideTexture);
+		mesh.addQuad(new Vector3f(14*unit, 1*unit, 14*unit), new Vector3f(14*unit, 1*unit, 2*unit), new Vector3f(14*unit, 0*unit, 2*unit), new Vector3f(14*unit, 0*unit, 14*unit), colour, baseSideTexture);
 		
-                baseMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.None, 0);
+                mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.None, 0);
+        }
+
+        private void buildStandMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit, float angle) {
+                SubMesh mesh = new SubMesh();
+
+
+                // Left leg
+                
+		// Front
+		mesh.addQuad(new Vector3f(5*unit, 12*unit, 9*unit), new Vector3f(7*unit, 12*unit, 9*unit), new Vector3f(7*unit, 1*unit, 9*unit), new Vector3f(5*unit, 1*unit, 9*unit), colour, legSideTexture);
+		// Back
+		mesh.addQuad(new Vector3f(7*unit, 12*unit, 7*unit), new Vector3f(5*unit, 12*unit, 7*unit), new Vector3f(5*unit, 1*unit, 7*unit), new Vector3f(7*unit, 1*unit, 7*unit), colour, legSideTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(5*unit, 12*unit, 7*unit), new Vector3f(5*unit, 12*unit, 9*unit), new Vector3f(5*unit, 1*unit, 9*unit), new Vector3f(5*unit, 1*unit, 7*unit), colour, legSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(7*unit, 12*unit, 9*unit), new Vector3f(7*unit, 12*unit, 7*unit), new Vector3f(7*unit, 1*unit, 7*unit), new Vector3f(7*unit, 1*unit, 9*unit), colour, legSideTexture);
+
+
+                // Right leg
+                
+		// Front
+		mesh.addQuad(new Vector3f(9*unit, 12*unit, 9*unit), new Vector3f(11*unit, 12*unit, 9*unit), new Vector3f(11*unit, 1*unit, 9*unit), new Vector3f(9*unit, 1*unit, 9*unit), colour, legSideTexture);
+		// Back
+		mesh.addQuad(new Vector3f(11*unit, 12*unit, 7*unit), new Vector3f(9*unit, 12*unit, 7*unit), new Vector3f(9*unit, 1*unit, 7*unit), new Vector3f(11*unit, 1*unit, 7*unit), colour, legSideTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(9*unit, 12*unit, 7*unit), new Vector3f(9*unit, 12*unit, 9*unit), new Vector3f(9*unit, 1*unit, 9*unit), new Vector3f(9*unit, 1*unit, 7*unit), colour, legSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(11*unit, 12*unit, 9*unit), new Vector3f(11*unit, 12*unit, 7*unit), new Vector3f(11*unit, 1*unit, 7*unit), new Vector3f(11*unit, 1*unit, 9*unit), colour, legSideTexture);
+
+                
+                // Hips
+                
+		// Front
+		mesh.addQuad(new Vector3f(4*unit, 14*unit, 9*unit), new Vector3f(12*unit, 14*unit, 9*unit), new Vector3f(12*unit, 12*unit, 9*unit), new Vector3f(4*unit, 12*unit, 9*unit), colour, hipsFrontTexture);
+		// Back
+		mesh.addQuad(new Vector3f(12*unit, 14*unit, 7*unit), new Vector3f(4*unit, 14*unit, 7*unit), new Vector3f(4*unit, 12*unit, 7*unit), new Vector3f(12*unit, 12*unit, 7*unit), colour, hipsFrontTexture);
+		// Top
+		mesh.addQuad(new Vector3f(4*unit, 14*unit, 7*unit), new Vector3f(12*unit, 14*unit, 7*unit), new Vector3f(12*unit, 14*unit, 9*unit), new Vector3f(4*unit, 14*unit, 9*unit), colour, hipsFrontTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(4*unit, 14*unit, 7*unit), new Vector3f(4*unit, 14*unit, 9*unit), new Vector3f(4*unit, 12*unit, 9*unit), new Vector3f(4*unit, 12*unit, 7*unit), colour, hipsSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(12*unit, 14*unit, 9*unit), new Vector3f(12*unit, 14*unit, 7*unit), new Vector3f(12*unit, 12*unit, 7*unit), new Vector3f(12*unit, 12*unit, 9*unit), colour, hipsSideTexture);
+
+
+                // Left part of torso
+                
+		// Front
+		mesh.addQuad(new Vector3f(5*unit, 21*unit, 9*unit), new Vector3f(7*unit, 21*unit, 9*unit), new Vector3f(7*unit, 14*unit, 9*unit), new Vector3f(5*unit, 14*unit, 9*unit), colour, torsoSideTexture);
+		// Back
+		mesh.addQuad(new Vector3f(7*unit, 21*unit, 7*unit), new Vector3f(5*unit, 21*unit, 7*unit), new Vector3f(5*unit, 14*unit, 7*unit), new Vector3f(7*unit, 14*unit, 7*unit), colour, torsoSideTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(5*unit, 21*unit, 7*unit), new Vector3f(5*unit, 21*unit, 9*unit), new Vector3f(5*unit, 14*unit, 9*unit), new Vector3f(5*unit, 14*unit, 7*unit), colour, torsoSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(7*unit, 21*unit, 9*unit), new Vector3f(7*unit, 21*unit, 7*unit), new Vector3f(7*unit, 14*unit, 7*unit), new Vector3f(7*unit, 14*unit, 9*unit), colour, torsoSideTexture);
+
+
+                // Right part of torso
+                
+		// Front
+		mesh.addQuad(new Vector3f(9*unit, 21*unit, 9*unit), new Vector3f(11*unit, 21*unit, 9*unit), new Vector3f(11*unit, 14*unit, 9*unit), new Vector3f(9*unit, 14*unit, 9*unit), colour, torsoSideTexture);
+		// Back
+		mesh.addQuad(new Vector3f(11*unit, 21*unit, 7*unit), new Vector3f(9*unit, 21*unit, 7*unit), new Vector3f(9*unit, 14*unit, 7*unit), new Vector3f(11*unit, 14*unit, 7*unit), colour, torsoSideTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(9*unit, 21*unit, 7*unit), new Vector3f(9*unit, 21*unit, 9*unit), new Vector3f(9*unit, 14*unit, 9*unit), new Vector3f(9*unit, 14*unit, 7*unit), colour, torsoSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(11*unit, 21*unit, 9*unit), new Vector3f(11*unit, 21*unit, 7*unit), new Vector3f(11*unit, 14*unit, 7*unit), new Vector3f(11*unit, 14*unit, 9*unit), colour, torsoSideTexture);
+
+                
+                // Shoulders
+                
+		// Front
+		mesh.addQuad(new Vector3f(2*unit, 24*unit, 9.5f*unit), new Vector3f(14*unit, 24*unit, 9.5f*unit), new Vector3f(14*unit, 21*unit, 9.5f*unit), new Vector3f(2*unit, 21*unit, 9.5f*unit), colour, shouldersFrontTexture);
+		// Back
+		mesh.addQuad(new Vector3f(14*unit, 24*unit, 6.5f*unit), new Vector3f(2*unit, 24*unit, 6.5f*unit), new Vector3f(2*unit, 21*unit, 6.5f*unit), new Vector3f(14*unit, 21*unit, 6.5f*unit), colour, shouldersFrontTexture);
+		// Top
+		mesh.addQuad(new Vector3f(2*unit, 24*unit, 6.5f*unit), new Vector3f(14*unit, 24*unit, 6.5f*unit), new Vector3f(14*unit, 24*unit, 9.5f*unit), new Vector3f(2*unit, 24*unit, 9.5f*unit), colour, shouldersFrontTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(2*unit, 24*unit, 6.5f*unit), new Vector3f(2*unit, 24*unit, 9.5f*unit), new Vector3f(2*unit, 21*unit, 9.5f*unit), new Vector3f(2*unit, 21*unit, 6.5f*unit), colour, shouldersSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(14*unit, 24*unit, 9.5f*unit), new Vector3f(14*unit, 24*unit, 6.5f*unit), new Vector3f(14*unit, 21*unit, 6.5f*unit), new Vector3f(14*unit, 21*unit, 9.5f*unit), colour, shouldersSideTexture);
+
+
+                // Neck/head
+                
+		// Front
+		mesh.addQuad(new Vector3f(7*unit, 30*unit, 9*unit), new Vector3f(9*unit, 30*unit, 9*unit), new Vector3f(9*unit, 24*unit, 9*unit), new Vector3f(7*unit, 24*unit, 9*unit), colour, neckSideTexture);
+		// Back
+		mesh.addQuad(new Vector3f(9*unit, 30*unit, 7*unit), new Vector3f(7*unit, 30*unit, 7*unit), new Vector3f(7*unit, 24*unit, 7*unit), new Vector3f(9*unit, 24*unit, 7*unit), colour, neckSideTexture);
+		// Top
+		mesh.addQuad(new Vector3f(7*unit, 30*unit, 7*unit), new Vector3f(9*unit, 30*unit, 7*unit), new Vector3f(9*unit, 30*unit, 9*unit), new Vector3f(7*unit, 30*unit, 9*unit), colour, neckTopTexture);
+		// Left edge
+		mesh.addQuad(new Vector3f(7*unit, 30*unit, 7*unit), new Vector3f(7*unit, 30*unit, 9*unit), new Vector3f(7*unit, 24*unit, 9*unit), new Vector3f(7*unit, 24*unit, 7*unit), colour, neckSideTexture);
+		// Right edge
+		mesh.addQuad(new Vector3f(9*unit, 30*unit, 9*unit), new Vector3f(9*unit, 30*unit, 7*unit), new Vector3f(9*unit, 24*unit, 7*unit), new Vector3f(9*unit, 24*unit, 9*unit), colour, neckSideTexture);
+
+                
+                mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.AntiClockwise, angle);
         }
 }
