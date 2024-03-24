@@ -12,13 +12,19 @@ package tectonicus.raw;
 public class ArmorStandEntity extends BlockEntity
 {
         private final float yaw;
+        private final boolean invisible;
+        private final boolean noBasePlate;
     
-	public ArmorStandEntity(int x, int y, int z, int localX, int localY, int localZ, float yaw)
+	public ArmorStandEntity(int x, int y, int z, int localX, int localY, int localZ, float yaw, boolean invisible, boolean noBasePlate)
 	{
 		super(x, y, z, localX, localY, localZ);
                 
                 this.yaw = yaw;
+                this.invisible = invisible;
+                this.noBasePlate = noBasePlate;
 	}
         
         public float getYaw() { return yaw; }
+        public boolean getInvisible() { return invisible; }
+        public boolean getNoBasePlate() { return noBasePlate; }
 }

@@ -308,8 +308,10 @@ public class RawChunk {
 				} else if (armorStand) {
                                         ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
                                         ListTag rotationTag = NbtUtil.getChild(entity, "Rotation", ListTag.class);
+                                        ByteTag invisibleTag = NbtUtil.getChild(entity, "Invisible", ByteTag.class);
+                                        ByteTag noBasePlateTag = NbtUtil.getChild(entity, "NoBasePlate", ByteTag.class);
                                         
-                                        if (posTag != null && rotationTag != null) {
+                                        if (posTag != null && rotationTag != null && invisibleTag != null && noBasePlateTag != null) {
                                                 List<Tag> pos = posTag.getValue();
 
                                                 int x = (int)Math.round(Math.floor((double)pos.get(0).getValue()));
@@ -328,7 +330,10 @@ public class RawChunk {
                                                 List<Tag> rotation = rotationTag.getValue();
                                                 float yaw = (float)rotation.get(0).getValue();
                                                 
-                                                armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ, yaw));
+                                                boolean invisible = invisibleTag.getValue() == 1;
+                                                boolean noBasePlate = noBasePlateTag.getValue() == 1;
+                                                
+                                                armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ, yaw, invisible, noBasePlate));
                                         }                                        
                                 }
 			}

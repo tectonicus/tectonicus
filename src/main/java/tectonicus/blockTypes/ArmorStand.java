@@ -97,8 +97,12 @@ public class ArmorStand implements BlockType
                         final float unit = 1.0f / 16.0f;
                         final float angle = entity.getYaw();
 
-                        buildBaseMesh(x, y, z, geometry, colour, unit);
-                        buildStandMesh(x, y, z, geometry, colour, unit, angle);
+                        if (!entity.getInvisible() && !entity.getNoBasePlate()) {
+                                buildBaseMesh(x, y, z, geometry, colour, unit);
+                        }
+                        if (!entity.getInvisible()) {
+                                buildStandMesh(x, y, z, geometry, colour, unit, angle);
+                        }
                 }
 	}
         
