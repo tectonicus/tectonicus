@@ -159,7 +159,7 @@ public class ChiseledBookshelf implements BlockType
                 SubTexture texture = new SubTexture(occupiedTexture.texture, occupiedTexture.u0+widthTexel*wOffset, occupiedTexture.v0+heightTexel*hOffset, occupiedTexture.u0+widthTexel*(wOffset+4), occupiedTexture.v0+heightTexel*(hOffset+6));
                 
                 final float unit = 1.0f / 16.0f;
-                final float epsilon = 0.0051f / 16.0f; // So that book texture and front texture are not on the same plane
+                final float epsilon = 0.005f / 16.0f; // So that book texture and front texture are not on the same plane
                 
                 SubMesh subMesh = new SubMesh();
 		subMesh.addQuad(new Vector3f(wOffset*unit, (16-hOffset)*unit, 16*unit+epsilon),

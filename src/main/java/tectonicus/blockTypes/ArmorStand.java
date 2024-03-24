@@ -16,7 +16,9 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.ArmorItem;
 import tectonicus.raw.ArmorStandEntity;
+import tectonicus.raw.DisplayTag;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -24,7 +26,11 @@ import tectonicus.texture.TexturePack;
 
 public class ArmorStand implements BlockType
 {
+        private static final float EPSILON = 0.005f / 16.0f; // So that different layer textures are not on the same plane
+    
 	private final String name;
+        
+        private final TexturePack texturePack;
         
         private final SubTexture texture;
 	
@@ -42,6 +48,8 @@ public class ArmorStand implements BlockType
         public ArmorStand(String name, TexturePack texturePack)
 	{
 		this.name = name;
+                
+                this.texturePack = texturePack;
                 
                 texture = texturePack.findTexture("assets/minecraft/textures/entity/armorstand/wood.png");
                 
@@ -102,6 +110,24 @@ public class ArmorStand implements BlockType
                         }
                         if (!entity.getInvisible()) {
                                 buildStandMesh(x, y, z, geometry, colour, unit, angle);
+                        }
+                        
+                        ArmorItem feetArmor = entity.getFeetArmor();
+                        ArmorItem legsArmor = entity.getLegsArmor();
+                        ArmorItem chestArmor = entity.getChestArmor();
+                        ArmorItem headArmor = entity.getHeadArmor();
+                        
+                        if (feetArmor != null) {
+                                buildFeetArmorMesh(x, y, z, geometry, colour, unit, angle, feetArmor);
+                        }
+                        if (legsArmor != null) {
+                                buildLegsArmorMesh(x, y, z, geometry, colour, unit, angle, legsArmor);
+                        }
+                        if (chestArmor != null) {
+                                buildChestArmorMesh(x, y, z, geometry, colour, unit, angle, chestArmor);
+                        }
+                        if (headArmor != null) {
+                                buildHeadArmorMesh(x, y, z, geometry, colour, unit, angle, headArmor);
                         }
                 }
 	}
@@ -218,5 +244,69 @@ public class ArmorStand implements BlockType
 
                 
                 mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.AntiClockwise, angle);
+        }
+        
+        private void buildFeetArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit, float angle, ArmorItem armor) {
+            
+        }
+        
+        private void buildLegsArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit, float angle, ArmorItem armor) {
+            
+        }
+        
+        private void buildChestArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit, float angle, ArmorItem armor) {
+            
+        }
+        
+        private void buildHeadArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit, float angle, ArmorItem armor) {
+                String armorMaterial = armor.id.substring("minecraft:".length(), armor.id.indexOf('_'));
+                if (armorMaterial.equals("golden")) {
+                        armorMaterial = "gold";
+                }
+                
+                SubTexture layer1Texture = texturePack.findTexture(String.format("assets/minecraft/textures/models/armor/%s_layer_1.png", armorMaterial));
+                SubTexture layer2Texture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_2.png", armorMaterial), null);
+                SubTexture layer1OverlayTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_1_overlay.png", armorMaterial), null);
+                SubTexture layer2OverlayTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_2_overlay.png", armorMaterial), null);
+                
+                DisplayTag display = armor.getTag(DisplayTag.class);
+            
+                if (armorMaterial.equals("leather")) {
+                        buildHeadArmorLayerMesh(x, y, z, geometry, colour, unit, angle, layer1OverlayTexture, 0);
+                        buildHeadArmorLayerMesh(x, y, z, geometry, colour, unit, angle, layer2OverlayTexture, 2);
+                        colour = display == null
+                                ? new Vector4f(106/255f, 64/255f, 41/255f, 1) // Default brown leather
+                                : new Vector4f(((display.color >> 16) & 255)/255f, ((display.color >> 8) & 255)/255f, (display.color & 255)/255f, 1);
+                }
+		
+                buildHeadArmorLayerMesh(x, y, z, geometry, colour, unit, angle, layer1Texture, -1);
+                if (layer2Texture != null) {
+                        buildHeadArmorLayerMesh(x, y, z, geometry, colour, unit, angle, layer2Texture, 1);
+                }
+        }
+        
+        private void buildHeadArmorLayerMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float unit, float angle, SubTexture texture, int layerIndex) {
+                final float widthTexel = 1.0f / 64.0f;
+		final float heightTexel = 1.0f / 32.0f;
+    
+                SubMesh mesh = new SubMesh();
+
+                // Front
+		mesh.addDoubleSidedQuad(new Vector3f(4*unit-layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*8, texture.u0+widthTexel*16, texture.v0+heightTexel*16));
+		// Back
+		mesh.addDoubleSidedQuad(new Vector3f(12*unit+layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*24, texture.v0+heightTexel*8, texture.u0+widthTexel*32, texture.v0+heightTexel*16));
+		// Top
+		mesh.addDoubleSidedQuad(new Vector3f(4*unit-layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*0, texture.u0+widthTexel*16, texture.v0+heightTexel*8));
+		// Left edge
+		mesh.addDoubleSidedQuad(new Vector3f(4*unit-layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(4*unit-layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*8, texture.u0+widthTexel*8, texture.v0+heightTexel*16));
+		// Right edge
+		mesh.addDoubleSidedQuad(new Vector3f(12*unit+layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 32*unit+layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 4*unit-layerIndex*EPSILON), new Vector3f(12*unit+layerIndex*EPSILON, 24*unit-layerIndex*EPSILON, 12*unit+layerIndex*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*16, texture.v0+heightTexel*8, texture.u0+widthTexel*24, texture.v0+heightTexel*16));
+		
+                mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest), x, y, z, Rotation.AntiClockwise, angle);
         }
 }

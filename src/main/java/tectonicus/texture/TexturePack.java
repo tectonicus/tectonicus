@@ -314,7 +314,7 @@ public class TexturePack
 
 		TextureRequest request = parseRequest(texturePath);
 
-		PackTexture tex = findTexture(request); // find existing PackTexture or load
+		PackTexture tex = findTexture(request, false); // find existing PackTexture or load
 
 		if (tex != null) {
 			result = tex.find(request, version); // find existing SubTexture or load
@@ -334,7 +334,7 @@ public class TexturePack
 
 		TextureRequest request = parseRequest(texturePath);
 
-		PackTexture tex = findTexture(request); // find existing PackTexture or load
+		PackTexture tex = findTexture(request, true); // find existing PackTexture or load
 
 		if (tex != null) {
 			result = tex.find(request, version); // find existing SubTexture or load
@@ -353,7 +353,7 @@ public class TexturePack
 
 		TextureRequest request = new TextureRequest("assets/minecraft/textures/" + texturePath, "");
 
-		PackTexture tex = findTexture(request); // find existing PackTexture or load
+		PackTexture tex = findTexture(request, true); // find existing PackTexture or load
 
 		if (tex != null) {
 			result = tex.find(request, version); // find existing SubTexture or load
@@ -423,7 +423,7 @@ public class TexturePack
 		return pathPrefix;
 	}
 	
-	private PackTexture findTexture(TextureRequest request) {
+	private PackTexture findTexture(TextureRequest request, boolean logMissingTextures) {
 		PackTexture tex = loadedPackTextures.get(request.path);
 		
 		if (tex == null) {
@@ -458,7 +458,9 @@ public class TexturePack
 					loadedPackTextures.put(request.path, tex);
 				}
 			} catch (FileNotFoundException e) {
-				log.warn("\nThe texture file '" + request.path + "' could not be found.");
+                                if (logMissingTextures) {
+                                        log.warn("\nThe texture file '" + request.path + "' could not be found.");
+                                }
 			}
 		}
 		
