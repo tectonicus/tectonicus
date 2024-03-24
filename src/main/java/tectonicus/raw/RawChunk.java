@@ -333,7 +333,55 @@ public class RawChunk {
                                                 boolean invisible = invisibleTag.getValue() == 1;
                                                 boolean noBasePlate = noBasePlateTag.getValue() == 1;
                                                 
-                                                armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ, yaw, invisible, noBasePlate));
+                                                ArmorItem feetArmor = null;
+                                                ArmorItem legsArmor = null;
+                                                ArmorItem chestArmor = null;
+                                                ArmorItem headArmor = null;
+                                                
+                                                ListTag armorItemsTag = NbtUtil.getChild(entity, "ArmorItems", ListTag.class);
+                                                if (armorItemsTag != null) {
+                                                        Function<CompoundTag, ArmorItem> parseArmorItem = (armorItemTag) -> {
+                                                                StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
+                                                                
+                                                                if (armorIdTag != null) {
+                                                                        ArmorTrimTag armorTrim = null;
+                                                                        DisplayTag display = null;
+                                                                        
+                                                                        
+                                                                        CompoundTag tagTag = NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class);
+                                                                        if (tagTag != null) {
+                                                                                CompoundTag trimTag = NbtUtil.getChild(tagTag, "Trim", CompoundTag.class);
+                                                                                if (trimTag != null) {
+                                                                                        StringTag materialTag = NbtUtil.getChild(trimTag, "material", StringTag.class);
+                                                                                        StringTag patternTag = NbtUtil.getChild(trimTag, "pattern", StringTag.class);
+                                                                                        if (materialTag != null && patternTag != null) {
+                                                                                                armorTrim = new ArmorTrimTag(materialTag.getValue(), patternTag.getValue());
+                                                                                        }
+                                                                                }
+                                                                                
+                                                                                CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
+                                                                                if (displayTag != null) {
+                                                                                        IntTag colorTag = NbtUtil.getChild(displayTag, "color", IntTag.class);
+                                                                                        if (colorTag != null) {
+                                                                                                display = new DisplayTag(colorTag.getValue());
+                                                                                        }
+                                                                                }
+                                                                        }
+                                                                        
+                                                                        return new ArmorItem(armorIdTag.getValue(), armorTrim, display);
+                                                                }
+                                                                
+                                                                return null;
+                                                        };
+                                                        
+                                                        feetArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 0, CompoundTag.class));
+                                                        legsArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 1, CompoundTag.class));
+                                                        chestArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 2, CompoundTag.class));
+                                                        headArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 3, CompoundTag.class));
+                                                }
+                                                
+                                                armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ,
+                                                        yaw, invisible, noBasePlate, feetArmor, legsArmor, chestArmor, headArmor));
                                         }                                        
                                 }
 			}

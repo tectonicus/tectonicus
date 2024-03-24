@@ -177,14 +177,14 @@ public class Player
 				{
 					CompoundTag itemTag = (CompoundTag)t;
 
-					ShortTag idTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
+					StringTag idTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
 					ShortTag damageTag = NbtUtil.getChild(itemTag, "Damage", ShortTag.class);
 					ByteTag countTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
 					ByteTag slotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
 
 					if (idTag != null && damageTag != null && countTag != null && slotTag != null)
 					{
-						inventory.add( new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue()) );
+						inventory.add( new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue(), null) );
 					}
 				}
 			}
