@@ -336,9 +336,103 @@ public class ArmorStand implements BlockType
         }
         
         private void buildFeetArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float angle, SubTexture texture, int offsetMultiplier) {
+                final float widthTexel = 1.0f / 64.0f;
+		final float heightTexel = 1.0f / 32.0f;
+    
+                SubMesh mesh = new SubMesh();
+
+                
+                // Left foot (this one is "turned inside out" to produce mirror image of right foot)
+
+                // Front
+		mesh.addDoubleSidedQuad(new Vector3f(12.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(7.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(7.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(12.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*4, texture.v0+heightTexel*20, texture.u0+widthTexel*8, texture.v0+heightTexel*32));
+		// Back
+		mesh.addDoubleSidedQuad(new Vector3f(7.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(12.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(12.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(7.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*20, texture.u0+widthTexel*16, texture.v0+heightTexel*32));
+		// Left edge
+		mesh.addDoubleSidedQuad(new Vector3f(7.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(7.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(7.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(7.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*20, texture.u0+widthTexel*12, texture.v0+heightTexel*32));
+		// Right edge
+		mesh.addDoubleSidedQuad(new Vector3f(12.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(12.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(12.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(12.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*20, texture.u0+widthTexel*4, texture.v0+heightTexel*32));
+
+
+                // Right foot
+
+                // Front
+		mesh.addDoubleSidedQuad(new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*4, texture.v0+heightTexel*20, texture.u0+widthTexel*8, texture.v0+heightTexel*32));
+		// Back
+		mesh.addDoubleSidedQuad(new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*20, texture.u0+widthTexel*16, texture.v0+heightTexel*32));
+		// Left edge
+		mesh.addDoubleSidedQuad(new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(3.5f*UNIT-offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*20, texture.u0+widthTexel*4, texture.v0+heightTexel*32));
+		// Right edge
+		mesh.addDoubleSidedQuad(new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 13.5f*UNIT+offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 5.5f*UNIT-offsetMultiplier*EPSILON), new Vector3f(8.5f*UNIT+offsetMultiplier*EPSILON, 0.5f*UNIT-offsetMultiplier*EPSILON, 10.5f*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*20, texture.u0+widthTexel*12, texture.v0+heightTexel*32));
+                
+		
+                mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest), x, y, z, Rotation.AntiClockwise, angle);
         }
         
         private void buildLegsArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float angle, SubTexture texture, int offsetMultiplier) {
+                final float widthTexel = 1.0f / 64.0f;
+		final float heightTexel = 1.0f / 32.0f;
+                
+                offsetMultiplier += 1; // To be slightly bigger than the stand and not overlap
+    
+                SubMesh mesh = new SubMesh();
+
+                
+                // Front
+		mesh.addDoubleSidedQuad(new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*20, texture.v0+heightTexel*27, texture.u0+widthTexel*28, texture.v0+heightTexel*32));
+		// Back
+		mesh.addDoubleSidedQuad(new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*32, texture.v0+heightTexel*27, texture.u0+widthTexel*40, texture.v0+heightTexel*32));
+		// Left edge
+		mesh.addDoubleSidedQuad(new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*16, texture.v0+heightTexel*27, texture.u0+widthTexel*20, texture.v0+heightTexel*32));
+		// Right edge
+		mesh.addDoubleSidedQuad(new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 17*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 12*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*28, texture.v0+heightTexel*27, texture.u0+widthTexel*32, texture.v0+heightTexel*32));
+
+                
+                // Left leg (this one is "turned inside out" to produce mirror image of right leg)
+
+                // Front
+		mesh.addDoubleSidedQuad(new Vector3f(12*UNIT-offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(12*UNIT-offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*4, texture.v0+heightTexel*20, texture.u0+widthTexel*8, texture.v0+heightTexel*32));
+		// Back
+		mesh.addDoubleSidedQuad(new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT-offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT-offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*20, texture.u0+widthTexel*16, texture.v0+heightTexel*32));
+		// Left edge
+		mesh.addDoubleSidedQuad(new Vector3f(8*UNIT-offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 10*UNIT-offsetMultiplier*EPSILON), new Vector3f(8*UNIT-offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 6*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT-offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 6*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT-offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 10*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*20, texture.u0+widthTexel*12, texture.v0+heightTexel*32));
+		// Right edge
+		mesh.addDoubleSidedQuad(new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 6*UNIT+offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 13*UNIT-offsetMultiplier*EPSILON, 10*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 10*UNIT-offsetMultiplier*EPSILON), new Vector3f(12*UNIT+offsetMultiplier*EPSILON, 1*UNIT+offsetMultiplier*EPSILON, 6*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*20, texture.u0+widthTexel*4, texture.v0+heightTexel*32));
+
+
+                // Right leg
+
+                // Front
+		mesh.addDoubleSidedQuad(new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*4, texture.v0+heightTexel*20, texture.u0+widthTexel*8, texture.v0+heightTexel*32));
+		// Back
+		mesh.addDoubleSidedQuad(new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*20, texture.u0+widthTexel*16, texture.v0+heightTexel*32));
+		// Left edge
+		mesh.addDoubleSidedQuad(new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(4*UNIT-offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*0, texture.v0+heightTexel*20, texture.u0+widthTexel*4, texture.v0+heightTexel*32));
+		// Right edge
+		mesh.addDoubleSidedQuad(new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 13*UNIT+offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 6*UNIT-offsetMultiplier*EPSILON), new Vector3f(8*UNIT+offsetMultiplier*EPSILON, 1*UNIT-offsetMultiplier*EPSILON, 10*UNIT+offsetMultiplier*EPSILON), colour,
+                        new SubTexture(texture.texture, texture.u0+widthTexel*8, texture.v0+heightTexel*20, texture.u0+widthTexel*12, texture.v0+heightTexel*32));
+                
+		
+                mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest), x, y, z, Rotation.AntiClockwise, angle);
         }
         
         private void buildChestArmorMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float angle, SubTexture texture, int offsetMultiplier) {
