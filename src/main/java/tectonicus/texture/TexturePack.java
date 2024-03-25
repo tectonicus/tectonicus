@@ -325,6 +325,26 @@ public class TexturePack
 
 		return result;
 	}
+        
+        public SubTexture findPalettedTexture(String texturePath, String palettePath, String keyPalettePath) {
+		if (texturePath == null || palettePath == null || keyPalettePath == null)
+			return null;
+
+		TextureRequest textureRequest = parseRequest(texturePath);
+		TextureRequest paletteRequest = parseRequest(palettePath);
+		TextureRequest keyPaletteRequest = parseRequest(keyPalettePath);
+
+		PackTexture texture = findTexture(textureRequest, true); // find existing PackTexture or load
+		PackTexture palette = findTexture(paletteRequest, true); // find existing PackTexture or load
+		PackTexture keyPalette = findTexture(keyPaletteRequest, true); // find existing PackTexture or load
+                
+                if (texture != null && palette != null && keyPalette != null) {
+                        PackTexture palettedTexture = applyPalette(texture, palette, keyPalette); // find existing PackTexture or apply palette and load
+                        return palettedTexture.getFullTexture();
+                }
+
+		return null;
+        }
 
 	public SubTexture findTexture(String texturePath) {
 		if (texturePath == null)
@@ -362,7 +382,7 @@ public class TexturePack
 
 		return result;
 	}
-	
+        
 	private TextureRequest parseRequest(String texturePath)
 	{
 		// texture path could be:
@@ -422,6 +442,41 @@ public class TexturePack
 
 		return pathPrefix;
 	}
+        
+        private PackTexture applyPalette(PackTexture texture, PackTexture palette, PackTexture keyPalette) {
+                String path = texture.getPath()+palette.getPath()+keyPalette.getPath();
+                PackTexture tex = loadedPackTextures.get(path);
+                
+                if (tex == null) {
+                        BufferedImage textureImage = ImageUtils.copy(texture.getImage());
+                        BufferedImage paletteImage = palette.getImage();
+                        BufferedImage keyPaletteImage = keyPalette.getImage();
+                        
+                        Map<Integer, Integer> paletteMap = new HashMap<>();
+                        for (int x=0; x<paletteImage.getWidth(); x++) {
+                                int keyColour = keyPaletteImage.getRGB(x, 0);
+                                int palettedColour = paletteImage.getRGB(x, 0);
+                                paletteMap.put(keyColour, palettedColour);
+                        }
+                        
+                        for (int x=0; x<textureImage.getWidth(); x++)
+                        {
+                                for (int y=0; y<textureImage.getHeight(); y++)
+                                {
+                                        int colour = textureImage.getRGB(x, y);
+                                        if (colour != 0) {
+                                                colour = paletteMap.get(colour);
+                                                textureImage.setRGB(x, y, colour);
+                                        }
+                                }
+                        }
+                                            
+                        tex = new PackTexture(rasteriser, path, textureImage);
+                        loadedPackTextures.put(path, tex);
+                }
+                
+                return tex;
+        }
 	
 	private PackTexture findTexture(TextureRequest request, boolean logMissingTextures) {
 		PackTexture tex = loadedPackTextures.get(request.path);

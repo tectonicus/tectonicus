@@ -18,6 +18,7 @@ import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.ArmorItem;
 import tectonicus.raw.ArmorStandEntity;
+import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.DisplayTag;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
@@ -260,6 +261,21 @@ public class ArmorStand implements BlockType
                 
                 SubTexture layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d.png", armorMaterial, layer), null);
                 SubTexture overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d_overlay.png", armorMaterial, layer), null);
+                
+                ArmorTrimTag armorTrim = armor.getTag(tectonicus.raw.ArmorTrimTag.class);
+                if (armorTrim != null) {
+                        final String pattern = armorTrim.pattern.substring("minecraft:".length());
+                        final String suffix = layer == 2 ? "_leggings" : "";
+                        final String material = armorTrim.material.substring("minecraft:".length());
+
+                        final String trimTextureFile = String.format("assets/minecraft/textures/trims/models/armor/%s%s.png", pattern, suffix);
+                        final String materialTextureFile = String.format("assets/minecraft/textures/trims/color_palettes/%s.png", material);
+                        final String paletteTextureFile = String.format("assets/minecraft/textures/trims/color_palettes/trim_palette.png", pattern, suffix);
+                        
+                        SubTexture trimTexture = texturePack.findPalettedTexture(trimTextureFile, materialTextureFile, paletteTextureFile);
+
+                        meshBuilder.build(x, y, z, geometry, colour, angle, trimTexture, 1);
+                }
                 
                 if (layerTexture == null) {
                         // Armor texture not found. Maybe it is some other item (e.g. mob head)
