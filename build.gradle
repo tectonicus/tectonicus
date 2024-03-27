@@ -1,6 +1,6 @@
 plugins {
 	id 'application'
-	id 'org.ajoberstar.grgit' version '4.1.1'
+	id 'org.ajoberstar.grgit' version '5.2.2'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'maven-publish'
 }
@@ -25,11 +25,11 @@ repositories {
 }
 
 dependencies {
-	def lwjglVersion = "3.3.2"
+	def lwjglVersion = "3.3.3"
 	def picocliVersion = "4.7.5"
-	def lombokVersion = "1.18.28"
-	def junitVersion = "5.10.0"
-	def log4jVersion = "2.20.0"
+	def lombokVersion = "1.18.32"
+	def junitVersion = "5.10.2"
+	def log4jVersion = "2.23.1"
 	def caffeineVersion = "3.1.8"
 
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
@@ -37,14 +37,14 @@ dependencies {
 				   "org.lwjgl:lwjgl-opengl",
 				   "org.lwjgl:lwjgl-egl",
 				   "org.lwjgl:lwjgl-glfw",
-				   'org.apache.commons:commons-text:1.10.0',
+				   'org.apache.commons:commons-text:1.11.0',
 				   'org.joml:joml:1.10.5',
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
-				   "com.fasterxml.jackson.core:jackson-databind:2.15.2",
+				   "com.fasterxml.jackson.core:jackson-databind:2.16.2",
 				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
-				   "com.h2database:h2-mvstore:2.2.222",
+				   "com.h2database:h2-mvstore:2.2.224",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 	implementation files ('libs/jnbt.jar', 'libs/jpct.jar', 'libs/ProcessingCore.jar', 'libs/BiomeExtractor.jar')
 	shadow "org.apache.logging.log4j:log4j-core:$log4jVersion"
@@ -88,7 +88,7 @@ shadowJar {
 	exclude ('processing/**', 'com/threed/**')
 	minimize {
 		exclude(dependency('com.fasterxml.jackson.core:jackson-databind:.*'))
-                exclude(dependency('com.github.ben-manes.caffeine:caffeine:.*'))
+		exclude(dependency('com.github.ben-manes.caffeine:caffeine:.*'))
 	}
 }
 
