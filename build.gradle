@@ -41,7 +41,7 @@ dependencies {
 				   'org.joml:joml:1.10.5',
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
-				   "com.fasterxml.jackson.core:jackson-databind:2.16.2",
+				   "com.fasterxml.jackson.core:jackson-databind:2.17.0",
 				   "org.apache.logging.log4j:log4j-api:$log4jVersion",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
 				   "com.h2database:h2-mvstore:2.2.224",
