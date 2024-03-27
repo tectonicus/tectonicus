@@ -109,6 +109,10 @@ public class PaintingNew implements BlockType
 				case "skullandroses":
 				case "skull_and_roses":
 				case "wither":
+				case "earth":
+				case "fire":
+				case "water":
+				case "wind":
 					numTilesX = numTilesY = 2;
 					dim1 = dim2 = numTilesX * 16;
 					break;

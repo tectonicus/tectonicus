@@ -14,6 +14,9 @@ import lombok.Getter;
 @Getter
 public class SkullEntity extends BlockEntity
 {
+        // Used to position the skull when on armor stand
+        private float yOffset = 0;
+        
 	private final int skullType;
 	private final int rotation;
 	private final String name;
@@ -23,6 +26,12 @@ public class SkullEntity extends BlockEntity
 	public SkullEntity(int x, int y, int z, int localX, int localY, int localZ, String name, String uuid, String skinURL)
 	{
 		this(x, y, z, localX, localY, localZ, -1, -1, name, uuid, skinURL);
+	}
+        
+        public SkullEntity(int x, int y, int z, int localX, int localY, int localZ, int skullType, int rotation, float yOffset)
+	{
+		this(x, y, z, localX, localY, localZ, skullType, rotation, "", "", "");
+                this.yOffset = yOffset;
 	}
 
 	public SkullEntity(int x, int y, int z, int localX, int localY, int localZ, int skullType, int rotation, String name, String uuid, String skinURL)

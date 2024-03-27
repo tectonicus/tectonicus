@@ -119,8 +119,8 @@
 	<ShulkerBox stringId="minecraft:black_shulker_box" name="Black Shulker Box" />
 
 	<Conduit stringId="minecraft:conduit" name="Conduit" texture="assets/minecraft/textures/entity/conduit/base.png" />
-
+        
 	<Painting id="-1" name="Paintings" texture="assets/minecraft/textures/painting/paintings_kristoffer_zetterstrand.png" />
-
 	<ItemFrameNew id="-2" name="Item Frame" background="item_frame.png" border="birch_planks.png" map="assets/minecraft/textures/map/map_background.png" />
+        <ArmorStand id="-3" name="Armor Stand" />
 </blockConfig>

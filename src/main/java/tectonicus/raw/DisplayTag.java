@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024, Tectonicus and other contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,12 +9,11 @@
 
 package tectonicus.raw;
 
-import java.util.List;
-
-public class Item extends ItemBase
+public class DisplayTag
 {
-	public Item(final String id, final int damage, final int count, final int slot, final List<Object> tag)
-	{
-		super(id, damage, count, slot, tag);
-	}
+        public int color;
+        
+        public DisplayTag(int color) {
+                this.color = color;
+        }
 }

@@ -85,8 +85,15 @@ public class Skull implements BlockType
 	}
 
 	@Override
-	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) 
-	{				
+	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
+        {
+		String xyz = "x" + x + "y" + y + "z" + z;
+                SkullEntity skullEntity = rawChunk.getSkulls().get(xyz);
+                addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry, skullEntity);
+        }
+
+        public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, SkullEntity entity) 
+        {				
 		SubMesh subMesh = new SubMesh();
 
 		//1.13+
@@ -98,8 +105,6 @@ public class Skull implements BlockType
 			facing = properties.get("facing");
 			rotationString = properties.get("rotation");
 		}
-		String xyz = "x" + x + "y" + y + "z" + z;
-		SkullEntity entity = rawChunk.getSkulls().get(xyz);
 		int rotationValue;
 		if (rotationString != null) {
 			rotationValue = Integer.parseInt(properties.get("rotation"));
@@ -137,7 +142,7 @@ public class Skull implements BlockType
 			currentTexture = dtexture;
 		
 		final boolean dragonHead = blockId == 5 || blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head");
-                final boolean piglinHead = blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head");
+                final boolean piglinHead = blockId == 6 || blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head");
 		
 		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
 		if(!player.getSkinURL().equals(""))
@@ -452,8 +457,8 @@ public class Skull implements BlockType
 		}
 
 		if(data > 1 || facing != null)
-			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4, zOffset, rotation, angle);
+			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4+entity.getYOffset(), zOffset, rotation, angle);
 		else
-			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y, z, rotation, angle);			
+			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y+entity.getYOffset(), z, rotation, angle);			
 	}
 }

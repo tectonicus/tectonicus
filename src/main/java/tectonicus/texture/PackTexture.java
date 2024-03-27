@@ -28,6 +28,7 @@ public class PackTexture
 {
 	private final Rasteriser rasteriser;
 	
+        @Getter
 	private final String path;
 
 	@Getter

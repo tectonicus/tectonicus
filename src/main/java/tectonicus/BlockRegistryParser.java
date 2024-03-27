@@ -17,6 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.Anvil;
+import tectonicus.blockTypes.ArmorStand;
 import tectonicus.blockTypes.Banner;
 import tectonicus.blockTypes.Beacon;
 import tectonicus.blockTypes.Bed;
@@ -30,6 +31,7 @@ import tectonicus.blockTypes.Carpet;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.ChestNew;
+import tectonicus.blockTypes.ChiseledBookshelf;
 import tectonicus.blockTypes.ChorusFlower;
 import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
@@ -884,36 +886,13 @@ public class BlockRegistryParser
 			blockType = new Bell(name, stringId, texture);
 		}
                 else if (nodeName.equals("decoratedpot")) {
-                        final SubTexture baseTexture = texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/decorated_pot_base.png", null);
-                        final HashMap<String, SubTexture> textures = new HashMap<>();
-                        
-                        textures.put("minecraft:brick", texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/decorated_pot_side.png", null));
-                        for (var pattern : new String[] {
-                            "angler",
-                            "archer",
-                            "arms_up",
-                            "blade",
-                            "brewer",
-                            "burn",
-                            "danger",
-                            "explorer",
-                            "friend",
-                            "heart",
-                            "heartbreak",
-                            "howl",
-                            "miner",
-                            "mourner",
-                            "plenty",
-                            "prize",
-                            "sheaf",
-                            "shelter",
-                            "skull",
-                            "snort"
-                        }) {
-                                textures.put("minecraft:"+pattern+"_pottery_sherd", texturePack.findTextureOrDefault("assets/minecraft/textures/entity/decorated_pot/"+pattern+"_pottery_pattern.png", null));
-                        }
-                        
-                        blockType = new DecoratedPot(name, baseTexture, textures);
+                        blockType = new DecoratedPot(name, texturePack);
+                }
+                else if (nodeName.equals("chiseledbookshelf")) {
+                        blockType = new ChiseledBookshelf(name, texturePack);
+                }
+                else if (nodeName.equals("armorstand")) {
+                        blockType = new ArmorStand(name, texturePack);
                 }
 		else
 		{
