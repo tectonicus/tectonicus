@@ -1,11 +1,13 @@
+import java.time.ZonedDateTime
+
 plugins {
-	id 'application'
-	id 'org.ajoberstar.grgit' version '5.2.2'
-	id 'com.github.johnrengelman.shadow' version '8.1.1'
-	id 'maven-publish'
+	id "application"
+	id "org.ajoberstar.grgit" version "5.2.2"
+	id "com.github.johnrengelman.shadow" version "8.1.1"
+	id "maven-publish"
 }
 
-project.version = '2.28.7'
+project.version = "2.28.7"
 
 //Exclude unneeded tasks
 project.gradle.startParameter.excludedTaskNames.addAll(["jar", "distTar", "distZip", "shadowDistTar"])
@@ -37,8 +39,8 @@ dependencies {
 				   "org.lwjgl:lwjgl-opengl",
 				   "org.lwjgl:lwjgl-egl",
 				   "org.lwjgl:lwjgl-glfw",
-				   'org.apache.commons:commons-text:1.11.0',
-				   'org.joml:joml:1.10.5',
+				   "org.apache.commons:commons-text:1.11.0",
+				   "org.joml:joml:1.10.5",
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.17.0",
@@ -46,7 +48,7 @@ dependencies {
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
 				   "com.h2database:h2-mvstore:2.2.224",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
-	implementation files ('libs/jnbt.jar', 'libs/jpct.jar', 'libs/ProcessingCore.jar', 'libs/BiomeExtractor.jar')
+	implementation files ("libs/jnbt.jar", "libs/jpct.jar", "libs/ProcessingCore.jar", "libs/BiomeExtractor.jar")
 	shadow "org.apache.logging.log4j:log4j-core:$log4jVersion"
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
 				"org.lwjgl:lwjgl-glfw::natives-windows",
@@ -63,7 +65,7 @@ dependencies {
 						"info.picocli:picocli-codegen:$picocliVersion")
 	
 	testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion",
-					   'org.hamcrest:hamcrest:2.2')
+					   "org.hamcrest:hamcrest:2.2")
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
 	testCompileOnly "org.projectlombok:lombok:$lombokVersion"
 	testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
@@ -75,20 +77,19 @@ shadowJar {
 
 	doFirst {
 		def props = new Properties()
-		props.setProperty('buildDate', new Date().format('MMMM dd yyyy'))
-		props.setProperty('buildTime', new Date().format('hhmm'))
-		props.setProperty('buildNumber', grgit.log().size().toString())
-		props.setProperty('version', "${project.version}")
-		def writer = new FileWriter(file('build/resources/main/tectonicus.buildInfo'))
-		props.store(writer, 'Tectonicus build info')
+		props.setProperty("buildDateTime", ZonedDateTime.now().toString())
+		props.setProperty("buildNumber", grgit.log().size().toString() + "-" + grgit.head().abbreviatedId)
+		props.setProperty("version", "${project.version}")
+		def writer = new FileWriter(file("build/resources/main/tectonicus.buildInfo"))
+		props.store(writer, "Tectonicus build info")
 		writer.flush()
 		writer.close()
 	}
 
-	exclude ('processing/**', 'com/threed/**')
+	exclude ("processing/**", "com/threed/**")
 	minimize {
-		exclude(dependency('com.fasterxml.jackson.core:jackson-databind:.*'))
-		exclude(dependency('com.github.ben-manes.caffeine:caffeine:.*'))
+		exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
+		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
 	}
 }
 
@@ -96,10 +97,10 @@ distributions {
 	shadow {
 		distributionBaseName = archivesBaseName
 		contents {
-			from files('src/main/resources/defaultBlockConfig.xml')
-			from('Docs') {
-				include('*.xml', '*.txt')
-				exclude('notes.txt')
+			from files("src/main/resources/defaultBlockConfig.xml")
+			from("Docs") {
+				include("*.xml", "*.txt")
+				exclude("notes.txt")
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,17 +16,23 @@ import picocli.CommandLine.IVersionProvider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Properties;
+import java.util.TimeZone;
 
 @Log4j2
 @UtilityClass
 public class BuildInfo
 {
 	private static final Properties info;
+	private static String dateTimeFormatted;
 	
 	static
 	{
 		info = new Properties();
+		dateTimeFormatted = null;
 		
 		final URL url = BuildInfo.class.getClassLoader().getResource("tectonicus.buildInfo");
 		if (url != null)
@@ -34,6 +40,11 @@ public class BuildInfo
 			try(final InputStream in = url.openStream())
 			{
 				info.load(in);
+				String dateTimeProperty = info.getProperty("buildDateTime");
+				if (dateTimeProperty != null) {
+					DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG);
+					dateTimeFormatted = formatter.format(ZonedDateTime.parse(dateTimeProperty).withZoneSameInstant(TimeZone.getDefault().toZoneId()));
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -49,13 +60,12 @@ public class BuildInfo
 	 \|/
 	 */
 	
-	public static void print()
-	{
+	public static void print() {
 		log.info(" + + + + + + + + + + + + + + + + + + + + + + +");
 		log.info("                  Tectonicus");
-		log.info("   Version: "+getVersion());
-		log.info("   Build "+getBuildNumber());
-		log.info("   Constructed on "+getBuildDate()+" at "+getBuildTime());
+		log.info("   Version: " + getVersion());
+		log.info("   Build: " + getBuildNumber());
+		log.info("   Constructed on " + getBuildDateTimeFormatted());
 		log.info("\n   www.github.com/tectonicus/tectonicus  ");
 		log.info(" + + + + + + + + + + + + + + + + + + + + + + +");
 	}
@@ -64,27 +74,21 @@ public class BuildInfo
 	{		
 		return info.getProperty("buildNumber");
 	}
-	
+
 	public static String getVersion()
 	{		
 		return info.getProperty("version");
 	}
 	
-	public static String getBuildDate()
-	{		
-		return info.getProperty("buildDate");
-	}
-	
-	public static String getBuildTime()
-	{
-		return info.getProperty("buildTime");
+	public static String getBuildDateTimeFormatted() {
+		return dateTimeFormatted;
 	}
 
 	public static class PropertiesVersionProvider implements IVersionProvider {
 		public String[] getVersion() {
 			return new String[] {
 					"Tectonicus " + BuildInfo.getVersion(),
-					"Built: " + BuildInfo.getBuildDate()
+					"Built: " + BuildInfo.getBuildDateTimeFormatted()
 			};
 		}
 	}
