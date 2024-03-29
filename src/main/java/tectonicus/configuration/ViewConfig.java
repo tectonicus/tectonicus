@@ -19,4 +19,8 @@ public interface ViewConfig
 	
 	int getFOV();
 	void setFOV(int fov);
+        
+        int getWidth();
+        
+        int getHeight();
 }

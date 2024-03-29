@@ -168,7 +168,45 @@ public class ParseUtil
 		
 		return 70;
 	}
-	
+        
+        public static int parseWidth(String widthStr)
+	{
+		try
+		{
+			final int width = Integer.parseInt(widthStr);
+			
+			if (width < 640)
+				return 640;
+			
+			if (width > 3840)
+				return 3840;
+			
+			return width;
+		}
+		catch (Exception e) {}
+		
+		return MutableViewConfig.DEFAULT_WIDTH;
+	}
+
+        public static int parseHeight(String heightStr)
+	{
+		try
+		{
+			final int height = Integer.parseInt(heightStr);
+			
+			if (height < 480)
+				return 480;
+			
+			if (height > 2160)
+				return 2160;
+			
+			return height;
+		}
+		catch (Exception e) {}
+		
+		return MutableViewConfig.DEFAULT_HEIGHT;
+	}
+
 	public static SignFilter parseSignFilter(String filterStr) {
 		SignFilterType filterType;
 

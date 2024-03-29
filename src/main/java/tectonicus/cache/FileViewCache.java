@@ -16,7 +16,7 @@ import tectonicus.view.ViewUtil;
 import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.cache.swap.HddObjectListWriter;
-import tectonicus.configuration.ImageFormat;
+import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
 import tectonicus.util.TempArea;
@@ -51,7 +51,7 @@ public class FileViewCache
 		cacheDir.mkdirs();
 	}
 	
-	public ChangedViews findChangedViews(Rasteriser rasteriser, World world, File viewsFile, File viewsDir, ImageFormat imageFormat, final int drawDistance)
+	public ChangedViews findChangedViews(Rasteriser rasteriser, World world, File viewsFile, File viewsDir, ViewConfig viewConfig)
 	{
 		log.info("Finding changed views...");
 
@@ -75,9 +75,9 @@ public class FileViewCache
 				if (world.getWorldSubset().containsBlock(sign.getX(), sign.getZ())) {
 					boolean cacheOk = false;
 
-					final File imgFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);
+					final File imgFile = ViewUtil.createViewFile(viewsDir, sign, viewConfig.getImageFormat());
 					if (imgFile.exists()) {
-						final byte[] visibleHash = calculateHash(rasteriser, world, sign, drawDistance);
+						final byte[] visibleHash = calculateHash(rasteriser, world, sign, viewConfig);
 
 						final File viewHashFile = findViewHashFile(cacheDir, sign);
 						final byte[] existingHash = CacheUtil.readHash(viewHashFile);
@@ -111,7 +111,7 @@ public class FileViewCache
 		return new ChangedViews(changedViewsFile, changedViewsCount);
 	}
 	
-	public byte[] calculateHash(Rasteriser rasteriser, World world, Sign sign, final int drawDistance)
+	public byte[] calculateHash(Rasteriser rasteriser, World world, Sign sign, ViewConfig viewConfig)
 	{
 		hashAlgorithm.reset();
 		
@@ -121,11 +121,14 @@ public class FileViewCache
 		hashAlgorithm.update(sign.getText(1).getBytes());
 		hashAlgorithm.update(sign.getText(2).getBytes());
 		hashAlgorithm.update(sign.getText(3).getBytes());
+                
+                hashAlgorithm.update(Integer.toString(viewConfig.getWidth()).getBytes());
+                hashAlgorithm.update(Integer.toString(viewConfig.getHeight()).getBytes());
 	
 		Viewpoint view = ViewUtil.findView(sign);
-		PerspectiveCamera camera = ViewUtil.createCamera(rasteriser, view, drawDistance);
+		PerspectiveCamera camera = ViewUtil.createCamera(rasteriser, view, viewConfig);
 		camera.apply();
-		
+                
 		List<ChunkCoord> visibleCoords = world.findVisible(camera);
 		for (ChunkCoord chunkCoord : visibleCoords)
 		{
@@ -136,9 +139,9 @@ public class FileViewCache
 		return hashAlgorithm.digest();
 	}
 	
-	public void writeHash(Sign sign, Rasteriser rasteriser, World world, final int drawDistance)
+	public void writeHash(Sign sign, Rasteriser rasteriser, World world, ViewConfig viewConfig)
 	{
-		final byte[] hash = calculateHash(rasteriser, world, sign, drawDistance);
+		final byte[] hash = calculateHash(rasteriser, world, sign, viewConfig);
 		final File file = findViewHashFile(cacheDir, sign);
 		
 		CacheUtil.writeCacheFile(file, hash);

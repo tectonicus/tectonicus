@@ -23,15 +23,13 @@ import org.joml.Vector3f;
 import tectonicus.Minecraft;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightStyle;
+import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
 import tectonicus.world.Sign;
 
 @UtilityClass
 public class ViewUtil {
-	public static final int VIEW_WIDTH = 2048;
-	public static final int VIEW_HEIGHT = 1152;
-
 	@Getter
 	@AllArgsConstructor
 	public static class Viewpoint {
@@ -197,9 +195,9 @@ public class ViewUtil {
 	}
 	
 	
-	public static PerspectiveCamera createCamera(Rasteriser rasteriser, Viewpoint view, final int drawDistance) {
-		PerspectiveCamera perspectiveCamera = new PerspectiveCamera(rasteriser, VIEW_WIDTH, VIEW_HEIGHT);
-		perspectiveCamera.lookAt(view.getEye(), view.getLookAt(), view.getUp(), view.getFov(), (float) VIEW_WIDTH /(float) VIEW_HEIGHT, 0.1f, drawDistance);
+	public static PerspectiveCamera createCamera(Rasteriser rasteriser, Viewpoint view, ViewConfig viewConfig) {
+                PerspectiveCamera perspectiveCamera = new PerspectiveCamera(rasteriser, viewConfig.getWidth(), viewConfig.getHeight());
+		perspectiveCamera.lookAt(view.getEye(), view.getLookAt(), view.getUp(), view.getFov(), (float) viewConfig.getWidth() /(float) viewConfig.getHeight(), 0.1f, viewConfig.getViewDistance());
 		
 		return perspectiveCamera;
 	}

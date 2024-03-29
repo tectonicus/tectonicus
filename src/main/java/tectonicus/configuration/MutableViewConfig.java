@@ -11,11 +11,17 @@ package tectonicus.configuration;
 
 public class MutableViewConfig implements ViewConfig
 {
+	public static final int DEFAULT_WIDTH = 1920;
+	public static final int DEFAULT_HEIGHT = 1080;
+        
 	private ImageFormat imageFormat;
 	private float imageCompressionLevel;
 	
 	private int viewDistance;
 	private int fov;
+        
+        private int width;
+        private int height;
 	
 	public MutableViewConfig()
 	{
@@ -23,6 +29,8 @@ public class MutableViewConfig implements ViewConfig
 		this.imageCompressionLevel = 0.95f;
 		this.viewDistance = 100;
 		this.fov = 70;
+                this.width = DEFAULT_WIDTH;
+                this.height = DEFAULT_HEIGHT;
 	}
 	
 	@Override
@@ -69,4 +77,22 @@ public class MutableViewConfig implements ViewConfig
 	{
 		this.fov = fov;
 	}
+
+        @Override
+        public int getWidth() {
+                return width;
+        }
+        
+        public void setWidth(int width) {
+                this.width = width;
+        }
+
+        @Override
+        public int getHeight() {
+                return height;
+        }
+
+        public void setHeight(int height) {
+                this.height = height;
+        }
 }

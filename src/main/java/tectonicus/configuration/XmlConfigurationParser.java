@@ -45,6 +45,7 @@ import static tectonicus.configuration.ParseUtil.parseDimension;
 import static tectonicus.configuration.ParseUtil.parseDrawDistance;
 import static tectonicus.configuration.ParseUtil.parseElevationAngle;
 import static tectonicus.configuration.ParseUtil.parseFOV;
+import static tectonicus.configuration.ParseUtil.parseHeight;
 import static tectonicus.configuration.ParseUtil.parseImageCompression;
 import static tectonicus.configuration.ParseUtil.parseImageFormat;
 import static tectonicus.configuration.ParseUtil.parseLightStyle;
@@ -67,6 +68,7 @@ import static tectonicus.configuration.ParseUtil.parseSinglePlayerName;
 import static tectonicus.configuration.ParseUtil.parseTileSize;
 import static tectonicus.configuration.ParseUtil.parseUseDefaultBlockConfig;
 import static tectonicus.configuration.ParseUtil.parseViewFilter;
+import static tectonicus.configuration.ParseUtil.parseWidth;
 
 @Log4j2
 @UtilityClass
@@ -236,6 +238,12 @@ public class XmlConfigurationParser
 				
 				final int fov = parseFOV( getString(viewsNode, "fov") );
 				viewConfig.setFOV(fov);
+
+				final int width = parseWidth( getString(viewsNode, "width") );
+				viewConfig.setWidth(width);
+
+				final int height = parseHeight( getString(viewsNode, "height") );
+				viewConfig.setHeight(height);
 			}
 			
 			// Player filter
