@@ -31,6 +31,7 @@ import tectonicus.configuration.Layer;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.TexturePack;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
-import tectonicus.raw.ContainerEntity;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
@@ -193,11 +193,6 @@ public class TileRenderer
 	public void abort()
 	{
 		this.abort = true;
-	}
-	
-	public Rasteriser getRasteriser()
-	{
-		return rasteriser;
 	}
 	
 	public Result output()

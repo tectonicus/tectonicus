@@ -20,6 +20,7 @@ import org.joml.Vector4f;
 import tectonicus.view.ViewUtil;
 import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.configuration.Configuration;
+import tectonicus.configuration.MutableViewConfig;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
@@ -283,8 +284,10 @@ public class InteractiveRenderer
 				Vector3f forward = new Vector3f((float)Math.cos(angleRad), 0, (float)Math.sin(angleRad));
 				Vector3f lookAt = new Vector3f(eye.x + forward.x, eye.y + forward.y, eye.z + forward.z);
 			*/	
-				Viewpoint view = ViewUtil.findView(new tectonicus.world.Sign(perspectiveSign));
-				perspectiveCamera = ViewUtil.createCamera(rasteriser, view, 300);
+                                Viewpoint view = ViewUtil.findView(new tectonicus.world.Sign(perspectiveSign));
+                                MutableViewConfig viewConfig = new MutableViewConfig();
+                                viewConfig.setViewDistance(300);
+				perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig);
 				
 			//	perspectiveCamera.lookAt(eye, lookAt, up, 90.0f, 1.0f, 0.1f, 100f);
 				

@@ -75,6 +75,8 @@
 			imageCompressionLevel="0.95 / 0.1 - 1.0"
 			drawDistance="200"
 			fov="70 / 30 - 110"
+                        width="1920 / 640 - 3840"
+                        height="1080 / 480 - 2160"
 		/>
 
 		<players

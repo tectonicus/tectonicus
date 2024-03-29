@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -21,11 +21,11 @@ import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
-import tectonicus.util.TempArea;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -37,6 +37,8 @@ import java.io.File;
 @Log4j2
 public class ViewRenderer
 {
+        public static final byte SAMPLES = 4;
+    
 	private final Rasteriser rasteriser;
 	private final FileViewCache viewCache;	
 	private final int numDownsampleThreads;
@@ -49,14 +51,14 @@ public class ViewRenderer
 		this.numDownsampleThreads = numDownsampleThreads;
 		this.viewConfig = viewConfig;
 	}
-	
+
 	public void output(World world, File mapDir, File viewsFile, ChangeFile changedFiles)
 	{
 		File viewsDir = new File(mapDir, "Views");
 		viewsDir.mkdirs();
 		
 		// Find changed views
-		ChangedViews changedViews = viewCache.findChangedViews(rasteriser, world, viewsFile, viewsDir, viewConfig.getImageFormat(), viewConfig.getViewDistance());
+		ChangedViews changedViews = viewCache.findChangedViews(rasteriser, world, viewsFile, viewsDir, viewConfig);
 		
 		// Output changed views
 		if (changedViews.getCount() > 0) {
@@ -115,31 +117,67 @@ public class ViewRenderer
 				
 				log.info("Drawing view at ({}, {}, {})", view.getLookAt().x, view.getLookAt().y, view.getLookAt().z);
 				
-				PerspectiveCamera perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig.getViewDistance());
+				PerspectiveCamera perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig);
 				perspectiveCamera.apply();
 				
-				rasteriser.resetState();
-				rasteriser.clear(new Color(0, 0, 0));
-				rasteriser.setViewport(0, 0, ViewUtil.VIEW_WIDTH, ViewUtil.VIEW_HEIGHT);
-				
-				world.draw(perspectiveCamera, true, false);
-				
-				
-				BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, ViewUtil.VIEW_WIDTH, ViewUtil.VIEW_HEIGHT, imageFormat);
-				if (tileImage != null)
-				{
-					File outputFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);
-					
-					writeScaled(tileImage, ViewUtil.VIEW_WIDTH /2, ViewUtil.VIEW_HEIGHT /2, outputFile, imageFormat, imageCompression, imageWriteQueue);
-					
-					changedFiles.writeLine( outputFile.getAbsolutePath() );
-				}
-				else
-				{
-					log.error("Error: Rasteriser.takeScreenshot gave us a null image (format: {})", imageFormat);
-				}
-				
-				viewCache.writeHash(sign, rasteriser, world, viewConfig.getViewDistance());
+                                final int supersampledWidth = viewConfig.getWidth()*SAMPLES;
+                                final int supersampledHeight = viewConfig.getHeight()*SAMPLES;
+                                final int displayWidth = rasteriser.getDisplayWidth();
+                                final int displayHeight = rasteriser.getDisplayHeight();
+                                
+                                // Determine the number of sections to capture based on the window size and desired capture dimensions
+                                int numHorizontalSections = (int) Math.ceil((double) supersampledWidth / displayWidth);
+                                int numVerticalSections = (int) Math.ceil((double) supersampledHeight / displayHeight);
+
+                                // Create an image to hold the entire screenshot
+                                final int pixelFormat = viewConfig.getImageFormat().hasAlpha() ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;
+
+                                BufferedImage viewImage = new BufferedImage(viewConfig.getWidth(), viewConfig.getHeight(), pixelFormat);
+                                Graphics2D viewGraphics = (Graphics2D)viewImage.getGraphics();
+                                viewGraphics.setColor(TileRenderer.clearColour);
+                                viewGraphics.fillRect(0, 0, viewImage.getWidth(), viewImage.getHeight());
+
+                                viewGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                                viewGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                                viewGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                                // Iterate over each section and capture it
+                                for (int y = 0; y < numVerticalSections; y++) {
+                                        for (int x = 0; x < numHorizontalSections; x++) {
+                                                // Calculate the dimensions and starting coordinates of the section to capture
+                                                int sectionWidth = Math.min(displayWidth, supersampledWidth - x * displayWidth);
+                                                int sectionHeight = Math.min(displayHeight, supersampledHeight - y * displayHeight);
+                                                int sectionStartX = x * displayWidth;
+                                                int sectionStartY = y * displayHeight;
+
+                                                // Capture the section
+                                                rasteriser.resetState();
+                                                rasteriser.clear(new Color(0, 0, 0));
+                                                rasteriser.setViewport(-sectionStartX, -sectionStartY, supersampledWidth, supersampledHeight);
+
+                                                world.draw(perspectiveCamera, true, false);
+
+                                                BufferedImage viewSection = rasteriser.takeScreenshot(0, 0, sectionWidth, sectionHeight, imageFormat);
+                                                if (viewSection == null) {
+                                                        log.error("Error: Rasteriser.takeScreenshot gave us a null image (format: {})", imageFormat);
+                                                        break;
+                                                }
+
+                                                // Draw the section onto the final image
+                                                viewGraphics.drawImage(
+                                                        viewSection,
+                                                        sectionStartX/SAMPLES,
+                                                        (supersampledHeight-sectionStartY-sectionHeight)/SAMPLES,
+                                                        sectionWidth/SAMPLES,
+                                                        sectionHeight/SAMPLES,
+                                                        null);
+                                        }
+                                }
+
+                                File outputFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);
+                                imageWriteQueue.write(outputFile, viewImage, imageFormat, imageCompression);
+                                
+				viewCache.writeHash(sign, rasteriser, world, viewConfig);
 			}
 			
 			imageWriteQueue.waitUntilFinished();
@@ -149,23 +187,5 @@ public class ViewRenderer
 			if (viewsIn != null)
 				viewsIn.close();
 		}
-	}
-	
-	private void writeScaled(BufferedImage originalImage, final int newWidth, final int newHeight, File outputFile, final ImageFormat imageFormat, final float imageCompression, ImageWriteQueue imageWriteQueue)
-	{
-		final int pixelFormat = imageFormat.hasAlpha() ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;
-		
-		BufferedImage outImg = new BufferedImage(ViewUtil.VIEW_WIDTH /2, ViewUtil.VIEW_HEIGHT /2, pixelFormat);
-		Graphics2D g = (Graphics2D)outImg.getGraphics();
-		g.setColor(TileRenderer.clearColour);
-		g.fillRect(0, 0, outImg.getWidth(), outImg.getHeight());
-		
-		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		
-		g.drawImage(originalImage, 0, 0, ViewUtil.VIEW_WIDTH /2, ViewUtil.VIEW_HEIGHT /2, null);
-		
-		imageWriteQueue.write(outputFile, outImg, imageFormat, imageCompression);
 	}
 }
