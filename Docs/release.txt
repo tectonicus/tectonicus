@@ -1,3 +1,26 @@
+Version 2.29 03-30-2024
+There have been so many changes since the last release that these release notes only cover the major changes and bug fixes that have been added. For more detail refer to the commit history.
+Thanks to Matej Darebnik for an incredible amount of work in this release!
+- added support for Minecraft 1.17, 1.18, 1.19, and 1.20
+- map markers are finally working again
+- added smooth lighting (defaults to on)
+- support for armor stands has been added! (Minecraft 1.13+ worlds only).
+- improved support for many custom resource packs
+- new options to set view resolution (up to 4k resolution)
+- new options to add or remove bed and respawn anchor map markers
+- new option to set map origin (will be overridden if using world subset)
+- new option to set html title in config
+- new options to add custom javascript and css to map
+- signs with prefix !!!POI!!! are considered special
+- support for new default player skins
+- many performance improvements
+- multiple fixes for tile downsampling
+- fixed macOS support
+- fixed paintings and item frames being rendered outside subset boundaries
+- many other bug fixes
+- upgraded to Java 11
+- lots of code cleanup and refactoring and dependency upgrades
+
 Version 2.28.7 10-28-2020
 - fixed an issue causing ConcurrentModificationExceptions in Java 15
 - removed an old NBT library that was causing illegal reflective access warnings in newer versions of Java
