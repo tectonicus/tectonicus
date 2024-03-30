@@ -15,7 +15,8 @@
 		useProgrammerArt="false / true"
 		outputDir="."
 		outputHtmlName="map.html"
-		defaultSkin="steve"
+		htmlTitle="Tectonicus Map"
+		defaultSkin="steve / alex / ari / efe / kai / makena / noor / sunny / zuri / <filepath_to_skin_png>"
 		numZoomLevels="8"
 		singlePlayerName=""
 		numDownsampleThreads="(num of CPU/cores)"
@@ -30,6 +31,8 @@
 		signsInitiallyVisible="true / false"
 		portalsInitiallyVisible="true / false"
 		viewsInitiallyVisible="true / false"
+		customStyle="<your_css_filename>" <!-- the custom file should be placed in the Scripts directory -->
+		customScript="<your_javascript_filename>" <!-- the custom file should be placed in the Scripts directory -->
 	/>
 
 	<!-- Rasteriser config applies to all maps/layers -->
@@ -52,6 +55,8 @@
 		cameraElevation="45 / 10 - 90"
 		north="-z / +z / -x / +x" <!-- compass rose north direction -->
 		compassRose="" <!-- custom image path -->
+		origin="0, 0" <!-- If not set the map will center on the spawn point. This setting will be overidden if a map subset is specified -->
+		useSmoothLighting="true / false"
 	>
 
 		<mods>
@@ -75,8 +80,8 @@
 			imageCompressionLevel="0.95 / 0.1 - 1.0"
 			drawDistance="200"
 			fov="70 / 30 - 110"
-                        width="1920 / 640 - 3840"
-                        height="1080 / 480 - 2160"
+			width="1920 / 640 - 3840"
+			height="1080 / 480 - 2160"
 		/>
 
 		<players
