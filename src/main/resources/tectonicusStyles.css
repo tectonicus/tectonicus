@@ -27,3 +27,45 @@ html, body, #map {
 .center {
 	text-align: center;
 }
+
+.chest_container {
+        font-size: 0;
+        line-height: 0;
+        width: 528px;                   /* Do not rely on scale and set size explicitly so that leaflet popup can adjust its size properly */
+        height: 234px;                  /* These should therefore be set to scale*chest_image_size */
+}
+
+.chest_container.large {
+        height: 396px;
+}
+
+.chest_scaler {
+        image-rendering: crisp-edges;   /* Use neirest neighbour to keep pixelated look */
+        scale: 3;                       /* Use integer scale for best look */
+        position: absolute;
+        transform-origin: top;
+        width: 0;
+}
+
+.chest_scaler>div {
+        position: absolute;
+}
+
+.item {
+        width: 16px;
+        height: 16px;
+}
+
+.mc_text_container {
+        position: absolute;
+        right: -2px;
+        bottom: 0;
+}
+
+.mc_char {
+        background: url('/Images/Font.png') no-repeat;
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        filter: drop-shadow(1px 1px black);
+}

@@ -250,7 +250,7 @@ public class TexturePack
 			} catch (IllegalArgumentException e) {
 				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, texturePack));
 			}
-
+                        
 			try {
 				InputStream imgStream = zipStack.getStream(path + "misc/grasscolor.png");
 				if (imgStream == null)
@@ -971,7 +971,19 @@ public class TexturePack
 		finalImg.getGraphics().drawImage(bottom, 0, factor*71, null);
 		return finalImg;
 	}
-	
+        
+        public BufferedImage getLargeChestImage()
+	{
+		int factor = (int) (chestImage.getWidth() / 256.0f);
+		BufferedImage top = chestImage.getSubimage(0, 0, factor*176, factor*125);
+		BufferedImage bottom = chestImage.getSubimage(0, factor*215, factor*176, factor*7);
+		
+		BufferedImage finalImg = new BufferedImage(factor*176, factor*132, BufferedImage.TYPE_INT_ARGB);
+		finalImg.getGraphics().drawImage(top, 0, 0, null);
+		finalImg.getGraphics().drawImage(bottom, 0, factor*125, null);
+		return finalImg;
+	}
+        
 	public Font getFont()
 	{
 		return font;
