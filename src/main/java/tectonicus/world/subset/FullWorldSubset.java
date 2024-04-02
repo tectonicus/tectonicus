@@ -36,4 +36,9 @@ public class FullWorldSubset implements WorldSubset {
 	public BlockFilter getBlockFilter(ChunkCoord coord) {
 		return new NullBlockFilter();
 	}
+        
+        @Override
+        public String toString() {
+                return "FullWorldSubset";
+        }
 }
