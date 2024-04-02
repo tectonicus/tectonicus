@@ -58,14 +58,28 @@ html, body, #map {
 
 .mc_text_container {
         position: absolute;
-        right: -2px;
-        bottom: 0;
 }
 
 .mc_char {
         background: url('/Images/Font.png') no-repeat;
         display: inline-block;
-        width: 8px;
+        width: 6px;
         height: 8px;
         filter: drop-shadow(1px 1px black);
+}
+
+.item_count {
+        right: 0;
+        bottom: 0;
+}
+
+.chest_name {
+        top: 6px;
+        left: 7px;
+        width: 162px;
+        height: 9px;
+}
+
+.chest_name .mc_char {
+        filter: invert(80%);
 }

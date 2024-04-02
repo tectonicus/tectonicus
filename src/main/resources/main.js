@@ -567,11 +567,14 @@ function refreshChestMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
                 
-                let markerPopup = layer.chests[i].large
+                let chest = layer.chests[i];
+                let markerPopup = chest.large
                         ? '<div class="chest_container large"><div class="chest_scaler"><img class="chest large_chest" src="Images/LargeChest.png"/>'
                         : '<div class="chest_container"><div class="chest_scaler"><img class="chest" src="Images/SmallChest.png"/>';
+
+                markerPopup += renderMinecraftText(chest.name, 'chest_name');
                 
-                for (j in layer.chests[i].items) {
+                for (j in chest.items) {
                         const item = layer.chests[i].items[j];
                         
                         const [namespace, itemId] = item.id.split(":");
@@ -601,7 +604,7 @@ function refreshChestMarkers(layer, markersVisible) {
                         markerPopup += '<img class="item" title="' + itemName + '" src="Images/Items/' + (isItem ? itemId : 'barrier') + '.png" />';
                         
                         if (item.count > 1) {
-                                markerPopup += renderMinecraftText(item.count.toString());
+                                markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
                         }
                         
                         markerPopup += '</div>';
@@ -635,16 +638,16 @@ function destroyMarkers(markers) {
 
 function findCharacterRowAndColumn(char) {
     const charMap =
-            '!"#$%&\'()*+,-./' +
+            ' !"#$%&\'()*+,-./' +
             '0123456789:;<=>?' +
             '@ABCDEFGHIJKLMNO' +
-            'PQRSTUVWXYZ[\]^_' +
+            'PQRSTUVWXYZ[\\]^_' +
             '\'abcdefghijklmno' +
             'pqrstuvwxyz{|}~';
     
-    const index = charMap.indexOf(char) + 1;
+    const index = charMap.indexOf(char);
     
-    if (index === 0) {
+    if (index === -1) {
             return [15, 3]; // ? character
     }
     
@@ -654,11 +657,11 @@ function findCharacterRowAndColumn(char) {
     return [col, row];
 }
 
-function renderMinecraftText(text) {
+function renderMinecraftText(text, className) {
     const characterWidth = 8;
     const characterHeight = 8;
 
-    let html = '<div class="mc_text_container">';
+    let html = '<div class="mc_text_container ' + className + '">';
 
     for (let i = 0; i < text.length; i++) {
         const position = findCharacterRowAndColumn(text[i]);
