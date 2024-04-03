@@ -43,7 +43,7 @@ html, body, #map {
         image-rendering: crisp-edges;   /* Use neirest neighbour to keep pixelated look */
         scale: 3;                       /* Use integer scale for best look */
         position: absolute;
-        transform-origin: top;
+        transform-origin: top left;
         width: 0;
 }
 
@@ -71,6 +71,15 @@ html, body, #map {
 .item_count {
         right: 0;
         bottom: 0;
+}
+
+.item_name {
+        position: absolute;
+        top: 0;
+        left: 0;
+        scale: 33.33%;
+        width: 300%;
+        transform-origin: top left;
 }
 
 .chest_name {

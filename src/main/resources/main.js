@@ -606,6 +606,9 @@ function refreshChestMarkers(layer, markersVisible) {
                         if (item.count > 1) {
                                 markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
                         }
+                        if (!isItem) {
+                                markerPopup += renderMinecraftText(itemName, 'item_name');
+                        }
                         
                         markerPopup += '</div>';
                 }
