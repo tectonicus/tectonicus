@@ -593,6 +593,16 @@ function refreshChestMarkers(layer, markersVisible) {
                                         isItem = false;
                                 }
                         }
+                        
+                        if (item.customName) {
+                                itemName = item.customName;
+                        }
+                        
+                        let pngName = itemId;
+                        if (itemId === 'compass' || itemId === 'clock' || itemId === 'recovery_compass') {
+                                // Choose 1st frame for animated items
+                                pngName += '_00';
+                        }
                                                 
                         const row = Math.floor(item.slot/9);
                         const col = item.slot%9;
@@ -601,7 +611,7 @@ function refreshChestMarkers(layer, markersVisible) {
                         const left = 8+18*col;
                         
                         markerPopup += '<div style="top: ' + top + 'px; left: ' + left + 'px;">';
-                        markerPopup += '<img class="item" title="' + itemName + '" src="Images/Items/' + (isItem ? itemId : 'barrier') + '.png" />';
+                        markerPopup += '<img class="item" title="' + itemName + '" src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
                         
                         if (item.count > 1) {
                                 markerPopup += renderMinecraftText(item.count.toString(), 'item_count');

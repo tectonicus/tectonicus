@@ -601,7 +601,7 @@ public class RawChunk {
                                                             : "left".equals(type) || "right".equals(type) ? "Large Chest" : "Chest";
                                                 } else {
                                                     name = customName.getValue();
-                                                    name = name.replaceAll("^\"*|\"*$", ""); // Replace " characters at the beginning and end of the string
+                                                    name = name.replaceAll("\"", ""); // Replace " characters
                                                 }
 
 						final StringTag lock = NbtUtil.getChild(entity, "Lock", StringTag.class);
@@ -618,15 +618,29 @@ public class RawChunk {
                                                         for (var i : itemsTag.getValue()) {
                                                                 if (i instanceof CompoundTag)
                                                                 {
-                                                                        CompoundTag itemTag = (CompoundTag)i;
+                                                                        final CompoundTag itemTag = (CompoundTag)i;
 
-                                                                        StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-                                                                        ByteTag itemCountTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
-                                                                        ByteTag itemSlotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
-
+                                                                        final StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
+                                                                        final ByteTag itemCountTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
+                                                                        final ByteTag itemSlotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
+                                                                        
                                                                         if (itemIdTag != null && itemCountTag != null && itemSlotTag != null)
                                                                         {
-                                                                                items.add(new Item(itemIdTag.getValue(), -1, itemCountTag.getValue(), itemSlotTag.getValue(), null));
+                                                                                String customItemName = null;
+
+                                                                                final CompoundTag tagTag = NbtUtil.getChild(itemTag, "tag", CompoundTag.class);
+                                                                                if (tagTag != null) {
+                                                                                        final CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
+                                                                                        if (displayTag != null) {
+                                                                                                final StringTag nameTag = NbtUtil.getChild(displayTag, "Name", StringTag.class);
+                                                                                                if (nameTag != null) {
+                                                                                                        customItemName = nameTag.getValue();
+                                                                                                        customItemName = customItemName.replaceAll("\"", ""); // Replace " characters
+                                                                                                }
+                                                                                        }
+                                                                                }
+
+                                                                                items.add(new Item(itemIdTag.getValue(), customItemName, -1, itemCountTag.getValue(), itemSlotTag.getValue(), null));
                                                                         }
                                                                 }
 

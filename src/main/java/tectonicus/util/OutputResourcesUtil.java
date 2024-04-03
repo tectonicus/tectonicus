@@ -432,7 +432,11 @@ public class OutputResourcesUtil {
 
                                 String items = "[\r\n";
                                 for (var item : entity.getItems()) {
-                                        items += "\t\t\t{ id: \"" + item.id + "\", count: " + item.count + ", slot: " + item.slot + " },\r\n";
+                                        items += "\t\t\t{ id: \"" + item.id;
+                                        if (item.customName != null) {
+                                                items += "\", customName: \"" + item.customName;
+                                        }
+                                        items += "\", count: " + item.count + ", slot: " + item.slot + " },\r\n";
                                 }
                                 if ("right".equals(entity.getType())) {
                                         // Find right part and add its items
@@ -460,7 +464,11 @@ public class OutputResourcesUtil {
                                                      continue;
                                                 }
                                                 for (var item : left.getItems()) {
-                                                        items += "\t\t\t{ id: \"" + item.id + "\", count: " + item.count + ", slot: " + (item.slot+3*9) + " },\r\n";
+                                                        items += "\t\t\t{ id: \"" + item.id;
+                                                        if (item.customName != null) {
+                                                                items += "\", customName: \"" + item.customName;
+                                                        }
+                                                        items += "\", count: " + item.count + ", slot: " + (item.slot+3*9) + " },\r\n";
                                                 }
                                                 break;
                                         }
