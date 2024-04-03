@@ -61,7 +61,7 @@ html, body, #map {
 }
 
 .mc_char {
-        background: url('/Images/Font.png') no-repeat;
+        background: url('../Images/Font.png') no-repeat;
         display: inline-block;
         width: 6px;
         height: 8px;
