@@ -579,6 +579,7 @@ function refreshChestMarkers(layer, markersVisible) {
                         
                         const [namespace, itemId] = item.id.split(":");
                         const item_key = `item.${namespace}.${itemId}`;
+                        const item_desc_key = `item.${namespace}.${itemId}.desc`;
                         const block_key = `block.${namespace}.${itemId}`;
                         
                         let itemName = itemId;
@@ -596,6 +597,10 @@ function refreshChestMarkers(layer, markersVisible) {
                         
                         if (item.customName) {
                                 itemName = item.customName;
+                        }
+                        
+                        if (localizations && localizations[item_desc_key]) {
+                                itemName += '&#013;&#010;' + localizations[item_desc_key];
                         }
                         
                         let pngName = itemId;
