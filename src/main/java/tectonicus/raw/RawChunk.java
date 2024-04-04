@@ -584,7 +584,7 @@ public class RawChunk {
 							}
 						}
 						banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
-					} else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box")) {
+					} else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box") || id.equals("minecraft:barrel")) {
                                                 BlockProperties blockState = getBlockState(localX, localY, localZ);
                                                 String facing = null;
                                                 String type = null;
@@ -596,12 +596,20 @@ public class RawChunk {
 						final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
 						String name;
 						if (customName == null) {
-                                                    name = id.equals("minecraft:shulker_box")
-                                                            ? "Shulker Box"
-                                                            : "left".equals(type) || "right".equals(type) ? "Large Chest" : "Chest";
+                                                        switch (id) {
+                                                                case "minecraft:barrel":
+                                                                        name = "Barrel";
+                                                                        break;
+                                                                case "minecraft:shulker_box":
+                                                                        name = "Shulker Box";
+                                                                        break;
+                                                                default:
+                                                                        name = "left".equals(type) || "right".equals(type) ? "Large Chest" : "Chest";;
+                                                                        break;
+                                                        }
                                                 } else {
-                                                    name = customName.getValue();
-                                                    name = name.replaceAll("\"", ""); // Replace " characters
+                                                        name = customName.getValue();
+                                                        name = name.replaceAll("\"", ""); // Replace " characters
                                                 }
 
 						final StringTag lock = NbtUtil.getChild(entity, "Lock", StringTag.class);
