@@ -1,5 +1,5 @@
 
-let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0)
+let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0);
 let tileLayers = new Map();
 let activeBaseLayer = null;
 
@@ -11,6 +11,7 @@ function size(obj) {
 	return size;
 }
 
+var localizations = null;
 var layerControl = null;
 var compassControl = null;
 var viewToggleControl = null;
@@ -22,8 +23,11 @@ var portalToggleControl = null;
 var spawnToggleControl = null;
 var chestToggleControl = null;
 
-function main()
+async function main()
 {
+        // Get localizations asynchronously, so that initialization can continue while the file is being downloaded
+        const localizationsResponsePromise = fetch('Scripts/localizations.json');
+        
 	let queryParams = getQueryParams();
 	let fragmentParams = getFragmentParams();
 	
@@ -40,93 +44,109 @@ function main()
         },
         initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, worldVectors, projection,
             blockStats, worldStats, viewPosition, controlState) {
-            this.mapId = mapId;
-            this.layerId = layerId;
-            this.dimension = dimension;
-            this.imageFormat = imageFormat;
-            this.mapName = mapName;
-            this.backgroundColor = backgroundColor;
-            this.signs = signs;
-            this.players = players;
-            this.chests = chests;
-            this.views = views;
-            this.portals = portals;
-            this.beds = beds;
-            this.anchors = anchors;
-            this.worldVectors = worldVectors;
-            this.projection = projection;
-            this.blockStats = blockStats;
-            this.worldStats = worldStats;
-			this.viewPosition = viewPosition;
-			this.controlState = JSON.parse(JSON.stringify(controlState));
-        }
-    });
-
-    let baseMaps = {}
-    for (let i = 0; i < contents.length; i++) {
-        let tecMap = contents[i];
-        for (let j = 0; j < tecMap.layers.length; j++) {
-            let layer = tecMap.layers[j];
-            let projection = new MinecraftProjection(tecMap.worldVectors);
-			// 'startPosition' stores view pos for a given layer, so we remember where we were when switching layers
-			let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
-
-            let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
-
-            if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
-                baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
-            } else {
-                baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
+                this.mapId = mapId;
+                this.layerId = layerId;
+                this.dimension = dimension;
+                this.imageFormat = imageFormat;
+                this.mapName = mapName;
+                this.backgroundColor = backgroundColor;
+                this.signs = signs;
+                this.players = players;
+                this.chests = chests;
+                this.views = views;
+                this.portals = portals;
+                this.beds = beds;
+                this.anchors = anchors;
+                this.worldVectors = worldVectors;
+                this.projection = projection;
+                this.blockStats = blockStats;
+                this.worldStats = worldStats;
+                this.viewPosition = viewPosition;
+                this.controlState = JSON.parse(JSON.stringify(controlState));
             }
-            tileLayers.set(layer.id, tileLayer);
+        });
+
+        let baseMaps = {}
+        for (let i = 0; i < contents.length; i++) {
+            let tecMap = contents[i];
+            for (let j = 0; j < tecMap.layers.length; j++) {
+                let layer = tecMap.layers[j];
+                let projection = new MinecraftProjection(tecMap.worldVectors);
+                            // 'startPosition' stores view pos for a given layer, so we remember where we were when switching layers
+                            let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
+
+                let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
+                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
+
+                if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
+                    baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
+                } else {
+                    baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
+                }
+                tileLayers.set(layer.id, tileLayer);
+            }
         }
-    }
 
-	// Try and get a starting view from the fragment params, query params, or fall back to default
-	let defaultLayer = tileLayers.get("LayerA");
-	let startView;
-	if (size(fragmentParams) > 0) {
-		startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
-	} else {
-		startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
-	}
+        // Try and get a starting view from the fragment params, query params, or fall back to default
+        let defaultLayer = tileLayers.get("LayerA");
+        let startView;
+        if (size(fragmentParams) > 0) {
+                startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+        } else {
+                startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+        }
 
-	// Set the starting view
-	let startLayer = tileLayers.get(startView.layerId);
-	activeBaseLayer = startLayer;
-	startLayer.addTo(mymap);
-	mymap.setView(startView.startPoint, startView.zoom);
+        // Set the starting view
+        let startLayer = tileLayers.get(startView.layerId);
+        activeBaseLayer = startLayer;
+        startLayer.addTo(mymap);
+        mymap.setView(startView.startPoint, startView.zoom);
 
-	// And store the updated start point in the layer
-	startLayer.viewPosition = startView;
+        // And store the updated start point in the layer
+        startLayer.viewPosition = startView;
 
-	// Create controls
-	if (tileLayers.size > 1) {
-        layerControl = L.control.layers(baseMaps);
-    }
+        // Create controls
+        if (tileLayers.size > 1) {
+            layerControl = L.control.layers(baseMaps);
+        }
 	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
-    viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
-    signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
-    playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-    bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
-    respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
-    portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
-    spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
-    chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, false);
+        viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
+        signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
+        playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
+        bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
+        respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
+        portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
+        spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
+        chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, false);
 
 	//CreateLinkControl(map);
 
 	// Add attribution control to the map
 	L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
 
+        // We have done all we can. Now we have to await the response and parse the JSON
+        let localizationsResponse;
+        try {
+                localizationsResponse = await localizationsResponsePromise;
+        } catch (NetworkError) {
+                console.error(
+                        'There was a network error during localizations fetch. ' +
+                        'If the map is open directly from the file system, the problem was probably that the request was denied due to CORS policy.' +
+                        'There is no way of overriding the browser CORS policy on Tectonicus side. Please host the map on web server.');
+        }
+        try {
+                localizations = await localizationsResponse.json();
+        } catch {
+                console.error('Unable to parse localizations');
+        }
+
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
 	mymap.on('zoomend', onProjectionChanged);
-    mymap.on('moveend', onProjectionChanged);
+        mymap.on('moveend', onProjectionChanged);
 
 	// Manually fire this event to set the initial state
-    mymap.fireEvent('baselayerchange', {layer: startLayer});
+        mymap.fireEvent('baselayerchange', {layer: startLayer});
 }
 
 spawnMarkers = [];
@@ -532,8 +552,8 @@ function refreshPortalMarkers(layer, markersVisible) {
 
 function refreshChestMarkers(layer, markersVisible) {
 	destroyMarkers(chestMarkers);
-
-	// Chest markers
+        
+ 	// Chest markers
 	for (i in layer.chests) {
 		let point = layer.projection.worldToMap(layer.chests[i].worldPos);
 
@@ -546,8 +566,74 @@ function refreshChestMarkers(layer, markersVisible) {
 			//shadowSize: [68, 95],
 			//shadowAnchor: [22, 94]
 		});
+                
+                let chest = layer.chests[i];
+                let markerPopup = chest.large
+                        ? '<div class="chest_container large"><div class="chest_scaler"><img class="chest large_chest" src="Images/LargeChest.png"/>'
+                        : '<div class="chest_container"><div class="chest_scaler"><img class="chest" src="Images/SmallChest.png"/>';
 
-		let marker = L.marker(point, { icon: icon }).bindPopup('<img width="300" height="131" src="Images/SmallChest.png"/>');
+                markerPopup += renderMinecraftText(chest.name, 'chest_name');
+                
+                for (j in chest.items) {
+                        const item = layer.chests[i].items[j];
+                        
+                        const [namespace, itemId] = item.id.split(":");
+                        const item_key = `item.${namespace}.${itemId}`;
+                        const item_desc_key = `item.${namespace}.${itemId}.desc`;
+                        const block_key = `block.${namespace}.${itemId}`;
+                        
+                        let itemName = itemId;
+                        let isItem = true; // Assume we have an item
+                        if (localizations) {
+                                if (localizations[item_key]) {
+                                        itemName = localizations[item_key];
+                                } else if (localizations[block_key]) {
+                                        itemName = localizations[block_key];
+                                        isItem = false;
+                                } else {
+                                        isItem = false;
+                                }
+                        }
+                        
+                        if (item.customName) {
+                                itemName = item.customName;
+                        }
+                        
+                        if (localizations && localizations[item_desc_key]) {
+                                itemName += '&#013;&#010;' + localizations[item_desc_key];
+                        }
+                        
+                        let pngName = itemId;
+                        if (itemId === 'compass' || itemId === 'clock' || itemId === 'recovery_compass') {
+                                // Choose 1st frame for animated items
+                                pngName += '_00';
+                        }
+                                                
+                        const row = Math.floor(item.slot/9);
+                        const col = item.slot%9;
+                        
+                        const top = 18+18*row;
+                        const left = 8+18*col;
+                        
+                        markerPopup += '<div style="top: ' + top + 'px; left: ' + left + 'px;">';
+                        markerPopup += '<img class="item" title="' + itemName + '" src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
+                        
+                        if (item.count > 1) {
+                                markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
+                        }
+                        if (!isItem) {
+                                markerPopup += renderMinecraftText(itemName, 'item_name');
+                        }
+                        
+                        markerPopup += '</div>';
+                }
+                
+                markerPopup += '</div></div>';
+
+		let marker = L.marker(point, { icon: icon }).bindPopup(
+                        markerPopup,
+                        { maxWidth: "auto" } // Fix for incorrect sizing of the popup
+                );
 
 		// Add marker to map if chests are initially visible
 		if (markersVisible) {
@@ -565,6 +651,48 @@ function destroyMarkers(markers) {
 	}
 
 	markers.length = 0;
+}
+
+
+function findCharacterRowAndColumn(char) {
+    const charMap =
+            ' !"#$%&\'()*+,-./' +
+            '0123456789:;<=>?' +
+            '@ABCDEFGHIJKLMNO' +
+            'PQRSTUVWXYZ[\\]^_' +
+            '\'abcdefghijklmno' +
+            'pqrstuvwxyz{|}~';
+    
+    const index = charMap.indexOf(char);
+    
+    if (index === -1) {
+            return [15, 3]; // ? character
+    }
+    
+    const col = index % 16;
+    const row = Math.floor(index / 16 + 2); // +2 because 1st 2 lines are empty
+    
+    return [col, row];
+}
+
+function renderMinecraftText(text, className) {
+    const characterWidth = 8;
+    const characterHeight = 8;
+
+    let html = '<div class="mc_text_container ' + className + '">';
+
+    for (let i = 0; i < text.length; i++) {
+        const position = findCharacterRowAndColumn(text[i]);
+
+        const left = position[0] * characterWidth;
+        const top = position[1] * characterHeight;
+        
+        html += `<div class="mc_char" style="background-position: -${left}px -${top}px;"></div>`;
+    }
+
+    html += '</div>';
+    
+    return html;
 }
 
 function ViewPos(layerId, worldPos, zoom, startPoint) {
@@ -605,24 +733,5 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 
 	return new ViewPos(queryLayerId, queryPos, queryZoom, startPoint);
 }
-
-/*
- * Workaround for 1px lines appearing in some browsers due to fractional transforms
- * and resulting anti-aliasing.
- * https://github.com/Leaflet/Leaflet/issues/3575
- */
-(function(){
-    var originalInitTile = L.GridLayer.prototype._initTile
-    L.GridLayer.include({
-        _initTile: function (tile) {
-            originalInitTile.call(this, tile);
-
-            var tileSize = this.getTileSize();
-
-            tile.style.width = tileSize.x + 1 + 'px';
-            tile.style.height = tileSize.y + 1 + 'px';
-        }
-    });
-})()
 
 window.onload = main;

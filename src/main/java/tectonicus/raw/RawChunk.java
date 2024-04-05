@@ -76,8 +76,6 @@ public class RawChunk {
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	private static final ObjectWriter OBJECT_WRITER = FileUtils.getOBJECT_MAPPER().writer();
 
-	private static final String CHEST = "Chest";
-
 	private int[][] biomes;
 	private int[][][] biomes3d;
 
@@ -586,11 +584,33 @@ public class RawChunk {
 							}
 						}
 						banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
-					} else if (id.equals(CHEST) || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box")) {
+					} else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box") || id.equals("minecraft:barrel")) {
+                                                BlockProperties blockState = getBlockState(localX, localY, localZ);
+                                                String facing = null;
+                                                String type = null;
+                                                if (blockState!=null) {
+                                                        facing = blockState.get("facing");
+                                                        type = blockState.get("type");
+                                                }
+                                            
 						final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
-						String name = CHEST;
-						if (customName != null)
-							name = customName.getValue();
+						String name;
+						if (customName == null) {
+                                                        switch (id) {
+                                                                case "minecraft:barrel":
+                                                                        name = "Barrel";
+                                                                        break;
+                                                                case "minecraft:shulker_box":
+                                                                        name = "Shulker Box";
+                                                                        break;
+                                                                default:
+                                                                        name = "left".equals(type) || "right".equals(type) ? "Large Chest" : "Chest";;
+                                                                        break;
+                                                        }
+                                                } else {
+                                                        name = customName.getValue();
+                                                        name = name.replaceAll("\"", ""); // Replace " characters
+                                                }
 
 						final StringTag lock = NbtUtil.getChild(entity, "Lock", StringTag.class);
 						String lockStr = "";
@@ -598,19 +618,44 @@ public class RawChunk {
 							lockStr = lock.getValue();
 
 						final StringTag lootTable = NbtUtil.getChild(entity, "LootTable", StringTag.class);
-
 						boolean unopenedChest = lootTable != null;
+                                                
+                                                final List<Item> items = new ArrayList<>();
+                                                final ListTag itemsTag = NbtUtil.getChild(entity, "Items", ListTag.class);
+                                                if (itemsTag != null) {
+                                                        for (var i : itemsTag.getValue()) {
+                                                                if (i instanceof CompoundTag)
+                                                                {
+                                                                        final CompoundTag itemTag = (CompoundTag)i;
 
-						if (id.equals(CHEST) || id.equals("minecraft:chest")) {
-							chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest));
-						}
-//										else if (id.equals("EnderChest") || id.equals("minecraft:ender_chest"))  //TODO: Handle Ender chests
-//										{
-//
-//										}
-//						else if (id.equals("minecraft:shulker_box")) {
-//
-//						}
+                                                                        final StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
+                                                                        final ByteTag itemCountTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
+                                                                        final ByteTag itemSlotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
+                                                                        
+                                                                        if (itemIdTag != null && itemCountTag != null && itemSlotTag != null)
+                                                                        {
+                                                                                String customItemName = null;
+
+                                                                                final CompoundTag tagTag = NbtUtil.getChild(itemTag, "tag", CompoundTag.class);
+                                                                                if (tagTag != null) {
+                                                                                        final CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
+                                                                                        if (displayTag != null) {
+                                                                                                final StringTag nameTag = NbtUtil.getChild(displayTag, "Name", StringTag.class);
+                                                                                                if (nameTag != null) {
+                                                                                                        customItemName = nameTag.getValue();
+                                                                                                        customItemName = customItemName.replaceAll("\"", ""); // Replace " characters
+                                                                                                }
+                                                                                        }
+                                                                                }
+
+                                                                                items.add(new Item(itemIdTag.getValue(), customItemName, -1, itemCountTag.getValue(), itemSlotTag.getValue(), null));
+                                                                        }
+                                                                }
+
+                                                        }
+                                                }
+
+                                                chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest, facing, type, items));
 					} else if (id.equals("minecraft:bed")) {
 						final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
 						int colorVal = 0;

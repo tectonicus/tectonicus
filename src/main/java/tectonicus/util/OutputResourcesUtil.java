@@ -30,11 +30,11 @@ import tectonicus.configuration.Layer;
 import tectonicus.configuration.PlayerFilter;
 import tectonicus.configuration.SignFilterType;
 import tectonicus.rasteriser.Rasteriser;
-import tectonicus.raw.BlockEntity;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.Player;
 import tectonicus.texture.TexturePack;
+import tectonicus.texture.ZipStack;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.subset.WorldSubset;
@@ -50,6 +50,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -416,43 +418,69 @@ public class OutputResourcesUtil {
 		}
 
 		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getId() + "_chestData")) {
-
-			ArrayList<BlockEntity> removeList = new ArrayList<>();
-			for (BlockEntity entity : chestList) {
-				final int x = entity.getX();
-				final int y = entity.getY();
-				final int z = entity.getZ();
-
-				for (BlockEntity newEntity : chestList) {
-					final int newX = newEntity.getX();
-					final int newY = newEntity.getY();
-					final int newZ = newEntity.getZ();
-
-					if (newX == x + 1 && newY == y && newZ == z) //north south chest
-					{
-						entity.setX(newX);
-						if (!removeList.contains(entity))
-							removeList.add(newEntity);
-					} else if (newZ == z + 1 && newY == y && newX == x) //east west chest
-					{
-						entity.setZ(z);
-						if (!removeList.contains(entity))
-							removeList.add(newEntity);
-					}
-				}
-			}
-
-			chestList.removeAll(removeList);
-
 			WorldSubset worldSubset = map.getWorldSubset();
-			for (BlockEntity entity : chestList) {
+			for (ContainerEntity entity : chestList) {
+                                if ("left".equals(entity.getType())) {
+                                        // Skip left part of large chests (we will merge them with right part and display them as one sigle large chest)
+                                        continue;
+                                }
+                            
 				float worldX = entity.getX() + 0.5f;
 				float worldY = entity.getY();
 				float worldZ = entity.getZ() + 0.5f;
 				Map<String, String> chestArgs = new HashMap<>();
 
-				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
-				chestArgs.put("worldPos", posStr);
+                                String items = "[\r\n";
+                                for (var item : entity.getItems()) {
+                                        items += "\t\t\t{ id: \"" + item.id;
+                                        if (item.customName != null) {
+                                                items += "\", customName: \"" + item.customName;
+                                        }
+                                        items += "\", count: " + item.count + ", slot: " + item.slot + " },\r\n";
+                                }
+                                if ("right".equals(entity.getType())) {
+                                        // Find right part and add its items
+                                        int leftX = entity.getX();
+                                        int leftY = entity.getY();
+                                        int leftZ = entity.getZ();
+
+                                        switch (entity.getFacing()) {
+                                                case "east":
+                                                        leftZ -= 1;
+                                                        break;
+                                                case "north":
+                                                        leftX -= 1;
+                                                        break;
+                                                case "south":
+                                                        leftX += 1;
+                                                        break;
+                                                case "west":
+                                                        leftZ += 1;
+                                                        break;
+                                        }
+                                        
+                                        for (ContainerEntity left : chestList) {
+                                                if (left.getX()!=leftX || left.getY()!=leftY || left.getZ()!=leftZ || !"left".equals(left.getType())) {
+                                                     continue;
+                                                }
+                                                for (var item : left.getItems()) {
+                                                        items += "\t\t\t{ id: \"" + item.id;
+                                                        if (item.customName != null) {
+                                                                items += "\", customName: \"" + item.customName;
+                                                        }
+                                                        items += "\", count: " + item.count + ", slot: " + (item.slot+3*9) + " },\r\n";
+                                                }
+                                                break;
+                                        }
+                                }
+                                items += "\t\t]";
+                                
+				chestArgs.put("worldPos", "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")");
+                                chestArgs.put("name", "\"" + entity.getCustomName() + "\"");
+                                chestArgs.put("items", items);
+                                if ("right".equals(entity.getType())) {
+                                        chestArgs.put("large", "true");
+                                }
 
 				if (worldSubset.containsBlock(entity.getX(), entity.getZ())) {
 					jsWriter.write(chestArgs);
@@ -495,7 +523,8 @@ public class OutputResourcesUtil {
 		String defaultSkin = config.getDefaultSkin();
 
 		File imagesDir = new File(exportDir, "Images");
-		imagesDir.mkdirs();
+                File itemsDir = new File(imagesDir, "Items");
+		itemsDir.mkdirs();
 
 		FileUtils.extractResource("Images/Spawn.png", new File(imagesDir, "Spawn.png"));
 		FileUtils.extractResource("Images/Logo.png", new File(imagesDir, "Logo.png"));
@@ -567,7 +596,11 @@ public class OutputResourcesUtil {
 		writeImage(texturePack.getEmptyAirImage(), 18, 18, new File(imagesDir, "EmptyAir.png"));
 		writeImage(texturePack.getFullAirImage(), 18, 18, new File(imagesDir, "FullAir.png"));
 
-		writeImage(texturePack.getChestImage(), 176, 77, new File(imagesDir, "SmallChest.png"));
+		writeImage(texturePack.getChestImage(), 176, 78, new File(imagesDir, "SmallChest.png"));
+		writeImage(texturePack.getLargeChestImage(), 176, 132, new File(imagesDir, "LargeChest.png"));
+                
+                // Write font texture
+                writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));
 
 		// Write default player icon
 		BufferedImage defaultSkinIcon = texturePack.getItem(defaultSkinPath);
@@ -576,9 +609,16 @@ public class OutputResourcesUtil {
 		} else {
 			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
+                
+                // Extract all item textures
+                extractItemTextures(texturePack, itemsDir);
 
-		//Extract Leaflet resources
-		extractMapResources(exportDir);
+		// Extract Leaflet resources
+                File scriptsDir = new File(exportDir, "Scripts");
+		extractMapResources(scriptsDir);
+                
+                // Extract localized texts
+                extractLocalizedTexts(texturePack, scriptsDir);
 
 		List<String> scriptResources = new ArrayList<>();
 		scriptResources.add("marker.js");
@@ -602,9 +642,23 @@ public class OutputResourcesUtil {
 			e.printStackTrace();
 		}
 	}
+        
+        public static void extractItemTextures(TexturePack texturePack, File targetDir) {
+            	try {
+                        ZipStack zipStack = texturePack.getZipStack();
+                        for (var file : zipStack.listFilesInDirectory("assets/minecraft/textures/item")) {
+                                try (var stream = zipStack.getStream(file)) {
+                                        String fileName = Paths.get(file).getFileName().toString();
+                                        File outputFile = new File(targetDir, fileName);
+                                        Files.copy(stream, outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                }
+                        }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        }
 
-	public static void extractMapResources(File exportDir) {
-		File scriptsDir = new File(exportDir, "Scripts");
+	public static void extractMapResources(File scriptsDir) {
 		scriptsDir.mkdirs();
 		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptImagesDir.mkdirs();
@@ -622,6 +676,19 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("tippy-bundle.umd.min.js", new File(scriptsDir, "tippy-bundle.umd.min.js"));
 		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
 	}
+        
+        private void extractLocalizedTexts(TexturePack texturePack, File scriptsDir) {
+                if (texturePack.fileExists("assets/minecraft/lang/en_us.json")) {
+                        try {
+                                try (var stream = texturePack.getZipStack().getStream("assets/minecraft/lang/en_us.json", false)) {
+                                        File outputFile = new File(scriptsDir, "localizations.json");
+                                        Files.copy(stream, outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                }
+                        } catch (IOException e) {
+                                e.printStackTrace();
+                        }
+                }
+        }
 
 	private void outputMergedJs(File outFile, List<String> inputResources, int numZoomLevels, Configuration config, int tileWidth, int tileHeight)
 	{

@@ -25,12 +25,14 @@ import tectonicus.texture.SubTexture;
 
 public class Font
 {
+        private BufferedImage fontSheet;
 	private Texture texture;
 	
 	private Map<Character, SubTexture> characterMap;
 	
 	public Font(Rasteriser rasteriser, BufferedImage fontSheet, InputStream fontLookup)
 	{
+                this.fontSheet = fontSheet;
 		this.texture = rasteriser.createTexture(fontSheet, TextureFilter.NEAREST);
 		
 		this.characterMap = new HashMap<Character, SubTexture>();
@@ -67,6 +69,11 @@ public class Font
 		{
 			e.printStackTrace();
 		}
+	}
+        
+	public BufferedImage getFontSheet()
+	{
+		return fontSheet;
 	}
 	
 	public Texture getTexture()

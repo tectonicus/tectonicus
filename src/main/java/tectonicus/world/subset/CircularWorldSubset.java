@@ -66,6 +66,11 @@ public class CircularWorldSubset implements WorldSubset
 		
 		return filter;
 	}
+        
+        @Override
+        public String toString() {
+                return String.format("CircularWorldSubset@[%d,%d,%d],r%d", origin.x, origin.y, origin.z, radius);
+        }
 	
 	public static long distance(ChunkCoord coord, final long offsetX, final long offsetZ, Vector3l origin)
 	{

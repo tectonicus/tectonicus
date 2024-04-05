@@ -18,7 +18,9 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 @Log4j2
@@ -94,4 +96,36 @@ public class ZipStack
 	{
 		return baseFileName;
 	}
+        
+        public List<String> listFilesInDirectory(String directoryPath) throws IOException {
+                List<String> fileList = new ArrayList<>();
+               
+                if (hasFile(directoryPath, override))
+		{
+                        Path directory = override.getPath(directoryPath);
+                        if (Files.isDirectory(directory)) {
+                                try (var directoryStream = Files.newDirectoryStream(directory)) {
+                                        for (Path path : directoryStream) {
+                                                fileList.add(path.toString());
+                                        }
+                                }
+                        }
+		}
+		
+                if (hasFile(directoryPath, base))
+		{
+                        Path directory = base.getPath(directoryPath);
+                        if (Files.isDirectory(directory)) {
+                                try (var directoryStream = Files.newDirectoryStream(directory)) {
+                                        for (Path path : directoryStream) {
+                                                if (!fileList.contains(path.toString())) {
+                                                        fileList.add(path.toString());
+                                                }
+                                        }
+                                }
+                        }
+		}
+
+                return fileList;
+        }
 }

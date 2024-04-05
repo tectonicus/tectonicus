@@ -13,7 +13,7 @@ public class ArmorItem extends ItemBase
 {
 	public ArmorItem(final String id, ArmorTrimTag armorTrim, DisplayTag display)
 	{
-                super(id, 0, 0, 0, null);
+                super(id, null, 0, 0, 0, null);
 
                 if (armorTrim != null) {
                         tag.add(armorTrim);
