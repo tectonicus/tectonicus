@@ -582,13 +582,13 @@ function refreshChestMarkers(layer, markersVisible) {
                         const item_desc_key = `item.${namespace}.${itemId}.desc`;
                         const block_key = `block.${namespace}.${itemId}`;
                         
-                        let itemName = itemId;
+                        let itemNameAndDescription = itemId;
                         let isItem = true; // Assume we have an item
                         if (localizations) {
                                 if (localizations[item_key]) {
-                                        itemName = localizations[item_key];
+                                        itemNameAndDescription = localizations[item_key];
                                 } else if (localizations[block_key]) {
-                                        itemName = localizations[block_key];
+                                        itemNameAndDescription = localizations[block_key];
                                         isItem = false;
                                 } else {
                                         isItem = false;
@@ -596,11 +596,13 @@ function refreshChestMarkers(layer, markersVisible) {
                         }
                         
                         if (item.customName) {
-                                itemName = item.customName;
+                                itemNameAndDescription = renderMinecraftText(item.customName, 'name renamed');
+                        } else {
+                                itemNameAndDescription = renderMinecraftText(itemNameAndDescription, 'name');
                         }
                         
                         if (localizations && localizations[item_desc_key]) {
-                                itemName += '&#013;&#010;' + localizations[item_desc_key];
+                                itemNameAndDescription += '<br />' + renderMinecraftText(localizations[item_desc_key]);
                         }
                         
                         let pngName = itemId;
@@ -615,17 +617,17 @@ function refreshChestMarkers(layer, markersVisible) {
                         const top = 18+18*row;
                         const left = 8+18*col;
                         
-                        markerPopup += '<div style="top: ' + top + 'px; left: ' + left + 'px;">';
-                        markerPopup += '<img class="item" title="' + itemName + '" src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
+                        markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
+                        markerPopup += '<img src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
                         
                         if (item.count > 1) {
                                 markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
                         }
                         if (!isItem) {
-                                markerPopup += renderMinecraftText(itemName, 'item_name');
+                                markerPopup += renderMinecraftText(itemId, 'item_name');
                         }
                         
-                        markerPopup += '</div>';
+                        markerPopup += '<div class=item_description>' + itemNameAndDescription + '</div></div>';
                 }
                 
                 markerPopup += '</div></div>';
@@ -678,16 +680,20 @@ function findCharacterRowAndColumn(char) {
 function renderMinecraftText(text, className) {
     const characterWidth = 8;
     const characterHeight = 8;
+    
+    if (!className) {
+            className = '';
+    }
 
     let html = '<div class="mc_text_container ' + className + '">';
 
     for (let i = 0; i < text.length; i++) {
-        const position = findCharacterRowAndColumn(text[i]);
+            const position = findCharacterRowAndColumn(text[i]);
 
-        const left = position[0] * characterWidth;
-        const top = position[1] * characterHeight;
-        
-        html += `<div class="mc_char" style="background-position: -${left}px -${top}px;"></div>`;
+            const left = position[0] * characterWidth;
+            const top = position[1] * characterHeight;
+
+            html += `<div class="mc_char" style="background-position: -${left}px -${top}px;"></div>`;
     }
 
     html += '</div>';

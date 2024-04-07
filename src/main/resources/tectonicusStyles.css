@@ -51,9 +51,46 @@ html, body, #map {
         position: absolute;
 }
 
-.item {
+.item img {
         width: 16px;
         height: 16px;
+}
+
+.item .item_description {
+        position: absolute;
+        left: 19px;
+        top: -6px;
+        visibility: collapse;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        border-radius: 2px;
+        border: solid 1px rgba(0, 0, 0, 0.9);
+        padding: 3px;
+        outline: solid 1px #280459;
+        outline-offset: -2px;
+        line-height: 1px;
+}
+
+.item:hover .item_description {
+        visibility: visible;
+}
+
+.item_description .mc_text_container {
+        position: relative;
+        width: max-content;
+}
+
+.item_description .mc_char {
+        position: relative;
+        filter: contrast(25%) drop-shadow(1px 1px rgba(70, 70, 70, 0.9));
+}
+
+.item_description .name .mc_char {
+        filter: drop-shadow(1px 1px rgba(70, 70, 70, 0.9));
+}
+
+.item_description .renamed {
+        transform: skew(-20deg, 0);
 }
 
 .mc_text_container {
@@ -65,7 +102,7 @@ html, body, #map {
         display: inline-block;
         width: 6px;
         height: 8px;
-        filter: drop-shadow(1px 1px black);
+        filter: drop-shadow(1px 1px rgba(0, 0, 0, 0.9));
 }
 
 .item_count {
