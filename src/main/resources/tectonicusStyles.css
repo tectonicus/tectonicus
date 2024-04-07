@@ -40,7 +40,7 @@ html, body, #map {
 }
 
 .chest_scaler {
-        image-rendering: crisp-edges;   /* Use neirest neighbour to keep pixelated look */
+        image-rendering: pixelated;     /* Use neirest neighbour to keep pixelated look */
         scale: 3;                       /* Use integer scale for best look */
         position: absolute;
         transform-origin: top left;
