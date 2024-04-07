@@ -9,13 +9,13 @@
 
 package tectonicus.raw;
 
-public class DisplayTag
+public class EnchantmentTag
 {
-        final public String name;
-        final public Integer color;
+        final public String id;
+        final public Short level;
         
-        public DisplayTag(final String name, final Integer color) {
-                this.name = name;
-                this.color = color;
+        public EnchantmentTag(final String id, final Short level) {
+                this.id = id;
+                this.level = level;
         }
 }

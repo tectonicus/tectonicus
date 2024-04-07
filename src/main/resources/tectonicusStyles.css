@@ -56,6 +56,28 @@ html, body, #map {
         height: 16px;
 }
 
+@keyframes enchanted_glint {
+        0% {
+                background-position-x: 0px;
+                background-position-y: 0px;
+        }
+        100% {
+                background-position-x: -384px;
+                background-position-y: -256px;
+        }
+}
+
+.item .enchanted {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background-image: url('../Images/EnchantedGlint.png');
+        mix-blend-mode: color-dodge;
+        animation: enchanted_glint 32s linear infinite;
+}
+
 .item .item_description {
         position: absolute;
         left: 19px;

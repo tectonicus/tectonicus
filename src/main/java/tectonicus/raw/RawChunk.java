@@ -342,31 +342,9 @@ public class RawChunk {
                                                                 StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
                                                                 
                                                                 if (armorIdTag != null) {
-                                                                        ArmorTrimTag armorTrim = null;
-                                                                        DisplayTag display = null;
-                                                                        
-                                                                        
                                                                         CompoundTag tagTag = NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class);
-                                                                        if (tagTag != null) {
-                                                                                CompoundTag trimTag = NbtUtil.getChild(tagTag, "Trim", CompoundTag.class);
-                                                                                if (trimTag != null) {
-                                                                                        StringTag materialTag = NbtUtil.getChild(trimTag, "material", StringTag.class);
-                                                                                        StringTag patternTag = NbtUtil.getChild(trimTag, "pattern", StringTag.class);
-                                                                                        if (materialTag != null && patternTag != null) {
-                                                                                                armorTrim = new ArmorTrimTag(materialTag.getValue(), patternTag.getValue());
-                                                                                        }
-                                                                                }
-                                                                                
-                                                                                CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
-                                                                                if (displayTag != null) {
-                                                                                        IntTag colorTag = NbtUtil.getChild(displayTag, "color", IntTag.class);
-                                                                                        if (colorTag != null) {
-                                                                                                display = new DisplayTag(colorTag.getValue());
-                                                                                        }
-                                                                                }
-                                                                        }
-                                                                        
-                                                                        return new ArmorItem(armorIdTag.getValue(), armorTrim, display);
+                                                                        List<Object> tag = parseTagTag(tagTag);
+                                                                        return new ArmorItem(armorIdTag.getValue(), tag);
                                                                 }
                                                                 
                                                                 return null;
@@ -634,21 +612,8 @@ public class RawChunk {
                                                                         
                                                                         if (itemIdTag != null && itemCountTag != null && itemSlotTag != null)
                                                                         {
-                                                                                String customItemName = null;
-
-                                                                                final CompoundTag tagTag = NbtUtil.getChild(itemTag, "tag", CompoundTag.class);
-                                                                                if (tagTag != null) {
-                                                                                        final CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
-                                                                                        if (displayTag != null) {
-                                                                                                final StringTag nameTag = NbtUtil.getChild(displayTag, "Name", StringTag.class);
-                                                                                                if (nameTag != null) {
-                                                                                                        customItemName = nameTag.getValue();
-                                                                                                        customItemName = customItemName.replaceAll("\"", ""); // Replace " characters
-                                                                                                }
-                                                                                        }
-                                                                                }
-
-                                                                                items.add(new Item(itemIdTag.getValue(), customItemName, -1, itemCountTag.getValue(), itemSlotTag.getValue(), null));
+                                                                                List<Object> tag = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
+                                                                                items.add(new Item(itemIdTag.getValue(), -1, itemCountTag.getValue(), itemSlotTag.getValue(), tag));
                                                                         }
                                                                 }
 
@@ -695,6 +660,68 @@ public class RawChunk {
 			}
 		}
 	}
+        
+        private List<Object> parseTagTag(CompoundTag tagTag) {
+                List<Object> tag = new ArrayList<>();
+                
+                if (tagTag == null) {
+                        return tag;
+                }
+                
+                final CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
+                if (displayTag != null) {
+                        String name = null;
+                        Integer color = null;
+                    
+                        final StringTag nameTag = NbtUtil.getChild(displayTag, "Name", StringTag.class);
+                        if (nameTag != null) {
+                                name = nameTag.getValue().replaceAll("\"", ""); // Replace " characters
+                        }
+                        
+                        IntTag colorTag = NbtUtil.getChild(displayTag, "color", IntTag.class);
+                        if (colorTag != null) {
+                                color = colorTag.getValue();
+                        }
+                        
+                        tag.add(new DisplayTag(name, color));
+                }
+                
+                boolean isStoredEnchantments = true;
+                ListTag enchantmentsTag = NbtUtil.getChild(tagTag, "StoredEnchantments", ListTag.class);
+                if (enchantmentsTag == null) {
+                        isStoredEnchantments = false;
+                        enchantmentsTag = NbtUtil.getChild(tagTag, "Enchantments", ListTag.class);
+                }
+                
+                if (enchantmentsTag != null) {
+                        List<EnchantmentTag> enchantments = new ArrayList<>();
+                    
+                        for (var enchantmentTag : enchantmentsTag.getValue()) {
+                                if (enchantmentTag instanceof CompoundTag) {
+                                        StringTag idTag = NbtUtil.getChild((CompoundTag)enchantmentTag, "id", StringTag.class);
+                                        ShortTag levelTag = NbtUtil.getChild((CompoundTag)enchantmentTag, "lvl", ShortTag.class);
+                                        if (idTag != null && levelTag != null) {
+                                                enchantments.add(new EnchantmentTag(idTag.getValue(), levelTag.getValue()));
+                                        }
+                                }
+                        }
+                        
+                        tag.add(isStoredEnchantments
+                                ? new StoredEnchantmentsTag(enchantments)
+                                : new EnchantmentsTag(enchantments));
+                }
+                
+                CompoundTag trimTag = NbtUtil.getChild(tagTag, "Trim", CompoundTag.class);
+                if (trimTag != null) {
+                        StringTag materialTag = NbtUtil.getChild(trimTag, "material", StringTag.class);
+                        StringTag patternTag = NbtUtil.getChild(trimTag, "pattern", StringTag.class);
+                        if (materialTag != null && patternTag != null) {
+                                tag.add(new ArmorTrimTag(materialTag.getValue(), patternTag.getValue()));
+                        }
+                }
+                
+                return tag;
+        }
 
 	private String createKey(int x, int y, int z) {
 		return "x" + x + "y" + y + "z" + z;

@@ -620,6 +620,11 @@ function refreshChestMarkers(layer, markersVisible) {
                         markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
                         markerPopup += '<img src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
                         
+                        if (item.enchantments)
+                        {
+                                markerPopup += '<div class="enchanted" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
+                        }
+                        
                         if (item.count > 1) {
                                 markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
                         }

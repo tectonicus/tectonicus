@@ -9,13 +9,13 @@
 
 package tectonicus.raw;
 
-public class DisplayTag
+import java.util.List;
+
+public class EnchantmentsTag
 {
-        final public String name;
-        final public Integer color;
+        final public List<EnchantmentTag> enchantments;
         
-        public DisplayTag(final String name, final Integer color) {
-                this.name = name;
-                this.color = color;
+        public EnchantmentsTag(List<EnchantmentTag> enchantments) {
+                this.enchantments = enchantments;
         }
 }
