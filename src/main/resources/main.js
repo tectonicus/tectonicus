@@ -655,16 +655,15 @@ function destroyMarkers(markers) {
 	markers.length = 0;
 }
 
+const charMap = ' !"#$%&\'()*+,-./' +
+                '0123456789:;<=>?' +
+                '@ABCDEFGHIJKLMNO' +
+                'PQRSTUVWXYZ[\\]^_' +
+                '\'abcdefghijklmno' +
+                'pqrstuvwxyz{|}~';
+const charWidths = ['', '!\',.:;i|', '`l', '"()*I[]t()', '<>fk'];
 
 function findCharacterRowAndColumn(char) {
-    const charMap =
-            ' !"#$%&\'()*+,-./' +
-            '0123456789:;<=>?' +
-            '@ABCDEFGHIJKLMNO' +
-            'PQRSTUVWXYZ[\\]^_' +
-            '\'abcdefghijklmno' +
-            'pqrstuvwxyz{|}~';
-    
     const index = charMap.indexOf(char);
     
     if (index === -1) {
@@ -692,8 +691,17 @@ function renderMinecraftText(text, className) {
 
             const left = position[0] * characterWidth;
             const top = position[1] * characterHeight;
+            
+            let widthOverride = '';
+            
+            for (let j = 1; j <= 4; j++) {
+                    if (charWidths[j].indexOf(text[i])>=0) {
+                            widthOverride = ` width: ${j+1}px;`;
+                            break;
+                    }
+            }
 
-            html += `<div class="mc_char" style="background-position: -${left}px -${top}px;"></div>`;
+            html += `<div class="mc_char" style="background-position: -${left}px -${top}px;${widthOverride}"></div>`;
     }
 
     html += '</div>';
