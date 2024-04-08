@@ -25,6 +25,23 @@ var chestToggleControl = null;
 
 async function main()
 {
+        // Set handler to update position of item description tooltip to follow the mouse cursor
+        window.onmousemove = function (e) {
+            let itemDescriptionTooltip = document.querySelector(".item:hover .item_description");
+
+            if (itemDescriptionTooltip) {
+                let x = e.clientX,
+                    y = e.clientY;
+            
+                let rect = itemDescriptionTooltip.parentElement.getBoundingClientRect();
+
+                const scale = 3; // The scale should be set to the same scale as in CSS
+
+                itemDescriptionTooltip.style.top = (y - rect.top - 10) / scale + 'px';
+                itemDescriptionTooltip.style.left = (x - rect.left + 20) / scale + 'px';
+            }
+        };
+    
         // Get localizations asynchronously, so that initialization can continue while the file is being downloaded
         const localizationsResponsePromise = fetch('Scripts/localizations.json');
         
