@@ -550,6 +550,18 @@ function refreshPortalMarkers(layer, markersVisible) {
 	}
 }
 
+const hiddenEnchantmentLevels = [
+        'aqua_affinity',
+        'binding_curse',
+        'channeling',
+        'flame',
+        'infinity',
+        'mending',
+        'multishot',
+        'silk_touch',
+        'vanishing_curse'
+];
+
 function refreshChestMarkers(layer, markersVisible) {
 	destroyMarkers(chestMarkers);
         
@@ -578,31 +590,82 @@ function refreshChestMarkers(layer, markersVisible) {
                         const item = layer.chests[i].items[j];
                         
                         const [namespace, itemId] = item.id.split(":");
-                        const item_key = `item.${namespace}.${itemId}`;
-                        const item_desc_key = `item.${namespace}.${itemId}.desc`;
-                        const block_key = `block.${namespace}.${itemId}`;
+                        const itemKey = `item.${namespace}.${itemId}`;
+                        const itemDescKey = `item.${namespace}.${itemId}.desc`;
+                        const blockKey = `block.${namespace}.${itemId}`;
                         
                         let itemNameAndDescription = itemId;
                         let isItem = true; // Assume we have an item
                         if (localizations) {
-                                if (localizations[item_key]) {
-                                        itemNameAndDescription = localizations[item_key];
-                                } else if (localizations[block_key]) {
-                                        itemNameAndDescription = localizations[block_key];
+                                if (localizations[itemKey]) {
+                                        itemNameAndDescription = localizations[itemKey];
+                                } else if (localizations[blockKey]) {
+                                        itemNameAndDescription = localizations[blockKey];
                                         isItem = false;
                                 } else {
                                         isItem = false;
                                 }
                         }
                         
-                        if (item.customName) {
-                                itemNameAndDescription = renderMinecraftText(item.customName, 'name renamed');
-                        } else {
-                                itemNameAndDescription = renderMinecraftText(itemNameAndDescription, 'name');
+                        let additionalItemNameCssClass = '';
+                        if (item.enchantments) {
+                                additionalItemNameCssClass = ' enchanted';
                         }
                         
-                        if (localizations && localizations[item_desc_key]) {
-                                itemNameAndDescription += '<br />' + renderMinecraftText(localizations[item_desc_key]);
+                        if (item.customName) {
+                                itemNameAndDescription = renderMinecraftText(item.customName, 'name renamed' + additionalItemNameCssClass);
+                        } else {
+                                itemNameAndDescription = renderMinecraftText(itemNameAndDescription, 'name' + additionalItemNameCssClass);
+                        }
+                        
+                        if (localizations && localizations[itemDescKey]) {
+                                itemNameAndDescription += renderMinecraftText(localizations[itemDescKey]);
+                        }
+                        
+                        if (item.trim) {
+                                const labelKey = 'item.minecraft.smithing_template.upgrade';
+                                const [patternNamespace, patternId] = item.trim.pattern.split(":");
+                                const [materialNamespace, materialId] = item.trim.material.split(":");
+                                
+                                let label = 'Upgrade: ';
+                                let pattern = `trim_pattern.${patternNamespace}.${patternId}`;
+                                let material = `trim_material.${materialNamespace}.${materialId}`;
+                                
+                                if (localizations) {
+                                        if (localizations[labelKey]) {
+                                                label = localizations[labelKey];
+                                        }
+                                        if (localizations[pattern]) {
+                                                pattern = localizations[pattern];
+                                        }
+                                        if (localizations[material]) {
+                                                material = localizations[material];
+                                        }
+                                }
+                                
+                                itemNameAndDescription += renderMinecraftText(label);
+                                itemNameAndDescription += renderMinecraftText(' ' + pattern, materialId);
+                                itemNameAndDescription += renderMinecraftText(' ' + material, materialId);
+                        }
+                        
+                        if (item.enchantments) {
+                                for (const enchantment of item.enchantments) {
+                                        const additionalEnchantmentCssClass = enchantment.id.indexOf('curse') >= 0 ? 'curse' : '';
+                                        
+                                        const [enchantmentNamespace, enchantmentId] = enchantment.id.split(":");
+                                        const enchantmentKey = `enchantment.${enchantmentNamespace}.${enchantmentId}`;
+                                        let enchantmentName = enchantmentId;
+                                        if (localizations && localizations[enchantmentKey]) {
+                                                enchantmentName = localizations[enchantmentKey];
+                                        }
+                                        
+                                        let enchantmentLevel = '';
+                                        if (hiddenEnchantmentLevels.indexOf(enchantmentId) < 0) {
+                                                enchantmentLevel = ' ' + intToRoman(enchantment.level);
+                                        }
+                                        
+                                        itemNameAndDescription += renderMinecraftText(enchantmentName + enchantmentLevel, additionalEnchantmentCssClass);
+                                }
                         }
                         
                         let pngName = itemId;
@@ -622,7 +685,7 @@ function refreshChestMarkers(layer, markersVisible) {
                         
                         if (item.enchantments)
                         {
-                                markerPopup += '<div class="enchanted" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
+                                markerPopup += '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
                         }
                         
                         if (item.count > 1) {
@@ -658,6 +721,35 @@ function destroyMarkers(markers) {
 	}
 
 	markers.length = 0;
+}
+
+function intToRoman(num) {
+    const romanNumerals = {
+        M: 1000,
+        CM: 900,
+        D: 500,
+        CD: 400,
+        C: 100,
+        XC: 90,
+        L: 50,
+        XL: 40,
+        X: 10,
+        IX: 9,
+        V: 5,
+        IV: 4,
+        I: 1
+    };
+
+    let roman = '';
+
+    for (let key in romanNumerals) {
+        while (num >= romanNumerals[key]) {
+            roman += key;
+            num -= romanNumerals[key];
+        }
+    }
+
+    return roman;
 }
 
 const charMap = ' !"#$%&\'()*+,-./' +
@@ -706,7 +798,7 @@ function renderMinecraftText(text, className) {
                     }
             }
 
-            html += `<div class="mc_char" style="background-position: -${left}px -${top}px;${widthOverride}"></div>`;
+            html += `<div class="mc_char" style="mask-position: -${left}px -${top}px;${widthOverride}"></div>`;
     }
 
     html += '</div>';

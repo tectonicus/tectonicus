@@ -30,6 +30,7 @@ import tectonicus.configuration.Layer;
 import tectonicus.configuration.PlayerFilter;
 import tectonicus.configuration.SignFilterType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.DisplayTag;
@@ -499,6 +500,11 @@ public class OutputResourcesUtil {
                 int slot = item.slot;
                 slot += isLeft ? 3 * 9 : 0;
                 result += "\", count: " + item.count + ", slot: " + slot;
+                
+                ArmorTrimTag trimTag = item.getTag(ArmorTrimTag.class);
+                if (trimTag != null) {
+                        result += ", trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }";
+                }
                 
                 List<EnchantmentTag> enchantments = null;
                 

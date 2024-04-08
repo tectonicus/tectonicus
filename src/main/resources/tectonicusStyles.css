@@ -62,12 +62,12 @@ html, body, #map {
                 background-position-y: 0px;
         }
         100% {
-                background-position-x: -384px;
-                background-position-y: -256px;
+                background-position-x: -256px;
+                background-position-y: -384px;
         }
 }
 
-.item .enchanted {
+.item .enchanted_glint {
         width: 16px;
         height: 16px;
         position: absolute;
@@ -75,7 +75,7 @@ html, body, #map {
         bottom: 0;
         background-image: url('../Images/EnchantedGlint.png');
         mix-blend-mode: color-dodge;
-        animation: enchanted_glint 32s linear infinite;
+        animation: enchanted_glint 60s linear infinite;
 }
 
 .item .item_description {
@@ -87,10 +87,9 @@ html, body, #map {
         z-index: 1000;
         border-radius: 2px;
         border: solid 1px rgba(0, 0, 0, 0.9);
-        padding: 3px;
+        padding: 2px 3px 3px 3px;
         outline: solid 1px #280459;
         outline-offset: -2px;
-        line-height: 1px;
 }
 
 .item:hover .item_description {
@@ -100,15 +99,124 @@ html, body, #map {
 .item_description .mc_text_container {
         position: relative;
         width: max-content;
+        margin-top: 2px;
+}
+
+.item_description .name + * {
+        margin-top: 4px;
 }
 
 .item_description .mc_char {
         position: relative;
-        filter: contrast(25%) drop-shadow(1px 1px rgba(70, 70, 70, 0.9));
+        filter: drop-shadow(1px 1px rgb(41, 41, 41));
+}
+
+.item_description .mc_char::before {
+        background: #a8a8a8;
 }
 
 .item_description .name .mc_char {
-        filter: drop-shadow(1px 1px rgba(70, 70, 70, 0.9));
+        filter: drop-shadow(1px 1px rgb(70, 70, 70));
+}
+
+.item_description .name .mc_char::before {
+        background: #fcfcfc;
+}
+
+.item_description .enchanted .mc_char {
+        filter: drop-shadow(1px 1px rgb(21, 62, 62));
+}
+
+.item_description .enchanted .mc_char::before {
+        background: #54fcfc;
+}
+
+.item_description .curse .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 21, 21));
+}
+
+.item_description .curse .mc_char::before {
+        background: #fc5454;
+}
+
+.item_description .amethyst .mc_char {
+        filter: drop-shadow(1px 1px rgb(38, 23, 48));
+}
+
+.item_description .amethyst .mc_char::before {
+        background: #985bc4;
+}
+
+.item_description .copper .mc_char {
+        filter: drop-shadow(1px 1px rgb(44, 26, 19));
+}
+
+.item_description .copper .mc_char::before {
+        background: #b2674c;
+}
+
+.item_description .diamond .mc_char {
+        filter: drop-shadow(1px 1px rgb(27, 58, 51));
+}
+
+.item_description .diamond .mc_char::before {
+        background: #6de9cf;
+}
+
+.item_description .emerald .mc_char {
+        filter: drop-shadow(1px 1px rgb(4, 39, 13));
+}
+
+.item_description .emerald .mc_char::before {
+        background: #119e35;
+}
+
+.item_description .gold .mc_char {
+        filter: drop-shadow(1px 1px rgb(54, 43, 11));
+}
+
+.item_description .gold .mc_char::before {
+        background: #dbaf2c;
+}
+
+.item_description .iron .mc_char {
+        filter: drop-shadow(1px 1px rgb(58, 58, 58));
+}
+
+.item_description .iron .mc_char::before {
+        background: #e9e9e9;
+}
+
+.item_description .lapis .mc_char {
+        filter: drop-shadow(1px 1px rgb(16, 27, 37));
+}
+
+.item_description .lapis .mc_char::before {
+        background: #406d95;
+}
+
+.item_description .netherite .mc_char {
+        filter: drop-shadow(1px 1px rgb(24, 22, 22));
+}
+
+.item_description .netherite .mc_char::before {
+        background: #615758;
+}
+
+.item_description .quartz .mc_char {
+        filter: drop-shadow(1px 1px rgb(55, 52, 48));
+}
+
+.item_description .quartz .mc_char::before {
+        background: #e0d1c2;
+}
+
+.item_description .redstone .mc_char {
+        filter: drop-shadow(1px 1px rgb(37, 5, 1));
+}
+
+.item_description .redstone .mc_char::before {
+        background: #951607;
 }
 
 .item_description .renamed {
@@ -120,11 +228,23 @@ html, body, #map {
 }
 
 .mc_char {
-        background: url('../Images/Font.png') no-repeat;
-        display: inline-block;
         width: 6px;
         height: 8px;
-        filter: drop-shadow(1px 1px rgba(0, 0, 0, 0.9));
+        display: inline-block;
+        filter: drop-shadow(1px 1px rgb(62, 62, 62));
+}
+
+.mc_char::before {
+        content: '';
+        position: relative;
+        top: 0;
+        bottom: 0;
+        background: #fcfcfc;
+        mask: url('../Images/Font.png');
+        mask-position: inherit;
+        display: inherit;
+        width: inherit;
+        height: inherit;
 }
 
 .item_count {
@@ -149,5 +269,9 @@ html, body, #map {
 }
 
 .chest_name .mc_char {
-        filter: invert(80%);
+        filter: unset;
+}
+
+.chest_name .mc_char::before {
+        background: #3f3f3f;
 }
