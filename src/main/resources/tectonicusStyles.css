@@ -131,6 +131,30 @@ html, body, #map {
         background: #54fcfc;
 }
 
+.item_description .yellow .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 62, 21));
+}
+
+.item_description .yellow .mc_char::before {
+        background: #fcfc54;
+}
+
+.item_description .purple .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 21, 62));
+}
+
+.item_description .purple .mc_char::before {
+        background: #fc54fc;
+}
+
+.item_description .orange .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 41, 0));
+}
+
+.item_description .orange .mc_char::before {
+        background: #fca800;
+}
+
 .item_description .curse .mc_char {
         filter: drop-shadow(1px 1px rgb(62, 21, 21));
 }

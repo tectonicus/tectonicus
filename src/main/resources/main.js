@@ -562,6 +562,44 @@ const hiddenEnchantmentLevels = [
         'vanishing_curse'
 ];
 
+const colorizedNames = {
+        beacon: 'enchanted',
+        conduit: 'enchanted',
+        creeper_head: 'yellow',
+        dragon_breath: 'yellow',
+        dragon_egg: 'purple',
+        dragon_head: 'yellow',
+        enchanted_book: 'yellow',
+        enchanted_golden_apple: 'purple',
+        end_crystal: 'enchanted',
+        experience_bottle: 'yellow',
+        golden_apple: 'enchanted',
+        heart_of_the_sea: 'yellow',
+        music_disc_11: 'enchanted',
+        music_disc_13: 'enchanted',
+        music_disc_5: 'enchanted',
+        music_disc_blocks: 'enchanted',
+        music_disc_cat: 'enchanted',
+        music_disc_chirp: 'enchanted',
+        music_disc_far: 'enchanted',
+        music_disc_mall: 'enchanted',
+        music_disc_mellohi: 'enchanted',
+        music_disc_otherside: 'enchanted',
+        music_disc_pigstep: 'enchanted',
+        music_disc_relic: 'enchanted',
+        music_disc_stal: 'enchanted',
+        music_disc_strad: 'enchanted',
+        music_disc_wait: 'enchanted',
+        music_disc_ward: 'enchanted',
+        nether_star: 'yellow',
+        piglin_head: 'yellow',
+        player_head: 'yellow',
+        skeleton_skull: 'yellow',
+        totem_of_undying: 'yellow',
+        wither_skeleton_skull: 'yellow',
+        zombie_head: 'yellow'
+};
+
 function refreshChestMarkers(layer, markersVisible) {
 	destroyMarkers(chestMarkers);
         
@@ -611,16 +649,25 @@ function refreshChestMarkers(layer, markersVisible) {
                         if (item.enchantments) {
                                 additionalItemNameCssClass = ' enchanted';
                         }
+                        if (colorizedNames[itemId]) {
+                                additionalItemNameCssClass = ' ' + colorizedNames[itemId];
+                        }
                         
                         if (item.customName) {
-                                itemNameAndDescription = renderMinecraftText(item.customName, 'name renamed' + additionalItemNameCssClass);
+                                let colouredNameRegex = /\{translate:(.*?),color:(.*?)\}/;
+                                let matches = colouredNameRegex.exec(item.customName);
+                                if (matches) {
+                                        let resourceKey = matches[1];
+                                        let color = matches[2];
+                                        itemNameAndDescription = renderMinecraftText(localize(resourceKey), 'name renamed ' + color + additionalItemNameCssClass);
+                                } else {                                
+                                        itemNameAndDescription = renderMinecraftText(localize(item.customName), 'name renamed' + additionalItemNameCssClass);
+                                }
                         } else {
-                                itemNameAndDescription = renderMinecraftText(itemNameAndDescription, 'name' + additionalItemNameCssClass);
+                                itemNameAndDescription = renderMinecraftText(localize(itemNameAndDescription), 'name' + additionalItemNameCssClass);
                         }
                         
-                        if (localizations && localizations[itemDescKey]) {
-                                itemNameAndDescription += renderMinecraftText(localizations[itemDescKey]);
-                        }
+                        itemNameAndDescription += renderMinecraftText(localize(itemDescKey, null));
                         
                         if (item.trim) {
                                 const labelKey = 'item.minecraft.smithing_template.upgrade';
@@ -631,17 +678,9 @@ function refreshChestMarkers(layer, markersVisible) {
                                 let pattern = `trim_pattern.${patternNamespace}.${patternId}`;
                                 let material = `trim_material.${materialNamespace}.${materialId}`;
                                 
-                                if (localizations) {
-                                        if (localizations[labelKey]) {
-                                                label = localizations[labelKey];
-                                        }
-                                        if (localizations[pattern]) {
-                                                pattern = localizations[pattern];
-                                        }
-                                        if (localizations[material]) {
-                                                material = localizations[material];
-                                        }
-                                }
+                                label = localize(labelKey, label);
+                                pattern = localize(pattern, patternId);
+                                material = localize(material, materialId);
                                 
                                 itemNameAndDescription += renderMinecraftText(label);
                                 itemNameAndDescription += renderMinecraftText(' ' + pattern, materialId);
@@ -654,10 +693,7 @@ function refreshChestMarkers(layer, markersVisible) {
                                         
                                         const [enchantmentNamespace, enchantmentId] = enchantment.id.split(":");
                                         const enchantmentKey = `enchantment.${enchantmentNamespace}.${enchantmentId}`;
-                                        let enchantmentName = enchantmentId;
-                                        if (localizations && localizations[enchantmentKey]) {
-                                                enchantmentName = localizations[enchantmentKey];
-                                        }
+                                        const enchantmentName = localize(enchantmentKey, enchantmentId);
                                         
                                         let enchantmentLevel = '';
                                         if (hiddenEnchantmentLevels.indexOf(enchantmentId) < 0) {
@@ -673,6 +709,9 @@ function refreshChestMarkers(layer, markersVisible) {
                                 // Choose 1st frame for animated items
                                 pngName += '_00';
                         }
+                        if (itemId === 'enchanted_golden_apple') {
+                                pngName = 'golden_apple';
+                        }
                                                 
                         const row = Math.floor(item.slot/9);
                         const col = item.slot%9;
@@ -683,7 +722,7 @@ function refreshChestMarkers(layer, markersVisible) {
                         markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
                         markerPopup += '<img src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
                         
-                        if (item.enchantments)
+                        if (item.enchantments || itemId === 'enchanted_golden_apple')
                         {
                                 markerPopup += '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
                         }
@@ -721,6 +760,16 @@ function destroyMarkers(markers) {
 	}
 
 	markers.length = 0;
+}
+
+function localize(key, fallbackString) {
+        if (localizations && localizations[key]) {
+                return localizations[key];
+        }
+        if (fallbackString === undefined) {
+                fallbackString = key;
+        }
+        return fallbackString;
 }
 
 function intToRoman(num) {
@@ -774,6 +823,11 @@ function findCharacterRowAndColumn(char) {
 }
 
 function renderMinecraftText(text, className) {
+    if (!text)
+    {
+            return null;
+    }
+    
     const characterWidth = 8;
     const characterHeight = 8;
     
