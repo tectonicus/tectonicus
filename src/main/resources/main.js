@@ -11,7 +11,6 @@ function size(obj) {
 	return size;
 }
 
-var localizations = null;
 var layerControl = null;
 var compassControl = null;
 var viewToggleControl = null;
@@ -23,27 +22,15 @@ var portalToggleControl = null;
 var spawnToggleControl = null;
 var chestToggleControl = null;
 
-async function main()
-{
-        // Set handler to update position of item description tooltip to follow the mouse cursor
+async function mainAsync()
+{        
         window.onmousemove = function (e) {
-            let itemDescriptionTooltip = document.querySelector(".item:hover .item_description");
-
-            if (itemDescriptionTooltip) {
-                let x = e.clientX,
-                    y = e.clientY;
-            
-                let rect = itemDescriptionTooltip.parentElement.getBoundingClientRect();
-
-                const scale = 3; // The scale should be set to the same scale as in CSS
-
-                itemDescriptionTooltip.style.top = (y - rect.top - 10) / scale + 'px';
-                itemDescriptionTooltip.style.left = (x - rect.left + 20) / scale + 'px';
-            }
+                // Set handler to update position of item description tooltip to follow the mouse cursor
+                updateContainerItemTooltipPosition(e);
         };
     
-        // Get localizations asynchronously, so that initialization can continue while the file is being downloaded
-        const localizationsResponsePromise = fetch('Scripts/localizations.json');
+        // Initialize containers asynchronously, so that main initialization can continue in the meantime
+        const containersMainPromise = containersMainAsync();
         
 	let queryParams = getQueryParams();
 	let fragmentParams = getFragmentParams();
@@ -141,21 +128,8 @@ async function main()
 	// Add attribution control to the map
 	L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
 
-        // We have done all we can. Now we have to await the response and parse the JSON
-        let localizationsResponse;
-        try {
-                localizationsResponse = await localizationsResponsePromise;
-        } catch (NetworkError) {
-                console.error(
-                        'There was a network error during localizations fetch. ' +
-                        'If the map is open directly from the file system, the problem was probably that the request was denied due to CORS policy.' +
-                        'There is no way of overriding the browser CORS policy on Tectonicus side. Please host the map on web server.');
-        }
-        try {
-                localizations = await localizationsResponse.json();
-        } catch {
-                console.error('Unable to parse localizations');
-        }
+        // We have done all we can. Now we have to await the containers initialization
+        await containersMainPromise;
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
@@ -567,56 +541,6 @@ function refreshPortalMarkers(layer, markersVisible) {
 	}
 }
 
-const hiddenEnchantmentLevels = [
-        'aqua_affinity',
-        'binding_curse',
-        'channeling',
-        'flame',
-        'infinity',
-        'mending',
-        'multishot',
-        'silk_touch',
-        'vanishing_curse'
-];
-
-const colorizedNames = {
-        beacon: 'enchanted',
-        conduit: 'enchanted',
-        creeper_head: 'yellow',
-        dragon_breath: 'yellow',
-        dragon_egg: 'purple',
-        dragon_head: 'yellow',
-        enchanted_book: 'yellow',
-        enchanted_golden_apple: 'purple',
-        end_crystal: 'enchanted',
-        experience_bottle: 'yellow',
-        golden_apple: 'enchanted',
-        heart_of_the_sea: 'yellow',
-        music_disc_11: 'enchanted',
-        music_disc_13: 'enchanted',
-        music_disc_5: 'enchanted',
-        music_disc_blocks: 'enchanted',
-        music_disc_cat: 'enchanted',
-        music_disc_chirp: 'enchanted',
-        music_disc_far: 'enchanted',
-        music_disc_mall: 'enchanted',
-        music_disc_mellohi: 'enchanted',
-        music_disc_otherside: 'enchanted',
-        music_disc_pigstep: 'enchanted',
-        music_disc_relic: 'enchanted',
-        music_disc_stal: 'enchanted',
-        music_disc_strad: 'enchanted',
-        music_disc_wait: 'enchanted',
-        music_disc_ward: 'enchanted',
-        nether_star: 'yellow',
-        piglin_head: 'yellow',
-        player_head: 'yellow',
-        skeleton_skull: 'yellow',
-        totem_of_undying: 'yellow',
-        wither_skeleton_skull: 'yellow',
-        zombie_head: 'yellow'
-};
-
 function refreshChestMarkers(layer, markersVisible) {
 	destroyMarkers(chestMarkers);
         
@@ -634,128 +558,7 @@ function refreshChestMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
                 
-                let chest = layer.chests[i];
-                let markerPopup = chest.large
-                        ? '<div class="chest_container large"><div class="chest_scaler"><img class="chest large_chest" src="Images/LargeChest.png"/>'
-                        : '<div class="chest_container"><div class="chest_scaler"><img class="chest" src="Images/SmallChest.png"/>';
-
-                markerPopup += renderMinecraftText(chest.name, 'chest_name');
-                
-                for (j in chest.items) {
-                        const item = layer.chests[i].items[j];
-                        
-                        const [namespace, itemId] = item.id.split(":");
-                        const itemKey = `item.${namespace}.${itemId}`;
-                        const itemDescKey = `item.${namespace}.${itemId}.desc`;
-                        const blockKey = `block.${namespace}.${itemId}`;
-                        
-                        let itemNameAndDescription = itemId;
-                        let isItem = true; // Assume we have an item
-                        if (localizations) {
-                                if (localizations[itemKey]) {
-                                        itemNameAndDescription = localizations[itemKey];
-                                } else if (localizations[blockKey]) {
-                                        itemNameAndDescription = localizations[blockKey];
-                                        isItem = false;
-                                } else {
-                                        isItem = false;
-                                }
-                        }
-                        
-                        let additionalItemNameCssClass = '';
-                        if (item.enchantments) {
-                                additionalItemNameCssClass = ' enchanted';
-                        }
-                        if (colorizedNames[itemId]) {
-                                additionalItemNameCssClass = ' ' + colorizedNames[itemId];
-                        }
-                        
-                        if (item.customName) {
-                                let colouredNameRegex = /\{translate:(.*?),color:(.*?)\}/;
-                                let matches = colouredNameRegex.exec(item.customName);
-                                if (matches) {
-                                        let resourceKey = matches[1];
-                                        let color = matches[2];
-                                        itemNameAndDescription = renderMinecraftText(localize(resourceKey), 'name renamed ' + color + additionalItemNameCssClass);
-                                } else {                                
-                                        itemNameAndDescription = renderMinecraftText(localize(item.customName), 'name renamed' + additionalItemNameCssClass);
-                                }
-                        } else {
-                                itemNameAndDescription = renderMinecraftText(localize(itemNameAndDescription), 'name' + additionalItemNameCssClass);
-                        }
-                        
-                        itemNameAndDescription += renderMinecraftText(localize(itemDescKey, null));
-                        
-                        if (item.trim) {
-                                const labelKey = 'item.minecraft.smithing_template.upgrade';
-                                const [patternNamespace, patternId] = item.trim.pattern.split(":");
-                                const [materialNamespace, materialId] = item.trim.material.split(":");
-                                
-                                let label = 'Upgrade: ';
-                                let pattern = `trim_pattern.${patternNamespace}.${patternId}`;
-                                let material = `trim_material.${materialNamespace}.${materialId}`;
-                                
-                                label = localize(labelKey, label);
-                                pattern = localize(pattern, patternId);
-                                material = localize(material, materialId);
-                                
-                                itemNameAndDescription += renderMinecraftText(label);
-                                itemNameAndDescription += renderMinecraftText(' ' + pattern, materialId);
-                                itemNameAndDescription += renderMinecraftText(' ' + material, materialId);
-                        }
-                        
-                        if (item.enchantments) {
-                                for (const enchantment of item.enchantments) {
-                                        const additionalEnchantmentCssClass = enchantment.id.indexOf('curse') >= 0 ? 'curse' : '';
-                                        
-                                        const [enchantmentNamespace, enchantmentId] = enchantment.id.split(":");
-                                        const enchantmentKey = `enchantment.${enchantmentNamespace}.${enchantmentId}`;
-                                        const enchantmentName = localize(enchantmentKey, enchantmentId);
-                                        
-                                        let enchantmentLevel = '';
-                                        if (hiddenEnchantmentLevels.indexOf(enchantmentId) < 0) {
-                                                enchantmentLevel = ' ' + intToRoman(enchantment.level);
-                                        }
-                                        
-                                        itemNameAndDescription += renderMinecraftText(enchantmentName + enchantmentLevel, additionalEnchantmentCssClass);
-                                }
-                        }
-                        
-                        let pngName = itemId;
-                        if (itemId === 'compass' || itemId === 'clock' || itemId === 'recovery_compass') {
-                                // Choose 1st frame for animated items
-                                pngName += '_00';
-                        }
-                        if (itemId === 'enchanted_golden_apple') {
-                                pngName = 'golden_apple';
-                        }
-                                                
-                        const row = Math.floor(item.slot/9);
-                        const col = item.slot%9;
-                        
-                        const top = 18+18*row;
-                        const left = 8+18*col;
-                        
-                        markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-                        markerPopup += '<img src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
-                        
-                        if (item.enchantments || itemId === 'enchanted_golden_apple')
-                        {
-                                markerPopup += '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
-                        }
-                        
-                        if (item.count > 1) {
-                                markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
-                        }
-                        if (!isItem) {
-                                markerPopup += renderMinecraftText(itemId, 'item_name');
-                        }
-                        
-                        markerPopup += '<div class=item_description>' + itemNameAndDescription + '</div></div>';
-                }
-                
-                markerPopup += '</div></div>';
-
+                let markerPopup = createChestPopup(layer.chests[i]);
 		let marker = L.marker(point, { icon: icon }).bindPopup(
                         markerPopup,
                         { maxWidth: "auto" } // Fix for incorrect sizing of the popup
@@ -777,104 +580,6 @@ function destroyMarkers(markers) {
 	}
 
 	markers.length = 0;
-}
-
-function localize(key, fallbackString) {
-        if (localizations && localizations[key]) {
-                return localizations[key];
-        }
-        if (fallbackString === undefined) {
-                fallbackString = key;
-        }
-        return fallbackString;
-}
-
-function intToRoman(num) {
-    const romanNumerals = {
-        M: 1000,
-        CM: 900,
-        D: 500,
-        CD: 400,
-        C: 100,
-        XC: 90,
-        L: 50,
-        XL: 40,
-        X: 10,
-        IX: 9,
-        V: 5,
-        IV: 4,
-        I: 1
-    };
-
-    let roman = '';
-
-    for (let key in romanNumerals) {
-        while (num >= romanNumerals[key]) {
-            roman += key;
-            num -= romanNumerals[key];
-        }
-    }
-
-    return roman;
-}
-
-const charMap = ' !"#$%&\'()*+,-./' +
-                '0123456789:;<=>?' +
-                '@ABCDEFGHIJKLMNO' +
-                'PQRSTUVWXYZ[\\]^_' +
-                '\'abcdefghijklmno' +
-                'pqrstuvwxyz{|}~';
-const charWidths = ['', '!\',.:;i|', '`l', '"()*I[]t()', '<>fk'];
-
-function findCharacterRowAndColumn(char) {
-    const index = charMap.indexOf(char);
-    
-    if (index === -1) {
-            return [15, 3]; // ? character
-    }
-    
-    const col = index % 16;
-    const row = Math.floor(index / 16 + 2); // +2 because 1st 2 lines are empty
-    
-    return [col, row];
-}
-
-function renderMinecraftText(text, className) {
-    if (!text)
-    {
-            return null;
-    }
-    
-    const characterWidth = 8;
-    const characterHeight = 8;
-    
-    if (!className) {
-            className = '';
-    }
-
-    let html = '<div class="mc_text_container ' + className + '">';
-
-    for (let i = 0; i < text.length; i++) {
-            const position = findCharacterRowAndColumn(text[i]);
-
-            const left = position[0] * characterWidth;
-            const top = position[1] * characterHeight;
-            
-            let widthOverride = '';
-            
-            for (let j = 1; j <= 4; j++) {
-                    if (charWidths[j].indexOf(text[i])>=0) {
-                            widthOverride = ` width: ${j+1}px;`;
-                            break;
-                    }
-            }
-
-            html += `<div class="mc_char" style="mask-position: -${left}px -${top}px;${widthOverride}"></div>`;
-    }
-
-    html += '</div>';
-    
-    return html;
 }
 
 function ViewPos(layerId, worldPos, zoom, startPoint) {
@@ -916,4 +621,4 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	return new ViewPos(queryLayerId, queryPos, queryZoom, startPoint);
 }
 
-window.onload = main;
+window.onload = mainAsync;

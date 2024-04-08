@@ -669,6 +669,7 @@ public class OutputResourcesUtil {
 		scriptResources.add("marker.js");
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
+		scriptResources.add("containers.js");
 		scriptResources.add("main.js");
 		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, config, tileWidth, tileHeight);
 	}
