@@ -98,9 +98,9 @@ public class OutputResourcesUtil {
 			Sign sign = new Sign();
 			while (signs.hasNext()) {
 				signs.read(sign);
-				String message = "\"" + sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
+				String message = "\"" + sign.getText(0) + "/n" + sign.getText(1) + "/n" + sign.getText(2) + "/n" + sign.getText(3) + "\"";
 				if (map.getSignFilter().getType() == SignFilterType.OBEY)
-					message = "\"\\nOBEY\\n\\n\"";
+					message = "\"/nOBEY/n/n\"";
 
 				Map<String, String> signArgs = new HashMap<>();
 
@@ -488,22 +488,25 @@ public class OutputResourcesUtil {
 	}
         
         private static String outputItem(Item item, Boolean isLeft) {
-                String result = "\t\t\t{ id: \"" + item.id;
+                String result = "\t\t\t{ id: \"" + item.id + "\", ";
 
                 DisplayTag displayTag = item.getTag(DisplayTag.class);
                 if (displayTag != null) {
                         if (displayTag.name != null) {
-                                result += "\", customName: \"" + displayTag.name;
+                                result += "customName: \"" + displayTag.name + "\", ";
+                        }
+                        if (displayTag.color != null) {
+                                result += "color: " + displayTag.color + ", ";
                         }
                 }
 
                 int slot = item.slot;
                 slot += isLeft ? 3 * 9 : 0;
-                result += "\", count: " + item.count + ", slot: " + slot;
+                result += "count: " + item.count + ", slot: " + slot + ", ";
                 
                 ArmorTrimTag trimTag = item.getTag(ArmorTrimTag.class);
                 if (trimTag != null) {
-                        result += ", trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }";
+                        result += "trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }, ";
                 }
                 
                 List<EnchantmentTag> enchantments = null;
@@ -518,14 +521,14 @@ public class OutputResourcesUtil {
                 }
                 
                 if (enchantments != null) {
-                        result += ", enchantments: [";
+                        result += "enchantments: [";
                         for (var enchantment : enchantments) {
                                 result += "{ id: \"" + enchantment.id + "\", level: " + enchantment.level.toString() + " }, ";
                         }
-                        result += "]";
+                        result += "], ";
                 }
 
-                result += " },\r\n";
+                result += "},\r\n";
                 
                 return result;
         }
@@ -704,6 +707,10 @@ public class OutputResourcesUtil {
         private static void extractItemTextures(TexturePack texturePack, File targetDir) {
             	try {
                         for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/item")) {
+                                String fileName = Paths.get(file).getFileName().toString();
+                                extractFile(texturePack, file, new File(targetDir, fileName), true);
+                        }
+                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/trims/items")) {
                                 String fileName = Paths.get(file).getFileName().toString();
                                 extractFile(texturePack, file, new File(targetDir, fileName), true);
                         }

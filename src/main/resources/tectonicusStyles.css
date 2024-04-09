@@ -56,6 +56,21 @@ html, body, #map {
         height: 16px;
 }
 
+.item img ~ img {
+        position: absolute;
+        top: 0;
+        left: 0;
+}
+
+.item .color_layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        mix-blend-mode: multiply;
+}
+
 @keyframes enchanted_glint {
         0% {
                 background-position-x: 0px;
@@ -243,7 +258,9 @@ html, body, #map {
         background: #951607;
 }
 
-.item_description .renamed {
+.item_description .italic {
+        margin-left: 1px;
+        margin-right: 1px;
         transform: skew(-20deg, 0);
 }
 
