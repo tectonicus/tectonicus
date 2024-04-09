@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -201,8 +201,9 @@ public class World implements BlockContext
 		}
 
 		Version version = VERSION_UNKNOWN;
+		Minecraft.setChunkHeight(256);
 		boolean sectionArrayOffset = false;
-		String worldVersion = levelDat.getVersion();
+		String worldVersion = levelDat.getVersion(); //Version tag was added in 1.9
 		if (worldVersion != null) {
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
 			if (StringUtils.isNotEmpty(versionNumber)) {
@@ -211,14 +212,12 @@ public class World implements BlockContext
 				version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 			}
 
-			if (version.getNumVersion() < VERSION_18.getNumVersion() || dimension == Dimension.NETHER || dimension == Dimension.END) {
-				Minecraft.setChunkHeight(256);
-			} else {
+			if (version.getNumVersion() >= VERSION_18.getNumVersion() && dimension != Dimension.NETHER && dimension != Dimension.END) {
 				Minecraft.setChunkHeight(384);
 				sectionArrayOffset = true;
 			}
-			log.info("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		}
+		log.info("Current world max chunk height: {}", Minecraft.getChunkHeight());
 
 		worldInfo = new WorldInfo(version, sectionArrayOffset);
 

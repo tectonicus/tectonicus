@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -63,7 +63,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
 
@@ -561,15 +560,20 @@ public class OutputResourcesUtil {
 					writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
 				}
 
-				if (texturePack.fileExists("assets/minecraft/textures/item/oak_sign.png")) { //1.14 and higher use the new sign image
-					writeImage(texturePack.getItem("assets/minecraft/textures/item/oak_sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
-				} else {
-					writeImage(texturePack.getItem("assets/minecraft/textures/item/sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				String path = "assets/minecraft/textures/items/"; //path for 1.6 - 1.12
+				if (texturePackVersion.getNumVersion() >= VERSION_13.getNumVersion()) {
+					path = "assets/minecraft/textures/item/"; //path for 1.13+
 				}
-				writeImage(texturePack.getItem("assets/minecraft/textures/item/painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
-				writeImage(texturePack.getItem("assets/minecraft/textures/item/iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
-				writeImage(texturePack.getItem("assets/minecraft/textures/item/gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
-				writeImage(texturePack.getItem("assets/minecraft/textures/item/diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+
+				if (texturePack.fileExists(path + "oak_sign.png")) { //1.14 and higher use the new sign image
+					writeImage(texturePack.getItem(path + "oak_sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				} else {
+					writeImage(texturePack.getItem(path + "sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
+				}
+				writeImage(texturePack.getItem(path + "painting.png"), 32, 32, new File(imagesDir, "Picture.png"));
+				writeImage(texturePack.getItem(path + "iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
+				writeImage(texturePack.getItem(path + "gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
+				writeImage(texturePack.getItem(path + "diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
 
 				if (defaultSkin.equals("steve") || defaultSkin.equals("alex") || defaultSkin.equals("ari") || defaultSkin.equals("efe") || defaultSkin.equals("kai") || defaultSkin.equals("makena")
 						|| defaultSkin.equals("noor") || defaultSkin.equals("sunny") || defaultSkin.equals("zuri")) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -153,11 +153,11 @@ public class TexturePack
 			version = VERSION_13;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
 			version = VERSION_12;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/bed_head_top.png")) {
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/chorus_flower.png")) {
 			version = VERSIONS_9_TO_11;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
 			version = VERSION_RV;
-		} else if (packMcMeta.getPack().getPackVersion() == 1 && zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
+		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
 			version = VERSIONS_6_TO_8;
 		} else if (zipStack.hasFile("textures/blocks/activatorRail.png")) {
 			version = VERSION_5;
