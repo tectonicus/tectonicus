@@ -199,19 +199,6 @@ function createChestPopup(chest) {
                 const itemDescKey = `item.${namespace}.${itemId}.desc`;
                 const blockKey = `block.${namespace}.${itemId}`;
 
-                let itemNameAndDescription = itemId;
-                let isItem = true; // Assume we have an item
-                if (localizations) {
-                        if (localizations[itemKey]) {
-                                itemNameAndDescription = localizations[itemKey];
-                        } else if (localizations[blockKey]) {
-                                itemNameAndDescription = localizations[blockKey];
-                                isItem = false;
-                        } else {
-                                isItem = false;
-                        }
-                }
-
                 let additionalItemNameCssClass = '';
                 if (item.enchantments) {
                         additionalItemNameCssClass = ' enchanted';
@@ -220,6 +207,7 @@ function createChestPopup(chest) {
                         additionalItemNameCssClass = ' ' + colorizedNames[itemId];
                 }
 
+                let itemNameAndDescription;
                 if (item.customName) {
                         // Parse custom name. Possible values if matched:
                         //      {text:Custom name}
@@ -235,7 +223,8 @@ function createChestPopup(chest) {
                                 itemNameAndDescription = renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
                         }
                 } else {
-                        itemNameAndDescription = renderMinecraftText(localize(itemNameAndDescription), 'name' + additionalItemNameCssClass);
+                        itemNameAndDescription = localize(itemKey, localize(blockKey, itemId));
+                        itemNameAndDescription += renderMinecraftText(itemNameAndDescription, 'name' + additionalItemNameCssClass);
                 }
 
                 itemNameAndDescription += renderMinecraftText(localize(itemDescKey, null));
@@ -259,18 +248,15 @@ function createChestPopup(chest) {
                 const left = 8+18*col;
 
                 markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-                markerPopup += '<img src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
+                markerPopup += '<img src="Images/Items/' + pngName + '.png" />';
                 
                 markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);
                 markerPopup += getLeatherOverlay(item, itemId);
                 markerPopup += getArmorTrimOverlay(item, itemId);
-                markerPopup += getEnchantmentGlint(item, itemId, isItem, pngName);
+                markerPopup += getEnchantmentGlint(item, itemId, pngName);
 
                 if (item.count > 1) {
                         markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
-                }
-                if (!isItem) {
-                        markerPopup += renderMinecraftText(itemId, 'item_name');
                 }
 
                 markerPopup += '<div class=item_description>' + itemNameAndDescription + '</div></div>';
@@ -324,10 +310,10 @@ function getEnchantmentsDescription(item) {
         return result;
 }
 
-function getEnchantmentGlint(item, itemId, isItem, pngName) { // TODO: remove isItem and pngName after block items have their icons and placeholder icon is unnecessary
+function getEnchantmentGlint(item, itemId, pngName) {
         if (item.enchantments || itemId === 'enchanted_golden_apple')
         {
-                return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
+                return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + pngName + '\.png\'); mask-image: url(\'Images/Items/' + pngName + '.png\');"></div>';
         }
         return '';
 }
