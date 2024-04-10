@@ -11,7 +11,6 @@ function size(obj) {
 	return size;
 }
 
-var localizations = null;
 var layerControl = null;
 var compassControl = null;
 var viewToggleControl = null;
@@ -23,10 +22,15 @@ var portalToggleControl = null;
 var spawnToggleControl = null;
 var chestToggleControl = null;
 
-async function main()
-{
-        // Get localizations asynchronously, so that initialization can continue while the file is being downloaded
-        const localizationsResponsePromise = fetch('Scripts/localizations.json');
+async function mainAsync()
+{        
+        window.onmousemove = function (e) {
+                // Set handler to update position of item description tooltip to follow the mouse cursor
+                updateContainerItemTooltipPosition(e);
+        };
+    
+        // Initialize containers asynchronously, so that main initialization can continue in the meantime
+        const containersMainPromise = containersMainAsync();
         
 	let queryParams = getQueryParams();
 	let fragmentParams = getFragmentParams();
@@ -124,21 +128,8 @@ async function main()
 	// Add attribution control to the map
 	L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
 
-        // We have done all we can. Now we have to await the response and parse the JSON
-        let localizationsResponse;
-        try {
-                localizationsResponse = await localizationsResponsePromise;
-        } catch (NetworkError) {
-                console.error(
-                        'There was a network error during localizations fetch. ' +
-                        'If the map is open directly from the file system, the problem was probably that the request was denied due to CORS policy.' +
-                        'There is no way of overriding the browser CORS policy on Tectonicus side. Please host the map on web server.');
-        }
-        try {
-                localizations = await localizationsResponse.json();
-        } catch {
-                console.error('Unable to parse localizations');
-        }
+        // We have done all we can. Now we have to await the containers initialization
+        await containersMainPromise;
 
 	// Register these last so that they don't get called while we're still initialising
 	mymap.on('baselayerchange', onBaseLayerChange);
@@ -567,69 +558,7 @@ function refreshChestMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
                 
-                let chest = layer.chests[i];
-                let markerPopup = chest.large
-                        ? '<div class="chest_container large"><div class="chest_scaler"><img class="chest large_chest" src="Images/LargeChest.png"/>'
-                        : '<div class="chest_container"><div class="chest_scaler"><img class="chest" src="Images/SmallChest.png"/>';
-
-                markerPopup += renderMinecraftText(chest.name, 'chest_name');
-                
-                for (j in chest.items) {
-                        const item = layer.chests[i].items[j];
-                        
-                        const [namespace, itemId] = item.id.split(":");
-                        const item_key = `item.${namespace}.${itemId}`;
-                        const item_desc_key = `item.${namespace}.${itemId}.desc`;
-                        const block_key = `block.${namespace}.${itemId}`;
-                        
-                        let itemName = itemId;
-                        let isItem = true; // Assume we have an item
-                        if (localizations) {
-                                if (localizations[item_key]) {
-                                        itemName = localizations[item_key];
-                                } else if (localizations[block_key]) {
-                                        itemName = localizations[block_key];
-                                        isItem = false;
-                                } else {
-                                        isItem = false;
-                                }
-                        }
-                        
-                        if (item.customName) {
-                                itemName = item.customName;
-                        }
-                        
-                        if (localizations && localizations[item_desc_key]) {
-                                itemName += '&#013;&#010;' + localizations[item_desc_key];
-                        }
-                        
-                        let pngName = itemId;
-                        if (itemId === 'compass' || itemId === 'clock' || itemId === 'recovery_compass') {
-                                // Choose 1st frame for animated items
-                                pngName += '_00';
-                        }
-                                                
-                        const row = Math.floor(item.slot/9);
-                        const col = item.slot%9;
-                        
-                        const top = 18+18*row;
-                        const left = 8+18*col;
-                        
-                        markerPopup += '<div style="top: ' + top + 'px; left: ' + left + 'px;">';
-                        markerPopup += '<img class="item" title="' + itemName + '" src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
-                        
-                        if (item.count > 1) {
-                                markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
-                        }
-                        if (!isItem) {
-                                markerPopup += renderMinecraftText(itemName, 'item_name');
-                        }
-                        
-                        markerPopup += '</div>';
-                }
-                
-                markerPopup += '</div></div>';
-
+                let markerPopup = createChestPopup(layer.chests[i]);
 		let marker = L.marker(point, { icon: icon }).bindPopup(
                         markerPopup,
                         { maxWidth: "auto" } // Fix for incorrect sizing of the popup
@@ -651,48 +580,6 @@ function destroyMarkers(markers) {
 	}
 
 	markers.length = 0;
-}
-
-
-function findCharacterRowAndColumn(char) {
-    const charMap =
-            ' !"#$%&\'()*+,-./' +
-            '0123456789:;<=>?' +
-            '@ABCDEFGHIJKLMNO' +
-            'PQRSTUVWXYZ[\\]^_' +
-            '\'abcdefghijklmno' +
-            'pqrstuvwxyz{|}~';
-    
-    const index = charMap.indexOf(char);
-    
-    if (index === -1) {
-            return [15, 3]; // ? character
-    }
-    
-    const col = index % 16;
-    const row = Math.floor(index / 16 + 2); // +2 because 1st 2 lines are empty
-    
-    return [col, row];
-}
-
-function renderMinecraftText(text, className) {
-    const characterWidth = 8;
-    const characterHeight = 8;
-
-    let html = '<div class="mc_text_container ' + className + '">';
-
-    for (let i = 0; i < text.length; i++) {
-        const position = findCharacterRowAndColumn(text[i]);
-
-        const left = position[0] * characterWidth;
-        const top = position[1] * characterHeight;
-        
-        html += `<div class="mc_char" style="background-position: -${left}px -${top}px;"></div>`;
-    }
-
-    html += '</div>';
-    
-    return html;
 }
 
 function ViewPos(layerId, worldPos, zoom, startPoint) {
@@ -734,4 +621,4 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	return new ViewPos(queryLayerId, queryPos, queryZoom, startPoint);
 }
 
-window.onload = main;
+window.onload = mainAsync;

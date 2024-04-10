@@ -40,7 +40,7 @@ html, body, #map {
 }
 
 .chest_scaler {
-        image-rendering: crisp-edges;   /* Use neirest neighbour to keep pixelated look */
+        image-rendering: pixelated;     /* Use neirest neighbour to keep pixelated look */
         scale: 3;                       /* Use integer scale for best look */
         position: absolute;
         transform-origin: top left;
@@ -51,9 +51,217 @@ html, body, #map {
         position: absolute;
 }
 
-.item {
+.item img {
         width: 16px;
         height: 16px;
+}
+
+.item img ~ img {
+        position: absolute;
+        top: 0;
+        left: 0;
+}
+
+.item .color_layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        mix-blend-mode: multiply;
+}
+
+@keyframes enchanted_glint {
+        0% {
+                background-position-x: 0px;
+                background-position-y: 0px;
+        }
+        100% {
+                background-position-x: -256px;
+                background-position-y: -384px;
+        }
+}
+
+.item .enchanted_glint {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background-image: url('../Images/EnchantedGlint.png');
+        mix-blend-mode: color-dodge;
+        animation: enchanted_glint 60s linear infinite;
+}
+
+.item .item_description {
+        position: absolute;
+        left: 19px;
+        top: -6px;
+        visibility: collapse;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        border-radius: 2px;
+        border: solid 1px rgba(0, 0, 0, 0.9);
+        padding: 2px 3px 3px 3px;
+        outline: solid 1px #280459;
+        outline-offset: -2px;
+}
+
+.item:hover .item_description {
+        visibility: visible;
+}
+
+.item_description .mc_text_container {
+        position: relative;
+        width: max-content;
+        margin-top: 2px;
+}
+
+.item_description .name + * {
+        margin-top: 4px;
+}
+
+.item_description .mc_char {
+        position: relative;
+        filter: drop-shadow(1px 1px rgb(41, 41, 41));
+}
+
+.item_description .mc_char::before {
+        background: #a8a8a8;
+}
+
+.item_description .name .mc_char {
+        filter: drop-shadow(1px 1px rgb(70, 70, 70));
+}
+
+.item_description .name .mc_char::before {
+        background: #fcfcfc;
+}
+
+.item_description .enchanted .mc_char {
+        filter: drop-shadow(1px 1px rgb(21, 62, 62));
+}
+
+.item_description .enchanted .mc_char::before {
+        background: #54fcfc;
+}
+
+.item_description .yellow .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 62, 21));
+}
+
+.item_description .yellow .mc_char::before {
+        background: #fcfc54;
+}
+
+.item_description .purple .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 21, 62));
+}
+
+.item_description .purple .mc_char::before {
+        background: #fc54fc;
+}
+
+.item_description .orange .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 41, 0));
+}
+
+.item_description .orange .mc_char::before {
+        background: #fca800;
+}
+
+.item_description .curse .mc_char {
+        filter: drop-shadow(1px 1px rgb(62, 21, 21));
+}
+
+.item_description .curse .mc_char::before {
+        background: #fc5454;
+}
+
+.item_description .amethyst .mc_char {
+        filter: drop-shadow(1px 1px rgb(38, 23, 48));
+}
+
+.item_description .amethyst .mc_char::before {
+        background: #985bc4;
+}
+
+.item_description .copper .mc_char {
+        filter: drop-shadow(1px 1px rgb(44, 26, 19));
+}
+
+.item_description .copper .mc_char::before {
+        background: #b2674c;
+}
+
+.item_description .diamond .mc_char {
+        filter: drop-shadow(1px 1px rgb(27, 58, 51));
+}
+
+.item_description .diamond .mc_char::before {
+        background: #6de9cf;
+}
+
+.item_description .emerald .mc_char {
+        filter: drop-shadow(1px 1px rgb(4, 39, 13));
+}
+
+.item_description .emerald .mc_char::before {
+        background: #119e35;
+}
+
+.item_description .gold .mc_char {
+        filter: drop-shadow(1px 1px rgb(54, 43, 11));
+}
+
+.item_description .gold .mc_char::before {
+        background: #dbaf2c;
+}
+
+.item_description .iron .mc_char {
+        filter: drop-shadow(1px 1px rgb(58, 58, 58));
+}
+
+.item_description .iron .mc_char::before {
+        background: #e9e9e9;
+}
+
+.item_description .lapis .mc_char {
+        filter: drop-shadow(1px 1px rgb(16, 27, 37));
+}
+
+.item_description .lapis .mc_char::before {
+        background: #406d95;
+}
+
+.item_description .netherite .mc_char {
+        filter: drop-shadow(1px 1px rgb(24, 22, 22));
+}
+
+.item_description .netherite .mc_char::before {
+        background: #615758;
+}
+
+.item_description .quartz .mc_char {
+        filter: drop-shadow(1px 1px rgb(55, 52, 48));
+}
+
+.item_description .quartz .mc_char::before {
+        background: #e0d1c2;
+}
+
+.item_description .redstone .mc_char {
+        filter: drop-shadow(1px 1px rgb(37, 5, 1));
+}
+
+.item_description .redstone .mc_char::before {
+        background: #951607;
+}
+
+.item_description .italic {
+        margin-left: 1px;
+        margin-right: 1px;
+        transform: skew(-20deg, 0);
 }
 
 .mc_text_container {
@@ -61,11 +269,23 @@ html, body, #map {
 }
 
 .mc_char {
-        background: url('../Images/Font.png') no-repeat;
-        display: inline-block;
         width: 6px;
         height: 8px;
-        filter: drop-shadow(1px 1px black);
+        display: inline-block;
+        filter: drop-shadow(1px 1px rgb(62, 62, 62));
+}
+
+.mc_char::before {
+        content: '';
+        position: relative;
+        top: 0;
+        bottom: 0;
+        background: #fcfcfc;
+        mask: url('../Images/Font.png');
+        mask-position: inherit;
+        display: inherit;
+        width: inherit;
+        height: inherit;
 }
 
 .item_count {
@@ -90,5 +310,9 @@ html, body, #map {
 }
 
 .chest_name .mc_char {
-        filter: invert(80%);
+        filter: unset;
+}
+
+.chest_name .mc_char::before {
+        background: #3f3f3f;
 }

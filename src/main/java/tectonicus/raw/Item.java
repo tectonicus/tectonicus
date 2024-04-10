@@ -13,8 +13,8 @@ import java.util.List;
 
 public class Item extends ItemBase
 {
-	public Item(final String id, final String customName, final int damage, final int count, final int slot, final List<Object> tag)
+	public Item(final String id, final int damage, final int count, final int slot, final List<Object> tag)
 	{
-		super(id, customName, damage, count, slot, tag);
+		super(id, damage, count, slot, tag);
 	}
 }
