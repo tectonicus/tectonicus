@@ -15,16 +15,14 @@ import java.util.List;
 public abstract class ItemBase
 {
 	public String id;
-        public String customName;
 	public int damage;
 	public int count;
 	public int slot;
         public List<Object> tag;
 	
-	public ItemBase(final String id, final String customName, final int damage, final int count, final int slot, List<Object> tag)
+	public ItemBase(final String id, final int damage, final int count, final int slot, List<Object> tag)
 	{
 		this.id = id;
-                this.customName = customName;
 		this.damage = damage;
 		this.count = count;
 		this.slot = slot;

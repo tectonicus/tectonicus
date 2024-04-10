@@ -9,17 +9,12 @@
 
 package tectonicus.raw;
 
+import java.util.List;
+
 public class ArmorItem extends ItemBase
 {
-	public ArmorItem(final String id, ArmorTrimTag armorTrim, DisplayTag display)
+	public ArmorItem(final String id, List<Object> tag)
 	{
-                super(id, null, 0, 0, 0, null);
-
-                if (armorTrim != null) {
-                        tag.add(armorTrim);
-                }
-                if (display != null) {
-                        tag.add(display);
-                }
+                super(id, 0, 0, 0, tag);
 	}
 }

@@ -32,11 +32,16 @@ import tectonicus.configuration.SignFilterType;
 import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
+import tectonicus.raw.DisplayTag;
+import tectonicus.raw.EnchantmentTag;
+import tectonicus.raw.EnchantmentsTag;
 import tectonicus.raw.Player;
+import tectonicus.raw.Item;
+import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
-import tectonicus.texture.ZipStack;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.subset.WorldSubset;
@@ -95,9 +100,9 @@ public class OutputResourcesUtil {
 			Sign sign = new Sign();
 			while (signs.hasNext()) {
 				signs.read(sign);
-				String message = "\"" + sign.getText(0) + "\\n" + sign.getText(1) + "\\n" + sign.getText(2) + "\\n" + sign.getText(3) + "\"";
+				String message = "\"" + sign.getText(0) + "/n" + sign.getText(1) + "/n" + sign.getText(2) + "/n" + sign.getText(3) + "\"";
 				if (map.getSignFilter().getType() == SignFilterType.OBEY)
-					message = "\"\\nOBEY\\n\\n\"";
+					message = "\"/nOBEY/n/n\"";
 
 				Map<String, String> signArgs = new HashMap<>();
 
@@ -433,11 +438,7 @@ public class OutputResourcesUtil {
 
                                 String items = "[\r\n";
                                 for (var item : entity.getItems()) {
-                                        items += "\t\t\t{ id: \"" + item.id;
-                                        if (item.customName != null) {
-                                                items += "\", customName: \"" + item.customName;
-                                        }
-                                        items += "\", count: " + item.count + ", slot: " + item.slot + " },\r\n";
+                                        items += outputItem(item, false);
                                 }
                                 if ("right".equals(entity.getType())) {
                                         // Find right part and add its items
@@ -465,11 +466,7 @@ public class OutputResourcesUtil {
                                                      continue;
                                                 }
                                                 for (var item : left.getItems()) {
-                                                        items += "\t\t\t{ id: \"" + item.id;
-                                                        if (item.customName != null) {
-                                                                items += "\", customName: \"" + item.customName;
-                                                        }
-                                                        items += "\", count: " + item.count + ", slot: " + (item.slot+3*9) + " },\r\n";
+                                                    items += outputItem(item, true);
                                                 }
                                                 break;
                                         }
@@ -491,6 +488,52 @@ public class OutputResourcesUtil {
 			e.printStackTrace();
 		}
 	}
+        
+        private static String outputItem(Item item, Boolean isLeft) {
+                String result = "\t\t\t{ id: \"" + item.id + "\", ";
+
+                DisplayTag displayTag = item.getTag(DisplayTag.class);
+                if (displayTag != null) {
+                        if (displayTag.name != null) {
+                                result += "customName: \"" + displayTag.name + "\", ";
+                        }
+                        if (displayTag.color != null) {
+                                result += "color: " + displayTag.color + ", ";
+                        }
+                }
+
+                int slot = item.slot;
+                slot += isLeft ? 3 * 9 : 0;
+                result += "count: " + item.count + ", slot: " + slot + ", ";
+                
+                ArmorTrimTag trimTag = item.getTag(ArmorTrimTag.class);
+                if (trimTag != null) {
+                        result += "trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }, ";
+                }
+                
+                List<EnchantmentTag> enchantments = null;
+                
+                EnchantmentsTag enchantmentsTag = item.getTag(EnchantmentsTag.class);
+                if (enchantmentsTag != null) {
+                        enchantments = enchantmentsTag.enchantments;
+                }
+                StoredEnchantmentsTag storedEnchantmentsTag = item.getTag(StoredEnchantmentsTag.class);
+                if (storedEnchantmentsTag != null) {
+                        enchantments = storedEnchantmentsTag.enchantments;
+                }
+                
+                if (enchantments != null) {
+                        result += "enchantments: [";
+                        for (var enchantment : enchantments) {
+                                result += "{ id: \"" + enchantment.id + "\", level: " + enchantment.level.toString() + " }, ";
+                        }
+                        result += "], ";
+                }
+
+                result += "},\r\n";
+                
+                return result;
+        }
 
 	public static void testOutputItemIcons(Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser, ItemRegistry itemRegistry) {
 		BlockRegistry registry = world.getModelRegistry();
@@ -635,7 +678,8 @@ public class OutputResourcesUtil {
 			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
                 
-                // Extract all item textures
+                // Extract textures for items in containers
+                extractFile(texturePack, "assets/minecraft/textures/misc/enchanted_glint_item.png", new File(imagesDir, "EnchantedGlint.png"), true);
                 extractItemTextures(texturePack, itemsDir);
 
 		// Extract Leaflet resources
@@ -643,12 +687,13 @@ public class OutputResourcesUtil {
 		extractMapResources(scriptsDir);
                 
                 // Extract localized texts
-                extractLocalizedTexts(texturePack, scriptsDir);
+                extractFile(texturePack, "assets/minecraft/lang/en_us.json", new File(scriptsDir, "localizations.json"), false);
 
 		List<String> scriptResources = new ArrayList<>();
 		scriptResources.add("marker.js");
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
+		scriptResources.add("containers.js");
 		scriptResources.add("main.js");
 		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, config, tileWidth, tileHeight);
 	}
@@ -667,23 +712,35 @@ public class OutputResourcesUtil {
 			e.printStackTrace();
 		}
 	}
-        
-        public static void extractItemTextures(TexturePack texturePack, File targetDir) {
-            	try {
-                        ZipStack zipStack = texturePack.getZipStack();
-                        for (var file : zipStack.listFilesInDirectory("assets/minecraft/textures/item")) {
-                                try (var stream = zipStack.getStream(file)) {
-                                        String fileName = Paths.get(file).getFileName().toString();
-                                        File outputFile = new File(targetDir, fileName);
+
+        private void extractFile(TexturePack texturePack, String filepath, File outputFile, boolean minecraftJarLoaded) {
+                if (texturePack.fileExists(filepath)) {
+                        try {
+                                try (var stream = texturePack.getZipStack().getStream(filepath, minecraftJarLoaded)) {
                                         Files.copy(stream, outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                                 }
+                        } catch (IOException e) {
+                                e.printStackTrace();
+                        }
+                }
+        }
+        
+        private static void extractItemTextures(TexturePack texturePack, File targetDir) {
+            	try {
+                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/item")) {
+                                String fileName = Paths.get(file).getFileName().toString();
+                                extractFile(texturePack, file, new File(targetDir, fileName), true);
+                        }
+                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/trims/items")) {
+                                String fileName = Paths.get(file).getFileName().toString();
+                                extractFile(texturePack, file, new File(targetDir, fileName), true);
                         }
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
         }
 
-	public static void extractMapResources(File scriptsDir) {
+	private static void extractMapResources(File scriptsDir) {
 		scriptsDir.mkdirs();
 		File scriptImagesDir = new File(scriptsDir, "images");
 		scriptImagesDir.mkdirs();
@@ -702,19 +759,6 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
 	}
         
-        private void extractLocalizedTexts(TexturePack texturePack, File scriptsDir) {
-                if (texturePack.fileExists("assets/minecraft/lang/en_us.json")) {
-                        try {
-                                try (var stream = texturePack.getZipStack().getStream("assets/minecraft/lang/en_us.json", false)) {
-                                        File outputFile = new File(scriptsDir, "localizations.json");
-                                        Files.copy(stream, outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                                }
-                        } catch (IOException e) {
-                                e.printStackTrace();
-                        }
-                }
-        }
-
 	private void outputMergedJs(File outFile, List<String> inputResources, int numZoomLevels, Configuration config, int tileWidth, int tileHeight)
 	{
 		InputStream in = null;
