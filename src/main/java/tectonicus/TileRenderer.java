@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -28,6 +28,7 @@ import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
+import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -74,6 +75,7 @@ import static tectonicus.util.OutputResourcesUtil.outputRenderStats;
 import static tectonicus.util.OutputResourcesUtil.outputRespawnAnchors;
 import static tectonicus.util.OutputResourcesUtil.outputSigns;
 import static tectonicus.util.OutputResourcesUtil.outputViews;
+import static tectonicus.util.OutputResourcesUtil.testOutputItemIcons;
 
 @Log4j2
 public class TileRenderer
@@ -268,6 +270,7 @@ public class TileRenderer
 				// Setup per-layer config
 				setupWorldForLayer(layer, world);
 				
+				
 				// Set new tile cache for this layer
 				String optionString = FileTileCache.calcOptionsString(config);
 				TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
@@ -288,7 +291,9 @@ public class TileRenderer
 				bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
 				tileCache.closeTileCache();
 			}
-			
+			ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
+			testOutputItemIcons(config, map, world, rasteriser, itemRegistry);
+
 			outputIcons(exportDir, config, map, world, rasteriser);
 			
 			// Output world stats

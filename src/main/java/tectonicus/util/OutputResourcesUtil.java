@@ -29,6 +29,8 @@ import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.PlayerFilter;
 import tectonicus.configuration.SignFilterType;
+import tectonicus.itemregistry.ItemModel;
+import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
@@ -483,6 +485,25 @@ public class OutputResourcesUtil {
 
 				if (worldSubset.containsBlock(entity.getX(), entity.getZ())) {
 					jsWriter.write(chestArgs);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void testOutputItemIcons(Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser, ItemRegistry itemRegistry) {
+		BlockRegistry registry = world.getModelRegistry();
+		TexturePack texturePack = world.getTexturePack();
+		Version version = world.getWorldInfo().getVersion();
+
+		try {
+			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
+			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
+				String modelName = entry.getValue().getParent();
+				if (modelName.contains("block/")) {
+					System.out.println("Rendering icon for: " + modelName);
+					itemRenderer.renderBlockModelName(new File(args.getOutputDir(), "Images/Items/" + entry.getKey() + ".png"), registry, texturePack, modelName);
 				}
 			}
 		} catch (Exception e) {
