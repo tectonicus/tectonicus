@@ -543,20 +543,72 @@ public class OutputResourcesUtil {
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
-				String modelName = entry.getValue().getParent();
-                                
+                                final String entryKey = entry.getKey();
+                                final ItemModel itemModel = entry.getValue();
+                                final File outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + ".png");
+
+                                System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
+                                log.trace("\tRendering icon for: " + entryKey);
+
+                                // Find ultimate predecessor
+                                String modelName = itemModel.getParent();
+                                while (true) {
+                                        String parentKey = StringUtils.removeStart(modelName, "minecraft:");
+                                        parentKey = StringUtils.removeStart(parentKey, "item/");
+                                        if (!itemRegistry.getModels().containsKey(parentKey))
+                                        {
+                                                break;
+                                        } 
+                                        modelName = itemRegistry.getModels().get(parentKey).getParent();
+                                }
                                 if (modelName == null) {
                                         // Do not crash for blocks without parent (Air)
                                         continue;
                                 }
                                 
-                                File outFile = new File(args.getOutputDir(), "Images/Items/" + entry.getKey() + ".png");
+                                // Fix for buttons, fences and pistons
+                                if (modelName.contains("_inventory")) {
+                                        modelName = StringUtils.removeEnd(modelName, "_inventory");
+                                        if (modelName.contains("fence") || modelName.contains("wall")) {
+                                                modelName += "_post";
+                                        }
+                                }
                                 
-				if (modelName.contains("block/")) {
-					System.out.print("\tRendering icon for: " + modelName + "                    \r"); //prints a carriage return after line
-                                        log.trace("\tRendering icon for: " + modelName);
-					itemRenderer.renderBlockModelName(outFile, blockRegistry, texturePack, modelName);
-				}
+                                // Some items need special handling. Namely beds, fence/wall posts and builtin entities
+                                if (modelName.endsWith("_post")) {
+                                        // TODO: build a fence segment with 2 posts or wall segment with 1 post
+                                        //continue;
+                                }
+                                if (modelName.endsWith("builtin/entity")) {
+                                        modelName = "minecraft:" + entryKey;
+                                        if (entryKey.endsWith("_bed")) {
+                                                itemRenderer.renderBed(outFile, blockTypeRegistry, texturePack, modelName);
+                                        } else if (entryKey.endsWith("_head") || entryKey.endsWith("_skull")) {
+                                                itemRenderer.renderSkull(outFile, blockTypeRegistry, texturePack, modelName);
+                                        }
+                                        // TODO: skulls, chests, ender chests, conduits, decorated pots, banners, shields, shulker boxes...
+                                        continue;
+                                }
+                                
+                                // Items that are just 2d textures
+                                if (modelName.endsWith("builtin/generated")) {
+                                        final Map<String, String> textures = itemModel.getTextures();
+                                        if (textures != null && textures.containsKey("layer0")) {
+                                                // TODO: handle more than 1 layer? composit the armor trim here and simplify HTML+CSS?
+                                                // TODO: vines, fern, maybe also grass and more need to be tinted
+                                                final String[] layer0Texture = textures.get("layer0").split(":");
+                                                final String namespace = layer0Texture.length == 1 ? "minecraft" : layer0Texture[0];
+                                                final String textureId = layer0Texture.length == 1 ? layer0Texture[0] : layer0Texture[1];
+                                                extractFile(texturePack, "assets/" + namespace + "/textures/" + textureId + ".png", outFile, true);
+                                                continue;
+                                        }
+                                }
+                                
+                                // Rest of the items
+                                itemRenderer.renderBlockModelName(outFile, blockRegistry, texturePack, modelName);
+                                
+                                
+                                // TODO Use ItemModel.transform to get translation, scaling and rotation for each item if they are defined
 			}
                         System.out.println();
 		} catch (Exception e) {
@@ -580,7 +632,7 @@ public class OutputResourcesUtil {
 				properties.put("facing", "south");
 				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
-			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
+                        itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
@@ -690,7 +742,7 @@ public class OutputResourcesUtil {
                 
                 // Extract textures for items in containers
                 extractFile(texturePack, "assets/minecraft/textures/misc/enchanted_glint_item.png", new File(imagesDir, "EnchantedGlint.png"), true);
-                extractItemTextures(texturePack, itemsDir);
+                extractTrimTextures(texturePack, itemsDir);
 
 		// Extract Leaflet resources
                 File scriptsDir = new File(exportDir, "Scripts");
@@ -735,12 +787,8 @@ public class OutputResourcesUtil {
                 }
         }
         
-        private static void extractItemTextures(TexturePack texturePack, File targetDir) {
+        private static void extractTrimTextures(TexturePack texturePack, File targetDir) {
             	try {
-                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/item")) {
-                                String fileName = Paths.get(file).getFileName().toString();
-                                extractFile(texturePack, file, new File(targetDir, fileName), true);
-                        }
                         for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/trims/items")) {
                                 String fileName = Paths.get(file).getFileName().toString();
                                 extractFile(texturePack, file, new File(targetDir, fileName), true);

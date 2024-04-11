@@ -107,7 +107,7 @@ public class Skull implements BlockType
 		}
 		int rotationValue;
 		if (rotationString != null) {
-			rotationValue = Integer.parseInt(properties.get("rotation"));
+			rotationValue = Integer.parseInt(rotationString);
 		} else {
 			rotationValue = entity.getRotation();
 		}

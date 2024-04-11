@@ -20,9 +20,11 @@ import java.util.Map;
 public class ItemModel {
 	private String parent;
 	private Map<String, Integer[]> transform;
+        private Map<String, String> textures;
+                
 	@JsonProperty("display")
+        @SuppressWarnings("unchecked")
 	private void unpackNested(Map<String,Object> brand) {
 		this.transform = (Map<String, Integer[]>)brand.get("gui");
 	}
-
 }

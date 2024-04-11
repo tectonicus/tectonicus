@@ -11,6 +11,7 @@ package tectonicus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
@@ -34,6 +35,7 @@ import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
+import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.SubTexture;
@@ -41,6 +43,7 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
 import tectonicus.util.Vector2f;
+import tectonicus.world.Colors;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -250,8 +253,25 @@ public class ItemRenderer
 	
 	public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
 	{
-		log.info("Generating bed icon...");
-		
+                log.info("Generating bed icon...");
+                
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1, -0.5f, 0), 2, 1, 0);
+                
+                renderBed(outFile, registry, texturePack, 32, bounds, "minecraft:red_bed");
+        }
+        
+        public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String modelName) throws Exception
+	{
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1f, -0.5f, 0), 2, 1, 0);
+                
+                renderBed(outFile, registry, texturePack, 48, bounds, modelName);
+        }
+
+       	private void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int imageSize, BoundingBox bounds, String modelName) throws Exception
+        {
+                final String colorString = StringUtils.removeEnd(StringUtils.removeStart(modelName, "minecraft:"), "_bed");
+                final int color = Colors.byName(colorString).getId();
+                            
 		ItemContext context = new ItemContext(texturePack, registry, null);
 		
 		Geometry geometry = new Geometry(rasteriser);
@@ -267,13 +287,13 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 1, (byte)16);
 		rawChunk.setSkyLight(0, 0, 1, (byte) 16);
 		HashMap<String, BedEntity> beds = new HashMap<>();
-		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, 14));
-		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, 14));
+		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, color));
+		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, color));
 		rawChunk.setBeds(beds);
 		
 		BlockType type = registry.find(BlockIds.BED, 10);
 		if (type instanceof Air) {
-			type = registry.find("minecraft:red_bed");
+			type = registry.find(modelName);
 		}
 
 		if (type != null)
@@ -282,11 +302,23 @@ public class ItemRenderer
 			type.addInteriorGeometry(0, 0, 1, context, registry, rawChunk, geometry);
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3f(-1, -0.5f, 0), 2, 1, 0);
-				
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 32, 4, getAngleRad(65), getAngleRad(35));
+		renderItem(item, outFile, imageSize, 4, getAngleRad(65), getAngleRad(35));
 	}
+        
+        // TODO does this need to be separate method? maybe there can be a generalized method to handle every builtin/entity?        
+        public void renderSkull(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String blockName) throws Exception {
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockName(0, 0, 0, blockName);
+		BlockType type = registry.find(blockName);
+		ItemContext context = new ItemContext(texturePack, registry, null);
+                
+                HashMap<String, SkullEntity> skulls = new HashMap<>();
+		skulls.put("x0y0z0", new SkullEntity(0, 0, 0, 0, 0, 0, 0, 0, 0));
+		rawChunk.setSkulls(skulls);
+		
+                renderBlock(outFile, registry, context, rawChunk, type, null, 48);
+        }        
 	
 	private void renderItem(ItemGeometry item, File outFile, final int imageSize, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
 	{
