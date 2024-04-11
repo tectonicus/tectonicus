@@ -12,6 +12,7 @@ package tectonicus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
+import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
@@ -64,6 +65,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
+import static tectonicus.util.OutputResourcesUtil.outputBlockItemIcons;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
 import static tectonicus.util.OutputResourcesUtil.outputHtml;
@@ -75,7 +77,6 @@ import static tectonicus.util.OutputResourcesUtil.outputRenderStats;
 import static tectonicus.util.OutputResourcesUtil.outputRespawnAnchors;
 import static tectonicus.util.OutputResourcesUtil.outputSigns;
 import static tectonicus.util.OutputResourcesUtil.outputViews;
-import static tectonicus.util.OutputResourcesUtil.testOutputItemIcons;
 
 @Log4j2
 public class TileRenderer
@@ -210,6 +211,8 @@ public class TileRenderer
 		
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
+                World world = null;
+                
 		for (tectonicus.configuration.Map map : config.getMaps())
 		{
 			// Clear shared state?
@@ -224,7 +227,7 @@ public class TileRenderer
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
 
 			// Create the world for this map
-			World world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
+			world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -291,8 +294,6 @@ public class TileRenderer
 				bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
 				tileCache.closeTileCache();
 			}
-			ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
-			testOutputItemIcons(config, map, world, rasteriser, itemRegistry);
 
 			outputIcons(exportDir, config, map, world, rasteriser);
 			
@@ -304,10 +305,14 @@ public class TileRenderer
 			worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
 					worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight);
 		}
-
-		// TODO: Should only load texture pack once and share between this and world loading
-		outputHtmlResources(new TexturePack(rasteriser, config.minecraftJar(), config.getTexturePack(), config.getMap(0).getModJars(), config),
-				playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
+                
+                if (world == null) {
+                        System.out.println("Unable to render. No map is defined in config.");
+                } else {
+                        ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
+                        outputBlockItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry);
+                        outputHtmlResources(world.getTexturePack(), playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
+                }
 		
 		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), config);
 		
@@ -599,7 +604,7 @@ public class TileRenderer
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
 
 		for (TileCoord t : tiles) {
-			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")\r"); //prints a carriage return after line
+			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")          \r"); //prints a carriage return after line
 			log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
 			progressListener.onTaskUpdate(done, tiles.size());
 

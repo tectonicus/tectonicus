@@ -86,7 +86,7 @@ public class ItemRenderer
 		
 		ItemGeometry item = createCompassGeometry(rasteriser, map.getNorthDirection(), compassImage);
 		
-		renderItem(item, outFile, 2, map.getCameraAngleRad(), map.getCameraElevationRad());
+		renderItem(item, outFile, 128, 4, map.getCameraAngleRad(), map.getCameraElevationRad());
 	}
 	
 	public void renderPortal(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
@@ -157,7 +157,7 @@ public class ItemRenderer
 		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 4, 5, 1);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(55), getAngleRad(35));
+		renderItem(item, outFile, 32, 4, getAngleRad(55), getAngleRad(35));
 	}
 
 	public void renderBlockOld(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception {
@@ -166,7 +166,7 @@ public class ItemRenderer
 		rawChunk.setBlockData(0, 0, 0, (byte) blockData);
 		BlockType type = registry.find(blockId, blockData);
 		ItemContext context = new ItemContext(texturePack, registry, null);
-		renderBlock(outFile, registry, context, rawChunk, type, null);
+		renderBlock(outFile, registry, context, rawChunk, type, null, 32);
 	}
 
 	public void renderBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, Block block, String modelVariant) throws Exception {
@@ -175,14 +175,15 @@ public class ItemRenderer
 		rawChunk.setBlockName(0, 0, 0, block.getName());
 		BlockModel model = registry.getModel(blockModelName);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		renderBlock(outFile, null, context, rawChunk, null, model);
+		renderBlock(outFile, null, context, rawChunk, null, model, 32);
 	}
 
 	public void renderBlockModelName(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		BlockModel model = registry.getModel(modelName);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		renderBlock(outFile, null, context, rawChunk, null, model);
+                BoundingBox bounds = new BoundingBox(new Vector3f(1, 0.17f, 1), 1, 1, 1);
+		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(225), getAngleRad(25), bounds);
 	}
 
 	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
@@ -192,10 +193,14 @@ public class ItemRenderer
 		rawChunk.setBlockState(0, 0, 0, properties);
 		BlockType type = registry.find(blockName);
 		ItemContext context = new ItemContext(texturePack, registry, null);
-		renderBlock(outFile, registry, context, rawChunk, type, null);
+		renderBlock(outFile, registry, context, rawChunk, type, null, 32);
 	}
+        
+	private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize) throws Exception {
+                renderBlock(outFile, registry, context, rawChunk, type, model, imageSize, getAngleRad(45), getAngleRad(25), new BoundingBox(new Vector3f(0, 0.17f, 0), 1, 1, 1));
+        }
 
-	public void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model) throws Exception {
+        private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize, float cameraAngle, float cameraElevationAngle, BoundingBox bounds) throws Exception {
 		Geometry geometry = new Geometry(rasteriser);
 
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
@@ -208,10 +213,8 @@ public class ItemRenderer
 			MeshUtil.addBlock(context, rawChunk, 0, 0, 0, model, geometry, 0, 0);
 		}
 
-		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.17f, 0), 1, 1, 1);
-
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
+		renderItem(item, outFile, imageSize, 4, cameraAngle, cameraElevationAngle);
 	}
 	
 	public void renderSign(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
@@ -242,7 +245,7 @@ public class ItemRenderer
 		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.4f, 0), 1, 1, 0);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
+		renderItem(item, outFile, 32, 4, getAngleRad(45), getAngleRad(25));
 	}
 	
 	public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
@@ -282,11 +285,13 @@ public class ItemRenderer
 		BoundingBox bounds = new BoundingBox(new Vector3f(-1, -0.5f, 0), 2, 1, 0);
 				
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(65), getAngleRad(35));
+		renderItem(item, outFile, 32, 4, getAngleRad(65), getAngleRad(35));
 	}
 	
-	private void renderItem(ItemGeometry item, File outFile, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
-	{	
+	private void renderItem(ItemGeometry item, File outFile, final int imageSize, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
+	{
+                final int capturedImageSize = imageSize * (1 << numDownsamples);
+                        
 		Geometry geometry = item.geometry;
 		BoundingBox bounds = item.bounds;
 		
@@ -297,7 +302,7 @@ public class ItemRenderer
 		rasteriser.clear(colourKey);
 		rasteriser.clearDepthBuffer();
 		
-		OrthoCamera camera = new OrthoCamera(rasteriser, 512, 512);
+		OrthoCamera camera = new OrthoCamera(rasteriser, capturedImageSize, capturedImageSize);
 		final float lookX = bounds.getCenterX();
 		final float lookY = bounds.getCenterY();
 		final float lookZ = bounds.getCenterZ();
@@ -372,7 +377,7 @@ public class ItemRenderer
 		rasteriser.enableBlending(false);
 		rasteriser.enableDepthWriting(true);
 		
-		BufferedImage outImg = rasteriser.takeScreenshot(0, 0, 512, 512, ImageFormat.Png);
+		BufferedImage outImg = rasteriser.takeScreenshot(0, 0, capturedImageSize, capturedImageSize, ImageFormat.Png);
 		
 		filterColourKey(outImg, colourKey);
 		

@@ -198,7 +198,7 @@ function createChestPopup(chest) {
                 const itemKey = `item.${namespace}.${itemId}`;
                 const itemDescKey = `item.${namespace}.${itemId}.desc`;
                 const blockKey = `block.${namespace}.${itemId}`;
-
+                
                 let additionalItemNameCssClass = '';
                 if (item.enchantments) {
                         additionalItemNameCssClass = ' enchanted';
@@ -247,7 +247,9 @@ function createChestPopup(chest) {
                 const top = 18+18*row;
                 const left = 8+18*col;
 
-                markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
+                const is3dItem = localizations && localizations[blockKey];
+                
+                markerPopup += '<div class="item ' + (is3dItem ? '3d_item' : '') + '" style="top: ' + top + 'px; left: ' + left + 'px;">';
                 markerPopup += '<img src="Images/Items/' + pngName + '.png" />';
                 
                 markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);

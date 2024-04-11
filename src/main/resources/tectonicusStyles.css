@@ -51,6 +51,10 @@ html, body, #map {
         position: absolute;
 }
 
+.3d_item img {
+        image-rendering: auto;
+}
+
 .item img {
         width: 16px;
         height: 16px;

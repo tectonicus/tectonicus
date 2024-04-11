@@ -69,6 +69,7 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.commons.lang3.StringUtils;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
@@ -535,20 +536,29 @@ public class OutputResourcesUtil {
                 return result;
         }
 
-	public static void testOutputItemIcons(Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser, ItemRegistry itemRegistry) {
-		BlockRegistry registry = world.getModelRegistry();
-		TexturePack texturePack = world.getTexturePack();
-		Version version = world.getWorldInfo().getVersion();
-
+	public static void outputBlockItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
+                System.out.println("Rendering icons for block items");
+                log.trace("Rendering icons for block items");
+                
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
 				String modelName = entry.getValue().getParent();
+                                
+                                if (modelName == null) {
+                                        // Do not crash for blocks without parent (Air)
+                                        continue;
+                                }
+                                
+                                File outFile = new File(args.getOutputDir(), "Images/Items/" + entry.getKey() + ".png");
+                                
 				if (modelName.contains("block/")) {
-					System.out.println("Rendering icon for: " + modelName);
-					itemRenderer.renderBlockModelName(new File(args.getOutputDir(), "Images/Items/" + entry.getKey() + ".png"), registry, texturePack, modelName);
+					System.out.print("\tRendering icon for: " + modelName + "                    \r"); //prints a carriage return after line
+                                        log.trace("\tRendering icon for: " + modelName);
+					itemRenderer.renderBlockModelName(outFile, blockRegistry, texturePack, modelName);
 				}
 			}
+                        System.out.println();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
