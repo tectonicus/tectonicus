@@ -545,22 +545,13 @@ public class OutputResourcesUtil {
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
                                 final String entryKey = entry.getKey();
                                 final ItemModel itemModel = entry.getValue();
+                                final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
                                 final File outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + ".png");
 
                                 System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
                                 log.trace("\tRendering icon for: " + entryKey);
 
-                                // Find ultimate predecessor
-                                String modelName = itemModel.getParent();
-                                while (true) {
-                                        String parentKey = StringUtils.removeStart(modelName, "minecraft:");
-                                        parentKey = StringUtils.removeStart(parentKey, "item/");
-                                        if (!itemRegistry.getModels().containsKey(parentKey))
-                                        {
-                                                break;
-                                        } 
-                                        modelName = itemRegistry.getModels().get(parentKey).getParent();
-                                }
+                                String modelName = ultimatePredecessorModel.getParent();
                                 if (modelName == null) {
                                         // Do not crash for blocks without parent (Air)
                                         continue;
@@ -581,12 +572,22 @@ public class OutputResourcesUtil {
                                 }
                                 if (modelName.endsWith("builtin/entity")) {
                                         modelName = "minecraft:" + entryKey;
+                                        
                                         if (entryKey.endsWith("_bed")) {
                                                 itemRenderer.renderBed(outFile, blockTypeRegistry, texturePack, modelName);
-                                        } else if (entryKey.endsWith("_head") || entryKey.endsWith("_skull")) {
-                                                itemRenderer.renderSkull(outFile, blockTypeRegistry, texturePack, modelName);
+                                                continue;
                                         }
-                                        // TODO: skulls, chests, ender chests, conduits, decorated pots, banners, shields, shulker boxes...
+                                        
+                                        List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);
+
+                                        // All the items are a bit small out of the box for some reason, so add our own tranform to make them larger
+                                        HashMap<String, ArrayList<Float>> transform = new HashMap<>();
+                                        transform.put("scale", new ArrayList<>(List.of(1.5f, 1.5f, 1.5f)));
+                                        transforms.add(transform);
+                                        
+                                        // TODO: chest and ender chest still do not render, same as chorus plant and shield
+                                        
+                                        itemRenderer.renderItem(outFile, blockTypeRegistry, texturePack, modelName, transforms);
                                         continue;
                                 }
                                 
@@ -606,9 +607,6 @@ public class OutputResourcesUtil {
                                 
                                 // Rest of the items
                                 itemRenderer.renderBlockModelName(outFile, blockRegistry, texturePack, modelName);
-                                
-                                
-                                // TODO Use ItemModel.transform to get translation, scaling and rotation for each item if they are defined
 			}
                         System.out.println();
 		} catch (Exception e) {

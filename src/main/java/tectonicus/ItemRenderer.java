@@ -35,7 +35,6 @@ import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
-import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.texture.SubTexture;
@@ -53,6 +52,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @Log4j2
 public class ItemRenderer
@@ -185,8 +185,8 @@ public class ItemRenderer
 		RawChunk rawChunk = new RawChunk();
 		BlockModel model = registry.getModel(modelName);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-                BoundingBox bounds = new BoundingBox(new Vector3f(1, 0.17f, 1), 1, 1, 1);
-		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(225), getAngleRad(25), bounds);
+                BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 1);
+		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(270 + 45), getAngleRad(30), bounds);
 	}
 
 	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
@@ -200,7 +200,7 @@ public class ItemRenderer
 	}
         
 	private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize) throws Exception {
-                renderBlock(outFile, registry, context, rawChunk, type, model, imageSize, getAngleRad(45), getAngleRad(25), new BoundingBox(new Vector3f(0, 0.17f, 0), 1, 1, 1));
+                renderBlock(outFile, registry, context, rawChunk, type, model, imageSize, getAngleRad(45), getAngleRad(25), new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 1));
         }
 
         private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize, float cameraAngle, float cameraElevationAngle, BoundingBox bounds) throws Exception {
@@ -245,7 +245,7 @@ public class ItemRenderer
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.4f, 0), 1, 1, 0);
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 0);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
 		renderItem(item, outFile, 32, 4, getAngleRad(45), getAngleRad(25));
@@ -255,14 +255,14 @@ public class ItemRenderer
 	{
                 log.info("Generating bed icon...");
                 
-                BoundingBox bounds = new BoundingBox(new Vector3f(-1, -0.5f, 0), 2, 1, 0);
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1, -1, 0), 2, 1, 0);
                 
                 renderBed(outFile, registry, texturePack, 32, bounds, "minecraft:red_bed");
         }
         
         public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String modelName) throws Exception
 	{
-                BoundingBox bounds = new BoundingBox(new Vector3f(-1f, -0.5f, 0), 2, 1, 0);
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1, -1, 0), 2, 1, 0);
                 
                 renderBed(outFile, registry, texturePack, 48, bounds, modelName);
         }
@@ -270,7 +270,8 @@ public class ItemRenderer
        	private void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int imageSize, BoundingBox bounds, String modelName) throws Exception
         {
                 final String colorString = StringUtils.removeEnd(StringUtils.removeStart(modelName, "minecraft:"), "_bed");
-                final int color = Colors.byName(colorString).getId();
+                final Colors color = Colors.byName(colorString);
+                final int colorId = color == null ? Colors.RED.getId() : color.getId();
                             
 		ItemContext context = new ItemContext(texturePack, registry, null);
 		
@@ -287,8 +288,8 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 1, (byte)16);
 		rawChunk.setSkyLight(0, 0, 1, (byte) 16);
 		HashMap<String, BedEntity> beds = new HashMap<>();
-		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, color));
-		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, color));
+		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, colorId));
+		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, colorId));
 		rawChunk.setBeds(beds);
 		
 		BlockType type = registry.find(BlockIds.BED, 10);
@@ -306,18 +307,61 @@ public class ItemRenderer
 		renderItem(item, outFile, imageSize, 4, getAngleRad(65), getAngleRad(35));
 	}
         
-        // TODO does this need to be separate method? maybe there can be a generalized method to handle every builtin/entity?        
-        public void renderSkull(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String blockName) throws Exception {
+        public void renderItem(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String blockName, List<java.util.Map<String, ArrayList<Float>>> transforms) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		BlockType type = registry.find(blockName);
 		ItemContext context = new ItemContext(texturePack, registry, null);
                 
-                HashMap<String, SkullEntity> skulls = new HashMap<>();
-		skulls.put("x0y0z0", new SkullEntity(0, 0, 0, 0, 0, 0, 0, 0, 0));
-		rawChunk.setSkulls(skulls);
-		
-                renderBlock(outFile, registry, context, rawChunk, type, null, 48);
+                BoundingBox bounds = new BoundingBox(new org.joml.Vector3f(), 1, 1, 1);
+                
+                float cameraAngle = getAngleRad(45 + 270);
+                float cameraElevationAngle = getAngleRad(30);
+
+                for (var transform : transforms) {
+                        float translateX = 0;
+                        float translateY = 0;
+                        float translateZ = 0;
+                        float scaleX = 1;
+                        float scaleY = 1;
+                        float scaleZ = 1;
+
+                        if (transform != null && transform.containsKey("rotation")) {
+                                ArrayList<Float> rotation = transform.get("rotation");
+                                cameraAngle = getAngleRad(rotation.get(1) + 270);
+                                cameraElevationAngle = getAngleRad(rotation.get(0));
+                        }
+                        if (transform != null && transform.containsKey("scale")) {
+                                ArrayList<Float> scale = transform.get("scale");
+                                scaleX = scale.get(0);
+                                scaleY = scale.get(1);
+                                scaleZ = scale.get(2);
+                        }
+                        /* TODO: Figure out translation. It does some weird stuff with skulls and mainly with the dragon head when enabled.
+                        if (transform != null && transform.containsKey("translation")) {
+                                ArrayList<Float> translation = transform.get("translation");
+                                translateX = translation.get(0);
+                                translateY = translation.get(1);
+                                translateZ = translation.get(2);
+                        }
+                        */
+
+                        // Do the scaling. Divide insted of multiply, since we are transforming bounding box instead of item
+                        final float centerX = bounds.getCenterX();
+                        final float centerY = bounds.getCenterY();
+                        final float centerZ = bounds.getCenterZ();
+                        final float scaledWidth = bounds.getWidth()/scaleX;
+                        final float scaledHeight = bounds.getHeight()/scaleY;
+                        final float scaledDepth = bounds.getDepth()/scaleZ;
+
+                        // Subtract insted of add during translation, since we are transforming bounding box instead of item
+                        bounds = new BoundingBox(
+                                new Vector3f(centerX-scaledWidth/2-translateX, centerY-scaledHeight/2-translateY, centerZ-scaledDepth/2-translateZ),
+                                scaledWidth, scaledHeight, scaledDepth
+                        );
+                }
+                
+                renderBlock(outFile, registry, context, rawChunk, type, null, 48, cameraAngle, cameraElevationAngle, bounds);
         }        
 	
 	private void renderItem(ItemGeometry item, File outFile, final int imageSize, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
@@ -421,7 +465,7 @@ public class ItemRenderer
 		Screenshot.write(outFile, outImg, ImageFormat.Png, 1.0f);
 	}
 	
-	private float getAngleRad(int angle)
+	private float getAngleRad(float angle)
 	{
 		final float normalised = (float)angle / 360.0f;
 		return normalised * (float)Math.PI * 2.0f;

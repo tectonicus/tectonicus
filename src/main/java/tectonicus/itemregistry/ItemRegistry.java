@@ -24,7 +24,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Log4j2
@@ -58,4 +60,30 @@ public class ItemRegistry {
 			models.put(name, itemModel);
 		}
 	}
+        
+        public ItemModel findUltimatePredecessor(ItemModel itemModel) {
+                while (true) {
+                        String parentKey = StringUtils.removeStart(itemModel.getParent(), "minecraft:");
+                        parentKey = StringUtils.removeStart(parentKey, "item/");
+                        if (!models.containsKey(parentKey))
+                        {
+                                return itemModel;
+                        } 
+                        itemModel = models.get(parentKey);
+                }                
+        }
+        
+        public List<Map<String, ArrayList<Float>>> getTransformsList(ItemModel itemModel) {
+                List<Map<String, ArrayList<Float>>> transforms = new ArrayList<>();
+                while (true) {
+                        transforms.add(itemModel.getTransform());
+                        String parentKey = StringUtils.removeStart(itemModel.getParent(), "minecraft:");
+                        parentKey = StringUtils.removeStart(parentKey, "item/");
+                        if (!models.containsKey(parentKey))
+                        {
+                                return transforms;
+                        } 
+                        itemModel = models.get(parentKey);
+                }     
+        }
 }

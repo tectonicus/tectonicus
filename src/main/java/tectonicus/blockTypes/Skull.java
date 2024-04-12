@@ -89,6 +89,10 @@ public class Skull implements BlockType
         {
 		String xyz = "x" + x + "y" + y + "z" + z;
                 SkullEntity skullEntity = rawChunk.getSkulls().get(xyz);
+                if (skullEntity == null) {
+                        // There is no entity when rendering item icons. Use default values...
+                        skullEntity = new SkullEntity(0, 0, 0, 0, 0, 0, 0, 0, 0);
+                }
                 addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry, skullEntity);
         }
 
