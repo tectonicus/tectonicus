@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -90,12 +90,14 @@ public class ParseUtil
 	{
 		imageStr = imageStr.toLowerCase();
 		
-		ImageFormat imageFormat = ImageFormat.Png;
+		ImageFormat imageFormat = ImageFormat.PNG;
 		
 		if (imageStr.equalsIgnoreCase("jpg") || imageStr.equalsIgnoreCase("jpeg"))
-			imageFormat = ImageFormat.Jpg;
+			imageFormat = ImageFormat.JPG;
 		else if (imageStr.equalsIgnoreCase("gif"))
-			imageFormat = ImageFormat.Gif;
+			imageFormat = ImageFormat.GIF;
+		else if (imageStr.equalsIgnoreCase("webp"))
+			imageFormat = ImageFormat.WEBP;
 		
 		return imageFormat;
 	}
@@ -115,7 +117,7 @@ public class ParseUtil
 		}
 		catch (Exception e) {}
 		
-		return 0.95f;
+		return 0.75f;
 	}
 	
 	public static String parseCustomBlockConfig(String blockConfig)

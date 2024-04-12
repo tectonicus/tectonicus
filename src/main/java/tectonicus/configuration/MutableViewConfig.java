@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -25,8 +25,8 @@ public class MutableViewConfig implements ViewConfig
 	
 	public MutableViewConfig()
 	{
-		this.imageFormat = ImageFormat.Png;
-		this.imageCompressionLevel = 0.95f;
+		this.imageFormat = ImageFormat.PNG;
+		this.imageCompressionLevel = 0.75f;
 		this.viewDistance = 100;
 		this.fov = 70;
                 this.width = DEFAULT_WIDTH;

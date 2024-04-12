@@ -48,6 +48,7 @@ dependencies {
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
 				   "com.h2database:h2-mvstore:2.2.224",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+	implementation("org.sejda.imageio:webp-imageio:0.1.6")
 	implementation files ("libs/jnbt.jar", "libs/jpct.jar", "libs/ProcessingCore.jar", "libs/BiomeExtractor.jar")
 
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",

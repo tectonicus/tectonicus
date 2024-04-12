@@ -243,7 +243,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 				log.debug("\t\tlightStyle: "+l.getLightStyle());
 				log.debug("\t\timageFormat: "+l.getImageFormat());
 
-				if (l.getImageFormat() == ImageFormat.Jpg)
+				if (l.getImageFormat() == ImageFormat.JPG)
 					log.debug("\t\timageCompressionLevel: "+l.getImageCompressionLevel());
 
 				if (l.getCustomBlockConfig() != null)

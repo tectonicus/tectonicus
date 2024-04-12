@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -36,7 +36,7 @@ public class MutableLayer implements Layer
 		this.name = "Unnamed layer";
 		this.lightStyle = LightStyle.Day;
 		this.renderStyle = RenderStyle.REGULAR;
-		this.imageFormat = ImageFormat.Png;
+		this.imageFormat = ImageFormat.PNG;
 		this.imageCompressionLevel = 1.0f;
 		this.useDefaultBlockConfig = true;
 	}

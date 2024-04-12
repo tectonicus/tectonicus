@@ -77,7 +77,7 @@
 		<views
 			filter="all / none"
 			imageFormat="png / jpg / gif"
-			imageCompressionLevel="0.95 / 0.1 - 1.0"
+			imageCompressionLevel="0.75 / 0.1 - 1.0"
 			drawDistance="200"
 			fov="70 / 30 - 110"
 			width="1920 / 640 - 3840"
@@ -105,7 +105,7 @@
 			lighting="day / night / cave / none"
 			renderStyle="normal / cave / nether / exploredcaves"
 			imageFormat="png / jpg / gif"
-			imageCompressionLevel="0.95 / 0.1 - 1.0"
+			imageCompressionLevel="0.75 / 0.1 - 1.0"
 			backgroundColor="#e5e3df / #281932" <!-- Any hex color value works. The two defaults shown are for Terra/Nether and End dimensions respectively-->
 			useDefaultBlocks="true / false"
 			customBlocks="."

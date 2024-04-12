@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -365,7 +365,7 @@ public class ItemRenderer
 		rasteriser.enableBlending(false);
 		rasteriser.enableDepthWriting(true);
 		
-		BufferedImage outImg = rasteriser.takeScreenshot(0, 0, 512, 512, ImageFormat.Png);
+		BufferedImage outImg = rasteriser.takeScreenshot(0, 0, 512, 512, ImageFormat.PNG);
 		
 		filterColourKey(outImg, colourKey);
 		
@@ -374,7 +374,7 @@ public class ItemRenderer
 			outImg = downsample(outImg);
 		}
 		
-		Screenshot.write(outFile, outImg, ImageFormat.Png, 1.0f);
+		Screenshot.write(outFile, outImg, ImageFormat.PNG, 1.0f);
 	}
 	
 	private float getAngleRad(int angle)
