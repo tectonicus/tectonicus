@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -119,7 +119,7 @@ public class PackTexture
 				final float v0 = tileY * tileV + vNudge;
 				final float v1 = (tileY+1) * tileV - vNudge;
 				
-				SubTexture sub = new SubTexture(tileTexture, u0, v0, u1, v1);
+				SubTexture sub = new SubTexture(tileTexture, u0, v0, u1, v1, Version.VERSION_4);
 				subTextures.put(new TextureRequest(path, tileX, tileY), sub);
 			}
 		}

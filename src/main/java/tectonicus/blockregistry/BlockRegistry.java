@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -131,7 +131,9 @@ public class BlockRegistry
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
 			deserializeBlockstates(entries);
-		} catch (Exception e) {
+		} catch (NotDirectoryException e) {
+			log.warn("No blockstates directory found. This is probably a pre 1.8 minecraft jar.");
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
@@ -198,13 +200,16 @@ public class BlockRegistry
 	public void deserializeModels() {
 		log.debug("Loading model json");
 		try {
+			int modelCount = 0;
 			for (BlockStateWrapper blockStateWrapper : blockStates.asMap().values()) {
 				List<BlockStateModel> models = blockStateWrapper.getAllModels();
 				for (BlockStateModel model : models) {
 					log.trace("Loading model: {} for {}", model, blockStateWrapper.getBlockName());
 					model.setBlockModel(loadModel(model.getModel()));
+					modelCount++;
 				}
 			}
+			log.info("Loaded {} models", modelCount);
 		} catch (Exception e) {
 			log.error("Something bad happened", e);
 		}

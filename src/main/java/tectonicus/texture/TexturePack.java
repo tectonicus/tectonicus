@@ -425,7 +425,7 @@ public class TexturePack
 	}
 
 	public String getTexturePathPrefix(String path) {
-		if (path.contains("/") || path.contains("\\")) {
+		if (path.contains("/") || path.contains("\\") || path.equals("terrain.png")) {
 			return path;
 		}
 
