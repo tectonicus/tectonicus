@@ -232,14 +232,7 @@ function createChestPopup(chest) {
                 itemNameAndDescription += getEnchantmentsDescription(item);
                 itemNameAndDescription += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
 
-                let pngName = itemId;
-                if (itemId === 'compass' || itemId === 'clock' || itemId === 'recovery_compass') {
-                        // Choose 1st frame for animated items
-                        pngName += '_00';
-                }
-                if (itemId === 'enchanted_golden_apple') {
-                        pngName = 'golden_apple';
-                }
+                let pngName = getPngName(item, itemId);
 
                 const row = Math.floor(item.slot/9);
                 const col = item.slot%9;
@@ -252,9 +245,6 @@ function createChestPopup(chest) {
                 markerPopup += '<div class="item ' + (is3dItem ? '3d_item' : '') + '" style="top: ' + top + 'px; left: ' + left + 'px;">';
                 markerPopup += '<img src="Images/Items/' + pngName + '.png" />';
                 
-                markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);
-                markerPopup += getLeatherOverlay(item, itemId);
-                markerPopup += getArmorTrimOverlay(item, itemId);
                 markerPopup += getEnchantmentGlint(item, itemId, pngName);
 
                 if (item.count > 1) {
@@ -267,6 +257,17 @@ function createChestPopup(chest) {
         markerPopup += '</div></div>';
         
         return markerPopup;
+}
+
+function getPngName(item, itemId) {
+        let pngName = itemId;
+        
+        if (item.trim) {
+                const [namespace, material] = item.trim.material.split(":");
+                pngName += '_' + material + '_trim';
+        }
+        
+        return pngName;
 }
 
 function getTrimDescription(item) {
@@ -318,80 +319,4 @@ function getEnchantmentGlint(item, itemId, pngName) {
                 return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + pngName + '\.png\'); mask-image: url(\'Images/Items/' + pngName + '.png\');"></div>';
         }
         return '';
-}
-
-function intToHTMLColor(colorCode) {
-        if (!colorCode) {
-                return null;
-        }
-        var hexColor = colorCode.toString(16);
-        while (hexColor.length < 6) {
-                hexColor = "0" + hexColor;
-        }
-        return "#" + hexColor;
-}
-
-function getColorLayer(color, itemId) {
-        if (color || itemId.indexOf('leather_') >= 0) {
-                color ??= 'rgb(106, 64, 41)';
-                return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'Images/Items/' + itemId + '.png\');"></div>';
-        }
-        return '';
-}
-
-function getLeatherOverlay(item, itemId) {
-        let result = '';
-        if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings') {
-                let overlayId = itemId + '_overlay';
-                result += '<img src="Images/Items/' + overlayId + '.png" />';
-                result += getEnchantmentGlint(item, overlayId, true, overlayId);
-        }
-        return result;
-}
-
-function getArmorTrimOverlay(item, itemId) {
-        let result = '';
-        if (item.trim) {
-                const [material, armorPiece] = itemId.split("_");
-                if (armorPiece === 'boots' || armorPiece === 'chestplate' || armorPiece === 'helmet' || armorPiece === 'leggings') {
-                        let color;
-                        
-                        switch(item.trim.material) {
-                                case 'minecraft:amethyst':
-                                        color = '#d393ff';
-                                        break;
-                                case 'minecraft:copper':
-                                        color = '#ff9474';
-                                        break;
-                                case 'minecraft:diamond':
-                                        color = '#71deff';
-                                        break;
-                                case 'minecraft:emerald':
-                                        color = '#43ff83';
-                                        break;
-                                case 'minecraft:gold':
-                                        color = '#ffe300';
-                                        break;
-                                case 'minecraft:iron':
-                                        color = '#d2d2d2';
-                                        break;
-                                case 'minecraft:lapis':
-                                        color = '#3c6bc6';
-                                        break;
-                                case 'minecraft:netherite':
-                                        color = '#666666';
-                                        break;
-                                case 'minecraft:quartz':
-                                        color = '#ffffff';
-                                        break;
-                                case 'minecraft:redstone':
-                                        color = '#ff0000';
-                                        break;
-                        }
-                    
-                        result += '<img src="Images/Items/' + armorPiece + '_trim.png" />';
-                        result += getColorLayer(color, armorPiece + '_trim');
-                }
-        }
-        return result;
 }

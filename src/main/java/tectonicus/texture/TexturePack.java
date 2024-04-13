@@ -448,34 +448,40 @@ public class TexturePack
                 PackTexture tex = loadedPackTextures.get(path);
                 
                 if (tex == null) {
-                        BufferedImage textureImage = ImageUtils.copy(texture.getImage());
+                        BufferedImage textureImage = texture.getImage();
                         BufferedImage paletteImage = palette.getImage();
                         BufferedImage keyPaletteImage = keyPalette.getImage();
                         
-                        Map<Integer, Integer> paletteMap = new HashMap<>();
-                        for (int x=0; x<paletteImage.getWidth(); x++) {
-                                int keyColour = keyPaletteImage.getRGB(x, 0);
-                                int palettedColour = paletteImage.getRGB(x, 0);
-                                paletteMap.put(keyColour, palettedColour);
-                        }
-                        
-                        for (int x=0; x<textureImage.getWidth(); x++)
-                        {
-                                for (int y=0; y<textureImage.getHeight(); y++)
-                                {
-                                        int colour = textureImage.getRGB(x, y);
-                                        if (colour != 0) {
-                                                colour = paletteMap.get(colour);
-                                                textureImage.setRGB(x, y, colour);
-                                        }
-                                }
-                        }
-                                            
-                        tex = new PackTexture(rasteriser, path, textureImage);
+                        tex = new PackTexture(rasteriser, path, applyPalette(textureImage, paletteImage, keyPaletteImage));
                         loadedPackTextures.put(path, tex);
                 }
                 
                 return tex;
+        }
+        
+        private BufferedImage applyPalette(BufferedImage textureImage, BufferedImage paletteImage, BufferedImage keyPaletteImage) {
+                BufferedImage resultTexture = ImageUtils.copy(textureImage);
+                
+                Map<Integer, Integer> paletteMap = new HashMap<>();
+                for (int x=0; x<paletteImage.getWidth(); x++) {
+                        int keyColour = keyPaletteImage.getRGB(x, 0);
+                        int palettedColour = paletteImage.getRGB(x, 0);
+                        paletteMap.put(keyColour, palettedColour);
+                }
+
+                for (int x=0; x<resultTexture.getWidth(); x++)
+                {
+                        for (int y=0; y<resultTexture.getHeight(); y++)
+                        {
+                                int colour = resultTexture.getRGB(x, y);
+                                if (colour != 0) {
+                                        colour = paletteMap.get(colour);
+                                        resultTexture.setRGB(x, y, colour);
+                                }
+                        }
+                }
+                
+                return resultTexture;
         }
 	
 	private PackTexture findTexture(TextureRequest request, boolean logMissingTextures) {
@@ -525,6 +531,14 @@ public class TexturePack
 	public SubTexture findTexture(BufferedImage img, String path) {
 		return loadedPackTextures.computeIfAbsent(path, p -> new PackTexture(rasteriser, p, img)).getFullTexture();
 	}
+        
+        public BufferedImage loadPalettedTexture(String texturePath, String palettePath, String keyPalettePath) throws FileNotFoundException {
+                BufferedImage texture = copy((BufferedImage) loadImage(texturePath).getRenderedImage());
+                BufferedImage palette = copy((BufferedImage) loadImage(palettePath).getRenderedImage());
+                BufferedImage keyPalette = copy((BufferedImage) loadImage(keyPalettePath).getRenderedImage());
+
+		return applyPalette(texture, palette, keyPalette);
+        }
 
 	public BufferedImage loadTexture(String path) throws FileNotFoundException {
 		return copy((BufferedImage) loadImage(path).getRenderedImage());

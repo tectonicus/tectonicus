@@ -57,7 +57,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -69,7 +68,6 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.apache.commons.lang3.StringUtils;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
@@ -537,8 +535,8 @@ public class OutputResourcesUtil {
         }
 
 	public static void outputBlockItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
-                System.out.println("Rendering icons for block items");
-                log.trace("Rendering icons for block items");
+                System.out.println("Rendering icons for inventory items");
+                log.trace("Rendering icons for inventory items");
                 
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
@@ -574,13 +572,34 @@ public class OutputResourcesUtil {
                                 // Items that are just 2d textures
                                 if (modelName.endsWith("builtin/generated")) {
                                         final Map<String, String> textures = itemModel.getTextures();
-                                        if (textures != null && textures.containsKey("layer0")) {
-                                                // TODO: handle more than 1 layer? composit the armor trim here and simplify HTML+CSS?
-                                                // TODO: vines, fern, maybe also grass and more need to be tinted
-                                                final String[] layer0Texture = textures.get("layer0").split(":");
-                                                final String namespace = layer0Texture.length == 1 ? "minecraft" : layer0Texture[0];
-                                                final String textureId = layer0Texture.length == 1 ? layer0Texture[0] : layer0Texture[1];
-                                                extractFile(texturePack, "assets/" + namespace + "/textures/" + textureId + ".png", outFile, true);
+                                        if (textures != null) {
+                                                BufferedImage composited = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+                                                for (var layer : textures.entrySet()) {
+                                                        if (!layer.getKey().startsWith("layer")) {
+                                                                // Ignore particles
+                                                                continue;
+                                                        }
+                                                        final String[] layerTexture = layer.getValue().split(":");
+                                                        final String namespace = layerTexture.length == 1 ? "minecraft" : layerTexture[0];
+                                                        final String textureId = layerTexture.length == 1 ? layerTexture[0] : layerTexture[1];
+                                                        
+                                                        BufferedImage texture;
+                                                        
+                                                        if (!layer.getKey().equals("layer0") && textureId.contains("trim")) {
+                                                                String[] trimParts = textureId.split("_trim_");
+                                                                
+                                                                String trim = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
+                                                                String palette = "assets/" + namespace + "/textures/trims/color_palettes/" + trimParts[1] + ".png";
+                                                                String keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
+                                                                
+                                                                texture = texturePack.loadPalettedTexture(trim, palette, keyPalette);
+                                                        } else {
+                                                                texture = texturePack.loadTexture("assets/" + namespace + "/textures/" + textureId + ".png");
+                                                        }
+                                                                                                                
+                                                        composited.getGraphics().drawImage(texture, 0, 0, null);
+                                                }
+                                                writeImage(composited, 16, 16, outFile);
                                                 continue;
                                         }
                                 }
@@ -725,9 +744,8 @@ public class OutputResourcesUtil {
 			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
                 
-                // Extract textures for items in containers
+                // Extract enchanted glint texture
                 extractFile(texturePack, "assets/minecraft/textures/misc/enchanted_glint_item.png", new File(imagesDir, "EnchantedGlint.png"), true);
-                extractTrimTextures(texturePack, itemsDir);
 
 		// Extract Leaflet resources
                 File scriptsDir = new File(exportDir, "Scripts");
@@ -770,17 +788,6 @@ public class OutputResourcesUtil {
                                 e.printStackTrace();
                         }
                 }
-        }
-        
-        private static void extractTrimTextures(TexturePack texturePack, File targetDir) {
-            	try {
-                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/trims/items")) {
-                                String fileName = Paths.get(file).getFileName().toString();
-                                extractFile(texturePack, file, new File(targetDir, fileName), true);
-                        }
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
         }
 
 	private static void extractMapResources(File scriptsDir) {
