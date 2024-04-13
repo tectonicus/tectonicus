@@ -12,10 +12,13 @@ package tectonicus.blockregistry;
 import lombok.Getter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import tectonicus.raw.BlockProperties;
 
 @Getter
-public class BlockVariant implements BlockState
+public class BlockVariant extends BlockState
 {
 	private final String name;
 	private final Map<String, String> states;
@@ -38,4 +41,12 @@ public class BlockVariant implements BlockState
 				states.put(state[0], "");
 		}
 	}
+        
+        @Override
+        void addModels(List<BlockStateModel> models, BlockProperties properties) {
+                String variantProperties = name;
+                if (variantProperties.equals(StringUtils.EMPTY) || properties.contains(variantProperties) || properties.containsAll(states)) {
+                        models.add(getRandomWeightedModel(modelsAndWeight));
+                }
+        }
 }

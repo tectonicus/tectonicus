@@ -557,20 +557,8 @@ public class OutputResourcesUtil {
                                         continue;
                                 }
                                 
-                                // Fix for buttons, fences and pistons
-                                if (modelName.contains("_inventory")) {
-                                        modelName = StringUtils.removeEnd(modelName, "_inventory");
-                                        if (modelName.contains("fence") || modelName.contains("wall")) {
-                                                modelName += "_post";
-                                        }
-                                }
-                                
-                                // Some items need special handling. Namely beds, fence/wall posts and builtin entities
-                                if (modelName.endsWith("_post")) {
-                                        // TODO: build a fence segment with 2 posts or wall segment with 1 post
-                                        //continue;
-                                }
-                                if (modelName.endsWith("builtin/entity")) {
+                                // Some items need special handling. Namely beds and builtin entities
+                                if (modelName.endsWith("builtin/entity")){
                                         modelName = "minecraft:" + entryKey;
                                         
                                         if (entryKey.endsWith("_bed")) {
@@ -578,15 +566,7 @@ public class OutputResourcesUtil {
                                                 continue;
                                         }
                                         
-                                        List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);
-
-                                        // All the items are a bit small out of the box for some reason, so add our own tranform to make them larger
-                                        HashMap<String, ArrayList<Float>> transform = new HashMap<>();
-                                        transform.put("scale", new ArrayList<>(List.of(1.5f, 1.5f, 1.5f)));
-                                        transforms.add(transform);
-                                        
-                                        // TODO: chest and ender chest still do not render, same as chorus plant and shield
-                                        
+                                        List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);                                        
                                         itemRenderer.renderItem(outFile, blockTypeRegistry, texturePack, modelName, transforms);
                                         continue;
                                 }
@@ -605,8 +585,15 @@ public class OutputResourcesUtil {
                                         }
                                 }
                                 
+                                // Inventory block models are not loaded in the registry because they do not have a block state. Let's load them manually
+                                if (modelName.contains("_inventory")) {
+                                        var model = blockRegistry.loadModel(modelName, "", new HashMap<>(), null);
+                                        itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, model);
+                                        continue;
+                                }
+                                
                                 // Rest of the items
-                                itemRenderer.renderBlockModelName(outFile, blockRegistry, texturePack, modelName);
+                                itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
 			}
                         System.out.println();
 		} catch (Exception e) {

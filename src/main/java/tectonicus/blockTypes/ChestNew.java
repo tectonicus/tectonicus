@@ -140,7 +140,8 @@ public class ChestNew implements BlockType
 		SubMesh rightDoubleChestMesh = new SubMesh();
 
 		Rotation horizRotation = Rotation.Clockwise;
-		float horizAngle = 0;
+		float horizAngle = 180;
+                String type = null;
 		final BlockProperties properties = chunk.getBlockState(x, y, z);
 		if (properties != null) {
 			switch (properties.get("facing")) {
@@ -159,17 +160,20 @@ public class ChestNew implements BlockType
 					eastWestColorTemp = northSouthColor;
 					break;
 				default:
+                                        horizAngle = 0;
+                                        break;
 			}
 
-			String type = properties.get("type");
-			if (type != null && type.equals("left")) {
-				addLeftHalfDoubleChest(leftDoubleChestMesh, topColor, northSouthColorTemp, eastWestColorTemp);
-			} else if (type != null && type.equals("right")) {
-				addRightHalfDoubleChest(rightDoubleChestMesh, topColor, northSouthColorTemp, eastWestColorTemp);
-			} else {
-				addSingleChest(singleChestMesh, topColor, northSouthColorTemp, eastWestColorTemp);
-			}
+			type = properties.get("type");
 		}
+                
+                if (type != null && type.equals("left")) {
+                        addLeftHalfDoubleChest(leftDoubleChestMesh, topColor, northSouthColorTemp, eastWestColorTemp);
+                } else if (type != null && type.equals("right")) {
+                        addRightHalfDoubleChest(rightDoubleChestMesh, topColor, northSouthColorTemp, eastWestColorTemp);
+                } else {
+                        addSingleChest(singleChestMesh, topColor, northSouthColorTemp, eastWestColorTemp);
+                }
 
 		singleChestMesh.pushTo(geometry.getMesh(smallTop.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, Rotation.None, 0);
 		leftDoubleChestMesh.pushTo(geometry.getMesh(leftTop.texture, Geometry.MeshType.Solid), x, y, z, horizRotation, horizAngle, Rotation.None, 0);

@@ -181,13 +181,17 @@ public class ItemRenderer
 		renderBlock(outFile, null, context, rawChunk, null, model, 32);
 	}
 
-	public void renderBlockModelName(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception {
-		RawChunk rawChunk = new RawChunk();
+	public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception {
 		BlockModel model = registry.getModel(modelName);
+                renderInventoryBlockModel(outFile, registry, texturePack, model);
+	}
+        
+        public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, BlockModel model) throws Exception {
+                RawChunk rawChunk = new RawChunk();
 		ItemContext context = new ItemContext(texturePack, null, registry);
                 BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 1);
 		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(270 + 45), getAngleRad(30), bounds);
-	}
+        }
 
 	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
 		String blockName = block.getName();
@@ -262,7 +266,7 @@ public class ItemRenderer
         
         public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String modelName) throws Exception
 	{
-                BoundingBox bounds = new BoundingBox(new Vector3f(-1, -1, 0), 2, 1, 0);
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1.25f, -1, 0), 2.5f, 1.25f, 0);
                 
                 renderBed(outFile, registry, texturePack, 48, bounds, modelName);
         }
@@ -318,6 +322,8 @@ public class ItemRenderer
                 float cameraAngle = getAngleRad(45 + 270);
                 float cameraElevationAngle = getAngleRad(30);
 
+                /* TODO: Figure out transforms. Both scaling and translation are all over the place.
+                         Some items benefit from them, others are too small, or weirdly offset, dragon head is a total mess.
                 for (var transform : transforms) {
                         float translateX = 0;
                         float translateY = 0;
@@ -337,14 +343,12 @@ public class ItemRenderer
                                 scaleY = scale.get(1);
                                 scaleZ = scale.get(2);
                         }
-                        /* TODO: Figure out translation. It does some weird stuff with skulls and mainly with the dragon head when enabled.
                         if (transform != null && transform.containsKey("translation")) {
                                 ArrayList<Float> translation = transform.get("translation");
                                 translateX = translation.get(0);
                                 translateY = translation.get(1);
                                 translateZ = translation.get(2);
                         }
-                        */
 
                         // Do the scaling. Divide insted of multiply, since we are transforming bounding box instead of item
                         final float centerX = bounds.getCenterX();
@@ -360,6 +364,7 @@ public class ItemRenderer
                                 scaledWidth, scaledHeight, scaledDepth
                         );
                 }
+                */
                 
                 renderBlock(outFile, registry, context, rawChunk, type, null, 48, cameraAngle, cameraElevationAngle, bounds);
         }        
