@@ -145,11 +145,14 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	@Option(names = {"-u", "--updateToLeaflet"}, paramLabel = "<String>")
 	private Path updateToLeaflet;
         
-        @Option(names = {"-css", "--customStyle", "customStyle"}, paramLabel = "<String>")
+	@Option(names = {"-css", "--customStyle", "customStyle"}, paramLabel = "<String>")
 	private String customStyle;
 
-        @Option(names = {"-js", "--customScript", "customScript"}, paramLabel = "<String>")
+	@Option(names = {"-js", "--customScript", "customScript"}, paramLabel = "<String>")
 	private String customScript;
+	
+	@Option(names = {"--useCdn", "useCdn"}, paramLabel = "<String")
+	private String useCdn;
 
 	private List<MutableMap> maps;
 
@@ -220,6 +223,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\thtmlTitle: {}", getHtmlTitle());
 		log.debug("\tnumDownsampleThreads:"+getNumDownsampleThreads());
 		log.debug("\tsinglePlayerName:"+getSinglePlayerName());
+		log.debug("\tuseCdn: {}", getUseCdn());
 
 		System.out.println();
 

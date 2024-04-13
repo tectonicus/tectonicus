@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -157,9 +157,10 @@ public class XmlConfigurationParser
 			config.setSignsInitiallyVisible(getBoolean(configNode, "signsInitiallyVisible", true));
 			config.setPortalsInitiallyVisible(getBoolean(configNode, "portalsInitiallyVisible", true));
 			config.setViewsInitiallyVisible(getBoolean(configNode, "viewsInitiallyVisible", true));
-                        
-                        config.setCustomStyle(getString(configNode, "customStyle", null));
-                        config.setCustomScript(getString(configNode, "customScript", null));
+			
+			config.setCustomStyle(getString(configNode, "customStyle", null));
+			config.setCustomScript(getString(configNode, "customScript", null));
+			config.setUseCdn(getString(configNode, "useCdn", ""));
 		}
 		
 		// Parse rasteriser config

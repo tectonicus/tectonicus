@@ -33,6 +33,7 @@
 		viewsInitiallyVisible="true / false"
 		customStyle="<your_css_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		customScript="<your_javascript_filename>" <!-- the custom file should be placed in the Scripts directory -->
+		useCdn="unpkg / cdnjs / jsdelivr"
 	/>
 
 	<!-- Rasteriser config applies to all maps/layers -->

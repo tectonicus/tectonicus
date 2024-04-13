@@ -11,6 +11,7 @@ package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.BlockTypeRegistry;
@@ -935,24 +936,62 @@ public class OutputResourcesUtil {
 				while (!tokens.isEmpty())
 				{
 					Util.Token first = tokens.remove(0);
-					if (first.isReplaceable)
-					{
+					if (first.isReplaceable) {
 						if (first.value.equals("title")) {
 							outLine.append(config.getHtmlTitle());
-                                                } else if (first.value.equals("customStyleIncludes")) {
-                                                        if (config.getCustomStyle() != null)
-                                                        {
-                                                                outLine.append("<link rel=\"stylesheet\" href=\"Scripts/");
-                                                                outLine.append(config.getCustomStyle());
-                                                                outLine.append("\" />");
-                                                        }
-                                                } else if (first.value.equals("customScriptIncludes")) {
-                                                        if (config.getCustomScript() != null) {
-                                                                outLine.append("<script src=\"Scripts/");
+						} else if (first.value.equals("styleIncludes")) {
+							switch(config.getUseCdn()) {
+								case "unpkg":
+									outLine.append("<link rel=\"stylesheet\" href=\"https://unpkg.com/tippy.js@6/themes/light.css\" />\n");
+									outLine.append("\t\t<link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9/dist/leaflet.css\" integrity=\"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=\" crossorigin=\"\" />");
+									break;
+								case "cdnjs":
+									outLine.append("<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/tippy.js/6.3.7/themes/light.min.css\" integrity=\"sha512-zpbTFOStBclqD3+SaV5Uz1WAKh9d2/vOtaFYpSLkosymyJKnO+M4vu2CK2U4ZjkRCJ7+RvLnISpNrCfJki5JXA==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />\n");
+									outLine.append("\t\t<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css\" integrity=\"sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />");
+									break;
+								case "jsdelivr":
+									outLine.append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tippy.js@6/themes/light.css\" />\n");
+									outLine.append("\t\t<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.min.css\">");
+									break;
+								default:
+									outLine.append("<link rel=\"stylesheet\" href=\"Scripts/tippy-light-theme.css\" />");
+									outLine.append("\t\t<link rel=\"stylesheet\" href=\"Scripts/leaflet.css\" />");
+							}
+						} else if (first.value.equals("customStyleIncludes")) {
+							if (config.getCustomStyle() != null) {
+								outLine.append("<link rel=\"stylesheet\" href=\"Scripts/");
+								outLine.append(config.getCustomStyle());
+								outLine.append("\" />");
+							}
+						} else if (first.value.equals("customScriptIncludes")) {
+							if (config.getCustomScript() != null) {
+								outLine.append("<script src=\"Scripts/");
 								outLine.append(config.getCustomScript());
 								outLine.append("\"></script>");
-                                                        }
-                                                } else if (first.value.equals("scriptIncludes")) {
+							}
+						} else if (first.value.equals("scriptIncludes")) {
+							switch(config.getUseCdn()) {
+								case "unpkg":
+									outLine.append("<script src=\"https://unpkg.com/@popperjs/core@2\"></script>\n");
+									outLine.append("\t\t<script src=\"https://unpkg.com/tippy.js@6\"></script>\n");
+									outLine.append("\t\t<script src=\"https://unpkg.com/leaflet@1.9/dist/leaflet.js\" integrity=\"sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=\" crossorigin=\"\"></script>\n");
+									break;
+								case "cdnjs":
+									outLine.append("<script src=\"https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js\" integrity=\"sha512-TPh2Oxlg1zp+kz3nFA0C5vVC6leG/6mm1z9+mA81MI5eaUVqasPLO8Cuk4gMF4gUfP5etR73rgU/8PNMsSesoQ==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>\n");
+									outLine.append("\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/tippy.js/6.3.7/tippy-bundle.umd.min.js\" integrity=\"sha512-gbruucq/Opx9jlHfqqZeAg2LNK3Y4BbpXHKDhRC88/tARL/izPOE4Zt2w6X9Sn1UeWaGbL38zW7nkL2jdn5JIw==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>\n");
+									outLine.append("\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js\" integrity=\"sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>\n");
+									break;
+								case "jsdelivr":
+									outLine.append("<script src=\"https://cdn.jsdelivr.net/npm/@popperjs/core@2/dist/umd/popper.min.js\"></script>\n");
+									outLine.append("\t\t<script src=\"https://cdn.jsdelivr.net/npm/tippy.js@6/dist/tippy-bundle.umd.min.js\"></script>\n");
+									outLine.append("\t\t<script src=\"https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.min.js\"></script>\n");
+									break;
+								default:
+									outLine.append("<script src=\"Scripts/popper.min.js\"></script>\n");
+									outLine.append("\t\t<script src=\"Scripts/tippy-bundle.umd.min.js\"></script>\n");
+									outLine.append("\t\t<script src=\"Scripts/leaflet.js\"></script>\n");
+							}
+							
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
                                                         
