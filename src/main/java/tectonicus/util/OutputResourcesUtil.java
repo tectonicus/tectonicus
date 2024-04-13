@@ -33,6 +33,7 @@ import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
+import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.DisplayTag;
@@ -534,7 +535,7 @@ public class OutputResourcesUtil {
                 return result;
         }
 
-	public static void outputBlockItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
+	public static void outputInventoryItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
                 System.out.println("Rendering icons for inventory items");
                 log.trace("Rendering icons for inventory items");
                 
@@ -595,6 +596,20 @@ public class OutputResourcesUtil {
                                                                 texture = texturePack.loadPalettedTexture(trim, palette, keyPalette);
                                                         } else {
                                                                 texture = texturePack.loadTexture("assets/" + namespace + "/textures/" + textureId + ".png");
+                                                        }
+                                                        
+                                                        var block = blockRegistry.getBlockModels().getIfPresent(layer.getValue());
+                                                        if (block != null) {
+                                                                if (block.getElements().get(0).getFaces().values().iterator().next().isTinted()) {
+                                                                        Colour4f tintColor = texturePack.getFoliageColor(BiomesOld.FOREST);
+                                                                        for (int y=0; y<texture.getHeight(); y++) {
+                                                                                for (int x=0; x<texture.getWidth(); x++) {
+                                                                                        Colour4f pixel = new Colour4f(texture.getRGB(x, y));
+                                                                                        pixel.multiply(tintColor);
+                                                                                        texture.setRGB(x, y, pixel.toArgb());
+                                                                                }
+                                                                        }
+                                                                }
                                                         }
                                                                                                                 
                                                         composited.getGraphics().drawImage(texture, 0, 0, null);

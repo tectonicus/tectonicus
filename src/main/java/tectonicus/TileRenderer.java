@@ -65,12 +65,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
-import static tectonicus.util.OutputResourcesUtil.outputBlockItemIcons;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
 import static tectonicus.util.OutputResourcesUtil.outputHtml;
 import static tectonicus.util.OutputResourcesUtil.outputHtmlResources;
 import static tectonicus.util.OutputResourcesUtil.outputIcons;
+import static tectonicus.util.OutputResourcesUtil.outputInventoryItemIcons;
 import static tectonicus.util.OutputResourcesUtil.outputPlayers;
 import static tectonicus.util.OutputResourcesUtil.outputPortals;
 import static tectonicus.util.OutputResourcesUtil.outputRenderStats;
@@ -310,7 +310,7 @@ public class TileRenderer
                         System.out.println("Unable to render. No map is defined in config.");
                 } else {
                         ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
-                        outputBlockItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry);
+                        outputInventoryItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry);
                         outputHtmlResources(world.getTexturePack(), playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
                 }
 		

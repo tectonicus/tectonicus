@@ -64,7 +64,10 @@ public class Colour4f
 	}
 
 	public Colour4f(int color) {
-		this((color >> 16) & 255, (color >> 8) & 255, color & 255);
+		this.a = ((color >> 24) & 255) / 255f;
+                this.r = ((color >> 16) & 255) / 255f;
+                this.g = ((color >> 8) & 255) / 255f;
+                this.b = ((color >> 0) & 255) / 255f;
 	}
 	
 	public void add(Colour4f other)
@@ -98,11 +101,20 @@ public class Colour4f
 		this.a = (this.a + other.a) / 2;
 	}
 
-	public int toInt() {
+        public int toRgb() {
 		int rgb = (int)(this.r * 255);
 		rgb = (rgb << 8) + (int)(this.g * 255);
 		rgb = (rgb << 8) + (int)(this.b * 255);
 
 		return rgb;
-	}
+        }
+
+        public int toArgb() {
+		int rgb = (int)(this.a * 255);
+                rgb = (rgb << 8) + (int)(this.r * 255);
+		rgb = (rgb << 8) + (int)(this.g * 255);
+		rgb = (rgb << 8) + (int)(this.b * 255);
+
+		return rgb;
+        }
 }

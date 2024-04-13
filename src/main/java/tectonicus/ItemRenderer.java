@@ -681,17 +681,17 @@ public class ItemRenderer
 		@Override
 		public Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z)
 		{
-			return BiomesOld.OCEAN;
+			return BiomesOld.FOREST;
 		}
 
 		@Override
 		public Colour4f getGrassColor(ChunkCoord chunkCoord, int x, int y, int z) {
-			return new Colour4f(1, 1, 1, 1);
+			return texturePack.getGrassColor(BiomesOld.FOREST);
 		}
 
 		@Override
 		public Colour4f getFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
-			return new Colour4f(1, 1, 1, 1);
+			return texturePack.getFoliageColor(BiomesOld.FOREST);
 		}
 
 		@Override

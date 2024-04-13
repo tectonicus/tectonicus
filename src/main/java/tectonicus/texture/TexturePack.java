@@ -822,7 +822,7 @@ public class TexturePack
 			foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
 
 			if(biome == Biomes.DARK_FOREST) {
-				grassColors.replace(biome, new Colour4f((grassColors.get(biome).toInt() & 16711422) + 2634762 >> 1));
+				grassColors.replace(biome, new Colour4f((grassColors.get(biome).toRgb() & 16711422) + 2634762 >> 1));
 			}
 		}
 
@@ -844,7 +844,7 @@ public class TexturePack
 			foliageColorsOld.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
 
 			if(biome == BiomesOld.DARK_FOREST || biome == BiomesOld.DARK_FOREST_HILLS) {
-				grassColorsOld.replace(biome, new Colour4f((grassColorsOld.get(biome).toInt() & 16711422) + 2634762 >> 1));
+				grassColorsOld.replace(biome, new Colour4f((grassColorsOld.get(biome).toRgb() & 16711422) + 2634762 >> 1));
 			}
 		}
 	}
