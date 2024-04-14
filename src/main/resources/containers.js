@@ -186,8 +186,8 @@ function renderMinecraftText(text, className) {
 
 function createChestPopup(chest) {
         let markerPopup = chest.large
-                ? '<div class="chest_container large"><div class="chest_scaler"><img class="chest large_chest" src="Images/LargeChest.png"/>'
-                : '<div class="chest_container"><div class="chest_scaler"><img class="chest" src="Images/SmallChest.png"/>';
+                ? '<div class="chest_container large"><div class="chest_scaler"><img src="Images/LargeChest.png" />'
+                : '<div class="chest_container"><div class="chest_scaler"><img src="Images/SmallChest.png" />';
 
         markerPopup += renderMinecraftText(chest.name, 'chest_name');
 
@@ -241,7 +241,7 @@ function createChestPopup(chest) {
                 let pngName = getPngName(item, itemId);
                 
                 markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-                markerPopup += '<img src="Images/Items/' + pngName + '.png" />';
+                markerPopup += '<img src="Images/Items/' + pngName + '.png" onload="checkImageSize(this)" />';
                 
                 markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);
                 markerPopup += getLeatherOverlay(item, itemId, pngName);
@@ -345,7 +345,13 @@ function getLeatherOverlay(item, itemId, pngName) {
         if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings') {
                 let overlayId = pngName + '_overlay';
                 result += '<img src="Images/Items/' + overlayId + '.png" />';
-                result += getEnchantmentGlint(item, overlayId, true, overlayId);
+                result += getEnchantmentGlint(item, overlayId, overlayId);
         }
         return result;
+}
+
+function checkImageSize(image) {
+        if (image.naturalWidth !== 16 || image.naturalHeight !== 16) {
+                image.classList.add('item_3d');
+        }
 }
