@@ -51,13 +51,24 @@ html, body, #map {
         position: absolute;
 }
 
-.3d_item img {
-        image-rendering: auto;
-}
-
 .item img {
         width: 16px;
         height: 16px;
+}
+
+.item img ~ img {
+        position: absolute;
+        top: 0;
+        left: 0;
+}
+
+.item .color_layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        mix-blend-mode: multiply;
 }
 
 @keyframes enchanted_glint {

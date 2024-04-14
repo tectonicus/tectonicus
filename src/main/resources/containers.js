@@ -232,19 +232,19 @@ function createChestPopup(chest) {
                 itemNameAndDescription += getEnchantmentsDescription(item);
                 itemNameAndDescription += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
 
-                let pngName = getPngName(item, itemId);
-
                 const row = Math.floor(item.slot/9);
                 const col = item.slot%9;
 
                 const top = 18+18*row;
                 const left = 8+18*col;
 
-                const is3dItem = localizations && localizations[blockKey];
+                let pngName = getPngName(item, itemId);
                 
-                markerPopup += '<div class="item ' + (is3dItem ? '3d_item' : '') + '" style="top: ' + top + 'px; left: ' + left + 'px;">';
+                markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
                 markerPopup += '<img src="Images/Items/' + pngName + '.png" />';
                 
+                markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);
+                markerPopup += getLeatherOverlay(item, itemId, pngName);
                 markerPopup += getEnchantmentGlint(item, itemId, pngName);
 
                 if (item.count > 1) {
@@ -319,4 +319,33 @@ function getEnchantmentGlint(item, itemId, pngName) {
                 return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + pngName + '\.png\'); mask-image: url(\'Images/Items/' + pngName + '.png\');"></div>';
         }
         return '';
+}
+
+function intToHTMLColor(colorCode) {
+        if (!colorCode) {
+                return null;
+        }
+        var hexColor = colorCode.toString(16);
+        while (hexColor.length < 6) {
+                hexColor = "0" + hexColor;
+        }
+        return "#" + hexColor;
+}
+
+function getColorLayer(color, itemId) {
+        if (color || itemId.indexOf('leather_') >= 0) {
+                color ??= 'rgb(106, 64, 41)';
+                return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'Images/Items/' + itemId + '.png\');"></div>';
+        }
+        return '';
+}
+
+function getLeatherOverlay(item, itemId, pngName) {
+        let result = '';
+        if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings') {
+                let overlayId = pngName + '_overlay';
+                result += '<img src="Images/Items/' + overlayId + '.png" />';
+                result += getEnchantmentGlint(item, overlayId, true, overlayId);
+        }
+        return result;
 }

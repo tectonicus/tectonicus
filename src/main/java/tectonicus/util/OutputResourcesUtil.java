@@ -545,7 +545,7 @@ public class OutputResourcesUtil {
                                 final String entryKey = entry.getKey();
                                 final ItemModel itemModel = entry.getValue();
                                 final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
-                                final File outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + ".png");
+                                File outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + ".png");
 
                                 System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
                                 log.trace("\tRendering icon for: " + entryKey);
@@ -611,8 +611,15 @@ public class OutputResourcesUtil {
                                                                         }
                                                                 }
                                                         }
-                                                                                                                
-                                                        composited.getGraphics().drawImage(texture, 0, 0, null);
+                                                              
+                                                        if (layer.getKey().equals("layer0") && textureId.contains("leather_")) {
+                                                                // Split the leather armor icon into base layer and overlay so that the base layer
+                                                                // can be coloured in CSS due to the colour not being known at this time.
+                                                                writeImage(texture, 16, 16, outFile);
+                                                                outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + "_overlay.png");
+                                                        } else {
+                                                                composited.getGraphics().drawImage(texture, 0, 0, null);
+                                                        }
                                                 }
                                                 writeImage(composited, 16, 16, outFile);
                                                 continue;
