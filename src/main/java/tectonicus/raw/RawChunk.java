@@ -1315,6 +1315,10 @@ public class RawChunk {
 	public Map<String, SkullEntity> getSkulls() {
 		return Collections.unmodifiableMap(skulls);
 	}
+        
+	public void setSkulls(Map<String, SkullEntity> skulls) {
+		this.skulls = skulls;
+	}
 
 	public Map<String, BeaconEntity> getBeacons() {
 		return Collections.unmodifiableMap(beacons);

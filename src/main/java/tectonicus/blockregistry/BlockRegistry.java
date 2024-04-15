@@ -49,7 +49,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static tectonicus.blockregistry.BlockStateWrapper.getRandomWeightedModel;
+import static tectonicus.blockregistry.BlockState.getRandomWeightedModel;
 
 
 @Log4j2
@@ -171,7 +171,7 @@ public class BlockRegistry
 							}
 						}
 
-						states.addCase(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
+						states.addState(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
 					});
 				} else if (root.has("variants")) {
 					JsonNode variants = root.get("variants");
@@ -186,7 +186,7 @@ public class BlockRegistry
 							singleVariantBlocks.put(name, modelsAndWeight);
 						}
 						BlockVariant blockVariant = new BlockVariant(key, modelsAndWeight);
-						states.addVariant(blockVariant);
+						states.addState(blockVariant);
 					}
 				} else {
 					log.warn("Invalid blockstate file: {}", blockStateFile);
@@ -360,15 +360,8 @@ public class BlockRegistry
 
 	private void checkBlockAttributes() {
 		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
-			List<BlockStateCase> cases = wrapper.getCases();
-			if (!cases.isEmpty()) {
-				for (BlockStateCase c : cases) {
-					setBlockAttributes(wrapper, c.getModelsAndWeight().getModels());
-				}
-			} else {
-				for (BlockVariant variant : wrapper.getVariants()) {
-					setBlockAttributes(wrapper, variant.getModelsAndWeight().getModels());
-				}
+                        for (BlockState state : wrapper.getStates()) {
+				setBlockAttributes(wrapper, state.getModelsAndWeight().getModels());
 			}
 		}
 	}

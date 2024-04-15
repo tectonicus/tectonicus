@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,6 +12,7 @@ package tectonicus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
+import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
@@ -28,6 +29,7 @@ import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
+import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -68,6 +70,7 @@ import static tectonicus.util.OutputResourcesUtil.outputContents;
 import static tectonicus.util.OutputResourcesUtil.outputHtml;
 import static tectonicus.util.OutputResourcesUtil.outputHtmlResources;
 import static tectonicus.util.OutputResourcesUtil.outputIcons;
+import static tectonicus.util.OutputResourcesUtil.outputInventoryItemIcons;
 import static tectonicus.util.OutputResourcesUtil.outputPlayers;
 import static tectonicus.util.OutputResourcesUtil.outputPortals;
 import static tectonicus.util.OutputResourcesUtil.outputRenderStats;
@@ -208,6 +211,8 @@ public class TileRenderer
 		
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
+                World world = null;
+                
 		for (tectonicus.configuration.Map map : config.getMaps())
 		{
 			// Clear shared state?
@@ -222,7 +227,7 @@ public class TileRenderer
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
 
 			// Create the world for this map
-			World world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
+			world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
 			
 			// Setup camera
 			setupInitialCamera(map);
@@ -268,6 +273,7 @@ public class TileRenderer
 				// Setup per-layer config
 				setupWorldForLayer(layer, world);
 				
+				
 				// Set new tile cache for this layer
 				String optionString = FileTileCache.calcOptionsString(config);
 				TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
@@ -288,7 +294,7 @@ public class TileRenderer
 				bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
 				tileCache.closeTileCache();
 			}
-			
+
 			outputIcons(exportDir, config, map, world, rasteriser);
 			
 			// Output world stats
@@ -299,10 +305,14 @@ public class TileRenderer
 			worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
 					worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight);
 		}
-
-		// TODO: Should only load texture pack once and share between this and world loading
-		outputHtmlResources(new TexturePack(rasteriser, config.minecraftJar(), config.getTexturePack(), config.getMap(0).getModJars(), config),
-				playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
+                
+                if (world == null) {
+                        System.out.println("Unable to render. No map is defined in config.");
+                } else {
+                        ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
+                        outputInventoryItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry);
+                        outputHtmlResources(world.getTexturePack(), playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
+                }
 		
 		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), config);
 		
@@ -594,7 +604,7 @@ public class TileRenderer
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
 
 		for (TileCoord t : tiles) {
-			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")\r"); //prints a carriage return after line
+			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")          \r"); //prints a carriage return after line
 			log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
 			progressListener.onTaskUpdate(done, tiles.size());
 

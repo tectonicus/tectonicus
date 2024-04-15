@@ -186,8 +186,8 @@ function renderMinecraftText(text, className) {
 
 function createChestPopup(chest) {
         let markerPopup = chest.large
-                ? '<div class="chest_container large"><div class="chest_scaler"><img class="chest large_chest" src="Images/LargeChest.png"/>'
-                : '<div class="chest_container"><div class="chest_scaler"><img class="chest" src="Images/SmallChest.png"/>';
+                ? '<div class="chest_container large"><div class="chest_scaler"><img src="Images/LargeChest.png" />'
+                : '<div class="chest_container"><div class="chest_scaler"><img src="Images/SmallChest.png" />';
 
         markerPopup += renderMinecraftText(chest.name, 'chest_name');
 
@@ -198,20 +198,7 @@ function createChestPopup(chest) {
                 const itemKey = `item.${namespace}.${itemId}`;
                 const itemDescKey = `item.${namespace}.${itemId}.desc`;
                 const blockKey = `block.${namespace}.${itemId}`;
-
-                let itemNameAndDescription = itemId;
-                let isItem = true; // Assume we have an item
-                if (localizations) {
-                        if (localizations[itemKey]) {
-                                itemNameAndDescription = localizations[itemKey];
-                        } else if (localizations[blockKey]) {
-                                itemNameAndDescription = localizations[blockKey];
-                                isItem = false;
-                        } else {
-                                isItem = false;
-                        }
-                }
-
+                
                 let additionalItemNameCssClass = '';
                 if (item.enchantments) {
                         additionalItemNameCssClass = ' enchanted';
@@ -220,6 +207,7 @@ function createChestPopup(chest) {
                         additionalItemNameCssClass = ' ' + colorizedNames[itemId];
                 }
 
+                let itemNameAndDescription;
                 if (item.customName) {
                         // Parse custom name. Possible values if matched:
                         //      {text:Custom name}
@@ -235,7 +223,8 @@ function createChestPopup(chest) {
                                 itemNameAndDescription = renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
                         }
                 } else {
-                        itemNameAndDescription = renderMinecraftText(localize(itemNameAndDescription), 'name' + additionalItemNameCssClass);
+                        itemNameAndDescription = localize(itemKey, localize(blockKey, itemId));
+                        itemNameAndDescription += renderMinecraftText(itemNameAndDescription, 'name' + additionalItemNameCssClass);
                 }
 
                 itemNameAndDescription += renderMinecraftText(localize(itemDescKey, null));
@@ -243,34 +232,23 @@ function createChestPopup(chest) {
                 itemNameAndDescription += getEnchantmentsDescription(item);
                 itemNameAndDescription += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
 
-                let pngName = itemId;
-                if (itemId === 'compass' || itemId === 'clock' || itemId === 'recovery_compass') {
-                        // Choose 1st frame for animated items
-                        pngName += '_00';
-                }
-                if (itemId === 'enchanted_golden_apple') {
-                        pngName = 'golden_apple';
-                }
-
                 const row = Math.floor(item.slot/9);
                 const col = item.slot%9;
 
                 const top = 18+18*row;
                 const left = 8+18*col;
 
+                let pngName = getPngName(item, itemId);
+                
                 markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-                markerPopup += '<img src="Images/Items/' + (isItem ? pngName : 'barrier') + '.png" />';
+                markerPopup += '<img src="Images/Items/' + pngName + '.png" onload="checkImageSize(this)" />';
                 
                 markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);
-                markerPopup += getLeatherOverlay(item, itemId);
-                markerPopup += getArmorTrimOverlay(item, itemId);
-                markerPopup += getEnchantmentGlint(item, itemId, isItem, pngName);
+                markerPopup += getLeatherOverlay(item, itemId, pngName);
+                markerPopup += getEnchantmentGlint(item, itemId, pngName);
 
                 if (item.count > 1) {
                         markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
-                }
-                if (!isItem) {
-                        markerPopup += renderMinecraftText(itemId, 'item_name');
                 }
 
                 markerPopup += '<div class=item_description>' + itemNameAndDescription + '</div></div>';
@@ -279,6 +257,17 @@ function createChestPopup(chest) {
         markerPopup += '</div></div>';
         
         return markerPopup;
+}
+
+function getPngName(item, itemId) {
+        let pngName = itemId;
+        
+        if (item.trim) {
+                const [namespace, material] = item.trim.material.split(":");
+                pngName += '_' + material + '_trim';
+        }
+        
+        return pngName;
 }
 
 function getTrimDescription(item) {
@@ -324,10 +313,10 @@ function getEnchantmentsDescription(item) {
         return result;
 }
 
-function getEnchantmentGlint(item, itemId, isItem, pngName) { // TODO: remove isItem and pngName after block items have their icons and placeholder icon is unnecessary
+function getEnchantmentGlint(item, itemId, pngName) {
         if (item.enchantments || itemId === 'enchanted_golden_apple')
         {
-                return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '\.png\'); mask-image: url(\'Images/Items/' + (isItem ? pngName : 'barrier') + '.png\');"></div>';
+                return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + pngName + '\.png\'); mask-image: url(\'Images/Items/' + pngName + '.png\');"></div>';
         }
         return '';
 }
@@ -351,59 +340,18 @@ function getColorLayer(color, itemId) {
         return '';
 }
 
-function getLeatherOverlay(item, itemId) {
+function getLeatherOverlay(item, itemId, pngName) {
         let result = '';
         if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings') {
-                let overlayId = itemId + '_overlay';
+                let overlayId = pngName + '_overlay';
                 result += '<img src="Images/Items/' + overlayId + '.png" />';
-                result += getEnchantmentGlint(item, overlayId, true, overlayId);
+                result += getEnchantmentGlint(item, overlayId, overlayId);
         }
         return result;
 }
 
-function getArmorTrimOverlay(item, itemId) {
-        let result = '';
-        if (item.trim) {
-                const [material, armorPiece] = itemId.split("_");
-                if (armorPiece === 'boots' || armorPiece === 'chestplate' || armorPiece === 'helmet' || armorPiece === 'leggings') {
-                        let color;
-                        
-                        switch(item.trim.material) {
-                                case 'minecraft:amethyst':
-                                        color = '#d393ff';
-                                        break;
-                                case 'minecraft:copper':
-                                        color = '#ff9474';
-                                        break;
-                                case 'minecraft:diamond':
-                                        color = '#71deff';
-                                        break;
-                                case 'minecraft:emerald':
-                                        color = '#43ff83';
-                                        break;
-                                case 'minecraft:gold':
-                                        color = '#ffe300';
-                                        break;
-                                case 'minecraft:iron':
-                                        color = '#d2d2d2';
-                                        break;
-                                case 'minecraft:lapis':
-                                        color = '#3c6bc6';
-                                        break;
-                                case 'minecraft:netherite':
-                                        color = '#666666';
-                                        break;
-                                case 'minecraft:quartz':
-                                        color = '#ffffff';
-                                        break;
-                                case 'minecraft:redstone':
-                                        color = '#ff0000';
-                                        break;
-                        }
-                    
-                        result += '<img src="Images/Items/' + armorPiece + '_trim.png" />';
-                        result += getColorLayer(color, armorPiece + '_trim');
-                }
+function checkImageSize(image) {
+        if (image.naturalWidth !== 16 || image.naturalHeight !== 16) {
+                image.classList.add('item_3d');
         }
-        return result;
 }

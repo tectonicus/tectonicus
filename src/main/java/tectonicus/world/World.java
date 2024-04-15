@@ -1259,7 +1259,7 @@ public class World implements BlockContext
 
 		if(!isFoliage && (biome == BiomesOld.DARK_FOREST || biome == BiomesOld.DARK_FOREST_HILLS)) {
 			Colour4f origColor = getTintColorFromBiomeTextures(BiomeUtils.normalize(adjTemp), BiomeUtils.normalize(adjRainfall), false);
-			return new Colour4f((origColor.toInt() & 16711422) + 2634762 >> 1);
+			return new Colour4f((origColor.toRgb() & 16711422) + 2634762 >> 1);
 		} else {
 			return getTintColorFromBiomeTextures(BiomeUtils.normalize(adjTemp), BiomeUtils.normalize(adjRainfall), isFoliage);
 		}

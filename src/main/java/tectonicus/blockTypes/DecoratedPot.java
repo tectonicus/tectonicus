@@ -111,6 +111,10 @@ public class DecoratedPot implements BlockType
                 
                 String xyz = "x" + x + "y" + y + "z" + z;
                 DecoratedPotEntity pot = rawChunk.getDecoratedPots().get(xyz);
+                if (pot == null) {
+                        // There is no entity when rendering item icons. Use default values...
+                        pot = new DecoratedPotEntity(0, 0, 0, 0, 0, 0, "minecraft:brick", "minecraft:brick", "minecraft:brick", "minecraft:brick");
+                }
                 
                 final SubTexture side1Texture = getSideTexture(pot.getSherd1());
                 final SubTexture side2Texture = getSideTexture(pot.getSherd2());
@@ -225,9 +229,12 @@ public class DecoratedPot implements BlockType
         
         private static int getRotationAngle(int x, int y, int z, RawChunk rawChunk) {
                 final BlockProperties properties = rawChunk.getBlockState(x, y, z);
-                final String facing = properties.get("facing");
-		
-                switch (facing) {
+                
+                if (properties == null) {
+                        return 0;
+                }
+
+                switch (properties.get("facing")) {
                         case "north":
                                 return 180;
                         case "west":
