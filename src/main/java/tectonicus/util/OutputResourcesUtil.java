@@ -33,6 +33,7 @@ import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
+import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.DisplayTag;
@@ -57,7 +58,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -535,20 +535,108 @@ public class OutputResourcesUtil {
                 return result;
         }
 
-	public static void testOutputItemIcons(Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser, ItemRegistry itemRegistry) {
-		BlockRegistry registry = world.getModelRegistry();
-		TexturePack texturePack = world.getTexturePack();
-		Version version = world.getWorldInfo().getVersion();
-
+	public static void outputInventoryItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
+                System.out.println("Rendering icons for inventory items");
+                log.trace("Rendering icons for inventory items");
+                
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
-				String modelName = entry.getValue().getParent();
-				if (modelName.contains("block/")) {
-					System.out.println("Rendering icon for: " + modelName);
-					itemRenderer.renderBlockModelName(new File(args.getOutputDir(), "Images/Items/" + entry.getKey() + ".png"), registry, texturePack, modelName);
-				}
+                                final String entryKey = entry.getKey();
+                                final ItemModel itemModel = entry.getValue();
+                                final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
+                                File outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + ".png");
+
+                                System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
+                                log.trace("\tRendering icon for: " + entryKey);
+
+                                String modelName = ultimatePredecessorModel.getParent();
+                                if (modelName == null) {
+                                        // Do not crash for blocks without parent (Air)
+                                        continue;
+                                }
+                                
+                                // Some items need special handling. Namely beds and builtin entities
+                                if (modelName.endsWith("builtin/entity")){
+                                        modelName = "minecraft:" + entryKey;
+                                        
+                                        if (entryKey.endsWith("_bed")) {
+                                                itemRenderer.renderBed(outFile, blockTypeRegistry, texturePack, modelName);
+                                                continue;
+                                        }
+                                        
+                                        List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);                                        
+                                        itemRenderer.renderItem(outFile, blockTypeRegistry, texturePack, modelName, transforms);
+                                        continue;
+                                }
+                                
+                                // Items that are just 2d textures
+                                if (modelName.endsWith("builtin/generated")) {
+                                        final Map<String, String> textures = itemModel.getTextures();
+                                        if (textures != null) {
+                                                BufferedImage composited = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+                                                for (var layer : textures.entrySet()) {
+                                                        if (!layer.getKey().startsWith("layer")) {
+                                                                // Ignore particles
+                                                                continue;
+                                                        }
+                                                        final String[] layerTexture = layer.getValue().split(":");
+                                                        final String namespace = layerTexture.length == 1 ? "minecraft" : layerTexture[0];
+                                                        final String textureId = layerTexture.length == 1 ? layerTexture[0] : layerTexture[1];
+                                                        
+                                                        BufferedImage texture;
+                                                        
+                                                        if (!layer.getKey().equals("layer0") && textureId.contains("trim")) {
+                                                                String[] trimParts = textureId.split("_trim_");
+                                                                
+                                                                String trim = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
+                                                                String palette = "assets/" + namespace + "/textures/trims/color_palettes/" + trimParts[1] + ".png";
+                                                                String keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
+                                                                
+                                                                texture = texturePack.loadPalettedTexture(trim, palette, keyPalette);
+                                                        } else {
+                                                                texture = texturePack.loadTexture("assets/" + namespace + "/textures/" + textureId + ".png");
+                                                        }
+                                                        
+                                                        var block = blockRegistry.getBlockModels().getIfPresent(layer.getValue());
+                                                        if (block != null) {
+                                                                if (block.getElements().get(0).getFaces().values().iterator().next().isTinted()) {
+                                                                        Colour4f tintColor = texturePack.getFoliageColor(BiomesOld.FOREST);
+                                                                        for (int y=0; y<texture.getHeight(); y++) {
+                                                                                for (int x=0; x<texture.getWidth(); x++) {
+                                                                                        Colour4f pixel = new Colour4f(texture.getRGB(x, y));
+                                                                                        pixel.multiply(tintColor);
+                                                                                        texture.setRGB(x, y, pixel.toArgb());
+                                                                                }
+                                                                        }
+                                                                }
+                                                        }
+                                                              
+                                                        if (layer.getKey().equals("layer0") && textureId.contains("leather_")) {
+                                                                // Split the leather armor icon into base layer and overlay so that the base layer
+                                                                // can be coloured in CSS due to the colour not being known at this time.
+                                                                writeImage(texture, 16, 16, outFile);
+                                                                outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + "_overlay.png");
+                                                        } else {
+                                                                composited.getGraphics().drawImage(texture, 0, 0, null);
+                                                        }
+                                                }
+                                                writeImage(composited, 16, 16, outFile);
+                                                continue;
+                                        }
+                                }
+                                
+                                // Inventory block models are not loaded in the registry because they do not have a block state. Let's load them manually
+                                if (modelName.contains("_inventory")) {
+                                        var model = blockRegistry.loadModel(modelName, "", new HashMap<>(), null);
+                                        itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, model);
+                                        continue;
+                                }
+                                
+                                // Rest of the items
+                                itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
 			}
+                        System.out.println();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -570,7 +658,7 @@ public class OutputResourcesUtil {
 				properties.put("facing", "south");
 				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
-			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
+                        itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
@@ -678,9 +766,8 @@ public class OutputResourcesUtil {
 			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
 		}
                 
-                // Extract textures for items in containers
+                // Extract enchanted glint texture
                 extractFile(texturePack, "assets/minecraft/textures/misc/enchanted_glint_item.png", new File(imagesDir, "EnchantedGlint.png"), true);
-                extractItemTextures(texturePack, itemsDir);
 
 		// Extract Leaflet resources
                 File scriptsDir = new File(exportDir, "Scripts");
@@ -723,21 +810,6 @@ public class OutputResourcesUtil {
                                 e.printStackTrace();
                         }
                 }
-        }
-        
-        private static void extractItemTextures(TexturePack texturePack, File targetDir) {
-            	try {
-                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/item")) {
-                                String fileName = Paths.get(file).getFileName().toString();
-                                extractFile(texturePack, file, new File(targetDir, fileName), true);
-                        }
-                        for (var file : texturePack.getZipStack().listFilesInDirectory("assets/minecraft/textures/trims/items")) {
-                                String fileName = Paths.get(file).getFileName().toString();
-                                extractFile(texturePack, file, new File(targetDir, fileName), true);
-                        }
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
         }
 
 	private static void extractMapResources(File scriptsDir) {

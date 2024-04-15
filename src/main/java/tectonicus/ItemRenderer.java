@@ -11,6 +11,7 @@ package tectonicus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
@@ -41,6 +42,7 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
 import tectonicus.util.Vector2f;
+import tectonicus.world.Colors;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -50,6 +52,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 @Log4j2
 public class ItemRenderer
@@ -86,7 +89,7 @@ public class ItemRenderer
 		
 		ItemGeometry item = createCompassGeometry(rasteriser, map.getNorthDirection(), compassImage);
 		
-		renderItem(item, outFile, 2, map.getCameraAngleRad(), map.getCameraElevationRad());
+		renderItem(item, outFile, 128, 4, map.getCameraAngleRad(), map.getCameraElevationRad());
 	}
 	
 	public void renderPortal(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
@@ -157,7 +160,7 @@ public class ItemRenderer
 		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 4, 5, 1);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(55), getAngleRad(35));
+		renderItem(item, outFile, 32, 4, getAngleRad(55), getAngleRad(35));
 	}
 
 	public void renderBlockOld(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception {
@@ -166,7 +169,7 @@ public class ItemRenderer
 		rawChunk.setBlockData(0, 0, 0, (byte) blockData);
 		BlockType type = registry.find(blockId, blockData);
 		ItemContext context = new ItemContext(texturePack, registry, null);
-		renderBlock(outFile, registry, context, rawChunk, type, null);
+		renderBlock(outFile, registry, context, rawChunk, type, null, 32);
 	}
 
 	public void renderBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, Block block, String modelVariant) throws Exception {
@@ -175,15 +178,20 @@ public class ItemRenderer
 		rawChunk.setBlockName(0, 0, 0, block.getName());
 		BlockModel model = registry.getModel(blockModelName);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		renderBlock(outFile, null, context, rawChunk, null, model);
+		renderBlock(outFile, null, context, rawChunk, null, model, 32);
 	}
 
-	public void renderBlockModelName(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception {
-		RawChunk rawChunk = new RawChunk();
+	public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception {
 		BlockModel model = registry.getModel(modelName);
-		ItemContext context = new ItemContext(texturePack, null, registry);
-		renderBlock(outFile, null, context, rawChunk, null, model);
+                renderInventoryBlockModel(outFile, registry, texturePack, model);
 	}
+        
+        public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, BlockModel model) throws Exception {
+                RawChunk rawChunk = new RawChunk();
+		ItemContext context = new ItemContext(texturePack, null, registry);
+                BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 1);
+		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(270 + 45), getAngleRad(30), bounds);
+        }
 
 	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
 		String blockName = block.getName();
@@ -192,10 +200,14 @@ public class ItemRenderer
 		rawChunk.setBlockState(0, 0, 0, properties);
 		BlockType type = registry.find(blockName);
 		ItemContext context = new ItemContext(texturePack, registry, null);
-		renderBlock(outFile, registry, context, rawChunk, type, null);
+		renderBlock(outFile, registry, context, rawChunk, type, null, 32);
 	}
+        
+	private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize) throws Exception {
+                renderBlock(outFile, registry, context, rawChunk, type, model, imageSize, getAngleRad(45), getAngleRad(25), new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 1));
+        }
 
-	public void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model) throws Exception {
+        private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize, float cameraAngle, float cameraElevationAngle, BoundingBox bounds) throws Exception {
 		Geometry geometry = new Geometry(rasteriser);
 
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
@@ -208,10 +220,8 @@ public class ItemRenderer
 			MeshUtil.addBlock(context, rawChunk, 0, 0, 0, model, geometry, 0, 0);
 		}
 
-		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.17f, 0), 1, 1, 1);
-
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
+		renderItem(item, outFile, imageSize, 4, cameraAngle, cameraElevationAngle);
 	}
 	
 	public void renderSign(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception
@@ -239,16 +249,34 @@ public class ItemRenderer
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0.4f, 0), 1, 1, 0);
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 0);
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(45), getAngleRad(25));
+		renderItem(item, outFile, 32, 4, getAngleRad(45), getAngleRad(25));
 	}
 	
 	public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
 	{
-		log.info("Generating bed icon...");
-		
+                log.info("Generating bed icon...");
+                
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1, -1, 0), 2, 1, 0);
+                
+                renderBed(outFile, registry, texturePack, 32, bounds, "minecraft:red_bed");
+        }
+        
+        public void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String modelName) throws Exception
+	{
+                BoundingBox bounds = new BoundingBox(new Vector3f(-1.25f, -1, 0), 2.5f, 1.25f, 0);
+                
+                renderBed(outFile, registry, texturePack, 48, bounds, modelName);
+        }
+
+       	private void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int imageSize, BoundingBox bounds, String modelName) throws Exception
+        {
+                final String colorString = StringUtils.removeEnd(StringUtils.removeStart(modelName, "minecraft:"), "_bed");
+                final Colors color = Colors.byName(colorString);
+                final int colorId = color == null ? Colors.RED.getId() : color.getId();
+                            
 		ItemContext context = new ItemContext(texturePack, registry, null);
 		
 		Geometry geometry = new Geometry(rasteriser);
@@ -264,13 +292,13 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 1, (byte)16);
 		rawChunk.setSkyLight(0, 0, 1, (byte) 16);
 		HashMap<String, BedEntity> beds = new HashMap<>();
-		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, 14));
-		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, 14));
+		beds.put("x0y0z0", new BedEntity(0, 0, 0, 0, 0, 0, colorId));
+		beds.put("x0y0z1", new BedEntity(0, 0, 1, 0, 0, 1, colorId));
 		rawChunk.setBeds(beds);
 		
 		BlockType type = registry.find(BlockIds.BED, 10);
 		if (type instanceof Air) {
-			type = registry.find("minecraft:red_bed");
+			type = registry.find(modelName);
 		}
 
 		if (type != null)
@@ -279,14 +307,72 @@ public class ItemRenderer
 			type.addInteriorGeometry(0, 0, 1, context, registry, rawChunk, geometry);
 		}
 		
-		BoundingBox bounds = new BoundingBox(new Vector3f(-1, -0.5f, 0), 2, 1, 0);
-				
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, 4, getAngleRad(65), getAngleRad(35));
+		renderItem(item, outFile, imageSize, 4, getAngleRad(65), getAngleRad(35));
 	}
+        
+        public void renderItem(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String blockName, List<java.util.Map<String, ArrayList<Float>>> transforms) throws Exception {
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockName(0, 0, 0, blockName);
+		BlockType type = registry.find(blockName);
+		ItemContext context = new ItemContext(texturePack, registry, null);
+                
+                BoundingBox bounds = new BoundingBox(new org.joml.Vector3f(), 1, 1, 1);
+                
+                float cameraAngle = getAngleRad(45 + 270);
+                float cameraElevationAngle = getAngleRad(30);
+
+                /* TODO: Figure out transforms. Both scaling and translation are all over the place.
+                         Some items benefit from them, others are too small, or weirdly offset, dragon head is a total mess.
+                for (var transform : transforms) {
+                        float translateX = 0;
+                        float translateY = 0;
+                        float translateZ = 0;
+                        float scaleX = 1;
+                        float scaleY = 1;
+                        float scaleZ = 1;
+
+                        if (transform != null && transform.containsKey("rotation")) {
+                                ArrayList<Float> rotation = transform.get("rotation");
+                                cameraAngle = getAngleRad(rotation.get(1) + 270);
+                                cameraElevationAngle = getAngleRad(rotation.get(0));
+                        }
+                        if (transform != null && transform.containsKey("scale")) {
+                                ArrayList<Float> scale = transform.get("scale");
+                                scaleX = scale.get(0);
+                                scaleY = scale.get(1);
+                                scaleZ = scale.get(2);
+                        }
+                        if (transform != null && transform.containsKey("translation")) {
+                                ArrayList<Float> translation = transform.get("translation");
+                                translateX = translation.get(0);
+                                translateY = translation.get(1);
+                                translateZ = translation.get(2);
+                        }
+
+                        // Do the scaling. Divide insted of multiply, since we are transforming bounding box instead of item
+                        final float centerX = bounds.getCenterX();
+                        final float centerY = bounds.getCenterY();
+                        final float centerZ = bounds.getCenterZ();
+                        final float scaledWidth = bounds.getWidth()/scaleX;
+                        final float scaledHeight = bounds.getHeight()/scaleY;
+                        final float scaledDepth = bounds.getDepth()/scaleZ;
+
+                        // Subtract insted of add during translation, since we are transforming bounding box instead of item
+                        bounds = new BoundingBox(
+                                new Vector3f(centerX-scaledWidth/2-translateX, centerY-scaledHeight/2-translateY, centerZ-scaledDepth/2-translateZ),
+                                scaledWidth, scaledHeight, scaledDepth
+                        );
+                }
+                */
+                
+                renderBlock(outFile, registry, context, rawChunk, type, null, 48, cameraAngle, cameraElevationAngle, bounds);
+        }        
 	
-	private void renderItem(ItemGeometry item, File outFile, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
-	{	
+	private void renderItem(ItemGeometry item, File outFile, final int imageSize, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
+	{
+                final int capturedImageSize = imageSize * (1 << numDownsamples);
+                        
 		Geometry geometry = item.geometry;
 		BoundingBox bounds = item.bounds;
 		
@@ -297,7 +383,7 @@ public class ItemRenderer
 		rasteriser.clear(colourKey);
 		rasteriser.clearDepthBuffer();
 		
-		OrthoCamera camera = new OrthoCamera(rasteriser, 512, 512);
+		OrthoCamera camera = new OrthoCamera(rasteriser, capturedImageSize, capturedImageSize);
 		final float lookX = bounds.getCenterX();
 		final float lookY = bounds.getCenterY();
 		final float lookZ = bounds.getCenterZ();
@@ -372,7 +458,7 @@ public class ItemRenderer
 		rasteriser.enableBlending(false);
 		rasteriser.enableDepthWriting(true);
 		
-		BufferedImage outImg = rasteriser.takeScreenshot(0, 0, 512, 512, ImageFormat.Png);
+		BufferedImage outImg = rasteriser.takeScreenshot(0, 0, capturedImageSize, capturedImageSize, ImageFormat.Png);
 		
 		filterColourKey(outImg, colourKey);
 		
@@ -384,7 +470,7 @@ public class ItemRenderer
 		Screenshot.write(outFile, outImg, ImageFormat.Png, 1.0f);
 	}
 	
-	private float getAngleRad(int angle)
+	private float getAngleRad(float angle)
 	{
 		final float normalised = (float)angle / 360.0f;
 		return normalised * (float)Math.PI * 2.0f;
@@ -595,17 +681,17 @@ public class ItemRenderer
 		@Override
 		public Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z)
 		{
-			return BiomesOld.OCEAN;
+			return BiomesOld.FOREST;
 		}
 
 		@Override
 		public Colour4f getGrassColor(ChunkCoord chunkCoord, int x, int y, int z) {
-			return new Colour4f(1, 1, 1, 1);
+			return texturePack.getGrassColor(BiomesOld.FOREST);
 		}
 
 		@Override
 		public Colour4f getFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
-			return new Colour4f(1, 1, 1, 1);
+			return texturePack.getFoliageColor(BiomesOld.FOREST);
 		}
 
 		@Override

@@ -18,9 +18,9 @@ import tectonicus.renderer.Camera;
 public class BoundingBox
 {
 	private Vector3f origin;
-	private long width, height, depth;
+	private float width, height, depth;
 	
-	public BoundingBox(Vector3f origin, final long width, final long height, final long depth)
+	public BoundingBox(Vector3f origin, final float width, final float height, final float depth)
 	{
 		this.origin = new Vector3f(origin);
 		this.width = width;
@@ -131,7 +131,7 @@ public class BoundingBox
 		return new Vector3f(origin);
 	}
 	
-	public long getWidth() { return width; }
-	public long getHeight() { return height; }
-	public long getDepth() { return depth; }
+	public float getWidth() { return width; }
+	public float getHeight() { return height; }
+	public float getDepth() { return depth; }
 }

@@ -11,6 +11,7 @@ package tectonicus.itemregistry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import lombok.Data;
 
 import java.util.Map;
@@ -19,10 +20,11 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ItemModel {
 	private String parent;
-	private Map<String, Integer[]> transform;
+	private Map<String, ArrayList<Float>> transform;
+        private Map<String, String> textures;
+                
 	@JsonProperty("display")
-	private void unpackNested(Map<String,Object> brand) {
-		this.transform = (Map<String, Integer[]>)brand.get("gui");
+	private void unpackNested(Map<String, Map<String, ArrayList<Float>>> brand) {
+		this.transform = brand.get("gui");
 	}
-
 }

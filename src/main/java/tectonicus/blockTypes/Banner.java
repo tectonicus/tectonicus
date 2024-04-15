@@ -31,6 +31,7 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -107,7 +108,14 @@ public class Banner implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		int data = rawChunk.getBlockData(x, y, z);
+		String xyz = "x" + x + "y" + y + "z" + z;
+		BannerEntity entity = rawChunk.getBanners().get(xyz);
+                if (entity == null) {
+                        // There is no entity when rendering item icons. Use default values...
+                        entity = new BannerEntity(0, 0, 0, 0, 0, 0, 0, new ArrayList<>());
+                }
+                
+                int data = rawChunk.getBlockData(x, y, z);
 		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
 		if (properties != null && properties.containsKey("facing")) {
 			final String facing = properties.get("facing");
@@ -132,8 +140,6 @@ public class Banner implements BlockType
 		}
 		
 		SubMesh subMesh = new SubMesh();
-		String xyz = "x" + x + "y" + y + "z" + z;
-		BannerEntity entity = rawChunk.getBanners().get(xyz);
 		Colors baseColor = Colors.byId(15-entity.getBaseColor());
 		if (StringUtils.isNotEmpty(id)) {
 			String bannerId = id.replace("minecraft:", "").replace("_wall", "").replace("_banner", "");
