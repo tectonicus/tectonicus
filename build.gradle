@@ -3,7 +3,6 @@ import java.time.ZonedDateTime
 plugins {
 	id "application"
 	id "org.ajoberstar.grgit" version "5.2.2"
-//	id "com.github.johnrengelman.shadow" version "8.1.1"
 	id("io.github.goooler.shadow") version "8.1.7"
 	id "maven-publish"
 }
@@ -47,8 +46,8 @@ dependencies {
 				   "com.fasterxml.jackson.core:jackson-databind:2.17.0",
 				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
 				   "com.h2database:h2-mvstore:2.2.224",
-				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
-	implementation("org.sejda.imageio:webp-imageio:0.1.6")
+				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion",
+				   "org.sejda.imageio:webp-imageio:0.1.6")
 	implementation files ("libs/jnbt.jar", "libs/jpct.jar", "libs/ProcessingCore.jar", "libs/BiomeExtractor.jar")
 
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
@@ -91,6 +90,7 @@ shadowJar {
 		exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
 		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
 		exclude(dependency("org.apache.logging.log4j:log4j-core:.*"))
+		exclude(dependency("org.sejda.imageio:webp-imageio:.*"))
 	}
 }
 
