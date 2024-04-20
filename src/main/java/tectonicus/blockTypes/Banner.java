@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,14 +9,16 @@
 
 package tectonicus.blockTypes;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.Version;
+import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Log4j2
 public class Banner implements BlockType
 {
 	private static final int WIDTH = 15;
@@ -44,8 +47,6 @@ public class Banner implements BlockType
 
 	private final String id;
 	private final String name;
-	
-	private final Map<String, BufferedImage> patternImages;
 	
 	private final SubTexture bannerSideTexture;
 	private final SubTexture sideTexture;
@@ -57,7 +58,7 @@ public class Banner implements BlockType
 
 	private final Version texturePackVersion;
 
-	public Banner(String id, String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
+	public Banner(String id, String name, SubTexture texture, final boolean hasPost)
 	{
 		this.id = id;
 		this.name = name;
@@ -71,14 +72,12 @@ public class Banner implements BlockType
 		this.topTexture = new SubTexture(texture.texture, texture.u0+texel*2, texture.v0+texel*42, texture.u0+texel*22, texture.v0+texel*44);
 		this.edgeTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel*44, texture.u0+texel*2, texture.v0+texel*46);
 
-		this.patternImages = patternImages;
-
 		this.texturePackVersion = texture.getTexturePackVersion();
 	}
 
-	public Banner(String name, SubTexture texture, final boolean hasPost, Map<String, BufferedImage> patternImages)
+	public Banner(String name, SubTexture texture, final boolean hasPost)
 	{
-		this(StringUtils.EMPTY, name, texture, hasPost, patternImages);
+		this(StringUtils.EMPTY, name, texture, hasPost);
 	}
 	
 	@Override
@@ -108,6 +107,8 @@ public class Banner implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		Map<String, BufferedImage> patternImages = world.getTexturePack().getBannerPatternImages();
+		
 		String xyz = "x" + x + "y" + y + "z" + z;
 		BannerEntity entity = rawChunk.getBanners().get(xyz);
                 if (entity == null) {
@@ -140,15 +141,18 @@ public class Banner implements BlockType
 		}
 		
 		SubMesh subMesh = new SubMesh();
-		Colors baseColor = Colors.byId(15-entity.getBaseColor());
-		if (StringUtils.isNotEmpty(id)) {
+		Integer baseColorId = entity.getBaseColor();
+		Colors baseColor;
+		if (baseColorId == null) {
 			String bannerId = id.replace("minecraft:", "").replace("_wall", "").replace("_banner", "");
 			baseColor = Colors.byName(bannerId);
+		} else {
+			baseColor = Colors.byId(baseColorId);
 		}
 		List<Pattern> patterns = entity.getPatterns();
 
 		//TODO: Only run this code if texture has not already been created
-		final BufferedImage base = patternImages.get("base");
+		final BufferedImage base = patternImages.get("bannerBase");
 		BufferedImage finalImage = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = finalImage.createGraphics();
@@ -158,26 +162,27 @@ public class Banner implements BlockType
 		StringBuilder identifier = new StringBuilder();
 		identifier.append("banner_base_").append(baseColor.getName());
 
-		if (texturePackVersion.getNumVersion() <= Version.VERSION_14.getNumVersion()) {
-			addPattern(base, patternImages.get("baseMask"), baseColor.getColor(), g);
-		} else {
-			addPattern(patternImages.get("baseMask"), baseColor.getColor(), g);
+		if (texturePackVersion.getNumVersion() >= Version.VERSION_15.getNumVersion()) {
+			//TODO: the base pattern is not being composited correctly for 1.15 and higher versions
+			addPattern(patternImages.get("base"), baseColor.getColor(), g);
+		} else { //1.8 - 1.14
+			addPattern(base, patternImages.get("base"), baseColor.getColor(), g);
 		}
-
-		if (!patterns.isEmpty())
-		{
-			for (Pattern pattern : patterns)
-			{
-				if (StringUtils.isNotEmpty(id)) {
-					if (texturePackVersion == Version.VERSION_13 || texturePackVersion == Version.VERSION_14) {
-						addPattern(base, patternImages.get(pattern.pattern), Colors.byId(pattern.color).getColor(), g);
-					} else {
-						addPattern(patternImages.get(pattern.pattern), Colors.byId(pattern.color).getColor(), g);
-					}
-				} else {
-					addPattern(base, patternImages.get(pattern.pattern), Colors.byId(15-pattern.color).getColor(), g);
+		
+		if (!patterns.isEmpty()) {
+			for (Pattern pattern : patterns) {
+				BufferedImage patternImage = patternImages.get(pattern.pattern.replace("minecraft:", ""));
+				if (patternImage == null) {
+					log.warn("Missing banner pattern: {}", pattern.pattern);
+					continue;
 				}
-				identifier.append(pattern.toString());
+				
+				if (texturePackVersion.getNumVersion() >= Version.VERSION_15.getNumVersion()) { //The way that the patterns are composited changed with 1.15
+					addPattern(patternImage, pattern.color.getColor(), g);
+				} else { //1.8 - 1.14
+					addPattern(base, patternImage, pattern.color.getColor(), g);
+				}
+				identifier.append(pattern);
 			}
 		}
 		
@@ -367,20 +372,13 @@ public class Banner implements BlockType
 		g.drawImage(maskedImage, 0, 0, null);
 	}
 	
-	public static class Pattern
-	{
-		String pattern;
-		int color;
-		
-		public Pattern(String pattern, int color)
-		{
-			this.pattern = pattern;
-			this.color = color;
-		}
+	@RequiredArgsConstructor
+	public static class Pattern {
+		final String pattern;
+		final Colors color;
 		
 		@Override
-		public String toString()
-		{
+		public String toString() {
 			return this.pattern + this.color;
 		}
 	}

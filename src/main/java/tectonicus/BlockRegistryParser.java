@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
@@ -107,37 +108,25 @@ import tectonicus.texture.TexturePack;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_5;
 
 @Log4j2
+@RequiredArgsConstructor
 public class BlockRegistryParser
 {
 	private final TexturePack texturePack;
 	private final BiomeCache biomeCache;
 	private final SignFilter signFilter;
-	private final Map<String, BufferedImage> patternImages;
-	
-	public BlockRegistryParser(TexturePack texturePack, BiomeCache biomeCache, SignFilter signFilter)
-	{
-		this.texturePack = texturePack;
-		this.biomeCache = biomeCache;
-		this.signFilter = signFilter;
-		
-		patternImages = texturePack.loadPatterns();
-	}
 	
 	public void parse(final String resName, BlockTypeRegistry registry)
 	{	
-		if (resName == null || resName.trim().length() == 0)
+		if (resName == null || resName.trim().isEmpty())
 			return;
 		
 		Element root = loadXml(resName, "blockConfig");
@@ -828,9 +817,9 @@ public class BlockRegistryParser
 			final boolean hasPost = (hasPostStr.equalsIgnoreCase("true"));
 
 			if (StringUtils.isNotEmpty(stringId)) {
-				blockType = new Banner(stringId, name, texture, hasPost, patternImages);
+				blockType = new Banner(stringId, name, texture, hasPost);
 			} else {
-				blockType = new Banner(name, texture, hasPost, patternImages);
+				blockType = new Banner(name, texture, hasPost);
 			}
 		}
 		else if (nodeName.equals("itemframe") || nodeName.equals("itemframenew"))

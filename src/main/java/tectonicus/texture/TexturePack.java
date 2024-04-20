@@ -10,6 +10,7 @@
 package tectonicus.texture;
 
 import com.fasterxml.jackson.databind.ObjectReader;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -60,7 +61,6 @@ import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
-import static tectonicus.Version.VERSION_20;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_RV;
@@ -99,6 +99,8 @@ public class TexturePack
 	private final ZipStack zipStack;
 	
 	private final Map<String, PackTexture> loadedPackTextures;
+	@Getter
+	private final Map<String, BufferedImage> bannerPatternImages;
 
 	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
 	{
@@ -205,6 +207,13 @@ public class TexturePack
 			if (version.getNumVersion() >= VERSION_14.getNumVersion()) {
 				loadPaintingTextures();
 			}
+			
+			//We load the banner patterns differently because we need direct access to the BufferedImages
+			Map<String, BufferedImage> patterns = loadPatternsJson(); //1.20.5+
+			if (patterns.isEmpty()) { //1.8 - 1.20.4
+				patterns = loadPatterns();
+			}
+			bannerPatternImages = patterns;
 
 			if (version == VERSION_4) {
 				try {
@@ -645,8 +654,8 @@ public class TexturePack
 	{
 		Map<String, BufferedImage> patterns = new HashMap<>();
 		Map<String, String> codes = new HashMap<>();
-		codes.put("banner_base.png", "base");
-		codes.put("base.png", "baseMask");
+		codes.put("banner_base.png", "bannerBase");
+		codes.put("base.png", "base");
 		codes.put("border.png", "bo");
 		codes.put("bricks.png", "bri");
 		codes.put("circle.png", "mc");
@@ -690,7 +699,7 @@ public class TexturePack
 
 			
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
-			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner"));)
+			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner")))
 		{
 			for (Path entry : entries) {
 				String fileName = entry.getFileName().toString();
@@ -710,10 +719,35 @@ public class TexturePack
 		return patterns;
 	}
 	
+	public Map<String, BufferedImage> loadPatternsJson() {
+		Map<String, BufferedImage> patterns = new HashMap<>();
+		
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("data/minecraft/banner_pattern"))) {
+			for (Path entry : entries) {
+				//TODO: actually parse the json and get the texture name from the json instead of using the filename
+				String filename = entry.getFileName().toString();
+				String patternId = filename.substring(0, filename.lastIndexOf('.'));
+				patterns.put(patternId, loadTexture("assets/minecraft/textures/entity/banner/" + patternId + ".png"));
+				log.trace("loaded: assets/minecraft/textures/entity/banner/{}.png", patternId);
+			}
+			
+			log.info("Total number of banner patterns: {}", patterns.size());
+			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
+			patterns.put("bannerBase", loadTexture(basePattern.toString()));
+		}
+		catch (IOException e)
+		{
+			log.error("No banner pattern json found. You may be using an older Minecraft jar file");
+		}
+		
+		return patterns;
+	}
+	
 	private void loadBedTextures()
 	{		
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
-				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/bed"));)
+				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/bed")))
 		{
 			for (Path entry : entries)
 			{
@@ -731,7 +765,7 @@ public class TexturePack
 	private void loadPaintingTextures()
 	{
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
-			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/painting"));)
+			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/painting")))
 		{
 			for (Path entry : entries)
 			{

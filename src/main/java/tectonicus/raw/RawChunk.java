@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -28,12 +28,13 @@ import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import tectonicus.BlockIds;
-import tectonicus.chunk.ChunkCoord;
-import tectonicus.chunk.ChunkData;
 import tectonicus.Minecraft;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Banner.Pattern;
+import tectonicus.chunk.ChunkCoord;
+import tectonicus.chunk.ChunkData;
 import tectonicus.util.FileUtils;
+import tectonicus.world.Colors;
 import tectonicus.world.WorldInfo;
 
 import java.io.ByteArrayInputStream;
@@ -47,11 +48,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_18;
@@ -488,18 +489,22 @@ public class RawChunk {
 						String uuid = "";
 						String textureURL = "";
 						StringTag extraType = NbtUtil.getChild(entity, "ExtraType", StringTag.class);
-						CompoundTag owner = NbtUtil.getChild(entity, "Owner", CompoundTag.class);
-						if (owner == null) {  //1.16
-							owner = NbtUtil.getChild(entity, "SkullOwner", CompoundTag.class);
+						CompoundTag profile = NbtUtil.getChild(entity, "profile", CompoundTag.class); //SkullOwner changed to profile in 1.20.5
+						if (profile == null) {  //1.16 - 1.20.5
+							profile = NbtUtil.getChild(entity, "SkullOwner", CompoundTag.class);
 						}
-						if (owner != null) {
-							nameTag = NbtUtil.getChild(owner, "Name", StringTag.class);
+						if (profile == null) { //older than 1.16
+							profile = NbtUtil.getChild(entity, "Owner", CompoundTag.class);
+						}
+						
+						if (profile != null) {
+							nameTag = NbtUtil.getChild(profile, "Name", StringTag.class);
 							if (nameTag != null) {
 								name = nameTag.getValue();
 							}
-							playerId = NbtUtil.getChild(owner, "Id", StringTag.class);
+							playerId = NbtUtil.getChild(profile, "Id", StringTag.class);
 							if (playerId == null) { //1.16
-								IntArrayTag idArrayTag = NbtUtil.getChild(owner, "Id", IntArrayTag.class);
+								IntArrayTag idArrayTag = NbtUtil.getChild(profile, "Id", IntArrayTag.class);
 								if (idArrayTag != null) {
 									int[] integerIdArray = idArrayTag.getValue();
 									StringBuilder sb = new StringBuilder();
@@ -513,11 +518,14 @@ public class RawChunk {
 							}
 
 							// Get skin URL
-							CompoundTag properties = NbtUtil.getChild(owner, "Properties", CompoundTag.class);
+							CompoundTag properties = NbtUtil.getChild(profile, "Properties", CompoundTag.class);
+							ListTag propertiesList = NbtUtil.getChild(profile, "properties", ListTag.class); //NBT structure changed in 1.20.5
 							if (properties != null) {
-								ListTag textures = NbtUtil.getChild(properties, "textures", ListTag.class);
-								CompoundTag tex = NbtUtil.getChild(textures, 0, CompoundTag.class);
-								StringTag value = NbtUtil.getChild(tex, "Value", StringTag.class);
+								propertiesList = NbtUtil.getChild(properties, "textures", ListTag.class);
+							}
+							if(propertiesList != null) {
+								CompoundTag textureInfo = NbtUtil.getChild(propertiesList, 0, CompoundTag.class);
+								StringTag value = NbtUtil.getChild(textureInfo, "Value", StringTag.class);
 								byte[] decoded = Base64.getDecoder().decode(value.getValue());
 								JsonNode node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
 								JsonNode skin = node.get("textures").get("SKIN");
@@ -525,7 +533,7 @@ public class RawChunk {
 									textureURL = skin.get("url").asText();
 								}
 							}
-						} else if (extraType != null && !(extraType.getValue().equals(""))) {
+						} else if (extraType != null && !(extraType.getValue().isEmpty())) {
 							name = uuid = extraType.getValue();
 							textureURL = "http://www.minecraft.net/skin/" + extraType.getValue() + ".png";
 						}
@@ -541,10 +549,9 @@ public class RawChunk {
 						beacons.put(createKey(localX, localY, localZ), new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue()));
 					} else if (id.equals("Banner") || id.equals("minecraft:banner")) {
 						IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
-						int baseVal = 0;
-
+						Integer baseVal = null;
 						if (base != null)
-							baseVal = base.getValue();
+							baseVal = 15 - base.getValue();
 
 						ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
 
@@ -557,8 +564,20 @@ public class RawChunk {
 							for (int i = 0; i < numPatterns; i++) {
 								CompoundTag p = NbtUtil.getChild(patternList, i, CompoundTag.class);
 								StringTag pattern = NbtUtil.getChild(p, "Pattern", StringTag.class);
-								IntTag color = NbtUtil.getChild(p, "Color", IntTag.class);
-								patterns.add(new Pattern(pattern.getValue(), color.getValue()));
+								IntTag colorInt = NbtUtil.getChild(p, "Color", IntTag.class);
+								StringTag colorStr = NbtUtil.getChild(p, "color", StringTag.class); //1.20.5 switched color to String tag
+								Colors color = Colors.WHITE;
+								if (colorStr != null) { //1.20.5+
+									color = Colors.byName(colorStr.getValue());
+								} else if (colorInt != null) {
+									if (baseVal == null) { //1.13 - 1.20.4
+										color = Colors.byId(colorInt.getValue());
+									} else { //1.8 - 1.12
+										color = Colors.byId(15-colorInt.getValue());
+									}
+								}
+								
+								patterns.add(new Pattern(pattern.getValue(), color));
 							}
 						}
 						banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
@@ -607,13 +626,21 @@ public class RawChunk {
                                                                         final CompoundTag itemTag = (CompoundTag)i;
 
                                                                         final StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-                                                                        final ByteTag itemCountTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
+                                                                        final ByteTag itemCountByteTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
+																		final IntTag itemCountIntTag = NbtUtil.getChild(itemTag, "Count", IntTag.class); //1.20.5 changed to using IntTag for item count
+																		int itemCount = 0;
+																		if (itemCountIntTag != null) {
+																			itemCount = itemCountIntTag.getValue();
+																		} else if (itemCountByteTag != null) {
+																			itemCount = itemCountByteTag.getValue();
+																		}
+																		
                                                                         final ByteTag itemSlotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
                                                                         
-                                                                        if (itemIdTag != null && itemCountTag != null && itemSlotTag != null)
+                                                                        if (itemIdTag != null && itemSlotTag != null)
                                                                         {
                                                                                 List<Object> tag = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
-                                                                                items.add(new Item(itemIdTag.getValue(), -1, itemCountTag.getValue(), itemSlotTag.getValue(), tag));
+                                                                                items.add(new Item(itemIdTag.getValue(), -1, itemCount, itemSlotTag.getValue(), tag));
                                                                         }
                                                                 }
 

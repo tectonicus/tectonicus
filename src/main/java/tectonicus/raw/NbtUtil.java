@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -34,6 +34,9 @@ public class NbtUtil
 	public <T extends Tag> T getChild(CompoundTag parent, String name, Class<T> clazz)
 	{
 		Tag child = parent.getValue().get(name);
+		if (child == null) { //check for lowercase version of name
+			child = parent.getValue().get(name.toLowerCase());
+		}
 		if (clazz.isInstance(child))
 		{
 			return (T)child;

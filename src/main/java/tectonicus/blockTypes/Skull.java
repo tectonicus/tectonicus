@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,11 +9,8 @@
 
 package tectonicus.blockTypes;
 
-import java.awt.image.BufferedImage;
-
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
@@ -28,6 +25,8 @@ import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
+
+import java.awt.image.BufferedImage;
 
 public class Skull implements BlockType 
 {
@@ -145,8 +144,8 @@ public class Skull implements BlockType
 		else if (blockId == 5)
 			currentTexture = dtexture;
 		
-		final boolean dragonHead = blockId == 5 || blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head");
-                final boolean piglinHead = blockId == 6 || blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head");
+		final boolean dragonHead = blockId == 5 || blockName != null && (blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head"));
+		final boolean piglinHead = blockId == 6 || blockName != null && (blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head"));
 		
 		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
 		if(!player.getSkinURL().equals(""))
