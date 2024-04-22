@@ -92,11 +92,8 @@ import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
-import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_15;
 import static tectonicus.Version.VERSION_18;
-import static tectonicus.Version.VERSION_4;
-import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_UNKNOWN;
 
 @Log4j2
@@ -224,7 +221,7 @@ public class World implements BlockContext
 		this.blockMaskFactory = new NullBlockMaskFactory();
 
 		log.info("Loading textures");
-		texturePack = new TexturePack(rasteriser, config.minecraftJar(), config.getTexturePack(), map.getModJars(), config);
+		texturePack = new TexturePack(rasteriser, config, map.getModJars(), levelDat.getDataPacks());
 		this.textureVersion = texturePack.getVersion();
 
 

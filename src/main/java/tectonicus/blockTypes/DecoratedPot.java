@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,7 +9,6 @@
 
 package tectonicus.blockTypes;
 
-import java.util.HashMap;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
@@ -24,6 +23,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
+
+import java.util.HashMap;
 
 public class DecoratedPot implements BlockType
 {
@@ -64,7 +65,10 @@ public class DecoratedPot implements BlockType
                     "sheaf",
                     "shelter",
                     "skull",
-                    "snort"
+                    "snort",
+						"flow",
+						"guster",
+						"scrape"
                 }) {
                         textures.put("minecraft:"+pattern+"_pottery_sherd", texturePack.findTexture("assets/minecraft/textures/entity/decorated_pot/"+pattern+"_pottery_pattern.png"));
                 }

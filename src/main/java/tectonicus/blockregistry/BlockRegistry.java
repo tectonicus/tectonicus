@@ -9,14 +9,14 @@
 
 package tectonicus.blockregistry;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -73,22 +73,14 @@ public class BlockRegistry
         private static final Map<String, String> renamedBlocks = Map.ofEntries(
                 new AbstractMap.SimpleImmutableEntry<>("minecraft:grass", "minecraft:short_grass") // Was renamed in 1.20.3
         );
-
-
-	public BlockRegistry(String blah)
-	{
-		try {
-			zips = new ZipStack(Minecraft.findMinecraftJar(), null, null);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+		
 	
-	public BlockRegistry(Rasteriser rasteriser)
+	public BlockRegistry(Rasteriser rasteriser) //This is only used by the draw model test code
 	{
 		File minecraftJar = Minecraft.findMinecraftJar();
 		MutableConfiguration config = new MutableConfiguration();
-		texturePack = new TexturePack(rasteriser, minecraftJar, null, Collections.emptyList(), config);
+		config.setMinecraftJar(minecraftJar);
+		texturePack = new TexturePack(rasteriser, config, Collections.emptyList(), Collections.emptyList());
 		try {
 			zips = new ZipStack(minecraftJar, null, null);
 		} catch (IOException e) {

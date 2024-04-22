@@ -101,24 +101,29 @@ public class TexturePack
 	private final Map<String, PackTexture> loadedPackTextures;
 	@Getter
 	private final Map<String, BufferedImage> bannerPatternImages;
+	private final List<String> dataPacks;
 
-	public TexturePack(Rasteriser rasteriser, File minecraftJar, File texturePack, List<File> modJars, Configuration args)
+	public TexturePack(Rasteriser rasteriser, Configuration config, List<File> modJars, List<String> dataPacks)
 	{
+		File minecraftJar = config.minecraftJar();
+		File resourcePack = config.getTexturePack();
+		
 		if (!minecraftJar.exists())
 			throw new MissingMinecraftJarException("Couldn't find minecraft.jar at " + minecraftJar.getAbsolutePath());
 	
 		this.rasteriser = rasteriser;
+		this.dataPacks = dataPacks;
 		
 		loadedPackTextures = new HashMap<>();
 
 		try
 		{
 			int worldVersion = Minecraft.getWorldVersion();
-			if (args.isUsingProgrammerArt() && worldVersion >= VERSION_14.getNumVersion()) {
-				//TODO: currently we are overwriting the value of texturepack if useProgrammerArt is true, we need to implement an ordered list of texture packs instead
-				texturePack = new File(Minecraft.findMinecraftDir(), "assets/objects/e4/e49420da40aa1cac6d85838e28a4b82f429ff1a1");
+			if (config.isUsingProgrammerArt() && worldVersion >= VERSION_14.getNumVersion()) {
+				//TODO: currently we are overwriting the value of resourcePack if useProgrammerArt is true, we need to implement an ordered list of resource packs instead
+				resourcePack = new File(Minecraft.findMinecraftDir(), "assets/objects/e4/e49420da40aa1cac6d85838e28a4b82f429ff1a1");
 			}
-			zipStack = new ZipStack(minecraftJar, texturePack, modJars);
+			zipStack = new ZipStack(minecraftJar, resourcePack, modJars);
 		}
 		catch (Exception e)
 		{
@@ -226,18 +231,18 @@ public class TexturePack
                         // From version 1.20.2 resource pack version was increased to 18 and there was a following change:
                         // All textures containing multiple sprites in a sheet for GUI have been split into individual sprites under textures/gui/sprites (automated by Slicer tool).
                         if (versionJson.getPackVersion() != null && versionJson.getPackVersion().getResource() >= 18) {
-                                emptyHeart = loadTexture(path + "gui/sprites/hud/heart/container.png", minecraftJar, texturePack);
-                                halfHeart = loadTexture(path + "gui/sprites/hud/heart/half.png", minecraftJar, texturePack);
-                                fullHeart = loadTexture(path + "gui/sprites/hud/heart/full.png", minecraftJar, texturePack);
+                                emptyHeart = loadTexture(path + "gui/sprites/hud/heart/container.png", minecraftJar, resourcePack);
+                                halfHeart = loadTexture(path + "gui/sprites/hud/heart/half.png", minecraftJar, resourcePack);
+                                fullHeart = loadTexture(path + "gui/sprites/hud/heart/full.png", minecraftJar, resourcePack);
 
-                                emptyFood = loadTexture(path + "gui/sprites/hud/food_empty.png", minecraftJar, texturePack);
-                                halfFood = loadTexture(path + "gui/sprites/hud/food_half.png", minecraftJar, texturePack);
-                                fullFood = loadTexture(path + "gui/sprites/hud/food_full.png", minecraftJar, texturePack);
+                                emptyFood = loadTexture(path + "gui/sprites/hud/food_empty.png", minecraftJar, resourcePack);
+                                halfFood = loadTexture(path + "gui/sprites/hud/food_half.png", minecraftJar, resourcePack);
+                                fullFood = loadTexture(path + "gui/sprites/hud/food_full.png", minecraftJar, resourcePack);
 
-                                emptyAir = loadTexture(path + "gui/sprites/hud/air_bursting.png", minecraftJar, texturePack);
-                                fullAir = loadTexture(path + "gui/sprites/hud/air.png", minecraftJar, texturePack);
+                                emptyAir = loadTexture(path + "gui/sprites/hud/air_bursting.png", minecraftJar, resourcePack);
+                                fullAir = loadTexture(path + "gui/sprites/hud/air.png", minecraftJar, resourcePack);
                         } else {
-                                BufferedImage iconSheet = loadTexture(path + "gui/icons.png", minecraftJar, texturePack);
+                                BufferedImage iconSheet = loadTexture(path + "gui/icons.png", minecraftJar, resourcePack);
                             
                                 emptyHeart = getIcon(iconSheet, 16, 0, 9, 9);
                                 halfHeart = getIcon(iconSheet, 61, 0, 9, 9);
@@ -257,7 +262,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "gui/container/generic_54.png");
 				chestImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, resourcePack));
 			}
                         
 			try {
@@ -266,7 +271,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "colormap/grass.png");
 				grassLookupImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, resourcePack));
 			}
 			
 			try {
@@ -275,7 +280,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "colormap/foliage.png");
 				foliageLookupImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, resourcePack));
 			}
 
 			loadBiomeColors();
@@ -289,12 +294,12 @@ public class TexturePack
 				BufferedImage fontSheet = ImageIO.read( imgStream );
 				font = new Font(rasteriser, fontSheet, textIn);
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find font resources in "+formatPaths(minecraftJar, texturePack));
+				throw new MissingAssetException("Couldn't find font resources in "+formatPaths(minecraftJar, resourcePack));
 			}
 		}
 		catch (Exception e)
 		{
-			throw new MissingAssetException("Couldn't load textures from "+formatPaths(minecraftJar, texturePack), e);
+			throw new MissingAssetException("Couldn't load textures from "+formatPaths(minecraftJar, resourcePack), e);
 		}
 	}
 	
@@ -724,24 +729,45 @@ public class TexturePack
 		
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("data/minecraft/banner_pattern"))) {
-			for (Path entry : entries) {
-				//TODO: actually parse the json and get the texture name from the json instead of using the filename
-				String filename = entry.getFileName().toString();
-				String patternId = filename.substring(0, filename.lastIndexOf('.'));
-				patterns.put(patternId, loadTexture("assets/minecraft/textures/entity/banner/" + patternId + ".png"));
-				log.trace("loaded: assets/minecraft/textures/entity/banner/{}.png", patternId);
-			}
+			loadPatternTextures(entries, patterns);
 			
-			log.info("Total number of banner patterns: {}", patterns.size());
 			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
 			patterns.put("bannerBase", loadTexture(basePattern.toString()));
-		}
-		catch (IOException e)
-		{
+		} catch (IOException e) {
 			log.error("No banner pattern json found. You may be using an older Minecraft jar file");
 		}
 		
+		//Check data packs for banners
+		for (String pack : dataPacks) {
+			String filePath = "data/minecraft/datapacks/" + pack + "/data/minecraft/banner_pattern";
+			boolean hasPatterns = fileExists(filePath);
+			if (hasPatterns) {
+				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+					 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath(filePath))) {
+					loadPatternTextures(entries, patterns);
+				} catch (IOException e) {
+					log.error("Error reading pattern json from datapack: {}", "");
+				}
+			}
+		}
+		
+		log.info("Total number of banner patterns: {}", patterns.size() - 1); //Don't count the banner base image as a pattern
 		return patterns;
+	}
+	
+	private void loadPatternTextures(DirectoryStream<Path> entries, Map<String, BufferedImage> patterns) {
+		for (Path entry : entries) {
+			//TODO: actually parse the json and get the texture name from the json instead of using the filename
+			String filename = entry.getFileName().toString();
+			String patternId = filename.substring(0, filename.lastIndexOf('.'));
+			try {
+				patterns.put(patternId, loadTexture("assets/minecraft/textures/entity/banner/" + patternId + ".png"));
+			} catch (FileNotFoundException e) {
+				log.error("No texture image found for {} pattern.", patternId);
+			}
+			
+			log.trace("loaded: assets/minecraft/textures/entity/banner/{}.png", patternId);
+		}
 	}
 	
 	private void loadBedTextures()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,20 +9,25 @@
 
 package tectonicus.raw;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
+import org.jnbt.ListTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.Tag;
 import tectonicus.util.Vector3l;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+
+@Log4j2
 @Data
 public class LevelDat
 {
@@ -35,6 +40,7 @@ public class LevelDat
 	private Player player;
 	private String version;
 	private boolean snapshot;
+	private List<String> dataPacks;
 	
 	public LevelDat(Path datFile, String singlePlayerName)
 	{	
@@ -46,6 +52,12 @@ public class LevelDat
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag) {
 				CompoundTag data = NbtUtil.getChild((CompoundTag)tag, "Data", CompoundTag.class);
+				
+				Optional.ofNullable(NbtUtil.getChild(data, "DataPacks", CompoundTag.class)).ifPresent(dataPackTag -> {
+					List<Tag> enabledTags = NbtUtil.getChild(dataPackTag, "Enabled", ListTag.class).getValue();
+					dataPacks = enabledTags.stream().filter(t -> !t.getValue().equals("vanilla")).map(t -> (String)t.getValue()).collect(Collectors.toList());
+					log.info("Enabled data packs: {}", dataPacks);
+				});
 
 				alpha = NbtUtil.getInt(data, "version", UNKNOWN_VERSION) == 0;
 
