@@ -77,7 +77,7 @@ public class BlockRegistry
 	
 	public BlockRegistry(Rasteriser rasteriser) //This is only used by the draw model test code
 	{
-		File minecraftJar = Minecraft.findMinecraftJar();
+		File minecraftJar = Minecraft.findLatestMinecraftJar();
 		MutableConfiguration config = new MutableConfiguration();
 		config.setMinecraftJar(minecraftJar);
 		texturePack = new TexturePack(rasteriser, config, Collections.emptyList(), Collections.emptyList());

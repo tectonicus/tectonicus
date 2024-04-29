@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,15 +9,14 @@
 
 package tectonicus.gui;
 
-import java.awt.Frame;
-import java.io.File;
+import tectonicus.Minecraft;
+import tectonicus.configuration.MutableConfiguration;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
-
-import tectonicus.Minecraft;
-import tectonicus.configuration.MutableConfiguration;
+import java.awt.Frame;
+import java.io.File;
 
 public class MinecraftJarBrowserLine
 {
@@ -28,7 +27,7 @@ public class MinecraftJarBrowserLine
 	public MinecraftJarBrowserLine(Frame parent)
 	{
 		// Auto fill this with the found minecraft jar
-		File minecraftJar = Minecraft.findMinecraftJar();
+		File minecraftJar = Minecraft.findLatestMinecraftJar();
 
 		// TODO: Handle minecraft jar not findable
 		// ..

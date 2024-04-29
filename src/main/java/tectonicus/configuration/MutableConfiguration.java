@@ -200,7 +200,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\toutputDir:"+outputDir.getAbsolutePath());
 		log.debug("\tuseCache:"+useCache());
 		log.debug("\tcacheDir:"+cacheDir.getAbsolutePath());
-		log.debug("\tminecraftJar:"+minecraftJar.getAbsolutePath());
 		log.debug("\ttexturePack:"+(texturePack != null ? texturePack.getAbsolutePath() : "none"));
 		log.debug("\tuseOldColorPalette:"+useOldColorPalette());
 		log.debug("\tcolourDepth:"+ this.getColourDepth());
@@ -272,15 +271,11 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	}
 	public boolean eraseOutputDir() { return eraseOutputDir; }
 
-	public File getWorldDir() { return worldDir; }
-
 	public void setUseCache(final boolean useCache)
 	{
 		this.useCache = useCache;
 	}
 	public boolean useCache() { return useCache; }
-
-	public File minecraftJar() { return minecraftJar; }
 
 	public void setUseOldColorPalette(boolean useOldColorPalette)
 	{

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,20 +9,20 @@
 
 package tectonicus.cache;
 
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
+import tectonicus.configuration.Configuration;
+import tectonicus.configuration.ImageFormat;
+import tectonicus.configuration.Layer;
+import tectonicus.configuration.Map;
+import tectonicus.util.TempArea;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.MessageDigest;
-
-import lombok.extern.log4j.Log4j2;
-import lombok.experimental.UtilityClass;
-import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
-import tectonicus.configuration.Configuration;
-import tectonicus.configuration.Map;
-import tectonicus.util.TempArea;
 
 @Log4j2
 @UtilityClass
@@ -196,7 +196,7 @@ public class CacheUtil
 			try
 			{
 				File actualDir = new File(config.getCacheDir(), map.getId());
-				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), config.minecraftJar(), hashAlgorithm);
+				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), config.getMinecraftJar(), hashAlgorithm);
 			}
 			catch (Exception e)
 			{

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -69,7 +70,49 @@ public class Minecraft
 		return result;
 	}
 	
-	public static File findMinecraftJar()
+	public static Optional<File> findMatchingMinecraftJar(String worldVersion) {
+		File versionsDir = new File(findMinecraftDir(), "versions");
+		File minecraftJar = null;
+		
+		if(versionsDir.exists()) {
+			log.info("Trying to find jar matching world version {}", worldVersion);
+			List<Path> jars = new ArrayList<>();
+			try (Stream<Path> paths = Files.find(versionsDir.toPath(), 2,
+					(path, attr) -> attr.isRegularFile() && path.getFileName().toString().toLowerCase().endsWith(".jar"))) {
+				jars = paths.collect(toList());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			for(Path jar : jars) {
+				log.trace(jar.getFileName().toString());
+				String jarVersion = StringUtils.removeEndIgnoreCase(jar.getFileName().toString(), ".jar");
+				if (jarVersion.equals(worldVersion)) { //match exact version
+					log.info("Found exact match: {}", jarVersion);
+					minecraftJar = jar.toFile();
+					break;
+				} else { //try to match only major and minor version
+					String[] splitWorldVersion = worldVersion.split("\\.");
+					String[] splitJarVersion = jarVersion.split("\\.");
+					
+					if (splitJarVersion.length >= 2 && splitWorldVersion.length >= 2
+							&& splitJarVersion[0].equals(splitWorldVersion[0]) && splitJarVersion[1].matches("\\d+") && splitJarVersion[1].equals(splitWorldVersion[1])) {
+						if (splitJarVersion.length == 3 && !splitJarVersion[2].matches("\\d+")) { //Ignore pre-release or release candidate versions
+							continue;
+						}
+						minecraftJar = jar.toFile();
+					}
+				}
+			}
+			if (minecraftJar == null) {
+				log.info("No matching jar found.");
+			}
+		}
+		
+		return Optional.ofNullable(minecraftJar);
+	}
+	
+	public static File findLatestMinecraftJar()
 	{
 		File versionsDir = new File(findMinecraftDir(), "versions");
 		
@@ -137,7 +180,6 @@ public class Minecraft
 			else
 				version = major + "." + minor + "." + patch;
 
-			log.info("Minecraft jar version: {}", version);
 			return new File(findMinecraftDir(), "versions/" + version + "/" + version + ".jar");
 		}
 		else	

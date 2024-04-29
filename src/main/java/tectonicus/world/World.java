@@ -216,6 +216,12 @@ public class World implements BlockContext
 		}
 		log.info("Current world max chunk height: {}", Minecraft.getChunkHeight());
 
+		if (config.getMinecraftJar() == null) {
+			log.info("No Minecraft jar specified.");
+			Minecraft.findMatchingMinecraftJar(worldVersion).ifPresentOrElse(jar -> config.setMinecraftJar(jar), () -> config.setMinecraftJar(Minecraft.findLatestMinecraftJar()));
+		}
+		log.info("Using Minecraft jar: {}", config.getMinecraftJar().getName());
+
 		worldInfo = new WorldInfo(version, sectionArrayOffset);
 
 		this.blockMaskFactory = new NullBlockMaskFactory();

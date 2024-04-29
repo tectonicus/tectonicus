@@ -105,7 +105,7 @@ public class TexturePack
 
 	public TexturePack(Rasteriser rasteriser, Configuration config, List<File> modJars, List<String> dataPacks)
 	{
-		File minecraftJar = config.minecraftJar();
+		File minecraftJar = config.getMinecraftJar();
 		File resourcePack = config.getTexturePack();
 		
 		if (!minecraftJar.exists())

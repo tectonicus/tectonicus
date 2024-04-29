@@ -67,7 +67,8 @@ public interface Configuration  //TODO: is this interface needed?
 	Level getLoggingLevel();
 	void setLoggingLevel(Level loggingLevel);
 	
-	File minecraftJar();
+	File getMinecraftJar();
+	void setMinecraftJar(File minecraftJar);
 	
 	File getTexturePack();
 	
