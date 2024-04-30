@@ -343,9 +343,12 @@ public class RawChunk {
                                                                 StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
                                                                 
                                                                 if (armorIdTag != null) {
-                                                                        CompoundTag tagTag = NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class);
-                                                                        List<Object> tag = parseTagTag(tagTag);
-                                                                        return new Item(armorIdTag.getValue(), tag);
+                                                                        List<Object> components = parseComponentsTag(NbtUtil.getChild(armorItemTag, "components", CompoundTag.class));
+                                                                        if (components == null) {
+                                                                                // Maybe the item uses pre 1.20.5 format? Try parsing the "tag" tag
+                                                                                components = parseTagTag(NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class));
+                                                                        }
+                                                                        return new Item(armorIdTag.getValue(), components);
                                                                 }
                                                                 
                                                                 return null;
@@ -639,21 +642,13 @@ public class RawChunk {
                                                                                         itemCount = itemCountByteTag.getValue();
                                                                                 }
 
-                                                                                Components components = null;
-                                                                                final CompoundTag componentsTag = NbtUtil.getChild(itemTag, "components", CompoundTag.class);
-                                                                                if (componentsTag != null) {
-                                                                                        final CompoundTag potionContentsTag = NbtUtil.getChild(componentsTag, "minecraft:potion_contents", CompoundTag.class);
-                                                                                        if (potionContentsTag != null) {
-                                                                                                final StringTag potionTag = NbtUtil.getChild(potionContentsTag, "potion", StringTag.class);
-                                                                                                if (potionTag != null) {
-                                                                                                        components = new Components(new PotionContents(potionTag.getValue()));
-                                                                                                }
-                                                                                        }
+                                                                                List<Object> components = parseComponentsTag(NbtUtil.getChild(itemTag, "components", CompoundTag.class));
+                                                                                if (components == null) {
+                                                                                        // Maybe the item uses pre 1.20.5 format? Try parsing the "tag" tag
+                                                                                        components = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
                                                                                 }
                                                                                 
-                                                                                List<Object> tag = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
-                                                                                
-                                                                                items.add(new Item(itemIdTag.getValue(), 0, itemCount, itemSlotTag.getValue(), components, tag));
+                                                                                items.add(new Item(itemIdTag.getValue(), 0, itemCount, itemSlotTag.getValue(), components));
                                                                         }
                                                                 }
 
@@ -688,42 +683,103 @@ public class RawChunk {
                                                 
                                                 decoratedPots.put(createKey(localX, localY, localZ), new DecoratedPotEntity(x, y, z, localX, localY, localZ, sherd1, sherd2, sherd3, sherd4));
                                         }
-					//	else if (id.equals("Furnace"))
-					//	{
-					//
-					//	}
-					//	else if (id.equals("MobSpawner"))
-					//	{
-					//
-					//	}
 				}
 			}
 		}
 	}
         
+        // 1.20.5 and later
+        private List<Object> parseComponentsTag(CompoundTag componentsTag) {
+                if (componentsTag == null) {
+                        return null;
+                }
+
+                List<Object> components = new ArrayList<>();
+
+                final CompoundTag potionContentsTag = NbtUtil.getChild(componentsTag, "minecraft:potion_contents", CompoundTag.class);
+                if (potionContentsTag != null) {
+                        final StringTag potionTag = NbtUtil.getChild(potionContentsTag, "potion", StringTag.class);
+                        if (potionTag != null) {
+                                components.add(new PotionContentsTag(potionTag.getValue()));
+                        }
+                }
+                
+                final CompoundTag dyedColorTag = NbtUtil.getChild(componentsTag, "minecraft:dyed_color", CompoundTag.class);
+                if (dyedColorTag != null) {
+                        IntTag rgbTag = NbtUtil.getChild(dyedColorTag, "rgb", IntTag.class);
+                        if (rgbTag != null) {
+                                components.add(new DyedColorTag(rgbTag.getValue()));
+                        }
+                }
+                        
+                final StringTag customNameTag = NbtUtil.getChild(componentsTag, "minecraft:custom_name", StringTag.class);
+                if (customNameTag != null) {
+                        final String name = customNameTag.getValue().replaceAll("\"", ""); // Replace " characters
+                        components.add(new CustomNameTag(name));
+                }
+                        
+                boolean isStoredEnchantments = true;
+                CompoundTag enchantmentsTag = NbtUtil.getChild(componentsTag, "minecraft:stored_enchantments", CompoundTag.class);
+                if (enchantmentsTag == null) {
+                        isStoredEnchantments = false;
+                        enchantmentsTag = NbtUtil.getChild(componentsTag, "minecraft:enchantments", CompoundTag.class);
+                }
+                
+                if (enchantmentsTag != null) {
+                        CompoundTag levelsTag = NbtUtil.getChild(enchantmentsTag, "levels", CompoundTag.class);
+                        if (levelsTag != null) {
+                                List<EnchantmentTag> enchantments = new ArrayList<>();
+
+                                for (var levelTagId : levelsTag.getValue().keySet()) {                                                
+                                        IntTag levelTag = NbtUtil.getChild(levelsTag, levelTagId, IntTag.class);
+                                        if (levelTag != null) {
+                                                enchantments.add(new EnchantmentTag(levelTagId, levelTag.getValue()));
+                                        }
+                                }
+
+                                components.add(isStoredEnchantments
+                                        ? new StoredEnchantmentsTag(enchantments)
+                                        : new EnchantmentsTag(enchantments));
+                        }
+                }
+                
+                CompoundTag trimTag = NbtUtil.getChild(componentsTag, "minecraft:trim", CompoundTag.class);
+                if (trimTag != null) {
+                        StringTag materialTag = NbtUtil.getChild(trimTag, "material", StringTag.class);
+                        StringTag patternTag = NbtUtil.getChild(trimTag, "pattern", StringTag.class);
+                        if (materialTag != null && patternTag != null) {
+                                components.add(new ArmorTrimTag(materialTag.getValue(), patternTag.getValue()));
+                        }
+                }
+                
+                return components;
+        }
+        
+        // 1.20.4 and older
         private List<Object> parseTagTag(CompoundTag tagTag) {
+                if (tagTag == null) {
+                        return null;
+                }
+
                 List<Object> tag = new ArrayList<>();
                 
-                if (tagTag == null) {
-                        return tag;
+                final StringTag potionTag = NbtUtil.getChild(tagTag, "Potion", StringTag.class);
+                if (potionTag != null) {
+                        tag.add(new PotionContentsTag(potionTag.getValue()));
                 }
                 
                 final CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
                 if (displayTag != null) {
-                        String name = null;
-                        Integer color = null;
-                    
                         final StringTag nameTag = NbtUtil.getChild(displayTag, "Name", StringTag.class);
                         if (nameTag != null) {
-                                name = nameTag.getValue().replaceAll("\"", ""); // Replace " characters
+                                String name = nameTag.getValue().replaceAll("\"", ""); // Replace " characters
+                                tag.add(new CustomNameTag(name));
                         }
                         
                         IntTag colorTag = NbtUtil.getChild(displayTag, "color", IntTag.class);
                         if (colorTag != null) {
-                                color = colorTag.getValue();
+                                tag.add(new DyedColorTag(colorTag.getValue()));
                         }
-                        
-                        tag.add(new DisplayTag(name, color));
                 }
                 
                 boolean isStoredEnchantments = true;
@@ -741,7 +797,7 @@ public class RawChunk {
                                         StringTag idTag = NbtUtil.getChild((CompoundTag)enchantmentTag, "id", StringTag.class);
                                         ShortTag levelTag = NbtUtil.getChild((CompoundTag)enchantmentTag, "lvl", ShortTag.class);
                                         if (idTag != null && levelTag != null) {
-                                                enchantments.add(new EnchantmentTag(idTag.getValue(), levelTag.getValue()));
+                                                enchantments.add(new EnchantmentTag(idTag.getValue(), Integer.valueOf(levelTag.getValue())));
                                         }
                                 }
                         }

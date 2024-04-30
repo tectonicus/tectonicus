@@ -184,7 +184,7 @@ public class Player
 
 					if (idTag != null && damageTag != null && countTag != null && slotTag != null)
 					{
-						inventory.add( new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue(), null, null) );
+						inventory.add( new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue(), null) );
 					}
 				}
 			}

@@ -36,11 +36,13 @@ import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
-import tectonicus.raw.DisplayTag;
+import tectonicus.raw.CustomNameTag;
+import tectonicus.raw.DyedColorTag;
 import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.EnchantmentsTag;
-import tectonicus.raw.Player;
 import tectonicus.raw.Item;
+import tectonicus.raw.Player;
+import tectonicus.raw.PotionContentsTag;
 import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
 import tectonicus.world.Sign;
@@ -492,36 +494,39 @@ public class OutputResourcesUtil {
         private static String outputItem(Item item, Boolean isLeft) {
                 String result = "\t\t\t{ id: \"" + item.id + "\", ";
 
-                DisplayTag displayTag = item.getTag(DisplayTag.class);
-                if (displayTag != null) {
-                        if (displayTag.name != null) {
-                                result += "customName: \"" + displayTag.name + "\", ";
-                        }
-                        if (displayTag.color != null) {
-                                result += "color: " + displayTag.color + ", ";
+                CustomNameTag customNameTag = item.getComponent(CustomNameTag.class);
+                if (customNameTag != null) {
+                        if (customNameTag.name != null) {
+                                result += "customName: \"" + customNameTag.name + "\", ";
                         }
                 }
 
+                DyedColorTag dyedColorTag = item.getComponent(DyedColorTag.class);
+                if (dyedColorTag != null) {
+                        result += "color: " + dyedColorTag.color + ", ";
+                }
+                
                 int slot = item.slot;
                 slot += isLeft ? 3 * 9 : 0;
                 result += "count: " + item.count + ", slot: " + slot + ", ";
                 
-                if (item.components != null && item.components.potionContents != null && item.components.potionContents.potion != null) {
-                        result += "components: { potionContents: { potion: \"" + item.components.potionContents.potion + "\" } }, ";
+                PotionContentsTag potionContents = item.getComponent(PotionContentsTag.class);
+                if (potionContents != null && potionContents.potion != null) {
+                        result += "components: { potionContents: { potion: \"" + potionContents.potion + "\" } }, ";
                 }
                 
-                ArmorTrimTag trimTag = item.getTag(ArmorTrimTag.class);
+                ArmorTrimTag trimTag = item.getComponent(ArmorTrimTag.class);
                 if (trimTag != null) {
                         result += "trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }, ";
                 }
                 
                 List<EnchantmentTag> enchantments = null;
                 
-                EnchantmentsTag enchantmentsTag = item.getTag(EnchantmentsTag.class);
+                EnchantmentsTag enchantmentsTag = item.getComponent(EnchantmentsTag.class);
                 if (enchantmentsTag != null) {
                         enchantments = enchantmentsTag.enchantments;
                 }
-                StoredEnchantmentsTag storedEnchantmentsTag = item.getTag(StoredEnchantmentsTag.class);
+                StoredEnchantmentsTag storedEnchantmentsTag = item.getComponent(StoredEnchantmentsTag.class);
                 if (storedEnchantmentsTag != null) {
                         enchantments = storedEnchantmentsTag.enchantments;
                 }

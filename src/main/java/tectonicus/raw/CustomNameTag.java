@@ -9,13 +9,11 @@
 
 package tectonicus.raw;
 
-public class DisplayTag
+public class CustomNameTag
 {
         final public String name;
-        final public Integer color;
         
-        public DisplayTag(final String name, final Integer color) {
+        public CustomNameTag(final String name) {
                 this.name = name;
-                this.color = color;
         }
 }

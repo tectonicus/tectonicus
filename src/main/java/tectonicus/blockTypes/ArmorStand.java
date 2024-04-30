@@ -19,7 +19,7 @@ import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.Item;
 import tectonicus.raw.ArmorStandEntity;
 import tectonicus.raw.ArmorTrimTag;
-import tectonicus.raw.DisplayTag;
+import tectonicus.raw.DyedColorTag;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
@@ -262,7 +262,7 @@ public class ArmorStand implements BlockType
                 SubTexture layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d.png", armorMaterial, layer), null);
                 SubTexture overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d_overlay.png", armorMaterial, layer), null);
                 
-                ArmorTrimTag armorTrim = armor.getTag(tectonicus.raw.ArmorTrimTag.class);
+                ArmorTrimTag armorTrim = armor.getComponent(tectonicus.raw.ArmorTrimTag.class);
                 if (armorTrim != null) {
                         final String pattern = armorTrim.pattern.substring("minecraft:".length());
                         final String suffix = layer == 2 ? "_leggings" : "";
@@ -287,10 +287,10 @@ public class ArmorStand implements BlockType
                 if (armorMaterial.equals("leather")) {
                         meshBuilder.build(x, y, z, geometry, colour, angle, overlayLayerTexture, 0);
                  
-                        DisplayTag display = armor.getTag(DisplayTag.class);
-                        colour = display == null
+                        DyedColorTag dyedColor = armor.getComponent(DyedColorTag.class);
+                        colour = dyedColor == null
                                 ? new Vector4f(106/255f, 64/255f, 41/255f, 1) // Default brown leather
-                                : new Vector4f(((display.color >> 16) & 255)/255f, ((display.color >> 8) & 255)/255f, (display.color & 255)/255f, 1);
+                                : new Vector4f(((dyedColor.color >> 16) & 255)/255f, ((dyedColor.color >> 8) & 255)/255f, (dyedColor.color & 255)/255f, 1);
                 }
 		
                 meshBuilder.build(x, y, z, geometry, colour, angle, layerTexture, -1);

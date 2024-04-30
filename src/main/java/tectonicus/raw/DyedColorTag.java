@@ -9,11 +9,11 @@
 
 package tectonicus.raw;
 
-public class PotionContents
+public class DyedColorTag
 {
-        public String potion;
+        final public int color;
         
-        public PotionContents(String potion) {
-                this.potion = potion;
+        public DyedColorTag(final int color) {
+                this.color = color;
         }
 }

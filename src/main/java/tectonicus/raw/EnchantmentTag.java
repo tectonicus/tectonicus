@@ -12,9 +12,9 @@ package tectonicus.raw;
 public class EnchantmentTag
 {
         final public String id;
-        final public Short level;
+        final public Integer level;
         
-        public EnchantmentTag(final String id, final Short level) {
+        public EnchantmentTag(final String id, final Integer level) {
                 this.id = id;
                 this.level = level;
         }

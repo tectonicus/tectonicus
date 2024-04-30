@@ -18,32 +18,30 @@ public class Item
 	public int damage;
 	public int count;
 	public int slot;
-        public Components components;
-        public List<Object> tag;
+        public List<Object> components;
 	
         public Item(final String id, List<Object> tag)
         {
-                this(id, 0, 0, 0, null, tag);
+                this(id, 0, 0, 0, tag);
         }
         
-	public Item(final String id, final int damage, final int count, final int slot, Components components, List<Object> tag)
+	public Item(final String id, final int damage, final int count, final int slot, List<Object> components)
 	{
 		this.id = id;
 		this.damage = damage;
 		this.count = count;
 		this.slot = slot;
                 this.components = components;
-                this.tag = tag;
                 
-                if (this.tag == null) {
-                        this.tag = new ArrayList<>();
+                if (this.components == null) {
+                        this.components = new ArrayList<>();
                 }
 	}
         
         @SuppressWarnings("unchecked")
-        public <T> T getTag(Class<T> clazz) {
+        public <T> T getComponent(Class<T> clazz) {
                 T result = null;
-                for (Object o : tag) {
+                for (Object o : components) {
                         if (clazz.isInstance(o)) {
                                 result = (T)o;
                         }

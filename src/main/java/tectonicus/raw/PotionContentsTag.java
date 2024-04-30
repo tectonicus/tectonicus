@@ -9,11 +9,11 @@
 
 package tectonicus.raw;
 
-public class Components
+public class PotionContentsTag
 {
-        public PotionContents potionContents;
+        public String potion;
         
-        public Components(PotionContents potionContents) {
-                this.potionContents = potionContents;
+        public PotionContentsTag(String potion) {
+                this.potion = potion;
         }
 }
