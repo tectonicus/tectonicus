@@ -11,7 +11,6 @@ package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.BlockTypeRegistry;
@@ -507,6 +506,10 @@ public class OutputResourcesUtil {
                 slot += isLeft ? 3 * 9 : 0;
                 result += "count: " + item.count + ", slot: " + slot + ", ";
                 
+                if (item.components != null && item.components.potionContents != null && item.components.potionContents.potion != null) {
+                        result += "components: { potionContents: { potion: \"" + item.components.potionContents.potion + "\" } }, ";
+                }
+                
                 ArmorTrimTag trimTag = item.getTag(ArmorTrimTag.class);
                 if (trimTag != null) {
                         result += "trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }, ";
@@ -613,9 +616,14 @@ public class OutputResourcesUtil {
                                                                 }
                                                         }
                                                               
-                                                        if (layer.getKey().equals("layer0") && textureId.contains("leather_")) {
-                                                                // Split the leather armor icon into base layer and overlay so that the base layer
-                                                                // can be coloured in CSS due to the colour not being known at this time.
+                                                        if (layer.getKey().equals("layer0") &&
+                                                                (
+                                                                    textureId.contains("leather_") ||
+                                                                    textureId.contains("potion") ||
+                                                                    textureId.contains("tipped_arrow")
+                                                                )) {
+                                                                // Split the leather armor, potion and tipped arrow icons into base layer and overlay
+                                                                // so that the base layer can be coloured in CSS due to the colour not being known at this time.
                                                                 writeImage(texture, 16, 16, outFile);
                                                                 outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + "_overlay.png");
                                                         } else {

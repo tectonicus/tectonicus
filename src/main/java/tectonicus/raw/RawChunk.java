@@ -332,20 +332,20 @@ public class RawChunk {
                                                 boolean invisible = invisibleTag.getValue() == 1;
                                                 boolean noBasePlate = noBasePlateTag.getValue() == 1;
                                                 
-                                                ArmorItem feetArmor = null;
-                                                ArmorItem legsArmor = null;
-                                                ArmorItem chestArmor = null;
-                                                ArmorItem headArmor = null;
+                                                Item feetArmor = null;
+                                                Item legsArmor = null;
+                                                Item chestArmor = null;
+                                                Item headArmor = null;
                                                 
                                                 ListTag armorItemsTag = NbtUtil.getChild(entity, "ArmorItems", ListTag.class);
                                                 if (armorItemsTag != null) {
-                                                        Function<CompoundTag, ArmorItem> parseArmorItem = (armorItemTag) -> {
+                                                        Function<CompoundTag, Item> parseArmorItem = (armorItemTag) -> {
                                                                 StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
                                                                 
                                                                 if (armorIdTag != null) {
                                                                         CompoundTag tagTag = NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class);
                                                                         List<Object> tag = parseTagTag(tagTag);
-                                                                        return new ArmorItem(armorIdTag.getValue(), tag);
+                                                                        return new Item(armorIdTag.getValue(), tag);
                                                                 }
                                                                 
                                                                 return null;
@@ -626,21 +626,34 @@ public class RawChunk {
                                                                         final CompoundTag itemTag = (CompoundTag)i;
 
                                                                         final StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-                                                                        final ByteTag itemCountByteTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
-																		final IntTag itemCountIntTag = NbtUtil.getChild(itemTag, "Count", IntTag.class); //1.20.5 changed to using IntTag for item count
-																		int itemCount = 0;
-																		if (itemCountIntTag != null) {
-																			itemCount = itemCountIntTag.getValue();
-																		} else if (itemCountByteTag != null) {
-																			itemCount = itemCountByteTag.getValue();
-																		}
-																		
                                                                         final ByteTag itemSlotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
                                                                         
                                                                         if (itemIdTag != null && itemSlotTag != null)
                                                                         {
+                                                                                final ByteTag itemCountByteTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
+                                                                                final IntTag itemCountIntTag = NbtUtil.getChild(itemTag, "Count", IntTag.class); //1.20.5 changed to using IntTag for item count
+                                                                                int itemCount = 0;
+                                                                                if (itemCountIntTag != null) {
+                                                                                        itemCount = itemCountIntTag.getValue();
+                                                                                } else if (itemCountByteTag != null) {
+                                                                                        itemCount = itemCountByteTag.getValue();
+                                                                                }
+
+                                                                                Components components = null;
+                                                                                final CompoundTag componentsTag = NbtUtil.getChild(itemTag, "components", CompoundTag.class);
+                                                                                if (componentsTag != null) {
+                                                                                        final CompoundTag potionContentsTag = NbtUtil.getChild(componentsTag, "minecraft:potion_contents", CompoundTag.class);
+                                                                                        if (potionContentsTag != null) {
+                                                                                                final StringTag potionTag = NbtUtil.getChild(potionContentsTag, "potion", StringTag.class);
+                                                                                                if (potionTag != null) {
+                                                                                                        components = new Components(new PotionContents(potionTag.getValue()));
+                                                                                                }
+                                                                                        }
+                                                                                }
+                                                                                
                                                                                 List<Object> tag = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
-                                                                                items.add(new Item(itemIdTag.getValue(), -1, itemCount, itemSlotTag.getValue(), tag));
+                                                                                
+                                                                                items.add(new Item(itemIdTag.getValue(), 0, itemCount, itemSlotTag.getValue(), components, tag));
                                                                         }
                                                                 }
 

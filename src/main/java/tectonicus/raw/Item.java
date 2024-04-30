@@ -9,12 +9,45 @@
 
 package tectonicus.raw;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class Item extends ItemBase
+public class Item
 {
-	public Item(final String id, final int damage, final int count, final int slot, final List<Object> tag)
+	public String id;
+	public int damage;
+	public int count;
+	public int slot;
+        public Components components;
+        public List<Object> tag;
+	
+        public Item(final String id, List<Object> tag)
+        {
+                this(id, 0, 0, 0, null, tag);
+        }
+        
+	public Item(final String id, final int damage, final int count, final int slot, Components components, List<Object> tag)
 	{
-		super(id, damage, count, slot, tag);
+		this.id = id;
+		this.damage = damage;
+		this.count = count;
+		this.slot = slot;
+                this.components = components;
+                this.tag = tag;
+                
+                if (this.tag == null) {
+                        this.tag = new ArrayList<>();
+                }
 	}
+        
+        @SuppressWarnings("unchecked")
+        public <T> T getTag(Class<T> clazz) {
+                T result = null;
+                for (Object o : tag) {
+                        if (clazz.isInstance(o)) {
+                                result = (T)o;
+                        }
+                }
+                return result;
+        }
 }

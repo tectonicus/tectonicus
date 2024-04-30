@@ -16,7 +16,7 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
-import tectonicus.raw.ArmorItem;
+import tectonicus.raw.Item;
 import tectonicus.raw.ArmorStandEntity;
 import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.DisplayTag;
@@ -117,10 +117,10 @@ public class ArmorStand implements BlockType
                                 buildStandMesh(x, y, z, geometry, colour, entity.getYaw());
                         }
                         
-                        ArmorItem feetArmor = entity.getFeetArmor();
-                        ArmorItem legsArmor = entity.getLegsArmor();
-                        ArmorItem chestArmor = entity.getChestArmor();
-                        ArmorItem headArmor = entity.getHeadArmor();
+                        Item feetArmor = entity.getFeetArmor();
+                        Item legsArmor = entity.getLegsArmor();
+                        Item chestArmor = entity.getChestArmor();
+                        Item headArmor = entity.getHeadArmor();
                         
                         if (feetArmor != null) {
                                 buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, feetArmor, (byte)1, this::buildFeetArmorMesh);
@@ -251,7 +251,7 @@ public class ArmorStand implements BlockType
                 mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.AntiClockwise, angle);
         }
         
-        private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, ArmorItem armor, byte layer, ArmorMeshBuilder meshBuilder) {
+        private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor, byte layer, ArmorMeshBuilder meshBuilder) {
                 final float angle = armorStand.getYaw();
                                 
                 String armorMaterial = armor.id.substring("minecraft:".length(), armor.id.indexOf('_'));
@@ -296,7 +296,7 @@ public class ArmorStand implements BlockType
                 meshBuilder.build(x, y, z, geometry, colour, angle, layerTexture, -1);
         }
         
-        private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, ArmorItem armor) {
+        private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor) {
                 BlockType blockType = registry.find(armor.id);
                 if (blockType != null) {
                         if (blockType instanceof Skull) {
