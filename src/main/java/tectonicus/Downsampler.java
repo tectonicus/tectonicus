@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -22,6 +22,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -35,11 +36,6 @@ public class Downsampler {
 	
 	public Downsampler(final int numThreads, ChangeFile changedFileList) {
 		this.changedFileList = changedFileList;
-		
-		// 1 thread  = 1m 52s
-		// 2 threads = 1m 9s
-		// 3 threads = 1m 9s 
-		
 		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(64), new ResubmitHandler());
 	}
 	
@@ -53,7 +49,7 @@ public class Downsampler {
 			executor.submit(task);
 			
 			count++;
-			if (count % 20 == 0) {
+			if (count % 128 == 0) {
 				final int percentage = (int)Math.floor((count / (float)tiles.size()) * 100);
 				System.out.print("\t" + percentage + "%\r"); //prints a carriage return after line
 			}
@@ -148,12 +144,19 @@ public class Downsampler {
 		}
 
 		private static BufferedImage getTile(File file) {
-			try {
-				return ImageIO.read(file);
+			BufferedImage tile = null;
+                        try {
+                                if (file.exists()) {
+                                        // Use input stream instead of file to fix ImageIO returning null for some WEBP images
+                                        try (var inputStream = new FileInputStream(file)) {
+                                                tile = ImageIO.read(inputStream);
+                                        }
+                                }
 			} catch (Exception e) {
-				//	e.printStackTrace();
+                                log.error("Error getting tile "+file.getAbsolutePath());
+				e.printStackTrace();
 			}
-			return null;
+			return tile;
 		}
 	}
 	
