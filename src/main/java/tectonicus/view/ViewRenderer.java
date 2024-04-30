@@ -25,7 +25,6 @@ import tectonicus.world.Sign;
 import tectonicus.world.World;
 
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -176,6 +175,7 @@ public class ViewRenderer
 
                                 File outputFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);
                                 imageWriteQueue.write(outputFile, viewImage, imageFormat, imageCompression);
+                                changedFiles.writeLine(outputFile.getAbsolutePath());
                                 
 				viewCache.writeHash(sign, rasteriser, world, viewConfig);
 			}
