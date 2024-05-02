@@ -48,6 +48,7 @@ public class Screenshot
 			// Then write the encoded bytes to disk
 			output = new FileImageOutputStream(outputFile);
 			output.write(memOut.toByteArray(), 0, memOut.size());
+                        output.flush();
 		}
 		catch (Exception e)
 		{

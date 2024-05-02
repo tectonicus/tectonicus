@@ -11,7 +11,6 @@ package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.BlockTypeRegistry;
@@ -37,11 +36,13 @@ import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
-import tectonicus.raw.DisplayTag;
+import tectonicus.raw.CustomNameTag;
+import tectonicus.raw.DyedColorTag;
 import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.EnchantmentsTag;
-import tectonicus.raw.Player;
 import tectonicus.raw.Item;
+import tectonicus.raw.Player;
+import tectonicus.raw.PotionContentsTag;
 import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
 import tectonicus.world.Sign;
@@ -493,32 +494,39 @@ public class OutputResourcesUtil {
         private static String outputItem(Item item, Boolean isLeft) {
                 String result = "\t\t\t{ id: \"" + item.id + "\", ";
 
-                DisplayTag displayTag = item.getTag(DisplayTag.class);
-                if (displayTag != null) {
-                        if (displayTag.name != null) {
-                                result += "customName: \"" + displayTag.name + "\", ";
-                        }
-                        if (displayTag.color != null) {
-                                result += "color: " + displayTag.color + ", ";
+                CustomNameTag customNameTag = item.getComponent(CustomNameTag.class);
+                if (customNameTag != null) {
+                        if (customNameTag.name != null) {
+                                result += "customName: \"" + customNameTag.name + "\", ";
                         }
                 }
 
+                DyedColorTag dyedColorTag = item.getComponent(DyedColorTag.class);
+                if (dyedColorTag != null) {
+                        result += "color: " + dyedColorTag.color + ", ";
+                }
+                
                 int slot = item.slot;
                 slot += isLeft ? 3 * 9 : 0;
                 result += "count: " + item.count + ", slot: " + slot + ", ";
                 
-                ArmorTrimTag trimTag = item.getTag(ArmorTrimTag.class);
+                PotionContentsTag potionContents = item.getComponent(PotionContentsTag.class);
+                if (potionContents != null && potionContents.potion != null) {
+                        result += "components: { potionContents: { potion: \"" + potionContents.potion + "\" } }, ";
+                }
+                
+                ArmorTrimTag trimTag = item.getComponent(ArmorTrimTag.class);
                 if (trimTag != null) {
                         result += "trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }, ";
                 }
                 
                 List<EnchantmentTag> enchantments = null;
                 
-                EnchantmentsTag enchantmentsTag = item.getTag(EnchantmentsTag.class);
+                EnchantmentsTag enchantmentsTag = item.getComponent(EnchantmentsTag.class);
                 if (enchantmentsTag != null) {
                         enchantments = enchantmentsTag.enchantments;
                 }
-                StoredEnchantmentsTag storedEnchantmentsTag = item.getTag(StoredEnchantmentsTag.class);
+                StoredEnchantmentsTag storedEnchantmentsTag = item.getComponent(StoredEnchantmentsTag.class);
                 if (storedEnchantmentsTag != null) {
                         enchantments = storedEnchantmentsTag.enchantments;
                 }
@@ -613,9 +621,14 @@ public class OutputResourcesUtil {
                                                                 }
                                                         }
                                                               
-                                                        if (layer.getKey().equals("layer0") && textureId.contains("leather_")) {
-                                                                // Split the leather armor icon into base layer and overlay so that the base layer
-                                                                // can be coloured in CSS due to the colour not being known at this time.
+                                                        if (layer.getKey().equals("layer0") &&
+                                                                (
+                                                                    textureId.contains("leather_") ||
+                                                                    textureId.contains("potion") ||
+                                                                    textureId.contains("tipped_arrow")
+                                                                )) {
+                                                                // Split the leather armor, potion and tipped arrow icons into base layer and overlay
+                                                                // so that the base layer can be coloured in CSS due to the colour not being known at this time.
                                                                 writeImage(texture, 16, 16, outFile);
                                                                 outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + "_overlay.png");
                                                         } else {

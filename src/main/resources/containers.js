@@ -50,6 +50,29 @@ const colorizedNames = {
         zombie_head: 'yellow'
 };
 
+const potionColors = {
+        water: '#385dc6',
+        mundane: '#385dc6',
+        thick: '#385dc6',
+        awkward: '#385dc6',
+        night_vision: '#c2ff66',
+        invisibility: '#f6f6f6',
+        leaping: '#fdff84',
+        fire_resistance: '#ff9900',
+        swiftness: '#33ebff',
+        slowness: '#8bafe0',
+        water_breathing: '#98dac0',
+        healing: '#f82423',
+        harming: '#a9656a',
+        poison: '#87a363',
+        regeneration: '#cd5cab',
+        strength: '#ffc700',
+        weakness: '#484d48',
+        luck: '#f7f8e0',
+        turtle_master: '#8e7be8',
+        slow_falling: '#f7f8e0'
+};
+
 async function containersMainAsync() {
         let localizationsResponse;
         
@@ -195,38 +218,9 @@ function createChestPopup(chest) {
                 const item = chest.items[j];
 
                 const [namespace, itemId] = item.id.split(":");
-                const itemKey = `item.${namespace}.${itemId}`;
                 const itemDescKey = `item.${namespace}.${itemId}.desc`;
-                const blockKey = `block.${namespace}.${itemId}`;
-                
-                let additionalItemNameCssClass = '';
-                if (item.enchantments) {
-                        additionalItemNameCssClass = ' enchanted';
-                }
-                if (colorizedNames[itemId]) {
-                        additionalItemNameCssClass = ' ' + colorizedNames[itemId];
-                }
-
-                let itemNameAndDescription;
-                if (item.customName) {
-                        // Parse custom name. Possible values if matched:
-                        //      {text:Custom name}
-                        //      {text:Custom name,color:gold}
-                        //      {translate:resource_key}
-                        //      {translate:resource_key,color:gold}
-                        let formattedCustomNameRegex = /{(text:(?<text>[^,)]*))?,?(translate:(?<translate>[^,)]*))?,?(color:(?<color>[^)]*))?}/;
-                        let matches = formattedCustomNameRegex.exec(item.customName);
-                        if (matches) {
-                                let { text, translate, color } = matches.groups;
-                                itemNameAndDescription = renderMinecraftText(localize(translate, text), 'name italic ' + color + additionalItemNameCssClass);
-                        } else {                                
-                                itemNameAndDescription = renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
-                        }
-                } else {
-                        itemNameAndDescription = localize(itemKey, localize(blockKey, itemId));
-                        itemNameAndDescription += renderMinecraftText(itemNameAndDescription, 'name' + additionalItemNameCssClass);
-                }
-
+                                
+                let itemNameAndDescription = getItemName(item);
                 itemNameAndDescription += renderMinecraftText(localize(itemDescKey, null));
                 itemNameAndDescription += getTrimDescription(item);
                 itemNameAndDescription += getEnchantmentsDescription(item);
@@ -243,8 +237,8 @@ function createChestPopup(chest) {
                 markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
                 markerPopup += '<img src="Images/Items/' + pngName + '.png" onload="checkImageSize(this)" />';
                 
-                markerPopup += getColorLayer(intToHTMLColor(item?.color), itemId);
-                markerPopup += getLeatherOverlay(item, itemId, pngName);
+                markerPopup += getColorLayer(item, itemId);
+                markerPopup += getOverlay(item, itemId, pngName);
                 markerPopup += getEnchantmentGlint(item, itemId, pngName);
 
                 if (item.count > 1) {
@@ -268,6 +262,41 @@ function getPngName(item, itemId) {
         }
         
         return pngName;
+}
+
+function getItemName(item) {
+        const [namespace, itemId] = item.id.split(":");
+        let itemKey = `item.${namespace}.${itemId}`;
+        const blockKey = `block.${namespace}.${itemId}`;
+        
+        if (item.components && item.components.potionContents && item.components.potionContents.potion) {
+                const [potionNamespace, potionId] = item.components.potionContents.potion.split(":");
+                itemKey = `${itemKey}.effect.${potionId.replace(/^(strong|long)_/, '')}`;
+        }
+    
+        let additionalItemNameCssClass = '';
+        if (item.enchantments) {
+                additionalItemNameCssClass = ' enchanted';
+        }
+        if (colorizedNames[itemId]) {
+                additionalItemNameCssClass = ' ' + colorizedNames[itemId];
+        }
+                
+        if (item.customName) {
+                // Parse custom name. Possible values if matched:
+                //      {text:Custom name}
+                //      {text:Custom name,color:gold}
+                //      {translate:resource_key}
+                //      {translate:resource_key,color:gold}
+                let formattedCustomNameRegex = /{(text:(?<text>[^,)]*))?,?(translate:(?<translate>[^,)]*))?,?(color:(?<color>[^)]*))?}/;
+                let matches = formattedCustomNameRegex.exec(item.customName);
+                if (matches) {
+                        let { text, translate, color } = matches.groups;
+                        return renderMinecraftText(localize(translate, text), 'name italic ' + color + additionalItemNameCssClass);
+                }
+                return renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
+        }
+        return renderMinecraftText(localize(itemKey, localize(blockKey, itemId)), 'name' + additionalItemNameCssClass);
 }
 
 function getTrimDescription(item) {
@@ -332,17 +361,30 @@ function intToHTMLColor(colorCode) {
         return "#" + hexColor;
 }
 
-function getColorLayer(color, itemId) {
+function getColorLayer(item, itemId) {
+        let color = intToHTMLColor(item?.color);
+        
+        if (item.components && item.components.potionContents && item.components.potionContents.potion) {
+                const potionId = item.components.potionContents.potion.replace(/^minecraft:((strong|long)_)?/, '');
+                if (potionColors[potionId]) {
+                        color = potionColors[potionId];
+                }
+                else {
+                        color = '#ff00ff';
+                }
+        }
+        
         if (color || itemId.indexOf('leather_') >= 0) {
                 color ??= 'rgb(106, 64, 41)';
                 return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'Images/Items/' + itemId + '.png\');"></div>';
         }
+        
         return '';
 }
 
-function getLeatherOverlay(item, itemId, pngName) {
+function getOverlay(item, itemId, pngName) {
         let result = '';
-        if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings') {
+        if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings' || itemId.indexOf('potion') >= 0 || itemId === 'tipped_arrow') {
                 let overlayId = pngName + '_overlay';
                 result += '<img src="Images/Items/' + overlayId + '.png" />';
                 result += getEnchantmentGlint(item, overlayId, overlayId);

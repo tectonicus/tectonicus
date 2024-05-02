@@ -15,13 +15,13 @@ public class ArmorStandEntity extends BlockEntity
         private final boolean invisible;
         private final boolean noBasePlate;
         
-        private final ArmorItem feetArmor;
-        private final ArmorItem legsArmor;
-        private final ArmorItem chestArmor;
-        private final ArmorItem headArmor;
+        private final Item feetArmor;
+        private final Item legsArmor;
+        private final Item chestArmor;
+        private final Item headArmor;
     
 	public ArmorStandEntity(int x, int y, int z, int localX, int localY, int localZ, float yaw, boolean invisible, boolean noBasePlate,
-                                ArmorItem feetArmor, ArmorItem legsArmor, ArmorItem chestArmor, ArmorItem headArmor)
+                                Item feetArmor, Item legsArmor, Item chestArmor, Item headArmor)
 	{
 		super(x, y, z, localX, localY, localZ);
                 
@@ -39,8 +39,8 @@ public class ArmorStandEntity extends BlockEntity
         public boolean getInvisible() { return invisible; }
         public boolean getNoBasePlate() { return noBasePlate; }
         
-        public ArmorItem getFeetArmor() { return feetArmor; }
-        public ArmorItem getLegsArmor() { return legsArmor; }
-        public ArmorItem getChestArmor() { return chestArmor; }
-        public ArmorItem getHeadArmor() { return headArmor; }
+        public Item getFeetArmor() { return feetArmor; }
+        public Item getLegsArmor() { return legsArmor; }
+        public Item getChestArmor() { return chestArmor; }
+        public Item getHeadArmor() { return headArmor; }
 }

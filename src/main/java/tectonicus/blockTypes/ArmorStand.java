@@ -16,10 +16,10 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
-import tectonicus.raw.ArmorItem;
+import tectonicus.raw.Item;
 import tectonicus.raw.ArmorStandEntity;
 import tectonicus.raw.ArmorTrimTag;
-import tectonicus.raw.DisplayTag;
+import tectonicus.raw.DyedColorTag;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
@@ -117,10 +117,10 @@ public class ArmorStand implements BlockType
                                 buildStandMesh(x, y, z, geometry, colour, entity.getYaw());
                         }
                         
-                        ArmorItem feetArmor = entity.getFeetArmor();
-                        ArmorItem legsArmor = entity.getLegsArmor();
-                        ArmorItem chestArmor = entity.getChestArmor();
-                        ArmorItem headArmor = entity.getHeadArmor();
+                        Item feetArmor = entity.getFeetArmor();
+                        Item legsArmor = entity.getLegsArmor();
+                        Item chestArmor = entity.getChestArmor();
+                        Item headArmor = entity.getHeadArmor();
                         
                         if (feetArmor != null) {
                                 buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, feetArmor, (byte)1, this::buildFeetArmorMesh);
@@ -251,7 +251,7 @@ public class ArmorStand implements BlockType
                 mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.AntiClockwise, angle);
         }
         
-        private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, ArmorItem armor, byte layer, ArmorMeshBuilder meshBuilder) {
+        private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor, byte layer, ArmorMeshBuilder meshBuilder) {
                 final float angle = armorStand.getYaw();
                                 
                 String armorMaterial = armor.id.substring("minecraft:".length(), armor.id.indexOf('_'));
@@ -262,7 +262,7 @@ public class ArmorStand implements BlockType
                 SubTexture layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d.png", armorMaterial, layer), null);
                 SubTexture overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d_overlay.png", armorMaterial, layer), null);
                 
-                ArmorTrimTag armorTrim = armor.getTag(tectonicus.raw.ArmorTrimTag.class);
+                ArmorTrimTag armorTrim = armor.getComponent(tectonicus.raw.ArmorTrimTag.class);
                 if (armorTrim != null) {
                         final String pattern = armorTrim.pattern.substring("minecraft:".length());
                         final String suffix = layer == 2 ? "_leggings" : "";
@@ -287,16 +287,16 @@ public class ArmorStand implements BlockType
                 if (armorMaterial.equals("leather")) {
                         meshBuilder.build(x, y, z, geometry, colour, angle, overlayLayerTexture, 0);
                  
-                        DisplayTag display = armor.getTag(DisplayTag.class);
-                        colour = display == null
+                        DyedColorTag dyedColor = armor.getComponent(DyedColorTag.class);
+                        colour = dyedColor == null
                                 ? new Vector4f(106/255f, 64/255f, 41/255f, 1) // Default brown leather
-                                : new Vector4f(((display.color >> 16) & 255)/255f, ((display.color >> 8) & 255)/255f, (display.color & 255)/255f, 1);
+                                : new Vector4f(((dyedColor.color >> 16) & 255)/255f, ((dyedColor.color >> 8) & 255)/255f, (dyedColor.color & 255)/255f, 1);
                 }
 		
                 meshBuilder.build(x, y, z, geometry, colour, angle, layerTexture, -1);
         }
         
-        private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, ArmorItem armor) {
+        private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor) {
                 BlockType blockType = registry.find(armor.id);
                 if (blockType != null) {
                         if (blockType instanceof Skull) {

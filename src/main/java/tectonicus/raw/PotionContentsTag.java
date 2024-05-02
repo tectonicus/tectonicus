@@ -9,13 +9,11 @@
 
 package tectonicus.raw;
 
-public class EnchantmentTag
+public class PotionContentsTag
 {
-        final public String id;
-        final public Integer level;
+        public String potion;
         
-        public EnchantmentTag(final String id, final Integer level) {
-                this.id = id;
-                this.level = level;
+        public PotionContentsTag(String potion) {
+                this.potion = potion;
         }
 }
