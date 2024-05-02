@@ -12,7 +12,6 @@ package tectonicus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.joml.Vector3f;
-import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
@@ -33,10 +32,10 @@ import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
-import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.DirUtils;
 import tectonicus.util.FileUtils;
@@ -61,6 +60,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
@@ -251,7 +251,7 @@ public class TileRenderer
 			// Output entity javascript for creating map markers
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
 			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, world.getPlayers(map.getDimension()), playerIconAssembler);
-			outputBeds(mapDir, map, world.getAllPlayers());
+			outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
 			outputRespawnAnchors(mapDir, map, world.getAllPlayers());
 			List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
 			worldStats.setNumPortals(portals.size());
@@ -528,11 +528,12 @@ public class TileRenderer
                                                         worldStats.incNumChunks();
                                                         
                                                         ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
+														Queue<BedEntity> beds = world.getBeds();
 
                                                         try
                                                         {
                                                                 // MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
-                                                                regionLoadQueue.load(c, regionHashStore, (MessageDigest)hashAlgorithm.clone(), map, portals, signs, views, chests);
+                                                                regionLoadQueue.load(c, regionHashStore, (MessageDigest)hashAlgorithm.clone(), map, portals, signs, views, chests, beds);
                                                         }
                                                         catch (CloneNotSupportedException e)
                                                         {

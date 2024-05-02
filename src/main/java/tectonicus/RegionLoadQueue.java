@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,7 +9,17 @@
 
 package tectonicus;
 
+import tectonicus.cache.RegionHashStore;
+import tectonicus.cache.swap.HddObjectListWriter;
+import tectonicus.chunk.Chunk;
+import tectonicus.configuration.Map;
+import tectonicus.configuration.PortalFilter;
+import tectonicus.raw.BedEntity;
+import tectonicus.raw.ContainerEntity;
+import tectonicus.world.Sign;
+
 import java.security.MessageDigest;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -17,18 +27,13 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import tectonicus.cache.RegionHashStore;
-import tectonicus.cache.swap.HddObjectListWriter;
 
-import tectonicus.chunk.Chunk;
-import tectonicus.configuration.PortalFilter;
-import tectonicus.raw.ContainerEntity;
+import static tectonicus.util.FindEntityUtil.findBeds;
 import static tectonicus.util.FindEntityUtil.findChests;
 import static tectonicus.util.FindEntityUtil.findPortals;
 import static tectonicus.util.FindEntityUtil.findPortalsOld;
 import static tectonicus.util.FindEntityUtil.findSigns;
 import static tectonicus.util.FindEntityUtil.findViews;
-import tectonicus.world.Sign;
 
 public class RegionLoadQueue
 {
@@ -41,15 +46,15 @@ public class RegionLoadQueue
 	{
                 numberOfRegionsStarted = new AtomicInteger();
             
-		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(16), new ResubmitHandler());
+		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(16), new ResubmitHandler());
 	}
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
-                tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-                HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests)
+					 Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
+					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds)
 	{
                 numberOfRegionsStarted.incrementAndGet();
-		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests);
+		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds);
 		executor.submit(task);
 	}
 	
@@ -76,10 +81,11 @@ public class RegionLoadQueue
                 private final HddObjectListWriter<Sign> signs;
                 private final HddObjectListWriter<Sign> views;
                 private final ConcurrentLinkedQueue<ContainerEntity> chests;
+				private final Queue<BedEntity> beds;
 		
 		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
-                        tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-                        HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests)
+						tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
+						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds)
 		{
 			this.chunk = chunk;
                         this.regionHashStore = regionHashStore;
@@ -89,6 +95,7 @@ public class RegionLoadQueue
                         this.signs = signs;
                         this.views = views;
                         this.chests = chests;
+						this.beds = beds;
 		}
 		
 		@Override
@@ -108,6 +115,7 @@ public class RegionLoadQueue
                                         findPortalsOld(chunk.getRawChunk(), portals, portalFilter);
                                 } else {
                                         findPortals(chunk.getRawChunk(), portals, portalFilter);
+									findBeds(chunk.getRawChunk(), beds);
                                 }
 
                                 findViews(chunk.getRawChunk(), views, map.getViewFilter());

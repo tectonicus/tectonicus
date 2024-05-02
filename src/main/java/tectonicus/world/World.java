@@ -45,6 +45,7 @@ import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.BedEntity;
 import tectonicus.raw.Biome;
 import tectonicus.raw.BiomeIds;
 import tectonicus.raw.BiomeUtils;
@@ -83,6 +84,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -104,7 +106,7 @@ public class World implements BlockContext
 	private final Version textureVersion;
 	
 	private final Rasteriser rasteriser;
-	
+	@Getter
 	private final File worldDir;
 	private final File dimensionDir;
 	@Getter
@@ -114,6 +116,7 @@ public class World implements BlockContext
 	@Getter
 	private BlockRegistry modelRegistry;
 	
+	@Getter
 	private final LevelDat levelDat;
 
 	@Getter
@@ -122,8 +125,12 @@ public class World implements BlockContext
 	private final List<Player> players;
 	private final PlayerSkinCache playerSkinCache;
 	
+	@Getter
 	private final ConcurrentLinkedQueue<ContainerEntity> chests;
+	@Getter
+	private final Queue<BedEntity> beds;
 	
+	@Getter
 	private final TexturePack texturePack;
 	
 	private final RegionCache regionCache;
@@ -218,7 +225,7 @@ public class World implements BlockContext
 
 		if (config.getMinecraftJar() == null) {
 			log.info("No Minecraft jar specified.");
-			Minecraft.findMatchingMinecraftJar(worldVersion).ifPresentOrElse(jar -> config.setMinecraftJar(jar), () -> config.setMinecraftJar(Minecraft.findLatestMinecraftJar()));
+			Minecraft.findMatchingMinecraftJar(worldVersion).ifPresentOrElse(config::setMinecraftJar, () -> config.setMinecraftJar(Minecraft.findLatestMinecraftJar()));
 		}
 		log.info("Using Minecraft jar: {}", config.getMinecraftJar().getName());
 
@@ -255,7 +262,8 @@ public class World implements BlockContext
 
 		players = loadPlayers(worldDir, playerSkinCache);
 		
-		chests = new ConcurrentLinkedQueue<ContainerEntity>();
+		chests = new ConcurrentLinkedQueue<>();
+		beds = new ConcurrentLinkedQueue<>();
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(biomeCache, regionCache);
@@ -279,6 +287,7 @@ public class World implements BlockContext
 		} else {
 			this.worldSubset = subset;
 		}
+		log.debug("worldSubset: {}", this.worldSubset);
                 
          	rawLoadedChunks = new RawCache(2048, (coord) -> {
                         CompositeBlockFilter composite = new CompositeBlockFilter();
@@ -488,21 +497,6 @@ public class World implements BlockContext
 				result.add(p);
 		}
 		return result;
-	}
-	
-	public ConcurrentLinkedQueue<ContainerEntity> getChests()
-	{
-		return chests;
-	}
-	
-	public LevelDat getLevelDat()
-	{
-		return levelDat;
-	}
-	
-	public TexturePack getTexturePack()
-	{
-		return texturePack;
 	}
 	
 	/* New, optimised version.
@@ -1133,11 +1127,6 @@ public class World implements BlockContext
 	public BlockTypeRegistry getBlockTypeRegistry()
 	{
 		return registry;
-	}
-	
-	public File getWorldDir()
-	{
-		return worldDir;
 	}
 	
 	public SignEntity[] getLoadedSigns()

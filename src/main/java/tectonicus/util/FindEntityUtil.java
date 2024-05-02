@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,11 +20,15 @@ import tectonicus.configuration.ChestFilter;
 import tectonicus.configuration.PortalFilter;
 import tectonicus.configuration.SignFilter;
 import tectonicus.configuration.ViewFilter;
+import tectonicus.raw.BedEntity;
+import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
+import tectonicus.world.Colors;
 import tectonicus.world.Sign;
 
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @UtilityClass
@@ -125,5 +129,23 @@ public class FindEntityUtil {
                                 chests.add(entity);
                         }
                 }
+	}
+
+	public static void findBeds(RawChunk chunk, Queue<BedEntity> beds) {
+		for (int y = 0; y < Minecraft.getChunkHeight(); y++) {
+			for (int x = 0; x < RawChunk.WIDTH; x++) {
+				for (int z = 0; z < RawChunk.DEPTH; z++) {
+					final String blockName = chunk.getBlockName(x, y, z);
+					if (blockName != null && blockName.contains("_bed")) {
+						final BlockProperties blockProperties = chunk.getBlockState(x, y, z);
+						if (blockProperties.containsKey("part") && blockProperties.get("part").equals("head")) {
+							ChunkCoord coord = chunk.getChunkCoord();
+							beds.add(new BedEntity((int) (coord.x * RawChunk.WIDTH + x), (y - 64), (int) (coord.z * RawChunk.DEPTH + z), x, y, z,
+									Colors.byName(blockName.replace("minecraft:", "").replace("_bed", "")).getId()));
+						}
+					}
+				}
+			}
+		}
 	}
 }

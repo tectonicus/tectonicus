@@ -33,6 +33,7 @@ import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
+import tectonicus.raw.BedEntity;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
@@ -45,6 +46,7 @@ import tectonicus.raw.Player;
 import tectonicus.raw.PotionContentsTag;
 import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
+import tectonicus.world.Colors;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.subset.WorldSubset;
@@ -67,11 +69,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
 
@@ -192,7 +196,7 @@ public class OutputResourcesUtil {
 		log.debug("Exported {} players", numOutput);
 	}
 
-	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, List<Player> players) {
+	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, List<Player> players, Queue<BedEntity> beds) {
 		File bedsFile = new File(exportDir, "beds.js");
 		try {
 			Files.deleteIfExists(bedsFile.toPath());
@@ -223,7 +227,16 @@ public class OutputResourcesUtil {
 
 							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
 							bedArgs.put("worldPos", posStr);
-
+							
+							if (!beds.isEmpty()) {
+								for (BedEntity bed : beds) {
+									if (bed.getX() == spawn.x && bed.getY() == spawn.y && bed.getZ() == spawn.z) {
+										bedArgs.put("color", "\"" + Colors.byId(bed.getColor()).getName() + "\"");
+									}
+								}
+							} else {
+								bedArgs.put("color", "\"red\"");
+							}
 
 							jsWriter.write(bedArgs);
 							numOutput++;
@@ -672,7 +685,10 @@ public class OutputResourcesUtil {
 				properties.put("facing", "south");
 				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
-                        itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
+			
+			if (texturePack.getVersion().getNumVersion() >= VERSION_12.getNumVersion()) {
+				itemRenderer.renderBed(new File(exportDir, "Images/Items/red_bed.png"), registryOld, texturePack);
+			}
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
@@ -723,7 +739,7 @@ public class OutputResourcesUtil {
 
 			default: //assume version is 1.6 or higher
 				if (texturePack.fileExists("assets/minecraft/textures/items/bed.png")) { //Use the old bed image for 1.6 - 1.11 if found
-					writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(imagesDir, "Bed.png"));
+					writeImage(texturePack.getItem("assets/minecraft/textures/items/bed.png"), 32, 32, new File(itemsDir, "red_bed.png"));
 				}
 
 				String path = "assets/minecraft/textures/items/"; //path for 1.6 - 1.12

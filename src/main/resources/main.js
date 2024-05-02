@@ -117,7 +117,7 @@ async function mainAsync()
         viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
         signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
         playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-        bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
+        bedToggleControl = CreateToggleControl('beds', 'Images/Items/red_bed.png', bedMarkers, bedsInitiallyVisible);
         respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
         portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
         spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
@@ -461,9 +461,9 @@ function refreshBedMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(bed.worldPos);
 
 		let icon = L.icon({
-			iconUrl: 'Images/Bed.png',
+			iconUrl: "Images/Items/" + bed.color + "_bed.png",
 			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
+			iconAnchor: [25, 30],
 			popupAnchor: [0, -10],
 			//shadowUrl: 'my-icon-shadow.png',
 			//shadowSize: [68, 95],
