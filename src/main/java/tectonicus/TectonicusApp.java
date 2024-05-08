@@ -9,8 +9,9 @@
 
 package tectonicus;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
@@ -49,7 +50,7 @@ import java.util.stream.Stream;
 public class TectonicusApp
 {
 	private final Configuration config;
-	private static org.apache.logging.log4j.Logger log;
+	private static org.slf4j.Logger log;
 
 	private TectonicusApp(Configuration config)
 	{
@@ -58,8 +59,9 @@ public class TectonicusApp
 		if (config.isVerbose()) {
 			config.setLoggingLevel(Level.TRACE);
 		}
-
-		Configurator.setRootLevel(config.getLoggingLevel());
+		
+		Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+		root.setLevel(config.getLoggingLevel());
 		
 		BuildInfo.print();
 		
@@ -225,12 +227,14 @@ public class TectonicusApp
 		return 0;
 	}
 
-	public static void main(String[] argArray) throws Exception
-	{
+	public static void main(String[] argArray) throws Exception {
 		// Init the logging framework
-		System.setProperty("logFilename", "log/tectonicus.log");
-		log = org.apache.logging.log4j.LogManager.getLogger(TectonicusApp.class);
-
+		String logDirProperty = "tectonicus.logDir";
+		String logAppendProperty = "tectonicus.logAppend";
+		System.setProperty(logDirProperty, System.getProperty(logDirProperty, "log"));
+		System.setProperty(logAppendProperty, System.getProperty(logAppendProperty, "false"));
+		log = org.slf4j.LoggerFactory.getLogger(TectonicusApp.class);
+		
 		//Parse command line to get config file
 		MutableConfiguration m = new MutableConfiguration();
 		CommandLine cmd = new CommandLine(m);
@@ -245,8 +249,7 @@ public class TectonicusApp
 
 		Path configFile = m.getConfigFile();
 		MutableConfiguration config = new MutableConfiguration();
-		if (configFile != null)
-		{
+		if (configFile != null) {
 			// Load config from xml first
 			config = XmlConfigurationParser.parseConfiguration(configFile.toFile());
 		}
@@ -261,10 +264,6 @@ public class TectonicusApp
 		if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
 			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
 		}
-
-		// Reset log file name
-		System.setProperty("logFilename", config.getLogFile());
-		Configurator.reconfigure();
 
 		if (config.getUpdateToLeaflet() != null) {
 			updateToLeaflet(config.getUpdateToLeaflet());
@@ -292,8 +291,7 @@ public class TectonicusApp
 		// Trigger the load of the awt libraries before we load lwjgl
 		Toolkit.getDefaultToolkit();
 
-		if (config.forceLoadAwt())
-		{
+		if (config.forceLoadAwt()) {
 			System.loadLibrary("awt");
 		}
 

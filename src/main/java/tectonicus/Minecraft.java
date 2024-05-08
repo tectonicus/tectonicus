@@ -12,7 +12,7 @@ package tectonicus;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.UtilityClass;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.OsDetect;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 
-@Log4j2
+@Slf4j
 @UtilityClass
 public class Minecraft
 {

@@ -9,9 +9,9 @@
 
 package tectonicus.configuration;
 
+import ch.qos.logback.classic.Level;
 import lombok.Data;
-import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Level;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-@Log4j2
+@Slf4j
 @Data
 @Command(name = "java -jar Tectonicus.jar",
 		header = {
@@ -36,8 +36,7 @@ import java.util.concurrent.Callable;
 		mixinStandardHelpOptions = true,
 		description = "Tectonicus is a high detail Minecraft world mapper focused on creating zoomable maps that look as close to what you see in Minecraft as possible.",
 		resourceBundle = "commandLine", versionProvider = tectonicus.BuildInfo.PropertiesVersionProvider.class)
-public class MutableConfiguration implements Configuration, Callable<MutableConfiguration>
-{
+public class MutableConfiguration implements Configuration, Callable<MutableConfiguration> {
 	@Option(names = {"-c", "--config", "config"}, paramLabel = "<String>")
 	private Path configFile;
 
@@ -52,9 +51,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	@Option(names = {"-e", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean eraseOutputDir;
-
-	@Option(names = {"-l", "--logFile", "logFile"}, paramLabel = "<String>")
-	private String logFile;
 
 	@Option(names = {"-o", "--outputDir", "outputDir"}, paramLabel = "<String>")
 	private File outputDir;
@@ -156,8 +152,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 
 	private List<MutableMap> maps;
 
-	public MutableConfiguration()
-	{
+	public MutableConfiguration() {
 		mode = Mode.CMD;
 		rasteriserType = RasteriserType.LWJGL;
 		showSpawn = true;
@@ -173,7 +168,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		bedsInitiallyVisible = true;
 		spawnInitiallyVisible = true;
 		viewsInitiallyVisible = true;
-		logFile = "log/tectonicus.log";
 		loggingLevel = Level.DEBUG;
 		outputHtmlName = "map.html";
 		outputDir = new File(".");
@@ -190,67 +184,65 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		return this;
 	}
 
-	public void printActive()
-	{
+	public void printActive() {
 		log.debug("Settings:");
-		log.debug("\tloggingLevel:"+getLoggingLevel());
-		log.debug("\tmode:"+getMode().getName());
-		log.debug("\trasteriser:"+getRasteriserType());
+		log.debug("\tloggingLevel:{}", getLoggingLevel());
+		log.debug("\tmode:{}", getMode().getName());
+		log.debug("\trasteriser:{}", getRasteriserType());
 		log.debug("\tuseEGL: {}", isUseEGL());
-		log.debug("\toutputDir:"+outputDir.getAbsolutePath());
-		log.debug("\tuseCache:"+useCache());
-		log.debug("\tcacheDir:"+cacheDir.getAbsolutePath());
-		log.debug("\ttexturePack:"+(texturePack != null ? texturePack.getAbsolutePath() : "none"));
-		log.debug("\tuseOldColorPalette:"+useOldColorPalette());
-		log.debug("\tcolourDepth:"+ this.getColourDepth());
-		log.debug("\talphaBits:"+ this.getAlphaBits());
-		log.debug("\tnumSamples:"+ this.getNumSamples());
-		log.debug("\ttileSize:"+ this.getTileSize());
-		log.debug("\tnumZoomLevels:"+ this.getNumZoomLevels());
-		log.debug("\tportalsInitiallyVisible:"+arePortalsInitiallyVisible());
-		log.debug("\tshowSpawn:"+showSpawn());
-		log.debug("\tsignsInitiallyVisible:"+areSignsInitiallyVisible());
-		log.debug("\tplayersInitiallyVisible:"+arePlayersInitiallyVisible());
-		log.debug("\tbedsInitiallyVisible:"+areBedsInitiallyVisible());
-		log.debug("\trespawnAnchorsInitiallyVisible:"+areRespawnAnchorsInitiallyVisible());
-		log.debug("\tspawnInitiallyVisible:"+isSpawnInitiallyVisible());
-		log.debug("\tviewsInitiallyVisible:"+areViewsInitiallyVisible());
-		log.debug("\teraseOutputDir:"+eraseOutputDir());
-		log.debug("\tforceLoadAwt:"+forceLoadAwt());
-		log.debug("\tlogFile: log/"+getLogFile());
-		log.debug("\toutputHtmlName:"+getOutputHtmlName());
+		log.debug("\toutputDir:{}", outputDir.getAbsolutePath());
+		log.debug("\tuseCache:{}", useCache());
+		log.debug("\tcacheDir:{}", cacheDir.getAbsolutePath());
+		log.debug("\ttexturePack:{}", texturePack != null ? texturePack.getAbsolutePath() : "none");
+		log.debug("\tuseOldColorPalette:{}", useOldColorPalette());
+		log.debug("\tcolourDepth:{}", this.getColourDepth());
+		log.debug("\talphaBits:{}", this.getAlphaBits());
+		log.debug("\tnumSamples:{}", this.getNumSamples());
+		log.debug("\ttileSize:{}", this.getTileSize());
+		log.debug("\tnumZoomLevels:{}", this.getNumZoomLevels());
+		log.debug("\tportalsInitiallyVisible:{}", arePortalsInitiallyVisible());
+		log.debug("\tshowSpawn:{}", showSpawn());
+		log.debug("\tsignsInitiallyVisible:{}", areSignsInitiallyVisible());
+		log.debug("\tplayersInitiallyVisible:{}", arePlayersInitiallyVisible());
+		log.debug("\tbedsInitiallyVisible:{}", areBedsInitiallyVisible());
+		log.debug("\trespawnAnchorsInitiallyVisible:{}", areRespawnAnchorsInitiallyVisible());
+		log.debug("\tspawnInitiallyVisible:{}", isSpawnInitiallyVisible());
+		log.debug("\tviewsInitiallyVisible:{}", areViewsInitiallyVisible());
+		log.debug("\teraseOutputDir:{}", eraseOutputDir());
+		log.debug("\tforceLoadAwt:{}", forceLoadAwt());
+		log.debug("\toutputHtmlName:{}", getOutputHtmlName());
 		log.debug("\thtmlTitle: {}", getHtmlTitle());
-		log.debug("\tnumDownsampleThreads:"+getNumDownsampleThreads());
-		log.debug("\tsinglePlayerName:"+getSinglePlayerName());
+		log.debug("\tnumDownsampleThreads:{}", getNumDownsampleThreads());
+		log.debug("\tsinglePlayerName:{}", getSinglePlayerName());
 		log.debug("\tuseCdn: {}", getUseCdn());
 
 		System.out.println();
 
 		for (Map m : getMaps())
 		{
-			log.debug("'"+m.getName()+"' map");
-
-			log.debug("\tworldDir: "+m.getWorldDir().getAbsolutePath());
-			log.debug("\tdimension: "+m.getDimension());
-			log.debug("\tcameraAngle: "+m.getCameraAngleDeg());
-			log.debug("\tcameraElevation: "+m.getCameraElevationDeg());
-			log.debug("\tclosestZoomSize: "+m.getClosestZoomSize());
-			log.debug("\tuseSmoothLighting:" + m.isSmoothLit());
-			log.debug("\tuseBiomeColours: "+m.useBiomeColours());
+			log.debug("'{}' map", m.getName());
+			
+			log.debug("\tworldDir: {}", m.getWorldDir().getAbsolutePath());
+			log.debug("\tdimension: {}", m.getDimension());
+			log.debug("\tcameraAngle: {}", m.getCameraAngleDeg());
+			log.debug("\tcameraElevation: {}", m.getCameraElevationDeg());
+			log.debug("\tclosestZoomSize: {}", m.getClosestZoomSize());
+			log.debug("\tuseSmoothLighting:{}", m.isSmoothLit());
+			log.debug("\tuseBiomeColours: {}", m.useBiomeColours());
 
 			for (Layer l : m.getLayers())
 			{
-				log.debug("\t'"+l.getName()+"' layer");
-
-				log.debug("\t\trenderStyle: "+l.getRenderStyle());
-				log.debug("\t\tlightStyle: "+l.getLightStyle());
-				log.debug("\t\timageFormat: "+l.getImageFormat());
+				log.debug("\t'{}' layer", l.getName());
+				
+				log.debug("\t\trenderStyle: {}", l.getRenderStyle());
+				log.debug("\t\tlightStyle: {}", l.getLightStyle());
+				log.debug("\t\timageFormat: {}", l.getImageFormat());
 
 				if (l.getImageFormat() == ImageFormat.JPG)
-					log.debug("\t\timageCompressionLevel: "+l.getImageCompressionLevel());
+					log.debug("\t\timageCompressionLevel: {}", l.getImageCompressionLevel());
 
 				if (l.getCustomBlockConfig() != null)
-					log.debug("\t\tcustomBlockConfig: "+l.getCustomBlockConfig());
+					log.debug("\t\tcustomBlockConfig: {}", l.getCustomBlockConfig());
 			}
 			if (m.numLayers() == 0)
 			{

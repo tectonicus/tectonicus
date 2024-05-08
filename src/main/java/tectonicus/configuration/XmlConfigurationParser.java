@@ -9,10 +9,10 @@
 
 package tectonicus.configuration;
 
+import ch.qos.logback.classic.Level;
 import lombok.experimental.UtilityClass;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.Level;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -49,7 +49,6 @@ import static tectonicus.configuration.ParseUtil.parseHeight;
 import static tectonicus.configuration.ParseUtil.parseImageCompression;
 import static tectonicus.configuration.ParseUtil.parseImageFormat;
 import static tectonicus.configuration.ParseUtil.parseLightStyle;
-import static tectonicus.configuration.ParseUtil.parseLogFile;
 import static tectonicus.configuration.ParseUtil.parseMaxTiles;
 import static tectonicus.configuration.ParseUtil.parseMode;
 import static tectonicus.configuration.ParseUtil.parseNorthDirection;
@@ -70,7 +69,7 @@ import static tectonicus.configuration.ParseUtil.parseUseDefaultBlockConfig;
 import static tectonicus.configuration.ParseUtil.parseViewFilter;
 import static tectonicus.configuration.ParseUtil.parseWidth;
 
-@Log4j2
+@Slf4j
 @UtilityClass
 public class XmlConfigurationParser
 {
@@ -143,7 +142,6 @@ public class XmlConfigurationParser
 			
 			config.setCacheDir( parseCacheDir( getString(configNode, "cacheDir"), config.getOutputDir() ) );
 			
-			config.setLogFile( parseLogFile( getString(configNode, "logFile") ) );
 			String logLevel = getString(configNode, "loggingLevel");
 			if (StringUtils.isEmpty(logLevel)) {
 				logLevel = getString(configNode, "logLevel");

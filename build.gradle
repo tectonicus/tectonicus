@@ -31,7 +31,6 @@ dependencies {
 	def picocliVersion = "4.7.5"
 	def lombokVersion = "1.18.32"
 	def junitVersion = "5.10.2"
-	def log4jVersion = "2.23.1"
 	def caffeineVersion = "3.1.8"
 
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
@@ -44,7 +43,7 @@ dependencies {
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.17.0",
-				   "org.apache.logging.log4j:log4j-core:$log4jVersion",
+				   "ch.qos.logback:logback-classic:1.5.6",
 				   "com.h2database:h2-mvstore:2.2.224",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion",
 				   "org.sejda.imageio:webp-imageio:0.1.6")
@@ -90,6 +89,7 @@ shadowJar {
 		exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
 		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
 		exclude(dependency("org.apache.logging.log4j:log4j-core:.*"))
+		exclude(dependency("ch.qos.logback:logback-classic:.*"))
 		exclude(dependency("org.sejda.imageio:webp-imageio:.*"))
 	}
 }

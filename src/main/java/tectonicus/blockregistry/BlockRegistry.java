@@ -19,7 +19,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
 import tectonicus.configuration.MutableConfiguration;
@@ -52,7 +52,7 @@ import java.util.Set;
 import static tectonicus.blockregistry.BlockState.getRandomWeightedModel;
 
 
-@Log4j2
+@Slf4j
 @NoArgsConstructor
 public class BlockRegistry
 {

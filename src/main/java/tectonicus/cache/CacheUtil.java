@@ -10,7 +10,7 @@
 package tectonicus.cache;
 
 import lombok.experimental.UtilityClass;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
@@ -24,7 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.MessageDigest;
 
-@Log4j2
+@Slf4j
 @UtilityClass
 public class CacheUtil
 {

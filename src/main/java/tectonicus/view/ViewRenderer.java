@@ -9,11 +9,10 @@
 
 package tectonicus.view;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.ChangeFile;
 import tectonicus.ImageWriteQueue;
 import tectonicus.TileRenderer;
-import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.cache.FileViewCache;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.configuration.ImageFormat;
@@ -21,6 +20,7 @@ import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
+import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 
@@ -33,7 +33,7 @@ import java.io.File;
 //	get image format out of map config node
 //	extract view height offset and elevation angle from sign text
 
-@Log4j2
+@Slf4j
 public class ViewRenderer
 {
         public static final byte SAMPLES = 4;

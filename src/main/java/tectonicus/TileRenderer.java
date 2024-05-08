@@ -10,7 +10,7 @@
 package tectonicus;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
@@ -78,7 +78,7 @@ import static tectonicus.util.OutputResourcesUtil.outputRespawnAnchors;
 import static tectonicus.util.OutputResourcesUtil.outputSigns;
 import static tectonicus.util.OutputResourcesUtil.outputViews;
 
-@Log4j2
+@Slf4j
 public class TileRenderer
 {
 	@RequiredArgsConstructor

@@ -11,7 +11,7 @@ package tectonicus.itemregistry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Log4j2
+@Slf4j
 public class ItemRegistry {
 	@Getter
 	private final Map<String, ItemModel> models = new HashMap<>();

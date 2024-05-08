@@ -11,7 +11,7 @@ package tectonicus.texture;
 
 import com.fasterxml.jackson.databind.ObjectReader;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -67,7 +67,7 @@ import static tectonicus.Version.VERSION_RV;
 import static tectonicus.Version.VERSION_UNKNOWN;
 import static tectonicus.util.ImageUtils.copy;
 
-@Log4j2
+@Slf4j
 public class TexturePack
 {
 	private final Version version;

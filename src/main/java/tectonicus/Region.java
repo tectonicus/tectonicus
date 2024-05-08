@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,7 +11,7 @@ package tectonicus;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.jnbt.NBTInputStream.Compression;
 import tectonicus.cache.BiomeCache;
 import tectonicus.chunk.Chunk;
@@ -32,7 +32,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-@Log4j2
+@Slf4j
 public class Region {
 	private static final int COMPRESSION_TYPE_GZIP = 1;
 	private static final int COMPRESSION_TYPE_DEFLATE = 2;

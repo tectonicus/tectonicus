@@ -9,9 +9,9 @@
 
 package tectonicus.configuration;
 
+import ch.qos.logback.classic.Level;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -63,7 +63,6 @@ public interface Configuration  //TODO: is this interface needed?
 	
 	boolean useCache();
 	
-	String getLogFile();
 	Level getLoggingLevel();
 	void setLoggingLevel(Level loggingLevel);
 	

@@ -11,7 +11,7 @@ package tectonicus.world;
 
 import lombok.Getter;
 import lombok.Value;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import tectonicus.Block;
@@ -98,7 +98,7 @@ import static tectonicus.Version.VERSION_15;
 import static tectonicus.Version.VERSION_18;
 import static tectonicus.Version.VERSION_UNKNOWN;
 
-@Log4j2
+@Slf4j
 public class World implements BlockContext
 {
 	private static final int BATCH_SIZE = 128;

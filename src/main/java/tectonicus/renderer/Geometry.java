@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,16 +9,16 @@
 
 package tectonicus.renderer;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 
-@Log4j2
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 public class Geometry
 {
 	public enum MeshType

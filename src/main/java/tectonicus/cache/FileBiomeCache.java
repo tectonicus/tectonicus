@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,20 +9,19 @@
 
 package tectonicus.cache;
 
+import com.google.code.minecraftbiomeextractor.WorldProcessor;
+import lombok.extern.slf4j.Slf4j;
+import tectonicus.chunk.ChunkCoord;
+import tectonicus.util.FileUtils;
+import tectonicus.util.Util;
+
 import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 
-import com.google.code.minecraftbiomeextractor.WorldProcessor;
-
-import lombok.extern.log4j.Log4j2;
-import tectonicus.chunk.ChunkCoord;
-import tectonicus.util.Util;
-import tectonicus.util.FileUtils;
-
-@Log4j2
+@Slf4j
 public class FileBiomeCache implements BiomeCache
 {
 	private static final int VERSION = 2;

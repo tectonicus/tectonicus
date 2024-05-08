@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,7 +9,7 @@
 
 package tectonicus.rasteriser.lwjgl;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
@@ -77,6 +77,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_OSMESA_CONTEXT_API;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
 import static org.lwjgl.glfw.GLFW.glfwGetKey;
+import static org.lwjgl.glfw.GLFW.glfwGetVersionString;
 import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
@@ -134,7 +135,7 @@ import static org.lwjgl.opengl.GL30.glGenFramebuffers;
 import static org.lwjgl.opengl.GL30.glGenRenderbuffers;
 import static org.lwjgl.opengl.GL30.glRenderbufferStorage;
 
-@Log4j2
+@Slf4j
 public class LwjglRasteriser implements Rasteriser
 {
 	private final DisplayType type;
@@ -238,7 +239,7 @@ public class LwjglRasteriser implements Rasteriser
 				Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
 			}
 
-			log.debug("GLFW version: {}", GLFW::glfwGetVersionString);
+			log.debug("GLFW version: {}", glfwGetVersionString());
 			glfwSetErrorCallback((error, description) ->
 					log.error("GLFW error [{}]: {}", String.format("0x%08X", error), GLFWErrorCallback.getDescription(description)));
 
@@ -723,7 +724,7 @@ public class LwjglRasteriser implements Rasteriser
 	private void checkOpenGLCompatability(int major, int minor) {
 		log.debug("Attempting to create window for OpenGL {}.{}", major, minor);
 
-		glfwSetErrorCallback((arg0, arg1) -> log.error("GLFW error: " + String.format("0x%08X", arg0)));
+		glfwSetErrorCallback((arg0, arg1) -> log.error("GLFW error: {}", String.format("0x%08X", arg0)));
 
 		if (!glfwInit()) {
 			throw new RuntimeException("Failed to init GLFW");
@@ -754,7 +755,7 @@ public class LwjglRasteriser implements Rasteriser
 			int majorV = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
 			int minorV = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
 			if (client == GLFW_OPENGL_API) {
-				log.debug("client = OpenGL "+ majorV + "." + minorV);
+				log.debug("client = OpenGL {}.{}", majorV, minorV);
 			}
 			if (GLFW_OSMESA_CONTEXT_API == glfwGetWindowAttrib(windowId, GLFW_CONTEXT_CREATION_API)) {
 				log.debug("OSMesa context creation api is set");

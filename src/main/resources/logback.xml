@@ -1,0 +1,35 @@
+<!--
+  ~ Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+  ~
+  ~ This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+  ~ the top-level directory of this distribution.  The full list of project contributors is contained
+  ~ in the AUTHORS file found in the same location.
+  ~
+  -->
+
+<configuration>
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%highlight(%msg%n)</pattern>
+        </encoder>
+    </appender>
+    <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${tectonicus.logDir}/tectonicus.log</file>
+        <append>${tectonicus.logAppend}</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${tectonicus.logDir}/tectonicus.%d{yyyy-MM}.zip</fileNamePattern>
+            <!-- keep 6 months' worth of history capped at 200MB total size -->
+            <maxHistory>6</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %replace(%msg){'\r?\n', ''}%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="Console" />
+        <appender-ref ref="File" />
+    </root>
+</configuration>
