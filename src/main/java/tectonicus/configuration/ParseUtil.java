@@ -10,7 +10,7 @@
 package tectonicus.configuration;
 
 import lombok.experimental.UtilityClass;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
@@ -21,7 +21,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Log4j2
+@Slf4j
 @UtilityClass
 public class ParseUtil
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,16 +9,9 @@
 
 package tectonicus;
 
-import java.awt.Color;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
-import tectonicus.view.ViewUtil;
-import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.MutableViewConfig;
 import tectonicus.rasteriser.Mesh;
@@ -31,9 +24,15 @@ import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.renderer.PerspectiveCamera;
+import tectonicus.view.ViewUtil;
+import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.world.World;
 
-@Log4j2
+import java.awt.Color;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+
+@Slf4j
 public class InteractiveRenderer
 {
 	private enum ViewMode

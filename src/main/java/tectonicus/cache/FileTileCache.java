@@ -9,7 +9,7 @@
 
 package tectonicus.cache;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import tectonicus.BlockRegistryParser;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Log4j2
+@Slf4j
 public class FileTileCache implements TileCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache

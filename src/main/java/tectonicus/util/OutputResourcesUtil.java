@@ -10,7 +10,7 @@
 package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.BlockTypeRegistry;
@@ -79,7 +79,7 @@ import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
 
-@Log4j2
+@Slf4j
 @UtilityClass
 public class OutputResourcesUtil {
 	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map) {

@@ -10,7 +10,7 @@
 package tectonicus;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -116,7 +116,7 @@ import java.util.ArrayList;
 import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_5;
 
-@Log4j2
+@Slf4j
 @RequiredArgsConstructor
 public class BlockRegistryParser
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,17 +9,17 @@
 
 package tectonicus.cache;
 
-import lombok.extern.log4j.Log4j2;
-import tectonicus.chunk.ChunkCoord;
-import tectonicus.view.ChangedViews;
-import tectonicus.view.ViewUtil;
-import tectonicus.view.ViewUtil.Viewpoint;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.cache.swap.HddObjectListWriter;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
 import tectonicus.util.TempArea;
+import tectonicus.view.ChangedViews;
+import tectonicus.view.ViewUtil;
+import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 
@@ -27,7 +27,7 @@ import java.io.File;
 import java.security.MessageDigest;
 import java.util.List;
 
-@Log4j2
+@Slf4j
 public class FileViewCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache

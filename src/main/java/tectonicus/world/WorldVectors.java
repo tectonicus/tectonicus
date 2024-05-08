@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,9 +11,8 @@ package tectonicus.world;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
-import tectonicus.util.JsonWriter;
 import tectonicus.Minecraft;
 import tectonicus.Portal;
 import tectonicus.TileRenderer;
@@ -22,6 +21,7 @@ import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
+import tectonicus.util.JsonWriter;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.CircularWorldSubset;
@@ -32,7 +32,7 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@Log4j2
+@Slf4j
 @Builder
 @Getter
 public class WorldVectors {
