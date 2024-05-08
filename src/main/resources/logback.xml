@@ -10,7 +10,7 @@
 <configuration>
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%highlight(%msg%n)</pattern>
+            <pattern>%msg%n</pattern>
         </encoder>
     </appender>
     <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
