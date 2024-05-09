@@ -32,20 +32,10 @@ import tectonicus.world.World;
 
 import java.awt.Toolkit;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TectonicusApp
 {
@@ -265,11 +255,6 @@ public class TectonicusApp
 			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
 		}
 
-		if (config.getUpdateToLeaflet() != null) {
-			updateToLeaflet(config.getUpdateToLeaflet());
-			System.exit(0);
-		}
-
 		if (config.numMaps() == 0) { //If no maps were specified in xml config add a single map and layer
 			MutableMap map = new MutableMap("Map0");
 			MutableLayer layer = new MutableLayer("LayerA", map.getId());
@@ -296,73 +281,5 @@ public class TectonicusApp
 		}
 
 		app.run();
-	}
-
-	//TODO: this needs to be updated or removed
-	private static void updateToLeaflet(Path renderDir) {
-		System.out.println("updateToLeaflet command is temporarily disabled");
-//		if (renderDir.resolve("Scripts").toFile().exists()) {
-//			OutputResourcesUtil.extractMapResources(renderDir.toFile());
-//			writeUpdatedHtmlFile(renderDir.toFile());
-//			System.out.println("Finished updating map " + renderDir + " to use Leaflet.");
-//		} else {
-//			System.err.println(renderDir + " is not a Tectonicus map render directory.");
-//		}
-		System.exit(1);
-	}
-
-	private static void writeUpdatedHtmlFile(final File exportDir) {
-
-		Path htmlFile = null;
-		List<String> mapLines = new ArrayList<>();
-		try (Stream<Path> htmlFiles = Files.list(exportDir.toPath()).filter(path -> path.toString().endsWith(".html"))) {
-			 htmlFile = htmlFiles.findFirst().orElse(Paths.get(""));
-			 mapLines = Files.readAllLines(htmlFile).stream().filter(str -> str.contains("Map") && str.contains(".js")
-					 && !str.contains("Scripts")).collect(Collectors.toList());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		File outputHtmlFile = new File(exportDir, htmlFile.getFileName().toString());
-		log.info("\twriting html to {}", outputHtmlFile.getAbsolutePath());
-
-		URL url = TectonicusApp.class.getClassLoader().getResource("mapWithSigns.html");
-		try (Scanner scanner = new Scanner(url.openStream());
-			 PrintWriter writer = new PrintWriter(new FileOutputStream(outputHtmlFile)))
-		{
-
-			while (scanner.hasNext())
-			{
-				String line = scanner.nextLine();
-				StringBuilder outLine = new StringBuilder();
-
-				List<Util.Token> tokens = Util.split(line);
-
-				while (!tokens.isEmpty())
-				{
-					Util.Token first = tokens.remove(0);
-					if (first.isReplaceable)
-					{
-						if (first.value.equals("includes"))
-						{
-							for (String l : mapLines) {
-								outLine.append(l).append("\n");
-							}
-						}
-					}
-					else
-					{
-						outLine.append(first.value);
-					}
-				}
-
-				writer.write(outLine.append("\n").toString());
-			}
-
-			writer.flush();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
 	}
 }

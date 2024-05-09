@@ -137,9 +137,6 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private boolean forceLoadAwt;
 
 	private String singlePlayerName;
-
-	@Option(names = {"-u", "--updateToLeaflet"}, paramLabel = "<String>")
-	private Path updateToLeaflet;
         
 	@Option(names = {"-css", "--customStyle", "customStyle"}, paramLabel = "<String>")
 	private String customStyle;

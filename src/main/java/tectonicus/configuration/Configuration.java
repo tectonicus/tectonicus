@@ -14,7 +14,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.List;
 
 public interface Configuration  //TODO: is this interface needed?
@@ -113,8 +112,6 @@ public interface Configuration  //TODO: is this interface needed?
 	int getNumDownsampleThreads();
 	
 	String getSinglePlayerName();
-
-	Path getUpdateToLeaflet();
 	
 	String getCustomStyle();
 	
