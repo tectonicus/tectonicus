@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 				"@|cyan       \\/_/\\/____/\\/____/ \\/__/\\/___/  \\/_/\\/_/\\/_/\\/____/ \\/___/  \\/___/ |@",
 				""}, //Font is 'Larry 3D' from http://www.patorjk.com/software/taag
 		mixinStandardHelpOptions = true,
-		description = "Tectonicus is a high detail Minecraft world mapper focused on creating zoomable maps that look as close to what you see in Minecraft as possible.",
+		description = "Tectonicus is a high detail Minecraft world mapper focused on creating zoomable maps that look very close to what you see in Minecraft.",
 		resourceBundle = "commandLine", versionProvider = tectonicus.BuildInfo.PropertiesVersionProvider.class)
 public class MutableConfiguration implements Configuration, Callable<MutableConfiguration> {
 	@Option(names = {"-c", "--config", "config"}, paramLabel = "<String>")
