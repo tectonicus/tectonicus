@@ -201,7 +201,7 @@ public class BlockRegistry
 					modelCount++;
 				}
 			}
-			log.info("Loaded {} models", modelCount);
+			log.debug("Loaded {} models", modelCount);
 		} catch (Exception e) {
 			log.error("Something bad happened", e);
 		}

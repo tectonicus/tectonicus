@@ -755,7 +755,7 @@ public class TexturePack
 			}
 		}
 		
-		log.info("Total number of banner patterns: {}", !patterns.isEmpty() ? patterns.size() - 1 : 0); //Don't count the banner base image as a pattern
+		log.debug("Total number of banner patterns: {}", !patterns.isEmpty() ? patterns.size() - 1 : 0); //Don't count the banner base image as a pattern
 		return patterns;
 	}
 	

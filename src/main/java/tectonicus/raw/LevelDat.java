@@ -57,7 +57,7 @@ public class LevelDat
 				Optional.ofNullable(NbtUtil.getChild(data, "DataPacks", CompoundTag.class)).ifPresent(dataPackTag -> {
 					List<Tag> enabledTags = NbtUtil.getChild(dataPackTag, "Enabled", ListTag.class).getValue();
 					dataPacks = enabledTags.stream().filter(t -> !t.getValue().equals("vanilla")).map(t -> (String)t.getValue()).collect(Collectors.toList());
-					log.info("Enabled data packs: {}", dataPacks);
+					log.debug("Enabled data packs: {}", dataPacks);
 				});
 
 				alpha = NbtUtil.getInt(data, "version", UNKNOWN_VERSION) == 0;

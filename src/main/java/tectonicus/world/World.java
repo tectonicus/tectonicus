@@ -224,7 +224,7 @@ public class World implements BlockContext
 				sectionArrayOffset = true;
 			}
 		}
-		log.info("Current world max chunk height: {}", Minecraft.getChunkHeight());
+		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 
 		if (config.getMinecraftJar() == null) {
 			log.info("No Minecraft jar specified.");
@@ -241,7 +241,7 @@ public class World implements BlockContext
 		this.textureVersion = texturePack.getVersion();
 
 
-		log.info("World version: " + worldVersion);
+		log.debug("World version: " + worldVersion);
 		// Is this actually helpful?
 		if (worldVersion != null && textureVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion()) {
 			switch (worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "") {

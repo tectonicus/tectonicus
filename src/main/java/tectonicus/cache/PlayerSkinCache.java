@@ -206,7 +206,7 @@ public class PlayerSkinCache
 		else
 		{
 			newEntry.skinFile = "Tectonicus_Default_Player_Skin.png";
-			log.info("No custom skin found for player {}", player.getName());
+			log.warn("No custom skin found for player {}", player.getName());
 		}
 		
 		newEntry.playerName = player.getName();

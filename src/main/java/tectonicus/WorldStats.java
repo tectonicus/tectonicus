@@ -77,7 +77,7 @@ public class WorldStats
 		if (statsFile.exists())
 			statsFile.delete();
 		
-		log.debug("Writing block stats to {}", statsFile.getAbsolutePath());
+		log.info("Writing block stats to {}", statsFile.getAbsolutePath());
 		
 		// First merge with block id names (so that 'flowing lava' and 'stationary lava' becomes 'lava'
 		Map<String, Long> nameCounts = new HashMap<>();
@@ -135,7 +135,7 @@ public class WorldStats
 			e.printStackTrace();
 		}
 		
-		log.info("Wrote {} block counts", nameCounts.size());
+		log.debug("Wrote {} block counts", nameCounts.size());
 
 		if (!unknownBlockIds.isEmpty())
 		{
@@ -149,7 +149,7 @@ public class WorldStats
 		if (statsFile.exists())
 			statsFile.delete();
 		
-		log.debug("Writing world stats to {}", statsFile.getAbsolutePath());
+		log.info("Writing world stats to {}", statsFile.getAbsolutePath());
 
 		try (JsonWriter jsWriter = new JsonWriter(statsFile)) {
 			jsWriter.startObject(varNamePrefix + "_worldStats");

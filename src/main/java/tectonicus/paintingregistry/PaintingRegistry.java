@@ -36,7 +36,7 @@ public class PaintingRegistry {
 		this.zips = texturePack.getZipStack();
 		log.info("Loading all painting variant json files...");
 		deserializePaintingJson();
-		log.info("Loaded {} painting json files.", paintings.size());
+		log.debug("Loaded {} painting json files.", paintings.size());
 	}
 	
 	private void deserializePaintingJson() {
