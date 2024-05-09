@@ -55,6 +55,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
@@ -153,8 +155,10 @@ public class TexturePack
 		}
 
 		if (versionJson.getPackVersion() != null) {
-                        String name = versionJson.getName();
-                        name = name.substring(0, name.lastIndexOf("."));
+			String name = versionJson.getName();
+			Pattern pattern = Pattern.compile("\\d\\.\\d{1,2}");
+			Matcher matcher = pattern.matcher(name);
+			name = matcher.find() ? matcher.group() : name;
 			version = Version.byName(name);
 		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
@@ -796,7 +800,7 @@ public class TexturePack
 			for (Path entry : entries)
 			{
 				String filename = entry.getFileName().toString();
-				String name = filename.substring(0, filename.lastIndexOf('.'));
+				String name = "minecraft:" + filename.substring(0, filename.lastIndexOf('.'));
 				findTexture(loadTexture(entry.toString()), name);
 			}
 		}

@@ -25,6 +25,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.Map;
 import tectonicus.configuration.NorthDirection;
+import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
@@ -711,5 +712,8 @@ public class ItemRenderer
 		{
 			return null;
 		}
+		
+		@Override
+		public PaintingRegistry getPaintingRegistry() { return null; }
 	}
 }

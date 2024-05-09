@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import tectonicus.cache.PlayerSkinCache;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.raw.Biome;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
@@ -46,4 +47,5 @@ public interface BlockContext {
 	PlayerSkinCache getPlayerSkinCache();
 
 	BlockRegistry getModelRegistry();
+	PaintingRegistry getPaintingRegistry();
 }

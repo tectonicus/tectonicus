@@ -241,12 +241,7 @@ public class RawChunk {
 
 					boolean is18 = false;
 					if (dir == null) {
-						dir = NbtUtil.getChild(entity, "facing", ByteTag.class);
-                                                if (dir == null)
-                                                {
-                                                        // Facing was renamed to facing, but leave both for compatibility
-                                                        dir = NbtUtil.getChild(entity, "Facing", ByteTag.class);
-                                                }
+						dir = NbtUtil.getChild(entity, "Facing", ByteTag.class); //It's been renamed to 'facing', nbtutil automatically checks for the lowercase version
 						is18 = true;
 					}
 

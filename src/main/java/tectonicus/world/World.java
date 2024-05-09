@@ -41,6 +41,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.SignFilter;
 import tectonicus.exceptions.IncompatibleVersionException;
+import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
@@ -115,6 +116,8 @@ public class World implements BlockContext
 	private BlockTypeRegistry registry;
 	@Getter
 	private BlockRegistry modelRegistry;
+	@Getter
+	private PaintingRegistry paintingRegistry;
 	
 	@Getter
 	private final LevelDat levelDat;
@@ -351,6 +354,7 @@ public class World implements BlockContext
 		registry.setDefaultBlock(new Air());
 		
 		modelRegistry = new BlockRegistry(texturePack);  //model registry loads all states and models now
+		paintingRegistry = new PaintingRegistry(texturePack);
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
 		
