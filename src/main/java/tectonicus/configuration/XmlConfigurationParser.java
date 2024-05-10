@@ -28,6 +28,7 @@ import tectonicus.world.subset.WorldSubset;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -431,20 +432,19 @@ public class XmlConfigurationParser
 		return config;
 	}
 	
-	private static Element loadXml(File file, String rootName)
-	{
-		try
-		{
+	private static Element loadXml(File file, String rootName) {
+		try {
 			DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			
 			Document doc = docBuilder.parse(file);
 			NodeList nodeList = doc.getElementsByTagName(rootName);
 			return (Element)nodeList.item(0);
-		}
-		catch (Exception e)
-		{
+		} catch (FileNotFoundException e) {
+			log.error("Could not find file: {}", file.getAbsolutePath());
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
 		return null;
 	}
 	

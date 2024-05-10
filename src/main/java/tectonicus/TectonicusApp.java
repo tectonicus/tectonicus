@@ -32,8 +32,11 @@ import tectonicus.world.World;
 
 import java.awt.Toolkit;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -231,13 +234,28 @@ public class TectonicusApp
 		cmd.registerConverter(Level.class, Level::toLevel);
 		cmd.setCaseInsensitiveEnumValuesAllowed(true);
 		CommandLine.ParseResult parseResult = cmd.parseArgs(argArray);
-		//If no arguments print usage help
-		if (parseResult.originalArgs().isEmpty()) {
-			cmd.usage(cmd.getOut());
-			System.exit(cmd.getCommandSpec().exitCodeOnUsageHelp());
-		}
-
+		
 		Path configFile = m.getConfigFile();
+		//If no arguments are specified search for default config filenames
+		if (parseResult.originalArgs().isEmpty()) {
+			boolean defaultConfigFound = false;
+			List<String> configNames = Arrays.asList("tectonicus.xml", "tectonicusConfig.xml");
+			for (String name : configNames) {
+				Path defaultConfigPath = Paths.get(name);
+				if (Files.exists(defaultConfigPath)) {
+					configFile = defaultConfigPath;
+					defaultConfigFound = true;
+					break;
+				}
+			}
+			
+			//If no arguments and no default config file found print usage help
+			if (!defaultConfigFound) {
+				cmd.usage(cmd.getOut());
+				System.exit(cmd.getCommandSpec().exitCodeOnUsageHelp());
+			}
+		}
+		
 		MutableConfiguration config = new MutableConfiguration();
 		if (configFile != null) {
 			// Load config from xml first

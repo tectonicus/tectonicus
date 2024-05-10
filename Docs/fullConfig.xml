@@ -3,7 +3,7 @@
 	THIS IS NOT A VALID CONFIGURATION FILE.
 	
 	This configuration file lists all of the available settings with the
-	default value listed first. Any element or attribute may be omitted if the
+	default value listed first. Any non-required element or attribute may be omitted if the
 	default value is desired.
 -->
 
@@ -23,7 +23,6 @@
 		eraseOutputDir="false / true"
 		useCache="true / false"
 		cacheDir="outputDir/cache"
-		logFile="./log/tectonicus.log"
 		loggingLevel="DEBUG / OFF / FATAL / ERROR / WARN / INFO / TRACE / ALL"
 		spawnInitiallyVisible="true / false"
 		playersInitiallyVisible="true / false"
@@ -114,7 +113,7 @@
 
 	</map>
 
-	<!-- Tweeks that you shouldn't need but work around quirks on some machines -->
+	<!-- Tweaks that you shouldn't need but work around quirks on some machines -->
 	<tweaks
 		forceLoadAwt="false / true"
 	/>
@@ -122,6 +121,7 @@
 	<!-- Debug options, you shouldn't need to tinker with these -->
 	<debug
 		maxTiles=""
+		verbose="false / true"
 	/>
 
 </tectonicus>
