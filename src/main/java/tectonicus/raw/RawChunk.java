@@ -1499,7 +1499,7 @@ public class RawChunk {
 			return BiomesOld.byId(biomes3d[xIndex][yIndex][zIndex]);
 		} else if (biomes != null) { //1.15 and older
 			return BiomesOld.byId(biomes[x][z]);
-		} else { //1.18+
+		} else { //1.18+ (or 1.2 and older)
 			final int sectionY = y / SECTION_HEIGHT;
 			final int localY = y % SECTION_HEIGHT;
 
@@ -1509,7 +1509,12 @@ public class RawChunk {
 				int yIndex = Math.floorDiv(localY, 4);
 				int zIndex = Math.floorDiv(z, 4);
 
-				return Biomes.byId(s.biomeIds[(yIndex * 4 + zIndex) * 4 + xIndex].substring(10));
+				String id = s.biomeIds[(yIndex * 4 + zIndex) * 4 + xIndex];
+				if (id != null) {
+					return Biomes.byId(id.substring(10));
+				} else { //hack to allow 1.2 and older worlds to still render
+					return Biomes.THE_VOID;
+				}
 			} else {
 				return Biomes.THE_VOID;
 			}

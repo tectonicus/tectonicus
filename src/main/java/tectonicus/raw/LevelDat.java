@@ -9,7 +9,7 @@
 
 package tectonicus.raw;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
@@ -29,16 +29,16 @@ import java.util.stream.Collectors;
 
 
 @Slf4j
-@Data
+@Getter
 public class LevelDat
 {
 	public static final int UNKNOWN_VERSION = 0;
 
 	private String worldName;
 	private boolean alpha;
-	private Vector3l spawnPosition;
+	private final Vector3l spawnPosition;
 	private long sizeOnDisk;
-	private Player player;
+	private Player singlePlayer;
 	private String version;
 	private boolean snapshot;
 	private List<String> dataPacks = Collections.emptyList();
@@ -76,6 +76,11 @@ public class LevelDat
 				sizeOnDisk = NbtUtil.getLong(data, "SizeOnDisk", 0);
 
 				worldName = NbtUtil.getString(data, "LevelName", "");
+				
+				CompoundTag playerTag = NbtUtil.getChild(data, "Player", CompoundTag.class);
+				if (playerTag != null) {
+					singlePlayer = new Player(singlePlayerName, playerTag);
+				}
 
 				Optional.ofNullable(NbtUtil.getChild(data, "Version", CompoundTag.class)).ifPresent(versionTag -> {
 					version = NbtUtil.getString(versionTag, "Name", "");

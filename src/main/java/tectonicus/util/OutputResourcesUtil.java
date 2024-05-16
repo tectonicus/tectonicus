@@ -558,8 +558,11 @@ public class OutputResourcesUtil {
         }
 
 	public static void outputInventoryItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
-                System.out.println("Rendering icons for inventory items");
-                log.trace("Rendering icons for inventory items");
+		log.info("Rendering icons for inventory items");
+		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
+			log.info("Skipping icon rendering. Chest items are supported for 1.13 and newer.");
+			return;
+		}
                 
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);

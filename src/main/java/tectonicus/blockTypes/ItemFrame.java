@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,15 +11,14 @@ package tectonicus.blockTypes;
 
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
-import tectonicus.raw.RawChunk;
 import tectonicus.raw.PaintingEntity;
+import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
@@ -74,7 +73,10 @@ public class ItemFrame implements BlockType
 	{
 		Mesh mesh = geometry.getMesh(border.texture, Geometry.MeshType.Solid);
 		Mesh backgroundMesh = geometry.getMesh(background.texture, Geometry.MeshType.Solid);
-		Mesh mapMesh = geometry.getMesh(map.texture, Geometry.MeshType.AlphaTest);
+		Mesh mapMesh = null;
+		if (map != null) { //Allow use of pre beta 1.6 minecraft jars
+			mapMesh = geometry.getMesh(map.texture, Geometry.MeshType.AlphaTest);
+		}
 		
 		final float texel = 1.0f/16.0f;
 			

@@ -171,7 +171,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		cacheDir = new File(outputDir, "Cache");
 		defaultSkin = "steve";
 		numDownsampleThreads = 1;
-		singlePlayerName = "Player";
+		singlePlayerName = "";
 		maps = new ArrayList<>();
 		smoothLit = false;
 	}

@@ -188,8 +188,6 @@ public class World implements BlockContext
 		// Check that this looks like a world dir
 		if (!Minecraft.isValidWorldDir(worldDir.toPath()))
 			throw new RuntimeException("Invalid world dir! No level.dat found at "+Minecraft.findLevelDat(worldDir.toPath()));
-		if (!Minecraft.isValidDimensionDir(dimensionDir))
-			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 		
 		// TODO: Better error handling here.
 		// World should throw Exception?
@@ -206,6 +204,9 @@ public class World implements BlockContext
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+		
+		if (!Minecraft.isValidDimensionDir(dimensionDir))
+			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 
 		Version version = VERSION_UNKNOWN;
 		Minecraft.setChunkHeight(256);
@@ -263,7 +264,7 @@ public class World implements BlockContext
 			}
 		}
 
-		players = loadPlayers(worldDir, playerSkinCache);
+		players = loadPlayers(worldDir, playerSkinCache, levelDat.getSinglePlayer());
 		
 		chests = new ConcurrentLinkedQueue<>();
 		beds = new ConcurrentLinkedQueue<>();
@@ -1065,67 +1066,59 @@ public class World implements BlockContext
 	}
 	
 	
-	public static List<Player> loadPlayers(File worldDir, PlayerSkinCache playerSkinCache)
-	{
+	public static List<Player> loadPlayers(File worldDir, PlayerSkinCache playerSkinCache, Player singlePlayer) {
 		File playersDir = Minecraft.findPlayersDir(worldDir);
 		
 		log.info("Loading players from {}", playersDir.getAbsolutePath());
 		
-		ArrayList<Player> players = new ArrayList<>();
+		List<Player> players = new ArrayList<>();
 		File[] playerFiles = playersDir.listFiles();
-		if (playerFiles != null)
-		{
-			ExecutorService executor = Executors.newCachedThreadPool();
-			for (File playerFile : playerFiles)
-			{
-				if (playerFile.getName().endsWith(".dat"))
-				{
-					try
-					{
+		ExecutorService executor = Executors.newCachedThreadPool();
+		if (playerFiles != null) {
+			for (File playerFile : playerFiles) {
+				if (playerFile.getName().endsWith(".dat")) {
+					try {
 						Player player = new Player(playerFile.toPath());
-						
-						CacheEntry ce = playerSkinCache.getCacheEntry(player.getUUID());
-						if (ce != null)
-						{
-							final long age = System.currentTimeMillis() - ce.fetchedTime;
-							if (age < 1000 * 60 * 60  * 60) // one hour in ms
-							{
-								player.setName(ce.playerName);
-								player.setSkinURL(ce.skinURL);
-							}
-							else
-							{
-								//refresh name and skin
-								RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
-								executor.submit(task);
-							}
-						}
-						else
-						{
-							RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
-							executor.submit(task);
-						}			            
-			            
+						submitPlayerTask(player, playerSkinCache, executor);
 						players.add(player);
-					}
-					catch (Exception e)
-					{
+					} catch (Exception e) {
 						log.warn("Couldn't load player info from {}", playerFile.getName());
 					}
 				}
 			}
-
-			try {
-				executor.shutdown();
-				executor.awaitTermination(2, TimeUnit.HOURS);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		} else { //try to load single player
+			submitPlayerTask(singlePlayer, playerSkinCache, executor);
+			players.add(singlePlayer);
+		}
+		
+		try {
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.HOURS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 		
 		log.debug("\tloaded {} players", players.size());
 		
 		return players;
+	}
+	
+	private static void submitPlayerTask(Player player, PlayerSkinCache playerSkinCache, ExecutorService executor) {
+		CacheEntry ce = playerSkinCache.getCacheEntry(player.getUuid());
+		if (ce != null) {
+			final long age = System.currentTimeMillis() - ce.fetchedTime;
+			if (age < 1000 * 60 * 60 * 60) { // one hour in ms
+				player.setName(ce.playerName);
+				player.setSkinURL(ce.skinURL);
+			} else {
+				//refresh name and skin
+				RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
+				executor.submit(task);
+			}
+		} else {
+			RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
+			executor.submit(task);
+		}
 	}
 	
 	public BlockTypeRegistry getBlockTypeRegistry()

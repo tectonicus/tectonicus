@@ -160,9 +160,9 @@ public class PlayerSkinCache
 	{
 		CacheEntry existing = null;
 		
-		if (skinCache.containsKey(player.getUUID()))
+		if (skinCache.containsKey(player.getUuid()))
 		{
-			existing = skinCache.get(player.getUUID());
+			existing = skinCache.get(player.getUuid());
 			
 			if (existing.skinFile.equals("Tectonicus_Default_Player_Skin.png"))
 				return null;
@@ -185,7 +185,7 @@ public class PlayerSkinCache
 		}
 		
 		// Not in cache, or cache stale so refetch from network
-		skinCache.remove(player.getUUID());
+		skinCache.remove(player.getUuid());
 		
 		CacheEntry newEntry = new CacheEntry();
 		BufferedImage newSkin = fetchSkinFromNetwork(player.getSkinURL());
@@ -210,11 +210,11 @@ public class PlayerSkinCache
 		}
 		
 		newEntry.playerName = player.getName();
-		newEntry.playerUUID = player.getUUID();
+		newEntry.playerUUID = player.getUuid();
 		newEntry.skinURL = player.getSkinURL();
 		newEntry.fetchedTime = System.currentTimeMillis();
 		
-		skinCache.put(player.getUUID(), newEntry);
+		skinCache.put(player.getUuid(), newEntry);
 		
 		return ImageUtils.copy(newSkin);
 	}

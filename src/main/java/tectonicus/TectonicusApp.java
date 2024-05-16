@@ -135,7 +135,7 @@ public class TectonicusApp
 				
 				for (tectonicus.configuration.Map map : config.getMaps())
 				{
-					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache);
+					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache, null);
 									
 					File mapDir = new File(config.getOutputDir(), map.getId());
 					File playerDir = new File(mapDir, "players.js");
