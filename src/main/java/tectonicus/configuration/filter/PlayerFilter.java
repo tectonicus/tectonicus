@@ -7,7 +7,7 @@
  *
  */
 
-package tectonicus.configuration;
+package tectonicus.configuration.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;

@@ -105,6 +105,10 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 	private boolean viewsInitiallyVisible;
 	@Option(names = {"--spawnInitiallyVisible", "spawnInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean spawnInitiallyVisible;
+	@Option(names = {"--chestsInitiallyVisible", "chestsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
+	private boolean chestsInitiallyVisible;
+	@Option(names = {"--beaconsInitiallyVisible", "beaconsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
+	private boolean beaconsInitiallyVisible;
 
 	@Option(names = {"--showSpawn", "showSpawn"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean showSpawn;
@@ -205,6 +209,8 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 		log.debug("\trespawnAnchorsInitiallyVisible:{}", areRespawnAnchorsInitiallyVisible());
 		log.debug("\tspawnInitiallyVisible:{}", isSpawnInitiallyVisible());
 		log.debug("\tviewsInitiallyVisible:{}", areViewsInitiallyVisible());
+		log.debug("\tchestsInitiallyVisible:{}", isChestsInitiallyVisible());
+		log.debug("\tbeaconsInitiallyVisible:{}", isBeaconsInitiallyVisible());
 		log.debug("\teraseOutputDir:{}", eraseOutputDir());
 		log.debug("\tforceLoadAwt:{}", forceLoadAwt());
 		log.debug("\toutputHtmlName:{}", getOutputHtmlName());

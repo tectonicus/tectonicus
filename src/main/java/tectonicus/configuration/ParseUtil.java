@@ -15,6 +15,13 @@ import org.apache.commons.lang3.StringUtils;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
+import tectonicus.configuration.filter.BeaconFilterType;
+import tectonicus.configuration.filter.ChestFilterType;
+import tectonicus.configuration.filter.PlayerFilterType;
+import tectonicus.configuration.filter.PortalFilterType;
+import tectonicus.configuration.filter.SignFilter;
+import tectonicus.configuration.filter.SignFilterType;
+import tectonicus.configuration.filter.ViewFilterType;
 import tectonicus.util.Vector3l;
 
 import java.io.File;
@@ -305,6 +312,19 @@ public class ParseUtil
 			chestFilterType = ChestFilterType.Player;
 		
 		return chestFilterType;
+	}
+	
+	public static BeaconFilterType parseBeaconFilter(String beaconFilterStr)
+	{
+		beaconFilterStr = beaconFilterStr.toLowerCase();
+		
+		BeaconFilterType beaconFilterType = BeaconFilterType.ALL;
+		if (beaconFilterStr.equalsIgnoreCase("none"))
+			beaconFilterType = BeaconFilterType.NONE;
+		else if (beaconFilterStr.equalsIgnoreCase("activated"))
+			beaconFilterType = BeaconFilterType.ACTIVATED;
+		
+		return beaconFilterType;
 	}
 	
 	/** Caution: can return null */

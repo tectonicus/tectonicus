@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -7,21 +7,22 @@
  *
  */
 
-package tectonicus.configuration;
+package tectonicus.configuration.filter;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class PortalFilter {
-	private final PortalFilterType type;
-
-	public boolean passesFilter() {
-		return type == PortalFilterType.All;
+public class BeaconFilter {
+	private final BeaconFilterType type;
+	
+	public boolean passesFilter(boolean activated) {
+		if (type == BeaconFilterType.ALL) {
+			return true;
+		} else return type == BeaconFilterType.ACTIVATED && activated;
 	}
-
+	
 	@Override
 	public String toString() {
-		// We need to override this so that MutableConfiguration.printActive works
 		return type.toString();
 	}
 }

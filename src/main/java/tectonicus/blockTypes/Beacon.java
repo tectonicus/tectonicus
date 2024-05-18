@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,6 +14,7 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.ItemRenderer;
 import tectonicus.Minecraft;
 import tectonicus.blockregistry.BlockStateModel;
 import tectonicus.blockregistry.BlockStateWrapper;
@@ -25,6 +26,7 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 import tectonicus.world.Colors;
+import tectonicus.world.Effect;
 
 import java.awt.Color;
 import java.util.List;
@@ -119,6 +121,9 @@ public class Beacon implements BlockType
 
 		String xyz = "x" + x + "y" + y + "z" + z;
 		BeaconEntity entity = rawChunk.getBeacons().get(xyz);
+		if(world instanceof ItemRenderer.ItemContext) { // We're rendering an icon
+			entity = new BeaconEntity(0, 0, 0, 0, 0, 0, 0, Effect.NONE, Effect.NONE);
+		}
 		if (entity.getLevels() > 0)
 		{
 			final int localY = entity.getLocalY();

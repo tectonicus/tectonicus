@@ -100,6 +100,8 @@ public interface Configuration  //TODO: is this interface needed?
 	boolean isSpawnInitiallyVisible();
 	
 	boolean areViewsInitiallyVisible();
+	boolean isChestsInitiallyVisible();
+	boolean isBeaconsInitiallyVisible();
 	
 	boolean isVerbose();
 	

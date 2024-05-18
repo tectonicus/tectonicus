@@ -10,6 +10,8 @@ var bedsInitiallyVisible = {{bedsInitiallyVisible}};
 var respawnAnchorsInitiallyVisible = {{respawnAnchorsInitiallyVisible}};
 var spawnInitiallyVisible = {{spawnInitiallyVisible}};
 var viewsInitiallyVisible = {{viewsInitiallyVisible}};
+var chestsInitiallyVisible = {{chestsInitiallyVisible}};
+var beaconsInitiallyVisible = {{beaconsInitiallyVisible}};
 
 let controlState = {
 	spawnControlChecked: spawnInitiallyVisible,
@@ -19,7 +21,9 @@ let controlState = {
 	portalControlChecked: portalsInitiallyVisible,
 	bedControlChecked: bedsInitiallyVisible,
 	respawnAnchorControlChecked: respawnAnchorsInitiallyVisible,
-	chestControlChecked: false,
+	chestControlChecked: chestsInitiallyVisible,
+	beaconControlChecked: beaconsInitiallyVisible,
+
 }
 
 function createPlayerMarker(player, pos) {

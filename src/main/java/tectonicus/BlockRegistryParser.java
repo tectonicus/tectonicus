@@ -100,8 +100,8 @@ import tectonicus.blockTypes.Wall;
 import tectonicus.blockTypes.Water;
 import tectonicus.blockTypes.Workbench;
 import tectonicus.cache.BiomeCache;
-import tectonicus.configuration.SignFilter;
-import tectonicus.configuration.SignFilterType;
+import tectonicus.configuration.filter.SignFilter;
+import tectonicus.configuration.filter.SignFilterType;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 

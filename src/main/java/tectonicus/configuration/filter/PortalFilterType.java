@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -7,12 +7,10 @@
  *
  */
 
-package tectonicus.configuration;
+package tectonicus.configuration.filter;
 
-public enum PlayerFilterType {
-	ALL,
-	NONE,
-	OPS,
-	WHITELIST,
-	BLACKLIST
+public enum PortalFilterType
+{
+	All,
+	None
 }

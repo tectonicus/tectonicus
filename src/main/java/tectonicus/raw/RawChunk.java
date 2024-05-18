@@ -35,6 +35,7 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.ChunkData;
 import tectonicus.util.FileUtils;
 import tectonicus.world.Colors;
+import tectonicus.world.Effect;
 import tectonicus.world.WorldInfo;
 
 import java.io.ByteArrayInputStream;
@@ -543,8 +544,27 @@ public class RawChunk {
 						}
 					} else if (id.equals("Beacon") || id.equals("minecraft:beacon")) {
 						IntTag levels = NbtUtil.getChild(entity, "Levels", IntTag.class);
-
-						beacons.put(createKey(localX, localY, localZ), new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue()));
+						
+						StringTag primaryEffectString = NbtUtil.getChild(entity, "primary_effect", StringTag.class);
+						IntTag primaryEffectInt = NbtUtil.getChild(entity, "Primary", IntTag.class);
+						Effect primaryEffect = Effect.NONE;
+						if (primaryEffectString != null) {
+							primaryEffect = Effect.byName(primaryEffectString.getValue().replace("minecraft:", ""));
+						} else if(primaryEffectInt != null) {
+							primaryEffect = Effect.byId(primaryEffectInt.getValue());
+						}
+						
+						StringTag secondaryEffectString = NbtUtil.getChild(entity, "secondary_effect", StringTag.class);
+						IntTag secondaryEffectInt = NbtUtil.getChild(entity, "Secondary", IntTag.class);
+						Effect secondaryEffect = Effect.NONE;
+						if (secondaryEffectString != null) {
+							secondaryEffect = Effect.byName(secondaryEffectString.getValue().replace("minecraft:", ""));
+						} else if(secondaryEffectInt != null) {
+							int secondary = secondaryEffectInt.getValue();
+							secondaryEffect = Effect.byId(secondaryEffectInt.getValue());
+						}
+						
+						beacons.put(createKey(localX, localY, localZ), new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue(), primaryEffect, secondaryEffect));
 					} else if (id.equals("Banner") || id.equals("minecraft:banner")) {
 						IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
 						Integer baseVal = null;

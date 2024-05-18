@@ -32,6 +32,7 @@ import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.RawChunk;
@@ -64,6 +65,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
+import static tectonicus.util.OutputResourcesUtil.outputBeacons;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
@@ -257,6 +259,7 @@ public class TileRenderer
 			worldStats.setNumPortals(portals.size());
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
+			outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons());
 
 			// Render views
 			FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
@@ -497,64 +500,56 @@ public class TileRenderer
 				{
 					e.printStackTrace();
 				}
-				if (region != null)
-				{
+				if (region != null) {
 					// For every region...
 					
 					regionHashStore.startRegion(region.getRegionCoord());
-                                        
-                                        RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
+					
+					RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
 					
 					ChunkCoord[] chunkCoords = region.getContainedChunks();
-					for (ChunkCoord coord : chunkCoords)
-					{
+					for (ChunkCoord coord : chunkCoords) {
 						// For every chunk coord...
 						
 						Chunk c = null;
-
-                                                try
-                                                {
-                                                        c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
-                                                }
-                                                catch (Exception e)
-                                                {
-                                                        // Catch exception, log it and skip the chunk
-                                                        log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z));
-                                                        e.printStackTrace();
-                                                }
-                                                
-						if (c != null)
-						{
-                                                        worldStats.incNumChunks();
-                                                        
-                                                        ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
-														Queue<BedEntity> beds = world.getBeds();
-
-                                                        try
-                                                        {
-                                                                // MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
-                                                                regionLoadQueue.load(c, regionHashStore, (MessageDigest)hashAlgorithm.clone(), map, portals, signs, views, chests, beds);
-                                                        }
-                                                        catch (CloneNotSupportedException e)
-                                                        {
-                                                                e.printStackTrace();
-                                                        }
+						
+						try {
+							c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
+						} catch (Exception e) {
+							// Catch exception, log it and skip the chunk
+							log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z));
+							e.printStackTrace();
+						}
+						
+						if (c != null) {
+							worldStats.incNumChunks();
+							
+							ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
+							Queue<BedEntity> beds = world.getBeds();
+							Queue<BeaconEntity> beacons = world.getBeacons();
+							
+							try {
+								// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
+								regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds, beacons);
+							} catch (CloneNotSupportedException e) {
+								e.printStackTrace();
+							}
 						}
 					}
 					
-                                        regionLoadQueue.waitUntilFinished();
-
-                                        System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
-                                        log.trace("found {} chunks so far", worldStats.numChunks());
-                                        
-                                        try {
-                                                portals.flush();
-                                                signs.flush();
-                                                views.flush();
-                                        } catch (Exception e) {
-                                                e.printStackTrace();
-                                        }
-                                        
+					regionLoadQueue.waitUntilFinished();
+					
+					System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
+					log.trace("found {} chunks so far", worldStats.numChunks());
+					
+					try {
+						portals.flush();
+						signs.flush();
+						views.flush();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					
 					regionHashStore.endRegion();
 				}
 			}

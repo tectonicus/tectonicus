@@ -194,14 +194,14 @@ public class ItemRenderer
 		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(270 + 45), getAngleRad(30), bounds);
         }
 
-	public void renderBlock(File outFile, BlockTypeRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
+	public void renderBlock(File outFile, BlockTypeRegistry registryOld, BlockRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
 		String blockName = block.getName();
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		rawChunk.setBlockState(0, 0, 0, properties);
-		BlockType type = registry.find(blockName);
-		ItemContext context = new ItemContext(texturePack, registry, null);
-		renderBlock(outFile, registry, context, rawChunk, type, null, 32);
+		BlockType type = registryOld.find(blockName);
+		ItemContext context = new ItemContext(texturePack, registryOld, registry);
+		renderBlock(outFile, registryOld, context, rawChunk, type, null, 32);
 	}
  
 	private void renderBlock(File outFile, BlockTypeRegistry registry, ItemContext context, RawChunk rawChunk, BlockType type, BlockModel model, int imageSize) throws Exception {
@@ -627,7 +627,7 @@ public class ItemRenderer
 	}
 
 	@RequiredArgsConstructor
-	private static class ItemContext implements BlockContext { //This implements BlockContext so that it can be passed in when rendering items
+	public static class ItemContext implements BlockContext { //This implements BlockContext so that it can be passed in when rendering items
 		private final TexturePack texturePack;
 		private final BlockTypeRegistry registry;
 		private final BlockRegistry blockRegistry;
@@ -710,7 +710,7 @@ public class ItemRenderer
 		@Override
 		public BlockRegistry getModelRegistry()
 		{
-			return null;
+			return blockRegistry;
 		}
 		
 		@Override

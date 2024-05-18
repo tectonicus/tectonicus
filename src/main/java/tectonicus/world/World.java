@@ -39,13 +39,14 @@ import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
-import tectonicus.configuration.SignFilter;
+import tectonicus.configuration.filter.SignFilter;
 import tectonicus.exceptions.IncompatibleVersionException;
 import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.PrimativeType;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.Biome;
 import tectonicus.raw.BiomeIds;
@@ -132,6 +133,8 @@ public class World implements BlockContext
 	private final ConcurrentLinkedQueue<ContainerEntity> chests;
 	@Getter
 	private final Queue<BedEntity> beds;
+	@Getter
+	private final Queue<BeaconEntity> beacons;
 	
 	@Getter
 	private final TexturePack texturePack;
@@ -268,6 +271,7 @@ public class World implements BlockContext
 		
 		chests = new ConcurrentLinkedQueue<>();
 		beds = new ConcurrentLinkedQueue<>();
+		beacons = new ConcurrentLinkedQueue<>();
 		
 		regionCache = new RegionCache(dimensionDir);
 		chunkLocator = new ChunkLocator(biomeCache, regionCache);

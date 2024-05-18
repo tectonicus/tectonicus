@@ -27,12 +27,13 @@ import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
-import tectonicus.configuration.PlayerFilter;
-import tectonicus.configuration.SignFilterType;
+import tectonicus.configuration.filter.PlayerFilter;
+import tectonicus.configuration.filter.SignFilterType;
 import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
@@ -61,7 +62,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -503,6 +509,37 @@ public class OutputResourcesUtil {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void outputBeacons(File beaconFile, tectonicus.configuration.Map map, Queue<BeaconEntity> beacons) {
+		log.info("Exporting beacons to {}", beaconFile.getAbsolutePath());
+		
+		try {
+			Files.deleteIfExists(beaconFile.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		try (JsArrayWriter jsWriter = new JsArrayWriter(beaconFile, map.getId() + "_beaconData")) {
+			WorldSubset worldSubset = map.getWorldSubset();
+			for (BeaconEntity beacon : beacons) {
+				float worldX = beacon.getX() + 0.5f;
+				float worldY = beacon.getY();
+				float worldZ = beacon.getZ() + 0.5f;
+				
+				Map<String, String> beaconArgs = new HashMap<>();
+				beaconArgs.put("worldPos", "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")");
+				beaconArgs.put("levels", Integer.toString(beacon.getLevels()));
+				beaconArgs.put("primaryEffect", "\"" + beacon.getPrimaryEffect().name().toLowerCase() + "\"");
+				beaconArgs.put("secondaryEffect", "\"" + beacon.getSecondaryEffect().name().toLowerCase() + "\"");
+				
+				if (worldSubset.containsBlock(beacon.getX(), beacon.getZ())) {
+					jsWriter.write(beaconArgs);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
         
         private static String outputItem(Item item, Boolean isLeft) {
                 String result = "\t\t\t{ id: \"" + item.id + "\", ";
@@ -686,17 +723,16 @@ public class OutputResourcesUtil {
 			} else {
 				Map<String, String> properties = new HashMap<>();
 				properties.put("facing", "south");
-				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, Block.CHEST, new BlockProperties(properties));
+				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, registry, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
-			
-			if (texturePack.getVersion().getNumVersion() >= VERSION_12.getNumVersion()) {
-				itemRenderer.renderBed(new File(exportDir, "Images/Items/red_bed.png"), registryOld, texturePack);
-			}
+
+			itemRenderer.renderBed(new File(exportDir, "Images/bed.png"), registryOld, texturePack);
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
 				itemRenderer.renderBlockModel(new File(args.getOutputDir(), "Images/RespawnAnchor.png"), registry, texturePack, Block.RESPAWN_ANCHOR, "_4");
 			}
+			itemRenderer.renderBlock(new File(exportDir, "Images/beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -707,8 +743,10 @@ public class OutputResourcesUtil {
 		String defaultSkin = config.getDefaultSkin();
 
 		File imagesDir = new File(exportDir, "Images");
-                File itemsDir = new File(imagesDir, "Items");
+		File itemsDir = new File(imagesDir, "Items");
 		itemsDir.mkdirs();
+		File effectsDir = new File(imagesDir, "effects");
+		effectsDir.mkdir();
 
 		FileUtils.extractResource("Images/Spawn.png", new File(imagesDir, "Spawn.png"));
 		FileUtils.extractResource("Images/Logo.png", new File(imagesDir, "Logo.png"));
@@ -749,6 +787,8 @@ public class OutputResourcesUtil {
 				if (texturePackVersion.getNumVersion() >= VERSION_13.getNumVersion()) {
 					path = "assets/minecraft/textures/item/"; //path for 1.13+
 				}
+				
+				String beaconPath = "assets/minecraft/textures/gui/container/beacon.png";
 
 				if (texturePack.fileExists(path + "oak_sign.png")) { //1.14 and higher use the new sign image
 					writeImage(texturePack.getItem(path + "oak_sign.png"), 32, 32, new File(imagesDir, "Sign.png"));
@@ -759,6 +799,22 @@ public class OutputResourcesUtil {
 				writeImage(texturePack.getItem(path + "iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
 				writeImage(texturePack.getItem(path + "gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 				writeImage(texturePack.getItem(path + "diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
+				writeImage(texturePack.getSubImage(beaconPath, 17, 21, 21, 22), 32, 32, new File(imagesDir, "beacon_level_1.png"));
+				writeImage(texturePack.getSubImage(beaconPath, 17, 46, 21, 22), 32, 32, new File(imagesDir, "beacon_level_2.png"));
+				writeImage(texturePack.getSubImage(beaconPath, 17, 71, 21, 22), 32, 32, new File(imagesDir, "beacon_level_3.png"));
+				writeImage(texturePack.getSubImage(beaconPath, 157, 21, 21, 22), 32, 32, new File(imagesDir, "beacon_level_4.png"));
+				writeImage(texturePack.getSubImage(beaconPath, 232, 0, 18, 18), 18, 18, new File(effectsDir, "none.png"));
+				//TODO: for older resource packs we need to get the effect icons from assets/minecraft/textures/gui/container/inventory.png (1.13 and older use this texture)
+				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()), null);
+					 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/mob_effect"))) {
+					for (Path entry : entries) {
+						String filename = entry.getFileName().toString();
+						writeImage(texturePack.getItem(entry.toString()), 18, 18, new File(effectsDir, entry.getFileName().toString()));
+					}
+				} catch (IOException e) {
+					log.warn("No effect images found.");
+					log.trace("Error: ", e);
+				}
 
 				if (defaultSkin.equals("steve") || defaultSkin.equals("alex") || defaultSkin.equals("ari") || defaultSkin.equals("efe") || defaultSkin.equals("kai") || defaultSkin.equals("makena")
 						|| defaultSkin.equals("noor") || defaultSkin.equals("sunny") || defaultSkin.equals("zuri")) {
@@ -889,54 +945,35 @@ public class OutputResourcesUtil {
 						Util.Token first = tokens.remove(0);
 						if (first.isReplaceable)
 						{
-							if (first.value.equals("tileWidth"))
-							{
+							if (first.value.equals("tileWidth")) {
 								outLine.append(tileWidth);
-							}
-							else if (first.value.equals("tileHeight"))
-							{
+							} else if (first.value.equals("tileHeight")) {
 								outLine.append(tileHeight);
-							}
-							else if (first.value.equals("maxZoom"))
-							{
+							} else if (first.value.equals("maxZoom")) {
 								outLine.append(numZoomLevels);
-							}
-							else if (first.value.equals("mapCoordScaleFactor"))
-							{
+							} else if (first.value.equals("mapCoordScaleFactor")) {
 								outLine.append(scale);
 								outLine.append(".0"); // Append .0 so that it's treated as float in the javascript
-							}
-							else if (first.value.equals("showSpawn"))
-							{
+							} else if (first.value.equals("showSpawn")) {
 								outLine.append(config.showSpawn());
-							}
-							else if (first.value.equals("signsInitiallyVisible"))
-							{
+							} else if (first.value.equals("signsInitiallyVisible")) {
 								outLine.append(config.areSignsInitiallyVisible());
-							}
-							else if (first.value.equals("playersInitiallyVisible"))
-							{
+							} else if (first.value.equals("playersInitiallyVisible")) {
 								outLine.append(config.arePlayersInitiallyVisible());
-							}
-							else if (first.value.equals("portalsInitiallyVisible"))
-							{
+							} else if (first.value.equals("portalsInitiallyVisible")) {
 								outLine.append(config.arePortalsInitiallyVisible());
-							}
-							else if (first.value.equals("bedsInitiallyVisible"))
-							{
+							} else if (first.value.equals("bedsInitiallyVisible")) {
 								outLine.append(config.areBedsInitiallyVisible());
-							}
-							else if (first.value.equals("respawnAnchorsInitiallyVisible"))
-							{
+							} else if (first.value.equals("respawnAnchorsInitiallyVisible")) {
 								outLine.append(config.areRespawnAnchorsInitiallyVisible());
-							}
-							else if (first.value.equals("spawnInitiallyVisible"))
-							{
+							} else if (first.value.equals("spawnInitiallyVisible")) {
 								outLine.append(config.isSpawnInitiallyVisible());
-							}
-							else if (first.value.equals("viewsInitiallyVisible"))
-							{
+							} else if (first.value.equals("viewsInitiallyVisible")) {
 								outLine.append(config.areViewsInitiallyVisible());
+							} else if (first.value.equals("chestsInitiallyVisible")) {
+								outLine.append(config.isChestsInitiallyVisible());
+							} else if (first.value.equals("beaconsInitiallyVisible")) {
+								outLine.append(config.isBeaconsInitiallyVisible());
 							}
 						}
 						else
@@ -997,6 +1034,7 @@ public class OutputResourcesUtil {
 				writer.println("\t\tplayers: "+m.getId()+"_playerData,");
 				writer.println("\t\tbeds: "+m.getId()+"_bedData,");
 				writer.println("\t\trespawnAnchors: "+m.getId()+"_respawnAnchorData,");
+				writer.println("\t\tbeacons: "+m.getId()+"_beaconData,");
 				writer.println("\t\tsigns: "+m.getId()+"_signData,");
 				writer.println("\t\tportals: "+m.getId()+"_portalData,");
 				writer.println("\t\tviews: "+m.getId()+"_viewData,");
@@ -1132,6 +1170,10 @@ public class OutputResourcesUtil {
 
 								outLine.append(templateStart);
 								outLine.append(map.getId()).append("/respawnAnchors.js");
+								outLine.append(templateEnd);
+								
+								outLine.append(templateStart);
+								outLine.append(map.getId()).append("/beacons.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);

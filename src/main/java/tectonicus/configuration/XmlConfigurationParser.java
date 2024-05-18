@@ -20,6 +20,16 @@ import org.w3c.dom.NodeList;
 import tectonicus.Minecraft;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
+import tectonicus.configuration.filter.BeaconFilter;
+import tectonicus.configuration.filter.BeaconFilterType;
+import tectonicus.configuration.filter.ChestFilter;
+import tectonicus.configuration.filter.ChestFilterType;
+import tectonicus.configuration.filter.PlayerFilter;
+import tectonicus.configuration.filter.PlayerFilterType;
+import tectonicus.configuration.filter.PortalFilter;
+import tectonicus.configuration.filter.PortalFilterType;
+import tectonicus.configuration.filter.ViewFilter;
+import tectonicus.configuration.filter.ViewFilterType;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
@@ -35,6 +45,7 @@ import java.util.List;
 
 import static tectonicus.configuration.ParseUtil.parseAlphaBits;
 import static tectonicus.configuration.ParseUtil.parseBackgroundColor;
+import static tectonicus.configuration.ParseUtil.parseBeaconFilter;
 import static tectonicus.configuration.ParseUtil.parseCacheDir;
 import static tectonicus.configuration.ParseUtil.parseCameraAngle;
 import static tectonicus.configuration.ParseUtil.parseChestFilter;
@@ -156,6 +167,8 @@ public class XmlConfigurationParser
 			config.setSignsInitiallyVisible(getBoolean(configNode, "signsInitiallyVisible", true));
 			config.setPortalsInitiallyVisible(getBoolean(configNode, "portalsInitiallyVisible", true));
 			config.setViewsInitiallyVisible(getBoolean(configNode, "viewsInitiallyVisible", true));
+			config.setChestsInitiallyVisible(getBoolean(configNode, "chestsInitiallyVisible", false));
+			config.setBeaconsInitiallyVisible(getBoolean(configNode, "beaconsInitiallyVisible", true));
 			
 			config.setCustomStyle(getString(configNode, "customStyle", null));
 			config.setCustomScript(getString(configNode, "customScript", null));
@@ -273,6 +286,13 @@ public class XmlConfigurationParser
 			{
 				ChestFilterType chestFilterType = parseChestFilter( getString(chestsNode, "filter") );
 				map.setChestFilter( new ChestFilter(chestFilterType) );
+			}
+			
+			// Beacon filter
+			Element beaconsNode = getChild(mapElement, "beacons");
+			if (beaconsNode != null) {
+				BeaconFilterType beaconFilterType = parseBeaconFilter(getString(beaconsNode, "filter"));
+				map.setBeaconFilter(new BeaconFilter(beaconFilterType));
 			}
 			
 			Element modsElement = getChild(mapElement, "mods");

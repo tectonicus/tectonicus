@@ -18,6 +18,7 @@ var signToggleControl = null;
 var playerToggleControl = null;
 var bedToggleControl = null;
 var respawnAnchorToggleControl = null;
+var beaconToggleControl = null;
 var portalToggleControl = null;
 var spawnToggleControl = null;
 var chestToggleControl = null;
@@ -46,7 +47,7 @@ async function mainAsync()
         getAttribution: function() {
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
-        initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, worldVectors, projection,
+        initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, beacons, worldVectors, projection,
             blockStats, worldStats, viewPosition, controlState) {
                 this.mapId = mapId;
                 this.layerId = layerId;
@@ -61,6 +62,7 @@ async function mainAsync()
                 this.portals = portals;
                 this.beds = beds;
                 this.anchors = anchors;
+                this.beacons = beacons;
                 this.worldVectors = worldVectors;
                 this.projection = projection;
                 this.blockStats = blockStats;
@@ -80,7 +82,7 @@ async function mainAsync()
                             let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
                 let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
+                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
 
                 if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
                     baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
@@ -117,11 +119,12 @@ async function mainAsync()
         viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
         signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
         playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-        bedToggleControl = CreateToggleControl('beds', 'Images/Items/red_bed.png', bedMarkers, bedsInitiallyVisible);
+        bedToggleControl = CreateToggleControl('beds', 'Images/bed.png', bedMarkers, bedsInitiallyVisible);
         respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
+        beaconToggleControl = CreateToggleControl('beacons', 'Images/beacon.png', beaconMarkers, beaconsInitiallyVisible);
         portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
         spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
-        chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, false);
+        chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, chestsInitiallyVisible);
 
 	//CreateLinkControl(map);
 
@@ -147,6 +150,7 @@ playerMarkers = [];
 portalMarkers = [];
 bedMarkers = [];
 respawnAnchorMarkers = [];
+beaconMarkers = [];
 chestMarkers = [];
 
 function onBaseLayerChange(e) {
@@ -165,6 +169,8 @@ function onBaseLayerChange(e) {
         controlState.bedControlChecked = bedToggleControl._container.checked;
     if (respawnAnchorToggleControl.hasOwnProperty('_container'))
         controlState.respawnAnchorControlChecked = respawnAnchorToggleControl._container.checked;
+    if (beaconToggleControl.hasOwnProperty('_container'))
+        controlState.beaconControlChecked = beaconToggleControl._container.checked;
     if (chestToggleControl.hasOwnProperty('_container'))
         controlState.chestControlChecked = chestToggleControl._container.checked;
 
@@ -216,7 +222,13 @@ function onBaseLayerChange(e) {
     respawnAnchorToggleControl.remove();
     if (e.layer.anchors.length != 0) {
         mymap.addControl(respawnAnchorToggleControl);
-        respawnAnchorToggleControl.setChecked(controlState.respawnAnchorChecked);
+        respawnAnchorToggleControl.setChecked(controlState.respawnAnchorControlChecked);
+    }
+
+    beaconToggleControl.remove();
+    if (e.layer.beacons.length != 0) {
+        mymap.addControl(beaconToggleControl);
+        beaconToggleControl.setChecked(controlState.beaconControlChecked);
     }
 
     chestToggleControl.remove();
@@ -255,6 +267,7 @@ function onBaseLayerChange(e) {
     refreshPortalMarkers(e.layer, controlState.portalControlChecked);
     refreshBedMarkers(e.layer, controlState.bedControlChecked);
     refreshRespawnAnchorMarkers(e.layer, controlState.respawnAnchorControlChecked);
+    refreshBeaconMarkers(e.layer, controlState.beaconControlChecked);
     refreshChestMarkers(e.layer, controlState.chestControlChecked);
 
 	compassControl.remove();
@@ -507,6 +520,47 @@ function refreshRespawnAnchorMarkers(layer, markersVisible) {
 		}
 
 		respawnAnchorMarkers.push(marker);
+	}
+}
+
+function refreshBeaconMarkers(layer, markersVisible) {
+	destroyMarkers(beaconMarkers);
+
+	// Beacon markers
+	for (i in layer.beacons) {
+		let beacon = layer.beacons[i];
+		let point = layer.projection.worldToMap(beacon.worldPos);
+
+		let icon = L.icon({
+			iconUrl: 'Images/beacon.png',
+			// iconSize: [30, 30],
+			iconAnchor: [17, 20],
+			popupAnchor: [0, -10],
+			//shadowUrl: 'my-icon-shadow.png',
+			//shadowSize: [68, 95],
+			//shadowAnchor: [22, 94]
+		});
+
+		let marker;
+		if (beacon.levels > 0) {
+		    let secondaryEffect = beacon.secondaryEffect !== "none" ? localize("effect.minecraft." + beacon.secondaryEffect) : "None";
+
+		    marker = L.marker(point, { icon: icon }).bindPopup(`<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="Images/beacon_level_${parseInt(beacon.levels)}.png" width="64" height="64" />
+		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.primaryEffect}.png" />${localize("effect.minecraft." + beacon.primaryEffect)}<br />
+		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.secondaryEffect}.png" />${secondaryEffect}</p>`);
+		} else {
+		    marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">Not Activated</p>');
+		}
+
+//		let marker = L.marker(point, { icon: icon }).bindPopup('<p style="width:200px; height:64px"><img style=\"float:left; margin:4px;\" src=\"Images/beacon_level_1.png\" width=\"64\" height=\"64\" />Primary Power: <img src="Images/' + beacon.primaryEffect + '.png" alt="' + localize("effect.minecraft." + beacon.primaryEffect)
+//		    + '"><br /> Secondary Power: <img src="Images/' + "haste" + '.png" alt="' + localize("effect.minecraft." + beacon.secondaryEffect) + '"></p>');
+
+		// Add marker to map if beacons are initially visible
+		if (markersVisible) {
+			marker.addTo(mymap);
+		}
+
+		beaconMarkers.push(marker);
 	}
 }
 

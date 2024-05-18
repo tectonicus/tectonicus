@@ -13,7 +13,8 @@ import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.Chunk;
 import tectonicus.configuration.Map;
-import tectonicus.configuration.PortalFilter;
+import tectonicus.configuration.filter.PortalFilter;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.world.Sign;
@@ -28,6 +29,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static tectonicus.util.FindEntityUtil.findBeacons;
 import static tectonicus.util.FindEntityUtil.findBeds;
 import static tectonicus.util.FindEntityUtil.findChests;
 import static tectonicus.util.FindEntityUtil.findPortals;
@@ -41,7 +43,7 @@ public class RegionLoadQueue
         
         private final AtomicInteger numberOfRegionsStarted;
         public static final AtomicInteger numberOfHashesAdded = new AtomicInteger();
-        	
+        
 	public RegionLoadQueue(final int numThreads)
 	{
                 numberOfRegionsStarted = new AtomicInteger();
@@ -51,10 +53,9 @@ public class RegionLoadQueue
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 					 Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds)
-	{
-                numberOfRegionsStarted.incrementAndGet();
-		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds);
+					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds, Queue<BeaconEntity> beacons) {
+		numberOfRegionsStarted.incrementAndGet();
+		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds, beacons);
 		executor.submit(task);
 	}
 	
@@ -71,63 +72,60 @@ public class RegionLoadQueue
 		}
 	}
 	
-	private static class LoadTask implements Callable<Void>
-	{
+	private static class LoadTask implements Callable<Void> {
 		private final Chunk chunk;
-                private final RegionHashStore regionHashStore;
-                private final MessageDigest hashAlgorithm;
-                private final tectonicus.configuration.Map map;
-                private final HddObjectListWriter<Portal> portals;
-                private final HddObjectListWriter<Sign> signs;
-                private final HddObjectListWriter<Sign> views;
-                private final ConcurrentLinkedQueue<ContainerEntity> chests;
-				private final Queue<BedEntity> beds;
+		private final RegionHashStore regionHashStore;
+		private final MessageDigest hashAlgorithm;
+		private final tectonicus.configuration.Map map;
+		private final HddObjectListWriter<Portal> portals;
+		private final HddObjectListWriter<Sign> signs;
+		private final HddObjectListWriter<Sign> views;
+		private final ConcurrentLinkedQueue<ContainerEntity> chests;
+		private final Queue<BedEntity> beds;
+		private final Queue<BeaconEntity> beacons;
 		
 		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 						tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds)
-		{
+						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds, Queue<BeaconEntity> beacons) {
 			this.chunk = chunk;
-                        this.regionHashStore = regionHashStore;
-                        this.hashAlgorithm = hashAlgorithm;
-                        this.map = map;
-                        this.portals = portals;
-                        this.signs = signs;
-                        this.views = views;
-                        this.chests = chests;
-						this.beds = beds;
+			this.regionHashStore = regionHashStore;
+			this.hashAlgorithm = hashAlgorithm;
+			this.map = map;
+			this.portals = portals;
+			this.signs = signs;
+			this.views = views;
+			this.chests = chests;
+			this.beds = beds;
+			this.beacons = beacons;
 		}
 		
 		@Override
-		public Void call()
-		{
-                        try
-                        {
-                                chunk.calculateHash(hashAlgorithm);
-                                regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
-
-                                numberOfHashesAdded.incrementAndGet();
-
-                                findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
-
-                                PortalFilter portalFilter = map.getPortalFilter();
-                                if (Minecraft.getWorldVersion() < 13) {
-                                        findPortalsOld(chunk.getRawChunk(), portals, portalFilter);
-                                } else {
-                                        findPortals(chunk.getRawChunk(), portals, portalFilter);
-									findBeds(chunk.getRawChunk(), beds);
-                                }
-
-                                findViews(chunk.getRawChunk(), views, map.getViewFilter());
-
-                                findChests(chunk.getRawChunk(), map.getChestFilter(), chests);
-                        }
-                        catch (Exception e)
-                        {
-                                e.printStackTrace();
-                        }
-                        
-                        return null;
+		public Void call() {
+			try {
+				chunk.calculateHash(hashAlgorithm);
+				regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
+				
+				numberOfHashesAdded.incrementAndGet();
+				
+				findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
+				
+				PortalFilter portalFilter = map.getPortalFilter();
+				if (Minecraft.getWorldVersion() < 13) {
+					findPortalsOld(chunk.getRawChunk(), portals, portalFilter);
+				} else {
+					findPortals(chunk.getRawChunk(), portals, portalFilter);
+					findBeds(chunk.getRawChunk(), beds);
+				}
+				
+				findViews(chunk.getRawChunk(), views, map.getViewFilter());
+				
+				findChests(chunk.getRawChunk(), map.getChestFilter(), chests);
+				findBeacons(chunk.getRawChunk(), beacons, map.getBeaconFilter());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			return null;
 		}
 	}
 	

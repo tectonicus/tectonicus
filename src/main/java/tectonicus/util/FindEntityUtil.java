@@ -16,10 +16,12 @@ import tectonicus.Minecraft;
 import tectonicus.Portal;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.ChunkCoord;
-import tectonicus.configuration.ChestFilter;
-import tectonicus.configuration.PortalFilter;
-import tectonicus.configuration.SignFilter;
-import tectonicus.configuration.ViewFilter;
+import tectonicus.configuration.filter.BeaconFilter;
+import tectonicus.configuration.filter.ChestFilter;
+import tectonicus.configuration.filter.PortalFilter;
+import tectonicus.configuration.filter.SignFilter;
+import tectonicus.configuration.filter.ViewFilter;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
@@ -145,6 +147,14 @@ public class FindEntityUtil {
 						}
 					}
 				}
+			}
+		}
+	}
+	
+	public static void findBeacons(RawChunk chunk, Queue<BeaconEntity> beacons, BeaconFilter filter) {
+		for (BeaconEntity beaconEntity: chunk.getBeacons().values()) {
+			if (filter.passesFilter(beaconEntity.getLevels()>0)) {
+				beacons.add(beaconEntity);
 			}
 		}
 	}

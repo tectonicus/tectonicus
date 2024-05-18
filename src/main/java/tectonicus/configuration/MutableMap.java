@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,6 +11,16 @@ package tectonicus.configuration;
 
 import lombok.Getter;
 import lombok.Setter;
+import tectonicus.configuration.filter.BeaconFilter;
+import tectonicus.configuration.filter.BeaconFilterType;
+import tectonicus.configuration.filter.ChestFilter;
+import tectonicus.configuration.filter.PlayerFilter;
+import tectonicus.configuration.filter.PortalFilter;
+import tectonicus.configuration.filter.PortalFilterType;
+import tectonicus.configuration.filter.SignFilter;
+import tectonicus.configuration.filter.SignFilterType;
+import tectonicus.configuration.filter.ViewFilter;
+import tectonicus.configuration.filter.ViewFilterType;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.WorldSubset;
@@ -37,14 +47,25 @@ public class MutableMap implements Map
 	@Getter
 	@Setter
 	private boolean smoothLit;
-
+	
+	@Getter
+	@Setter
 	private PlayerFilter playerFilter;
 	@Getter
 	@Setter
 	private SignFilter signFilter;
+	@Getter
+	@Setter
 	private PortalFilter portalFilter;
+	@Getter
+	@Setter
 	private ViewFilter viewFilter;
+	@Getter
+	@Setter
 	private ChestFilter chestFilter;
+	@Getter
+	@Setter
+	private BeaconFilter beaconFilter;
 	
 	private MutableViewConfig viewConfig;
 
@@ -75,6 +96,7 @@ public class MutableMap implements Map
 		this.portalFilter = new PortalFilter(PortalFilterType.All);
 		this.viewFilter = new ViewFilter(ViewFilterType.All);
 		this.chestFilter = new ChestFilter();
+		this.beaconFilter = new BeaconFilter(BeaconFilterType.ALL);
 		
 		this.viewConfig = new MutableViewConfig();
 		
@@ -220,46 +242,6 @@ public class MutableMap implements Map
 	public void setUseBiomeColours(final boolean use)
 	{
 		this.useBiomeColours = use;
-	}
-	
-	@Override
-	public PlayerFilter getPlayerFilter()
-	{
-		return playerFilter;
-	}
-	public void setPlayerFilter(PlayerFilter filter)
-	{
-		this.playerFilter = filter;
-	}
-	
-	@Override
-	public ViewFilter getViewFilter()
-	{
-		return viewFilter;
-	}
-	public void setViewFilter(ViewFilter filter)
-	{
-		this.viewFilter = filter;
-	}
-	
-	@Override
-	public PortalFilter getPortalFilter()
-	{
-		return portalFilter;
-	}
-	public void setPortalFilter(PortalFilter filter)
-	{
-		this.portalFilter = filter;
-	}
-	
-	@Override
-	public ChestFilter getChestFilter()
-	{
-		return chestFilter;
-	}
-	public void setChestFilter(ChestFilter filter)
-	{
-		this.chestFilter = filter;
 	}
 	
 	@Override

@@ -72,6 +72,7 @@ import static tectonicus.util.ImageUtils.copy;
 @Slf4j
 public class TexturePack
 {
+	@Getter
 	private final Version version;
 	
 	private final Rasteriser rasteriser;
@@ -98,6 +99,7 @@ public class TexturePack
 	
 	private final Font font;
 	
+	@Getter
 	private final ZipStack zipStack;
 	
 	private final Map<String, PackTexture> loadedPackTextures;
@@ -738,7 +740,7 @@ public class TexturePack
 			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
 			patterns.put("bannerBase", loadTexture(basePattern.toString()));
 		} catch (IOException e) {
-			log.error("No banner pattern json found. You may be using an older Minecraft jar file");
+			log.warn("No banner pattern json found. You may be using an older Minecraft jar file");
 		}
 		
 		//Check data packs for banners
@@ -943,22 +945,6 @@ public class TexturePack
 	public Color getFoliageColour(final int x, final int y) {
 		return new Color(foliageLookupImage.getRGB(x, y));
 	}
-
-	public ZipStack getZipStack()
-	{
-		return zipStack;
-	}
-
-	public Version getVersion()
-	{
-		return version;
-	}
-	
-	public Texture getVignetteTexture()
-	{
-		return vignetteTexture;
-	}
-	
 	
 	public SubTexture getSubTile(final int tileX, final int tileY)
 	{
@@ -967,8 +953,7 @@ public class TexturePack
 	}
 	
 	
-	public BufferedImage getItem(final int itemTileX, final int itemTileY)
-	{
+	public BufferedImage getItem(final int itemTileX, final int itemTileY) {
 		// item sheet is a 16x16 grid of images, so figure out actual size in pixels
 		
 		final int itemWidth = itemSheet.getWidth() / 16;
@@ -979,11 +964,20 @@ public class TexturePack
 		return itemSheet.getSubimage(x, y, itemWidth, itemHeight);
 	}
 	
-	public BufferedImage getItem(String fileName)
-	{
+	public BufferedImage getItem(String fileName) {
 		// in MC 1.5 items are already separate images, we load them so we can resize them
 		try {
 			return loadTexture(fileName);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public BufferedImage getSubImage(String fileName, int tileX, int tileY, int width, int height) {
+		try {
+			BufferedImage fullImage = loadTexture(fileName);
+			return fullImage.getSubimage(tileX, tileY, width, height);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
