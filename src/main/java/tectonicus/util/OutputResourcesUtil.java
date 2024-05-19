@@ -726,7 +726,7 @@ public class OutputResourcesUtil {
 				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, registry, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
 
-			itemRenderer.renderBed(new File(exportDir, "Images/bed.png"), registryOld, texturePack);
+			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {

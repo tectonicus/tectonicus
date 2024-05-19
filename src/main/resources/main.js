@@ -119,7 +119,7 @@ async function mainAsync()
         viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
         signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
         playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-        bedToggleControl = CreateToggleControl('beds', 'Images/bed.png', bedMarkers, bedsInitiallyVisible);
+        bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
         respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
         beaconToggleControl = CreateToggleControl('beacons', 'Images/beacon.png', beaconMarkers, beaconsInitiallyVisible);
         portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
