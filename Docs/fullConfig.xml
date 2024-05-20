@@ -19,7 +19,7 @@
 		defaultSkin="steve / alex / ari / efe / kai / makena / noor / sunny / zuri / <filepath_to_skin_png>"
 		numZoomLevels="8"
 		singlePlayerName=""
-		numDownsampleThreads="(num of CPU/cores)"
+		numDownsampleThreads="(num of CPU cores)"
 		eraseOutputDir="false / true"
 		useCache="true / false"
 		cacheDir="outputDir/cache"
@@ -30,6 +30,8 @@
 		signsInitiallyVisible="true / false"
 		portalsInitiallyVisible="true / false"
 		viewsInitiallyVisible="true / false"
+		chestsInitiallyVisible="false / true"
+		beaconsInitiallyVisible="true / false"
 		customStyle="<your_css_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		customScript="<your_javascript_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		useCdn="unpkg / cdnjs / jsdelivr"
@@ -55,7 +57,7 @@
 		cameraElevation="45 / 10 - 90"
 		north="-z / +z / -x / +x" <!-- compass rose north direction -->
 		compassRose="" <!-- custom image path -->
-		origin="0, 0" <!-- If not set the map will center on the spawn point. This setting will be overidden if a map subset is specified -->
+		origin="0, 0" <!-- If not set the map will center on the spawn point. This setting will be overridden if a map subset is specified -->
 		useSmoothLighting="true / false"
 	>
 
@@ -70,9 +72,7 @@
 
 		<!-- Markers to display on this layer -->
 
-		<signs
-			filter="special / all / none / obey"
-		/>
+		<signs filter="special / all / none / obey" />
 
 		<views
 			filter="all / none"
@@ -91,13 +91,11 @@
 			showRespawnAnchors="true / false"
 		/>
 
-		<portals
-			filter="all / none"
-		/>
+		<portals filter="all / none" />
 
-		<chests
-			filter="none / all / player"
-		/>
+		<chests filter="none / all / player" />
+
+		<beacons filter="all / activated / none" />
 
 		<!-- A generated map layer (can be more than one per map) -->
 		<layer
