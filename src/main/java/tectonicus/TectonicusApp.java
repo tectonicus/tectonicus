@@ -225,7 +225,10 @@ public class TectonicusApp
 		String logDirProperty = "tectonicus.logDir";
 		String logAppendProperty = "tectonicus.logAppend";
 		System.setProperty(logDirProperty, System.getProperty(logDirProperty, "log"));
-		System.setProperty(logAppendProperty, System.getProperty(logAppendProperty, "false"));
+		//If logAppend is false we have to delete the old log file manually because the logback RollingFileAppender append option cannot be set to false
+		if (System.getProperty(logAppendProperty, "false").equals("false")) {
+			Files.deleteIfExists(Paths.get(System.getProperty(logDirProperty) + "/tectonicus.log"));
+		}
 		log = org.slf4j.LoggerFactory.getLogger(TectonicusApp.class);
 		
 		//Parse command line to get config file

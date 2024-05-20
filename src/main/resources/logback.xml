@@ -7,7 +7,6 @@
     </appender>
     <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${tectonicus.logDir}/tectonicus.log</file>
-        <append>${tectonicus.logAppend}</append>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${tectonicus.logDir}/tectonicus.%d{yyyy-MM}.zip</fileNamePattern>
             <!-- keep 6 months' worth of history capped at 200MB total size -->
