@@ -1,3 +1,18 @@
+Version 2.30 05-20-2024
+Once again thanks to Matej Darebnik who put a great deal of effort into making chest inventories work (along with other fixes).
+- updates for breaking changes in Minecraft 1.20.5, preliminary support for 1.21
+- chests now display their inventory with tooltips that appear close to how they look in game. Tooltips only work if the map is served from a web server or CORS is disabled in your browser (generally not a good idea to disable CORS)
+- added beacon markers to map, the popup displays the beacon's current pyramid level and enabled powers if any.
+- experimental webp image support, this can drastically reduce the total size of the map.
+- new option to use a CDN for 3rd party js libraries
+- search for a default config file (tectonicus.xml or tectonicusConfig.xml) if no other options or config file provided on command line
+- if no jar is specified in config the auto minecraft jar search will now try to select the jar that matches the world version (works with release versions)
+- bed map icons are now the actual color of the in-game bed
+- many backwards compatibility fixes, it is possible once again to render worlds all the way back to Minecraft Beta 1.3 (not all features will work and some issues may occur)
+- replaced log4j2 with logback resolving issues with the uberjar
+- the logFile option was removed and replaced with two system properties, tectonicus.logDir and tectonicus.logAppend, which let you set the log directory and specify whether to overwrite or append to the log file
+- dependency upgrades
+
 Version 2.29 03-30-2024
 There have been so many changes since the last release that these release notes only cover the major changes and bug fixes that have been added. For more detail refer to the commit history.
 Thanks to Matej Darebnik for an incredible amount of work in this release!

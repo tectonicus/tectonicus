@@ -7,7 +7,7 @@ plugins {
 	id "maven-publish"
 }
 
-project.version = "2.29"
+project.version = "2.30"
 
 //Exclude unneeded tasks
 project.gradle.startParameter.excludedTaskNames.addAll(["jar", "distTar", "distZip", "shadowDistTar"])
