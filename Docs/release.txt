@@ -1,3 +1,6 @@
+Version 2.30.1 05-20-2024
+- fix issue with log files always being appended
+
 Version 2.30 05-20-2024
 Once again thanks to Matej Darebnik who put a great deal of effort into making chest inventories work (along with other fixes).
 - updates for breaking changes in Minecraft 1.20.5, preliminary support for 1.21
