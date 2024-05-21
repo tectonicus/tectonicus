@@ -10,9 +10,9 @@ Usage
 1. [Download the latest version of Tectonicus](https://github.com/tectonicus/tectonicus/releases)
 2. [Create an XML configuration file](https://github.com/tectonicus/tectonicus/wiki/Creating-a-Tectonicus-config-file)
 3. Run Tectonicus from the command line:
-	`java -jar Tectonicus-2.30.jar -c myconfig.xml`
+	`java -jar Tectonicus-2.30.1.jar -c myconfig.xml`
 
-Tectonicus generates a large amount of images which can use a significant amount of hard drive space depending on your world size. This can be reduced by setting imageFormat to webp or jpg, and also by utilising closestZoomSize in the Map node.
+Tectonicus generates a large amount of images which can use a significant amount of hard drive space (gigabytes) depending on your world size. This can be reduced by setting imageFormat to webp or jpg, and also by utilising closestZoomSize in the Map node.
 
 While the first Tectonicus run can be time-consuming, subsequent runs with the same options will be significantly quicker due to Tectonicus only rendering changed tiles.
 
@@ -23,7 +23,7 @@ If Tectonicus is run without any command line arguments it will search for eithe
 
 By default, Tectonicus displays every sign your players place.  To stop your map being completely overrun you can use filter="special".
 
-'Special' signs are those that begin and end with one of these characters:``
+'Special' signs are those that begin and end with one of these characters:
 ```
 - = ~ !
 ```
@@ -86,11 +86,11 @@ Description here
 
 ## Logging
 
-Tectonicus generates a log file that is overwritten each time you run the program. By default the log is located in log/tectonicus.log in the current working directory.
+Tectonicus generates a log file that is overwritten each time you run the program. By default, the log is located in log/tectonicus.log in the current working directory.
 To change the log directory and/or append to the logfile instead of overwriting it use the system properties tectonicus.logDir and tectonicus.logAppend respectively: 
-`java -Dtectonicus.logDir=newLogDir -Dtectonicus.logAppend=true -jar Tectonicus-2.30.jar`
+`java -Dtectonicus.logDir=newLogDir -Dtectonicus.logAppend=true -jar Tectonicus-2.30.1.jar`
 If appending is enabled, by default the log file will roll over at the start of every month saving previous month's log files for six months or until the total log file size reaches 200MB.
 
 You can provide your own custom [logback configuration](https://logback.qos.ch/manual/configuration.html):
-`java -Dlogback.configurationFile -jar Tectonicus-2.30.jar`
+`java -Dlogback.configurationFile=logbackConfig.xml -jar Tectonicus-2.30.1.jar`
 Make sure to name your custom config file something other than logback.xml or it will not work.
