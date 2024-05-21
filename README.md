@@ -5,6 +5,9 @@ It is highly configurable and is focused on creating maps that look very close t
 
 ![Minecraft Castle](/SourceData/FloatingCastle.png)
 
+## Example Map
+[View the example map](http://map.tectonicus.org/) (this was rendered using an older version of Tectonicus)
+
 Usage
 -----------
 1. [Download the latest version of Tectonicus](https://github.com/tectonicus/tectonicus/releases)
