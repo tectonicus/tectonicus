@@ -521,7 +521,7 @@ public class TileRenderer
 							e.printStackTrace();
 						}
 						
-						if (c != null) {
+						if (c != null && c.getRawChunk().isFullChunk()) {
 							worldStats.incNumChunks();
 							
 							ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();

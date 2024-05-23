@@ -119,6 +119,8 @@ public class Chunk
 			return false;
 		if (geometry != null)
 			return false;
+		if (!rawChunk.isFullChunk())
+			return false;
 		
 		BlockMask mask = maskFactory.createMask(coord, rawChunk);
 		
