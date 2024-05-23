@@ -85,10 +85,9 @@ async function mainAsync()
                     tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
 
                 if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
-                    baseMaps[tecMap.name + " - " + layer.name + j] = tileLayer;  //A hack to handle duplicate layer names in the layer control
-                } else {
-                    baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
+                    layer.name = layer.name + i + j; //A hack to handle duplicate layer names in the layer control
                 }
+                baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
                 tileLayers.set(layer.id, tileLayer);
             }
         }
