@@ -12,8 +12,11 @@ Usage
 -----------
 1. [Download the latest version of Tectonicus](https://github.com/tectonicus/tectonicus/releases)
 2. [Create an XML configuration file](https://github.com/tectonicus/tectonicus/wiki/Creating-a-Tectonicus-config-file)
-3. Run Tectonicus from the command line:
-	`java -jar Tectonicus-2.30.1.jar -c myconfig.xml`
+3. Run Tectonicus from the command line: `java -jar Tectonicus-2.30.1.jar -c myconfig.xml`
+
+If you experience out of memory errors you may need to increase the memory available to the Java VM:
+`java -Xmx6G -jar Tectonicus-2.30.1.jar config=myconfig.xml`
+6G = 6 gigabytes of RAM (or however much RAM you can afford to use)
 
 Tectonicus generates a large amount of images which can use a significant amount of hard drive space (gigabytes) depending on your world size. This can be reduced by setting imageFormat to webp or jpg, and also by utilising closestZoomSize in the Map node.
 

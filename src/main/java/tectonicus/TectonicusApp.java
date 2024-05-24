@@ -65,9 +65,11 @@ public class TectonicusApp
 				getProperty("os.arch"),
 				getProperty("os.version"));
 
-		log.debug("\tJava vendor: {}\n\tJava version: {}\n\tAwt toolkit: {}",
+		log.debug("\tJava vendor: {}\n\tJava version: {}\n\tJava VM name: {}\n\tJava VM max heap size: {} GB\n\tAwt toolkit: {}",
 				getProperty("java.vendor"),
 				getProperty("java.version"),
+				getProperty("java.vm.name"),
+				Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024,
 				getProperty("awt.toolkit"));
 	}
 	
