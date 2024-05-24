@@ -542,10 +542,11 @@ function refreshBeaconMarkers(layer, markersVisible) {
 
 		let marker;
 		if (beacon.levels > 0) {
+		    let primaryEffect = beacon.primaryEffect !== "none" ? localize("effect.minecraft." + beacon.primaryEffect) : "None";
 		    let secondaryEffect = beacon.secondaryEffect !== "none" ? localize("effect.minecraft." + beacon.secondaryEffect) : "None";
 
 		    marker = L.marker(point, { icon: icon }).bindPopup(`<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="Images/beacon_level_${parseInt(beacon.levels)}.png" width="64" height="64" />
-		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.primaryEffect}.png" />${localize("effect.minecraft." + beacon.primaryEffect)}<br />
+		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.primaryEffect}.png" />${primaryEffect}<br />
 		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.secondaryEffect}.png" />${secondaryEffect}</p>`);
 		} else {
 		    marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">Not Activated</p>');

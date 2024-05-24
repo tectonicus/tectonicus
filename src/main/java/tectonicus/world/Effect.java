@@ -67,7 +67,7 @@ public enum Effect {
 	private final int id;
 	
 	public static Effect byId(int id) {
-		return ID_LOOKUP[Math.max(id, 0) - 1];
+		return ID_LOOKUP[Math.max(id, 0)];
 	}
 	
 	public static Effect byName(String name) {
