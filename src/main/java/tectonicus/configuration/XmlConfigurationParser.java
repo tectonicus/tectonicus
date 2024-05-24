@@ -462,7 +462,7 @@ public class XmlConfigurationParser
 		} catch (FileNotFoundException e) {
 			log.error("Could not find file: {}", file.getAbsolutePath());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		return null;

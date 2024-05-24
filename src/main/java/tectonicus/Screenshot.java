@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,18 +9,18 @@
 
 package tectonicus;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
+import lombok.extern.slf4j.Slf4j;
+import tectonicus.configuration.ImageFormat;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 
-import tectonicus.configuration.ImageFormat;
-
-
+@Slf4j
 public class Screenshot
 {
 	
@@ -52,7 +52,7 @@ public class Screenshot
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{

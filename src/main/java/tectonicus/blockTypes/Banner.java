@@ -366,7 +366,7 @@ public class Banner implements BlockType
 		} 
 		catch (ArrayIndexOutOfBoundsException e) 
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		g.drawImage(maskedImage, 0, 0, null);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,12 +9,13 @@
 
 package tectonicus.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.security.MessageDigest;
+import lombok.extern.slf4j.Slf4j;
+import tectonicus.ProgressListener;
+import tectonicus.TileRenderer;
+import tectonicus.configuration.Configuration;
+import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.MutableLayer;
+import tectonicus.configuration.MutableMap;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -23,13 +24,12 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-
-import tectonicus.ProgressListener;
-import tectonicus.TileRenderer;
-import tectonicus.configuration.Configuration;
-import tectonicus.configuration.MutableConfiguration;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.security.MessageDigest;
 
 // GUI todo list:
 //
@@ -47,6 +47,7 @@ import tectonicus.configuration.MutableMap;
 
 // Remember last export dir
 
+@Slf4j
 public class Gui
 {
 	private final MessageDigest hashAlgorithm;
@@ -85,7 +86,7 @@ public class Gui
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		*/
 		
@@ -296,9 +297,9 @@ public class Gui
 				startButton.setText("Start");
 				setControlsEnabled(true);
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-				ex.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 		

@@ -45,7 +45,7 @@ public class CacheUtil
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{
@@ -58,7 +58,7 @@ public class CacheUtil
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 	}
@@ -86,7 +86,7 @@ public class CacheUtil
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{
@@ -141,7 +141,7 @@ public class CacheUtil
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{
@@ -200,8 +200,7 @@ public class CacheUtil
 			}
 			catch (Exception e)
 			{
-				log.warn("Couldn't create biome cache - biome colours will be disabled");
-				e.printStackTrace();
+				log.warn("Couldn't create biome cache - biome colours will be disabled", e);
 			}
 		}
 		

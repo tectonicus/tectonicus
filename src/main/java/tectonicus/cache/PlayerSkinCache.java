@@ -89,7 +89,7 @@ public class PlayerSkinCache
 					}
 					catch (Exception e)
 					{
-						e.printStackTrace();
+						log.error("Exception: ", e);
 					}
 				}
 				
@@ -97,7 +97,7 @@ public class PlayerSkinCache
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 		
@@ -145,7 +145,7 @@ public class PlayerSkinCache
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		log.info("Player skin cache written");
@@ -199,7 +199,7 @@ public class PlayerSkinCache
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 			newEntry.skinFile = player.getName() + ".png";
 		}

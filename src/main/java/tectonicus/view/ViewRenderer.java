@@ -182,7 +182,7 @@ public class ViewRenderer
 			
 			imageWriteQueue.waitUntilFinished();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		} finally {
 			if (viewsIn != null)
 				viewsIn.close();

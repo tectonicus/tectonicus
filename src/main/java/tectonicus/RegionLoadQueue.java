@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.Chunk;
@@ -37,6 +38,7 @@ import static tectonicus.util.FindEntityUtil.findPortalsOld;
 import static tectonicus.util.FindEntityUtil.findSigns;
 import static tectonicus.util.FindEntityUtil.findViews;
 
+@Slf4j
 public class RegionLoadQueue
 {
 	private final ThreadPoolExecutor executor;
@@ -68,7 +70,7 @@ public class RegionLoadQueue
 		}
                 catch (InterruptedException e)
                 {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 	
@@ -122,7 +124,7 @@ public class RegionLoadQueue
 				findChests(chunk.getRawChunk(), map.getChestFilter(), chests);
 				findBeacons(chunk.getRawChunk(), beacons, map.getBeaconFilter());
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 			
 			return null;
@@ -140,7 +142,7 @@ public class RegionLoadQueue
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 	}

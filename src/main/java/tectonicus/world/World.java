@@ -1099,7 +1099,7 @@ public class World implements BlockContext
 			executor.shutdown();
 			executor.awaitTermination(1, TimeUnit.HOURS);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		log.debug("\tloaded {} players", players.size());

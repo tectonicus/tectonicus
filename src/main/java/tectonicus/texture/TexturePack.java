@@ -581,14 +581,14 @@ public class TexturePack
 				in = stream;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		if (in == null) {
 			try { // Check classpath
 				in = getClass().getClassLoader().getResourceAsStream(path);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 
@@ -607,7 +607,7 @@ public class TexturePack
 			imageReader.setInput(ImageIO.createImageInputStream(in));
 			image = imageReader.readAll(0, imageReader.getDefaultReadParam());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		} finally {
 			try {
 				in.close();
@@ -969,7 +969,7 @@ public class TexturePack
 		try {
 			return loadTexture(fileName);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 			return null;
 		}
 	}
@@ -979,7 +979,7 @@ public class TexturePack
 			BufferedImage fullImage = loadTexture(fileName);
 			return fullImage.getSubimage(tileX, tileY, width, height);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 			return null;
 		}
 	}

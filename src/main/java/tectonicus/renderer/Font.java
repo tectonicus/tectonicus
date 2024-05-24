@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -8,6 +8,12 @@
  */
 
 package tectonicus.renderer;
+
+import lombok.extern.slf4j.Slf4j;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.Texture;
+import tectonicus.rasteriser.TextureFilter;
+import tectonicus.texture.SubTexture;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -18,11 +24,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import tectonicus.rasteriser.Rasteriser;
-import tectonicus.rasteriser.Texture;
-import tectonicus.rasteriser.TextureFilter;
-import tectonicus.texture.SubTexture;
-
+@Slf4j
 public class Font
 {
         private BufferedImage fontSheet;
@@ -67,7 +69,7 @@ public class Font
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
         

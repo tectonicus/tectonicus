@@ -974,7 +974,7 @@ public class BlockRegistryParser
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		return null;
 	}

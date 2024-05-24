@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,12 +9,15 @@
 
 package tectonicus.cache.swap;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Slf4j
 public class HddObjectListWriter<T extends Swappable>
 {	
 	public static final int MAGIC = 0xC0DEBABE;
@@ -45,7 +48,7 @@ public class HddObjectListWriter<T extends Swappable>
                 }
                 catch (Exception e)
                 {
-                        e.printStackTrace();
+                        log.error("Exception: ", e);
                 }
                 
                 try

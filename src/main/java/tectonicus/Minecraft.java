@@ -81,7 +81,7 @@ public class Minecraft
 					(path, attr) -> attr.isRegularFile() && path.getFileName().toString().toLowerCase().endsWith(".jar"))) {
 				jars = paths.collect(toList());
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 			
 			for(Path jar : jars) {
@@ -124,7 +124,7 @@ public class Minecraft
 					(path, attr) -> attr.isRegularFile() && path.getFileName().toString().toLowerCase().endsWith(".jar"))){
 				jars = paths.collect(toList());
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 
 			String major = "0";
@@ -218,7 +218,7 @@ public class Minecraft
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		return false;

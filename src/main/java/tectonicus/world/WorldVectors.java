@@ -84,7 +84,7 @@ public class WorldVectors {
 		try {
 			Files.deleteIfExists(vectorsFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.info("Exporting world vectors to {}", vectorsFile.getAbsolutePath());
@@ -154,7 +154,7 @@ public class WorldVectors {
 
 			json.endObject();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 

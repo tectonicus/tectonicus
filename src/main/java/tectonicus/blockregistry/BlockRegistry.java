@@ -84,7 +84,7 @@ public class BlockRegistry
 		try {
 			zips = new ZipStack(minecraftJar, null, null);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 	
@@ -126,7 +126,7 @@ public class BlockRegistry
 		} catch (NotDirectoryException e) {
 			log.warn("No blockstates directory found. This is probably a pre 1.8 minecraft jar.");
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		if (zips.getOverrideFileName() != null) {
@@ -137,7 +137,7 @@ public class BlockRegistry
 			} catch(NotDirectoryException e) {
 				log.info("No blockstate directory found in resource pack");
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 	}
@@ -228,7 +228,7 @@ public class BlockRegistry
 				stateModels = OBJECT_MAPPER.readValue("[" + models + "]", new TypeReference<List<BlockStateModel>>(){});
 			}
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		return stateModels;
@@ -247,7 +247,7 @@ public class BlockRegistry
                         }
                         catch (Exception e)
                         {
-                                e.printStackTrace();
+                                log.error("Exception: ", e);
                                 return null;
                         }
                 });

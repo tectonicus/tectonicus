@@ -63,7 +63,7 @@ public class Downsampler {
 			executor.shutdown();
 			executor.awaitTermination(1, TimeUnit.DAYS);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		log.debug("\tDownsampling complete");
@@ -137,24 +137,23 @@ public class Downsampler {
 				changedFileList.writeLine( outputFile.getAbsolutePath() );
 				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 			
 			return null;
 		}
-
+		
 		private static BufferedImage getTile(File file) {
 			BufferedImage tile = null;
-                        try {
-                                if (file.exists()) {
-                                        // Use input stream instead of file to fix ImageIO returning null for some WEBP images
-                                        try (var inputStream = new FileInputStream(file)) {
-                                                tile = ImageIO.read(inputStream);
-                                        }
-                                }
+			try {
+				if (file.exists()) {
+					// Use input stream instead of file to fix ImageIO returning null for some WEBP images
+					try (var inputStream = new FileInputStream(file)) {
+						tile = ImageIO.read(inputStream);
+					}
+				}
 			} catch (Exception e) {
-                                log.error("Error getting tile "+file.getAbsolutePath());
-				e.printStackTrace();
+				log.error("Error getting tile {}", file.getAbsolutePath(), e);
 			}
 			return tile;
 		}
@@ -171,7 +170,7 @@ public class Downsampler {
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 	}

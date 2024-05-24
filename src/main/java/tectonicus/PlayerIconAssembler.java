@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,16 +9,18 @@
 
 package tectonicus;
 
+import lombok.extern.slf4j.Slf4j;
+import tectonicus.cache.PlayerSkinCache;
+import tectonicus.raw.Player;
+import tectonicus.util.OutputResourcesUtil;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-import tectonicus.cache.PlayerSkinCache;
-import tectonicus.raw.Player;
-import tectonicus.util.OutputResourcesUtil;
-
+@Slf4j
 public class PlayerIconAssembler
 {
 	private final PlayerSkinCache skinCache;
@@ -37,7 +39,7 @@ public class PlayerIconAssembler
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -54,7 +56,7 @@ public class PlayerIconAssembler
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 

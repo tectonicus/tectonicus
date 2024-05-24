@@ -64,7 +64,7 @@ public class RegionCache
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					log.error("Exception: ", e);
 				}
 			}
                         return null;

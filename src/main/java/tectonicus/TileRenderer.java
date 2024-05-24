@@ -326,7 +326,7 @@ public class TileRenderer
 			progressListener.onTaskStarted(Task.OUTPUT_HTML.toString());
 			outputHtmlFile = outputHtml(exportDir, config);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		// ----
@@ -450,7 +450,7 @@ public class TileRenderer
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{
@@ -498,7 +498,7 @@ public class TileRenderer
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					log.error("Exception: ", e);
 				}
 				if (region != null) {
 					// For every region...
@@ -517,8 +517,7 @@ public class TileRenderer
 							c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
 						} catch (Exception e) {
 							// Catch exception, log it and skip the chunk
-							log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z));
-							e.printStackTrace();
+							log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z), e);
 						}
 						
 						if (c != null && c.getRawChunk().isFullChunk()) {
@@ -532,7 +531,7 @@ public class TileRenderer
 								// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
 								regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds, beacons);
 							} catch (CloneNotSupportedException e) {
-								e.printStackTrace();
+								log.error("Exception: ", e);
 							}
 						}
 					}
@@ -547,7 +546,7 @@ public class TileRenderer
 						signs.flush();
 						views.flush();
 					} catch (Exception e) {
-						e.printStackTrace();
+						log.error("Exception: ", e);
 					}
 					
 					regionHashStore.endRegion();
@@ -727,7 +726,7 @@ public class TileRenderer
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 			if (region != null)
 			{

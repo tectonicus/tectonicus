@@ -203,11 +203,11 @@ public class TectonicusApp
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		catch (OutOfMemoryError e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{

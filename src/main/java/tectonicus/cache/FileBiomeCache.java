@@ -162,7 +162,7 @@ public class FileBiomeCache implements BiomeCache
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					log.error("Exception: ", e);
 				}
 				*/
 			}
@@ -184,7 +184,7 @@ public class FileBiomeCache implements BiomeCache
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		return data;

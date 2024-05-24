@@ -130,7 +130,7 @@ public class FileUtils
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 	

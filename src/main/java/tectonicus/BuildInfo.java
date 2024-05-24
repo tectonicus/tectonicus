@@ -46,7 +46,7 @@ public class BuildInfo
 					dateTimeFormatted = formatter.format(ZonedDateTime.parse(dateTimeProperty).withZoneSameInstant(TimeZone.getDefault().toZoneId()));
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 	}

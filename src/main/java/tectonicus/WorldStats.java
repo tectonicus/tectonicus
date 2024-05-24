@@ -132,7 +132,7 @@ public class WorldStats
 				jsWriter.write(args);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		log.debug("Wrote {} block counts", nameCounts.size());
@@ -160,7 +160,7 @@ public class WorldStats
 
 			jsWriter.endObject();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		log.info("Wrote world stats");

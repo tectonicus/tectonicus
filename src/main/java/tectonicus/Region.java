@@ -219,7 +219,7 @@ public class Region {
 				coord = new RegionCoord(x, z);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		return coord;
@@ -266,16 +266,14 @@ public class Region {
 			try {
 				chunk.loadRaw(chunkData, entityChunkData, filter, worldStats, worldInfo);
 			} catch (IOException e) {
-				log.error("Error while trying to load entities for chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath());
-				e.printStackTrace();
+				log.error("Error while trying to load entities for chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath(), e);
 			}
 		}
 
 		try {
 			chunk.loadRaw(chunkData, filter, worldStats, worldInfo);
 		} catch (IOException e) {
-			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath());
-			e.printStackTrace();
+			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath(), e);
 		}
 
 		return chunk;

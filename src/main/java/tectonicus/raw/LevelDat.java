@@ -88,7 +88,7 @@ public class LevelDat
 				});
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 	

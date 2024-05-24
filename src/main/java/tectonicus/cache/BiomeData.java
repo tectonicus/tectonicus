@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,14 +10,15 @@
 package tectonicus.cache;
 
 import com.google.code.minecraftbiomeextractor.WorldProcessor;
+import lombok.extern.slf4j.Slf4j;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.NBTOutputStream;
 import org.jnbt.Tag;
-import tectonicus.chunk.ChunkCoord;
 import tectonicus.Minecraft;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.NbtUtil;
 import tectonicus.raw.RawChunk;
 
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class BiomeData
 {
 	private static final int VERSION = 1;
@@ -71,7 +73,7 @@ public class BiomeData
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					log.error("Exception: ", e);
 				}
 				
 			/*	// TODO: These should accept longs not ints?
@@ -134,7 +136,7 @@ public class BiomeData
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{
@@ -198,7 +200,7 @@ public class BiomeData
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{

@@ -80,9 +80,8 @@ public class ItemRenderer
 		}
 		catch (Exception e)
 		{
-			log.error("Error while trying to read custom compass rose image: " + e);
-			log.error("Tried to read:"+map.getCustomCompassRose().getAbsolutePath());
-			e.printStackTrace();
+			log.error("Tried to read: {} ", map.getCustomCompassRose().getAbsolutePath());
+			log.error("Error while trying to read custom compass rose image: ", e);
 		}
 		
 		if (compassImage == null)

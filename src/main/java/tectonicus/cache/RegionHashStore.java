@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,6 +9,7 @@
 
 package tectonicus.cache;
 
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.RegionCoord;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.util.FileUtils;
@@ -18,11 +19,11 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-
+@Slf4j
 public class RegionHashStore
 {
 	private final File hashStoreDir;
@@ -137,7 +138,7 @@ public class RegionHashStore
 					out.write(hash);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 		
@@ -163,7 +164,7 @@ public class RegionHashStore
 					addHash(new ChunkCoord(chunkX, chunkZ), hash);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Exception: ", e);
 			}
 		}
 		

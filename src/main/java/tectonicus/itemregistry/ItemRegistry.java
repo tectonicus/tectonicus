@@ -49,7 +49,7 @@ public class ItemRegistry {
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/models/item"))) {
 			deserializeItemModels(entries);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 

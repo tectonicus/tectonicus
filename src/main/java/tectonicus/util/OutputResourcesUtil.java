@@ -94,7 +94,7 @@ public class OutputResourcesUtil {
 			signsIn = new HddObjectListReader<>(signListFile);
 			outputSigns(outputFile, signsIn, map);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		} finally {
 			if (signsIn != null)
 				signsIn.close();
@@ -142,7 +142,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -150,7 +150,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(playersFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		FileUtils.ensureExists(imagesDir);
@@ -195,7 +195,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		} finally {
 			executor.shutdown();
 		}
@@ -207,7 +207,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(bedsFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.info("Exporting beds to {}", bedsFile.getAbsolutePath());
@@ -251,7 +251,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.debug("Exported {} beds", numOutput);
@@ -262,7 +262,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(anchorsFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.info("Exporting respawn anchors to {}", anchorsFile.getAbsolutePath());
@@ -297,7 +297,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.debug("Exported {} respawn anchors", numOutput);
@@ -311,7 +311,7 @@ public class OutputResourcesUtil {
 			portals = outputPortals(outFile, portalsIn, map);
 			portalsIn.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		return portals;
@@ -374,7 +374,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.debug("Exported {} portals", portals.size());
@@ -387,7 +387,7 @@ public class OutputResourcesUtil {
 			viewsIn = new HddObjectListReader<>(viewsListFile);
 			outputViews(outputFile, viewsIn, map);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		} finally {
 			if (viewsIn != null)
 				viewsIn.close();
@@ -431,7 +431,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -441,7 +441,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(chestFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getId() + "_chestData")) {
@@ -506,7 +506,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 	
@@ -516,7 +516,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(beaconFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		
 		try (JsArrayWriter jsWriter = new JsArrayWriter(beaconFile, map.getId() + "_beaconData")) {
@@ -537,7 +537,7 @@ public class OutputResourcesUtil {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
         
@@ -705,7 +705,7 @@ public class OutputResourcesUtil {
 			}
                         System.out.println();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -734,7 +734,7 @@ public class OutputResourcesUtil {
 			}
 			itemRenderer.renderBlock(new File(exportDir, "Images/beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -885,7 +885,7 @@ public class OutputResourcesUtil {
 			}
 			ImageIO.write(toWrite, "png", file);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -896,7 +896,7 @@ public class OutputResourcesUtil {
                                         Files.copy(stream, outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                                 }
                         } catch (IOException e) {
-                                e.printStackTrace();
+                                log.error("Exception: ", e);
                         }
                 }
         }
@@ -989,7 +989,7 @@ public class OutputResourcesUtil {
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 		finally
 		{
@@ -1008,7 +1008,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(outputFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.info("Writing master contents to {}", outputFile.getAbsolutePath());
@@ -1075,7 +1075,7 @@ public class OutputResourcesUtil {
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 
@@ -1219,7 +1219,7 @@ public class OutputResourcesUtil {
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		return outputHtmlFile;
@@ -1231,7 +1231,7 @@ public class OutputResourcesUtil {
 		try {
 			Files.deleteIfExists(statsFile.toPath());
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 
 		log.info("Exporting stats to {}", statsFile.getAbsolutePath());
@@ -1254,7 +1254,7 @@ public class OutputResourcesUtil {
 
 			jsWriter.write("stats", stats);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Exception: ", e);
 		}
 	}
 }
