@@ -16,10 +16,10 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
-import tectonicus.raw.Item;
 import tectonicus.raw.ArmorStandEntity;
 import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.DyedColorTag;
+import tectonicus.raw.Item;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
@@ -253,8 +253,9 @@ public class ArmorStand implements BlockType
         
         private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor, byte layer, ArmorMeshBuilder meshBuilder) {
                 final float angle = armorStand.getYaw();
-                                
-                String armorMaterial = armor.id.substring("minecraft:".length(), armor.id.indexOf('_'));
+			
+				int underscoreIndex = armor.id.indexOf('_');
+                String armorMaterial = armor.id.substring("minecraft:".length(), underscoreIndex != -1 ? underscoreIndex : armor.id.length());
                 if (armorMaterial.equals("golden")) {
                         armorMaterial = "gold";
                 }
@@ -297,7 +298,8 @@ public class ArmorStand implements BlockType
         }
         
         private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor) {
-                BlockType blockType = registry.find(armor.id);
+                //TODO: create elytra model
+				BlockType blockType = registry.find(armor.id);
                 if (blockType != null) {
                         if (blockType instanceof Skull) {
                                 // We do have a mob head, but there is no skull entity on these coordinates (there is armor stand instead).
