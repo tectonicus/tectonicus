@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ *
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution.  The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
+ *
+ */
+
 import java.time.ZonedDateTime
 
 plugins {
@@ -7,7 +16,7 @@ plugins {
 	id "maven-publish"
 }
 
-project.version = "2.30.1"
+project.version = "2.30.2"
 
 //Exclude unneeded tasks
 project.gradle.startParameter.excludedTaskNames.addAll(["jar", "distTar", "distZip", "shadowDistTar"])
