@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,9 +23,13 @@ public class ImageUtils {
 	public static BufferedImage copy(BufferedImage in) {
 		if (in == null)
 			return null;
-
+		
 		BufferedImage img = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		copy(img, in, 0, 0);
+		if (in.getType() == BufferedImage.TYPE_BYTE_GRAY) {
+			copyGrayscale(img, in); //getRBG() doesn't read the pixel value correctly for grayscale images so we have to do it manually
+		} else {
+			copy(img, in, 0, 0);
+		}
 
 		return img;
 	}
@@ -35,6 +39,16 @@ public class ImageUtils {
 			for (int y=0; y<src.getHeight(); y++) {
 				final int rgb = src.getRGB(x, y);
 				dest.setRGB(destX + x, destY + y, rgb);
+			}
+		}
+	}
+	
+	public static void copyGrayscale(BufferedImage dest, BufferedImage src) {
+		for (int x=0; x<src.getWidth(); x++) {
+			for (int y=0; y<src.getHeight(); y++) {
+				final int gray = src.getRaster().getSample(x, y, 0);
+				int argb = (255 << 24) | (gray << 16) | (gray << 8) | gray;
+				dest.setRGB(x, y, argb);
 			}
 		}
 	}
