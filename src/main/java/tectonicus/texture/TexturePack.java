@@ -146,15 +146,7 @@ public class TexturePack
 		}
 
 		// version.json gives us the Minecraft jar information (added in 1.14)
-		VersionJson versionJson = new VersionJson();
-		if (zipStack.hasFile("version.json")) {
-			try {
-				ObjectReader versionJsonReader = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class);
-				versionJson = versionJsonReader.readValue(zipStack.getStream("version.json"));
-			} catch (IOException e) {
-				log.error("Failed to read version.json file.", e);
-			}
-		}
+		VersionJson versionJson = Minecraft.getVersionJson(zipStack);
 
 		if (versionJson.getPackVersion() != null) {
 			String name = versionJson.getName();

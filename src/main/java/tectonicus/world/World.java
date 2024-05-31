@@ -218,7 +218,7 @@ public class World implements BlockContext
 		if (worldVersion != null) {
 			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
 			if (StringUtils.isNotEmpty(versionNumber)) {
-                                versionNumber = versionNumber.split(" Release Candidate ")[0];
+                versionNumber = versionNumber.split(" [-a-zA-Z]* ")[0];  //Handle Pre-Release and Release Candidate versions
 				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
 				version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
 			}
@@ -243,9 +243,8 @@ public class World implements BlockContext
 		log.info("Loading textures");
 		texturePack = new TexturePack(rasteriser, config, map.getModJars(), levelDat.getDataPacks());
 		this.textureVersion = texturePack.getVersion();
-
-
-		log.debug("World version: " + worldVersion);
+		
+		log.debug("World version: {}", worldVersion);
 		// Is this actually helpful?
 		if (worldVersion != null && textureVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion()) {
 			switch (worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "") {

@@ -14,7 +14,9 @@ import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import tectonicus.texture.VersionJson;
 import tectonicus.texture.ZipStack;
+import tectonicus.util.FileUtils;
 import tectonicus.util.OsDetect;
 
 import java.io.File;
@@ -87,21 +89,26 @@ public class Minecraft
 			for(Path jar : jars) {
 				log.trace(jar.getFileName().toString());
 				String jarVersion = StringUtils.removeEndIgnoreCase(jar.getFileName().toString(), ".jar");
-				if (jarVersion.equals(worldVersion)) { //match exact version
-					log.info("Found exact match: {}", jarVersion);
-					minecraftJar = jar.toFile();
-					break;
-				} else { //try to match only major and minor version
-					String[] splitWorldVersion = worldVersion.split("\\.");
-					String[] splitJarVersion = jarVersion.split("\\.");
-					
-					if (splitJarVersion.length >= 2 && splitWorldVersion.length >= 2
-							&& splitJarVersion[0].equals(splitWorldVersion[0]) && splitJarVersion[1].matches("\\d+") && splitJarVersion[1].equals(splitWorldVersion[1])) {
-						if (splitJarVersion.length == 3 && !splitJarVersion[2].matches("\\d+")) { //Ignore pre-release or release candidate versions
-							continue;
-						}
+				try {
+					VersionJson versionJson = getVersionJson(new ZipStack(jar.toFile(), null, null));
+					if (jarVersion.equals(worldVersion) || versionJson.getName().equals(worldVersion)) { //match exact version
+						log.info("Found exact match: {}", jarVersion);
 						minecraftJar = jar.toFile();
+						break;
+					} else { //try to match only major and minor version
+						String[] splitWorldVersion = worldVersion.split("\\.");
+						String[] splitJarVersion = jarVersion.split("\\.");
+						
+						if (splitJarVersion.length >= 2 && splitWorldVersion.length >= 2
+								&& splitJarVersion[0].equals(splitWorldVersion[0]) && splitJarVersion[1].matches("\\d+") && splitJarVersion[1].equals(splitWorldVersion[1])) {
+							if (splitJarVersion.length == 3 && !splitJarVersion[2].matches("\\d+")) { //Ignore pre-release or release candidate versions
+								continue;
+							}
+							minecraftJar = jar.toFile();
+						}
 					}
+				} catch (IOException e) {
+					log.error("Exception: ", e);
 				}
 			}
 			if (minecraftJar == null) {
@@ -110,6 +117,19 @@ public class Minecraft
 		}
 		
 		return Optional.ofNullable(minecraftJar);
+	}
+	
+	public static VersionJson getVersionJson(ZipStack zipStack) {
+		VersionJson versionJson = new VersionJson();
+		try {
+			if (zipStack.hasFile("version.json")) { //version.json was added in 1.14
+				versionJson = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class).readValue(zipStack.getStream("version.json"));
+			}
+		} catch (IOException e) {
+			log.error("Failed to read version.json file.", e);
+		}
+		
+		return versionJson;
 	}
 	
 	public static File findLatestMinecraftJar()
