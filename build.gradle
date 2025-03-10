@@ -12,7 +12,7 @@ import java.time.ZonedDateTime
 plugins {
 	id "application"
 	id "org.ajoberstar.grgit" version "5.3.0"
-	id("com.gradleup.shadow") version "8.3.5"
+	id("com.gradleup.shadow") version "8.3.6"
 	id "maven-publish"
 }
 
