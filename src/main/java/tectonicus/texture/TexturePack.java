@@ -886,7 +886,7 @@ public class TexturePack
 			
 			//Dark Forest grass color is taken from grass.png and then modified
 			if (biome == Biomes.DARK_FOREST) {
-				grassColors.replace(biome, new Colour4f((grassColors.get(biome).toRgb() & 16711422) + 2634762 >> 1));
+				grassColors.replace(biome, new Colour4f((255 << 24) | ((grassColors.get(biome).toRgb() & 16711422) + 2634762 >> 1) & 0x00ffffff));
 			}
 		}
 
