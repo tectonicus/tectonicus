@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,14 +15,13 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
-import tectonicus.chunk.Chunk;
-import tectonicus.util.Util;
 import tectonicus.Version;
+import tectonicus.blockTypes.BlockUtil;
 import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BlockModel.BlockElement;
 import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockregistry.BlockStateWrapper;
-import tectonicus.blockTypes.BlockUtil;
+import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
@@ -30,6 +29,7 @@ import tectonicus.renderer.Geometry;
 import tectonicus.renderer.Geometry.MeshType;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
+import tectonicus.util.Util;
 
 import java.util.List;
 import java.util.Map;
@@ -906,11 +906,12 @@ public class MeshUtil
 			tintColor = new Colour4f(97/255f, 153/255f, 97/255f);
 		} else if (modelName.contains("birch_leaves")) {
 			tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
-		} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves")
-				|| modelName.contains("acacia_leaves") || modelName.contains("vines")) {
+		} else if (modelName.contains("cherry_leaves") || modelName.contains("pale_oak_leaves")) { //Don't actually tint these leaves
+			tintColor = new Colour4f(255/255f, 255/255f, 255/255f);
+		} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves") || modelName.contains("acacia_leaves") || modelName.contains("vines")) {
 			tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
-                } else if (modelName.contains("cherry_leaves")) {                    
-                        tintColor = new Colour4f(255/255f, 255/255f, 255/255f);
+		} else if (modelName.contains("leaf_litter")) {
+			tintColor = world.getDryFoliageColor(rawChunk.getChunkCoord(), x, y, z);
 		} else {
 			tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 		}

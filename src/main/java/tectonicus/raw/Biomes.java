@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,15 +17,16 @@ import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
 
+import static tectonicus.world.ColorsWater.CHERRY;
 import static tectonicus.world.ColorsWater.COLD;
 import static tectonicus.world.ColorsWater.END;
 import static tectonicus.world.ColorsWater.LUSH;
+import static tectonicus.world.ColorsWater.MANGROVE;
+import static tectonicus.world.ColorsWater.PALE;
 import static tectonicus.world.ColorsWater.SNOWY;
 import static tectonicus.world.ColorsWater.SWAMPY;
 import static tectonicus.world.ColorsWater.TEMPERATE;
 import static tectonicus.world.ColorsWater.WARM;
-import static tectonicus.world.ColorsWater.MANGROVE;
-import static tectonicus.world.ColorsWater.CHERRY;
 
 @Getter
 @AllArgsConstructor
@@ -36,7 +37,7 @@ public enum Biomes implements Biome {
 	SNOWY_PLAINS("snowy_plains", 3, 0.0f, 0.5f, SNOWY.getWaterColor()),
 	ICE_SPIKES("ice_spikes", 4, 0.0f, 0.5f, SNOWY.getWaterColor()),
 	DESERT("desert", 5, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	SWAMP("swamp", 6, 0.8f, 0.9f, SWAMPY.getWaterColor()),
+	SWAMP("swamp", 6, 0.8f, 0.9f, SWAMPY.getWaterColor(), HardcodedColors.SWAMP, HardcodedColors.SWAMP, HardcodedColors.DRY_FOLIAGE),
 	MANGROVE_SWAMP("mangrove_swamp", 7, 0.8f, 0.9f, MANGROVE.getWaterColor()),
 	FOREST("forest", 8, 0.7f, 0.8f, TEMPERATE.getWaterColor()),
 	FLOWER_FOREST("flower_forest", 9, 0.7f, 0.8f, TEMPERATE.getWaterColor()),
@@ -56,11 +57,11 @@ public enum Biomes implements Biome {
 	JUNGLE("jungle", 23, 0.95f, 0.9f, LUSH.getWaterColor()),
 	SPARSE_JUNGLE("sparse_jungle", 24, 0.95f, 0.8f, LUSH.getWaterColor()),
 	BAMBOO_JUNGLE("bamboo_jungle", 25, 0.95f, 0.9f, LUSH.getWaterColor()),
-	BADLANDS("badlands", 26, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	ERODED_BADLANDS("eroded_badlands", 27, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	WOODED_BADLANDS("wooded_badlands", 28, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
+	BADLANDS("badlands", 26, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE, HardcodedColors.BADLANDS_FOLIAGE),
+	ERODED_BADLANDS("eroded_badlands", 27, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE, HardcodedColors.BADLANDS_FOLIAGE),
+	WOODED_BADLANDS("wooded_badlands", 28, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE, HardcodedColors.BADLANDS_FOLIAGE),
 	MEADOW("meadow", 29, 0.5f, 0.8f, TEMPERATE.getWaterColor()),
-	CHERRY_GROVE("cherry_grove", 30, 0.5f, 0.8f, CHERRY.getWaterColor()),
+	CHERRY_GROVE("cherry_grove", 30, 0.5f, 0.8f, CHERRY.getWaterColor(), HardcodedColors.CHERRY_GROVE, HardcodedColors.CHERRY_GROVE, HardcodedColors.DRY_FOLIAGE),
 	GROVE("grove", 31, -0.2f, 0.8f, SNOWY.getWaterColor()),
 	SNOWY_SLOPES("snowy_slopes", 32, -0.3f, 0.9f, SNOWY.getWaterColor()),
 	FROZEN_PEAKS("frozen_peaks", 33, -0.7f, 0.9f, SNOWY.getWaterColor()),
@@ -93,10 +94,15 @@ public enum Biomes implements Biome {
 	END_HIGHLANDS("end_highlands", 60, 0.5f, 0.5f, END.getWaterColor()),
 	END_MIDLANDS("end_midlands", 61, 0.5f, 0.5f, END.getWaterColor()),
 	SMALL_END_ISLANDS("small_end_islands", 62, 0.5f, 0.5f, END.getWaterColor()),
-	END_BARRENS("end_barrens", 63, 0.5f, 0.5f, END.getWaterColor());
-
+	END_BARRENS("end_barrens", 63, 0.5f, 0.5f, END.getWaterColor()),
+	PALE_GARDEN("pale_garden", 64, 0.7f, 0.8f, PALE.getWaterColor(), HardcodedColors.PALE_GARDEN_GRASS, HardcodedColors.PALE_GARDEN_FOLIAGE, HardcodedColors.PALE_GARDEN_DRY_FOLIAGE);
+	
+	Biomes(String id, int numericId, float temperature, float rainfall, Colour4f waterColor, Colour4f grassColor, Colour4f foliageColor, Colour4f dryFoliageColor) {
+		this(id, numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, grassColor, foliageColor, dryFoliageColor);
+	}
+	
 	Biomes(String id, int numericId, float temperature, float rainfall, Colour4f waterColor) {
-		this(id, numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor);
+		this(id, numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, null, null, null);
 	}
 
 	private static final Map<String, Biomes> ID_LOOKUP = new HashMap<>(values().length);
@@ -107,6 +113,10 @@ public enum Biomes implements Biome {
 	private final float rainfall;
 	private final Point colorCoords;
 	private final Colour4f waterColor;
+	//Some biomes have hard-coded grass and foliage colors
+	private final Colour4f grassColor;
+	private final Colour4f foliageColor;
+	private final Colour4f dryFoliageColor;
 
 	static {
 		for (Biomes biome : values()) {
@@ -116,5 +126,16 @@ public enum Biomes implements Biome {
 
 	public static Biomes byId(String id) {
 		return ID_LOOKUP.getOrDefault(id, OCEAN);
+	}
+	
+	private static class HardcodedColors {
+		public static final Colour4f BADLANDS_GRASS = new Colour4f(144, 129, 77);
+		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(158, 129, 77); //TODO: Do badlands have a different color for dry foliage?
+		public static final Colour4f SWAMP = new Colour4f(106, 112, 57);
+		public static final Colour4f CHERRY_GROVE = new Colour4f(182, 219, 97);
+		public static final Colour4f DRY_FOLIAGE = new Colour4f(123, 83, 52);
+		public static final Colour4f PALE_GARDEN_GRASS = new Colour4f(119, 130, 114);
+		public static final Colour4f PALE_GARDEN_FOLIAGE = new Colour4f(135, 141, 118);
+		public static final Colour4f PALE_GARDEN_DRY_FOLIAGE = new Colour4f(160, 166, 156);
 	}
 }

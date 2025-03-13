@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -42,6 +42,7 @@ public interface BlockContext {
 
 	Colour4f getGrassColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
 	Colour4f getFoliageColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
+	Colour4f getDryFoliageColor(ChunkCoord chunkCoord, final int x, final int y, final int z);
 	Colour4f getWaterColor(RawChunk rawChunk, final int x, final int y, final int z);
 
 	PlayerSkinCache getPlayerSkinCache();

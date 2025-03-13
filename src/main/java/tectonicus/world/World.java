@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -1143,15 +1143,20 @@ public class World implements BlockContext
 
 	@Override
 	public Colour4f getGrassColor(ChunkCoord chunkCoord, int x, int y, int z) {
-		return getPlantTintColor(chunkCoord, x, y, z, false);
+		return getPlantTintColor(chunkCoord, x, y, z, false, false);
 	}
 
 	@Override
 	public Colour4f getFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
-		return getPlantTintColor(chunkCoord, x, y, z, true);
+		return getPlantTintColor(chunkCoord, x, y, z, true, false);
+	}
+	
+	@Override
+	public Colour4f getDryFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
+		return getPlantTintColor(chunkCoord, x, y, z, false, true);
 	}
 
-	public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage) {
+	public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage, boolean isDryFoliage) {
 		final Biome biome = getBiome(chunkCoord, x, y, z);
 		final Biome northBiome = getBiome(chunkCoord, x, y, z-1);
 		final Biome southBiome = getBiome(chunkCoord, x, y, z+1);
@@ -1199,15 +1204,15 @@ public class World implements BlockContext
 				southEastColor = getTintColor(southEastBiome, elevation, isFoliage);
 				southWestColor = getTintColor(southWestBiome, elevation, isFoliage);
 			} else { //1.15+
-				centerColor = getTintColor(biome, isFoliage);
-				northColor = getTintColor(northBiome, isFoliage);
-				southColor = getTintColor(southBiome, isFoliage);
-				eastColor = getTintColor(eastBiome, isFoliage);
-				westColor = getTintColor(westBiome, isFoliage);
-				northEastColor = getTintColor(northEastBiome, isFoliage);
-				northWestColor = getTintColor(northWestBiome, isFoliage);
-				southEastColor = getTintColor(southEastBiome, isFoliage);
-				southWestColor = getTintColor(southWestBiome, isFoliage);
+				centerColor = getTintColor(biome, isFoliage, isDryFoliage);
+				northColor = getTintColor(northBiome, isFoliage, isDryFoliage);
+				southColor = getTintColor(southBiome, isFoliage, isDryFoliage);
+				eastColor = getTintColor(eastBiome, isFoliage, isDryFoliage);
+				westColor = getTintColor(westBiome, isFoliage, isDryFoliage);
+				northEastColor = getTintColor(northEastBiome, isFoliage, isDryFoliage);
+				northWestColor = getTintColor(northWestBiome, isFoliage, isDryFoliage);
+				southEastColor = getTintColor(southEastBiome, isFoliage, isDryFoliage);
+				southWestColor = getTintColor(southWestBiome, isFoliage, isDryFoliage);
 			}
 		}
 
@@ -1225,13 +1230,13 @@ public class World implements BlockContext
 		return color;
 	}
 
-	// 1.6 and earlier
+	/** Get tint color for Minecraft 1.6 and earlier */
 	private Colour4f getTintColorOld(final int id, boolean isFoliage) {
 		Point colorCoords = BiomeIds.getColourCoord(id);
 		return getTintColorFromBiomeTextures(colorCoords.x, colorCoords.y, isFoliage);
 	}
 
-	//versions 1.7.2 - 1.14.4
+	/** Get tint color for Minecraft 1.7.2 - 1.14.4 */
 	private Colour4f getTintColor(Biome biome, int elevation, boolean isFoliage)
 	{
 		if (biome == BiomesOld.SWAMP || biome == BiomesOld.SWAMP_HILLS) {
@@ -1257,10 +1262,12 @@ public class World implements BlockContext
 		}
 	}
 
-	// 1.15+
-	private Colour4f getTintColor(Biome biome, boolean isFoliage) {
+	/** Get tint color for Minecraft 1.15 and later */
+	private Colour4f getTintColor(Biome biome, boolean isFoliage, boolean isDryFoliage) {
 		if (isFoliage) {
 			return texturePack.getFoliageColor(biome);
+		} else if (isDryFoliage) {
+			return texturePack.getDryFoliageColor(biome);
 		} else {
 			return texturePack.getGrassColor(biome);
 		}

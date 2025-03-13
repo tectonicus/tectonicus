@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -88,12 +88,14 @@ public class TexturePack
 	private final BufferedImage fullFood;
 	private final BufferedImage emptyAir;
 	private final BufferedImage fullAir;
-        private final BufferedImage chestImage;
+	private final BufferedImage chestImage;
 	
 	private final BufferedImage grassLookupImage;
 	private final BufferedImage foliageLookupImage;
+	private BufferedImage dryFoliageLookupImage = null;
 	private final Map<Biomes, Colour4f> grassColors = new EnumMap<>(Biomes.class);
 	private final Map<Biomes, Colour4f> foliageColors = new EnumMap<>(Biomes.class);
+	private final Map<Biomes, Colour4f> dryFoliageColors = new EnumMap<>(Biomes.class);
 	private final Map<BiomesOld, Colour4f> grassColorsOld = new EnumMap<>(BiomesOld.class);
 	private final Map<BiomesOld, Colour4f> foliageColorsOld = new EnumMap<>(BiomesOld.class);
 	
@@ -279,6 +281,11 @@ public class TexturePack
 				foliageLookupImage = copy( ImageIO.read( imgStream ) );
 			} catch (IllegalArgumentException e) {
 				throw new MissingAssetException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, resourcePack));
+			}
+			
+			if (zipStack.hasFile(path + "colormap/dry_foliage.png")) { //This was added in 1.20.5 and is used for leaf litter
+				InputStream imgStream = zipStack.getStream(path + "colormap/dry_foliage.png");
+				dryFoliageLookupImage = copy(ImageIO.read(imgStream));
 			}
 
 			loadBiomeColors();
@@ -653,6 +660,7 @@ public class TexturePack
 		return transparentColor;
 	}
 	
+	/** Loads banner pattern images from Minecraft 1.8 - 1.20.4 */
 	public Map<String, BufferedImage> loadPatterns()
 	{
 		Map<String, BufferedImage> patterns = new HashMap<>();
@@ -722,6 +730,7 @@ public class TexturePack
 		return patterns;
 	}
 	
+	/** Loads banner pattern images from Minecraft 1.20.5 and newer */
 	public Map<String, BufferedImage> loadPatternsJson() {
 		Map<String, BufferedImage> patterns = new HashMap<>();
 		
@@ -864,44 +873,35 @@ public class TexturePack
 	private void loadBiomeColors() {
 		log.info("Loading biome colors");
 		for (Biomes biome : Biomes.values()) {
-			//These are hardcoded in Minecraft
-			if(biome == Biomes.BADLANDS || biome == Biomes.ERODED_BADLANDS || biome == Biomes.WOODED_BADLANDS) {
-				grassColors.put(biome, new Colour4f(144, 129, 77));
-				foliageColors.put(biome, new Colour4f(158, 129, 77));
-				continue;
-			} else if(biome == Biomes.SWAMP) {
-				foliageColors.put(biome, new Colour4f(106, 112, 57));
-				grassColors.put(biome, new Colour4f(106, 112, 57));
-				continue;
+			if (biome.getGrassColor() != null) { //The biome has hard-coded values for grass and foliage
+				grassColors.put(biome, biome.getGrassColor());
+				foliageColors.put(biome, biome.getFoliageColor());
+				dryFoliageColors.put(biome, biome.getDryFoliageColor());
+			} else {
+				Point colorCoords = biome.getColorCoords();
+				grassColors.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
+				foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
+				dryFoliageColors.put(biome, new Colour4f(getDryFoliageColor(colorCoords.x, colorCoords.y)));
 			}
-
-			Point colorCoords = biome.getColorCoords();
-			grassColors.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
-			foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
-
-			if(biome == Biomes.DARK_FOREST) {
+			
+			//Dark Forest grass color is taken from grass.png and then modified
+			if (biome == Biomes.DARK_FOREST) {
 				grassColors.replace(biome, new Colour4f((grassColors.get(biome).toRgb() & 16711422) + 2634762 >> 1));
 			}
 		}
 
 		for (BiomesOld biome : BiomesOld.values()) {
-			if(biome == BiomesOld.BADLANDS || biome == BiomesOld.ERODED_BADLANDS || biome == BiomesOld.BADLANDS_PLATEAU
-					|| biome == BiomesOld.WOODED_BADLANDS_PLATEAU || biome == BiomesOld.MODIFIED_BADLANDS_PLATEAU
-					|| biome == BiomesOld.MODIFIED_WOODED_BADLANDS_PLATEAU) {
-				grassColorsOld.put(biome, new Colour4f(144, 129, 77));
-				foliageColorsOld.put(biome, new Colour4f(158, 129, 77));
-				continue;
-			} else if(biome == BiomesOld.SWAMP) {
-				foliageColorsOld.put(biome, new Colour4f(106, 112, 57));
-				grassColorsOld.put(biome, new Colour4f(106, 112, 57));
-				continue;
+			if (biome.getGrassColor() != null) { //The biome has hard-coded values for grass and foliage
+				grassColorsOld.put(biome, biome.getGrassColor());
+				foliageColorsOld.put(biome, biome.getFoliageColor());
+			} else {
+				Point colorCoords = biome.getColorCoords();
+				grassColorsOld.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
+				foliageColorsOld.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
 			}
-
-			Point colorCoords = biome.getColorCoords();
-			grassColorsOld.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
-			foliageColorsOld.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
-
-			if(biome == BiomesOld.DARK_FOREST || biome == BiomesOld.DARK_FOREST_HILLS) {
+			
+			//Dark Forest grass color is taken from grass.png and then modified
+			if (biome == BiomesOld.DARK_FOREST || biome == BiomesOld.DARK_FOREST_HILLS) {
 				grassColorsOld.replace(biome, new Colour4f((grassColorsOld.get(biome).toRgb() & 16711422) + 2634762 >> 1));
 			}
 		}
@@ -926,6 +926,14 @@ public class TexturePack
 			return foliageColors.get(Biomes.THE_VOID);
 		}
 	}
+	
+	public Colour4f getDryFoliageColor(Biome biome) {
+		if (biome instanceof Biomes) {
+			return dryFoliageColors.get(biome);
+		} else {
+			return dryFoliageColors.get(Biomes.THE_VOID);
+		}
+	}
 
 	public Color getGrassColour(final int x, final int y) {
 		final int actualX = x & 0xff;
@@ -936,6 +944,14 @@ public class TexturePack
 
 	public Color getFoliageColour(final int x, final int y) {
 		return new Color(foliageLookupImage.getRGB(x, y));
+	}
+	
+	public Color getDryFoliageColor(final int x, final int z) {
+		Color dryFoliageColor = new Color(255, 255, 255);
+		if (dryFoliageLookupImage != null) {
+			dryFoliageColor = new Color(dryFoliageLookupImage.getRGB(x, z));
+		}
+		return dryFoliageColor;
 	}
 	
 	public SubTexture getSubTile(final int tileX, final int tileY)

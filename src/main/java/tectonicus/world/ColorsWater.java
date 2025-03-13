@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -26,7 +26,8 @@ public enum ColorsWater {
 	END(new Colour4f(new Color(98, 82, 158))),
 	SWAMPY(new Colour4f(new Color(97,123,100))),
 	MANGROVE(new Colour4f(new Color(58, 122, 106))),
-	CHERRY(new Colour4f(new Color(93, 183, 239)));
+	CHERRY(new Colour4f(new Color(93, 183, 239))),
+	PALE(new Colour4f(new Color(118, 136, 157)));
 
 	private final Colour4f waterColor;
 }

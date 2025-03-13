@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -34,7 +34,7 @@ public enum BiomesOld implements Biome {
 	MOUNTAINS(3, 0.2f, 0.3f, COLD.getWaterColor()),
 	FOREST(4, 0.7f, 0.8f, TEMPERATE.getWaterColor()),
 	TAIGA(5, 0.25f, 0.8f, COLD.getWaterColor()),
-	SWAMP(6, 0.8f, 0.9f, SWAMPY.getWaterColor()),
+	SWAMP(6, 0.8f, 0.9f, SWAMPY.getWaterColor(), HardcodedColors.SWAMP, HardcodedColors.SWAMP),
 	RIVER(7, 0.5f, 0.5f, TEMPERATE.getWaterColor()),
 	NETHER_WASTES(8, 2.0f, 0.0f, null),
 	THE_END(9, 0.5f, 0.5f, END.getWaterColor()),
@@ -65,9 +65,9 @@ public enum BiomesOld implements Biome {
 	WOODED_MOUNTAINS(34, 0.2f, 0.3f, COLD.getWaterColor()),
 	SAVANNA(35, 1.2f, 0.0f, TEMPERATE.getWaterColor()),
 	SAVANNA_PLATEAU(36, 1.0f, 0.0f, TEMPERATE.getWaterColor()),
-	BADLANDS(37, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	WOODED_BADLANDS_PLATEAU(38, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	BADLANDS_PLATEAU(39, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
+	BADLANDS(37, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE),
+	WOODED_BADLANDS_PLATEAU(38, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE),
+	BADLANDS_PLATEAU(39, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE),
 	SMALL_END_ISLANDS(40, 0.5f, 0.5f, END.getWaterColor()),
 	END_MIDLANDS(41, 0.5f, 0.5f, END.getWaterColor()),
 	END_HIGHLANDS(42, 0.5f, 0.5f, END.getWaterColor()),
@@ -98,18 +98,22 @@ public enum BiomesOld implements Biome {
 	MODIFIED_GRAVELLY_MOUNTAINS(162, 0.2f, 0.3f, COLD.getWaterColor()),
 	SHATTERED_SAVANNA(163, 1.1f, 0.0f, TEMPERATE.getWaterColor()),
 	SHATTERED_SAVANNA_PLATEAU(164, 1.0f, 0.0f, TEMPERATE.getWaterColor()),
-	ERODED_BADLANDS(165, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	MODIFIED_WOODED_BADLANDS_PLATEAU(166, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
-	MODIFIED_BADLANDS_PLATEAU(167, 2.0f, 0.0f, TEMPERATE.getWaterColor()),
+	ERODED_BADLANDS(165, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE),
+	MODIFIED_WOODED_BADLANDS_PLATEAU(166, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE),
+	MODIFIED_BADLANDS_PLATEAU(167, 2.0f, 0.0f, TEMPERATE.getWaterColor(), HardcodedColors.BADLANDS_GRASS, HardcodedColors.BADLANDS_FOLIAGE),
 	BAMBOO_JUNGLE(168, 0.95f, 0.9f, LUSH.getWaterColor()),
 	BAMBOO_JUNGLE_HILLS(169, 0.95f, 0.9f, LUSH.getWaterColor()),
 	SOUL_SAND_VALLEY(170, 2.0f, 0.0f, null),
 	CRIMSON_FOREST(171, 2.0f, 0.0f, null),
 	WARPED_FOREST(172, 2.0f, 0.0f, null),
 	BASALT_DELTAS(173, 2.0f, 0.0f, null);
-
+	
+	BiomesOld(int numericId, float temperature, float rainfall, Colour4f waterColor, Colour4f grassColor, Colour4f foliageColor) {
+		this(numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, grassColor, foliageColor);
+	}
+	
 	BiomesOld(int numericId, float temperature, float rainfall, Colour4f waterColor) {
-		this(numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor);
+		this(numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, null, null);
 	}
 
 	private static final Map<Integer, BiomesOld> ID_LOOKUP = new HashMap<>(values().length);
@@ -119,6 +123,9 @@ public enum BiomesOld implements Biome {
 	private final float rainfall;
 	private final Point colorCoords;
 	private final Colour4f waterColor;
+	//Some biomes have hard-coded grass and foliage colors
+	private final Colour4f grassColor;
+	private final Colour4f foliageColor;
 
 	static
 	{
@@ -133,5 +140,11 @@ public enum BiomesOld implements Biome {
 
 	public String getName() {
 		return this.toString().toLowerCase();
+	}
+	
+	private static class HardcodedColors {
+		public static final Colour4f BADLANDS_GRASS = new Colour4f(144, 129, 77);
+		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(158, 129, 77);
+		public static final Colour4f SWAMP = new Colour4f(106, 112, 57);
 	}
 }
