@@ -607,33 +607,35 @@ public class OutputResourcesUtil {
 			Files.createDirectories(itemIconDir.toPath());
 			
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
-                                final String entryKey = entry.getKey();
-                                final ItemModel itemModel = entry.getValue();
-                                final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
-                                File outFile = new File(itemIconDir, entryKey + ".png");
-
-                                System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
-                                log.trace("\tRendering icon for: " + entryKey);
-
-                                String modelName = ultimatePredecessorModel.getParent();
-                                if (modelName == null) {
-                                        // Do not crash for blocks without parent (Air)
-                                        continue;
-                                }
-                                
-                                // Some items need special handling. Namely beds and builtin entities
-                                if (modelName.endsWith("builtin/entity")){
-                                        modelName = "minecraft:" + entryKey;
-                                        
-                                        if (entryKey.endsWith("_bed")) {
-                                                itemRenderer.renderBed(outFile, blockTypeRegistry, texturePack, modelName);
-                                                continue;
-                                        }
-                                        
-                                        List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);                                        
-                                        itemRenderer.renderItem(outFile, blockTypeRegistry, texturePack, modelName, transforms);
-                                        continue;
-                                }
+				final String entryKey = entry.getKey();
+				final ItemModel itemModel = entry.getValue();
+				final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
+				File outFile = new File(itemIconDir, entryKey + ".png");
+				
+				System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
+				log.trace("\tRendering icon for: " + entryKey);
+				String modelName = ultimatePredecessorModel.getParent();
+				
+				if (entryKey.endsWith("_bed")) {
+					modelName = "minecraft:" + entryKey;
+					itemRenderer.renderBed(outFile, blockTypeRegistry, texturePack, modelName);
+					continue;
+				}
+				
+				if (modelName == null) {
+					//TODO: multiple models now no longer have parent models because of the new item model definitions
+					//System.out.println("Models with no parent: " + entryKey);
+					// Do not crash for blocks without parent (Air)
+					continue;
+				}
+				
+				// Some items need special handling (shulker boxes, mob heads, banners, etc.)
+				if (modelName.endsWith("builtin/entity")) {  //TODO: this doesn't appear to exist anymore with 1.21.4
+					modelName = "minecraft:" + entryKey;
+					List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);
+					itemRenderer.renderItem(outFile, blockTypeRegistry, texturePack, modelName, transforms);
+					continue;
+				}
                                 
                                 // Items that are just 2d textures
                                 if (modelName.endsWith("builtin/generated")) {
