@@ -185,7 +185,7 @@ public class MeshUtil
 			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
 
 			selfFull = selfBlock.isFullBlock();
-			if (selfBlock.isTransparent()) {
+			if (selfBlock.isTransparent() && !model.getName().contains("leaves")) {
 				above = aboveBlock.isFullBlock();
 				below = belowBlock.isFullBlock();
 				north = northBlock.isFullBlock();
