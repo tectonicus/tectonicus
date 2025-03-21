@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -253,9 +253,6 @@ public class RawChunk {
                                 boolean armorStand = id.equals("ArmorStand") || id.equals("minecraft:armor_stand");
                                 
 				if (painting || itemFrame) {
-					IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
-					IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
-					IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
 					ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
 					ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
 
@@ -275,19 +272,34 @@ public class RawChunk {
 					} else if (oldDir != null && direction == 2) {
 						direction = 0;
 					}
-
-					int x = xTag.getValue();
-					final int y = yTag.getValue();
-					int z = zTag.getValue();
-
-					if (is18 && direction == 0) {
-						z = zTag.getValue() - 1;
-					} else if (is18 && direction == 1) {
-						x = xTag.getValue() + 1;
-					} else if (is18 && direction == 2) {
-						z = zTag.getValue() + 1;
-					} else if (is18 && direction == 3) {
-						x = xTag.getValue() - 1;
+					
+					int x = 0;
+					int y = 0;
+					int z = 0;
+					
+					IntTag xTag = NbtUtil.getChild(entity, "TileX", IntTag.class);
+					IntTag yTag = NbtUtil.getChild(entity, "TileY", IntTag.class);
+					IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
+					
+					if (xTag == null) { //probably 1.21.5+
+						int[] blockPos = NbtUtil.getChild(entity, "block_pos", IntArrayTag.class).getValue();
+						x = blockPos[0];
+						y = blockPos[1];
+						z = blockPos[2];
+					} else { // 1.21.4 and older
+						x = xTag.getValue();
+						y = yTag.getValue();
+						z = zTag.getValue();
+						
+						if (is18 && direction == 0) {
+							z = zTag.getValue() - 1;
+						} else if (is18 && direction == 1) {
+							x = xTag.getValue() + 1;
+						} else if (is18 && direction == 2) {
+							z = zTag.getValue() + 1;
+						} else if (is18 && direction == 3) {
+							x = xTag.getValue() - 1;
+						}
 					}
 
 					final int localX = x - (chunkX * WIDTH);
@@ -324,65 +336,77 @@ public class RawChunk {
 						itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, item, direction));
 					}
 				} else if (armorStand) {
-                                        ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
-                                        ListTag rotationTag = NbtUtil.getChild(entity, "Rotation", ListTag.class);
-                                        ByteTag invisibleTag = NbtUtil.getChild(entity, "Invisible", ByteTag.class);
-                                        ByteTag noBasePlateTag = NbtUtil.getChild(entity, "NoBasePlate", ByteTag.class);
-                                        
-                                        if (posTag != null && rotationTag != null && invisibleTag != null && noBasePlateTag != null) {
-                                                List<Tag> pos = posTag.getValue();
-
-                                                int x = (int)Math.round(Math.floor((double)pos.get(0).getValue()));
-                                                int y = (int)Math.round(Math.floor((double)pos.get(1).getValue()));
-                                                int z = (int)Math.round(Math.floor((double)pos.get(2).getValue()));
-                                                
-                                                final int localX = x - (chunkX * WIDTH);
-                                                int localY;
-                                                if (is118) {
-                                                        localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
-                                                } else {
-                                                        localY = y;
-                                                }
-                                                final int localZ = z - (chunkZ * DEPTH);
-                                                
-                                                List<Tag> rotation = rotationTag.getValue();
-                                                float yaw = (float)rotation.get(0).getValue();
-                                                
-                                                boolean invisible = invisibleTag.getValue() == 1;
-                                                boolean noBasePlate = noBasePlateTag.getValue() == 1;
-                                                
-                                                Item feetArmor = null;
-                                                Item legsArmor = null;
-                                                Item chestArmor = null;
-                                                Item headArmor = null;
-                                                
-                                                ListTag armorItemsTag = NbtUtil.getChild(entity, "ArmorItems", ListTag.class);
-                                                if (armorItemsTag != null) {
-                                                        Function<CompoundTag, Item> parseArmorItem = (armorItemTag) -> {
-                                                                StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
-                                                                
-                                                                if (armorIdTag != null) {
-                                                                        List<Object> components = parseComponentsTag(NbtUtil.getChild(armorItemTag, "components", CompoundTag.class));
-                                                                        if (components == null) {
-                                                                                // Maybe the item uses pre 1.20.5 format? Try parsing the "tag" tag
-                                                                                components = parseTagTag(NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class));
-                                                                        }
-                                                                        return new Item(armorIdTag.getValue(), components);
-                                                                }
-                                                                
-                                                                return null;
-                                                        };
-                                                        
-                                                        feetArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 0, CompoundTag.class));
-                                                        legsArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 1, CompoundTag.class));
-                                                        chestArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 2, CompoundTag.class));
-                                                        headArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 3, CompoundTag.class));
-                                                }
-                                                
-                                                armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ,
-                                                        yaw, invisible, noBasePlate, feetArmor, legsArmor, chestArmor, headArmor));
-                                        }                                        
-                                }
+					ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
+					ListTag rotationTag = NbtUtil.getChild(entity, "Rotation", ListTag.class);
+					ByteTag invisibleTag = NbtUtil.getChild(entity, "Invisible", ByteTag.class);
+					ByteTag noBasePlateTag = NbtUtil.getChild(entity, "NoBasePlate", ByteTag.class);
+					
+					if (posTag != null && rotationTag != null && invisibleTag != null && noBasePlateTag != null) {
+						List<Tag> pos = posTag.getValue();
+						
+						int x = (int) Math.round(Math.floor((double) pos.get(0).getValue()));
+						int y = (int) Math.round(Math.floor((double) pos.get(1).getValue()));
+						int z = (int) Math.round(Math.floor((double) pos.get(2).getValue()));
+						
+						final int localX = x - (chunkX * WIDTH);
+						int localY;
+						if (is118) {
+							localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
+						} else {
+							localY = y;
+						}
+						final int localZ = z - (chunkZ * DEPTH);
+						
+						List<Tag> rotation = rotationTag.getValue();
+						float yaw = (float) rotation.get(0).getValue();
+						
+						boolean invisible = invisibleTag.getValue() == 1;
+						boolean noBasePlate = noBasePlateTag.getValue() == 1;
+						
+						Item feetArmor = null;
+						Item legsArmor = null;
+						Item chestArmor = null;
+						Item headArmor = null;
+						
+						
+						Function<CompoundTag, Item> parseArmorItem = (armorItemTag) -> {
+							if (armorItemTag != null) {
+								StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
+								
+								if (armorIdTag != null) {
+									List<Object> components = parseComponentsTag(NbtUtil.getChild(armorItemTag, "components", CompoundTag.class));
+									if (components == null) {
+										// Maybe the item uses pre 1.20.5 format? Try parsing the "tag" tag
+										components = parseTagTag(NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class));
+									}
+									return new Item(armorIdTag.getValue(), components);
+								}
+							}
+							
+							return null;
+						};
+						
+						//1.21.5+
+						CompoundTag equipment = NbtUtil.getChild(entity, "equipment", CompoundTag.class);
+						//1.21.4 and older
+						ListTag armorItemsTag = NbtUtil.getChild(entity, "ArmorItems", ListTag.class);
+						
+						if (equipment != null) {
+							feetArmor = parseArmorItem.apply(NbtUtil.getChild(equipment, "feet", CompoundTag.class));
+							legsArmor = parseArmorItem.apply(NbtUtil.getChild(equipment, "legs", CompoundTag.class));
+							chestArmor = parseArmorItem.apply(NbtUtil.getChild(equipment, "chest", CompoundTag.class));
+							headArmor = parseArmorItem.apply(NbtUtil.getChild(equipment, "head", CompoundTag.class));
+						} else if (armorItemsTag != null) {
+							feetArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 0, CompoundTag.class));
+							legsArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 1, CompoundTag.class));
+							chestArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 2, CompoundTag.class));
+							headArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 3, CompoundTag.class));
+						}
+						
+						armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ,
+								yaw, invisible, noBasePlate, feetArmor, legsArmor, chestArmor, headArmor));
+					}
+				}
 			}
 		}
 	}
@@ -741,14 +765,17 @@ public class RawChunk {
                                 components.add(new PotionContentsTag(potionTag.getValue()));
                         }
                 }
-                
-                final CompoundTag dyedColorTag = NbtUtil.getChild(componentsTag, "minecraft:dyed_color", CompoundTag.class);
-                if (dyedColorTag != null) {
-                        IntTag rgbTag = NbtUtil.getChild(dyedColorTag, "rgb", IntTag.class);
-                        if (rgbTag != null) {
-                                components.add(new DyedColorTag(rgbTag.getValue()));
-                        }
-                }
+			
+			final IntTag dyedColorTagInt = NbtUtil.getChild(componentsTag, "minecraft:dyed_color", IntTag.class); //As of 1.21.5 dyed_color will always be an int tag
+			final CompoundTag dyedColorTag = NbtUtil.getChild(componentsTag, "minecraft:dyed_color", CompoundTag.class);
+			if (dyedColorTagInt != null) {
+				components.add(new DyedColorTag(dyedColorTagInt.getValue()));
+			} else if (dyedColorTag != null) {
+				IntTag rgbTag = NbtUtil.getChild(dyedColorTag, "rgb", IntTag.class);
+				if (rgbTag != null) {
+					components.add(new DyedColorTag(rgbTag.getValue()));
+				}
+			}
                         
                 final StringTag customNameTag = NbtUtil.getChild(componentsTag, "minecraft:custom_name", StringTag.class);
                 if (customNameTag != null) {

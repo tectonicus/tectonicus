@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
 import org.jnbt.DoubleTag;
+import org.jnbt.IntArrayTag;
 import org.jnbt.IntTag;
 import org.jnbt.ListTag;
 import org.jnbt.NBTInputStream;
@@ -148,13 +149,23 @@ public class Player {
 			}
 		}
 		
+		//May exist in 1.21.4 and older
 		IntTag spawnXTag = NbtUtil.getChild(root, "SpawnX", IntTag.class);
 		IntTag spawnYTag = NbtUtil.getChild(root, "SpawnY", IntTag.class);
 		IntTag spawnZTag = NbtUtil.getChild(root, "SpawnZ", IntTag.class);
-		if (spawnXTag != null && spawnYTag != null && spawnZTag != null) {
+		
+		//May exist in 1.21.5 and newer
+		CompoundTag respawnTag = NbtUtil.getChild(root, "respawn", CompoundTag.class);
+		
+		if (respawnTag != null) {
+			int[] pos = NbtUtil.getChild(respawnTag, "pos", IntArrayTag.class).getValue();
+			spawnPosition = new Vector3l(pos[0], pos[1], pos[2]);
+			spawnDimension = Dimension.byId(NbtUtil.getString(respawnTag, "dimension", "minecraft:overworld"));
+		} else if (spawnXTag != null && spawnYTag != null && spawnZTag != null) {
 			spawnPosition = new Vector3l(spawnXTag.getValue(), spawnYTag.getValue(), spawnZTag.getValue());
 		}
 		
+		//May exist in 1.21.4 and older
 		StringTag spawnDimensionTag = NbtUtil.getChild(root, "SpawnDimension", StringTag.class);
 		if (spawnDimensionTag != null) {
 			spawnDimension = Dimension.byId(spawnDimensionTag.getValue());

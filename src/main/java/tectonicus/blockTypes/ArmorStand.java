@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -250,52 +250,72 @@ public class ArmorStand implements BlockType
                 
                 mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), x, y, z, Rotation.AntiClockwise, angle);
         }
-        
-        private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor, byte layer, ArmorMeshBuilder meshBuilder) {
-                final float angle = armorStand.getYaw();
-			
-				int underscoreIndex = armor.id.indexOf('_');
-                String armorMaterial = armor.id.substring("minecraft:".length(), underscoreIndex != -1 ? underscoreIndex : armor.id.length());
-                if (armorMaterial.equals("golden")) {
-                        armorMaterial = "gold";
-                }
-                
-                SubTexture layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d.png", armorMaterial, layer), null);
-                SubTexture overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d_overlay.png", armorMaterial, layer), null);
-                
-                ArmorTrimTag armorTrim = armor.getComponent(tectonicus.raw.ArmorTrimTag.class);
-                if (armorTrim != null) {
-                        final String pattern = armorTrim.pattern.substring("minecraft:".length());
-                        final String suffix = layer == 2 ? "_leggings" : "";
-                        final String material = armorTrim.material.substring("minecraft:".length());
-
-                        final String trimTextureFile = String.format("assets/minecraft/textures/trims/models/armor/%s%s.png", pattern, suffix);
-                        final String materialTextureFile = String.format("assets/minecraft/textures/trims/color_palettes/%s.png", material);
-                        final String paletteTextureFile = String.format("assets/minecraft/textures/trims/color_palettes/trim_palette.png", pattern, suffix);
-                        
-                        SubTexture trimTexture = texturePack.findPalettedTexture(trimTextureFile, materialTextureFile, paletteTextureFile);
-
-                        meshBuilder.build(x, y, z, geometry, colour, angle, trimTexture, 1);
-                }
-                
-                if (layerTexture == null) {
-                        // Armor texture not found. Maybe it is some other item (e.g. mob head)
-                        // Try finding relevant item in block registry and add its geometry
-                        buildOtherItemMesh(x, y, z, world, registry, rawChunk, geometry, armorStand, colour, armor);
-                        return;
-                }
-                
-                if (armorMaterial.equals("leather")) {
-                        meshBuilder.build(x, y, z, geometry, colour, angle, overlayLayerTexture, 0);
-                 
-                        DyedColorTag dyedColor = armor.getComponent(DyedColorTag.class);
-                        colour = dyedColor == null
-                                ? new Vector4f(106/255f, 64/255f, 41/255f, 1) // Default brown leather
-                                : new Vector4f(((dyedColor.color >> 16) & 255)/255f, ((dyedColor.color >> 8) & 255)/255f, (dyedColor.color & 255)/255f, 1);
-                }
+	
+	private void buildArmorMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor, byte layer, ArmorMeshBuilder meshBuilder) {
+		final float angle = armorStand.getYaw();
+		final String suffix = layer == 2 ? "_leggings" : "";
 		
-                meshBuilder.build(x, y, z, geometry, colour, angle, layerTexture, -1);
-        }
+		int underscoreIndex = armor.id.indexOf('_');
+		String armorMaterial = armor.id.substring("minecraft:".length(), underscoreIndex != -1 ? underscoreIndex : armor.id.length());
+		if (armorMaterial.equals("golden")) {
+			armorMaterial = "gold";
+		}
+		
+		SubTexture layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d.png", armorMaterial, layer), null);
+		if (layerTexture == null) { //Check the new 1.21.2+ armor texture location
+			if (armorMaterial.equals("turtle")) {
+				armorMaterial = "turtle_scute";
+			}
+			
+			layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/entity/equipment/humanoid%s/%s.png", suffix, armorMaterial), null);
+		}
+		
+		ArmorTrimTag armorTrim = armor.getComponent(tectonicus.raw.ArmorTrimTag.class);
+		if (armorTrim != null) {
+			
+			final String pattern = armorTrim.pattern.substring("minecraft:".length());
+			final String material = armorTrim.material.substring("minecraft:".length());
+			
+			final String materialTextureFile = String.format("assets/minecraft/textures/trims/color_palettes/%s.png", material);
+			final String paletteTextureFile = "assets/minecraft/textures/trims/color_palettes/trim_palette.png";
+			
+			//1.21.2+ location
+			String trimTextureFile = String.format("assets/minecraft/textures/trims/entity/humanoid%s/%s.png", suffix, pattern);
+			
+			//This is a hacky but simple way to do version checking
+			boolean hasTrimTexture = texturePack.findTextureOrDefault(trimTextureFile, null) != null;
+			if (!hasTrimTexture) { //1.21.1 and older
+				trimTextureFile = String.format("assets/minecraft/textures/trims/models/armor/%s%s.png", pattern, suffix);
+			}
+			
+			SubTexture trimTexture = texturePack.findPalettedTexture(trimTextureFile, materialTextureFile, paletteTextureFile);
+			
+			meshBuilder.build(x, y, z, geometry, colour, angle, trimTexture, 1);
+		}
+		
+		if (layerTexture == null) {
+			// Armor texture still not found. Maybe it is some other item (e.g. mob head)
+			// Try finding relevant item in block registry and add its geometry
+			buildOtherItemMesh(x, y, z, world, registry, rawChunk, geometry, armorStand, colour, armor);
+			return;
+		}
+		
+		if (armorMaterial.equals("leather")) {
+			SubTexture overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/entity/equipment/humanoid%s/leather_overlay.png", suffix), null);
+			
+			if (overlayLayerTexture == null) { //Check 1.21.1 and older location
+				overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/leather_layer_%d_overlay.png", layer), null);
+			}
+			meshBuilder.build(x, y, z, geometry, colour, angle, overlayLayerTexture, 0);
+			
+			DyedColorTag dyedColor = armor.getComponent(DyedColorTag.class);
+			colour = dyedColor == null
+					? new Vector4f(106 / 255f, 64 / 255f, 41 / 255f, 1) // Default brown leather
+					: new Vector4f(((dyedColor.color >> 16) & 255) / 255f, ((dyedColor.color >> 8) & 255) / 255f, (dyedColor.color & 255) / 255f, 1);
+		}
+		
+		meshBuilder.build(x, y, z, geometry, colour, angle, layerTexture, -1);
+	}
         
         private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor) {
                 //TODO: create elytra model
