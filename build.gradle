@@ -52,7 +52,7 @@ dependencies {
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.18.3",
-				   "ch.qos.logback:logback-classic:1.5.17",
+				   "ch.qos.logback:logback-classic:1.5.18",
 				   "com.h2database:h2-mvstore:2.3.232",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion",
 				   "org.sejda.imageio:webp-imageio:0.1.6")
