@@ -62,10 +62,10 @@ dependencies {
 	compileOnly "org.projectlombok:lombok:$lombokVersion"
 	annotationProcessor("org.projectlombok:lombok:$lombokVersion",
 						"info.picocli:picocli-codegen:$picocliVersion")
-	
-	testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion",
-					   "org.hamcrest:hamcrest:3.0")
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+
+	testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+	testImplementation("org.hamcrest:hamcrest:3.0")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testCompileOnly "org.projectlombok:lombok:$lombokVersion"
 	testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
 }
