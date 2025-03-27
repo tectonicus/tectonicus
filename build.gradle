@@ -1,18 +1,9 @@
-/*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
- *
- * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
- * the top-level directory of this distribution.  The full list of project contributors is contained
- * in the AUTHORS file found in the same location.
- *
- */
-
 import java.time.ZonedDateTime
 
 plugins {
 	id "application"
 	id "org.ajoberstar.grgit" version "5.3.0"
-	id("com.gradleup.shadow") version "8.3.5"
+	id("com.gradleup.shadow") version "8.3.6"
 	id "maven-publish"
 }
 
@@ -39,7 +30,7 @@ dependencies {
 	def lwjglVersion = "3.3.6"
 	def picocliVersion = "4.7.6"
 	def lombokVersion = "1.18.36"
-	def junitVersion = "5.11.4"
+	def junitVersion = "5.12.1"
 	def caffeineVersion = "3.2.0"
 
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
@@ -52,11 +43,11 @@ dependencies {
 				   "info.picocli:picocli:$picocliVersion@jar",
 				   "org.jogamp.jogl:jogl-all:2.3.2",
 				   "com.fasterxml.jackson.core:jackson-databind:2.18.3",
-				   "ch.qos.logback:logback-classic:1.5.17",
+				   "ch.qos.logback:logback-classic:1.5.18",
 				   "com.h2database:h2-mvstore:2.3.232",
 				   "com.github.ben-manes.caffeine:caffeine:$caffeineVersion",
 				   "org.sejda.imageio:webp-imageio:0.1.6")
-	implementation files ("libs/jnbt.jar", "libs/jpct.jar", "libs/ProcessingCore.jar", "libs/BiomeExtractor.jar")
+	implementation files ("libs/jnbt.jar", "libs/BiomeExtractor.jar")
 
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows",
 				"org.lwjgl:lwjgl-glfw::natives-windows",
@@ -93,7 +84,6 @@ shadowJar {
 		writer.close()
 	}
 
-	exclude ("processing/**", "com/threed/**")
 	minimize {
 		exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
 		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,54 +11,29 @@ package tectonicus.rasteriser;
 
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.configuration.Configuration.RasteriserType;
-import tectonicus.rasteriser.jpct.JpctRasteriser;
 import tectonicus.rasteriser.lwjgl.LwjglRasteriser;
-import tectonicus.rasteriser.processing.ProcessingRasteriser;
 
 @Slf4j
-public class RasteriserFactory
-{
+public class RasteriserFactory {
 	
-	public enum DisplayType
-	{
+	public enum DisplayType {
 		WINDOW,
 		OFFSCREEN,
 		OFFSCREEN_EGL
 	}
 	
-	public static Rasteriser createRasteriser(RasteriserType type, DisplayType displayType, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples)
-	{
+	public static Rasteriser createRasteriser(RasteriserType type, DisplayType displayType, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples) {
 		Rasteriser result = null;
 		
-		if (type == RasteriserType.LWJGL)
-		{
-			try
-			{
+		//We only have one rasterizer type at the moment, there were others meant for software rendering but they were never finished and have been removed
+		if (type == RasteriserType.LWJGL) {
+			try {
 				result = new LwjglRasteriser(displayType, displayWidth, displayHeight, colourDepth, alphaBits, depthBits, numSamples);
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				log.error("Exception: ", e);
 			}
 		}
-		else if (type == RasteriserType.PROCESSING)
-		{
-			result = new ProcessingRasteriser(displayType, displayWidth, displayHeight);
-		}
-		else if (type == RasteriserType.JPCT)
-		{
-			result = new JpctRasteriser(displayType, displayWidth, displayHeight);
-		}
-		
-		// Still null? Try the fallback option
-		/*
-		if (result == null)
-		{
-			result = new ProcessingRasteriser(displayType, displayWidth, displayHeight);
-		}
-		*/
 		
 		return result;
 	}
-	
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,7 +13,6 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.configuration.Configuration.Mode;
-import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.filter.BeaconFilterType;
 import tectonicus.configuration.filter.ChestFilterType;
@@ -79,18 +78,6 @@ public class ParseUtil
 			dimension = Dimension.END;
 		
 		return dimension;
-	}
-	
-	public static RasteriserType parseRasteriserType(String rasteriserStr)
-	{
-		rasteriserStr = rasteriserStr.toLowerCase();
-		
-		RasteriserType rasteriser = RasteriserType.LWJGL;
-
-		if (rasteriserStr.equals("processing"))
-			rasteriser = RasteriserType.PROCESSING;
-		
-		return rasteriser;
 	}
 	
 	public static ImageFormat parseImageFormat(String imageStr)

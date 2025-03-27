@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -20,27 +20,22 @@ public interface Configuration  //TODO: is this interface needed?
 {
 	@Getter
 	@RequiredArgsConstructor
-	enum Mode
-	{
+	enum Mode {
 		CMD("Command Line"),
 		GUI("Gui"),
 		INTERACTIVE("Interactive"),
 		PLAYERS("Export Players"),
 		VIEWS("Render Views"),
 		PROFILE("Profile");
-
+		
 		private final String name;
 	}
 	
-	enum RasteriserType
-	{
-		LWJGL,
-		PROCESSING,
-		JPCT
+	enum RasteriserType {
+		LWJGL
 	}
 	
-	enum RenderStyle
-	{
+	enum RenderStyle {
 		REGULAR,
 		CAVE,
 		EXPLORED_CAVES,
@@ -52,25 +47,31 @@ public interface Configuration  //TODO: is this interface needed?
 	Mode getMode();
 	
 	RasteriserType getRasteriserType();
+	
 	boolean isUseEGL();
 	
 	boolean eraseOutputDir();
 	
 	File getOutputDir();
+	
 	File getCacheDir();
+	
 	File getWorldDir();
 	
 	boolean useCache();
 	
 	Level getLoggingLevel();
+	
 	void setLoggingLevel(Level loggingLevel);
 	
 	File getMinecraftJar();
+	
 	void setMinecraftJar(File minecraftJar);
 	
 	File getTexturePack();
 	
 	String getOutputHtmlName();
+	
 	String getHtmlTitle();
 	
 	String getDefaultSkin();
@@ -94,19 +95,21 @@ public interface Configuration  //TODO: is this interface needed?
 	boolean arePortalsInitiallyVisible();
 	
 	boolean areBedsInitiallyVisible();
-
+	
 	boolean areRespawnAnchorsInitiallyVisible();
 	
 	boolean isSpawnInitiallyVisible();
 	
 	boolean areViewsInitiallyVisible();
+	
 	boolean isChestsInitiallyVisible();
+	
 	boolean isBeaconsInitiallyVisible();
 	
 	boolean isVerbose();
 	
 	boolean forceLoadAwt();
-
+	
 	boolean isUsingProgrammerArt();
 	
 	int getTileSize();
@@ -122,6 +125,8 @@ public interface Configuration  //TODO: is this interface needed?
 	String getUseCdn();
 	
 	int numMaps();
+	
 	Map getMap(final int index);
+	
 	List<Map> getMaps();
 }

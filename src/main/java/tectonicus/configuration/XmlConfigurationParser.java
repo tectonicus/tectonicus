@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -72,7 +72,6 @@ import static tectonicus.configuration.ParseUtil.parseOutputDir;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterFile;
 import static tectonicus.configuration.ParseUtil.parsePlayerFilterType;
 import static tectonicus.configuration.ParseUtil.parsePortalFilter;
-import static tectonicus.configuration.ParseUtil.parseRasteriserType;
 import static tectonicus.configuration.ParseUtil.parseRenderStyle;
 import static tectonicus.configuration.ParseUtil.parseSignFilter;
 import static tectonicus.configuration.ParseUtil.parseSinglePlayerName;
@@ -177,11 +176,9 @@ public class XmlConfigurationParser
 		
 		// Parse rasteriser config
 		Element rasteriserNode = getChild(root, "rasteriser");
-		if (rasteriserNode != null)
-		{
-			RasteriserType rasteriser = parseRasteriserType(getString(rasteriserNode, "type"));
-			config.setRasteriserType(rasteriser);
-
+		if (rasteriserNode != null) {
+			config.setRasteriserType(RasteriserType.LWJGL);
+			
 			config.setColourDepth(parseColourDepth(getString(rasteriserNode, "colourDepth")));
 			config.setAlphaBits(parseAlphaBits(getString(rasteriserNode, "alphaBits")));
 			config.setNumSamples(parseNumSamples(getString(rasteriserNode, "numSamples")));
