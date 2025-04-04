@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -225,7 +225,7 @@ public class DrawModelTest
 		//glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_ALPHA_TEST);
-		rasteriser.setAlphaFunc(AlphaFunc.Greater, 0.4f);
+		rasteriser.setAlphaFunc(AlphaFunc.GREATER, 0.4f);
 		//glEnable(GL_MULTISAMPLE);
 		//glPolygonMode(GL_FRONT, GL_LINE);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,7 +15,7 @@ import org.joml.Vector4f;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.MutableViewConfig;
 import tectonicus.rasteriser.Mesh;
-import tectonicus.rasteriser.PrimativeType;
+import tectonicus.rasteriser.PrimitiveType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -307,7 +307,7 @@ public class InteractiveRenderer
 	
 	public static void drawAxies(Rasteriser rasteriser)
 	{
-		rasteriser.beginShape(PrimativeType.Lines);
+		rasteriser.beginShape(PrimitiveType.LINES);
 		{
 			// Red x axis
 

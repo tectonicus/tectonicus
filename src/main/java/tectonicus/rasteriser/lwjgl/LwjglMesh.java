@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,22 +9,23 @@
 
 package tectonicus.rasteriser.lwjgl;
 
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-
 import com.jogamp.opengl.GL2;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
+import lombok.RequiredArgsConstructor;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
 import tectonicus.util.Colour4f;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+
+@RequiredArgsConstructor
 public class LwjglMesh implements Mesh
 {
-	private LwjglTexture texture;
+	private final LwjglTexture texture;
 	
 	private FloatBuffer vertices;
 	private ByteBuffer colours;
@@ -37,11 +38,6 @@ public class LwjglMesh implements Mesh
 	private int displayList;
 	
 	private boolean isFinalised;
-	
-	public LwjglMesh(LwjglTexture texture)
-	{
-		this.texture = texture;
-	}
 	
 	@Override
 	public void destroy()
@@ -202,40 +198,18 @@ public class LwjglMesh implements Mesh
 	}
 	
 	@Override
-	public void draw(final float xOffset, final float yOffset, final float zOffset)
-	{
+	public void draw(final float xOffset, final float yOffset, final float zOffset) {
 		if (vertices == null)
 			return;
 		
 		assert (numVertices > 0);
 		
-	//	if (hasDisplayList)
-		{
-	//		GL11.glCallList(displayList);
-		}
-	//	else
-		{
-	//		org.lwjgl.opengl.Util.checkGLError();
-			
-		//	displayList = GL11.glGenLists(1);
-			
-		//	GL11.glNewList(displayList, GL11.GL_COMPILE);
-			{
-				GL11.glPushMatrix();
-				GL11.glTranslatef(xOffset, yOffset, zOffset);
-				
-				GL11.glDrawArrays(GL11.GL_QUADS, 0, numVertices);
-				
-				GL11.glPopMatrix();
-			}
-		//	GL11.glEndList();
-			
-		//	GL11.glCallList(displayList);
-			
-		//	hasDisplayList = true;
-			
-		//	org.lwjgl.opengl.Util.checkGLError();
-		}
+		GL11.glPushMatrix();
+		GL11.glTranslatef(xOffset, yOffset, zOffset);
+		
+		GL11.glDrawArrays(GL11.GL_QUADS, 0, numVertices);
+		
+		GL11.glPopMatrix();
 	}
 
 	@Override

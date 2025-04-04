@@ -44,7 +44,7 @@ import tectonicus.exceptions.IncompatibleVersionException;
 import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
-import tectonicus.rasteriser.PrimativeType;
+import tectonicus.rasteriser.PrimitiveType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
@@ -583,7 +583,7 @@ public class World implements BlockContext
 			rasteriser.enableDepthTest(false);
 			rasteriser.enableBlending(false);
 			
-			rasteriser.beginShape(PrimativeType.Quads);
+			rasteriser.beginShape(PrimitiveType.QUADS);
 			{
 				if (genAlphaMask)
 					rasteriser.colour(0, 0, 0, 0);
@@ -650,7 +650,7 @@ public class World implements BlockContext
 		}
 		//System.out.println("Num visible chunks: " + visibleChunks.size());
 		rasteriser.enableDepthTest(true);
-		rasteriser.setBlendFunc(BlendFunc.Regular);
+		rasteriser.setBlendFunc(BlendFunc.REGULAR);
 		
 		
 		drawGeometry(camera, visibleChunks);
@@ -665,11 +665,11 @@ public class World implements BlockContext
 			
 			// Write the new alpha values
 			{
-				rasteriser.setBlendFunc(BlendFunc.Additive);
+				rasteriser.setBlendFunc(BlendFunc.ADDITIVE);
 				
 				drawGeometry(camera, visibleChunks);
 				
-				rasteriser.setBlendFunc(BlendFunc.Regular);
+				rasteriser.setBlendFunc(BlendFunc.REGULAR);
 			}
 			
 			rasteriser.enableColourWriting(true, false);
@@ -697,7 +697,7 @@ public class World implements BlockContext
 		// Alpha test pass
 		
 		rasteriser.enableAlphaTest(true);
-		rasteriser.setAlphaFunc(AlphaFunc.Greater, 0.4f);
+		rasteriser.setAlphaFunc(AlphaFunc.GREATER, 0.4f);
 		rasteriser.enableBlending(false);
 		
 		for (ChunkCoord coord : visible)
