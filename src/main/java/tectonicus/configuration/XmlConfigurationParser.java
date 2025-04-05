@@ -279,10 +279,9 @@ public class XmlConfigurationParser
 			
 			// Chest filter
 			Element chestsNode = getChild(mapElement, "chests");
-			if (chestsNode != null)
-			{
-				ChestFilterType chestFilterType = parseChestFilter( getString(chestsNode, "filter") );
-				map.setChestFilter( new ChestFilter(chestFilterType) );
+			if (chestsNode != null) {
+				ChestFilterType chestFilterType = parseChestFilter(getString(chestsNode, "filter"));
+				map.setChestFilter(new ChestFilter(chestFilterType));
 			}
 			
 			// Beacon filter

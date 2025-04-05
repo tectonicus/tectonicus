@@ -288,15 +288,14 @@ public class ParseUtil
 		return portalFilterType;
 	}
 	
-	public static ChestFilterType parseChestFilter(String chestFilterStr)
-	{
+	public static ChestFilterType parseChestFilter(String chestFilterStr) {
 		chestFilterStr = chestFilterStr.toLowerCase();
 		
-		ChestFilterType chestFilterType = ChestFilterType.All;
-		if (chestFilterStr.equalsIgnoreCase("none"))
-			chestFilterType = ChestFilterType.None;
+		ChestFilterType chestFilterType = ChestFilterType.NONE;
+		if (chestFilterStr.equalsIgnoreCase("all"))
+			chestFilterType = ChestFilterType.ALL;
 		else if (chestFilterStr.equalsIgnoreCase("player"))
-			chestFilterType = ChestFilterType.Player;
+			chestFilterType = ChestFilterType.PLAYER;
 		
 		return chestFilterType;
 	}
