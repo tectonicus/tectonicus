@@ -1,3 +1,12 @@
+<!--
+  ~ Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+  ~
+  ~ This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+  ~ the top-level directory of this distribution.  The full list of project contributors is contained
+  ~ in the AUTHORS file found in the same location.
+  ~
+  -->
+
 <tectonicus version="2">
 <!--
 	THIS IS NOT A VALID CONFIGURATION FILE.
@@ -51,7 +60,7 @@
 	<map
 		name=""
 		worldDir="/Users/xxxx/AppData/Roaming/.minecraft/saves/My World" <!-- required -->
-		dimension="terra / nether / end"
+		dimension="overworld / nether / end"
 		closestZoomSize="12"
 		cameraAngle="45"
 		cameraElevation="45 / 10 - 90"
@@ -104,7 +113,7 @@
 			renderStyle="normal / cave / nether / exploredcaves"
 			imageFormat="png / jpg / gif"
 			imageCompressionLevel="0.75 / 0.1 - 1.0"
-			backgroundColor="#e5e3df / #281932" <!-- Any hex color value works. The two defaults shown are for Terra/Nether and End dimensions respectively-->
+			backgroundColor="#e5e3df / #281932" <!-- Any hex color value works. The two defaults shown are for Overworld/Nether and End dimensions respectively-->
 			useDefaultBlocks="true / false"
 			customBlocks="."
 		/>

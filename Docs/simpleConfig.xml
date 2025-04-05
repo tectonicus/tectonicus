@@ -1,7 +1,16 @@
+<!--
+  ~ Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+  ~
+  ~ This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+  ~ the top-level directory of this distribution.  The full list of project contributors is contained
+  ~ in the AUTHORS file found in the same location.
+  ~
+  -->
+
 <tectonicus version="2">
 <!--
 	This sample configuration demonstrates the most commonly used configuration settings.
-	It will render a map of the entire world at daytime with all markers shown.
+	It will render a map of the entire Overworld at daytime with all markers shown.
 
 	You only need to change the "worldDir" path below to your Minecraft world folder,
 	and the "outputDir" path if desired. Increasing the "closestZoomSize" to "24" or "48" will
@@ -19,7 +28,6 @@
 	<map
 		name="My World Map"
 		worldDir="C:\Users\xxxx\AppData\Roaming\.minecraft\saves\My World"
-		dimension="terra"
 		closestZoomSize="12"
 	>
 		<layer
