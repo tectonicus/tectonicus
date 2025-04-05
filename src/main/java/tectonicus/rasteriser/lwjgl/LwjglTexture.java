@@ -16,7 +16,7 @@ import tectonicus.rasteriser.Texture;
 @RequiredArgsConstructor
 @Getter
 public class LwjglTexture implements Texture {
+	private final int id;
 	private final int width;
 	private final int height;
-	private final int id;
 }
