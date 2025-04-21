@@ -28,6 +28,7 @@ import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
+import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
@@ -312,8 +313,9 @@ public class TileRenderer
                 if (world == null) {
                         System.out.println("Unable to render. No map is defined in config.");
                 } else {
+                        ItemModelDefinitionRegistry itemModelDefinitionRegistry = new ItemModelDefinitionRegistry(world.getTexturePack());
                         ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
-                        outputInventoryItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry);
+                        outputInventoryItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry, itemModelDefinitionRegistry);
                         outputHtmlResources(world.getTexturePack(), playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
                 }
 		
