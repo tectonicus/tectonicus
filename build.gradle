@@ -28,7 +28,7 @@ repositories {
 
 dependencies {
 	def lwjglVersion = "3.3.6"
-	def picocliVersion = "4.7.6"
+	def picocliVersion = "4.7.7"
 	def lombokVersion = "1.18.36"
 	def junitVersion = "5.12.1"
 	def caffeineVersion = "3.2.0"
