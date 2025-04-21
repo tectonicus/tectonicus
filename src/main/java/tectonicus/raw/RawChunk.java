@@ -792,20 +792,24 @@ public class RawChunk {
                 
                 if (enchantmentsTag != null) {
                         CompoundTag levelsTag = NbtUtil.getChild(enchantmentsTag, "levels", CompoundTag.class);
-                        if (levelsTag != null) {
-                                List<EnchantmentTag> enchantments = new ArrayList<>();
+                        
+                        if (levelsTag == null) {
+                                // From 1.21.5, simplified format is used, where levels field is inlined to top-level
+                                levelsTag = enchantmentsTag;
+                        } 
 
-                                for (var levelTagId : levelsTag.getValue().keySet()) {                                                
-                                        IntTag levelTag = NbtUtil.getChild(levelsTag, levelTagId, IntTag.class);
-                                        if (levelTag != null) {
-                                                enchantments.add(new EnchantmentTag(levelTagId, levelTag.getValue()));
-                                        }
+                        List<EnchantmentTag> enchantments = new ArrayList<>();
+
+                        for (var levelTagId : levelsTag.getValue().keySet()) {                                                
+                                IntTag levelTag = NbtUtil.getChild(levelsTag, levelTagId, IntTag.class);
+                                if (levelTag != null) {
+                                        enchantments.add(new EnchantmentTag(levelTagId, levelTag.getValue()));
                                 }
-
-                                components.add(isStoredEnchantments
-                                        ? new StoredEnchantmentsTag(enchantments)
-                                        : new EnchantmentsTag(enchantments));
                         }
+
+                        components.add(isStoredEnchantments
+                                ? new StoredEnchantmentsTag(enchantments)
+                                : new EnchantmentsTag(enchantments));
                 }
                 
                 CompoundTag trimTag = NbtUtil.getChild(componentsTag, "minecraft:trim", CompoundTag.class);
