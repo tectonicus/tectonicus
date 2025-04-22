@@ -43,9 +43,13 @@ public class ItemModelDefinitionRegistry {
 
 	public void deserializeItemModels() {
 		log.debug("Loading item model definition json from minecraft jar");
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
-			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/items"))) {
-			deserializeItemModels(entries);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null)) {
+                        Path itemModelDefinitionsPath = fs.getPath("/assets/minecraft/items");
+                        if (Files.exists(itemModelDefinitionsPath)) {
+                                try (DirectoryStream<Path> entries = Files.newDirectoryStream(itemModelDefinitionsPath)) {
+                                        deserializeItemModels(entries);
+                                }                                
+                        }                            			
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		}
