@@ -30,7 +30,7 @@ dependencies {
 	def lwjglVersion = "3.3.6"
 	def picocliVersion = "4.7.6"
 	def lombokVersion = "1.18.36"
-	def junitVersion = "5.12.1"
+	def junitVersion = "5.13.0"
 	def caffeineVersion = "3.2.0"
 
 	implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
