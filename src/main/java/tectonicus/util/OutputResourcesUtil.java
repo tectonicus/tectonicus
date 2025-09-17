@@ -29,6 +29,8 @@ import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.filter.PlayerFilter;
 import tectonicus.configuration.filter.SignFilterType;
+import tectonicus.itemmodeldefinitionregistry.ItemModelDefinition;
+import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
@@ -594,7 +596,7 @@ public class OutputResourcesUtil {
                 return result;
         }
 
-	public static void outputInventoryItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry) {
+	public static void outputInventoryItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry) {
 		log.info("Rendering icons for inventory items");
 		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
 			log.info("Skipping icon rendering. Chest items are supported for 1.13 and newer.");
@@ -606,6 +608,31 @@ public class OutputResourcesUtil {
 			File itemIconDir = new File(args.getOutputDir(), "Images/Items/");
 			Files.createDirectories(itemIconDir.toPath());
 			
+                        for (Map.Entry<String, ItemModelDefinition> entry : itemModelDefinitionRegistry.getModelDefinitions().entrySet()) {
+                                final String entryKey = entry.getKey();
+				final ItemModelDefinition itemModelDefinition = entry.getValue();
+                                File outFile = new File(itemIconDir, entryKey + ".png");
+
+                                System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
+                                log.trace("\tRendering icon for: " + entryKey);
+
+                                String modelName = itemModelDefinition.getModelName();
+                                
+                                if (modelName == null) {
+                                    continue;
+                                }
+                                
+                                if (modelName.startsWith("minecraft:block")) {
+                                        itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
+                                }
+                                else if (modelName.startsWith("minecraft:item")) {
+                                        // We should get entry from itemRegistry and render 2d texture item.
+                                        
+                                        // We do not need to do anything though, since all items from itemRegistry are iterated through and rendered below.
+                                        // This also ensures compatibility with pre-1.21.4 versions
+                                }
+                        }
+                        
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
 				final String entryKey = entry.getKey();
 				final ItemModel itemModel = entry.getValue();
