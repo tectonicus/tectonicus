@@ -510,31 +510,22 @@ public class TexturePack
 			try {
 				IIOImage image = loadImage(request.path);
 				if (image != null) {
-					boolean convertedTransparency = false;
 					BufferedImage bufferedImage = (BufferedImage) image.getRenderedImage();
-					Color transparentColor = getTransparentColor(image);
-					if (transparentColor != null) {
-						bufferedImage = ImageUtils.convertSimpleTransparencyToARGB(bufferedImage, transparentColor);
-						convertedTransparency = true;
-					}
+					BufferedImage argbImage = copy(bufferedImage);
 
-					if (convertedTransparency) { // Already in ARGB format so no need to copy image
-						tex = new PackTexture(rasteriser, request.path, bufferedImage, true, false);
+					ImageUtils.normalizeAlpha(argbImage); // We need to do this to handle some resource pack textures
+					ImageUtils.Opacity opacity = ImageUtils.testOpacity(argbImage);
+
+					if (opacity == ImageUtils.Opacity.TRANSPARENT) {
+						tex = new PackTexture(rasteriser, request.path, argbImage, true, false);
 						log.trace(request.path + " contains transparency");
+					} else if (opacity == ImageUtils.Opacity.TRANSLUCENT) {
+						tex = new PackTexture(rasteriser, request.path, argbImage, false, true);
+						log.trace(request.path + " contains translucency");
 					} else {
-						BufferedImage argbImage = copy(bufferedImage);
-						ImageUtils.normalizeAlpha(argbImage); // We need to do this to handle some resource pack textures
-						ImageUtils.Opacity opacity = ImageUtils.testOpacity(argbImage);
-						if (opacity == ImageUtils.Opacity.TRANSPARENT) {
-							tex = new PackTexture(rasteriser, request.path, argbImage, true, false);
-							log.trace(request.path + " contains transparency");
-						} else if (opacity == ImageUtils.Opacity.TRANSLUCENT) {
-							tex = new PackTexture(rasteriser, request.path, argbImage, false, true);
-							log.trace(request.path + " contains translucency");
-						} else {
-							tex = new PackTexture(rasteriser, request.path, argbImage);
-						}
+						tex = new PackTexture(rasteriser, request.path, argbImage);
 					}
+					
 					loadedPackTextures.put(request.path, tex);
 				}
 			} catch (FileNotFoundException e) {
@@ -634,32 +625,6 @@ public class TexturePack
 		return hasFile;
 	}
 
-	public Color getTransparentColor(IIOImage image) {
-		Color transparentColor = null;
-
-		//TODO: remove this when we move to Java 11
-		/* Because of Java 8 ImageIO png reader limitations we have to check the tRNS chunk to figure out transparency (this is fixed in Java 11 https://bugs.openjdk.java.net/browse/JDK-6788458)
-		 * This is necessary because some resource packs like to save their textures in all kinds of png formats including some without alpha channels
-		 * See http://www.libpng.org/pub/png/spec/1.2/PNG-Chunks.html and Harald K's answer here https://stackoverflow.com/questions/31763853/trying-to-read-a-png-and-xuggler */
-		NodeList tRNS = ((IIOMetadataNode) image.getMetadata().getAsTree("javax_imageio_png_1.0")).getElementsByTagName("tRNS");
-		if (tRNS.getLength() > 0) {
-			Node node = tRNS.item(0).getFirstChild();
-			String nodeName = node.getNodeName();
-			if (nodeName.equals("tRNS_RGB")) {
-				NamedNodeMap attributes = node.getAttributes();
-				int red = Integer.parseInt(attributes.getNamedItem("red").getNodeValue());
-				int green = Integer.parseInt(attributes.getNamedItem("green").getNodeValue());
-				int blue = Integer.parseInt(attributes.getNamedItem("blue").getNodeValue());
-				transparentColor = new Color(red, green, blue, 255);
-			} else if (nodeName.equals("tRNS_Grayscale")) {
-				int gray = Integer.parseInt(node.getAttributes().getNamedItem("gray").getNodeValue());
-				transparentColor = new Color(gray, gray, gray, 255);
-			} // 'tRNS_Palette' is also a possibility but seems to work without any manual changes needed
-		}
-
-		return transparentColor;
-	}
-	
 	/** Loads banner pattern images from Minecraft 1.8 - 1.20.4 */
 	public Map<String, BufferedImage> loadPatterns()
 	{

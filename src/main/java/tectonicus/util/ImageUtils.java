@@ -11,8 +11,10 @@ package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
 
-import java.awt.Color;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
 
 @UtilityClass
 public class ImageUtils {
@@ -25,7 +27,7 @@ public class ImageUtils {
 			return null;
 		
 		BufferedImage img = new BufferedImage(in.getWidth(), in.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		if (in.getType() == BufferedImage.TYPE_BYTE_GRAY) {
+		if (in.getColorModel().getColorSpace().getType() == ColorSpace.TYPE_GRAY) {
 			copyGrayscale(img, in); //getRBG() doesn't read the pixel value correctly for grayscale images so we have to do it manually
 		} else {
 			copy(img, in, 0, 0);
@@ -44,29 +46,30 @@ public class ImageUtils {
 	}
 	
 	public static void copyGrayscale(BufferedImage dest, BufferedImage src) {
+		Raster raster = src.getRaster();
+		SampleModel sm = raster.getSampleModel();
+
+		final int bits = sm.getSampleSize(0);   // 8 or 16 bits
+		final int bands = sm.getNumBands();     // 1 = gray, 2 = gray+alpha
+		final boolean hasAlpha = bands > 1;
+
 		for (int x=0; x<src.getWidth(); x++) {
 			for (int y=0; y<src.getHeight(); y++) {
-				final int gray = src.getRaster().getSample(x, y, 0);
-				int argb = (255 << 24) | (gray << 16) | (gray << 8) | gray;
+				int gray = raster.getSample(x, y, 0);
+				int alpha = hasAlpha
+					? raster.getSample(x, y, 1)
+					: 255;
+
+				// Normalize to 8-bit if needed
+				if (bits > 8) {
+					gray  >>= (bits - 8);
+					alpha >>= (bits - 8);
+				}
+
+				int argb = (alpha << 24) | (gray << 16) | (gray  << 8) | gray;
 				dest.setRGB(x, y, argb);
 			}
 		}
-	}
-
-	public BufferedImage convertSimpleTransparencyToARGB(BufferedImage image, Color transparentColor) {
-		BufferedImage newImg = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		for (int i = 0; i < image.getHeight(); i++) {
-			for (int j = 0; j < image.getWidth(); j++) {
-				int pixel = image.getRGB(j, i);
-				if (pixel == transparentColor.getRGB()){
-					newImg.setRGB(j, i, 0);
-				} else {
-					newImg.setRGB(j, i, pixel);
-				}
-			}
-		}
-
-		return newImg;
 	}
 
 	public void normalizeAlpha(BufferedImage image) {

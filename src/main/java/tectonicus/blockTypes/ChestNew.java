@@ -54,7 +54,8 @@ public class ChestNew implements BlockType
 		Calendar calendar = Calendar.getInstance();
 		int day = calendar.get(Calendar.DAY_OF_MONTH);
 		if(calendar.get(Calendar.MONTH) == Calendar.DECEMBER && (day == 24 || day == 25 || day == 26)
-				&& left.texturePackVersion.getNumVersion() >= VERSION_5.getNumVersion())
+			&& left.texturePackVersion.getNumVersion() >= VERSION_5.getNumVersion()
+                        && christmasSingle != null && christmasLeft != null && christmasRight != null)
 		{
 			singleChest = christmasSingle;
 			doubleChestLeft = christmasLeft;

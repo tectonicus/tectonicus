@@ -9,6 +9,7 @@
 
 package tectonicus.texture;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -29,7 +30,7 @@ public class VersionJson {
 	@JsonProperty("pack_version")
 	public void setPackVersion(Object version) {
 		if (version instanceof Integer) {
-			packVersion = new PackVersion((int) version, 0);
+			packVersion = new PackVersion((int) version, 0, 0, 0);
 		} else {
 			packVersion = FileUtils.getOBJECT_MAPPER().convertValue(version, PackVersion.class);
 		}
@@ -40,7 +41,16 @@ public class VersionJson {
 	@NoArgsConstructor
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class PackVersion {
-		private int resource;
-		private int data;
+            @JsonAlias({ "resource", "resource_major" })
+            private int resource;
+
+            @JsonAlias({ "data", "data_major" })
+            private int data;
+
+            @JsonProperty("resource_minor")
+            private int resourceMinor;
+
+            @JsonProperty("data_minor")
+            private int dataMinor;
 	}
 }

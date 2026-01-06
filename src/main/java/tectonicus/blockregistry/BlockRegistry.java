@@ -71,7 +71,8 @@ public class BlockRegistry
 	private static final String TEXTURES_FIELD = "textures";
         
         private static final Map<String, String> renamedBlocks = Map.ofEntries(
-                new AbstractMap.SimpleImmutableEntry<>("minecraft:grass", "minecraft:short_grass") // Was renamed in 1.20.3
+                new AbstractMap.SimpleImmutableEntry<>("minecraft:grass", "minecraft:short_grass"),     // Was renamed in 1.20.3
+                new AbstractMap.SimpleImmutableEntry<>("minecraft:chain", "minecraft:iron_chain")       // Renamed in 1.21.9 with the addition of copper chains
         );
 		
 	
