@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -72,7 +72,7 @@ import tectonicus.util.Vector3l;
 import tectonicus.world.filter.BlockFilter;
 import tectonicus.world.filter.CompositeBlockFilter;
 import tectonicus.world.filter.NullBlockFilter;
-import tectonicus.world.subset.CircularWorldSubset;
+import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
 
@@ -277,23 +277,19 @@ public class World implements BlockContext
 		
 		//Set subset origin if none was set in config file
 		WorldSubset subset = map.getWorldSubset();
-		if (subset instanceof CircularWorldSubset) {
-			CircularWorldSubset circularSubset = (CircularWorldSubset) subset;
-			if (circularSubset.getOrigin() == null) {
-				Vector3l origin = levelDat.getSpawnPosition();
+		if (!(subset instanceof FullWorldSubset) && subset.getOrigin() == null) {
+			Vector3l origin = levelDat.getSpawnPosition();
 
-				//For the Nether we try to find a player or Respawn Anchor closest to overworld spawn and use that as the origin
-				//otherwise we just use the overworld spawn position as the origin
-				if (dimension == Dimension.NETHER) {
-					origin = getNetherOriginFromPlayers();
-				}
-
-				circularSubset.setOrigin(origin);
+			//For the Nether we try to find a player or Respawn Anchor closest to overworld spawn and use that as the origin
+			//otherwise we just use the overworld spawn position as the origin
+			if (dimension == Dimension.NETHER) {
+				origin = getNetherOriginFromPlayers();
 			}
-			this.worldSubset = circularSubset;
-		} else {
-			this.worldSubset = subset;
+
+			subset.setOrigin(origin);
 		}
+		this.worldSubset = subset;
+		
 		log.debug("worldSubset: {}", this.worldSubset);
                 
          	rawLoadedChunks = new RawCache(2048, (coord) -> {

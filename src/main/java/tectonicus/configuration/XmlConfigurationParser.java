@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -33,6 +33,7 @@ import tectonicus.configuration.filter.ViewFilterType;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.RectangularWorldSubset;
 import tectonicus.world.subset.WorldSubset;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -547,6 +548,28 @@ public class XmlConfigurationParser
 
 				if (radius > 0) {
 					return new CircularWorldSubset(origin, radius);
+				}
+			}
+			
+			Element rectangularNode = getChild(subsetNode, "RectangularSubset");
+			if (rectangularNode != null) {
+				long width = 0;
+				long depth = 0;
+				
+				try {
+					width = Long.parseLong(rectangularNode.getAttribute("width"));
+					depth = Long.parseLong(rectangularNode.getAttribute("depth"));
+				} catch (NumberFormatException e) {
+					log.error("Failed to parse rectangular subset attributes", e);
+				}
+
+				Vector3l origin = null;
+				if (rectangularNode.hasAttribute("origin")) {
+					origin = parseOrigin(rectangularNode.getAttribute("origin"));
+				}
+				
+				if (width > 0 && depth > 0) {
+					return new RectangularWorldSubset(origin, width, depth);
 				}
 			}
 		}

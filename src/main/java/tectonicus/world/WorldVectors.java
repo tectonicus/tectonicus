@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,7 +24,8 @@ import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.JsonWriter;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3l;
-import tectonicus.world.subset.CircularWorldSubset;
+import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.WorldSubset;
 
 import java.io.File;
 import java.io.IOException;
@@ -162,8 +163,8 @@ public class WorldVectors {
 		LevelDat levelDat = world.getLevelDat();
 
 		Vector3l startView;
-		if (map.getWorldSubset() instanceof CircularWorldSubset) {
-			CircularWorldSubset subset = (CircularWorldSubset) map.getWorldSubset();
+		if (!(map.getWorldSubset() instanceof FullWorldSubset)) {
+			WorldSubset subset = map.getWorldSubset();
 			startView = new Vector3l(subset.getOrigin().x, 64, subset.getOrigin().z);
 		} else if (map.getOrigin() != null) {
 			startView = map.getOrigin();
