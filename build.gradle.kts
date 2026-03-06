@@ -31,7 +31,7 @@ dependencies {
 	val lwjglVersion = "3.4.1"
 	val picocliVersion = "4.7.7"
 	val lombokVersion = "1.18.42"
-	val junitVersion = "5.14.3"
+	val junitVersion = "6.0.3"
 	val caffeineVersion = "3.2.3"
 	val commonsTextVersion = "1.15.0"
 	val jomlVersion = "1.10.8"
