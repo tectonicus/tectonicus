@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,7 +11,7 @@ package tectonicus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
@@ -273,7 +273,7 @@ public class ItemRenderer
 
        	private void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int imageSize, BoundingBox bounds, String modelName) throws Exception
         {
-                final String colorString = StringUtils.removeEnd(StringUtils.removeStart(modelName, "minecraft:"), "_bed");
+                final String colorString = Strings.CI.removeEnd(Strings.CI.removeStart(modelName, "minecraft:"), "_bed");
                 final Colors color = Colors.byName(colorString);
                 final int colorId = color == null ? Colors.RED.getId() : color.getId();
                 

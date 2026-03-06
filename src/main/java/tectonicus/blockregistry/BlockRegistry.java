@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import tectonicus.Minecraft;
 import tectonicus.configuration.MutableConfiguration;
 import tectonicus.rasteriser.Rasteriser;
@@ -43,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -121,7 +121,7 @@ public class BlockRegistry
 	
 	public void deserializeBlockstates() {
 		log.debug("Loading blockstate json from minecraft jar");
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()));
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
 			deserializeBlockstates(entries);
 		} catch (NotDirectoryException e) {
@@ -132,7 +132,7 @@ public class BlockRegistry
 
 		if (zips.getOverrideFileName() != null) {
 			log.debug("Loading blockstate json from resource pack");
-			try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getOverrideFileName()), null);
+			try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getOverrideFileName()));
 				 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
 				deserializeBlockstates(entries);
 			} catch(NotDirectoryException e) {
@@ -146,7 +146,7 @@ public class BlockRegistry
 	private void deserializeBlockstates(DirectoryStream<Path> entries) throws IOException {
 		for (Path blockStateFile : entries) {
 			if (blockStateFile.getFileName().toString().toLowerCase().endsWith(".json")) {
-				String name = "minecraft:" + StringUtils.removeEnd(blockStateFile.getFileName().toString(), ".json");
+				String name = "minecraft:" + Strings.CI.removeEnd(blockStateFile.getFileName().toString(), ".json");
 				singleVariantBlocks.invalidate(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
 				log.trace("Parsing {}.json", name);
 				JsonNode root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
@@ -168,10 +168,8 @@ public class BlockRegistry
 					});
 				} else if (root.has("variants")) {
 					JsonNode variants = root.get("variants");
-
-					Iterator<Entry<String, JsonNode>> iter = variants.fields();
-					while (iter.hasNext()) {
-						Map.Entry<String, JsonNode> entry = iter.next();
+					
+					for (Entry<String, JsonNode> entry : variants.properties()) {
 						String key = entry.getKey();
 						List<BlockStateModel> blockStateModels = deserializeBlockStateModels(entry.getValue());
 						BlockStateModelsWeight modelsAndWeight = new BlockStateModelsWeight(blockStateModels);
@@ -210,10 +208,8 @@ public class BlockRegistry
 
 	private Map<String, String> parseStates(JsonNode when) {
 		Map<String, String> states = new HashMap<>();
-		Iterator<Entry<String, JsonNode>> iter = when.fields();
-
-		while (iter.hasNext()) {
-			Map.Entry<String, JsonNode> entry = iter.next();
+		
+		for (Entry<String, JsonNode> entry : when.properties()) {
 			states.put(entry.getKey(), entry.getValue().asText());
 		}
 
@@ -326,24 +322,17 @@ public class BlockRegistry
 	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures)
 	{
 		Map<String, String> newTexMap = new HashMap<>(textureMap);
-
-		Iterator<Entry<String, JsonNode>> iter = textures.fields();
-
-		while (iter.hasNext()) {
-			Map.Entry<String, JsonNode> entry = iter.next();
-
+		
+		for (Entry<String, JsonNode> entry : textures.properties()) {
 			String key = entry.getKey();
 			StringBuilder tex = new StringBuilder(entry.getValue().asText());
-
-			if(tex.charAt(0) == '#')
-			{
+			
+			if (tex.charAt(0) == '#') {
 				String texture = textureMap.get(tex.deleteCharAt(0).toString());
 				if (texture != null) {
 					newTexMap.put(key, texture);
 				}
-			}
-			else
-			{
+			} else {
 				newTexMap.put(key, tex.toString());
 			}
 		}

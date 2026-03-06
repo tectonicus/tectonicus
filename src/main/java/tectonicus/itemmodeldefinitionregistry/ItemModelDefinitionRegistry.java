@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,7 +12,7 @@ package tectonicus.itemmodeldefinitionregistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
 
@@ -43,7 +43,7 @@ public class ItemModelDefinitionRegistry {
 
 	public void deserializeItemModels() {
 		log.debug("Loading item model definition json from minecraft jar");
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null)) {
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()))) {
                         Path itemModelDefinitionsPath = fs.getPath("/assets/minecraft/items");
                         if (Files.exists(itemModelDefinitionsPath)) {
                                 try (DirectoryStream<Path> entries = Files.newDirectoryStream(itemModelDefinitionsPath)) {
@@ -58,7 +58,7 @@ public class ItemModelDefinitionRegistry {
 	private void deserializeItemModels(DirectoryStream<Path> entries) throws IOException {
 		for (Path itemJsonFile : entries) {
 			ItemModelDefinition itemModel = OBJECT_MAPPER.readValue(Files.newBufferedReader(itemJsonFile, StandardCharsets.UTF_8), ItemModelDefinition.class);
-			String name = StringUtils.removeEnd(itemJsonFile.getFileName().toString(), ".json");
+			String name = Strings.CI.removeEnd(itemJsonFile.getFileName().toString(), ".json");
 			modelDefinitions.put(name, itemModel);
 		}
 	}

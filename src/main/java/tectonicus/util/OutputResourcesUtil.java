@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -837,7 +837,7 @@ public class OutputResourcesUtil {
 				writeImage(texturePack.getSubImage(beaconPath, 157, 21, 21, 22), 32, 32, new File(imagesDir, "beacon_level_4.png"));
 				writeImage(texturePack.getSubImage(beaconPath, 232, 0, 18, 18), 18, 18, new File(effectsDir, "none.png"));
 				//TODO: for older resource packs we need to get the effect icons from assets/minecraft/textures/gui/container/inventory.png (1.13 and older use this texture)
-				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()), null);
+				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()));
 					 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/mob_effect"))) {
 					for (Path entry : entries) {
 						String filename = entry.getFileName().toString();

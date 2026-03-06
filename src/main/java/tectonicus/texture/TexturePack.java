@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,9 +12,6 @@ package tectonicus.texture;
 import com.fasterxml.jackson.databind.ObjectReader;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.Configuration;
@@ -34,7 +31,6 @@ import tectonicus.util.ImageUtils;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
-import javax.imageio.metadata.IIOMetadataNode;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -674,7 +670,7 @@ public class TexturePack
 		codes.put("piglin.png", "pig");
 
 			
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner")))
 		{
 			for (Path entry : entries) {
@@ -699,7 +695,7 @@ public class TexturePack
 	public Map<String, BufferedImage> loadPatternsJson() {
 		Map<String, BufferedImage> patterns = new HashMap<>();
 		
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("data/minecraft/banner_pattern"))) {
 			loadPatternTextures(entries, patterns);
 			
@@ -714,7 +710,7 @@ public class TexturePack
 			String filePath = "data/minecraft/datapacks/" + pack + "/data/minecraft/banner_pattern";
 			boolean hasPatterns = fileExists(filePath);
 			if (hasPatterns) {
-				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 					 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath(filePath))) {
 					loadPatternTextures(entries, patterns);
 				} catch (IOException e) {
@@ -744,7 +740,7 @@ public class TexturePack
 	
 	private void loadBedTextures()
 	{		
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/bed")))
 		{
 			for (Path entry : entries)
@@ -762,7 +758,7 @@ public class TexturePack
 
 	private void loadPaintingTextures()
 	{
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/painting")))
 		{
 			for (Path entry : entries)
@@ -780,7 +776,7 @@ public class TexturePack
 	
 	private void loadShulkerTextures()
 	{		
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/shulker")))
 		{
 			for (Path entry : entries)

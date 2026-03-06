@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -36,14 +36,14 @@ public class ZipStack
 	public ZipStack(File baseFile, File overrideFile, List<File> modJars) throws IOException
 	{
 		baseFileName = baseFile.getPath();
-		base = FileSystems.newFileSystem(Paths.get(baseFileName), null);
+		base = FileSystems.newFileSystem(Paths.get(baseFileName));
 		
 		if (overrideFile != null)
 		{
 			overrideFileName = overrideFile.getPath();
 			if (overrideFile.exists())
 			{
-				override = FileSystems.newFileSystem(Paths.get(overrideFile.getPath()), null);
+				override = FileSystems.newFileSystem(Paths.get(overrideFile.getPath()));
 			}
 			else
 				log.error("Couldn't open {}", overrideFile.getAbsolutePath());
@@ -70,7 +70,7 @@ public class ZipStack
 		{
 			for (File jar : modJars)
 			{
-				FileSystem fs = FileSystems.newFileSystem(Paths.get(jar.getPath()), null);
+				FileSystem fs = FileSystems.newFileSystem(Paths.get(jar.getPath()));
 				if (hasFile(path, fs))
 					return Files.newInputStream(fs.getPath(path));
 			}

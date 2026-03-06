@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -40,7 +40,7 @@ public class PaintingRegistry {
 	}
 	
 	private void deserializePaintingJson() {
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()), null);
+		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()));
 			 DirectoryStream<Path> variants = Files.newDirectoryStream(fs.getPath("/data/minecraft/painting_variant"))) {
 			for (Path variantJson : variants) {
 				PaintingVariant variant = OBJECT_MAPPER.readValue(Files.newBufferedReader(variantJson, StandardCharsets.UTF_8), PaintingVariant.class);

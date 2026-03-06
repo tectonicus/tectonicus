@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import tectonicus.texture.VersionJson;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.FileUtils;
@@ -88,7 +88,7 @@ public class Minecraft
 			
 			for(Path jar : jars) {
 				log.trace(jar.getFileName().toString());
-				String jarVersion = StringUtils.removeEndIgnoreCase(jar.getFileName().toString(), ".jar");
+				String jarVersion = Strings.CI.removeEnd(jar.getFileName().toString(), ".jar");
 				try {
 					VersionJson versionJson = getVersionJson(new ZipStack(jar.toFile(), null, null));
 					if (jarVersion.equals(worldVersion) || versionJson.getName().equals(worldVersion)) { //match exact version
@@ -152,7 +152,7 @@ public class Minecraft
 			String patch = "0";
 			for(Path jar : jars)
 			{
-				String[] version = StringUtils.removeEndIgnoreCase(jar.getFileName().toString(), ".jar").split("\\.");
+				String[] version = Strings.CI.removeEnd(jar.getFileName().toString(), ".jar").split("\\.");
 				try 
 				{
 					if(version.length == 2 && version[1].matches("\\d+"))
