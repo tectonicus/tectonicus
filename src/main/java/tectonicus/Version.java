@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -35,7 +35,10 @@ public enum Version {
     VERSION_17("1.17", 17, 2724),
     VERSION_18("1.18", 18, 2860),
     VERSION_19("1.19", 19, 3080),
-    VERSION_20("1.20", 20, 3463);
+    VERSION_20("1.20", 20, 3463),
+    VERSION_21("1.21", 21, 3953),
+    VERSION_21_9_PLUS("1.21.{9,10,11}", 22, 4554),
+    VERSION_26_1("26.1", 26, 4779);
 
     private final String name;
     private final int numVersion;

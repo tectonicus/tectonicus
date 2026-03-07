@@ -148,10 +148,16 @@ public class TexturePack
 
 		if (versionJson.getPackVersion() != null) {
 			String name = versionJson.getName();
-			Pattern pattern = Pattern.compile("\\d\\.\\d{1,2}");
-			Matcher matcher = pattern.matcher(name);
-			name = matcher.find() ? matcher.group() : name;
-			version = Version.byName(name);
+			Version tempVersion;
+			if (name.equals("1.21.9") || name.equals("1.21.10") || name.equals("1.21.11")) { //hack because of changes in and after 1.21.9
+				tempVersion = Version.VERSION_21_9_PLUS;
+			} else {
+				Pattern pattern = Pattern.compile("\\d\\.\\d{1,2}");
+				Matcher matcher = pattern.matcher(name);
+				name = matcher.find() ? matcher.group() : name;
+				tempVersion = Version.byName(name);
+			}
+			version = tempVersion;
 		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {

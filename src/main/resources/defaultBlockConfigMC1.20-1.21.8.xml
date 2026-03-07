@@ -89,26 +89,6 @@
 	<ChestNew stringId="minecraft:ender_chest" name="Ender Chest" single="assets/minecraft/textures/entity/chest/ender.png"
 		   christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
 
-	<ChestNew stringId="minecraft:copper_chest" name="Copper Chest" single="assets/minecraft/textures/entity/chest/copper.png" right="assets/minecraft/textures/entity/chest/copper_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-	<ChestNew stringId="minecraft:waxed_copper_chest" name="Waxed Copper Chest" single="assets/minecraft/textures/entity/chest/copper.png" right="assets/minecraft/textures/entity/chest/copper_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-
-	<ChestNew stringId="minecraft:exposed_copper_chest" name="Exposed Copper Chest" single="assets/minecraft/textures/entity/chest/copper_exposed.png" right="assets/minecraft/textures/entity/chest/copper_exposed_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_exposed_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-	<ChestNew stringId="minecraft:waxed_exposed_copper_chest" name="Waxed Exposed Copper Chest" single="assets/minecraft/textures/entity/chest/copper_exposed.png" right="assets/minecraft/textures/entity/chest/copper_exposed_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_exposed_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-
-	<ChestNew stringId="minecraft:weathered_copper_chest" name="Weathered Copper Chest" single="assets/minecraft/textures/entity/chest/copper_weathered.png" right="assets/minecraft/textures/entity/chest/copper_weathered_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_weathered_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-	<ChestNew stringId="minecraft:waxed_weathered_copper_chest" name="Waxed Weathered Copper Chest" single="assets/minecraft/textures/entity/chest/copper_weathered.png" right="assets/minecraft/textures/entity/chest/copper_weathered_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_weathered_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-
-	<ChestNew stringId="minecraft:oxidized_copper_chest" name="Oxidized Copper Chest" single="assets/minecraft/textures/entity/chest/copper_oxidized.png" right="assets/minecraft/textures/entity/chest/copper_oxidized_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_oxidized_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-	<ChestNew stringId="minecraft:waxed_oxidized_copper_chest" name="Waxed Oxidized Copper Chest" single="assets/minecraft/textures/entity/chest/copper_oxidized.png" right="assets/minecraft/textures/entity/chest/copper_oxidized_right.png"
-			  left="assets/minecraft/textures/entity/chest/copper_oxidized_left.png" christmasSingle="assets/minecraft/textures/entity/chest/christmas.png" />
-
 	<Beacon stringId="minecraft:beacon" name="Beacon" beam="assets/minecraft/textures/entity/beacon_beam.png" />
 
 	<Skull stringId="minecraft:skeleton_skull" name="Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/skeleton.png" />

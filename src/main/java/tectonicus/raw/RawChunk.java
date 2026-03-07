@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -290,16 +290,16 @@ public class RawChunk {
 						x = xTag.getValue();
 						y = yTag.getValue();
 						z = zTag.getValue();
-						
-						if (is18 && direction == 0) {
-							z = zTag.getValue() - 1;
-						} else if (is18 && direction == 1) {
-							x = xTag.getValue() + 1;
-						} else if (is18 && direction == 2) {
-							z = zTag.getValue() + 1;
-						} else if (is18 && direction == 3) {
-							x = xTag.getValue() - 1;
-						}
+					}
+					
+					if (is18 && direction == 0) {
+						z = z - 1;
+					} else if (is18 && direction == 1) {
+						x = x + 1;
+					} else if (is18 && direction == 2) {
+						z = z + 1;
+					} else if (is18 && direction == 3) {
+						x = x - 1;
 					}
 
 					final int localX = x - (chunkX * WIDTH);
