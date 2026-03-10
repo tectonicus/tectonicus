@@ -17,9 +17,9 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public enum Dimension {
-	OVERWORLD("minecraft:overworld"),
-	NETHER("minecraft:the_nether"),
-	END("minecraft:the_end");
+	OVERWORLD("overworld"),
+	NETHER("the_nether"),
+	END("the_end");
 
 	private static final Map<String, Dimension> ID_LOOKUP = new HashMap<>(values().length);
 

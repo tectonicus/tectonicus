@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -44,76 +44,67 @@ public class FindEntityUtil {
                 }
 	}
 
-	public static void findPortalsOld(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter) {
-                for (int x = 0; x < RawChunk.WIDTH; x++) {
-                        for (int y = 1; y < Minecraft.getChunkHeight() - 1; y++) {
-                                for (int z = 0; z < RawChunk.DEPTH; z++) {
-                                        final int id = chunk.getBlockId(x, y, z);
-                                        final int above = chunk.getBlockId(x, y + 1, z);
-                                        int below = chunk.getBlockId(x, y - 1, z);
-
-                                        if (id == BlockIds.PORTAL && above != BlockIds.PORTAL) //Find vertical center portal blocks
-                                        {
-                                                ChunkCoord coord = chunk.getChunkCoord();
-
-                                                int tempY = y;
-                                                while (below == BlockIds.PORTAL) {
-                                                        tempY -= 1;
-                                                        below = chunk.getBlockId(x, tempY, z);
-                                                }
-
-                                                Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
-                                                                y - Math.round((y - (tempY + 1)) / 2),
-                                                                coord.z * RawChunk.DEPTH + z);
-
-                                                if (filter.passesFilter()) {
-                                                        portals.add(new Portal(pos.x, pos.y, pos.z));
-                                                }
-                                        }
-                                }
-                        }
-                }
-	}
-
 	public static void findPortals(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter) {
-                String netherPortalName = Block.NETHER_PORTAL.getName();
+		for (int x = 0; x < RawChunk.WIDTH; x++) {
+			for (int y = 1; y < Minecraft.getChunkHeight() - 1; y++) {
+				for (int z = 0; z < RawChunk.DEPTH; z++) {
+					boolean isPortal;
+					boolean aboveIsPortal;
+					int tempY = y;
 
-                for (int x = 0; x < RawChunk.WIDTH; x++) {
-                        for (int y = 1; y < Minecraft.getChunkHeight() - 1; y++) {
-                                for (int z = 0; z < RawChunk.DEPTH; z++) {
-                                        String id = chunk.getBlockName(x, y, z);
-                                        String above = chunk.getBlockName(x, y + 1, z);
-                                        String below = chunk.getBlockName(x, y - 1, z);
+					// Try using block name first (MC >= 1.13)
+					String id = chunk.getBlockName(x, y, z);
+					if (id != null) {
+						String netherPortalName = Block.NETHER_PORTAL.getName();
+						String above = chunk.getBlockName(x, y + 1, z);
+						isPortal = id.equals(netherPortalName);
+						aboveIsPortal = (above != null && above.equals(netherPortalName));
 
-                                        if (id != null && id.equals(netherPortalName) && !above.equals(netherPortalName)) //Find vertical center portal blocks
-                                        {
-                                                ChunkCoord coord = chunk.getChunkCoord();
+						if (isPortal && !aboveIsPortal) {
+							String below = chunk.getBlockName(x, tempY - 1, z);
+							while (below != null && below.equals(netherPortalName)) {
+								tempY -= 1;
+								below = chunk.getBlockName(x, tempY - 1, z);
+							}
+						}
+					} else {
+						// Fall back to block ID (MC < 1.13)
+						final int idInt = chunk.getBlockId(x, y, z);
+						final int above = chunk.getBlockId(x, y + 1, z);
+						isPortal = (idInt == BlockIds.PORTAL);
+						aboveIsPortal = (above == BlockIds.PORTAL);
 
-                                                int tempY = y;
-                                                while (below.equals(netherPortalName)) {
-                                                        tempY -= 1;
-                                                        below = chunk.getBlockName(x, tempY, z);
-                                                }
+						if (isPortal && !aboveIsPortal) {
+							int below = chunk.getBlockId(x, tempY - 1, z);
+							while (below == BlockIds.PORTAL) {
+								tempY -= 1;
+								below = chunk.getBlockId(x, tempY - 1, z);
+							}
+						}
+					}
 
-                                                // For 1.18 and higher we need to subtract 64 from the y value to get the actual y value
-                                                long finalY;
-                                                if (Minecraft.getChunkHeight() > 256) {
-                                                        finalY = (y - (y - (tempY + 1)) / 2) - 64L;
-                                                } else {
-                                                        finalY = y - (y - (tempY + 1)) / 2L;
-                                                }
+					if (isPortal && !aboveIsPortal) { //Find vertical center portal blocks
+						ChunkCoord coord = chunk.getChunkCoord();
 
-                                                Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
-                                                                finalY,
-                                                                coord.z * RawChunk.DEPTH + z);
+						// Calculate Y position
+						long finalY = (y + tempY + 1) / 2L;
 
-                                                if (filter.passesFilter()) {
-                                                        portals.add(new Portal(pos.x, pos.y, pos.z));
-                                                }
-                                        }
-                                }
-                        }
-                }
+						// For 1.18 and higher we need to subtract 64 from the y value to get the actual y value
+						if (Minecraft.getChunkHeight() > 256) {
+							finalY -= 64L;
+						}
+
+						Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
+							finalY,
+							coord.z * RawChunk.DEPTH + z);
+
+						if (filter.passesFilter()) {
+							portals.add(new Portal(pos.x, pos.y, pos.z));
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public static void findViews(RawChunk chunk, HddObjectListWriter<Sign> views, ViewFilter filter) {

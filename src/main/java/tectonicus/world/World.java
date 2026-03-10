@@ -179,11 +179,7 @@ public class World implements BlockContext
 		this.worldDir = map.getWorldDir();
 		this.dimension = map.getDimension();
 
-		// Use the world dir and the dimension to find the dimension dir
-		dimensionDir = DirUtils.getDimensionDir(worldDir, dimension);
-		
 		log.info("Loading world from base dir {} with dimension {}", worldDir.getPath(), dimension);
-		log.debug("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
 		
 		this.biomeCache = biomeCache;
 		this.playerSkinCache = playerSkinCache;
@@ -208,20 +204,12 @@ public class World implements BlockContext
 			throw new RuntimeException(e);
 		}
 		
-		if (!Minecraft.isValidDimensionDir(dimensionDir))
-			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
-
 		Version version = VERSION_UNKNOWN;
 		Minecraft.setChunkHeight(256);
 		boolean sectionArrayOffset = false;
 		String worldVersion = levelDat.getVersion(); //Version tag was added in 1.9
 		if (worldVersion != null) {
-			String versionNumber = worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "";
-			if (StringUtils.isNotEmpty(versionNumber)) {
-                versionNumber = versionNumber.split(" [-a-zA-Z]* ")[0];  //Handle Pre-Release and Release Candidate versions
-				Minecraft.setWorldVersion(Integer.parseInt(versionNumber));
-				version = Version.byName(worldVersion.substring(0, worldVersion.lastIndexOf(".")));
-			}
+			version = Minecraft.getVersion(worldVersion);
 
 			if (version.getNumVersion() >= VERSION_18.getNumVersion() && dimension != Dimension.NETHER && dimension != Dimension.END) {
 				Minecraft.setChunkHeight(384);
@@ -229,6 +217,13 @@ public class World implements BlockContext
 			}
 		}
 		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
+		
+		// Use the world dir and the dimension to find the dimension dir
+		dimensionDir = DirUtils.getDimensionDir(worldDir, dimension, version);
+		log.debug("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
+		
+		if (!Minecraft.isValidDimensionDir(dimensionDir))
+			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 
 		if (config.getMinecraftJar() == null) {
 			log.info("No Minecraft jar specified.");

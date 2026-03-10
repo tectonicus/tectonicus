@@ -746,7 +746,7 @@ public class OutputResourcesUtil {
 		BlockTypeRegistry registryOld = world.getBlockTypeRegistry();
 		BlockRegistry registry = world.getModelRegistry();
 		TexturePack texturePack = world.getTexturePack();
-		Version version = world.getWorldInfo().getVersion();
+		Version version = world.getWorldInfo().version();
 
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);

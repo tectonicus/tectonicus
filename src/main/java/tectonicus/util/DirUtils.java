@@ -10,6 +10,7 @@
 package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
+import tectonicus.Version;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.Map;
@@ -36,17 +37,25 @@ public class DirUtils
 		return new File(layerDir, "Zoom"+zoomLevel);
 	}
 
-	public static File getDimensionDir(File worldDir, Dimension dimension) {
+	public static File getDimensionDir(File worldDir, Dimension dimension, Version version) {
 		File dimensionDir;
 
-		if (dimension == Dimension.OVERWORLD) {
-			dimensionDir = worldDir;
-		} else if (dimension == Dimension.NETHER) {
-			dimensionDir = new File(worldDir, "DIM-1");
-		} else if (dimension == Dimension.END) {
-			dimensionDir = new File(worldDir, "DIM1");
+		String dimensionPath = "dimensions/minecraft/";
+		
+		if (version.getNumVersion() >= Version.VERSION_26_1.getNumVersion()) {
+			dimensionDir = new File(worldDir, dimensionPath + Dimension.OVERWORLD.getId()); //default to overworld
+			if (dimension == Dimension.NETHER) {
+				dimensionDir = new File(worldDir, dimensionPath + Dimension.NETHER.getId());
+			} else if (dimension == Dimension.END) {
+				dimensionDir = new File(worldDir, dimensionPath + Dimension.END.getId());
+			}
 		} else {
-			dimensionDir = worldDir;
+			dimensionDir = worldDir; //default to overworld
+			if (dimension == Dimension.NETHER) {
+				dimensionDir = new File(worldDir, "DIM-1");
+			} else if (dimension == Dimension.END) {
+				dimensionDir = new File(worldDir, "DIM1");
+			}
 		}
 
 		return dimensionDir;

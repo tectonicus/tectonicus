@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -34,7 +34,6 @@ import static tectonicus.util.FindEntityUtil.findBeacons;
 import static tectonicus.util.FindEntityUtil.findBeds;
 import static tectonicus.util.FindEntityUtil.findChests;
 import static tectonicus.util.FindEntityUtil.findPortals;
-import static tectonicus.util.FindEntityUtil.findPortalsOld;
 import static tectonicus.util.FindEntityUtil.findSigns;
 import static tectonicus.util.FindEntityUtil.findViews;
 
@@ -112,12 +111,8 @@ public class RegionLoadQueue
 				findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
 				
 				PortalFilter portalFilter = map.getPortalFilter();
-				if (Minecraft.getWorldVersion() < 13) {
-					findPortalsOld(chunk.getRawChunk(), portals, portalFilter);
-				} else {
-					findPortals(chunk.getRawChunk(), portals, portalFilter);
-					findBeds(chunk.getRawChunk(), beds);
-				}
+				findPortals(chunk.getRawChunk(), portals, portalFilter);
+				findBeds(chunk.getRawChunk(), beds);
 				
 				findViews(chunk.getRawChunk(), views, map.getViewFilter());
 				

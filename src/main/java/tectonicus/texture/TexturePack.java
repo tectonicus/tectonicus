@@ -118,17 +118,18 @@ public class TexturePack
 		
 		loadedPackTextures = new HashMap<>();
 
-		try
-		{
-			int worldVersion = Minecraft.getWorldVersion();
-			if (config.isUsingProgrammerArt() && worldVersion >= VERSION_14.getNumVersion()) {
+		try {
+			if (config.isUsingProgrammerArt()) { //programmer art resource pack added in 1.14
 				//TODO: currently we are overwriting the value of resourcePack if useProgrammerArt is true, we need to implement an ordered list of resource packs instead
-				resourcePack = new File(Minecraft.findMinecraftDir(), "assets/objects/e4/e49420da40aa1cac6d85838e28a4b82f429ff1a1");
+				File programmerArtResourcePack = new File(Minecraft.findMinecraftDir(), "assets/objects/1c/1cbd8e7b9a0d2f5e4a3c8b9cbbd1e7e6a9f0b2a");
+				if (programmerArtResourcePack.isFile()) {
+					resourcePack = programmerArtResourcePack;
+				} else {
+					log.warn("Couldn't find programmer art resource pack, which was added in Minecraft 1.14. Using default resource pack instead.");
+				}
 			}
 			zipStack = new ZipStack(minecraftJar, resourcePack, modJars);
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 
@@ -148,16 +149,7 @@ public class TexturePack
 
 		if (versionJson.getPackVersion() != null) {
 			String name = versionJson.getName();
-			Version tempVersion;
-			if (name.equals("1.21.9") || name.equals("1.21.10") || name.equals("1.21.11")) { //hack because of changes in and after 1.21.9
-				tempVersion = Version.VERSION_21_9_PLUS;
-			} else {
-				Pattern pattern = Pattern.compile("\\d\\.\\d{1,2}");
-				Matcher matcher = pattern.matcher(name);
-				name = matcher.find() ? matcher.group() : name;
-				tempVersion = Version.byName(name);
-			}
-			version = tempVersion;
+			version = Minecraft.getVersion(name);
 		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
 		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {

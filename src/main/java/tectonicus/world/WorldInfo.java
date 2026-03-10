@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,13 +9,6 @@
 
 package tectonicus.world;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import tectonicus.Version;
 
-@Getter
-@RequiredArgsConstructor
-public class WorldInfo {
-	private final Version version;
-	private final boolean sectionArrayOffset;
-}
+public record WorldInfo(Version version, boolean sectionArrayOffset) {}

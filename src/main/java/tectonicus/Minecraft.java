@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -37,10 +39,6 @@ public class Minecraft
 {
 	@Setter
 	private static boolean useOldColorPalette;
-
-	@Getter
-	@Setter
-	private static int worldVersion;
 	@Getter
 	@Setter
 	private static int chunkHeight;
@@ -303,5 +301,19 @@ public class Minecraft
 		
 		return (mcRegionFiles != null && mcRegionFiles.length > 0)
 				|| (anvilRegionFiles != null && anvilRegionFiles.length > 0);
+	}
+	
+	/** Get the Major.Minor version from the version string. */
+	public static Version getVersion(String versionString) {
+		Version version;
+		if (versionString.contains("1.21.9") || versionString.contains("1.21.10") || versionString.contains("1.21.11")) { //hack because of changes in and after 1.21.9
+			version = Version.VERSION_21_9_PLUS;
+		} else {
+			Pattern pattern = Pattern.compile("\\d{1,2}\\.\\d{1,2}");
+			Matcher matcher = pattern.matcher(versionString);
+			versionString = matcher.find() ? matcher.group() : versionString;
+			version = Version.byName(versionString);
+		}
+		return version;
 	}
 }
