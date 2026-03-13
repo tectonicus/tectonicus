@@ -168,26 +168,30 @@ public class WorldVectors {
 			startView = new Vector3l(subset.getOrigin().x, 64, subset.getOrigin().z);
 		} else if (map.getOrigin() != null) {
 			startView = map.getOrigin();
-		} else {
+		} else { //Full world render without a specified map origin
 			Vector3l spawnPosition = levelDat.getSpawnPosition();
-			startView = levelDat.getSpawnPosition();
+			startView = spawnPosition;
 
-			if (map.getDimension() == Dimension.NETHER) {
-				//For the Nether we try to find a portal, player or Respawn Anchor closest to overworld spawn and use that as the origin
-				//otherwise we just use the overworld spawn position as the origin
+			if (map.getDimension() == Dimension.OVERWORLD && levelDat.getSpawnDimension() != Dimension.OVERWORLD) {
+				//For the Overworld we try to find a player or bed closest to (0,64, 0) and use that as the start view
+				//otherwise we just use (0, 64, 0) as the start view
+				startView = world.getOriginFromPlayers(new Vector3l(0, 64, 0), Dimension.OVERWORLD);
+			} else if (map.getDimension() == Dimension.NETHER && levelDat.getSpawnDimension() != Dimension.NETHER) {
+				//For the Nether we try to find a portal, player or Respawn Anchor closest to world spawn and use that as the start view
+				//otherwise we just use the world spawn position as the start view
 				double prevDistance = 99999999999d;
 
-				//Prefer using portals as origin
+				//Prefer using a portal as the start view in the Nether
 				if (!portals.isEmpty()) {
 					for (Portal portal : portals) {
 						double distance = Math.hypot(portal.getX() - (double) spawnPosition.x, portal.getZ() - (double) spawnPosition.z);
 						if (distance < prevDistance) {
 							startView = new Vector3l(portal.getX(), portal.getY(), portal.getZ());
+							prevDistance = distance;
 						}
-						prevDistance = distance;
 					}
 				} else { //If no portals then try players
-					startView = world.getNetherOriginFromPlayers();
+					startView = world.getOriginFromPlayers(spawnPosition, Dimension.NETHER);
 				}
 			}
 		}

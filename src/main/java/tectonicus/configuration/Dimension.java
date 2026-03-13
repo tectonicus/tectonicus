@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -17,9 +17,9 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public enum Dimension {
-	OVERWORLD("overworld"),
-	NETHER("the_nether"),
-	END("the_end");
+	OVERWORLD("minecraft:overworld"),
+	NETHER("minecraft:the_nether"),
+	END("minecraft:the_end");
 
 	private static final Map<String, Dimension> ID_LOOKUP = new HashMap<>(values().length);
 

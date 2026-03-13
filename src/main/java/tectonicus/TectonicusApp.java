@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -95,7 +95,7 @@ public class TectonicusApp
 			{
 				interactiveRenderer = new InteractiveRenderer(config, 512, 512);
 
-				tectonicus.configuration.Map map = config.getMap(0);;
+				tectonicus.configuration.Map map = config.getMap(0);
 				Layer layer = map.getLayer(0);
 				
 				BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);

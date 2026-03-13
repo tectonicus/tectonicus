@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,12 +10,14 @@
 package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
-import tectonicus.Version;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.Map;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @UtilityClass
 public class DirUtils
@@ -37,25 +39,17 @@ public class DirUtils
 		return new File(layerDir, "Zoom"+zoomLevel);
 	}
 
-	public static File getDimensionDir(File worldDir, Dimension dimension, Version version) {
-		File dimensionDir;
-
-		String dimensionPath = "dimensions/minecraft/";
-		
-		if (version.getNumVersion() >= Version.VERSION_26_1.getNumVersion()) {
-			dimensionDir = new File(worldDir, dimensionPath + Dimension.OVERWORLD.getId()); //default to overworld
-			if (dimension == Dimension.NETHER) {
-				dimensionDir = new File(worldDir, dimensionPath + Dimension.NETHER.getId());
-			} else if (dimension == Dimension.END) {
-				dimensionDir = new File(worldDir, dimensionPath + Dimension.END.getId());
-			}
-		} else {
-			dimensionDir = worldDir; //default to overworld
-			if (dimension == Dimension.NETHER) {
-				dimensionDir = new File(worldDir, "DIM-1");
-			} else if (dimension == Dimension.END) {
-				dimensionDir = new File(worldDir, "DIM1");
-			}
+	public static Path getDimensionDir(Path worldDir, Dimension dimension) {
+		String[] dimensionParts = dimension.getId().split(":");
+		String namespace = dimensionParts[0];
+		String path = dimensionParts[1];
+		Path dimensionDir = Paths.get(worldDir.toString(),"dimensions", namespace, path);
+		if (!Files.exists(dimensionDir)) { //fall back to old directory structure if new one doesn't exist
+			dimensionDir = switch (dimension) {
+				case NETHER -> worldDir.resolve("DIM-1");
+				case END -> worldDir.resolve("DIM1");
+				default -> worldDir;
+			};
 		}
 
 		return dimensionDir;

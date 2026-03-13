@@ -12,7 +12,6 @@ package tectonicus.world;
 import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
 import tectonicus.Block;
 import tectonicus.BlockContext;
@@ -193,7 +192,7 @@ public class World implements BlockContext
 		try {
 			log.info("Loading level.dat");
 			levelDat = new LevelDat(Minecraft.findLevelDat(worldDir.toPath()), config.getSinglePlayerName());
-			if (dimension == Dimension.END) {
+			if (dimension == Dimension.END && levelDat.getSpawnDimension() != Dimension.END) {
 				levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 			}
 			
@@ -219,7 +218,7 @@ public class World implements BlockContext
 		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		
 		// Use the world dir and the dimension to find the dimension dir
-		dimensionDir = DirUtils.getDimensionDir(worldDir, dimension, version);
+		dimensionDir = DirUtils.getDimensionDir(worldDir.toPath(), dimension).toFile();
 		log.debug("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
 		
 		if (!Minecraft.isValidDimensionDir(dimensionDir))
@@ -273,15 +272,7 @@ public class World implements BlockContext
 		//Set subset origin if none was set in config file
 		WorldSubset subset = map.getWorldSubset();
 		if (!(subset instanceof FullWorldSubset) && subset.getOrigin() == null) {
-			Vector3l origin = levelDat.getSpawnPosition();
-
-			//For the Nether we try to find a player or Respawn Anchor closest to overworld spawn and use that as the origin
-			//otherwise we just use the overworld spawn position as the origin
-			if (dimension == Dimension.NETHER) {
-				origin = getNetherOriginFromPlayers();
-			}
-
-			subset.setOrigin(origin);
+			subset.setOrigin(getSubsetOrigin());
 		}
 		this.worldSubset = subset;
 		
@@ -313,33 +304,50 @@ public class World implements BlockContext
 		this.smoothLit = map.isSmoothLit();
 		this.nightLightAdjustment = smoothLit ? 0.3f : 0.1f;
 	}
-
-	public Vector3l getNetherOriginFromPlayers() {
-		Vector3l spawnPosition = levelDat.getSpawnPosition();
-		Vector3l origin = new Vector3l(spawnPosition);
+	
+	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
+	//For Overworld we check for a player or bed closest to (0,64,0) and use that as the origin
+	//otherwise we just use (0,64,0) as the origin
+	//For the Nether we try to find a player or Respawn Anchor closest to world spawn and use that as the origin
+	//otherwise we just use the world spawn position as the origin
+	//For the End we set the spawn to (100, 49, 0) when we load the level.dat. That's the location of the obsidian platform that the player spawns on
+	private Vector3l getSubsetOrigin() {
+		Vector3l origin = levelDat.getSpawnPosition();
+		Dimension spawnDimension = levelDat.getSpawnDimension();
+		
+		if(dimension == Dimension.OVERWORLD && spawnDimension != Dimension.OVERWORLD) {
+			origin = getOriginFromPlayers(new Vector3l(0, 64, 0), dimension);
+		} else if (dimension == Dimension.NETHER && spawnDimension != Dimension.NETHER) {
+			origin = getOriginFromPlayers(origin, dimension);
+		}
+		return origin;
+	}
+	
+	public Vector3l getOriginFromPlayers(Vector3l startPoint, Dimension dimension) {
+		Vector3l origin = startPoint;
 		double prevDistance = 99999999999d;
-
+		
 		//TODO: need to use player filter here
 		for (Player player : players) {
-			if (player.getDimension() == Dimension.NETHER) {
+			if (player.getDimension() == dimension) {
 				Vector3d position = player.getPosition();
-				double distance = Math.hypot(position.x - spawnPosition.x, position.z - spawnPosition.z);
+				double distance = Math.hypot(position.x - startPoint.x, position.z - startPoint.z);
 				if (distance < prevDistance) {
 					origin = new Vector3l((long) position.x, (long) position.y, (long) position.z);
-				}
-				prevDistance = distance;
+					prevDistance = distance;
+				}				
 			}
-
-			if (player.getSpawnDimension() == Dimension.NETHER) {
+			
+			if (player.getSpawnDimension() == dimension) {
 				Vector3l position = player.getSpawnPosition();
-				double distance = Math.hypot(position.x - (double) spawnPosition.x, position.z - (double) spawnPosition.z);
+				double distance = Math.hypot(position.x - (double) startPoint.x, position.z - (double) startPoint.z);
 				if (distance < prevDistance) {
 					origin = new Vector3l(position.x, position.y, position.z);
+					prevDistance = distance;
 				}
-				prevDistance = distance;
 			}
 		}
-
+		
 		return origin;
 	}
 	
