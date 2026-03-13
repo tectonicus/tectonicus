@@ -1,3 +1,14 @@
+Version 2.31 03-13-2026
+Thanks to Matej Darebnik for fixing numerous breaking changes in 1.21 versions including getting Item Model Definitions working
+- Compatibility with Minecraft 1.21-1.21.11
+- Add arm64 lwjgl natives (support for M-series Macs and possibly other ARM platforms)
+- Add support for rectangular world subsets in addition to circular subsets
+- Make ChestFilterType.NONE the default instead of ALL  (chests will no longer automatically be output for your map unless you specifically enable it in your config file)
+- "overworld" can be used in place of "terra" for the overworld dimension in config files
+- Fix long-standing bugs with leaf rendering and Dark Forest grass side overlay color
+- Jar search now tries to find an exact match with pre-release and release candidate created worlds
+- Lots of code cleanup, refactoring, and dependency upgrades
+
 Version 2.30.2 05-29-2024
 - fix issue with grayscale textures being the wrong color
 - ignore proto-chunks when rendering

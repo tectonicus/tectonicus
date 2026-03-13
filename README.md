@@ -11,11 +11,11 @@ It is highly configurable and is focused on creating maps that look very close t
 Usage
 -----------
 1. [Download the latest version of Tectonicus](https://github.com/tectonicus/tectonicus/releases)
-2. [Create an XML configuration file](https://github.com/tectonicus/tectonicus/wiki/Creating-a-Tectonicus-config-file)
-3. Run Tectonicus from the command line: `java -jar Tectonicus-2.30.1.jar -c myconfig.xml`
+2. [Create an XML configuration file](https://github.com/tectonicus/tectonicus/wiki/Home)
+3. Run Tectonicus from the command line: `java -jar Tectonicus-2.31.jar -c myconfig.xml`
 
 If you experience out of memory errors you may need to increase the memory available to the Java VM:
-`java -Xmx6G -jar Tectonicus-2.30.1.jar config=myconfig.xml`
+`java -Xmx6G -jar Tectonicus-2.31.jar config=myconfig.xml`
 6G = 6 gigabytes of RAM (or however much RAM you can afford to use)
 
 Tectonicus generates a large amount of images which can use a significant amount of hard drive space (gigabytes) depending on your world size. This can be reduced by setting imageFormat to webp or jpg, and also by utilising closestZoomSize in the Map node.
@@ -94,9 +94,9 @@ Description here
 
 Tectonicus generates a log file that is overwritten each time you run the program. By default, the log is located in log/tectonicus.log in the current working directory.
 To change the log directory and/or append to the logfile instead of overwriting it use the system properties tectonicus.logDir and tectonicus.logAppend respectively: 
-`java -Dtectonicus.logDir=newLogDir -Dtectonicus.logAppend=true -jar Tectonicus-2.30.1.jar`
+`java -Dtectonicus.logDir=newLogDir -Dtectonicus.logAppend=true -jar Tectonicus-2.31.jar`
 If appending is enabled, by default the log file will roll over at the start of every month saving previous month's log files for six months or until the total log file size reaches 200MB.
 
 You can provide your own custom [logback configuration](https://logback.qos.ch/manual/configuration.html):
-`java -Dlogback.configurationFile=logbackConfig.xml -jar Tectonicus-2.30.1.jar`
+`java -Dlogback.configurationFile=logbackConfig.xml -jar Tectonicus-2.31.jar`
 Make sure to name your custom config file something other than logback.xml or it will not work.
