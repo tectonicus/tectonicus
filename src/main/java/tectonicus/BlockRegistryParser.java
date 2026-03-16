@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -722,16 +722,14 @@ public class BlockRegistryParser
 		 	
 		 	blockType = new CocoaPod(name, smallTexture, mediumTexture, largeTexture);
 		}
-		else if (nodeName.equals("beacon"))
-		{
-		 	SubTexture beam = parseTexture(element, "beam", null);
+		else if (nodeName.equals("beacon")) {
 		 	if (StringUtils.isNotEmpty(stringId)) {
-				blockType = new Beacon(stringId, name, beam);
+				blockType = new Beacon(stringId, name, texturePack);
 			} else {
 				SubTexture glass = parseTexture(element, "glass", null);
 				SubTexture beacon = parseTexture(element, "beacon", null);
 				SubTexture obsidian = parseTexture(element, "obsidian", null);
-				blockType = new Beacon(name, glass, beacon, obsidian, beam);
+				blockType = new Beacon(name, glass, beacon, obsidian, texturePack);
 			}
 		}
 		else if (nodeName.equals("anvil"))
@@ -809,17 +807,14 @@ public class BlockRegistryParser
 			
 			blockType = new Tripwire(name, texture);
 		}
-		else if (nodeName.equals("banner"))
-		{
-			SubTexture texture = parseTexture(element, "texture", null);
-			
+		else if (nodeName.equals("banner")) {
 			String hasPostStr = element.getAttribute("hasPost");
 			final boolean hasPost = (hasPostStr.equalsIgnoreCase("true"));
 
 			if (StringUtils.isNotEmpty(stringId)) {
-				blockType = new Banner(stringId, name, texture, hasPost);
+				blockType = new Banner(stringId, name, texturePack, hasPost);
 			} else {
-				blockType = new Banner(name, texture, hasPost);
+				blockType = new Banner(name, texturePack, hasPost);
 			}
 		}
 		else if (nodeName.equals("itemframe") || nodeName.equals("itemframenew"))

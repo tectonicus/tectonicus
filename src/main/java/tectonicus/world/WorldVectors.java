@@ -107,12 +107,13 @@ public class WorldVectors {
 			json.writeVariable("surfaceArea", surfaceArea);
 			json.writeVariable("numPlayers", numPlayers);
 
+			json.writeVariable("spawnDimension", levelDat.getSpawnDimension().toString());
 			Vector3l spawnPos = levelDat.getSpawnPosition();
 			if (map.getWorldSubset().containsBlock(spawnPos.x, spawnPos.z)) {
 				// Spawn point
 				json.writeWorldCoord("spawnPosition", levelDat.getSpawnPosition());
 			}
-
+			
 			json.writeWorldCoord("startView", getStartView(map, world, portals));
 
 			Vector2f scaledOrigin = new Vector2f();

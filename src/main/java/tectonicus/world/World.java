@@ -338,8 +338,8 @@ public class World implements BlockContext
 				}				
 			}
 			
-			if (player.getSpawnDimension() == dimension) {
-				Vector3l position = player.getSpawnPosition();
+			Vector3l position = player.getSpawnPosition();
+			if (position != null && player.getSpawnDimension() == dimension) { //Players may not have a spawn position set
 				double distance = Math.hypot(position.x - (double) startPoint.x, position.z - (double) startPoint.z);
 				if (distance < prevDistance) {
 					origin = new Vector3l(position.x, position.y, position.z);
@@ -780,6 +780,11 @@ public class World implements BlockContext
 		return levelDat.getSpawnPosition();
 	}
 	
+	public Dimension getSpawnDimension()
+	{
+		return levelDat.getSpawnDimension();
+	}
+	
 	@Override
 	public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z)
 	{
@@ -1067,7 +1072,7 @@ public class World implements BlockContext
 	
 	
 	public static List<Player> loadPlayers(File worldDir, PlayerSkinCache playerSkinCache, Player singlePlayer) {
-		File playersDir = Minecraft.findPlayersDir(worldDir);
+		File playersDir = Minecraft.findPlayersDir(worldDir.toPath());
 		
 		log.info("Loading players from {}", playersDir.getAbsolutePath());
 		

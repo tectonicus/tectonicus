@@ -403,7 +403,7 @@
 	
 	<Solid id="137" name="Command Block" texture="command_block.png" />
 	
-	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" beam="assets/minecraft/textures/entity/beacon_beam.png" />
+	<Beacon id="138" name="Beacon" glass="glass.png" beacon="beacon.png" obsidian="obsidian.png" />
 	
 	<Wall id="139" name="Cobblestone Wall" texture="cobblestone.png" />
 	
@@ -559,9 +559,9 @@
 	<Plant id="175:4" name="Rose Bush" top="double_plant_rose_top.png" bottom="double_plant_rose_bottom.png" />
 	<Plant id="175:5" name="Peony" top="double_plant_paeonia_top.png" bottom="double_plant_paeonia_bottom.png" />
 	
-	<Banner id="176" stringid="minecraft:standing_banner" name="Standing Banner" texture="assets/minecraft/textures/entity/banner_base.png" hasPost="true" />
+	<Banner id="176" stringid="minecraft:standing_banner" name="Standing Banner" hasPost="true" />
 	
-	<Banner id="177" stringid="minecraft:wall_banner" name="Wall Banner" texture="assets/minecraft/textures/entity/banner_base.png" />
+	<Banner id="177" stringid="minecraft:wall_banner" name="Wall Banner" />
 	
 	<DaylightSensor id="178" stringId="minecraft:daylight_detector_inverted" name="Inverted Daylight Sensor" top="daylight_detector_inverted_top.png" bottom="daylight_detector_side.png" />
 	

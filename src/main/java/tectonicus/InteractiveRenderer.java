@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -238,11 +238,17 @@ public class InteractiveRenderer
 		}
 	}
 	
-	public void display(World world)
-	{
-		orthoCamPosition.x = world.getSpawnPosition().x;
-		orthoCamPosition.y = world.getSpawnPosition().y;
-		orthoCamPosition.z = world.getSpawnPosition().z;
+	public void display(World world) {
+		if (world.getSpawnDimension() == world.getDimension()) {
+			orthoCamPosition.x = world.getSpawnPosition().x;
+			orthoCamPosition.y = world.getSpawnPosition().y;
+			orthoCamPosition.z = world.getSpawnPosition().z;
+		} else {
+			log.warn("World spawn is in a different dimension to the one being rendered - ortho camera will be positioned at (0,0,0)");
+			orthoCamPosition.x = 0;
+			orthoCamPosition.y = 0;
+			orthoCamPosition.z = 0;
+		}
 		
 		orthoZoom = 32;
 		orthoAngleOffset = (float)Math.PI / 4.0f;

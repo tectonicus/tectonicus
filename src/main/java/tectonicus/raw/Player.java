@@ -130,13 +130,19 @@ public class Player {
 		air = NbtUtil.getShort(root, "Air", (short) 0);
 		food = NbtUtil.getInt(root, "foodLevel", 0);
 		
-		final int dimensionVal = NbtUtil.getInt(root, "Dimension", 0);
-		if (dimensionVal == 0)
-			dimension = Dimension.OVERWORLD;
-		else if (dimensionVal == 1)
-			dimension = Dimension.END;
-		else if (dimensionVal == -1)
-			dimension = Dimension.NETHER;
+		//This changed to a string in 1.16
+		StringTag dimensionStr = NbtUtil.getChild(root, "Dimension", StringTag.class);
+		if (dimensionStr != null) {
+			dimension = Dimension.byId(dimensionStr.getValue());
+		} else {
+			final int dimensionVal = NbtUtil.getInt(root, "Dimension", 0);
+			if (dimensionVal == 0)
+				dimension = Dimension.OVERWORLD;
+			else if (dimensionVal == 1)
+				dimension = Dimension.END;
+			else if (dimensionVal == -1)
+				dimension = Dimension.NETHER;
+		}
 		
 		ListTag posList = NbtUtil.getChild(root, "Pos", ListTag.class);
 		if (posList != null) {

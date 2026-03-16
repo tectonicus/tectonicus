@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -55,12 +55,18 @@ public class ArmorStand implements BlockType
         public ArmorStand(String name, TexturePack texturePack)
 	{
 		this.name = name;
-                
-                this.texturePack = texturePack;
-                
-                texture = texturePack.findTexture("assets/minecraft/textures/entity/armorstand/wood.png");
-                
-                final float widthTexel = 1.0f / 64.0f;
+		
+		this.texturePack = texturePack;
+		SubTexture armorStandTexture;
+		boolean textureExists = texturePack.fileExists("assets/minecraft/textures/entity/armorstand/armorstand.png");
+		if (textureExists) {
+			armorStandTexture = texturePack.findTexture("assets/minecraft/textures/entity/armorstand/armorstand.png");
+		} else { // Fall back to old texture location (1.21.11 and older)
+			armorStandTexture = texturePack.findTexture("assets/minecraft/textures/entity/armorstand/wood.png");
+		}
+		texture = armorStandTexture;
+		
+		final float widthTexel = 1.0f / 64.0f;
 		final float heightTexel = 1.0f / 64.0f;
                 
 		baseTopTexture = new SubTexture(texture.texture, texture.u0+widthTexel*12, texture.v0+heightTexel*32, texture.u0+widthTexel*24, texture.v0+heightTexel*44);

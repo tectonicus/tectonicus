@@ -93,7 +93,7 @@ public class TectonicusApp
 			MessageDigest hashAlgorithm = MessageDigest.getInstance("sha1");
 			if (config.getMode() == Mode.INTERACTIVE)
 			{
-				interactiveRenderer = new InteractiveRenderer(config, 512, 512);
+				interactiveRenderer = new InteractiveRenderer(config, 1024, 1024);
 
 				tectonicus.configuration.Map map = config.getMap(0);
 				Layer layer = map.getLayer(0);

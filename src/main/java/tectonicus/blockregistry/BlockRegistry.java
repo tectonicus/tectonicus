@@ -325,21 +325,43 @@ public class BlockRegistry
 		
 		for (Entry<String, JsonNode> entry : textures.properties()) {
 			String key = entry.getKey();
-			StringBuilder tex = new StringBuilder(entry.getValue().asText());
+			JsonNode value = entry.getValue();
+			//TODO: handle the new 26.1 format with force_translucent and sprite. Have to create a sprite object
+			StringBuilder tex = null;
+			if (value.isTextual()) {
+				tex = new StringBuilder(value.asText());
+			} else if (value.isObject()) {
+				tex = new StringBuilder(value.get("sprite").asText()); //TODO: this is just a temp fix to get this working with 26.1
+			} else {
+				log.warn("Unexpected texture value: {} for key: {}", value, key);
+			}
 			
-			if (tex.charAt(0) == '#') {
-				String texture = textureMap.get(tex.deleteCharAt(0).toString());
+			if (tex != null) {
+				String texture = getTexture(tex, textureMap);
 				if (texture != null) {
 					newTexMap.put(key, texture);
 				}
-			} else {
-				newTexMap.put(key, tex.toString());
 			}
 		}
 		
 		return newTexMap;
 	}
 
+	private String getTexture(StringBuilder tex, Map<String, String> textureMap) {
+		String texture = null;
+		
+		if (tex.charAt(0) == '#') {
+			String lookupTexture = textureMap.get(tex.deleteCharAt(0).toString());
+			if (lookupTexture != null) {
+				texture = lookupTexture;
+			}
+		} else {
+			texture = tex.toString();
+		}
+		
+		return texture;
+	}
+	
 	private void checkBlockAttributes() {
 		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
                         for (BlockState state : wrapper.getStates()) {

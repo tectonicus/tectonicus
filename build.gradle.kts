@@ -10,7 +10,7 @@ plugins {
 
 version = "2.31"
 
-// Exclude unneeded tasks.
+// Exclude unneeded tasks from CI build
 gradle.startParameter.excludedTaskNames.addAll(listOf("jar", "distTar", "distZip", "shadowDistTar"))
 
 java {

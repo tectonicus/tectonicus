@@ -697,7 +697,10 @@ public class TexturePack
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("data/minecraft/banner_pattern"))) {
 			loadPatternTextures(entries, patterns);
 			
-			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
+			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner/banner_base.png");
+			if (!Files.exists(basePattern)) { //Fall back to old texture location (1.21.11 and older)
+				basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
+			}
 			patterns.put("bannerBase", loadTexture(basePattern.toString()));
 		} catch (IOException e) {
 			log.warn("No banner pattern json found. You may be using an older Minecraft jar file");

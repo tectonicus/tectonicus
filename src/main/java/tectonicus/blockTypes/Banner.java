@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -27,6 +27,7 @@ import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.texture.TexturePack;
 import tectonicus.world.Colors;
 
 import java.awt.AlphaComposite;
@@ -58,12 +59,20 @@ public class Banner implements BlockType
 
 	private final Version texturePackVersion;
 
-	public Banner(String id, String name, SubTexture texture, final boolean hasPost)
+	public Banner(String id, String name, TexturePack texturePack, final boolean hasPost)
 	{
 		this.id = id;
 		this.name = name;
 		this.hasPost = hasPost;
 
+		SubTexture texture;
+		boolean textureExists = texturePack.fileExists("assets/minecraft/textures/entity/banner/banner_base.png");
+		if (textureExists) { //26.1 and newer
+			texture = texturePack.findTexture("assets/minecraft/textures/entity/banner/banner_base.png");
+		} else { //fall back to old location (1.21.11 and earlier)
+			texture = texturePack.findTexture("assets/minecraft/textures/entity/banner_base.png");
+		}
+		
 		final float texel = 1.0f / 64.0f;
 
 		this.bannerSideTexture = new SubTexture(texture.texture, texture.u0, texture.v0+texel, texture.u0+texel, texture.v0+texel*41);
@@ -75,9 +84,9 @@ public class Banner implements BlockType
 		this.texturePackVersion = texture.getTexturePackVersion();
 	}
 
-	public Banner(String name, SubTexture texture, final boolean hasPost)
+	public Banner(String name, TexturePack texturePack, final boolean hasPost)
 	{
-		this(StringUtils.EMPTY, name, texture, hasPost);
+		this(StringUtils.EMPTY, name, texturePack, hasPost);
 	}
 	
 	@Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,6 +24,7 @@ import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 import tectonicus.world.Colors;
 import tectonicus.world.Effect;
@@ -33,30 +34,27 @@ import java.util.List;
 
 import static tectonicus.Version.VERSION_4;
 
-public class Beacon implements BlockType
-{
+public class Beacon implements BlockType {
 	private final String id;
 	private final String name;
 
 	private final SubTexture glass, obsidian, beacon, beam;
 
-	public Beacon(String id, String name, SubTexture beam)
-	{
+	public Beacon(String id, String name, TexturePack texturePack) {
 		this.id = id;
 		this.name = name;
-		this.beam = beam;
+		this.beam = findBeamTexture(texturePack);
 		this.glass = null;
 		this.obsidian = null;
 		this.beacon = null;
 	}
 
-	public Beacon(String name, SubTexture glass, SubTexture beacon, SubTexture obsidian, SubTexture beam)
-	{
+	public Beacon(String name, SubTexture glass, SubTexture beacon, SubTexture obsidian, TexturePack texturePack) {
 		this.id = StringUtils.EMPTY;
 		this.name = name;
 		this.glass = glass;
 		this.obsidian = obsidian;
-		this.beam = beam;
+		this.beam = findBeamTexture(texturePack);
 
 		final float texel;
 		if (glass.texturePackVersion == VERSION_4)
@@ -65,6 +63,23 @@ public class Beacon implements BlockType
 			texel = 1.0f / 16.0f;
 
 		this.beacon = new SubTexture(beacon.texture, beacon.u0+texel, beacon.v0+texel, beacon.u1-texel, beacon.v1-texel);
+	}
+	
+	private SubTexture findBeamTexture(TexturePack texturePack) {
+		boolean textureExists = texturePack.fileExists("assets/minecraft/textures/entity/beacon/beacon_beam.png");
+		SubTexture beamTexture;
+		if (textureExists) {
+			beamTexture = texturePack.findTexture("assets/minecraft/textures/entity/beacon/beacon_beam.png");
+		} else {
+			textureExists = texturePack.fileExists("assets/minecraft/textures/entity/beacon_beam.png");
+			if (textureExists) {
+				beamTexture = texturePack.findTexture("assets/minecraft/textures/entity/beacon_beam.png");
+			} else {
+				beamTexture = texturePack.findTexture("misc/beam.png");
+			}
+		}
+		
+		return beamTexture;
 	}
 	
 	@Override

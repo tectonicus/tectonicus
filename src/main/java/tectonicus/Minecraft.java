@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -250,16 +251,18 @@ public class Minecraft
 		return worldDir.resolve("level.dat");
 	}
 	
-	public static File findPlayersDir(File worldDir)
-	{
+	public static File findPlayersDir(Path worldDir) {
 		if (worldDir == null)
 			return null;
 		
-		File newDir = new File(worldDir, "playerdata");
-		if (newDir.exists())
-			return newDir;
-		else
-			return new File(worldDir, "players");
+		Path playersDir = Paths.get(worldDir.toString(), "players", "data"); //26.1+ player data location
+		if (!Files.isDirectory(playersDir)) {
+			playersDir = worldDir.resolve("playerdata"); //1.7-1.21.11
+			if (!Files.isDirectory(playersDir))
+				playersDir = worldDir.resolve("players");// 1.6 and earlier
+		}
+		
+		return playersDir.toFile();
 	}
 
 	public static Path findServerPlayerFile(Path worldDir, String name)
