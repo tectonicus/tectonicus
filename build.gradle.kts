@@ -30,7 +30,7 @@ repositories {
 dependencies {
 	val lwjglVersion = "3.4.1"
 	val picocliVersion = "4.7.7"
-	val lombokVersion = "1.18.42"
+	val lombokVersion = "1.18.44"
 	val junitVersion = "6.0.3"
 	val caffeineVersion = "3.2.3"
 	val commonsTextVersion = "1.15.0"
