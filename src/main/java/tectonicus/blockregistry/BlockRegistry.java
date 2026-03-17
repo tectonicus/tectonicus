@@ -9,12 +9,6 @@
 
 package tectonicus.blockregistry;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
@@ -27,6 +21,12 @@ import tectonicus.configuration.MutableConfiguration;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonReadFeature;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -210,7 +210,7 @@ public class BlockRegistry
 		Map<String, String> states = new HashMap<>();
 		
 		for (Entry<String, JsonNode> entry : when.properties()) {
-			states.put(entry.getKey(), entry.getValue().asText());
+			states.put(entry.getKey(), entry.getValue().asString());
 		}
 
 		return states;
@@ -224,7 +224,7 @@ public class BlockRegistry
 			} else {
 				stateModels = OBJECT_MAPPER.readValue("[" + models + "]", new TypeReference<List<BlockStateModel>>(){});
 			}
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			log.error("Exception: ", e);
 		}
 
@@ -274,7 +274,7 @@ public class BlockRegistry
 		String parent;
 		if(json.has("parent")) // Get texture information and then load parent file
 		{
-			parent = json.get("parent").asText();
+			parent = json.get("parent").asString();
 
 			if(json.has(ELEMENTS_FIELD) && elements == null)
 			{
@@ -328,10 +328,10 @@ public class BlockRegistry
 			JsonNode value = entry.getValue();
 			//TODO: handle the new 26.1 format with force_translucent and sprite. Have to create a sprite object
 			StringBuilder tex = null;
-			if (value.isTextual()) {
-				tex = new StringBuilder(value.asText());
+			if (value.isString()) {
+				tex = new StringBuilder(value.asString());
 			} else if (value.isObject()) {
-				tex = new StringBuilder(value.get("sprite").asText()); //TODO: this is just a temp fix to get this working with 26.1
+				tex = new StringBuilder(value.get("sprite").asString()); //TODO: this is just a temp fix to get this working with 26.1
 			} else {
 				log.warn("Unexpected texture value: {} for key: {}", value, key);
 			}

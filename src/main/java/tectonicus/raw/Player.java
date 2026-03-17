@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,8 +9,8 @@
 
 package tectonicus.raw;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectReader;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -211,13 +211,13 @@ public class Player {
 				HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 				log.trace(response.body());
 				JsonNode usernameNode = OBJECT_READER.readTree(response.body());
-				Player.this.setUuid(usernameNode.get("id").asText());
+				Player.this.setUuid(usernameNode.get("id").asString());
 				
 				JsonNode profileNode = getProfile(httpClient);
 				getSkinUrl(profileNode);
 			} else {
 				JsonNode profileNode = getProfile(httpClient);
-				Player.this.setName(profileNode.get("name").asText());
+				Player.this.setName(profileNode.get("name").asString());
 				getSkinUrl(profileNode);
 			}
 			log.debug("Loaded {}", Player.this.getName());
@@ -240,14 +240,14 @@ public class Player {
 		
 		private void getSkinUrl(JsonNode node) throws Exception {
 			JsonNode properties = node.get("properties").get(0);
-			byte[] decoded = Base64.getDecoder().decode(properties.get("value").asText());
+			byte[] decoded = Base64.getDecoder().decode(properties.get("value").asString());
 			String textureValue = new String(decoded, StandardCharsets.UTF_8);
 			log.trace(textureValue);
 			node = OBJECT_READER.readTree(textureValue);
 			boolean hasSkin = node.get("textures").has("SKIN");
 			String textureUrl = null;
 			if (hasSkin)
-				textureUrl = node.get("textures").get("SKIN").get("url").asText();
+				textureUrl = node.get("textures").get("SKIN").get("url").asString();
 			Player.this.setSkinURL(textureUrl);
 		}
 	}

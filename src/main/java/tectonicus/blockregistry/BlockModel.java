@@ -9,7 +9,7 @@
 
 package tectonicus.blockregistry;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -109,7 +109,7 @@ public class BlockModel
 				JsonNode rotOrigin = rot.get("origin");
 				rotationOrigin = new org.joml.Vector3f(rotOrigin.get(0).floatValue(), rotOrigin.get(1).floatValue(), rotOrigin.get(2).floatValue());
 
-				String rotationAxis = rot.get("axis").asText();
+				String rotationAxis = rot.get("axis").asString();
 				if (rotationAxis.equals("x")) {
 					rotAxis = new org.joml.Vector3f(1.0f, 0.0f, 0.0f);
 				}
@@ -203,7 +203,7 @@ public class BlockModel
 				SubTexture subTexture = new SubTexture(null, u0 * texel, v0 * texel, u1 * texel, v1 * texel);
 				
 				String modelName = blockModel.getName();
-				StringBuilder tex = new StringBuilder(face.get("texture").asText());
+				StringBuilder tex = new StringBuilder(face.get("texture").asString());
 				if (tex.charAt(0) == '#') {
 					String texture = tex.deleteCharAt(0).toString();
 					

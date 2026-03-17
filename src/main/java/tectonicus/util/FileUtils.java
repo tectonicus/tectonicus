@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,7 +9,7 @@
 
 package tectonicus.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;

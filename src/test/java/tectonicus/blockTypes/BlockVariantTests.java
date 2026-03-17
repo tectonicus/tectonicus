@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,15 +9,15 @@
 
 package tectonicus.blockTypes;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateModel;
 import tectonicus.blockregistry.BlockVariant;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +26,6 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 
 class BlockVariantTests
@@ -34,7 +33,7 @@ class BlockVariantTests
 	ObjectMapper mapper = new ObjectMapper();
 
 	@BeforeEach
-	public void setUp()
+	void setUp()
 	{	
 //		try {
 //			Thread.sleep(20 * 1000);
@@ -72,7 +71,7 @@ class BlockVariantTests
 
 	@EnabledIfSystemProperty(named = "os.name", matches = "Windows 10")
 	@Test
-	void testDeserializeVariantSingleModel() throws JsonProcessingException {
+	void testDeserializeVariantSingleModel() throws JacksonException {
 		System.out.println(System.getProperty("os.name") + " " + System.getProperty("os.version"));
 		JsonNode variant = mapper.readTree("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
 		BlockRegistry registry = new BlockRegistry();
@@ -84,7 +83,7 @@ class BlockVariantTests
 
 	@EnabledIfSystemProperty(named = "os.name", matches = "Windows 10")
 	@Test
-	void testDeserializeVariantMultipleModels() throws JsonProcessingException {
+	void testDeserializeVariantMultipleModels() throws JacksonException {
 		JsonNode variant = mapper.readTree("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
 		BlockRegistry registry = new BlockRegistry();
 		List<BlockStateModel> models = registry.deserializeBlockStateModels(variant);

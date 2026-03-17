@@ -9,7 +9,7 @@
 
 package tectonicus.texture;
 
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.databind.ObjectReader;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.Minecraft;

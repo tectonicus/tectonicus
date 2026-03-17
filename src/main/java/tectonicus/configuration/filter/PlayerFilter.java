@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,7 +9,7 @@
 
 package tectonicus.configuration.filter;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.Minecraft;
@@ -83,7 +83,7 @@ public class PlayerFilter
 
 				for (int i=0; i<node.size(); i++)
 				{
-					String name = node.get(i).get("name").asText();
+					String name = node.get(i).get("name").asString();
 					playerList.add(name.toLowerCase());
 				}
 			}

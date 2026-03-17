@@ -9,10 +9,6 @@
 
 package tectonicus.raw;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +34,10 @@ import tectonicus.util.FileUtils;
 import tectonicus.world.Colors;
 import tectonicus.world.Effect;
 import tectonicus.world.WorldInfo;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectReader;
+import tools.jackson.databind.ObjectWriter;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -411,7 +411,7 @@ public class RawChunk {
 		}
 	}
 
-	private void parseBlockEntities(ListTag blockEntitiesTag, boolean is118) throws JsonProcessingException {
+	private void parseBlockEntities(ListTag blockEntitiesTag, boolean is118) throws JacksonException {
 		for (Tag t : blockEntitiesTag.getValue()) {
 			if (t instanceof CompoundTag) {
 				CompoundTag entity = (CompoundTag) t;
@@ -440,64 +440,63 @@ public class RawChunk {
 					if (id.equals("Sign") || id.equals("minecraft:sign") || id.equals("minecraft:hanging_sign")) {
 						List<String> textLines = new ArrayList<>();
 						String color = "black";
-
-                                                CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
-                                                CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
-
-                                                Consumer<Function<Integer, String>> parseSignText = (getText) -> {
-                                                        for (int i = 0; i < 4; i++) {
-                                                                String text = getText.apply(i);
-
-                                                                if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
-                                                                {
-                                                                        textLines.add(textFromJSON(text));
-                                                                } else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
-                                                                {
-                                                                        text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
-                                                                        try {
-                                                                                textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
-                                                                        }
-                                                                        catch (JsonProcessingException e) {
-                                                                                throw new RuntimeException(e);
-                                                                        }
-                                                                } else {
-                                                                        textLines.add("");
-                                                                }
-                                                        }
-                                                };
-                                                
-                                                if (frontText == null) {
-                                                        // Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
-                                                        parseSignText.accept((i) -> {
-                                                                return NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue();
-                                                        });
-                                                        
-                                                        StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
-                                                        if (colorTag != null) {
-                                                                color = colorTag.getValue();
-                                                        }
-                                                } else {
-                                                        // Process 1.20 or newer sign
-                                                        ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
-                                                        ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
-                                                        
-                                                        parseSignText.accept((i) -> {
-                                                                if (NbtUtil.getChild(frontMessages, i, StringTag.class) == null) {
-                                                                        return null;
-                                                                } else {
-                                                                        return NbtUtil.getChild(frontMessages, i, StringTag.class).getValue();
-                                                                }
-                                                        });
-                                                        parseSignText.accept((i) -> {
-                                                                return NbtUtil.getChild(backMessages, i, StringTag.class).getValue();
-                                                        });
-                                                        
-                                                        StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
-                                                        if (colorTag != null) {
-                                                                color = colorTag.getValue();
-                                                        }
-                                                }
-
+						
+						CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
+						CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
+						
+						Consumer<Function<Integer, String>> parseSignText = (getText) -> {
+							for (int i = 0; i < 4; i++) {
+								String text = getText.apply(i);
+								
+								if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
+								{
+									textLines.add(textFromJSON(text));
+								} else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
+								{
+									text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
+									try {
+										textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+									} catch (JacksonException e) {
+										throw new RuntimeException(e);
+									}
+								} else {
+									textLines.add("");
+								}
+							}
+						};
+						
+						if (frontText == null) {
+							// Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
+							parseSignText.accept((i) -> {
+								return NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue();
+							});
+							
+							StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
+							if (colorTag != null) {
+								color = colorTag.getValue();
+							}
+						} else {
+							// Process 1.20 or newer sign
+							ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
+							ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
+							
+							parseSignText.accept((i) -> {
+								if (NbtUtil.getChild(frontMessages, i, StringTag.class) == null) {
+									return null;
+								} else {
+									return NbtUtil.getChild(frontMessages, i, StringTag.class).getValue();
+								}
+							});
+							parseSignText.accept((i) -> {
+								return NbtUtil.getChild(backMessages, i, StringTag.class).getValue();
+							});
+							
+							StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
+							if (colorTag != null) {
+								color = colorTag.getValue();
+							}
+						}
+						
 						Integer data = null;
 						BlockProperties properties = null;
 						if (dataVersion >= VERSION_13.getDataVersion()) {
@@ -576,7 +575,7 @@ public class RawChunk {
 								JsonNode node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
 								JsonNode skin = node.get("textures").get("SKIN");
 								if (skin != null) {
-									textureURL = skin.get("url").asText();
+									textureURL = skin.get("url").asString();
 								}
 							}
 						} else if (extraType != null && !(extraType.getValue().isEmpty())) {

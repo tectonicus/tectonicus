@@ -4,7 +4,7 @@ import java.util.Properties
 
 plugins {
 	application
-	id("com.gradleup.shadow") version "9.3.2"
+	id("com.gradleup.shadow") version "9.4.0"
 	`maven-publish`
 }
 
@@ -30,19 +30,21 @@ repositories {
 dependencies {
 	val lwjglVersion = "3.4.1"
 	val picocliVersion = "4.7.7"
-	val lombokVersion = "1.18.42"
+	val lombokVersion = "1.18.44"
 	val junitVersion = "6.0.3"
 	val caffeineVersion = "3.2.3"
 	val commonsTextVersion = "1.15.0"
 	val jomlVersion = "1.10.8"
 	val joglVersion = "2.6.0"
-	val jacksonVersion = "2.21.1"
+//	val jacksonVersion = "2.21.1"
+    val jacksonVersion = "3.1.0"
 	val logbackVersion = "1.5.32"
 	val h2Version = "2.4.240"
 	val webpImageIoVersion = "0.1.6"
 	val hamcrestVersion = "3.0"
 
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
+    implementation(platform("tools.jackson:jackson-bom:$jacksonVersion"))
 
 	implementation("org.lwjgl:lwjgl")
 	implementation("org.lwjgl:lwjgl-opengl")
@@ -52,7 +54,8 @@ dependencies {
 	implementation("org.joml:joml:$jomlVersion")
 	implementation("info.picocli:picocli:$picocliVersion@jar")
 	implementation("org.jogamp.jogl:jogl-all:$joglVersion")
-	implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+	implementation("tools.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.core:jackson-annotations")
 	implementation("ch.qos.logback:logback-classic:$logbackVersion")
 	implementation("com.h2database:h2-mvstore:$h2Version")
 	implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
@@ -109,7 +112,7 @@ tasks.named<ShadowJar>("shadowJar") {
 	}
 
 	minimize {
-		exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
+		exclude(dependency("tools.jackson.core:jackson-databind:.*"))
 		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
 		exclude(dependency("org.apache.logging.log4j:log4j-core:.*"))
 		exclude(dependency("ch.qos.logback:logback-classic:.*"))

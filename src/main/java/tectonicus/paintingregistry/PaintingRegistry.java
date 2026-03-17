@@ -9,7 +9,7 @@
 
 package tectonicus.paintingregistry;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
