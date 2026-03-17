@@ -36,7 +36,6 @@ dependencies {
 	val commonsTextVersion = "1.15.0"
 	val jomlVersion = "1.10.8"
 	val joglVersion = "2.6.0"
-//	val jacksonVersion = "2.21.1"
     val jacksonVersion = "3.1.0"
 	val logbackVersion = "1.5.32"
 	val h2Version = "2.4.240"

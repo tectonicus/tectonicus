@@ -159,6 +159,10 @@ public class BlockRegistry
 							JsonNode whenField = node.get("when");
 							if (whenField.has("OR")) {
 								whenField.get("OR").forEach(whenClause -> whenClauses.add(parseStates(whenClause)));
+							} else if (whenField.has("AND")) {
+								Map<String, String> andClause = new HashMap<>();
+								whenField.get("AND").forEach(whenCondition -> andClause.putAll(parseStates(whenCondition)));
+								whenClauses.add(andClause);
 							} else {
 								whenClauses.add(parseStates(whenField));
 							}
