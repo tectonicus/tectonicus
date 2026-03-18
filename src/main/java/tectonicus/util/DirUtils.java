@@ -10,7 +10,7 @@
 package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
-import tectonicus.configuration.Dimension;
+import tectonicus.configuration.DimensionInfo;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.Map;
 
@@ -39,17 +39,22 @@ public class DirUtils
 		return new File(layerDir, "Zoom"+zoomLevel);
 	}
 
-	public static Path getDimensionDir(Path worldDir, Dimension dimension) {
-		String[] dimensionParts = dimension.getId().split(":");
+	public static Path getDimensionDir(Path worldDir, DimensionInfo dimensionInfo) {
+		String[] dimensionParts = dimensionInfo.dimension().getId().split(":");
 		String namespace = dimensionParts[0];
 		String path = dimensionParts[1];
+		if (path.equals("other")) { //for non-vanilla dimensions such as from CraftMine
+			path = dimensionInfo.name();
+		}
 		Path dimensionDir = Paths.get(worldDir.toString(),"dimensions", namespace, path);
-		if (!Files.exists(dimensionDir)) { //fall back to old directory structure if new one doesn't exist
-			dimensionDir = switch (dimension) {
+		if (!Files.exists(dimensionDir) && !path.equals("other")) { //fall back to old directory structure if new one doesn't exist
+			dimensionDir = switch (dimensionInfo.dimension()) {
 				case NETHER -> worldDir.resolve("DIM-1");
 				case END -> worldDir.resolve("DIM1");
 				default -> worldDir;
 			};
+		} else if (path.equals("other")) {
+			throw new IllegalStateException("No directory found for dimension: " + dimensionInfo.name());
 		}
 
 		return dimensionDir;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -66,18 +66,17 @@ public class ParseUtil
 		return renderStyle;
 	}
 	
-	public static Dimension parseDimension(String dimensionStr)
-	{
+	public static DimensionInfo parseDimension(String dimensionStr) {
 		dimensionStr = dimensionStr.toLowerCase();
 		
-		Dimension dimension = Dimension.OVERWORLD;
-
-		if (dimensionStr.equalsIgnoreCase("nether"))
-			dimension = Dimension.NETHER;
-		else if (dimensionStr.equalsIgnoreCase("ender") || dimensionStr.equals("end"))
-			dimension = Dimension.END;
+		Dimension dimension = switch (dimensionStr) {
+			case "overworld", "terra" -> Dimension.OVERWORLD;
+			case "the_nether", "nether" -> Dimension.NETHER;
+			case "the_end", "end", "ender" -> Dimension.END;
+			default -> Dimension.OTHER;
+		};
 		
-		return dimension;
+		return new DimensionInfo(dimension, dimensionStr);
 	}
 	
 	public static ImageFormat parseImageFormat(String imageStr)
@@ -498,17 +497,16 @@ public class ParseUtil
 		return -1;
 	}
 	
-	public static String parseBackgroundColor (String string, Dimension dimension)
-	{
-		if (StringUtils.isEmpty(string))
-		{
-			if (dimension == Dimension.OVERWORLD || dimension == Dimension.NETHER)
-				return "#e5e3df";
-			else if (dimension == Dimension.END)
-				return "#281932";
+	public static String parseBackgroundColor(String colorStr, Dimension dimension) {
+		String colorCode = colorStr;
+		if (StringUtils.isEmpty(colorStr)) {
+			if (dimension == Dimension.END)
+				colorCode =  "#281932";
+			else
+				colorCode = "#e5e3df"; //OVERWORLD, NETHER, OTHER
 		}
 		
-		return string;
+		return colorCode;
 	}
 	
 	public static int parseVersion(String str)

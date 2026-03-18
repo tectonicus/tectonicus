@@ -36,6 +36,7 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.ChunkLocator;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
+import tectonicus.configuration.DimensionInfo;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.filter.SignFilter;
@@ -112,6 +113,8 @@ public class World implements BlockContext
 	private final File dimensionDir;
 	@Getter
 	private final Dimension dimension;
+	@Getter
+	private final DimensionInfo dimensionInfo;
 	
 	private BlockTypeRegistry registry;
 	@Getter
@@ -177,6 +180,7 @@ public class World implements BlockContext
 
 		this.worldDir = map.getWorldDir();
 		this.dimension = map.getDimension();
+		this.dimensionInfo = map.getDimensionInfo();
 
 		log.info("Loading world from base dir {} with dimension {}", worldDir.getPath(), dimension);
 		
@@ -218,7 +222,7 @@ public class World implements BlockContext
 		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		
 		// Use the world dir and the dimension to find the dimension dir
-		dimensionDir = DirUtils.getDimensionDir(worldDir.toPath(), dimension).toFile();
+		dimensionDir = DirUtils.getDimensionDir(worldDir.toPath(), dimensionInfo).toFile();
 		log.debug("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
 		
 		if (!Minecraft.isValidDimensionDir(dimensionDir))

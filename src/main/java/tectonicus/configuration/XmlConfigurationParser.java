@@ -202,8 +202,9 @@ public class XmlConfigurationParser
 			
 			map.setClosestZoomSize( parseClosestZoomSize(getString(mapElement, "closestZoomSize")));
 			
-			final Dimension dimension = parseDimension(getString(mapElement, "dimension"));
-			map.setDimension(dimension);
+			DimensionInfo dimensionInfo = parseDimension(getString(mapElement, "dimension"));
+			map.setDimension(dimensionInfo.dimension());
+			map.setDimensionInfo(dimensionInfo);
 			
 			final int cameraAngle = parseCameraAngle( getString(mapElement, "cameraAngle") );
 			map.setCameraAngleDeg(cameraAngle);
@@ -322,7 +323,7 @@ public class XmlConfigurationParser
 				
 				layer.setImageFormat( parseImageFormat(getString(layerElement, "imageFormat")));
 				layer.setImageCompressionLevel( parseImageCompression(getString(layerElement, "imageCompressionLevel")));
-				layer.setBackgroundColor( parseBackgroundColor( getString(layerElement, "backgroundColor"), dimension ) );
+				layer.setBackgroundColor( parseBackgroundColor( getString(layerElement, "backgroundColor"), dimensionInfo.dimension() ) );
 				
 				layer.setUseDefaultBlockConfig( parseUseDefaultBlockConfig( getString(layerElement, "useDefaultBlocks")));
 				
