@@ -18,6 +18,8 @@ import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.Mode;
+import tectonicus.configuration.Dimension;
+import tectonicus.configuration.DimensionInfo;
 import tectonicus.configuration.Layer;
 import tectonicus.configuration.MutableConfiguration;
 import tectonicus.configuration.MutableLayer;
@@ -288,7 +290,9 @@ public class TectonicusApp
 		}
 
 		if (config.getDimension() != null) {
-			config.getMap(0).setDimension(config.getDimension());
+			Dimension dimension = config.getDimension();
+			config.getMap(0).setDimension(dimension);
+			config.getMap(0).setDimensionInfo(new DimensionInfo(dimension, dimension.getId()));
 		}
 
 		TectonicusApp app = new TectonicusApp(config);

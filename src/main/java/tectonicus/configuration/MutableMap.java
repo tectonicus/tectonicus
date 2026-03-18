@@ -93,6 +93,7 @@ public class MutableMap implements Map
 		this.name = "Unnamed map";
 		this.worldDir = new File(".");
 		this.dimension = Dimension.OVERWORLD;
+		this.dimensionInfo = new DimensionInfo(dimension, dimension.getId());
 		
 		this.playerFilter = new PlayerFilter();
 		this.signFilter = new SignFilter(SignFilterType.ALL);
