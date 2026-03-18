@@ -17,10 +17,10 @@ import static org.hamcrest.Matchers.is;
 class ParseUtilTests {
 	@Test
 	void testParseDimension() {
-		DimensionInfo dimensionInfo = ParseUtil.parseDimension("minecraft:the_nether");
+		DimensionInfo dimensionInfo = ParseUtil.parseDimension("the_nether");
 		
 		assertThat(dimensionInfo.dimension(), is(Dimension.NETHER));
-		assertThat(dimensionInfo.name(), is("minecraft:the_nether"));
+		assertThat(dimensionInfo.name(), is("the_nether"));
 	}
 
 	@Test
