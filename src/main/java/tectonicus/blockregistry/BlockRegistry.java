@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import tectonicus.Minecraft;
+import tectonicus.Version;
 import tectonicus.configuration.MutableConfiguration;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.texture.TexturePack;
@@ -284,6 +285,18 @@ public class BlockRegistry
 		if (zips.hasFile(fullModelPath)) {
 			json = OBJECT_READER.readTree(new InputStreamReader(zips.getStream(fullModelPath)));
 		} else {
+			if (modelPath.contains("copper_golem")) { //maintain fewer model files by using the same model file for different oxidation states of the copper golem statue and just changing the texture.
+				if (modelPath.contains("standing")) {
+					modelPath = "block/copper_golem_standing";
+				} else if (modelPath.contains("sitting")) {
+					modelPath = "block/copper_golem_sitting";
+				} else if (modelPath.contains("running")) {
+					modelPath = "block/copper_golem_running";
+				} else if (modelPath.contains("star")) {
+					modelPath = "block/copper_golem_star";
+				}
+			}
+			
 			String resourcePath = "models/" + modelPath + ".json";
 			try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
 				if (in != null) {
@@ -323,7 +336,11 @@ public class BlockRegistry
 				Map<String, String> textures = populateTextureMap(textureMap, json.get(TEXTURES_FIELD));
 				for (Map.Entry<String, String> entry : textures.entrySet()) {
 					if (entry.getValue() != null) {
-						combineMap.putIfAbsent(entry.getKey(), entry.getValue());
+						String texture = entry.getValue();
+						if (modelName.contains("copper_golem")) { //Override textures for copper golem statues. This lets us use the same model file for all oxidation states of the statues and handle renamed textures.
+							texture = getTextureOverride(modelName, texture, "models/block/copper_golem_texture_overrides.json");
+						}
+						combineMap.putIfAbsent(entry.getKey(), texture);
 					}
 				}
 			}
@@ -385,6 +402,25 @@ public class BlockRegistry
 		}
 		
 		return texture;
+	}
+	
+	private String getTextureOverride(String modelName, String texture, String resourcePath) {
+		String overrideTexture = texture;
+		try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
+			if (in != null) {
+				log.trace("Loading override textures from local resource");
+				Map<String, String> textureOverrides = OBJECT_MAPPER.readValue(in, new TypeReference<>() {});
+				if (texturePack.getVersion().getNumVersion() >= Version.VERSION_26_1.getNumVersion()) {
+					overrideTexture = textureOverrides.getOrDefault(modelName + "_26_1", texture);
+				} else {
+					overrideTexture = textureOverrides.getOrDefault(modelName, texture);
+				}
+			}
+		} catch (IOException e) {
+			log.error("Exception: ", e);
+		}
+		
+		return overrideTexture;
 	}
 	
 	private void checkBlockAttributes() {
