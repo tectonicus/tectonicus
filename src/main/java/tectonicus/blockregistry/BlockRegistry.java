@@ -30,6 +30,7 @@ import tools.jackson.databind.ObjectReader;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -145,14 +146,26 @@ public class BlockRegistry
 
 	private void deserializeBlockstates(DirectoryStream<Path> entries) throws IOException {
 		for (Path blockStateFile : entries) {
-			if (blockStateFile.getFileName().toString().toLowerCase().endsWith(".json")) {
-				String name = "minecraft:" + Strings.CI.removeEnd(blockStateFile.getFileName().toString(), ".json");
+			String fileName = blockStateFile.getFileName().toString();
+			JsonNode root = null;
+			if (fileName.toLowerCase().endsWith(".json")) {
+				if (fileName.contains("copper_golem_statue")) { //Use custom blockstate files for copper golem statues
+					try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("blockstates/" + fileName)) {
+						if (in != null) {
+							log.trace("Loading local blockstate file for: {}", fileName);
+							root = OBJECT_MAPPER.readTree(new InputStreamReader(in));
+						}
+					}
+				} else {
+					root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
+				}
+				
+				String name = "minecraft:" + Strings.CI.removeEnd(fileName, ".json");
 				singleVariantBlocks.invalidate(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
 				log.trace("Parsing {}.json", name);
-				JsonNode root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
 
 				BlockStateWrapper states = new BlockStateWrapper(name);
-				if (root.has("multipart")) {
+				if (root != null && root.has("multipart")) {
 					root.get("multipart").forEach(node -> {
 						List<Map<String, String>> whenClauses = new ArrayList<>();
 						if (node.has("when")) {
@@ -170,7 +183,7 @@ public class BlockRegistry
 
 						states.addState(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
 					});
-				} else if (root.has("variants")) {
+				} else if (root != null && root.has("variants")) {
 					JsonNode variants = root.get("variants");
 					
 					for (Entry<String, JsonNode> entry : variants.properties()) {
@@ -271,8 +284,16 @@ public class BlockRegistry
 		if (zips.hasFile(fullModelPath)) {
 			json = OBJECT_READER.readTree(new InputStreamReader(zips.getStream(fullModelPath)));
 		} else {
-			missingBlockModels.add(fullModelPath);
-			return null;
+			String resourcePath = "models/" + modelPath + ".json";
+			try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
+				if (in != null) {
+					log.trace("Loading model from local resource: {}", resourcePath);
+					json = OBJECT_READER.readTree(in);
+				} else {
+					missingBlockModels.add(fullModelPath);
+					return null;
+				}
+			}
 		}
 		
 		String parent;

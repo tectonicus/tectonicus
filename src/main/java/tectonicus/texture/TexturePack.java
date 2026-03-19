@@ -523,9 +523,9 @@ public class TexturePack
 					loadedPackTextures.put(request.path, tex);
 				}
 			} catch (FileNotFoundException e) {
-                                if (logMissingTextures) {
-                                        log.warn("\nThe texture file '" + request.path + "' could not be found.");
-                                }
+				if (logMissingTextures) {
+					log.warn("\nThe texture file '{}' could not be found.", request.path);
+				}
 			}
 		}
 		
