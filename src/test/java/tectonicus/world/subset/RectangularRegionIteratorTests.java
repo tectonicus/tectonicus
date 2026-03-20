@@ -48,7 +48,7 @@ class RectangularRegionIteratorTests {
 	void testConstructorInitializesBaseDirCorrectly() {
 		// Create iterator with simple bounds
 		iterator = new RectangularRegionIterator(
-			tempDir, SaveFormat.Anvil,
+			tempDir, SaveFormat.ANVIL,
 				-150, 150, -150, 150
 		);
 		
@@ -59,7 +59,7 @@ class RectangularRegionIteratorTests {
 	void testNextReturnsNullWhenNoRegionsExist() {
 		// Create iterator but don't create any region files
 		iterator = new RectangularRegionIterator(
-			tempDir, SaveFormat.Anvil,
+			tempDir, SaveFormat.ANVIL,
 				0, 100, 0, 100
 		);
 		
@@ -81,7 +81,7 @@ class RectangularRegionIteratorTests {
 		// Create iterator that spans multiple regions
 		final long regionEdgeLength = Region.WIDTH_IN_CHUNKS * RawChunk.WIDTH;
 		iterator = new RectangularRegionIterator(
-			tempDir, SaveFormat.Anvil,
+			tempDir, SaveFormat.ANVIL,
 				0, regionEdgeLength * 5, 0, regionEdgeLength * 5
 		);
 		
@@ -104,7 +104,7 @@ class RectangularRegionIteratorTests {
 		
 		// Small rectangle within first region
 		iterator = new RectangularRegionIterator(
-			tempDir, SaveFormat.Anvil,
+			tempDir, SaveFormat.ANVIL,
 				50, 250, 50, 250
 		);
 		
@@ -130,7 +130,7 @@ class RectangularRegionIteratorTests {
 		
 		// Large rectangle spanning multiple regions
 		iterator = new RectangularRegionIterator(
-			tempDir, SaveFormat.Anvil,
+			tempDir, SaveFormat.ANVIL,
 				-regionEdgeLength, regionEdgeLength, -regionEdgeLength,
 				regionEdgeLength
 		);

@@ -302,8 +302,7 @@ public class Minecraft
 		
 		File[] anvilRegionFiles = regionDir.listFiles(new AnvilFileFilter());
 		
-		return (mcRegionFiles != null && mcRegionFiles.length > 0)
-				|| (anvilRegionFiles != null && anvilRegionFiles.length > 0);
+		return (anvilRegionFiles != null && anvilRegionFiles.length > 0) || (mcRegionFiles != null && mcRegionFiles.length > 0);
 	}
 	
 	/** Get the Major.Minor version from the version string. */

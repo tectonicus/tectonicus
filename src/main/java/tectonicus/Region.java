@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -127,7 +127,7 @@ public class Region {
 		return info[header].getSectorOffset() != 0 && info[header].getNumSectors() != 0;
 	}
 
-	public ChunkCoord[] getContainedChunks() {
+	public ChunkCoord[] getContainedChunkCoords() {
 		List<ChunkCoord> result = new ArrayList<>();
 
 		final long baseChunkX = regionCoord.x * RegionCoord.REGION_WIDTH;
@@ -203,7 +203,7 @@ public class Region {
 		try {
 			String name = file.getName();
 			if (name.startsWith("r.")
-					&& (name.endsWith(SaveFormat.McRegion.extension) || name.endsWith(SaveFormat.Anvil.extension))) {
+					&& (name.endsWith(SaveFormat.MC_REGION.extension) || name.endsWith(SaveFormat.ANVIL.extension))) {
 				// Looks valid
 
 				final int firstDot = name.indexOf('.');

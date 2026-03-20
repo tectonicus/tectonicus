@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -28,6 +28,7 @@ import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
+import tectonicus.configuration.Map;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
@@ -60,6 +61,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Queue;
@@ -483,75 +485,97 @@ public class TileRenderer
 		//	Iterate over regions, then over chunks
 		//		hash each chunk and store in region hashes file
 		//		gather world stats and signs for each chunk
-
-		RegionIterator it = world.createRegionIterator();
 		
-		log.debug("Looking for chunks in "+it.getBaseDir().getAbsolutePath());
 		final Date beginTime = new Date();
-		while (it.hasNext())
-		{
-			File regionFile = it.next();
-			if (regionFile != null && regionFile.length() > 0)
-			{
-				Region region = null;
-				try
-				{
-					region = new Region(regionFile);
-				}
-				catch (Exception e)
-				{
-					log.error("Exception: ", e);
-				}
-				if (region != null) {
-					// For every region...
-					
-					regionHashStore.startRegion(region.getRegionCoord());
-					
-					RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
-					
-					ChunkCoord[] chunkCoords = region.getContainedChunks();
-					for (ChunkCoord coord : chunkCoords) {
-						// For every chunk coord...
-						
-						Chunk c = null;
-						
-						try {
-							c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
-						} catch (Exception e) {
-							// Catch exception, log it and skip the chunk
-							log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z), e);
-						}
-						
-						if (c != null && c.getRawChunk().isFullChunk()) {
-							worldStats.incNumChunks();
-							
-							ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
-							Queue<BedEntity> beds = world.getBeds();
-							Queue<BeaconEntity> beacons = world.getBeacons();
-							
-							try {
-								// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
-								regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds, beacons);
-							} catch (CloneNotSupportedException e) {
-								log.error("Exception: ", e);
-							}
-						}
+		if (world.isAlphaWorld()) {
+			ChunkCoord[] alphaChunkCoords = world.getAlphaChunkCoords();
+			ChunkCoord[] sortedAlphaChunks = Arrays.copyOf(alphaChunkCoords, alphaChunkCoords.length);
+			Arrays.sort(sortedAlphaChunks, (lhs, rhs) -> {
+				RegionCoord lhsRegion = RegionCoord.fromChunkCoord(lhs);
+				RegionCoord rhsRegion = RegionCoord.fromChunkCoord(rhs);
+				
+				int regionXComp = Long.compare(lhsRegion.x, rhsRegion.x);
+				if (regionXComp != 0)
+					return regionXComp;
+				
+				int regionZComp = Long.compare(lhsRegion.z, rhsRegion.z);
+				if (regionZComp != 0)
+					return regionZComp;
+				
+				int chunkXComp = Long.compare(lhs.x, rhs.x);
+				if (chunkXComp != 0)
+					return chunkXComp;
+				
+				return Long.compare(lhs.z, rhs.z);
+			});
+			
+			log.debug("Looking for alpha chunks in {}", world.getWorldDir().getAbsolutePath());
+			
+			//Group alpha chunks by "region" to use the regionHashStore and regionLoadQueue
+			RegionCoord currentRegion = null;
+			RegionLoadQueue regionLoadQueue = null;
+			for (ChunkCoord coord : sortedAlphaChunks) {
+				if (coord == null || !world.contains(coord))
+					continue;
+				
+				RegionCoord regionCoord = RegionCoord.fromChunkCoord(coord);
+				if (currentRegion == null || !currentRegion.equals(regionCoord)) {
+					if (regionLoadQueue != null) {
+						endRegion(portals, signs, views, regionLoadQueue, worldStats);
 					}
 					
-					regionLoadQueue.waitUntilFinished();
-					
-					System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
-					log.trace("found {} chunks so far", worldStats.numChunks());
-					
+					currentRegion = regionCoord;
+					regionHashStore.startRegion(regionCoord);
+					regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
+				}
+				
+				Chunk c = null;
+				try {
+					c = world.loadChunk(coord, worldStats);
+				} catch (Exception e) {
+					log.error(String.format("Chunk %1$d,%2$d is probably corrupted.", coord.x, coord.z), e);
+				}
+				
+				chunkSearch(world, map, portals, signs, views, c, worldStats, regionLoadQueue);
+			}
+			
+			if (regionLoadQueue != null) {
+				endRegion(portals, signs, views, regionLoadQueue, worldStats);
+			}
+		} else {
+			RegionIterator it = world.createRegionIterator();
+			
+			log.debug("Looking for chunks in " + it.getBaseDir().getAbsolutePath());
+			while (it.hasNext()) {
+				File regionFile = it.next();
+				if (regionFile != null && regionFile.length() > 0) {
+					Region region = null;
 					try {
-						portals.flush();
-						signs.flush();
-						views.flush();
+						region = new Region(regionFile);
 					} catch (Exception e) {
 						log.error("Exception: ", e);
 					}
-					
-					regionHashStore.endRegion();
+					if (region != null) {
+						// For every region...
+						regionHashStore.startRegion(region.getRegionCoord());
+						
+						RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
+						
+						for (ChunkCoord coord : region.getContainedChunkCoords()) {
+							// For every chunk coord...
+							Chunk c = null;
+							try {
+								c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
+							} catch (Exception e) {
+								// Catch exception, log it and skip the chunk
+								log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z), e);
+							}
+							
+							chunkSearch(world, map, portals, signs, views, c, worldStats, regionLoadQueue);
+						}
+						
+						endRegion(portals, signs, views, regionLoadQueue, worldStats);
+					}
 				}
 			}
 		}
@@ -559,27 +583,63 @@ public class TileRenderer
 		final Date endTime = new Date();
 		final String searchTime = Util.getElapsedTime(beginTime, endTime);
 		
-		log.debug("\nFound "+worldStats.numChunks()+" chunks in total");
+		log.debug("\nFound " + worldStats.numChunks() + " chunks in total");
 		log.debug("Chunk search took: " + searchTime);
 		
-		if (worldStats.numChunks() == 0)
-		{
+		if (worldStats.numChunks() == 0) {
 			// Uh oh, didn't find any chunks!
 			// Print some debugging info to help people figure out what they're doing wrong
 			
 			log.error("Failed to find any chunks!");
-			log.error("Contents of "+it.getBaseDir().getAbsolutePath());
-			File[] contents = it.getBaseDir().listFiles();
-			if (contents != null)
-			{
-				for (File f : contents)
-				{
-					log.error("\t"+f.getName());
+			File inspectDir = world.getWorldDir();
+			if (!world.isAlphaWorld()) {
+				RegionIterator it = world.createRegionIterator();
+				inspectDir = it.getBaseDir();
+			}
+			log.error("Contents of " + inspectDir.getAbsolutePath());
+			File[] contents = inspectDir.listFiles();
+			if (contents != null) {
+				for (File f : contents) {
+					log.error("\t" + f.getName());
 				}
 			}
 		}
 		
 		return worldStats;
+	}
+	
+	private void chunkSearch(World world, Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
+		if (c != null && c.getRawChunk().isFullChunk()) {
+			worldStats.incNumChunks();
+			
+			ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
+			Queue<BedEntity> beds = world.getBeds();
+			Queue<BeaconEntity> beacons = world.getBeacons();
+			
+			try {
+				// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
+				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds, beacons);
+			} catch (CloneNotSupportedException e) {
+				log.error("Exception: ", e);
+			}
+		}
+	}
+	
+	private void endRegion(HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, RegionLoadQueue regionLoadQueue, WorldStats worldStats) {
+		regionLoadQueue.waitUntilFinished();
+		
+		System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line
+		log.trace("found {} chunks so far", worldStats.numChunks());
+		
+		try {
+			portals.flush();
+			signs.flush();
+			views.flush();
+		} catch (Exception e) {
+			log.error("Exception: ", e);
+		}
+		
+		regionHashStore.endRegion();
 	}
 	
 	private void renderBaseTiles(World world, tectonicus.configuration.Map map, Layer layer, File layerDir, HddTileList tiles, TileCache tileCache)
@@ -714,78 +774,81 @@ public class TileRenderer
 		
 		int count = 0;
 		
-		RegionIterator it = world.createRegionIterator();
-		while (it.hasNext())
-		{
-			File regionFile = it.next();
-			if (regionFile == null || regionFile.length() == 0)
-				continue;
-			
-			Region region = null;
-			try
-			{
-				region = new Region(regionFile);
-			}
-			catch (Exception e)
-			{
-				log.error("Exception: ", e);
-			}
-			if (region != null)
-			{
-				ChunkCoord[] chunkCoords = region.getContainedChunks();
-				for (ChunkCoord coord : chunkCoords)
-				{
-					if (coord != null && world.contains(coord))
-					{
-						BoundingBox bounds = new BoundingBox(new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
-						ArrayList<Vector3f> cornerPoints = bounds.getCornerPoints();
-						
-						int minX = Integer.MAX_VALUE;
-						int maxX = Integer.MIN_VALUE;
-						int minY = Integer.MAX_VALUE;
-						int maxY = Integer.MIN_VALUE;
-						
-						// Project corners to find screen rect
-						for (Vector3f corner : cornerPoints)
-						{
-							Point screenPos = camera.project(corner);
-							
-							minX = Math.min(screenPos.x, minX);
-							maxX = Math.max(screenPos.x, maxX);
-							
-							minY = Math.min(screenPos.y, minY);
-							maxY = Math.max(screenPos.y, maxY);
-						}
-						
-						// Find tiles that screen rect overlaps
-						for (int x=minX; x<=maxX+tileWidth; x+=tileWidth)
-						{
-							for (int y=minY; y<=maxY+tileHeight; y+=tileHeight)
-							{
-								TileCoord tile = screenToTile( new Point(x, y) );
-								visible.add(tile);						
-							}
-						}
-						
-						count++;
-						if (count % 100 == 0)
-						{
-							final int percentage = (int)Math.floor((count / (float)numChunks) * 100);
-							System.out.print(percentage+"%\r"); //prints a carriage return after line
-						}
-						progressListener.onTaskUpdate(count, numChunks);
-					}
+		if (world.isAlphaWorld()) {
+			findVisibleFromChunks(world, camera, numChunks, world.getAlphaChunkCoords(), visible);
+		} else {
+			RegionIterator it = world.createRegionIterator();
+			while (it.hasNext()) {
+				File regionFile = it.next();
+				if (regionFile == null || regionFile.length() == 0)
+					continue;
+				
+				Region region = null;
+				try {
+					region = new Region(regionFile);
+				} catch (Exception e) {
+					log.error("Exception: ", e);
+				}
+				if (region != null) {
+					count += findVisibleFromChunks(world, camera, numChunks, region.getContainedChunkCoords(), visible);
 				}
 			}
-			
-			if (abort)
-				break;
 		}
+
 		System.out.println("100%");
 		
 		log.info("found {} total tiles to output", visible.size());
 		
 		return visible;
+	}
+	
+	private int findVisibleFromChunks(World world, OrthoCamera camera, int numChunks, ChunkCoord[] chunkCoords, HddTileList visible) {
+		int count = 0;
+		for (ChunkCoord coord : chunkCoords) {
+			if (coord != null && world.contains(coord)) {
+				addVisibleTilesForChunk(visible, camera, coord);
+				
+				count++;
+				if (count % 100 == 0) {
+					final int percentage = (int) Math.floor((count / (float) numChunks) * 100);
+					System.out.print(percentage + "%\r"); //prints a carriage return after line
+				}
+				progressListener.onTaskUpdate(count, numChunks);
+			}
+			
+			if (abort)
+				break;
+		}
+		return count;
+	}
+	
+	private void addVisibleTilesForChunk(HddTileList visible, OrthoCamera camera, ChunkCoord coord) {
+		BoundingBox bounds = new BoundingBox(new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
+		ArrayList<Vector3f> cornerPoints = bounds.getCornerPoints();
+		
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		
+		// Project corners to find screen rect
+		for (Vector3f corner : cornerPoints) {
+			Point screenPos = camera.project(corner);
+			
+			minX = Math.min(screenPos.x, minX);
+			maxX = Math.max(screenPos.x, maxX);
+			
+			minY = Math.min(screenPos.y, minY);
+			maxY = Math.max(screenPos.y, maxY);
+		}
+		
+		// Find tiles that screen rect overlaps
+		for (int x = minX; x <= maxX + tileWidth; x += tileWidth) {
+			for (int y = minY; y <= maxY + tileHeight; y += tileHeight) {
+				TileCoord tile = screenToTile(new Point(x, y));
+				visible.add(tile);
+			}
+		}
 	}
 	
 	private HddTileList trimTileList(HddTileList inTiles, final int maxTiles)
@@ -908,6 +971,7 @@ public class TileRenderer
 		return new File(dir2, "tile_"+x+"_"+y+"."+imageFormat.getExtension());
 	}
 	
+	//TODO: Why is this here?
 	public static String jsEscape(String text)
 	{
 		text = text.replace("\\", "\\\\");	// Replace \ with \\

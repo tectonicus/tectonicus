@@ -24,7 +24,9 @@ import tectonicus.Minecraft;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
+import tectonicus.SaveFormat;
 import tectonicus.Version;
+import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
@@ -115,6 +117,8 @@ public class World implements BlockContext
 	private final Dimension dimension;
 	@Getter
 	private final DimensionInfo dimensionInfo;
+	@Getter
+	private final boolean alphaWorld;
 	
 	private BlockTypeRegistry registry;
 	@Getter
@@ -199,13 +203,13 @@ public class World implements BlockContext
 			if (dimension == Dimension.END && levelDat.getSpawnDimension() != Dimension.END) {
 				levelDat.setSpawnPosition(100, 49, 0);  // Location of obsidian platform where the player spawns
 			}
-			
-			if (levelDat.isAlpha()) {
-				throw new RuntimeException("Error: Alpha map format no longer supported");
-			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+
+		alphaWorld = levelDat.isAlpha();
+		if (alphaWorld && dimension != Dimension.OVERWORLD && dimension != Dimension.NETHER)
+			throw new RuntimeException("Alpha world rendering only supports the Overworld and Nether dimensions");
 		
 		Version version = VERSION_UNKNOWN;
 		Minecraft.setChunkHeight(256);
@@ -219,18 +223,24 @@ public class World implements BlockContext
 				sectionArrayOffset = true;
 			}
 		}
-		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		
 		// Use the world dir and the dimension to find the dimension dir
 		dimensionDir = DirUtils.getDimensionDir(worldDir.toPath(), dimensionInfo).toFile();
-		log.debug("\tFull dimension dir: {}", dimensionDir.getAbsolutePath());
+		log.debug("Full dimension dir: {}", dimensionDir.getAbsolutePath());
 		
-		if (!Minecraft.isValidDimensionDir(dimensionDir))
+		if (alphaWorld && !dimensionDir.exists())
+			throw new RuntimeException("Invalid dimension dir! Missing " + dimensionDir.getAbsolutePath());
+		if (!alphaWorld && !Minecraft.isValidDimensionDir(dimensionDir))
 			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 
 		if (config.getMinecraftJar() == null) {
 			log.info("No Minecraft jar specified.");
-			Minecraft.findMatchingMinecraftJar(worldVersion).ifPresentOrElse(config::setMinecraftJar, () -> config.setMinecraftJar(Minecraft.findLatestMinecraftJar()));
+			if (worldVersion != null && !worldVersion.isBlank()) {
+				Minecraft.findMatchingMinecraftJar(worldVersion).ifPresentOrElse(config::setMinecraftJar, () -> config.setMinecraftJar(Minecraft.findLatestMinecraftJar()));
+			}
+			else {
+				config.setMinecraftJar(Minecraft.findLatestMinecraftJar());
+			}
 		}
 		log.info("Using Minecraft jar: {}", config.getMinecraftJar().getName());
 
@@ -246,9 +256,7 @@ public class World implements BlockContext
 		// Is this actually helpful?
 		if (worldVersion != null && textureVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion()) {
 			switch (worldVersion.contains(".") ? worldVersion.split("\\.")[1] : "") {
-				case "9":
-				case "10":
-				case "11":
+				case "9", "10", "11":
 					if (!textureVersion.equals(VERSIONS_9_TO_11))
 						throw new IncompatibleVersionException(textureVersion, worldVersion);
 					break;
@@ -271,7 +279,12 @@ public class World implements BlockContext
 		beacons = new ConcurrentLinkedQueue<>();
 		
 		regionCache = new RegionCache(dimensionDir);
-		chunkLocator = new ChunkLocator(biomeCache, regionCache);
+		if (regionCache.getFormat() == SaveFormat.MC_REGION || regionCache.getFormat() == SaveFormat.ALPHA) {
+			Minecraft.setChunkHeight(RawChunk.MC_REGION_HEIGHT);
+		}
+		chunkLocator = new ChunkLocator(biomeCache, regionCache, dimensionDir);
+		
+		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		
 		//Set subset origin if none was set in config file
 		WorldSubset subset = map.getWorldSubset();
@@ -282,12 +295,12 @@ public class World implements BlockContext
 		
 		log.debug("worldSubset: {}", this.worldSubset);
                 
-         	rawLoadedChunks = new RawCache(2048, (coord) -> {
+		rawLoadedChunks = new RawCache(2048, (coord) -> {
                         CompositeBlockFilter composite = new CompositeBlockFilter();
                         composite.add(blockFilter);
                         composite.add(worldSubset.getBlockFilter(coord));
 
-                        return chunkLocator.loadChunkFromRegion(coord, composite, worldInfo);
+                        return chunkLocator.loadChunk(coord, composite, null, worldInfo);
                 });
 		geometryLoadedChunks = new GeometryCache(512, (coord) -> {
                         Chunk chunk = rawLoadedChunks.get(coord);
@@ -485,6 +498,18 @@ public class World implements BlockContext
 	public RegionIterator createRegionIterator()
 	{
 		return worldSubset.createRegionIterator(regionCache.getFormat(), dimensionDir);
+	}
+	
+	public ChunkCoord[] getAlphaChunkCoords() {
+		return chunkLocator.getAlphaChunkCoords();
+	}
+	
+	public Chunk loadChunk(ChunkCoord coord, WorldStats worldStats) {
+		CompositeBlockFilter composite = new CompositeBlockFilter();
+		composite.add(blockFilter);
+		composite.add(worldSubset.getBlockFilter(coord));
+		
+		return chunkLocator.loadChunk(coord, composite, worldStats, worldInfo);
 	}
 	
 	public boolean contains(ChunkCoord coord)

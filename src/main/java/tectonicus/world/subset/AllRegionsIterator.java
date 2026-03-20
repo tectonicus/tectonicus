@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -28,7 +28,7 @@ public class AllRegionsIterator implements RegionIterator
 		this.worldDir = worldDir;
 		
 		File regionDir = new File(worldDir, "region");
-		regionFiles = regionDir.listFiles(saveFormat == SaveFormat.McRegion ? new RegionFileFilter() : new AnvilFileFilter());
+		regionFiles = regionDir.listFiles(saveFormat == SaveFormat.MC_REGION ? new RegionFileFilter() : new AnvilFileFilter());
 		if (regionFiles == null)
 			regionFiles = new File[0];
 		

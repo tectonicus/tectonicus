@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -66,9 +66,10 @@ public class RegionCoord implements Comparable<RegionCoord>
 	@Override
 	public boolean equals(Object obj)
 	{
-		assert (obj instanceof RegionCoord);
-		
-		RegionCoord other = (RegionCoord)obj;
+		if (this == obj)
+			return true;
+		if (!(obj instanceof RegionCoord other))
+			return false;
 		
 		return this.x == other.x && this.z == other.z;
 	}
