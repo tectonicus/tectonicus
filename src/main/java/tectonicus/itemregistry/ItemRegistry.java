@@ -22,6 +22,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -40,7 +41,6 @@ public class ItemRegistry {
 		this.zips = texturePack.getZipStack();
 		log.info("Loading all item model json files...");
 		deserializeItemModels();
-		log.info("All item json files loaded.");
 	}
 	
 	public void deserializeItemModels() {
@@ -48,6 +48,9 @@ public class ItemRegistry {
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()));
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/models/item"))) {
 			deserializeItemModels(entries);
+			log.info("All item json files loaded.");
+		} catch (NotDirectoryException e) {
+			log.warn("No item models directory found.");
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		}

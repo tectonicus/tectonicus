@@ -788,7 +788,7 @@ public class OutputResourcesUtil {
 		String defaultSkinPath = defaultSkin;
 		Version texturePackVersion = texturePack.getVersion();
 		switch (texturePackVersion) {
-			case VERSION_4:
+			case VERSION_ALPHA_BETA, VERSION_4:
 				writeImage(texturePack.getItem(10, 2), 32, 32, new File(imagesDir, "Sign.png"));
 				writeImage(texturePack.getItem(10, 1), 32, 32, new File(imagesDir, "Picture.png"));
 				writeImage(texturePack.getItem(7, 1), 32, 32, new File(imagesDir, "IronIcon.png"));

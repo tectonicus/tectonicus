@@ -98,9 +98,7 @@ public class BlockRegistry
 		log.info("Loading all block state and block model json files...");
 		deserializeBlockstates();
 		deserializeModels();
-		missingBlockModels.forEach(s -> log.warn("Missing block model json file: {}", s));
 		checkBlockAttributes();
-		log.info("All json files loaded.");
 	}
 
 	public BlockStateWrapper getBlock(String blockName) {
@@ -219,6 +217,11 @@ public class BlockRegistry
 				}
 			}
 			log.debug("Loaded {} models", modelCount);
+			missingBlockModels.forEach(s -> log.warn("Missing block model json file: {}", s));
+			
+			if (modelCount > 0 && missingBlockModels.isEmpty())
+				log.info("All json files loaded.");
+			
 		} catch (Exception e) {
 			log.error("Something bad happened", e);
 		}

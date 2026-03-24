@@ -379,6 +379,9 @@ public class World implements BlockContext
 		
 		if (useDefaultBlocks) {
 			switch (this.textureVersion) {
+				case VERSION_ALPHA_BETA:
+					parser.parse("defaultBlockConfigMCAlphaBeta.xml", registry);
+					break;
 				case VERSION_4:
 					parser.parse("defaultBlockConfigMC1.4.xml", registry);
 					break;

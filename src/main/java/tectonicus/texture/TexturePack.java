@@ -9,7 +9,6 @@
 
 package tectonicus.texture;
 
-import tools.jackson.databind.ObjectReader;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.Minecraft;
@@ -27,6 +26,7 @@ import tectonicus.renderer.Font;
 import tectonicus.util.Colour4f;
 import tectonicus.util.FileUtils;
 import tectonicus.util.ImageUtils;
+import tools.jackson.databind.ObjectReader;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -51,8 +51,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
@@ -61,6 +59,7 @@ import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
+import static tectonicus.Version.VERSION_ALPHA_BETA;
 import static tectonicus.Version.VERSION_RV;
 import static tectonicus.Version.VERSION_UNKNOWN;
 import static tectonicus.util.ImageUtils.copy;
@@ -86,8 +85,8 @@ public class TexturePack
 	private final BufferedImage fullAir;
 	private final BufferedImage chestImage;
 	
-	private final BufferedImage grassLookupImage;
-	private final BufferedImage foliageLookupImage;
+	private BufferedImage grassLookupImage = null;
+	private BufferedImage foliageLookupImage = null;
 	private BufferedImage dryFoliageLookupImage = null;
 	private final Map<Biomes, Colour4f> grassColors = new EnumMap<>(Biomes.class);
 	private final Map<Biomes, Colour4f> foliageColors = new EnumMap<>(Biomes.class);
@@ -95,7 +94,7 @@ public class TexturePack
 	private final Map<BiomesOld, Colour4f> grassColorsOld = new EnumMap<>(BiomesOld.class);
 	private final Map<BiomesOld, Colour4f> foliageColorsOld = new EnumMap<>(BiomesOld.class);
 	
-	private final Font font;
+	private Font font = null;
 	
 	@Getter
 	private final ZipStack zipStack;
@@ -162,8 +161,10 @@ public class TexturePack
 			version = VERSIONS_6_TO_8;
 		} else if (zipStack.hasFile("textures/blocks/activatorRail.png")) {
 			version = VERSION_5;
-		} else if (zipStack.hasFile("terrain.png")) {
+		} else if (zipStack.hasFile("item/chest.png")) {
 			version = VERSION_4;
+		} else if (zipStack.hasFile("terrain.png")) {
+			version = VERSION_ALPHA_BETA;
 		} else {
 			version = VERSION_UNKNOWN;
 		}
@@ -175,7 +176,7 @@ public class TexturePack
 
 		try
 		{
-			if (version == VERSION_4)
+			if (version == VERSION_4 || version == VERSION_ALPHA_BETA)
 				findTexture("terrain.png[0, 0]");
 
 			String path;
@@ -214,7 +215,7 @@ public class TexturePack
 			}
 			bannerPatternImages = patterns;
 
-			if (version == VERSION_4) {
+			if (version == VERSION_4 || version == VERSION_ALPHA_BETA) {
 				try {
 					itemSheet = copy(ImageIO.read(zipStack.getStream(path + "gui/items.png")));
 				} catch (IllegalArgumentException e) {
@@ -258,23 +259,23 @@ public class TexturePack
 			} catch (IllegalArgumentException e) {
 				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, resourcePack));
 			}
-                        
+			
 			try {
 				InputStream imgStream = zipStack.getStream(path + "misc/grasscolor.png");
 				if (imgStream == null)
 					imgStream = zipStack.getStream(path + "colormap/grass.png");
-				grassLookupImage = copy( ImageIO.read( imgStream ) );
+				grassLookupImage = copy(ImageIO.read(imgStream));
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find grasscolor.png in "+formatPaths(minecraftJar, resourcePack));
+				log.warn("Couldn't find grasscolor.png in {}", formatPaths(minecraftJar, resourcePack));
 			}
 			
 			try {
 				InputStream imgStream = zipStack.getStream(path + "misc/foliagecolor.png");
 				if (imgStream == null)
 					imgStream = zipStack.getStream(path + "colormap/foliage.png");
-				foliageLookupImage = copy( ImageIO.read( imgStream ) );
+				foliageLookupImage = copy(ImageIO.read(imgStream));
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find foliagecolor.png in "+formatPaths(minecraftJar, resourcePack));
+				log.warn("Couldn't find foliagecolor.png in {}", formatPaths(minecraftJar, resourcePack));
 			}
 			
 			if (zipStack.hasFile(path + "colormap/dry_foliage.png")) { //This was added in 1.20.5 and is used for leaf litter
@@ -293,7 +294,7 @@ public class TexturePack
 				BufferedImage fontSheet = ImageIO.read( imgStream );
 				font = new Font(rasteriser, fontSheet, textIn);
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find font resources in "+formatPaths(minecraftJar, resourcePack));
+				log.warn("Couldn't find font resources in {}", formatPaths(minecraftJar, resourcePack));
 			}
 		}
 		catch (Exception e)
@@ -443,7 +444,7 @@ public class TexturePack
 		}
 
 		String pathPrefix = "";
-		if (path.equals("terrain") && version == VERSION_4) {  //MC 1.4 (or older) texture packs
+		if (path.equals("terrain") && (version == VERSION_4 || version == VERSION_ALPHA_BETA)) {  //MC 1.4 (or older) texture packs
 			pathPrefix = "terrain.png";
 		} else if (version == VERSION_5) { //MC 1.5 texture packs
 			pathPrefix = "textures/blocks/" + path;
@@ -473,7 +474,7 @@ public class TexturePack
         }
         
         private BufferedImage applyPalette(BufferedImage textureImage, BufferedImage paletteImage, BufferedImage keyPaletteImage) {
-                BufferedImage resultTexture = ImageUtils.copy(textureImage);
+                BufferedImage resultTexture = copy(textureImage);
                 
                 Map<Integer, Integer> paletteMap = new HashMap<>();
                 for (int x=0; x<paletteImage.getWidth(); x++) {
@@ -753,7 +754,7 @@ public class TexturePack
 		}
 		catch (IOException e)
 		{
-			log.error("No bed textures found. You may be using an older Minecraft jar file");
+			log.warn("No bed textures found. You may be using an older Minecraft jar file");
 		}
 	}
 
@@ -814,7 +815,7 @@ public class TexturePack
 		}
 		catch (IOException e)
 		{
-			log.error("No shulker textures found. You may be using an older Minecraft jar file");
+			log.warn("No shulker textures found. You may be using an older Minecraft jar file");
 		}
 	}
 
@@ -898,14 +899,21 @@ public class TexturePack
 	}
 
 	public Color getGrassColour(final int x, final int y) {
-		final int actualX = x & 0xff;
-		final int actualY = y & 0xff;
-
-		return new Color(grassLookupImage.getRGB(actualX, actualY));
+		Color grassColor = new Color(255, 255, 255);
+		if (grassLookupImage != null) {
+			final int actualX = x & 0xff;
+			final int actualY = y & 0xff;
+			grassColor = new Color(grassLookupImage.getRGB(actualX, actualY));
+		}
+		return grassColor;
 	}
 
 	public Color getFoliageColour(final int x, final int y) {
-		return new Color(foliageLookupImage.getRGB(x, y));
+		Color foliageColor = new Color(255, 255, 255);
+		if (foliageLookupImage != null) {
+			foliageColor = new Color(foliageLookupImage.getRGB(x, y));
+		}
+		return foliageColor;
 	}
 	
 	public Color getDryFoliageColor(final int x, final int z) {
@@ -967,13 +975,13 @@ public class TexturePack
         }
 
         public BufferedImage getHalfHeartImage() {
-                BufferedImage composedHalf = ImageUtils.copy(emptyHeart);
+                BufferedImage composedHalf = copy(emptyHeart);
                 composedHalf.getGraphics().drawImage(halfHeart, 0, 0, halfHeart.getWidth(), halfHeart.getHeight(), null);
                 return composedHalf;
         }
 
         public BufferedImage getFullHeartImage() {
-                BufferedImage composedFull = ImageUtils.copy(emptyHeart);
+                BufferedImage composedFull = copy(emptyHeart);
                 composedFull.getGraphics().drawImage(fullHeart, 0, 0, fullHeart.getWidth(), fullHeart.getHeight(), null);
                 return composedFull;
         }
@@ -983,13 +991,13 @@ public class TexturePack
         }
 
         public BufferedImage getHalfFoodImage() {
-                BufferedImage composedHalf = ImageUtils.copy(emptyFood);
+                BufferedImage composedHalf = copy(emptyFood);
                 composedHalf.getGraphics().drawImage(halfFood, 0, 0, halfFood.getWidth(), halfFood.getHeight(), null);
                 return composedHalf;
         }
 
         public BufferedImage getFullFoodImage() {
-                BufferedImage composedFull = ImageUtils.copy(emptyFood);
+                BufferedImage composedFull = copy(emptyFood);
                 composedFull.getGraphics().drawImage(fullFood, 0, 0, fullFood.getWidth(), fullFood.getHeight(), null);
                 return composedFull;
         }

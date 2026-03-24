@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -119,10 +119,10 @@ public class Grass implements BlockType
 		final int aboveId = rawChunk.getBlockIdClamped(x, y+1, z, BlockIds.AIR);
 		final boolean aboveIsSnow = aboveId == BlockIds.SNOW;
 		SubTexture actualSideTexture = aboveIsSnow ? snowSideTexture
-				: betterGrass == BetterGrassMode.Fast ? topTexture
+				: betterGrass == BetterGrassMode.Fancy ? topTexture
 				: sideTexture;
 		
-		Colour4f sideColour = betterGrass == BetterGrassMode.Fast ? colour : white;
+		Colour4f sideColour = betterGrass == BetterGrassMode.Fancy ? colour : white;
 		
 		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		BlockUtil.addTop(world, rawChunk, topMesh, x, y, z, colour, topTexture, registry);
@@ -138,9 +138,9 @@ public class Grass implements BlockType
 		
 		if (!aboveIsSnow && betterGrass != BetterGrassMode.Fast)
 		{
+			Mesh alphaMesh = geometry.getMesh(grassSideTexture.texture, Geometry.MeshType.AlphaTest);
 			if (betterGrass != BetterGrassMode.Fancy)
 			{
-				Mesh alphaMesh = geometry.getMesh(grassSideTexture.texture, Geometry.MeshType.AlphaTest);
 				BlockUtil.addNorth(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
 				BlockUtil.addSouth(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
 				BlockUtil.addEast(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
@@ -148,7 +148,6 @@ public class Grass implements BlockType
 			}
 			else
 			{
-				Mesh alphaMesh = geometry.getMesh(grassSideTexture.texture, Geometry.MeshType.AlphaTest);
 				boolean isNorthGrass = world.getBlockId(rawChunk.getChunkCoord(), x-1, y-1, z) == BlockIds.GRASS;
 				BlockUtil.addNorth(world, rawChunk, alphaMesh, x, y, z, colour, isNorthGrass ? topTexture : grassSideTexture, registry);
 				boolean isSouthGrass = world.getBlockId(rawChunk.getChunkCoord(), x+1, y-1, z) == BlockIds.GRASS;

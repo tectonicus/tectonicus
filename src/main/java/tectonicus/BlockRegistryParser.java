@@ -31,6 +31,7 @@ import tectonicus.blockTypes.Cake;
 import tectonicus.blockTypes.Carpet;
 import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
+import tectonicus.blockTypes.ChestAlpha;
 import tectonicus.blockTypes.ChestNew;
 import tectonicus.blockTypes.ChiseledBookshelf;
 import tectonicus.blockTypes.ChorusFlower;
@@ -411,6 +412,18 @@ public class BlockRegistryParser
 			SubTexture christmasRight = parseTexture(element, "christmasRight", christmasSmall);
 
 			blockType = new ChestNew(name, stringId, single, left, right, christmasSmall, christmasLeft, christmasRight);
+		} else if (nodeName.equals("chestalpha")) {
+			SubTexture top = parseTexture(element, "top", null);
+			SubTexture side = parseTexture(element, "side", null);
+			SubTexture front = parseTexture(element, "front", null);
+			SubTexture doubleSideLeft = parseTexture(element, "doubleSideLeft", null);
+			SubTexture doubleSideRight = parseTexture(element, "doubleSideRight", null);
+			SubTexture doubleFrontLeft = parseTexture(element, "doubleFrontLeft", null);
+			SubTexture doubleFrontRight = parseTexture(element, "doubleFrontRight", null);
+			
+			blockType = new ChestAlpha(name, top, side, front,
+				doubleSideLeft, doubleSideRight,
+				doubleFrontLeft, doubleFrontRight);
 		}
 		else if (nodeName.equals("redstonewire"))
 		{

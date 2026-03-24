@@ -19,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public enum Version {
     VERSION_UNKNOWN("unknown", 9999, 99999999),
+	VERSION_ALPHA_BETA("alpha/beta", 0, 0),
     VERSION_4("1.4", 4, 0),
     VERSION_5("1.5", 5, 0),
     VERSIONS_6_TO_8("1.6-1.8", 6, 0),
