@@ -213,13 +213,13 @@ public class BlockModel
 						texturePath = texturePath.replace("minecraft:", "");
 					}
 					
-					SubTexture te = texturePack.getSubTexture(texturePath);
+					SubTexture te = texturePack.findTexture(texturePath);
 					PackTexture pt = null;
 					if (te == null) {
-						te = texturePack.findTexture(null, "missing_texture");
+						te = texturePack.getPackTexture("missing_texture").getFullTexture();
 						blockModel.addMissingTexture(texturePath);
 					} else {
-						pt = texturePack.getTexture("assets/minecraft/textures/" + texturePath);
+						pt = texturePack.getPackTexture("assets/minecraft/textures/" + texturePath);
 					}
 					
 					if (pt != null) {

@@ -23,6 +23,7 @@ import tectonicus.raw.Item;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
+import tectonicus.texture.PackTexture;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 
@@ -267,14 +268,12 @@ public class ArmorStand implements BlockType
 			armorMaterial = "gold";
 		}
 		
-		SubTexture layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/%s_layer_%d.png", armorMaterial, layer), null);
-		if (layerTexture == null) { //Check the new 1.21.2+ armor texture location
-			if (armorMaterial.equals("turtle")) {
-				armorMaterial = "turtle_scute";
-			}
-			
-			layerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/entity/equipment/humanoid%s/%s.png", suffix, armorMaterial), null);
+		if (armorMaterial.equals("turtle")) {
+			armorMaterial = "turtle_scute";
 		}
+		
+		PackTexture armorTexture = texturePack.getPackTexture(String.format("armor_%s%s", armorMaterial, suffix));
+		SubTexture layerTexture = armorTexture != null ? armorTexture.getFullTexture() : null;
 		
 		ArmorTrimTag armorTrim = armor.getComponent(tectonicus.raw.ArmorTrimTag.class);
 		if (armorTrim != null) {
@@ -282,21 +281,14 @@ public class ArmorStand implements BlockType
 			final String pattern = armorTrim.pattern.substring("minecraft:".length());
 			final String material = armorTrim.material.substring("minecraft:".length());
 			
-			final String materialTextureFile = String.format("assets/minecraft/textures/trims/color_palettes/%s.png", material);
-			final String paletteTextureFile = "assets/minecraft/textures/trims/color_palettes/trim_palette.png";
+			final String materialTextureFile = String.format("trim_palette_%s", material);
+			final String paletteTextureFile = "trim_palette_trim_palette";
 			
-			//1.21.2+ location
-			String trimTextureFile = String.format("assets/minecraft/textures/trims/entity/humanoid%s/%s.png", suffix, pattern);
-			
-			//This is a hacky but simple way to do version checking
-			boolean hasTrimTexture = texturePack.findTextureOrDefault(trimTextureFile, null) != null;
-			if (!hasTrimTexture) { //1.21.1 and older
-				trimTextureFile = String.format("assets/minecraft/textures/trims/models/armor/%s%s.png", pattern, suffix);
-			}
-			
+			String trimTextureFile = String.format("trim_%s%s", pattern, suffix);
 			SubTexture trimTexture = texturePack.findPalettedTexture(trimTextureFile, materialTextureFile, paletteTextureFile);
 			
-			meshBuilder.build(x, y, z, geometry, colour, angle, trimTexture, 1);
+			if (trimTexture != null)
+				meshBuilder.build(x, y, z, geometry, colour, angle, trimTexture, 1);
 		}
 		
 		if (layerTexture == null) {
@@ -307,12 +299,11 @@ public class ArmorStand implements BlockType
 		}
 		
 		if (armorMaterial.equals("leather")) {
-			SubTexture overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/entity/equipment/humanoid%s/leather_overlay.png", suffix), null);
+			PackTexture leatherOverlayTexture = texturePack.getPackTexture(String.format("armor_leather_overlay%s", suffix));
+			SubTexture overlayTexture = leatherOverlayTexture != null ? leatherOverlayTexture.getFullTexture() : null;
 			
-			if (overlayLayerTexture == null) { //Check 1.21.1 and older location
-				overlayLayerTexture = texturePack.findTextureOrDefault(String.format("assets/minecraft/textures/models/armor/leather_layer_%d_overlay.png", layer), null);
-			}
-			meshBuilder.build(x, y, z, geometry, colour, angle, overlayLayerTexture, 0);
+			if (overlayTexture != null)
+				meshBuilder.build(x, y, z, geometry, colour, angle, overlayTexture, 0);
 			
 			DyedColorTag dyedColor = armor.getComponent(DyedColorTag.class);
 			colour = dyedColor == null

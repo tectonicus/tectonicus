@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -88,7 +88,7 @@ public class BedNew implements BlockType
 				color = Colors.byId(be.getColor()).getName();
 		}
 
-		SubTexture texture = world.getTexturePack().findTexture(null, "bed_"+color);
+		SubTexture texture = world.getTexturePack().getPackTexture("bed_" + color).getFullTexture();
 		SubTexture headTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*6, texture.u0+texel*22, texture.v0+texel*21.8f);
 		SubTexture footTop = new SubTexture(texture.texture, texture.u0+texel*6, texture.v0+texel*28.2f, texture.u0+texel*22, texture.v0+texel*43.9f);
 		SubTexture headSide = new SubTexture(texture.texture, texture.u0, texture.v0+texel*6.1f, texture.u0+texel*6, texture.v0+texel*21.9f);

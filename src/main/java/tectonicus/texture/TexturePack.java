@@ -11,6 +11,7 @@ package tectonicus.texture;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.Configuration;
@@ -200,15 +201,28 @@ public class TexturePack
 //				vignetteTexture = rasteriser.createTexture(vignetteImage, TextureFilter.LINEAR);
 //			}
 			
-			loadBedTextures();
+			loadTexturesFromDirectory("assets/minecraft/textures/entity/bed", "bed_", StringUtils.EMPTY);
+			String trimTextureDir = "assets/minecraft/textures/trims/entity/humanoid";
+			if (zipStack.hasFile(trimTextureDir)) { //load 1.21.2+ armor and trim textures
+				loadTexturesFromDirectory(trimTextureDir, "trim_", StringUtils.EMPTY);
+				loadTexturesFromDirectory(trimTextureDir + "_leggings", "trim_", "_leggings");
+				loadTexturesFromDirectory("assets/minecraft/textures/entity/equipment/humanoid", "armor_", StringUtils.EMPTY);
+				loadTexturesFromDirectory("assets/minecraft/textures/entity/equipment/humanoid_leggings", "armor_", "_leggings");
+			} else { //1.21.1 and older
+				loadTexturesFromDirectory("assets/minecraft/textures/trims/models/armor", "trim_", StringUtils.EMPTY);
+				loadTexturesFromDirectory("assets/minecraft/textures/models/armor", "armor_", StringUtils.EMPTY);
+			}
+			
+			loadTexturesFromDirectory("assets/minecraft/textures/trims/color_palettes", "trim_palette_", StringUtils.EMPTY);
+			
 			loadShulkerTextures();
 			loadMissingTexture();
 
 			if (version.getNumVersion() >= VERSION_14.getNumVersion()) {
-				loadPaintingTextures();
+				loadTexturesFromDirectory("assets/minecraft/textures/painting", "minecraft:", StringUtils.EMPTY);
 			}
 			
-			//We load the banner patterns differently because we need direct access to the BufferedImages
+			//We load the banner patterns differently because we need bannerBase texture too
 			Map<String, BufferedImage> patterns = loadPatternsJson(); //1.20.5+
 			if (patterns.isEmpty()) { //1.8 - 1.20.4
 				patterns = loadPatterns();
@@ -318,83 +332,42 @@ public class TexturePack
 		return result.trim();
 	}
 
-	public PackTexture getTexture(String path) {
+	public PackTexture getPackTexture(String path) {
 		return loadedPackTextures.get(path);
 	}
-
-	public SubTexture findTextureOrDefault(String texturePath, SubTexture defaultTexture)
-	{
+	
+	public SubTexture findTextureOrDefault(String texturePath, SubTexture defaultTexture) {
 		SubTexture result;
-
 		TextureRequest request = parseRequest(texturePath);
-
-		PackTexture tex = findTexture(request, false); // find existing PackTexture or load
-
+		PackTexture tex = findTexture(request); // find existing PackTexture or load
+		
 		if (tex != null) {
 			result = tex.find(request, version); // find existing SubTexture or load
-			assert (result != null);
 		} else {
 			result = defaultTexture;
 		}
 
 		return result;
 	}
-        
-        public SubTexture findPalettedTexture(String texturePath, String palettePath, String keyPalettePath) {
+	
+	public SubTexture findTexture(String texturePath) {
+		return findTextureOrDefault(texturePath, null);
+	}
+	
+	public SubTexture findPalettedTexture(String texturePath, String palettePath, String keyPalettePath) {
 		if (texturePath == null || palettePath == null || keyPalettePath == null)
 			return null;
-
-		TextureRequest textureRequest = parseRequest(texturePath);
-		TextureRequest paletteRequest = parseRequest(palettePath);
-		TextureRequest keyPaletteRequest = parseRequest(keyPalettePath);
-
-		PackTexture texture = findTexture(textureRequest, true); // find existing PackTexture or load
-		PackTexture palette = findTexture(paletteRequest, true); // find existing PackTexture or load
-		PackTexture keyPalette = findTexture(keyPaletteRequest, true); // find existing PackTexture or load
-                
-                if (texture != null && palette != null && keyPalette != null) {
-                        PackTexture palettedTexture = applyPalette(texture, palette, keyPalette); // find existing PackTexture or apply palette and load
-                        return palettedTexture.getFullTexture();
-                }
-
-		return null;
-        }
-
-	public SubTexture findTexture(String texturePath) {
-		if (texturePath == null)
-			return null;
-
-		SubTexture result = null;
-
-		TextureRequest request = parseRequest(texturePath);
-
-		PackTexture tex = findTexture(request, true); // find existing PackTexture or load
-
-		if (tex != null) {
-			result = tex.find(request, version); // find existing SubTexture or load
-			assert (result != null);
+		
+		PackTexture texture = getPackTexture(texturePath);
+		PackTexture palette = getPackTexture(palettePath);
+		PackTexture keyPalette = getPackTexture(keyPalettePath);
+		
+		if (texture != null && palette != null && keyPalette != null) {
+			PackTexture palettedTexture = applyPalette(texture, palette, keyPalette); // find existing PackTexture or apply palette and load
+			return palettedTexture.getFullTexture();
 		}
 		
-		return result;
-	}
-
-	// Used by new rendering system
-	public SubTexture getSubTexture(String texturePath) {
-		if (texturePath == null)
-			return null;
-
-		SubTexture result = null;
-
-		TextureRequest request = new TextureRequest("assets/minecraft/textures/" + texturePath, "");
-
-		PackTexture tex = findTexture(request, true); // find existing PackTexture or load
-
-		if (tex != null) {
-			result = tex.find(request, version); // find existing SubTexture or load
-			assert (result != null);
-		}
-
-		return result;
+		return null;
 	}
         
 	private TextureRequest parseRequest(String texturePath)
@@ -406,9 +379,9 @@ public class TexturePack
 		// path/file.ext[0, 1]
 		// path/file.ext(0, 1, 2, 3)
 		
-		// Minecraft 1.5
+		// Minecraft 1.5+
 		// texture path could be:
-		// file.ext  -assume it's located in textures/blocks/
+		// file.ext  -assume it's located at <texturePathPrefix>/file.ext
 		// path/file.ext
 		// path/file.ext[0, 1]
 		// path/file.ext(0, 1, 2, 3)
@@ -435,14 +408,14 @@ public class TexturePack
 			params = "";
 		}
 
-		return new TextureRequest(getTexturePathPrefix(path), params);
+		return new TextureRequest(getTexturePathWithPrefix(path), params);
 	}
 
-	public String getTexturePathPrefix(String path) {
-		if (path.contains("/") || path.contains("\\") || path.equals("terrain.png")) {
+	public String getTexturePathWithPrefix(String path) {
+		if (path.startsWith("assets/") || (path.contains("/") && !path.startsWith("block/") && !path.startsWith("entity/")) || path.contains("\\") || path.equals("terrain.png")) {
 			return path;
 		}
-
+		
 		String pathPrefix = "";
 		if (path.equals("terrain") && (version == VERSION_4 || version == VERSION_ALPHA_BETA)) {  //MC 1.4 (or older) texture packs
 			pathPrefix = "terrain.png";
@@ -451,9 +424,12 @@ public class TexturePack
 		}  else if ((version == VERSIONS_6_TO_8 || version == VERSIONS_9_TO_11 || version == VERSION_12)) { //MC 1.6-1.12 texture packs
 			pathPrefix = "assets/minecraft/textures/blocks/" + path;
 		} else if (version.getNumVersion() >= VERSION_13.getNumVersion()) { //MC 1.13+ texture packs
-			pathPrefix = "assets/minecraft/textures/block/" + path;
+			if (path.startsWith("block/") || path.startsWith("entity/"))
+				pathPrefix = "assets/minecraft/textures/" + path;
+			else
+				pathPrefix = "assets/minecraft/textures/block/" + path;
 		}
-
+		
 		return pathPrefix;
 	}
         
@@ -498,7 +474,7 @@ public class TexturePack
                 return resultTexture;
         }
 	
-	private PackTexture findTexture(TextureRequest request, boolean logMissingTextures) {
+	private PackTexture findTexture(TextureRequest request) {
 		PackTexture tex = loadedPackTextures.get(request.path);
 		
 		if (tex == null) {
@@ -513,10 +489,10 @@ public class TexturePack
 
 					if (opacity == ImageUtils.Opacity.TRANSPARENT) {
 						tex = new PackTexture(rasteriser, request.path, argbImage, true, false);
-						log.trace(request.path + " contains transparency");
+						log.trace("{} contains transparency", request.path);
 					} else if (opacity == ImageUtils.Opacity.TRANSLUCENT) {
 						tex = new PackTexture(rasteriser, request.path, argbImage, false, true);
-						log.trace(request.path + " contains translucency");
+						log.trace("{} contains translucency", request.path);
 					} else {
 						tex = new PackTexture(rasteriser, request.path, argbImage);
 					}
@@ -524,9 +500,7 @@ public class TexturePack
 					loadedPackTextures.put(request.path, tex);
 				}
 			} catch (FileNotFoundException e) {
-				if (logMissingTextures) {
-					log.warn("\nThe texture file '{}' could not be found.", request.path);
-				}
+				log.warn("\nThe texture file '{}' could not be found.", request.path);
 			}
 		}
 		
@@ -740,39 +714,25 @@ public class TexturePack
 		}
 	}
 	
-	private void loadBedTextures()
-	{		
+	private void loadTexturesFromDirectory(String textureDir, String prefix, String suffix) {
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
-				DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/bed")))
-		{
-			for (Path entry : entries)
-			{
+			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath(textureDir))) {
+			for (Path entry : entries) {
 				String filename = entry.getFileName().toString();
-				String color = filename.substring(0, filename.lastIndexOf('.'));
-				findTexture(loadTexture(entry.toString()), "bed_"+color);
+				String name = filename.substring(0, filename.lastIndexOf('.'));
+				if (name.contains("layer")) { //Handle armor textures renamed in 1.21.2
+					name = name.replace("_layer_1", "");
+					if (name.contains("leather_layer_2")) {
+						name = name.replace("_layer_2_overlay", "_leggings");
+					} else {
+						name = name.replace("_layer_2", "_leggings");
+					}
+					name = name.replace("turtle", "turtle_scute");
+				}
+				findTexture(loadTexture(entry.toString()), prefix + name + suffix);
 			}
-		}
-		catch (IOException e)
-		{
-			log.warn("No bed textures found. You may be using an older Minecraft jar file");
-		}
-	}
-
-	private void loadPaintingTextures()
-	{
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
-			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/painting")))
-		{
-			for (Path entry : entries)
-			{
-				String filename = entry.getFileName().toString();
-				String name = "minecraft:" + filename.substring(0, filename.lastIndexOf('.'));
-				findTexture(loadTexture(entry.toString()), name);
-			}
-		}
-		catch (IOException e)
-		{
-			log.error("No painting textures found. You may be using an older Minecraft jar file");
+		} catch (IOException e) {
+			log.warn("No textures found in {}. You may be using an older Minecraft jar file", textureDir);
 		}
 	}
 	

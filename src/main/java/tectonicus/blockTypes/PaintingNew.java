@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,6 +24,7 @@ import tectonicus.raw.PaintingEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
+import tectonicus.texture.TexturePack;
 
 public class PaintingNew implements BlockType
 {
@@ -62,11 +63,12 @@ public class PaintingNew implements BlockType
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
 		final float texel = 1.0f/16.0f;
 		PaintingRegistry paintingRegistry = world.getPaintingRegistry();
+		TexturePack texturePack = world.getTexturePack();
 
 		for (PaintingEntity entity : rawChunk.getPaintings()) {
 			String motive = entity.getMotive().toLowerCase();
-			SubTexture painting = world.getTexturePack().findTexture(null, motive);
-			SubTexture backing = world.getTexturePack().findTexture(null, "minecraft:back");
+			SubTexture painting = texturePack.getPackTexture(motive).getFullTexture();
+			SubTexture backing = texturePack.getPackTexture("minecraft:back").getFullTexture();
 			Mesh mesh = geometry.getMesh(painting.texture, Geometry.MeshType.AlphaTest);
 			Mesh backMesh = geometry.getMesh(backing.texture, Geometry.MeshType.AlphaTest);
 
@@ -88,30 +90,15 @@ public class PaintingNew implements BlockType
 				// 16x16 paintings are 1x1 blocks
 				switch (motive.replace("minecraft:", "")) {
 					// 16x32 paintings
-					case "pool":
-					case "courbet":
-					case "sea":
-					case "sunset":
-					case "creebet":
+					case "pool", "courbet", "sea", "sunset", "creebet":
 						width = 2;
 						break;
 					// 32x16 paintings
-					case "wanderer":
-					case "graham":
+					case "wanderer", "graham":
 						height = 2;
 						break;
 					// 32x32 paintings
-					case "match":
-					case "bust":
-					case "stage":
-					case "void":
-					case "skullandroses":
-					case "skull_and_roses":
-					case "wither":
-					case "earth":
-					case "fire":
-					case "water":
-					case "wind":
+					case "match", "bust", "stage", "void", "skullandroses", "skull_and_roses", "wither", "earth", "fire", "water", "wind":
 						width = height = 2;
 						break;
 					// 64x32 painting
@@ -120,17 +107,12 @@ public class PaintingNew implements BlockType
 						height = 2;
 						break;
 					// 64x48 paintings
-					case "skeleton":
-					case "donkeykong":
-					case "donkey_kong":
+					case "skeleton", "donkeykong", "donkey_kong":
 						width = 4;
 						height = 3;
 						break;
 					// 64x64 paintings
-					case "pointer":
-					case "pigscene":
-					case "burningskull":
-					case "burning_skull":
+					case "pointer", "pigscene", "burningskull", "burning_skull":
 						width = height = 4;
 						break;
 					default:
