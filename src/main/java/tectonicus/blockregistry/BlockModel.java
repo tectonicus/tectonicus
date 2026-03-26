@@ -199,63 +199,60 @@ public class BlockModel
 				if (face.has(ROTATION_FIELD))
 					rotation = face.get(ROTATION_FIELD).asInt();
 				
-				final float texel = 1.0f / 16.0f;
-				SubTexture subTexture = new SubTexture(null, u0 * texel, v0 * texel, u1 * texel, v1 * texel);
-				
 				String modelName = blockModel.getName();
 				StringBuilder tex = new StringBuilder(face.get("texture").asString());
-				if (tex.charAt(0) == '#') {
-					String texture = tex.deleteCharAt(0).toString();
+				String texture = tex.toString();
+				if (tex.charAt(0) == '#')
+					texture = tex.deleteCharAt(0).toString();				
 					
-					//TODO: For mod support we may need to keep this namespace
-					String texturePath = combineMap.get(texture) + ".png";
-					if (texturePath.contains("minecraft:")) {
-						texturePath = texturePath.replace("minecraft:", "");
-					}
-					
-					SubTexture te = texturePack.findTexture(texturePath);
-					PackTexture pt = null;
-					if (te == null) {
-						te = texturePack.getPackTexture("missing_texture").getFullTexture();
-						blockModel.addMissingTexture(texturePath);
-					} else {
-						pt = texturePack.getPackTexture("assets/minecraft/textures/" + texturePath);
-					}
-					
-					if (pt != null) {
-						if (pt.isTranslucent()) {
-							blockModel.setSolid(false);
-							blockModel.setTranslucent(true);
-						} else if (pt.isTransparent()) {
-							blockModel.setSolid(false);
-						}
-					}
-					
-					final float texHeight = te.texture.getHeight();
-					final float texWidth = te.texture.getWidth();
-					final int numTiles = te.texture.getHeight() / te.texture.getWidth();
-					
-					//Get first frame of animated texture
-					u0 /= 16;
-					v0 = (v0 / 16) / numTiles;
-					u1 /= 16;
-					v1 = (v1 / 16) / numTiles;
-					
-					if (face.has("uv")) {
-						JsonNode uv = face.get("uv");
-						u0 = uv.get(0).floatValue() / 16.0f;
-						v0 = (uv.get(1).floatValue() / 16.0f) / numTiles;
-						u1 = uv.get(2).floatValue() / 16.0f;
-						v1 = (uv.get(3).floatValue() / 16.0f) / numTiles;
-					}
-					
-					int frame = 0;
-					if (numTiles > 1) {
-						frame = ThreadLocalRandom.current().nextInt(numTiles);
-					}
-					
-					subTexture = new SubTexture(te.texture, u0, v0 + frame * (texWidth / texHeight), u1, v1 + frame * (texWidth / texHeight));
+				//TODO: For mod support we may need to keep this namespace
+				String texturePath = combineMap.get(texture) + ".png";
+				if (texturePath.contains("minecraft:")) {
+					texturePath = texturePath.replace("minecraft:", "");
 				}
+				
+				SubTexture te = texturePack.findTexture(texturePath);
+				PackTexture pt = null;
+				if (te == null) {
+					te = texturePack.getPackTexture("missing_texture").getFullTexture();
+					blockModel.addMissingTexture(texturePath);
+				} else {
+					pt = texturePack.getPackTexture("assets/minecraft/textures/" + texturePath);
+				}
+				
+				if (pt != null) {
+					if (pt.isTranslucent()) {
+						blockModel.setSolid(false);
+						blockModel.setTranslucent(true);
+					} else if (pt.isTransparent()) {
+						blockModel.setSolid(false);
+					}
+				}
+				
+				final float texHeight = te.texture.getHeight();
+				final float texWidth = te.texture.getWidth();
+				final int numTiles = te.texture.getHeight() / te.texture.getWidth();
+				
+				//Get first frame of animated texture
+				u0 /= 16;
+				v0 = (v0 / 16) / numTiles;
+				u1 /= 16;
+				v1 = (v1 / 16) / numTiles;
+				
+				if (face.has("uv")) {
+					JsonNode uv = face.get("uv");
+					u0 = uv.get(0).floatValue() / 16.0f;
+					v0 = (uv.get(1).floatValue() / 16.0f) / numTiles;
+					u1 = uv.get(2).floatValue() / 16.0f;
+					v1 = (uv.get(3).floatValue() / 16.0f) / numTiles;
+				}
+				
+				int frame = 0;
+				if (numTiles > 1) {
+					frame = ThreadLocalRandom.current().nextInt(numTiles);
+				}
+				
+				SubTexture subTexture = new SubTexture(te.texture, u0, v0 + frame * (texWidth / texHeight), u1, v1 + frame * (texWidth / texHeight));
 				
 				boolean cullFace = face.has("cullface");
 				
