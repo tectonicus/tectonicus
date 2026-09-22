@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.MessageDigest;
@@ -41,7 +42,7 @@ public class PlayerSkinCache
 	
 	private final File cacheDir;
 	
-	private Map<String, CacheEntry> skinCache;
+	private final Map<String, CacheEntry> skinCache;
 	
 	public PlayerSkinCache(Configuration config, MessageDigest hashAlgorithm)
 	{
@@ -117,7 +118,7 @@ public class PlayerSkinCache
 	
 	public void destroy()
 	{
-		log.info("Writing player skin cache info ("+skinCache.size()+" skin"+ (skinCache.size()>1?"s":"") + " to write)");
+		log.info("Writing player skin cache info ({} skin{} to write)", skinCache.size(), skinCache.size() > 1 ? "s" : "");
 		
 		try (PrintWriter writer = new PrintWriter(new File(cacheDir, "skins.cache")))
 		{
@@ -229,7 +230,7 @@ public class PlayerSkinCache
             {
                 BufferedImage skin = ImageIO.read(skinStream);
                 if(skin != null)
-				return skin;
+					return skin;
             }
             finally
             {
@@ -247,7 +248,7 @@ public class PlayerSkinCache
         URLConnection connection = null;
         do
         {
-            URL skinURL = new URL(location);
+            URL skinURL = URI.create(location).toURL();
             connection = skinURL.openConnection();
             location = connection.getHeaderField("Location");
         }

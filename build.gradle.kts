@@ -15,7 +15,7 @@ gradle.startParameter.excludedTaskNames.addAll(listOf("jar", "distTar", "distZip
 
 java {
 	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(17))
+		languageVersion.set(JavaLanguageVersion.of(21))
 	}
 }
 
