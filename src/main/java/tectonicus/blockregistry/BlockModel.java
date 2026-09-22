@@ -101,6 +101,9 @@ public class BlockModel
 			org.joml.Vector3f rotationOrigin = new org.joml.Vector3f(8.0f, 8.0f, 8.0f);
 			org.joml.Vector3f rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
 			float rotationAngle = 0;
+			float rotationX = 0;
+			float rotationY = 0;
+			float rotationZ = 0;
 			boolean rotationScale = false;
 
 			if(element.has(ROTATION_FIELD))
@@ -109,19 +112,33 @@ public class BlockModel
 				JsonNode rotOrigin = rot.get("origin");
 				rotationOrigin = new org.joml.Vector3f(rotOrigin.get(0).floatValue(), rotOrigin.get(1).floatValue(), rotOrigin.get(2).floatValue());
 
-				String rotationAxis = rot.get("axis").asString();
-				if (rotationAxis.equals("x")) {
-					rotAxis = new org.joml.Vector3f(1.0f, 0.0f, 0.0f);
-				}
-				else if (rotationAxis.equals("y")) {
-					rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
-				}
-				else {
-					rotAxis = new org.joml.Vector3f(0.0f, 0.0f, 1.0f);
-				}
 
-
-				rotationAngle = rot.get("angle").floatValue();
+				// The legacy axis/angle form takes precedence over x/y/z when both are present.
+				JsonNode rotAxisNode = rot.get("axis");
+				JsonNode rotAngleNode = rot.get("angle");
+				if (rotAxisNode != null && rotAngleNode != null) {
+					String rotationAxis = rotAxisNode.asString();
+					rotationAngle = rotAngleNode.floatValue();
+					if (rotationAxis.equals("x")) {
+						rotAxis = new org.joml.Vector3f(1.0f, 0.0f, 0.0f);
+						rotationX = rotationAngle;
+					}
+					else if (rotationAxis.equals("y")) {
+						rotAxis = new org.joml.Vector3f(0.0f, 1.0f, 0.0f);
+						rotationY = rotationAngle;
+					}
+					else if (rotationAxis.equals("z")) {
+						rotAxis = new org.joml.Vector3f(0.0f, 0.0f, 1.0f);
+						rotationZ = rotationAngle;
+					}
+					else {
+						log.warn("Invalid rotation axis '{}' for block model: {}", rotationAxis, blockModel.getName());
+					}
+				} else {
+					rotationX = rot.has("x") ? rot.get("x").floatValue() : 0;
+					rotationY = rot.has("y") ? rot.get("y").floatValue() : 0;
+					rotationZ = rot.has("z") ? rot.get("z").floatValue() : 0;
+				}
 
 				if(rot.has("rescale")) {
 					rotationScale = rot.get("rescale").asBoolean();
@@ -136,7 +153,8 @@ public class BlockModel
 			JsonNode facesNode = element.get("faces");
 			SubTexture subTexture = new SubTexture(null, fromVector.x(), 16-toVector.y(), toVector.x(), 16-fromVector.y());
 			BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotAxis, rotationAngle,
-					rotationScale, shaded, combineMap, subTexture, facesNode, texturePack, blockModel);
+				rotationX, rotationY, rotationZ,
+				rotationScale, shaded, combineMap, subTexture, facesNode, texturePack, blockModel);
 			elementsList.add(be);
 		}
 		return elementsList;
@@ -149,11 +167,13 @@ public class BlockModel
 		private final org.joml.Vector3f rotationOrigin;
 		private final org.joml.Vector3f rotationAxis;
 		private final float rotationAngle;
+		private final float rotationX, rotationY, rotationZ;
 		private final boolean scaled, shaded;
 		private final Map<String, ElementFace> faces;
 		
 		public BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, org.joml.Vector3f rotationAxis,
-							float rotationAngle, boolean scaled, boolean shaded, Map<String, String> combineMap,
+							float rotationAngle, float rotationX, float rotationY, float rotationZ,
+							boolean scaled, boolean shaded, Map<String, String> combineMap,
 							SubTexture subTexture, JsonNode facesNode, TexturePack texturePack, BlockModel blockModel)
 		{
 			this.from = from;
@@ -161,6 +181,9 @@ public class BlockModel
 			this.rotationOrigin = rotationOrigin;
 			this.rotationAxis = rotationAxis;
 			this.rotationAngle = rotationAngle;
+			this.rotationX = rotationX;
+			this.rotationY = rotationY;
+			this.rotationZ = rotationZ;
 			this.scaled = scaled;
 			this.shaded = shaded;
 			this.faces = deserializeElementFaces(combineMap, subTexture, facesNode, from, to, texturePack, blockModel);

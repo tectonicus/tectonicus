@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -710,23 +710,23 @@ public class MeshUtil
 		for(BlockElement element : elements)
 		{
 			Matrix4f elementRotation = null;
-			if (element.getRotationAngle() != 0) {
+			if (element.getRotationX() != 0 || element.getRotationY() != 0 || element.getRotationZ() != 0) {
 				float xrot = x + element.getRotationOrigin().x()/16;
 				float yrot = y + element.getRotationOrigin().y()/16;
 				float zrot = z + element.getRotationOrigin().z()/16;
 				Vector3f rotationOrigin = new Vector3f(xrot, yrot, zrot);
-				Vector3f rotationAxis = element.getRotationAxis();
-
-				if (element.isScaled()) {
-					elementRotation = new Matrix4f().translate(rotationOrigin)
-							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
-							.scale(1, 1, 1.4f)  //TODO: this needs work
-							.translate(rotationOrigin.negate());
-				} else {
-					elementRotation = new Matrix4f().translate(rotationOrigin)
-							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
-							.translate(rotationOrigin.negate());
+				//Rotate on multiple axes 
+				elementRotation = new Matrix4f().translate(rotationOrigin)
+						.rotateX((float) Math.toRadians(element.getRotationX()))
+						.rotateY((float) Math.toRadians(element.getRotationY()))
+						.rotateZ((float) Math.toRadians(element.getRotationZ()));
+				if (element.isScaled()) { //scale the non-rotated faces across the whole block by 1 / cos(angle)
+					elementRotation.scale(
+							rescaleFactor(element.getRotationY()) * rescaleFactor(element.getRotationZ()),
+							rescaleFactor(element.getRotationX()) * rescaleFactor(element.getRotationZ()),
+							rescaleFactor(element.getRotationX()) * rescaleFactor(element.getRotationY()));
 				}
+				elementRotation.translate(rotationOrigin.negate());
 			}
 			
 			float x1 = x + element.getFrom().x()/16;
@@ -883,8 +883,13 @@ public class MeshUtil
 		}
 	}
 
+	private float rescaleFactor(float angle) {
+		return 1.0f / (float) Math.cos(Math.toRadians(angle));
+	}
+
 	private Colour4f getTintColor(String modelName, RawChunk rawChunk, BlockContext world, int x, int y, int z, BlockElement element) {
 		Colour4f tintColor;
+		Colour4f fixedTint = FixedBlockTint.find(modelName);
 
 		if (modelName.contains("cauldron")) {
 			tintColor = world.getWaterColor(rawChunk, x, y, z);
@@ -900,14 +905,8 @@ public class MeshUtil
 				age = 7;
 			}
 			tintColor = new Colour4f(age*32/255f, (255-age*8)/255f, age*4/255f);
-		} else if (modelName.contains("lily_pad")) {
-			tintColor = new Colour4f(32/255f, 128/255f, 48/255f);
-		} else if (modelName.contains("spruce_leaves")) {
-			tintColor = new Colour4f(97/255f, 153/255f, 97/255f);
-		} else if (modelName.contains("birch_leaves")) {
-			tintColor = new Colour4f(128/255f, 167/255f, 85/255f);
-		} else if (modelName.contains("cherry_leaves") || modelName.contains("pale_oak_leaves")) { //Don't actually tint these leaves
-			tintColor = new Colour4f(255/255f, 255/255f, 255/255f);
+		} else if (fixedTint != null) {
+			tintColor = fixedTint;
 		} else if (modelName.contains("oak_leaves") || modelName.contains("jungle_leaves") || modelName.contains("acacia_leaves") || modelName.contains("vines")) {
 			tintColor = world.getFoliageColor(rawChunk.getChunkCoord(), x, y, z);
 		} else if (modelName.contains("leaf_litter")) {

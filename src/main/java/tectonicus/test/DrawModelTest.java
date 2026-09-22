@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -109,21 +109,20 @@ public class DrawModelTest
 		for(BlockElement element : elements)
 		{
 			Vector3f rotationOrigin = element.getRotationOrigin();
-			Vector3f rotationAxis = element.getRotationAxis();
-
 			Matrix4f elementRotation = null;
-			if (element.getRotationAngle() != 0)
+			if (element.getRotationX() != 0 || element.getRotationY() != 0 || element.getRotationZ() != 0)
 			{
+				elementRotation = new Matrix4f().translate(rotationOrigin)
+						.rotateX((float) Math.toRadians(element.getRotationX()))
+						.rotateY((float) Math.toRadians(element.getRotationY()))
+						.rotateZ((float) Math.toRadians(element.getRotationZ()));
 				if (element.isScaled()) {
-					elementRotation = new Matrix4f().translate(rotationOrigin)
-							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
-							.scale(1, 1, 1.4f)  //TODO: this needs work
-							.translate(rotationOrigin.negate());
-				} else {
-					elementRotation = new Matrix4f().translate(rotationOrigin)
-							.rotate((float) Math.toRadians(element.getRotationAngle()), rotationAxis.x, rotationAxis.y, rotationAxis.z)
-							.translate(rotationOrigin.negate());
+					elementRotation.scale(
+							rescaleFactor(element.getRotationY()) * rescaleFactor(element.getRotationZ()),
+							rescaleFactor(element.getRotationX()) * rescaleFactor(element.getRotationZ()),
+							rescaleFactor(element.getRotationX()) * rescaleFactor(element.getRotationY()));
 				}
+				elementRotation.translate(rotationOrigin.negate());
 			}
 
 	        float x1 = element.getFrom().x();
@@ -271,6 +270,10 @@ public class DrawModelTest
 //		BufferedImage image = rasteriser.takeScreenshot(0, 0, 800, 800, ImageFormat.Png);
 //		Screenshot.write(new File("c:/users/Ender/Desktop/testImage.png"), image, ImageFormat.Png, 1.0f);
 		GLFW.glfwDestroyWindow(windowId);
+	}
+
+	private float rescaleFactor(float angle) {
+		return 1.0f / (float) Math.cos(Math.toRadians(angle));
 	}
 
 	private void oldDraw(List<BlockElement> elements) {
@@ -533,8 +536,7 @@ public class DrawModelTest
 		int texRotation = face.getTextureRotation();
 		LwjglTexture texture = (LwjglTexture) tex.texture;
 		
-		Mesh result = null;
-		result = meshList.get(texture);
+		Mesh result = meshList.get(texture);
 		if (result == null)
 		{
 			result = new LwjglMesh(texture);
