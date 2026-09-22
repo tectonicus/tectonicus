@@ -39,13 +39,15 @@ public enum Version {
     VERSION_20("1.20", 20, 3463),
     VERSION_21("1.21", 21, 3953),
     VERSION_21_9_PLUS("1.21.{9,10,11}", 22, 4554),
-    VERSION_26_1("26.1", 26, 4779);
+    VERSION_26_1("26.1", 261, 4779),
+	VERSION_26_2("26.2", 262, 4903),
+	VERSION_26_3("26.3", 263, 5023);
 
     private final String name;
     private final int numVersion;
     private final int dataVersion;
 
-    private static final Map<String, Version> NAME_LOOKUP = new HashMap<>(values().length);
+    private static final Map<String, Version> NAME_LOOKUP = HashMap.newHashMap(values().length);
 
     static {
         for (Version version : values()) {

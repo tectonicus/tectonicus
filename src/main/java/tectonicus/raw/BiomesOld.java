@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import tectonicus.util.Colour4f;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,7 +117,7 @@ public enum BiomesOld implements Biome {
 		this(numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, null, null);
 	}
 
-	private static final Map<Integer, BiomesOld> ID_LOOKUP = new HashMap<>(values().length);
+	private static final Map<Integer, BiomesOld> ID_LOOKUP = HashMap.newHashMap(values().length);
 
 	private final int numericId;
 	private final float temperature;
@@ -143,8 +144,8 @@ public enum BiomesOld implements Biome {
 	}
 	
 	private static class HardcodedColors {
-		public static final Colour4f BADLANDS_GRASS = new Colour4f(144, 129, 77);
-		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(158, 129, 77);
-		public static final Colour4f SWAMP = new Colour4f(106, 112, 57);
+		public static final Colour4f BADLANDS_GRASS = new Colour4f(new Color(144, 129, 77));
+		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(new Color(158, 129, 77));
+		public static final Colour4f SWAMP = new Colour4f(new Color(106, 112, 57));
 	}
 }

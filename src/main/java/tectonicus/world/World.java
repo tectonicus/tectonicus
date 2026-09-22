@@ -409,6 +409,9 @@ public class World implements BlockContext
 				case VERSION_20, VERSION_21:
 					parser.parse("defaultBlockConfigMC1.20-1.21.8.xml", registry);
 					break;
+				case VERSION_21_9_PLUS, VERSION_26_1:
+					parser.parse("defaultBlockConfigMC1.21.9-26.1.xml", registry);
+					break;
 				default:
 					parser.parse("defaultBlockConfig.xml", registry);
 					break;

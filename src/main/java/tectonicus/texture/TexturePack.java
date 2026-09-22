@@ -201,7 +201,11 @@ public class TexturePack
 //				vignetteTexture = rasteriser.createTexture(vignetteImage, TextureFilter.LINEAR);
 //			}
 			
-			loadTexturesFromDirectory("assets/minecraft/textures/entity/bed", "bed_", StringUtils.EMPTY);
+			String bedTextureDir = "assets/minecraft/textures/entity/bed";
+			if (zipStack.hasFile(bedTextureDir)) { //1.12-26.1
+				loadTexturesFromDirectory("assets/minecraft/textures/entity/bed", "bed_", StringUtils.EMPTY);
+			}
+			
 			String trimTextureDir = "assets/minecraft/textures/trims/entity/humanoid";
 			if (zipStack.hasFile(trimTextureDir)) { //load 1.21.2+ armor and trim textures
 				loadTexturesFromDirectory(trimTextureDir, "trim_", StringUtils.EMPTY);
@@ -716,7 +720,7 @@ public class TexturePack
 	
 	private void loadTexturesFromDirectory(String textureDir, String prefix, String suffix) {
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
-			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath(textureDir))) {
+			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath(textureDir), "*.png")) {
 			for (Path entry : entries) {
 				String filename = entry.getFileName().toString();
 				String name = filename.substring(0, filename.lastIndexOf('.'));
@@ -796,14 +800,21 @@ public class TexturePack
 	private void loadBiomeColors() {
 		log.info("Loading biome colors");
 		for (Biomes biome : Biomes.values()) {
-			if (biome.getGrassColor() != null) { //The biome has hard-coded values for grass and foliage
+			Point colorCoords = biome.getColorCoords();
+			//Check for hardcoded colors first, if not present then use the color lookup images
+			if (biome.getGrassColor() != null) {
 				grassColors.put(biome, biome.getGrassColor());
+			} else {
+				grassColors.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
+			}
+			if (biome.getFoliageColor() != null) {
 				foliageColors.put(biome, biome.getFoliageColor());
+			} else {
+				foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
+			}
+			if (biome.getDryFoliageColor() != null) {
 				dryFoliageColors.put(biome, biome.getDryFoliageColor());
 			} else {
-				Point colorCoords = biome.getColorCoords();
-				grassColors.put(biome, new Colour4f(getGrassColour(colorCoords.x, colorCoords.y)));
-				foliageColors.put(biome, new Colour4f(getFoliageColour(colorCoords.x, colorCoords.y)));
 				dryFoliageColors.put(biome, new Colour4f(getDryFoliageColor(colorCoords.x, colorCoords.y)));
 			}
 			

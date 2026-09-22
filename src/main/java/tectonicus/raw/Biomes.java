@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,17 +13,20 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import tectonicus.util.Colour4f;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
 
 import static tectonicus.world.ColorsWater.CHERRY;
 import static tectonicus.world.ColorsWater.COLD;
+import static tectonicus.world.ColorsWater.DAPPLED;
 import static tectonicus.world.ColorsWater.END;
 import static tectonicus.world.ColorsWater.LUSH;
 import static tectonicus.world.ColorsWater.MANGROVE;
 import static tectonicus.world.ColorsWater.PALE;
 import static tectonicus.world.ColorsWater.SNOWY;
+import static tectonicus.world.ColorsWater.SULFUR;
 import static tectonicus.world.ColorsWater.SWAMPY;
 import static tectonicus.world.ColorsWater.TEMPERATE;
 import static tectonicus.world.ColorsWater.WARM;
@@ -95,7 +98,9 @@ public enum Biomes implements Biome {
 	END_MIDLANDS("end_midlands", 61, 0.5f, 0.5f, END.getWaterColor()),
 	SMALL_END_ISLANDS("small_end_islands", 62, 0.5f, 0.5f, END.getWaterColor()),
 	END_BARRENS("end_barrens", 63, 0.5f, 0.5f, END.getWaterColor()),
-	PALE_GARDEN("pale_garden", 64, 0.7f, 0.8f, PALE.getWaterColor(), HardcodedColors.PALE_GARDEN_GRASS, HardcodedColors.PALE_GARDEN_FOLIAGE, HardcodedColors.PALE_GARDEN_DRY_FOLIAGE);
+	PALE_GARDEN("pale_garden", 64, 0.7f, 0.8f, PALE.getWaterColor(), HardcodedColors.PALE_GARDEN_GRASS, HardcodedColors.PALE_GARDEN_FOLIAGE, HardcodedColors.PALE_GARDEN_DRY_FOLIAGE),
+	SULFUR_CAVES("sulfur_caves", 65, 0.8f, 0.4f, SULFUR.getWaterColor(), HardcodedColors.SULFUR_CAVES_GRASS, null, null),
+	DAPPLED_FOREST("dappled_forest", 66, 0.6f, 0.6f, DAPPLED.getWaterColor(), HardcodedColors.DAPPLED_FOREST_GRASS, HardcodedColors.DAPPLED_FOREST_FOLIAGE, HardcodedColors.DAPPLED_FOREST_DRY_FOLIAGE);
 	
 	Biomes(String id, int numericId, float temperature, float rainfall, Colour4f waterColor, Colour4f grassColor, Colour4f foliageColor, Colour4f dryFoliageColor) {
 		this(id, numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, grassColor, foliageColor, dryFoliageColor);
@@ -105,7 +110,7 @@ public enum Biomes implements Biome {
 		this(id, numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, null, null, null);
 	}
 
-	private static final Map<String, Biomes> ID_LOOKUP = new HashMap<>(values().length);
+	private static final Map<String, Biomes> ID_LOOKUP = HashMap.newHashMap(values().length);
 
 	private final String id;
 	private final int numericId;
@@ -129,13 +134,17 @@ public enum Biomes implements Biome {
 	}
 	
 	private static class HardcodedColors {
-		public static final Colour4f BADLANDS_GRASS = new Colour4f(144, 129, 77);
-		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(158, 129, 77); //TODO: Do badlands have a different color for dry foliage?
-		public static final Colour4f SWAMP = new Colour4f(106, 112, 57);
-		public static final Colour4f CHERRY_GROVE = new Colour4f(182, 219, 97);
-		public static final Colour4f DRY_FOLIAGE = new Colour4f(123, 83, 52);
-		public static final Colour4f PALE_GARDEN_GRASS = new Colour4f(119, 130, 114);
-		public static final Colour4f PALE_GARDEN_FOLIAGE = new Colour4f(135, 141, 118);
-		public static final Colour4f PALE_GARDEN_DRY_FOLIAGE = new Colour4f(160, 166, 156);
+		public static final Colour4f BADLANDS_GRASS = new Colour4f(new Color(144, 129, 77));
+		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(new Color(158, 129, 77));
+		public static final Colour4f SWAMP = new Colour4f(new Color(106, 112, 57));
+		public static final Colour4f CHERRY_GROVE = new Colour4f(new Color(182, 219, 97));
+		public static final Colour4f DRY_FOLIAGE = new Colour4f(new Color(123, 83, 52));
+		public static final Colour4f PALE_GARDEN_GRASS = new Colour4f(new Color(119, 130, 114));
+		public static final Colour4f PALE_GARDEN_FOLIAGE = new Colour4f(new Color(135, 141, 118));
+		public static final Colour4f PALE_GARDEN_DRY_FOLIAGE = new Colour4f(new Color(160, 166, 156));
+		public static final Colour4f SULFUR_CAVES_GRASS = new Colour4f(new Color(171, 166, 79));
+		public static final Colour4f DAPPLED_FOREST_GRASS = new Colour4f(new Color(223, 104, 39));
+		public static final Colour4f DAPPLED_FOREST_FOLIAGE = new Colour4f(new Color(230, 142, 48));
+		public static final Colour4f DAPPLED_FOREST_DRY_FOLIAGE = new Colour4f(new Color(140, 58, 4));
 	}
 }

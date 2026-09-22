@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -38,7 +38,7 @@ public enum Colors {
 	BLACK(15, "black", new Color(29, 29, 33), new Color(25, 25, 25));
 	
 	private static final Colors[] ID_LOOKUP = new Colors[values().length];
-	private static final Map<String, Colors> NAME_LOOKUP = new HashMap<>(values().length);
+	private static final Map<String, Colors> NAME_LOOKUP = HashMap.newHashMap(values().length);
 	@Getter
 	private final int id;
 	@Getter
