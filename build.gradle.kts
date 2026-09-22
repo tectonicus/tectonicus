@@ -1,10 +1,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.api.tasks.WriteProperties
 import java.time.ZonedDateTime
-import java.util.Properties
 
 plugins {
 	application
-	id("com.gradleup.shadow") version "9.4.0"
+	id("com.gradleup.shadow") version "9.6.1"
 	`maven-publish`
 }
 
@@ -28,17 +28,17 @@ repositories {
 }
 
 dependencies {
-	val lwjglVersion = "3.4.1"
+	val lwjglVersion = "3.4.3"
 	val picocliVersion = "4.7.7"
-	val lombokVersion = "1.18.44"
-	val junitVersion = "6.0.3"
-	val caffeineVersion = "3.2.3"
+	val lombokVersion = "1.18.48"
+	val junitVersion = "6.1.3"
+	val caffeineVersion = "3.3.0"
 	val commonsTextVersion = "1.15.0"
-	val jomlVersion = "1.10.8"
+	val jomlVersion = "1.10.9"
 	val joglVersion = "2.6.0"
-    val jacksonVersion = "3.1.0"
-	val logbackVersion = "1.5.32"
-	val h2Version = "2.4.240"
+    val jacksonVersion = "3.2.3"
+	val logbackVersion = "1.6.3"
+	val h2Version = "2.5.250"
 	val webpImageIoVersion = "0.1.6"
 	val hamcrestVersion = "3.0"
 
@@ -91,24 +91,25 @@ dependencies {
 	testAnnotationProcessor("org.projectlombok:lombok:$lombokVersion")
 }
 
+val gitDescribe = providers.exec {
+	commandLine("git", "describe", "--tags", "--always")
+}.standardOutput.asText.map { it.trim() }
+val buildInfoDir = layout.buildDirectory.dir("generated/build-info")
+
+val buildInfo = tasks.register<WriteProperties>("generateBuildInfo") {
+    description = "Generate a build info properties file."
+    group = "build"
+	destinationFile.set(buildInfoDir.map { it.file("tectonicus.buildInfo") })
+	property("buildDateTime", providers.provider { ZonedDateTime.now().toString() })
+	property("buildNumber", gitDescribe)
+	property("version", version)
+}
+
 tasks.named<ShadowJar>("shadowJar") {
 	archiveClassifier.set("")
 
-	doFirst {
-		val gitDescribe = providers.exec {
-			commandLine("git", "describe", "--tags", "--always")
-		}.standardOutput.asText.get().trim()
-
-		val props = Properties().apply {
-			setProperty("buildDateTime", ZonedDateTime.now().toString())
-			setProperty("buildNumber", gitDescribe)
-			setProperty("version", version.toString())
-		}
-
-		file("build/resources/main/tectonicus.buildInfo").writer().use { writer ->
-			props.store(writer, "Tectonicus build info")
-		}
-	}
+	dependsOn(buildInfo)
+	from(buildInfoDir)
 
 	minimize {
 		exclude(dependency("tools.jackson.core:jackson-databind:.*"))
