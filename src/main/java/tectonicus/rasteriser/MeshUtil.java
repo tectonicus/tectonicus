@@ -185,12 +185,12 @@ public class MeshUtil
 			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
 
 			selfFull = selfBlock.isFullBlock();
-			above = aboveBlock.isFullOpaqueBlock();
-			below = belowBlock.isFullOpaqueBlock();
-			north = northBlock.isFullOpaqueBlock();
-			south = southBlock.isFullOpaqueBlock();
-			east = eastBlock.isFullOpaqueBlock();
-			west = westBlock.isFullOpaqueBlock();
+			above = isFaceCovered(selfBlock, aboveBlock);
+			below = isFaceCovered(selfBlock, belowBlock);
+			north = isFaceCovered(selfBlock, northBlock);
+			south = isFaceCovered(selfBlock, southBlock);
+			east = isFaceCovered(selfBlock, eastBlock);
+			west = isFaceCovered(selfBlock, westBlock);
 
 			//If the block is covered by solid blocks then skip it
 			if (above && north && south && east && west)
@@ -927,6 +927,12 @@ public class MeshUtil
 			blockRotation.transformPosition(bottomRight);
 			blockRotation.transformPosition(bottomLeft);
 		}
+	}
+
+	private boolean isFaceCovered(BlockStateWrapper selfBlock, BlockStateWrapper neighborBlock)
+	{
+		return neighborBlock.isFullOpaqueBlock()
+				|| selfBlock.getBlockName().equals(neighborBlock.getBlockName());
 	}
 
 	private Mesh getMesh(Geometry geometry, SubTexture tex, BlockModel model, boolean isGrassOverlay) {
