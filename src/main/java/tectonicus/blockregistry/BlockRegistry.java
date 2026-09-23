@@ -436,6 +436,7 @@ public class BlockRegistry
 
 	//Set attributes on the entire block instead of just the individuals models. These are used to help with lighting and face culling
 	private void setBlockAttributes(BlockStateWrapper wrapper, List<BlockStateModel> models) {
+		boolean hasOpaqueFullBlockModel = false;
 		for (BlockStateModel model : models) {
 			BlockModel blockModel = model.getBlockModel();
 			if (blockModel != null) {
@@ -443,10 +444,20 @@ public class BlockRegistry
 					wrapper.setFullBlock(false);
 				}
 
+				if (blockModel.isFullBlock()
+						&& (blockModel.isSolid())) {
+					hasOpaqueFullBlockModel = true;
+				}
+
 				if (!wrapper.isTransparent() && blockModel.isTranslucent() || wrapper.isFullBlock() && !blockModel.isSolid()) {
 					wrapper.setTransparent(true);
 				}
 			}
 		}
+
+		// A block can have both an opaque full-block model and a transparent overlay
+		// (grass blocks for example). Such a block should still hide faces of
+		// neighboring blocks even though one of its model layers uses alpha.
+		wrapper.setFullOpaqueBlock(wrapper.isFullBlock() && hasOpaqueFullBlockModel);
 	}
 }

@@ -185,21 +185,12 @@ public class MeshUtil
 			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
 
 			selfFull = selfBlock.isFullBlock();
-			if (selfBlock.isTransparent() && !model.getName().contains("leaves")) {
-				above = aboveBlock.isFullBlock();
-				below = belowBlock.isFullBlock();
-				north = northBlock.isFullBlock();
-				south = southBlock.isFullBlock();
-				east = eastBlock.isFullBlock();
-				west = westBlock.isFullBlock();
-			} else {
-				above = aboveBlock.isFullBlock() && !aboveBlock.isTransparent();
-				below = belowBlock.isFullBlock() && !belowBlock.isTransparent();
-				north = northBlock.isFullBlock() && !northBlock.isTransparent();
-				south = southBlock.isFullBlock() && !southBlock.isTransparent();
-				east = eastBlock.isFullBlock() && !eastBlock.isTransparent();
-				west = westBlock.isFullBlock() && !westBlock.isTransparent();
-			}
+			above = aboveBlock.isFullOpaqueBlock();
+			below = belowBlock.isFullOpaqueBlock();
+			north = northBlock.isFullOpaqueBlock();
+			south = southBlock.isFullOpaqueBlock();
+			east = eastBlock.isFullOpaqueBlock();
+			west = westBlock.isFullOpaqueBlock();
 
 			//If the block is covered by solid blocks then skip it
 			if (above && north && south && east && west)
