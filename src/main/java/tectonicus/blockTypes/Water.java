@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -115,11 +115,12 @@ public class Water implements BlockType
 		BlockProperties eastProperties = world.getBlockState(rawChunk.getChunkCoord(), x+1, y, z);
 
 		//TODO: handle some waterlogged blocks better e.g. waterlogged stairs
+		BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y-1, z);
 
 		if(!above.getName().equals("Ice") && !above.isWater() && !aboveNorth.isWater() && !aboveSouth.isWater() && !aboveEast.isWater() && !aboveWest.isWater())  // Only water blocks that don't have another water block above them should be lower
 		{
 			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
-			if (!west.isWater() && !isWaterlogged(westProperties, west.getName()))
+			if (!west.isSolid() && !west.isWater() && !isWaterlogged(westProperties, west.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
 										new Vector3f(x,		y+waterLevel,	z+1),
@@ -130,7 +131,7 @@ public class Water implements BlockType
 			}
 
 			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
-			if (!east.isWater() && !isWaterlogged(eastProperties, east.getName()))
+			if (!east.isSolid() && !east.isWater() && !isWaterlogged(eastProperties, east.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+waterLevel,		z+1),
 										new Vector3f(x+1,		y+waterLevel,	z),
@@ -141,7 +142,7 @@ public class Water implements BlockType
 			}
 
 			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
-			if (!north.isWater() && !isWaterlogged(northProperties, north.getName()))
+			if (!north.isSolid() && !north.isWater() && !isWaterlogged(northProperties, north.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+waterLevel,	z),
 										new Vector3f(x,		y+waterLevel,	z),
@@ -152,7 +153,7 @@ public class Water implements BlockType
 			}
 
 			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
-			if (!south.isWater() && !isWaterlogged(southProperties, south.getName()))
+			if (!south.isSolid() && !south.isWater() && !isWaterlogged(southProperties, south.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z+1),
 										new Vector3f(x+1,	y+waterLevel,	z+1),
@@ -162,8 +163,7 @@ public class Water implements BlockType
 										subTexture); 
 			}
 			
-		//	if (!above.isWater())
-			
+			if (!above.isSolid() && !isWaterlogged(aboveProperties, above.getName())) {
 				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
 										new Vector3f(x+1,	y+waterLevel,	z),
@@ -171,10 +171,9 @@ public class Water implements BlockType
 										new Vector3f(x,		y+waterLevel,	z+1),
 										new Vector4f(waterColor.r * topLight, waterColor.g * topLight, waterColor.b * topLight, aboveAlpha),
 										subTexture);
-			
-			
-			BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-			if (!below.isWater() && !isWaterlogged(belowProperties, below.getName()))
+			}
+
+			if (!below.isSolid() && !below.isWater() && !isWaterlogged(belowProperties, below.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
 										new Vector3f(x+1,	y,	z+1),
@@ -187,7 +186,7 @@ public class Water implements BlockType
 		else
 		{
 			BlockType west = world.getBlockType(rawChunk.getChunkCoord(), x-1, y, z);
-			if (!west.isWater() && !isWaterlogged(westProperties, west.getName()))
+			if (!west.isSolid() && !west.isWater() && !isWaterlogged(westProperties, west.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z),
 										new Vector3f(x,		y+1,	z+1),
@@ -198,7 +197,7 @@ public class Water implements BlockType
 			}
 
 			BlockType east = world.getBlockType(rawChunk.getChunkCoord(), x+1, y, z);
-			if (!east.isWater() && !isWaterlogged(eastProperties, east.getName()))
+			if (!east.isSolid() && !east.isWater() && !isWaterlogged(eastProperties, east.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,		y+1,		z+1),
 										new Vector3f(x+1,		y+1,	z),
@@ -209,7 +208,7 @@ public class Water implements BlockType
 			}
 
 			BlockType north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z-1);
-			if (!north.isWater() && !isWaterlogged(northProperties, north.getName()))
+			if (!north.isSolid() && !north.isWater() && !isWaterlogged(northProperties, north.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x+1,	y+1,	z),
 										new Vector3f(x,		y+1,	z),
@@ -220,7 +219,7 @@ public class Water implements BlockType
 			}
 
 			BlockType south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z+1);
-			if (!south.isWater() && !isWaterlogged(southProperties, south.getName()))
+			if (!south.isSolid() && !south.isWater() && !isWaterlogged(southProperties, south.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+1,	z+1),
 										new Vector3f(x+1,	y+1,	z+1),
@@ -230,7 +229,7 @@ public class Water implements BlockType
 										subTexture); 
 			}
 
-			if (!isWaterlogged(aboveProperties, above.getName())) {
+			if (!above.isSolid() && !isWaterlogged(aboveProperties, above.getName())) {
 				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
 				MeshUtil.addQuad(mesh, new Vector3f(x, y + 1, z),
 									   new Vector3f(x + 1, y + 1, z),
@@ -240,8 +239,7 @@ public class Water implements BlockType
 									   subTexture);
 			}
 
-			BlockType below = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
-			if (!below.isWater() && !isWaterlogged(belowProperties, below.getName()))
+			if (!below.isSolid() && !below.isWater() && !isWaterlogged(belowProperties, below.getName()))
 			{
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y,	z+1),
 										new Vector3f(x+1,	y,	z+1),

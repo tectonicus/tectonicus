@@ -931,6 +931,12 @@ public class MeshUtil
 
 	private boolean isFaceCovered(BlockStateWrapper selfBlock, BlockStateWrapper neighborBlock)
 	{
+		//Ignore snow because it can have adjacent snow blocks with different heights, we could look up the snow layer height
+		//but I don't know if it's worth it
+		if (selfBlock.getBlockName().equals("minecraft:snow")
+				&& neighborBlock.getBlockName().equals("minecraft:snow"))
+			return false;
+
 		return neighborBlock.isFullOpaqueBlock()
 				|| selfBlock.getBlockName().equals(neighborBlock.getBlockName());
 	}
