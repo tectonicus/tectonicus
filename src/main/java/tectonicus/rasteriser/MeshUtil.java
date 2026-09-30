@@ -934,7 +934,7 @@ public class MeshUtil
 		//Ignore snow because it can have adjacent snow blocks with different heights, we could look up the snow layer height
 		//but I don't know if it's worth it
 		if (selfBlock.getBlockName().equals("minecraft:snow")
-				&& neighborBlock.getBlockName().equals("minecraft:snow"))
+				&& neighborBlock.getBlockName().equals("minecraft:snow") || selfBlock.getBlockName().contains("leaves"))
 			return false;
 
 		return neighborBlock.isFullOpaqueBlock()
