@@ -14,12 +14,15 @@ import lombok.Setter;
 import tectonicus.raw.BlockProperties;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 public class BlockStateWrapper {
 	private final String blockName;
 	private final List<BlockState> states = new ArrayList<>();
+	private Map<String, String> defaultProperties = Collections.emptyMap();
 	@Setter
 	private boolean fullBlock = true;
 	@Setter
@@ -35,19 +38,28 @@ public class BlockStateWrapper {
 		states.add(state);
 	}
 
+	public void setDefaultProperties(Map<String, String> defaultProperties) {
+		this.defaultProperties = Map.copyOf(defaultProperties);
+	}
+
 	public List<BlockStateModel> getModels(BlockProperties properties) {
+		boolean hasProperties = properties != null && !properties.getProperties().isEmpty();
+		if (!hasProperties && !defaultProperties.isEmpty()) {
+			properties = new BlockProperties(defaultProperties);
+		}
+
 		List<BlockStateModel> models = new ArrayList<>();
-                for (BlockState state : states) {
-                        state.addModels(models, properties);
-                }
+		for (BlockState state : states) {
+			state.addModels(models, properties);
+		}
 		return models;
 	}
 
 	public List<BlockStateModel> getAllModels() {
 		List<BlockStateModel> models = new ArrayList<>();
-                for (BlockState state : states) {
-                        models.addAll(state.getModelsAndWeight().getModels());
-                }
+		for (BlockState state : states) {
+			models.addAll(state.getModelsAndWeight().getModels());
+		}
 		return models;
 	}
 }

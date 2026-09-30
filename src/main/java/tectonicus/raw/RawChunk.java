@@ -937,7 +937,7 @@ public class RawChunk {
 					for (int y = 0; y < SECTION_HEIGHT; y++) {
 						if (blockDataTag == null && singleBlockState != null) {
 							//If no data tag the section should be filled with the only block in the palette
-                                                        final int fromIndex = Section.getIndex(x, y, 0);
+                            final int fromIndex = Section.getIndex(x, y, 0);
 							Arrays.fill(newSection.blockNames, fromIndex, fromIndex + SECTION_DEPTH, singleBlockState.name);
 							Arrays.fill(newSection.blockStates, fromIndex, fromIndex + SECTION_DEPTH, singleBlockState.properties);
 						}
@@ -1163,9 +1163,28 @@ public class RawChunk {
 	private List<BlockState> parseBlockStates(ListTag paletteTag) {
 		List<BlockState> blockStatesPalette = new ArrayList<>();
 		for (Tag paletteEntry : paletteTag.getValue()) {
-			String name = NbtUtil.getChild((CompoundTag) paletteEntry, "Name", StringTag.class).getValue();
-			BlockProperties properties = NbtUtil.getProperties(NbtUtil.getChild((CompoundTag) paletteEntry, "Properties", CompoundTag.class));
-			blockStatesPalette.add(new BlockState(name, properties));
+			if (paletteEntry instanceof StringTag stringTag) {
+				blockStatesPalette.add(new BlockState(stringTag.getValue(),
+						NbtUtil.getProperties(null)));
+			} else if (paletteEntry instanceof CompoundTag compound) {
+				StringTag nameTag = NbtUtil.getChild(compound, "id", StringTag.class);
+				if (nameTag == null) {
+					nameTag = NbtUtil.getChild(compound, "Name", StringTag.class);
+				}
+				if (nameTag == null && compound.getValue().size() == 1
+						&& compound.getValue().get("") instanceof StringTag stringTag) {
+					nameTag = stringTag;
+				}
+				
+				CompoundTag propertiesTag = NbtUtil.getChild(compound, "properties", CompoundTag.class);
+				if (propertiesTag == null) {
+					propertiesTag = NbtUtil.getChild(compound, "Properties", CompoundTag.class);
+				}
+				
+				blockStatesPalette.add(new BlockState(nameTag.getValue(), NbtUtil.getProperties(propertiesTag)));
+			} else {
+				throw new IllegalArgumentException("Unsupported block state palette entry: " + paletteEntry.getClass().getName());
+			}
 		}
 
 		return blockStatesPalette;

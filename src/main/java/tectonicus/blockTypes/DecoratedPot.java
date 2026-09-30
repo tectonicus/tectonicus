@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -230,24 +230,19 @@ public class DecoratedPot implements BlockType
 
                 return new SubTexture(texture.texture, texture.u0+widthTexel*1, texture.v0+heightTexel*0, texture.u0+widthTexel*15, texture.v0+heightTexel*16);
         }
-        
-        private static int getRotationAngle(int x, int y, int z, RawChunk rawChunk) {
-                final BlockProperties properties = rawChunk.getBlockState(x, y, z);
-                
-                if (properties == null) {
-                        return 0;
-                }
-
-                switch (properties.get("facing")) {
-                        case "north":
-                                return 180;
-                        case "west":
-                                return 90;
-                        case "east":
-                                return 270;
-                        case "south":
-                        default:
-                                return 0;
-                }    
-        }
+	
+	private static int getRotationAngle(int x, int y, int z, RawChunk rawChunk) {
+		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+		
+		if (properties == null) {
+			return 0;
+		}
+		
+		return switch (properties.get("facing")) {
+			case "north" -> 180;
+			case "west" -> 90;
+			case "east" -> 270;
+			case null, default -> 0;
+		};
+	}
 }

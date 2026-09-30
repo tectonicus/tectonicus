@@ -78,26 +78,14 @@ public class ShulkerBox implements BlockType
 		int direction = data & 0x7;
 		final BlockProperties properties = chunk.getBlockState(x, y, z);
 		if (properties != null) {
-			switch (properties.get("facing")) {
-				case "down":
-					direction = 0;
-					break;
-				case "north":
-					direction = 2;
-					break;
-				case "south":
-					direction = 3;
-					break;
-				case "west":
-					direction = 4;
-					break;
-				case "east":
-					direction = 5;
-					break;
-				default:
-					direction = 1;
-
-			}
+			direction = switch (properties.get("facing")) {
+				case "down" -> 0;
+				case "north" -> 2;
+				case "south" -> 3;
+				case "west" -> 4;
+				case "east" -> 5;
+				case null, default -> 1;
+			};
 		}
 
 		if (direction == 0) { //Facing down

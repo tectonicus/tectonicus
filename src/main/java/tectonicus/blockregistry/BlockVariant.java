@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,10 +14,13 @@ import lombok.Getter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import tectonicus.raw.BlockProperties;
 
 @Getter
+@ToString
 public class BlockVariant extends BlockState
 {
 	private final String name;

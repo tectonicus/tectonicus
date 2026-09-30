@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -142,7 +142,7 @@ public class ChestNew implements BlockType
 
 		Rotation horizRotation = Rotation.Clockwise;
 		float horizAngle = 180;
-                String type = null;
+        String type = null;
 		final BlockProperties properties = chunk.getBlockState(x, y, z);
 		if (properties != null) {
 			switch (properties.get("facing")) {
@@ -160,9 +160,9 @@ public class ChestNew implements BlockType
 					northSouthColorTemp = eastWestColor;
 					eastWestColorTemp = northSouthColor;
 					break;
-				default:
-                                        horizAngle = 0;
-                                        break;
+				case null, default:
+					horizAngle = 0;
+					break;
 			}
 
 			type = properties.get("type");

@@ -65,6 +65,7 @@ public class BlockRegistry
 	@Getter
 	private final Cache<String, BlockStateModelsWeight> singleVariantBlocks = Caffeine.newBuilder().build();
 	private final Set<String> missingBlockModels = new HashSet<>();
+	private Map<String, Map<String, String>> defaultBlockStates = Collections.emptyMap();
 	private TexturePack texturePack;
 	private ZipStack zips;
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -121,6 +122,7 @@ public class BlockRegistry
 	
 	public void deserializeBlockstates() {
 		log.debug("Loading blockstate json from minecraft jar");
+		loadDefaultBlockStates();
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()));
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
 			deserializeBlockstates(entries);
@@ -139,6 +141,31 @@ public class BlockRegistry
 				log.info("No blockstate directory found in resource pack");
 			} catch (Exception e) {
 				log.error("Exception: ", e);
+			}
+		}
+
+		applyDefaultBlockStates();
+	}
+
+	private void loadDefaultBlockStates() {
+		try (InputStream in = BlockRegistry.class.getClassLoader().getResourceAsStream("default_block_states.json")) {
+			if (in == null) {
+				log.warn("Default block states resource was not found");
+				return;
+			}
+
+			defaultBlockStates = OBJECT_MAPPER.readValue(in, new TypeReference<>() {});
+			log.debug("Loaded {} default block states", defaultBlockStates.size());
+		} catch (IOException e) {
+			log.error("Unable to load default block states", e);
+		}
+	}
+
+	private void applyDefaultBlockStates() {
+		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
+			Map<String, String> defaultProperties = defaultBlockStates.get(wrapper.getBlockName());
+			if (defaultProperties != null) {
+				wrapper.setDefaultProperties(defaultProperties);
 			}
 		}
 	}
