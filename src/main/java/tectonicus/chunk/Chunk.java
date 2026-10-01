@@ -331,10 +331,15 @@ public class Chunk
 	
 	public void drawTransparentSurfaces(Camera camera)
 	{
+		drawTransparentSurfaces(camera, true);
+	}
+
+	public void drawTransparentSurfaces(Camera camera, boolean sortFaces)
+	{
 		if (geometry == null)
 			return;
 
-		geometry.drawTransparentSurfaces(	coord.x * RawChunk.WIDTH,
+		geometry.drawTransparentSurfaces(camera, sortFaces,	coord.x * RawChunk.WIDTH,
 											0,
 											coord.z * RawChunk.DEPTH);
 	}

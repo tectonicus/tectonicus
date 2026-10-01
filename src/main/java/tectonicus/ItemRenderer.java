@@ -450,7 +450,7 @@ public class ItemRenderer
 			rasteriser.enableBlending(true);
 			rasteriser.enableDepthWriting(false);
 			
-			geometry.drawTransparentSurfaces(0, 0, 0);
+			geometry.drawTransparentSurfaces(camera, 0, 0, 0);
 		}
 		
 		// Reset to default

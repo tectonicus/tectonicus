@@ -67,8 +67,11 @@
 		north="-z / +z / -x / +x" <!-- compass rose north direction -->
 		compassRose="" <!-- custom image path -->
 		origin="0, 0" <!-- If not set the map will center on the spawn point. This setting will be overridden if a map subset is specified -->
-		useSmoothLighting="true / false"
 	>
+		<render
+			sortTranslucentFaces="true / false"
+			useSmoothLighting="true / false"
+		/>
 
 		<mods>
 			<mod name="" path="" />  <!-- path to mod jar file, used for loading mod textures -->

@@ -16,11 +16,11 @@ import tectonicus.util.Colour4f;
 
 public interface Mesh {
 	void destroy();
-	
+
 	void finalise();
-	
+
 	Texture getTexture();
-	
+
 	void bind();
 	
 	void bind(GL2 gl2);
@@ -28,8 +28,14 @@ public interface Mesh {
 	void draw(final float xOffset, final float yOffset, final float zOffset);
 	
 	void draw(final float xOffset, final float yOffset, final float zOffset, GL2 gl2);
-	
-	
+
+	int getFaceCount();
+
+	float getFaceDepth(int faceIndex, Vector3f eye, Vector3f forward, float xOffset, float yOffset, float zOffset);
+
+	void drawFaces(int firstFace, int faceCount, float xOffset, float yOffset, float zOffset);
+
+
 	int getMemorySize();
 	
 	int getTotalVertices();

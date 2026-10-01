@@ -220,7 +220,10 @@ public class XmlConfigurationParser
 			final boolean useBiomeColours = getBoolean(mapElement, "useBiomeColours", false);
 			map.setUseBiomeColours(useBiomeColours);
 
-			map.setSmoothLit(getBoolean(mapElement, "useSmoothLighting", true));
+			boolean smoothLighting = getBoolean(mapElement, "useSmoothLighting", true);
+			Element renderNode = getChild(mapElement, "render");
+			map.setSmoothLit(getBoolean(renderNode, "useSmoothLighting", smoothLighting));
+			map.setSortTranslucentFaces(getBoolean(renderNode, "sortTranslucentFaces", true));
 			
 			map.setNorthDirection( parseNorthDirection( getString(mapElement, "north")));
 			map.setCustomCompassRose( getString(mapElement, "compassRose"));

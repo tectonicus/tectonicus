@@ -230,6 +230,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 			log.debug("\tcameraElevation: {}", m.getCameraElevationDeg());
 			log.debug("\tclosestZoomSize: {}", m.getClosestZoomSize());
 			log.debug("\tuseSmoothLighting:{}", m.isSmoothLit());
+			log.debug("\tsortTranslucentFaces:{}", m.isSortTranslucentFaces());
 			log.debug("\tuseBiomeColours: {}", m.useBiomeColours());
 
 			for (Layer l : m.getLayers())

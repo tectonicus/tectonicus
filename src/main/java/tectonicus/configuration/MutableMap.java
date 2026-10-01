@@ -50,6 +50,9 @@ public class MutableMap implements Map
 	@Getter
 	@Setter
 	private boolean smoothLit;
+	@Getter
+	@Setter
+	private boolean sortTranslucentFaces;
 	
 	@Getter
 	@Setter
@@ -122,6 +125,7 @@ public class MutableMap implements Map
 		this.origin = new Vector3l(0, 0, 0);
 
 		this.smoothLit = true;
+		this.sortTranslucentFaces = true;
 	}
 	
 	@Override

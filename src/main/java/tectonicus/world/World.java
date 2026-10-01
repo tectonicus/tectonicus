@@ -110,6 +110,7 @@ public class World implements BlockContext
 	private final Version textureVersion;
 	
 	private final Rasteriser rasteriser;
+	private final boolean sortTranslucentFaces;
 	@Getter
 	private final File worldDir;
 	private final File dimensionDir;
@@ -177,6 +178,7 @@ public class World implements BlockContext
 	public World(Rasteriser rasteriser, tectonicus.configuration.Map map, BiomeCache biomeCache, PlayerSkinCache playerSkinCache, Configuration config)
 	{
 		this.rasteriser = rasteriser;
+		this.sortTranslucentFaces = map.isSortTranslucentFaces();
 		this.signFilter = map.getSignFilter();
 		
 		this.defaultBlockId = BlockIds.AIR;
@@ -745,7 +747,7 @@ public class World implements BlockContext
 		
 		for (ChunkCoord coord : visible)
 		{	
-			geometryLoadedChunks.get(coord).drawTransparentSurfaces(camera);
+			geometryLoadedChunks.get(coord).drawTransparentSurfaces(camera, sortTranslucentFaces);
 		}
 		
 		rasteriser.enableDepthWriting(true);

@@ -33,6 +33,7 @@ public class LwjglMesh implements Mesh
 	
 	private int numVertices;
 	private int maxVertices;
+	private float[] faceCentres;
 	
 	private boolean hasDisplayList;
 	private int displayList;
@@ -148,6 +149,14 @@ public class LwjglMesh implements Mesh
 		
 		if (texCoords != null)
 			texCoords.flip();
+
+		faceCentres = new float[(numVertices / 4) * 3];
+		for (int face = 0; face < numVertices / 4; face++) {
+			int vertex = face * 4;
+			faceCentres[face * 3] = (vertices.get(vertex * 3) + vertices.get((vertex + 1) * 3) + vertices.get((vertex + 2) * 3) + vertices.get((vertex + 3) * 3)) * 0.25f;
+			faceCentres[face * 3 + 1] = (vertices.get(vertex * 3 + 1) + vertices.get((vertex + 1) * 3 + 1) + vertices.get((vertex + 2) * 3 + 1) + vertices.get((vertex + 3) * 3 + 1)) * 0.25f;
+			faceCentres[face * 3 + 2] = (vertices.get(vertex * 3 + 2) + vertices.get((vertex + 1) * 3 + 2) + vertices.get((vertex + 2) * 3 + 2) + vertices.get((vertex + 3) * 3 + 2)) * 0.25f;
+		}
 		
 		isFinalised = true;
 	}
@@ -215,6 +224,27 @@ public class LwjglMesh implements Mesh
 	@Override
 	public void draw(final float xOffset, final float yOffset, final float zOffset, GL2 gl2) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int getFaceCount() {
+		return numVertices / 4;
+	}
+
+	@Override
+	public float getFaceDepth(int faceIndex, Vector3f eye, Vector3f forward, float xOffset, float yOffset, float zOffset) {
+		float x = faceCentres[faceIndex * 3] + xOffset;
+		float y = faceCentres[faceIndex * 3 + 1] + yOffset;
+		float z = faceCentres[faceIndex * 3 + 2] + zOffset;
+		return (x - eye.x) * forward.x + (y - eye.y) * forward.y + (z - eye.z) * forward.z;
+	}
+
+	@Override
+	public void drawFaces(int firstFace, int faceCount, float xOffset, float yOffset, float zOffset) {
+		GL11.glPushMatrix();
+		GL11.glTranslatef(xOffset, yOffset, zOffset);
+		GL11.glDrawArrays(GL11.GL_QUADS, firstFace * 4, faceCount * 4);
+		GL11.glPopMatrix();
 	}
 
 	@Override
