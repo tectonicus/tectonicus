@@ -281,7 +281,8 @@ public class BlockModel
 				
 				boolean tintIndex = face.has("tintindex") && !modelName.contains("powder_snow_cauldron") && !modelName.contains("lava_cauldron"); //Hack to not tint lava or snow cauldrons
 				
-				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex);
+				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex,
+						pt != null && pt.isTranslucent(), pt != null && pt.isTransparent());
 				elementFaces.put(key, ef);
 			}
 
@@ -293,14 +294,18 @@ public class BlockModel
 		{
 			private final SubTexture texture;
 			private final boolean faceCulled, tinted;  // May need to change the type of these variables in the future, for now they work fine as booleans
+			private final boolean translucent, transparent;
 			private final int textureRotation;
 			
-			public ElementFace(SubTexture texture, boolean faceCulled, int textureRotation, boolean tinted)
+			public ElementFace(SubTexture texture, boolean faceCulled, int textureRotation, boolean tinted,
+							   boolean translucent, boolean transparent)
 			{
 				this.texture = texture;
 				this.faceCulled = faceCulled;
 				this.textureRotation = textureRotation;
 				this.tinted = tinted;
+				this.translucent = translucent;
+				this.transparent = transparent;
 			}
 		}
 	}

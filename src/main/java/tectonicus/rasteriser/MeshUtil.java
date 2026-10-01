@@ -941,17 +941,19 @@ public class MeshUtil
 				|| selfBlock.getBlockName().equals(neighborBlock.getBlockName());
 	}
 
-	private Mesh getMesh(Geometry geometry, SubTexture tex, BlockModel model, boolean isGrassOverlay) {
-		Mesh mesh;
-		if (model.isSolid() || model.getName().contains("grass_block") && !isGrassOverlay) {
-			mesh = geometry.getMesh(tex.texture, MeshType.Solid);
-		} else if (model.isTranslucent()) {
-			mesh = geometry.getMesh(tex.texture, MeshType.Transparent);
+	private Mesh getMesh(Geometry geometry, ElementFace face, BlockModel model, boolean isGrassOverlay) {
+		MeshType meshType;
+		if (model.getName().contains("grass_block") && !isGrassOverlay) {
+			meshType = MeshType.Solid;
+		} else if (face.isTranslucent()) {
+			meshType = MeshType.Transparent;
+		} else if (face.isTransparent()) {
+			meshType = MeshType.AlphaTest;
 		} else {
-			mesh = geometry.getMesh(tex.texture, MeshType.AlphaTest);
+			meshType = MeshType.Solid;
 		}
 
-		return mesh;
+		return geometry.getMesh(face.getTexture().texture, meshType);
 	}
 	
 	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
@@ -960,7 +962,7 @@ public class MeshUtil
 		doTransforms(topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 
 		SubTexture tex = face.getTexture();
-		Mesh mesh = getMesh(geometry, tex, model, isGrassOverlay);
+		Mesh mesh = getMesh(geometry, face, model, isGrassOverlay);
 		
 		int texRotation = face.getTextureRotation();
 		if(texRotation == 0)
@@ -1000,7 +1002,7 @@ public class MeshUtil
 		doTransforms(topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
 
 		SubTexture tex = face.getTexture();
-		Mesh mesh = getMesh(geometry, tex, model, isGrassOverlay);
+		Mesh mesh = getMesh(geometry, face, model, isGrassOverlay);
 
 		//TODO: if the block has ambient occlusion we should figure out smooth lighting
 
