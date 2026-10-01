@@ -143,6 +143,11 @@ public class MeshUtil
 	
 	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation)
 	{
+		addBlock(world, rawChunk, x, y, z, model, geometry, xRotation, yRotation, 0);
+	}
+
+	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation, int zRotation)
+	{
 		List<BlockElement> elements = model.getElements();
 
 		boolean selfFull = true;
@@ -452,249 +457,57 @@ public class MeshUtil
 
 		Matrix4f blockRotation = null;
 
-		if (xRotation != 0 || yRotation != 0) {
+		if (xRotation != 0 || yRotation != 0 || zRotation != 0) {
 			Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
 			blockRotation = new Matrix4f().translate(rotOrigin)
+					.rotate(-(float) Math.toRadians(zRotation), 0, 0, 1)
 					.rotate(-(float) Math.toRadians(yRotation), 0, 1, 0)
 					.rotate(-(float) Math.toRadians(xRotation), 1, 0, 0)
 					.translate(rotOrigin.negate());
 
-			if (Math.abs(xRotation) == 90 && yRotation == 0) {
-				upFaceCovered = north;
-				downFaceCovered = south;
-				northFaceCovered = below;
-				southFaceCovered = above;
+			FaceDirection upDirection = rotatedFaceDirection(blockRotation, 0, 1, 0);
+			FaceDirection downDirection = rotatedFaceDirection(blockRotation, 0, -1, 0);
+			FaceDirection northDirection = rotatedFaceDirection(blockRotation, 0, 0, -1);
+			FaceDirection southDirection = rotatedFaceDirection(blockRotation, 0, 0, 1);
+			FaceDirection eastDirection = rotatedFaceDirection(blockRotation, 1, 0, 0);
+			FaceDirection westDirection = rotatedFaceDirection(blockRotation, -1, 0, 0);
 
-				if (selfFull) {
-					topLightTemp = northLight;
-					bottomLightTemp = southLight;
-					northLightTemp = bottomLight;
-					southLightTemp = topLight;
-				}
-			} else if (xRotation == 180 && yRotation == 0) {
-				upFaceCovered = below;
-				downFaceCovered = above;
-				northFaceCovered = south;
-				southFaceCovered = north;
+			upFaceCovered = isDirectionCovered(upDirection, above, below, north, south, east, west);
+			downFaceCovered = isDirectionCovered(downDirection, above, below, north, south, east, west);
+			northFaceCovered = isDirectionCovered(northDirection, above, below, north, south, east, west);
+			southFaceCovered = isDirectionCovered(southDirection, above, below, north, south, east, west);
+			eastFaceCovered = isDirectionCovered(eastDirection, above, below, north, south, east, west);
+			westFaceCovered = isDirectionCovered(westDirection, above, below, north, south, east, west);
 
-				if (selfFull) {
-					topLightTemp = bottomLight;
-					bottomLightTemp = topLight;
-					northLightTemp = southLight;
-					southLightTemp = northLight;
-				}
-			} else if (Math.abs(xRotation) == 270 && yRotation == 0) {
-				upFaceCovered = south;
-				downFaceCovered = north;
-				northFaceCovered = above;
-				southFaceCovered = below;
+			if (selfFull) {
+				topLightTemp = getDirectionLight(upDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+				bottomLightTemp = getDirectionLight(downDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+				northLightTemp = getDirectionLight(northDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+				southLightTemp = getDirectionLight(southDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+				eastLightTemp = getDirectionLight(eastDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+				westLightTemp = getDirectionLight(westDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+			}
+		}
 
-				if (selfFull) {
-					topLightTemp = southLight;
-					bottomLightTemp = northLight;
-					northLightTemp = topLight;
-					southLightTemp = bottomLight;
-				}
-			} else if (yRotation == 90 && xRotation == 0 || yRotation == -270 && xRotation == 0) {
-				northFaceCovered = east;
-				southFaceCovered = west;
-				eastFaceCovered = south;
-				westFaceCovered = north;
-
-				if (selfFull) {
-					northLightTemp = eastLight;
-					southLightTemp = westLight;
-					eastLightTemp = southLight;
-					westLightTemp = northLight;
-
-					if (useSmoothLighting && model.isAmbientlyOccluded()) {
-						topShadedTemp = new Vector4f(topShaded.y, topShaded.z, topShaded.w, topShaded.x);
-						northShadedTemp = eastShaded;
-						southShadedTemp = westShaded;
-						eastShadedTemp = southShaded;
-						westShadedTemp = northShaded;
-					}
-				}
-			} else if (yRotation == 90 && xRotation == 90) {
-				upFaceCovered = east;
-				downFaceCovered = west;
-				northFaceCovered = below;
-				southFaceCovered = above;
-				eastFaceCovered = south;
-				westFaceCovered = north;
-
-				if (selfFull) {
-					topLightTemp = eastLight;
-					bottomLightTemp = westLight;
-					northLightTemp = bottomLight;
-					southLightTemp = topLight;
-					eastLightTemp = southLight;
-					westLightTemp = northLight;
-				}
-			} else if (yRotation == 90 && xRotation == 180) {
-				upFaceCovered = below;
-				downFaceCovered = above;
-				northFaceCovered = west;
-				southFaceCovered = east;
-				eastFaceCovered = south;
-				westFaceCovered = north;
-
-				if (selfFull) {
-					topLightTemp = bottomLight;
-					bottomLightTemp = topLight;
-					northLightTemp = westLight;
-					southLightTemp = eastLight;
-					eastLightTemp = southLight;
-					westLightTemp = northLight;
-				}
-			} else if (yRotation == 90 && xRotation == 270) {
-				upFaceCovered = west;
-				downFaceCovered = east;
-				northFaceCovered = above;
-				southFaceCovered = below;
-				eastFaceCovered = south;
-				westFaceCovered = north;
-
-				if (selfFull) {
-					topLightTemp = westLight;
-					bottomLightTemp = eastLight;
-					northLightTemp = topLight;
-					southLightTemp = bottomLight;
-					eastLightTemp = southLight;
-					westLightTemp = northLight;
-				}
-			} else if (Math.abs(yRotation) == 180 && xRotation == 0) {
-				northFaceCovered = south;
-				southFaceCovered = north;
-				eastFaceCovered = west;
-				westFaceCovered = east;
-
-				if (selfFull) {
-					northLightTemp = southLight;
-					southLightTemp = northLight;
-					eastLightTemp = westLight;
-					westLightTemp = eastLight;
-
-					if (useSmoothLighting && model.isAmbientlyOccluded()) {
-						topShadedTemp = new Vector4f(topShaded.z, topShaded.w, topShaded.x, topShaded.y);
-						northShadedTemp = southShaded;
-						southShadedTemp = northShaded;
-						eastShadedTemp = westShaded;
-						westShadedTemp = eastShaded;
-					}
-				}
-			} else if (Math.abs(yRotation) == 180 && xRotation == 90) {
-				upFaceCovered = south;
-				downFaceCovered = north;
-				northFaceCovered = below;
-				southFaceCovered = above;
-				eastFaceCovered = west;
-				westFaceCovered = east;
-
-				if (selfFull) {
-					topLightTemp = southLight;
-					bottomLightTemp = northLight;
-					northLightTemp = bottomLight;
-					southLightTemp = topLight;
-					eastLightTemp = westLight;
-					westLightTemp = eastLight;
-				}
-			} else if (Math.abs(yRotation) == 180 && xRotation == 180) {
-				upFaceCovered = below;
-				downFaceCovered = above;
-				eastFaceCovered = west;
-				westFaceCovered = east;
-
-				if (selfFull) {
-					topLightTemp = bottomLight;
-					bottomLightTemp = topLight;
-					eastLightTemp = westLight;
-					westLightTemp = eastLight;
-				}
-			} else if (Math.abs(yRotation) == 180 && xRotation == 270) {
-				upFaceCovered = north;
-				downFaceCovered = south;
-				northFaceCovered = above;
-				southFaceCovered = below;
-				eastFaceCovered = west;
-				westFaceCovered = east;
-
-				if (selfFull) {
-					topLightTemp = northLight;
-					bottomLightTemp = southLight;
-					northLightTemp = topLight;
-					southLightTemp = bottomLight;
-					eastLightTemp = westLight;
-					westLightTemp = eastLight;
-				}
-			} else if (yRotation == 270 && xRotation == 0 || yRotation == -90 && xRotation == 0) {
-				northFaceCovered = west;
-				southFaceCovered = east;
-				eastFaceCovered = north;
-				westFaceCovered = south;
-
-				if (selfFull) {
-					northLightTemp = westLight;
-					southLightTemp = eastLight;
-					eastLightTemp = northLight;
-					westLightTemp = southLight;
-
-					if (useSmoothLighting && model.isAmbientlyOccluded()) {
-						topShadedTemp = new Vector4f(topShaded.w, topShaded.x, topShaded.y, topShaded.z);
-						northShadedTemp = westShaded;
-						southShadedTemp = eastShaded;
-						eastShadedTemp = northShaded;
-						westShadedTemp = southShaded;
-					}
-				}
-			} else if (yRotation == 270 && xRotation == 90) {
-				upFaceCovered = west;
-				downFaceCovered = east;
-				northFaceCovered = below;
-				southFaceCovered = above;
-				eastFaceCovered = north;
-				westFaceCovered = south;
-
-				if (selfFull) {
-					topLightTemp = westLight;
-					bottomLightTemp = eastLight;
-					northLightTemp = bottomLight;
-					southLightTemp = topLight;
-					eastLightTemp = northLight;
-					westLightTemp = southLight;
-				}
-			} else if (yRotation == 270 && xRotation == 180) {
-				upFaceCovered = below;
-				downFaceCovered = above;
-				northFaceCovered = east;
-				southFaceCovered = west;
-				eastFaceCovered = north;
-				westFaceCovered = south;
-
-				if (selfFull) {
-					topLightTemp = bottomLight;
-					bottomLightTemp = topLight;
-					northLightTemp = eastLight;
-					southLightTemp = westLight;
-					eastLightTemp = northLight;
-					westLightTemp = southLight;
-				}
-			} else if (yRotation == 270 && xRotation == 270) {
-				upFaceCovered = east;
-				downFaceCovered = west;
-				northFaceCovered = above;
-				southFaceCovered = below;
-				eastFaceCovered = north;
-				westFaceCovered = south;
-
-				if (selfFull) {
-					topLightTemp = eastLight;
-					bottomLightTemp = westLight;
-					northLightTemp = topLight;
-					southLightTemp = bottomLight;
-					eastLightTemp = northLight;
-					westLightTemp = southLight;
-				}
+		if (selfFull && useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 && zRotation == 0) {
+			if (yRotation == 90 || yRotation == -270) {
+				topShadedTemp = new Vector4f(topShaded.y, topShaded.z, topShaded.w, topShaded.x);
+				northShadedTemp = eastShaded;
+				southShadedTemp = westShaded;
+				eastShadedTemp = southShaded;
+				westShadedTemp = northShaded;
+			} else if (Math.abs(yRotation) == 180) {
+				topShadedTemp = new Vector4f(topShaded.z, topShaded.w, topShaded.x, topShaded.y);
+				northShadedTemp = southShaded;
+				southShadedTemp = northShaded;
+				eastShadedTemp = westShaded;
+				westShadedTemp = eastShaded;
+			} else if (yRotation == 270 || yRotation == -90) {
+				topShadedTemp = new Vector4f(topShaded.w, topShaded.x, topShaded.y, topShaded.z);
+				northShadedTemp = westShaded;
+				southShadedTemp = eastShaded;
+				eastShadedTemp = northShaded;
+				westShadedTemp = southShaded;
 			}
 		}
 
@@ -708,9 +521,9 @@ public class MeshUtil
 				Vector3f rotationOrigin = new Vector3f(xrot, yrot, zrot);
 				//Rotate on multiple axes 
 				elementRotation = new Matrix4f().translate(rotationOrigin)
-						.rotateX((float) Math.toRadians(element.getRotationX()))
+						.rotateZ((float) Math.toRadians(element.getRotationZ()))
 						.rotateY((float) Math.toRadians(element.getRotationY()))
-						.rotateZ((float) Math.toRadians(element.getRotationZ()));
+						.rotateX((float) Math.toRadians(element.getRotationX()));
 				if (element.isScaled()) { //scale the non-rotated faces across the whole block by 1 / cos(angle)
 					elementRotation.scale(
 							rescaleFactor(element.getRotationY()) * rescaleFactor(element.getRotationZ()),
@@ -909,6 +722,48 @@ public class MeshUtil
 		//Stonecutter has tintindex but does not need tint
 
 		return tintColor;
+	}
+
+	private FaceDirection rotatedFaceDirection(Matrix4f rotation, float x, float y, float z) {
+		org.joml.Vector3f direction = rotation.transformDirection(new org.joml.Vector3f(x, y, z));
+		float absX = Math.abs(direction.x);
+		float absY = Math.abs(direction.y);
+		float absZ = Math.abs(direction.z);
+
+		if (absY >= absX && absY >= absZ) {
+			return direction.y >= 0 ? FaceDirection.UP : FaceDirection.DOWN;
+		}
+		if (absX >= absZ) {
+			return direction.x >= 0 ? FaceDirection.EAST : FaceDirection.WEST;
+		}
+		return direction.z >= 0 ? FaceDirection.SOUTH : FaceDirection.NORTH;
+	}
+
+	private boolean isDirectionCovered(FaceDirection direction, boolean above, boolean below, boolean north, boolean south,
+										boolean east, boolean west) {
+		return switch (direction) {
+			case UP -> above;
+			case DOWN -> below;
+			case NORTH -> north;
+			case SOUTH -> south;
+			case EAST -> east;
+			case WEST -> west;
+		};
+	}
+
+	private float getDirectionLight(FaceDirection direction, float top, float bottom, float north, float south, float east, float west) {
+		return switch (direction) {
+			case UP -> top;
+			case DOWN -> bottom;
+			case NORTH -> north;
+			case SOUTH -> south;
+			case EAST -> east;
+			case WEST -> west;
+		};
+	}
+
+	private enum FaceDirection {
+		UP, DOWN, NORTH, SOUTH, EAST, WEST
 	}
 
 	private void doTransforms(Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft,

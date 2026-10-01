@@ -10,6 +10,7 @@
 package tectonicus.blockregistry;
 
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 import tectonicus.raw.BlockProperties;
 
 import java.util.List;
@@ -20,6 +21,17 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 class BlockStateWrapperTest {
+
+	@Test
+	void deserializesZRotationAndDefaultsItToZero() {
+		ObjectMapper mapper = new ObjectMapper();
+
+		BlockStateModel defaultRotation = mapper.readValue("{\"model\":\"default\"}", BlockStateModel.class);
+		BlockStateModel zRotation = mapper.readValue("{\"model\":\"rotated\",\"z\":270}", BlockStateModel.class);
+
+		assertThat(defaultRotation.getZRotation(), is(0));
+		assertThat(zRotation.getZRotation(), is(270));
+	}
 
 	@Test
 	void usesDefaultPropertiesWhenPropertiesAreEmpty() {

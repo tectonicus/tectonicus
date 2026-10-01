@@ -66,14 +66,19 @@ public class BlockModel
 		}
 	}
 	
-	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry, int xRotation, int yRotation)
+	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry, int xRotation, int yRotation, int zRotation)
 	{
 		try {
-			MeshUtil.addBlock(world, rawChunk, x, y, z, this, geometry, xRotation, yRotation);
+			MeshUtil.addBlock(world, rawChunk, x, y, z, this, geometry, xRotation, yRotation, zRotation);
 		} catch (Exception e) {
 			ChunkCoord cc = rawChunk.getChunkCoord();
 			log.error("Error adding block: {} in {} in {}", this.name, cc, RegionCoord.getFilenameFromChunkCoord(cc), e);
 		}
+	}
+
+	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry, int xRotation, int yRotation)
+	{
+		createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation, 0);
 	}
 
 	public void addMissingTexture(String missingTexture) {

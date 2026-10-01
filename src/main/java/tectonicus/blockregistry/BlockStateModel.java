@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -27,12 +27,14 @@ public class BlockStateModel {
 	private int xRotation = 0;
 	@JsonProperty("y")
 	private int yRotation = 0;
+	@JsonProperty("z")
+	private int zRotation = 0;
 	private int weight = 1;
 	private boolean uvlock = false;
 
 	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry) {
 		if(blockModel != null) {
-			blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation);  //TODO: pass in weight and uvlock
+			blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation, zRotation);  //TODO: pass in weight and uvlock
 		} else {
 			log.warn("No block model found for model: {}", model);
 		}
