@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -143,6 +143,10 @@ public class Chunk
 							}
 
 							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+							BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
+							BlockProperties effectiveProperties = stateWrapper != null
+									? stateWrapper.getPropertiesWithDefaults(properties)
+									: properties;
 
 							// Blocks in the old registry either don't have models or they require special handling
 							type = registry.find(blockName);
@@ -153,10 +157,9 @@ public class Chunk
 								} else {
 									//TODO: This is quite slow. Need to profile and figure out if it can be sped up
 									List<BlockStateModel> models;
-									BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
 
 									if (stateWrapper != null)
-										models = stateWrapper.getModels(properties);
+										models = stateWrapper.getModels(effectiveProperties);
 									else
 										continue;
 
@@ -167,7 +170,7 @@ public class Chunk
 							}
 
 							//Render a water block at this same location if waterlogged
-							if (properties != null && properties.containsKey("waterlogged") && properties.get("waterlogged").equals("true")
+							if ((effectiveProperties != null && effectiveProperties.containsKey("waterlogged") && effectiveProperties.get("waterlogged").equals("true"))
 									|| blockName.equals("minecraft:kelp") || blockName.equals("minecraft:kelp_plant") || blockName.contains("seagrass")) {  //TODO: is there some way to avoid hard-coding these blocks?
 								registry.find("minecraft:water").addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
 							}

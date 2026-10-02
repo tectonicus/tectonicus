@@ -115,7 +115,7 @@ public class Beacon implements BlockType {
 
 		if (StringUtils.isNotEmpty(id)) {
 			BlockStateWrapper beaconBlock = world.getModelRegistry().getBlock(id);
-			List<BlockStateModel> models = beaconBlock.getModels(rawChunk.getBlockState(x, y, z));
+			List<BlockStateModel> models = beaconBlock.getModels(beaconBlock.getPropertiesWithDefaults(rawChunk.getBlockState(x, y, z)));
 			for (BlockStateModel bsc : models) {  //There is only a single beacon model in vanilla Minecraft
 				bsc.getBlockModel().createGeometry(x, y, z, world, rawChunk, geometry, bsc.getXRotation(), bsc.getYRotation());
 			}

@@ -42,12 +42,15 @@ public class BlockStateWrapper {
 		this.defaultProperties = Map.copyOf(defaultProperties);
 	}
 
-	public List<BlockStateModel> getModels(BlockProperties properties) {
+	public BlockProperties getPropertiesWithDefaults(BlockProperties properties) {
 		boolean hasProperties = properties != null && !properties.getProperties().isEmpty();
-		if (!hasProperties && !defaultProperties.isEmpty()) {
-			properties = new BlockProperties(defaultProperties);
-		}
+		if (!hasProperties && !defaultProperties.isEmpty())
+			return new BlockProperties(defaultProperties);
 
+		return properties;
+	}
+
+	public List<BlockStateModel> getModels(BlockProperties properties) {
 		List<BlockStateModel> models = new ArrayList<>();
 		for (BlockState state : states) {
 			state.addModels(models, properties);
