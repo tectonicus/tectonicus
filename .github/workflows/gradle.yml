@@ -1,6 +1,4 @@
 # This workflow will build a Java project with Gradle
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
-
 name: Java CI with Gradle
 
 on:
@@ -11,9 +9,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v7
     - name: Set up JDK
@@ -21,7 +17,7 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: 21
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
     - name: Build with Gradle
       run: ./gradlew build
