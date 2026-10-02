@@ -45,8 +45,10 @@ class BlockStateWrapperTest {
 		wrapper.addState(new BlockVariant("facing=south", new BlockStateModelsWeight(List.of(southModel))));
 		wrapper.setDefaultProperties(Map.of("facing", "north"));
 
-		List<BlockStateModel> models = wrapper.getModels(new BlockProperties());
+		BlockProperties properties = wrapper.getPropertiesWithDefaults(new BlockProperties());
+		List<BlockStateModel> models = wrapper.getModels(properties);
 
+		assertThat(properties.get("facing"), is("north"));
 		assertThat(models, hasSize(1));
 		assertThat(models.getFirst().getModel(), is("north_model"));
 	}
