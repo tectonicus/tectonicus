@@ -114,39 +114,34 @@ public class Banner implements BlockType
 	}
 	
 	@Override
-	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
-	{
+	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
 		Map<String, BufferedImage> patternImages = world.getTexturePack().getBannerPatternImages();
 		
 		String xyz = "x" + x + "y" + y + "z" + z;
 		BannerEntity entity = rawChunk.getBanners().get(xyz);
-                if (entity == null) {
-                        // There is no entity when rendering item icons. Use default values...
-                        entity = new BannerEntity(0, 0, 0, 0, 0, 0, 0, new ArrayList<>());
-                }
-                
-                int data = rawChunk.getBlockData(x, y, z);
-		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
-		if (properties != null && properties.containsKey("facing")) {
-			final String facing = properties.get("facing");
-			switch (facing) {
-				case "north":
-					data = 2;
-					break;
-				case "south":
-					data = 3;
-					break;
-				case "west":
-					data = 4;
-					break;
-				case "east":
-					data = 5;
-					break;
-				default:
-			}
+		if (entity == null) {
+			// There is no entity when rendering item icons. Use default values...
+			entity = new BannerEntity(0, 0, 0, 0, 0, 0, 0, new ArrayList<>());
 		}
-		if (properties != null && properties.containsKey("rotation")) {
-			data = Integer.parseInt(properties.get("rotation"));
+		
+		int data = rawChunk.getBlockData(x, y, z);
+		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
+		if (properties != null) {
+			if (hasPost) { //Standing banner
+				if (properties.containsKey("rotation")) {
+					data = Integer.parseInt(properties.get("rotation"));
+				} else { // default to north if no rotation property is present, this should only happen for 26.3 and newer worlds
+					data = 8;
+				}
+			} else { //Wall banner
+				final String facing = properties.get("facing");
+				data = switch (facing) {
+					case "south" -> 3;
+					case "west" -> 4;
+					case "east" -> 5;
+					case null, default -> 2; // north
+				};
+			}
 		}
 		
 		SubMesh subMesh = new SubMesh();
@@ -251,9 +246,7 @@ public class Banner implements BlockType
 		// Right edge
 		subMesh.addQuad(new Vector3f(width, bannerHeight, bannerDepth+texel), new Vector3f(width, bannerHeight, bannerDepth), new Vector3f(width, texel*2, bannerDepth), new Vector3f(width, texel*2, bannerDepth+texel), white, bannerSideTexture);
 		
-		final float xOffset = x;
 		final float yOffset;
-		final float zOffset = z;
 		
 		Rotation rotation = Rotation.None;
 		float angle = 0;
@@ -305,7 +298,7 @@ public class Banner implements BlockType
 			}
 		}
 		
-		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, rotation, angle);
+		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), (float) x, yOffset, (float) z, rotation, angle);
 	}
 
 
