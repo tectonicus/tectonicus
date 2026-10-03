@@ -60,7 +60,7 @@
 	<map
 		name=""
 		worldDir="/Users/xxxx/AppData/Roaming/.minecraft/saves/My World" <!-- required -->
-		dimension="overworld / nether / end"
+		dimension="overworld / nether / end / other"
 		closestZoomSize="12"
 		cameraAngle="45"
 		cameraElevation="45 / 10 - 90"

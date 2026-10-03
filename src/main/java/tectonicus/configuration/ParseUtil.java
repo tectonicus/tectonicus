@@ -70,10 +70,10 @@ public class ParseUtil
 		dimensionStr = dimensionStr.toLowerCase();
 		
 		Dimension dimension = switch (dimensionStr) {
-			case "overworld", "terra" -> Dimension.OVERWORLD;
-			case "the_nether", "nether" -> Dimension.NETHER;
+            case "the_nether", "nether" -> Dimension.NETHER;
 			case "the_end", "end", "ender" -> Dimension.END;
-			default -> Dimension.OTHER;
+			case "other" -> Dimension.OTHER;
+			default -> Dimension.OVERWORLD;
 		};
 		
 		return new DimensionInfo(dimension, dimensionStr);

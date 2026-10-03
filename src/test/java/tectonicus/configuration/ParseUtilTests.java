@@ -24,6 +24,20 @@ class ParseUtilTests {
 	}
 
 	@Test
+	void testParseDimensionDefaultsToOverworld() {
+		assertThat(ParseUtil.parseDimension("").dimension(), is(Dimension.OVERWORLD));
+		assertThat(ParseUtil.parseDimension("unknown").dimension(), is(Dimension.OVERWORLD));
+	}
+
+	@Test
+	void testParseDimensionOtherMustBeSpecified() {
+		DimensionInfo dimensionInfo = ParseUtil.parseDimension("other");
+
+		assertThat(dimensionInfo.dimension(), is(Dimension.OTHER));
+		assertThat(dimensionInfo.name(), is("other"));
+	}
+
+	@Test
 	void testParseBackgroundColorDefaultsByDimension() {
 		assertThat(ParseUtil.parseBackgroundColor(null, Dimension.OVERWORLD), is("#e5e3df"));
 		assertThat(ParseUtil.parseBackgroundColor("", Dimension.NETHER), is("#e5e3df"));
