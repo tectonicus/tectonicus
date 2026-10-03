@@ -29,31 +29,21 @@ import java.nio.file.Paths;
 
 @Slf4j
 @UtilityClass
-public class ParseUtil
-{
-	public static Mode parseMode(String modeStr)
-	{
-		modeStr = modeStr.toLowerCase();
-		
-		Mode mode = Mode.CMD;
-		if (modeStr.equals("interactive"))
-			mode = Mode.INTERACTIVE;
-		else if (modeStr.equals("gui"))
-			mode = Mode.GUI;
-		else if (modeStr.equals("players"))
-			mode = Mode.PLAYERS;
-		else if (modeStr.equals("views"))
-			mode = Mode.VIEWS;
-		else if (modeStr.equals("profile"))
-			mode = Mode.PROFILE;
-		
-		return mode;
+public class ParseUtil {
+	public static Mode parseMode(String modeStr) {
+        return switch (modeStr.toLowerCase()) {
+            case "interactive" -> Mode.INTERACTIVE;
+            case "gui" -> Mode.GUI;
+            case "players" -> Mode.PLAYERS;
+            case "views" -> Mode.VIEWS;
+            case "profile" -> Mode.PROFILE;
+            default -> Mode.CMD;
+        };
 	}
-	
-	public static RenderStyle parseRenderStyle(String renderStyleStr)
-	{
+
+	public static RenderStyle parseRenderStyle(String renderStyleStr) {
 		renderStyleStr = renderStyleStr.toLowerCase();
-		
+
 		RenderStyle renderStyle = RenderStyle.REGULAR;
 
 		if (renderStyleStr.equalsIgnoreCase("cave"))
@@ -62,263 +52,209 @@ public class ParseUtil
 			renderStyle = RenderStyle.EXPLORED_CAVES;
 		else if (renderStyleStr.equalsIgnoreCase("nether"))
 			renderStyle = RenderStyle.NETHER;
-		
+
 		return renderStyle;
 	}
-	
+
 	public static DimensionInfo parseDimension(String dimensionStr) {
 		dimensionStr = dimensionStr.toLowerCase();
-		
+
 		Dimension dimension = switch (dimensionStr) {
             case "the_nether", "nether" -> Dimension.NETHER;
 			case "the_end", "end", "ender" -> Dimension.END;
 			case "other" -> Dimension.OTHER;
 			default -> Dimension.OVERWORLD;
 		};
-		
+
 		return new DimensionInfo(dimension, dimensionStr);
 	}
-	
-	public static ImageFormat parseImageFormat(String imageStr)
-	{
+
+	public static ImageFormat parseImageFormat(String imageStr) {
 		imageStr = imageStr.toLowerCase();
-		
+
 		ImageFormat imageFormat = ImageFormat.PNG;
-		
+
 		if (imageStr.equalsIgnoreCase("jpg") || imageStr.equalsIgnoreCase("jpeg"))
 			imageFormat = ImageFormat.JPG;
 		else if (imageStr.equalsIgnoreCase("gif"))
 			imageFormat = ImageFormat.GIF;
 		else if (imageStr.equalsIgnoreCase("webp"))
 			imageFormat = ImageFormat.WEBP;
-		
+
 		return imageFormat;
 	}
-	
-	public static float parseImageCompression(String compressionStr)
-	{
-		try
-		{
+
+	public static float parseImageCompression(String compressionStr) {
+		try {
 			final float imageCompression = Float.parseFloat(compressionStr);
-			
+
 			if (imageCompression > 1.0f)
 				return 1.0f;
-			if (imageCompression < 0.1f)
-				return 0.1f;
-			
-			return imageCompression;
+            return Math.max(imageCompression, 0.1f);
+
+        } catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 0.75f;
 	}
-	
-	public static String parseCustomBlockConfig(String blockConfig)
-	{
+
+	public static String parseCustomBlockConfig(String blockConfig) {
 		return blockConfig;
 	}
-	
-	public static boolean parseUseDefaultBlockConfig(String useDefaults)
-	{
-		if (useDefaults == null || useDefaults.equals(""))
+
+	public static boolean parseUseDefaultBlockConfig(String useDefaults) {
+		if (useDefaults == null || useDefaults.isEmpty())
 			return true;
-		
+
 		return useDefaults.equalsIgnoreCase("true");
 	}
-	
-	public static int parseDrawDistance(String distanceStr)
-	{
-		try
-		{
+
+	public static int parseDrawDistance(String distanceStr) {
+		try {
 			final int drawDistance = Integer.parseInt(distanceStr);
-			
+
 			if (drawDistance < 10)
 				return 10;
-			
-			if (drawDistance > 1000)
-				return 1000;
-			
-			return drawDistance;
+
+			return Math.min(drawDistance, 1000);
+
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 200;
 	}
-	
-	public static int parseFOV(String fovStr)
-	{
-		try
-		{
+
+	public static int parseFOV(String fovStr) {
+		try {
 			final int fov = Integer.parseInt(fovStr);
-			
+
 			if (fov < 30)
 				return 30;
-			
-			if (fov > 110)
-				return 110;
-			
-			return fov;
+
+			return Math.min(fov, 110);
+
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 70;
 	}
-        
-        public static int parseWidth(String widthStr)
-	{
-		try
-		{
+
+	public static int parseWidth(String widthStr) {
+		try {
 			final int width = Integer.parseInt(widthStr);
-			
+
 			if (width < 640)
 				return 640;
-			
-			if (width > 3840)
-				return 3840;
-			
-			return width;
+
+			return Math.min(width, 3840);
+
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return MutableViewConfig.DEFAULT_WIDTH;
 	}
 
-        public static int parseHeight(String heightStr)
-	{
-		try
-		{
+	public static int parseHeight(String heightStr) {
+		try {
 			final int height = Integer.parseInt(heightStr);
-			
+
 			if (height < 480)
 				return 480;
-			
-			if (height > 2160)
-				return 2160;
-			
-			return height;
+
+			return Math.min(height, 2160);
+
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return MutableViewConfig.DEFAULT_HEIGHT;
 	}
 
 	public static SignFilter parseSignFilter(String filterStr) {
-		SignFilterType filterType;
+		SignFilterType filterType = switch (filterStr.toLowerCase()) {
+            case "none", "off" -> SignFilterType.NONE;
+            case "all" -> SignFilterType.ALL;
+            case "obey" -> SignFilterType.OBEY;
+            default -> SignFilterType.SPECIAL;
+        };
 
-		switch (filterStr.toLowerCase()) {
-			case "none":
-			case "off":
-				filterType = SignFilterType.NONE;
-				break;
-			case "all":
-				filterType = SignFilterType.ALL;
-				break;
-			case "obey":
-				filterType = SignFilterType.OBEY;
-				break;
-			default:
-				filterType = SignFilterType.SPECIAL;
-		}
-		
-		return new SignFilter(filterType);
+        return new SignFilter(filterType);
 	}
-	
-	public static ViewFilterType parseViewFilter(String filterStr)
-	{
+
+	public static ViewFilterType parseViewFilter(String filterStr) {
 		filterStr = filterStr.toLowerCase();
-		
+
 		ViewFilterType type = ViewFilterType.All;
-		
-		if (filterStr.equalsIgnoreCase("all"))
-		{
-			type = ViewFilterType.All;
-		}
-		else if (filterStr.equalsIgnoreCase("none"))
-		{
+
+
+		if (filterStr.equalsIgnoreCase("none")) {
 			type = ViewFilterType.None;
 		}
-		
+
 		return type;
 	}
-	
-	public static PlayerFilterType parsePlayerFilterType(String playerStr)
-	{
+
+	public static PlayerFilterType parsePlayerFilterType(String playerStr) {
 		playerStr = playerStr.toLowerCase();
-		
+
 		PlayerFilterType playerFilterType = PlayerFilterType.ALL;
-		
-		if (playerStr.equalsIgnoreCase("none"))
-		{
+
+		if (playerStr.equalsIgnoreCase("none")) {
 			playerFilterType = PlayerFilterType.NONE;
-		}
-		else if (playerStr.equalsIgnoreCase("ops"))
-		{
+		} else if (playerStr.equalsIgnoreCase("ops")) {
 			playerFilterType = PlayerFilterType.OPS;
-		}
-		else if (playerStr.equalsIgnoreCase("all"))
-		{
-			playerFilterType = PlayerFilterType.ALL;
-		}
-		else if (playerStr.equalsIgnoreCase("whitelist"))
-		{
+		} else if (playerStr.equalsIgnoreCase("whitelist")) {
 			playerFilterType = PlayerFilterType.WHITELIST;
-		}
-		else if (playerStr.equalsIgnoreCase("blacklist"))
-		{
+		} else if (playerStr.equalsIgnoreCase("blacklist")) {
 			playerFilterType = PlayerFilterType.BLACKLIST;
 		}
-		
+
 		return playerFilterType;
 	}
-	
-	public static Path parsePlayerFilterFile(String fileStr)
-	{
+
+	public static Path parsePlayerFilterFile(String fileStr) {
 		return StringUtils.isNotEmpty(fileStr) ? Paths.get(fileStr) : Paths.get(".");
 	}
-	
-	public static PortalFilterType parsePortalFilter(String portalFilterStr)
-	{
+
+	public static PortalFilterType parsePortalFilter(String portalFilterStr) {
 		portalFilterStr = portalFilterStr.toLowerCase();
-		
+
 		PortalFilterType portalFilterType = PortalFilterType.All;
 		if (portalFilterStr.equalsIgnoreCase("none"))
 			portalFilterType = PortalFilterType.None;
-		
+
 		return portalFilterType;
 	}
-	
+
 	public static ChestFilterType parseChestFilter(String chestFilterStr) {
 		chestFilterStr = chestFilterStr.toLowerCase();
-		
+
 		ChestFilterType chestFilterType = ChestFilterType.NONE;
 		if (chestFilterStr.equalsIgnoreCase("all"))
 			chestFilterType = ChestFilterType.ALL;
 		else if (chestFilterStr.equalsIgnoreCase("player"))
 			chestFilterType = ChestFilterType.PLAYER;
-		
+
 		return chestFilterType;
 	}
-	
-	public static BeaconFilterType parseBeaconFilter(String beaconFilterStr)
-	{
+
+	public static BeaconFilterType parseBeaconFilter(String beaconFilterStr) {
 		beaconFilterStr = beaconFilterStr.toLowerCase();
-		
+
 		BeaconFilterType beaconFilterType = BeaconFilterType.ALL;
 		if (beaconFilterStr.equalsIgnoreCase("none"))
 			beaconFilterType = BeaconFilterType.NONE;
 		else if (beaconFilterStr.equalsIgnoreCase("activated"))
 			beaconFilterType = BeaconFilterType.ACTIVATED;
-		
+
 		return beaconFilterType;
 	}
-	
+
 	/** Caution: can return null */
-	public static LightStyle parseLightStyle(String lightingStr)
-	{
+	public static LightStyle parseLightStyle(String lightingStr) {
 		lightingStr = lightingStr.toLowerCase();
-		
+
 		LightStyle lightStyle = null;
-		
+
 		if (lightingStr.equalsIgnoreCase("day"))
 			lightStyle = LightStyle.Day;
 		else if (lightingStr.equalsIgnoreCase("night"))
@@ -327,176 +263,140 @@ public class ParseUtil
 			lightStyle = LightStyle.Cave;
 		else if (lightingStr.equalsIgnoreCase("none"))
 			lightStyle = LightStyle.None;
-		
+
 		return lightStyle;
 	}
-	
-	public static int parseTileSize(String tileSizeStr)
-	{
-		try
-		{
+
+	public static int parseTileSize(String tileSizeStr) {
+		try {
 			final int tileSize = Integer.parseInt(tileSizeStr);
 			if (tileSize < 64)
-				return 64;	// minimum
-			if (tileSize > 2048)
-				return 2048; // maximum
-			return tileSize;
+				return 64;    // minimum
+            return Math.min(tileSize, 2048); // maximum
+        } catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 512; // default
 	}
-	
-	public static int parseCameraAngle(String angleStr)
-	{
-		try
-		{
-			final int angle = Integer.parseInt(angleStr);
-			return angle;
+
+	public static int parseCameraAngle(String angleStr) {
+		try {
+			return Integer.parseInt(angleStr);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
-		return 45;
-	}
-	
-	public static int parseElevationAngle(String angleStr)
-	{
-		try
-		{
-			final int angle = Integer.parseInt(angleStr);
-			if (angle > 90)
-				return 90;
-			if(angle < 10)
-				return 10;
-			return angle;
-		}
-		catch (Exception e) {}
-		
+
 		return 45;
 	}
 
-	public static String parseSinglePlayerName(String name)
-	{
+	public static int parseElevationAngle(String angleStr) {
+		try {
+			final int angle = Integer.parseInt(angleStr);
+			if (angle > 90)
+				return 90;
+			return Math.max(angle, 10);
+		} catch (Exception e) {
+		}
+
+		return 45;
+	}
+
+	public static String parseSinglePlayerName(String name) {
 		if (name == null)
 			return "";
-		
+
 		return name;
 	}
-	
-	public static File parseOutputDir(String outputDirStr)
-	{
-		if (outputDirStr == null || outputDirStr.equals(""))
+
+	public static File parseOutputDir(String outputDirStr) {
+		if (outputDirStr == null || outputDirStr.isEmpty())
 			return new File(".");
-		
+
 		return new File(outputDirStr);
 	}
-	
-	public static File parseCacheDir(String cacheDir, File outputDir)
-	{
-		if (cacheDir == null || cacheDir.equals(""))
+
+	public static File parseCacheDir(String cacheDir, File outputDir) {
+		if (cacheDir == null || cacheDir.isEmpty())
 			return new File(outputDir, "Cache");
-		
+
 		return new File(cacheDir);
 	}
-	
-	public static String parseDefaultSkin(String skin)
-	{
-		if (skin == null || skin.equals(""))
+
+	public static String parseDefaultSkin(String skin) {
+		if (skin == null || skin.isEmpty())
 			return "steve";
-		
+
 		return skin;
 	}
-	
-	public static int parseNumDownsampleThreads(String numThreadsStr)
-	{
-		try
-		{
+
+	public static int parseNumDownsampleThreads(String numThreadsStr) {
+		try {
 			final int numThreads = Integer.parseInt(numThreadsStr);
 			if (numThreads >= 1)
 				return numThreads;
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
-		return Runtime.getRuntime().availableProcessors(); 
+
+		return Runtime.getRuntime().availableProcessors();
 	}
-	
-	public static int parseColourDepth(String depthStr)
-	{
-		try
-		{
+
+	public static int parseColourDepth(String depthStr) {
+		try {
 			final int colourDepth = Integer.parseInt(depthStr);
 			if (colourDepth > 0)
 				return colourDepth;
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 32;
 	}
-	
-	public static int parseAlphaBits(String depthStr)
-	{
-		try
-		{
-			final int alphaBits = Integer.parseInt(depthStr);
-			return alphaBits;
+
+	public static int parseAlphaBits(String depthStr) {
+		try {
+			return Integer.parseInt(depthStr);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 8;
 	}
-	
-	public static int parseNumSamples(String depthStr)
-	{
-		try
-		{
-			final int samples = Integer.parseInt(depthStr);
-			return samples;
+
+	public static int parseNumSamples(String depthStr) {
+		try {
+			return Integer.parseInt(depthStr);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 4;
 	}
-	
-	public static int parseNumZoomLevels(String zoomLevelsStr)
-	{
-		try
-		{
+
+	public static int parseNumZoomLevels(String zoomLevelsStr) {
+		try {
 			final int numLevels = Integer.parseInt(zoomLevelsStr);
-			if (numLevels < 1)
-				return 1;
-			return numLevels;
+			return Math.max(numLevels, 1);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 8;
 	}
-	
-	public static int parseClosestZoomSize(String sizeStr)
-	{
-		try
-		{
+
+	public static int parseClosestZoomSize(String sizeStr) {
+		try {
 			final int size = Integer.parseInt(sizeStr);
-			if (size < 1)
-				return 1;
-			return size;
+			return Math.max(size, 1);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return 12;
 	}
-	
-	public static int parseMaxTiles(String maxTilesStr)
-	{
-		try
-		{
-			final int maxTiles = Integer.parseInt(maxTilesStr);
-			return maxTiles;
+
+	public static int parseMaxTiles(String maxTilesStr) {
+		try {
+			return Integer.parseInt(maxTilesStr);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return -1;
 	}
-	
+
 	public static String parseBackgroundColor(String colorStr, Dimension dimension) {
 		String colorCode = colorStr;
 		if (StringUtils.isEmpty(colorStr)) {
@@ -505,48 +405,35 @@ public class ParseUtil
 			else
 				colorCode = "#e5e3df"; //OVERWORLD, NETHER, OTHER
 		}
-		
+
 		return colorCode;
 	}
-	
-	public static int parseVersion(String str)
-	{
+
+	public static int parseVersion(String str) {
 		int version = 0;
-		try
-		{
+		try {
 			version = Integer.parseInt(str);
+		} catch (Exception e) {
 		}
-		catch (Exception e) {}
-		
+
 		return version;
 	}
-	
-	public static NorthDirection parseNorthDirection(String dirStr)
-	{
+
+	public static NorthDirection parseNorthDirection(String dirStr) {
 		NorthDirection dir = NorthDirection.MinusZ;
-		
-		if (dirStr != null)
-		{
+
+		if (dirStr != null) {
 			dirStr = dirStr.trim().toLowerCase();
-			
-			if (dirStr.equals("+x"))
-			{
-				dir = NorthDirection.PlusX;
-			}
-			else if (dirStr.equals("-x"))
-			{
-				dir = NorthDirection.MinusX;
-			}
-			else if (dirStr.equals("+z"))
-			{
-				dir = NorthDirection.PlusZ;
-			}
-			else if (dirStr.equals("-z"))
-			{
-				dir = NorthDirection.MinusZ;
-			}
+
+            dir = switch (dirStr) {
+                case "+x" -> NorthDirection.PlusX;
+                case "-x" -> NorthDirection.MinusX;
+                case "+z" -> NorthDirection.PlusZ;
+                case "-z" -> NorthDirection.MinusZ;
+                default -> dir;
+            };
 		}
-		
+
 		return dir;
 	}
 
