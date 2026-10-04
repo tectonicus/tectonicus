@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,6 +14,7 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
@@ -32,14 +33,14 @@ public class Skull implements BlockType
 {
 	private final String name;
 	
-	private SubTexture texture;
+	private final SubTexture texture;
 	private final SubTexture ctexture;
 	private final SubTexture stexture;
 	private final SubTexture wtexture;
 	private final SubTexture ztexture;
 	private final SubTexture dtexture;
 
-	private Colour4f colour;
+	private final Colour4f colour;
 
 	public Skull(String name, SubTexture texture, SubTexture ctexture, SubTexture stexture, SubTexture wtexture, SubTexture ztexture, SubTexture dtexture) 
 	{
@@ -100,8 +101,12 @@ public class Skull implements BlockType
 		SubMesh subMesh = new SubMesh();
 
 		//1.13+
-		final BlockProperties properties = rawChunk.getBlockState(x, y, z);
 		final String blockName = rawChunk.getBlockName(x, y, z);
+		final BlockStateWrapper block = blockName == null ? null : world.getModelRegistry().getBlock(blockName);
+		final BlockProperties rawProperties = rawChunk.getBlockState(x, y, z);
+		final BlockProperties properties = block == null
+				? rawProperties
+				: block.getPropertiesWithDefaults(rawProperties);
 		String facing = null;
 		String rotationString = null;
 		if (properties != null) {
@@ -122,7 +127,6 @@ public class Skull implements BlockType
 		
 		final float offSet = 1.0f / 16.0f;
 		float xOffset = x;
-		float yOffset = y;
 		float zOffset = z;
 
 		Rotation rotation = Rotation.AntiClockwise;
@@ -148,7 +152,7 @@ public class Skull implements BlockType
 		final boolean piglinHead = blockId == 6 || blockName != null && (blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head"));
 		
 		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
-		if(!player.getSkinURL().equals(""))
+		if(!player.getSkinURL().isEmpty())
 		{
 			BufferedImage skin = world.getPlayerSkinCache().fetchSkin(player);
 			if (skin != null)
@@ -460,7 +464,7 @@ public class Skull implements BlockType
 		}
 
 		if(data > 1 || facing != null)
-			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset+offSet*4+entity.getYOffset(), zOffset, rotation, angle);
+			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), xOffset, (float) y +offSet*4+entity.getYOffset(), zOffset, rotation, angle);
 		else
 			subMesh.pushTo(geometry.getMesh(currentTexture.texture, Geometry.MeshType.Solid), x, y+entity.getYOffset(), z, rotation, angle);			
 	}
