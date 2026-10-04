@@ -724,14 +724,23 @@ public class RawChunk {
 							colorVal = color.getValue();
 						beds.put(createKey(localX, localY, localZ), new BedEntity(x, y, z, localX, localY, localZ, colorVal));
 					} else if (id.equals("minecraft:decorated_pot")) {
-                                                final ListTag sherds = NbtUtil.getChild(entity, "sherds", ListTag.class);
+                                                final Tag sherdsTag = NbtUtil.getChild(entity, "sherds", Tag.class);
                                                 
                                                 String sherd1 = "minecraft:brick";
                                                 String sherd2 = "minecraft:brick";
                                                 String sherd3 = "minecraft:brick";
                                                 String sherd4 = "minecraft:brick";
                                                 
-                                                if (sherds != null) {
+                                                // Older chunk data stores the four sherd item IDs in a list. Newer
+                                                // data stores optional item stacks in a compoundTag keyed by side.
+                                                if (sherdsTag instanceof CompoundTag) {
+                                                        final CompoundTag sherds = (CompoundTag)sherdsTag;
+                                                        sherd1 = getDecoratedPotSherd(sherds, "back", sherd1);
+                                                        sherd2 = getDecoratedPotSherd(sherds, "left", sherd2);
+                                                        sherd3 = getDecoratedPotSherd(sherds, "right", sherd3);
+                                                        sherd4 = getDecoratedPotSherd(sherds, "front", sherd4);
+                                                } else if (sherdsTag instanceof ListTag) {
+                                                        final ListTag sherds = (ListTag)sherdsTag;
                                                         StringTag sherd1Tag = NbtUtil.getChild(sherds, 0, StringTag.class);
                                                         sherd1 = sherd1Tag == null ? sherd1 : sherd1Tag.getValue();
                                                         StringTag sherd2Tag = NbtUtil.getChild(sherds, 1, StringTag.class);
@@ -821,6 +830,20 @@ public class RawChunk {
                 }
                 
                 return components;
+        }
+
+        private String getDecoratedPotSherd(CompoundTag sherds, String side, String defaultValue) {
+                final Tag sherdTag = NbtUtil.getChild(sherds, side, Tag.class);
+                if (sherdTag instanceof StringTag) {
+                        return ((StringTag)sherdTag).getValue();
+                }
+                if (sherdTag instanceof CompoundTag) {
+                        final StringTag itemId = NbtUtil.getChild((CompoundTag)sherdTag, "id", StringTag.class);
+                        if (itemId != null) {
+                                return itemId.getValue();
+                        }
+                }
+                return defaultValue;
         }
         
         // 1.20.4 and older

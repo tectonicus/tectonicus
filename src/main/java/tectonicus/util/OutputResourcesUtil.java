@@ -618,10 +618,12 @@ public class OutputResourcesUtil {
                                 System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
                                 log.trace("\tRendering icon for: " + entryKey);
 
-                                if (entryKey.endsWith("_bed")) {
-                                        itemRenderer.renderBed(outFile, blockRegistry, texturePack, "minecraft:" + entryKey);
-                                        continue;
-                                }
+								if (entryKey.endsWith("_bed")) {
+									if (texturePack.getVersion().getNumVersion() >= VERSION_26_2.getNumVersion()) {
+										itemRenderer.renderBed(outFile, blockRegistry, texturePack, "minecraft:" + entryKey);
+									}
+									continue;
+								}
 
                                 String modelName = itemModelDefinition.getModelName();
                                 
