@@ -12,6 +12,8 @@ package tectonicus.texture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.Configuration;
@@ -58,6 +60,7 @@ import static tectonicus.Version.VERSIONS_9_TO_11;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_14;
+import static tectonicus.Version.VERSION_26_3;
 import static tectonicus.Version.VERSION_4;
 import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_ALPHA_BETA;
@@ -68,6 +71,7 @@ import static tectonicus.util.ImageUtils.copy;
 @Slf4j
 public class TexturePack
 {
+	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 	@Getter
 	private final Version version;
 	
@@ -379,6 +383,139 @@ public class TexturePack
 		
 		return null;
 	}
+
+	public SubTexture findArmorTrimTexture(String patternId, String materialId, String equipmentAsset, boolean leggings) {
+		if (patternId == null || materialId == null) {
+			return null;
+		}
+
+		if (version.getNumVersion() < VERSION_26_3.getNumVersion()) {
+			String pattern = pathPart(patternId);
+			String material = pathPart(materialId);
+			return findPalettedTexture("trim_" + pattern + (leggings ? "_leggings" : ""),
+					"trim_palette_" + material, "trim_palette_trim_palette");
+		}
+
+		String[] patternParts = splitId(patternId);
+		String baseTexturePath = "assets/" + patternParts[0] + "/textures/trims/entity/" + (leggings ? "humanoid_leggings/" : "humanoid/") + patternParts[1] + ".png";
+		String texturePath = baseTexturePath;
+		String paletteId = readTrimPaletteId(materialId);
+		String basePaletteId = readBasePaletteId(baseTexturePath);
+
+		JsonNode equipment = readJson(assetEquipmentJsonPath(equipmentAsset));
+		JsonNode overrides = equipment == null ? null : equipment.get("trim_overrides");
+		if (overrides != null && overrides.isArray()) {
+			for (JsonNode override : overrides) {
+				JsonNode when = override.get("when");
+				if (when == null || !matches(when.get("material"), materialId) || !matches(when.get("pattern"), patternId)) {
+					continue;
+				}
+
+				JsonNode overrideTexture = override.get("texture");
+				if (overrideTexture != null && overrideTexture.isString()) {
+					texturePath = textureAssetPath(overrideTexture.asString(), leggings);
+				}
+				JsonNode overridePalette = override.get("palette");
+				if (overridePalette != null && overridePalette.isString()) {
+					paletteId = overridePalette.asString();
+				} else {
+					paletteId = null;
+				}
+				break;
+			}
+		}
+
+		try {
+			String textureName = "trim_" + patternId + (leggings ? "_leggings" : "");
+			BufferedImage trim = loadTexture(texturePath);
+			if (paletteId == null) {
+				return findTexture(trim, textureName);
+			}
+			String palettePath = paletteTexturePath(paletteId);
+			String keyPalettePath = paletteTexturePath(basePaletteId == null ? "minecraft:trim_base" : basePaletteId);
+			BufferedImage remapped = applyPalette(trim, loadTexture(palettePath), loadTexture(keyPalettePath));
+			return findTexture(remapped, textureName + paletteId);
+		} catch (IOException e) {
+			log.warn("Unable to load armor trim texture for pattern {} and material {}", patternId, materialId, e);
+			return null;
+		}
+	}
+
+	private String readTrimPaletteId(String materialId) {
+		JsonNode material = readJson(assetJsonPath(materialId, "trim_material"));
+		if (material != null) {
+			JsonNode palette = material.get("palette_id");
+			if (palette == null) {
+				palette = material.get("palette");
+			}
+			if (palette != null && palette.isString()) {
+				return palette.asString();
+			}
+		}
+		return materialId;
+	}
+
+	private String readBasePaletteId(String texturePath) {
+		try (InputStream stream = zipStack.getStream(texturePath + ".mcmeta")) {
+			if (stream == null) {
+				return null;
+			}
+			JsonNode root = JSON_MAPPER.readTree(stream);
+			JsonNode palette = root == null ? null : root.get("palette");
+			JsonNode basePalette = palette == null ? null : palette.get("base_palette");
+			return basePalette != null && basePalette.isString() ? basePalette.asString() : null;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	private JsonNode readJson(String path) {
+		if (path == null) {
+			return null;
+		}
+		try (InputStream stream = zipStack.getStream(path)) {
+			return stream == null ? null : JSON_MAPPER.readTree(stream);
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	private String assetJsonPath(String id, String directory) {
+		String[] idParts = splitId(id);
+		return "data/" + idParts[0] + "/" + directory + "/" + idParts[1] + ".json";
+	}
+
+	private String assetEquipmentJsonPath(String id) {
+		String[] idParts = splitId(id);
+		return "assets/" + idParts[0] + "/equipment/" + idParts[1] + ".json";
+	}
+
+	private String paletteTexturePath(String id) {
+		String[] idParts = splitId(id);
+		return "assets/" + idParts[0] + "/textures/palettes/" + idParts[1] + ".png";
+	}
+
+	private String textureAssetPath(String id, boolean leggings) {
+		String[] idParts = splitId(id);
+		String path = idParts[1];
+		if (!path.startsWith("trims/")) {
+			path = "trims/entity/" + (leggings ? "humanoid_leggings/" : "humanoid/") + path;
+		}
+		return "assets/" + idParts[0] + "/textures/" + path + ".png";
+	}
+
+	private boolean matches(JsonNode value, String id) {
+		return value == null || !value.isString() || value.asString().equals(id);
+	}
+
+	private String[] splitId(String id) {
+		String[] parts = id.split(":", 2);
+		return parts.length == 1 ? new String[] {"minecraft", parts[0]} : parts;
+	}
+
+	private String pathPart(String id) {
+		return splitId(id)[1];
+	}
         
 	private TextureRequest parseRequest(String texturePath)
 	{
@@ -473,10 +610,10 @@ public class TexturePack
                 {
                         for (int y=0; y<resultTexture.getHeight(); y++)
                         {
-                                int colour = resultTexture.getRGB(x, y);
-                                if (colour != 0) {
-                                        colour = paletteMap.get(colour);
-                                        resultTexture.setRGB(x, y, colour);
+						int colour = resultTexture.getRGB(x, y);
+						Integer palettedColour = paletteMap.get(colour);
+						if (colour != 0 && palettedColour != null) {
+							resultTexture.setRGB(x, y, palettedColour);
                                 }
                         }
                 }

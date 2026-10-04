@@ -278,14 +278,7 @@ public class ArmorStand implements BlockType
 		ArmorTrimTag armorTrim = armor.getComponent(tectonicus.raw.ArmorTrimTag.class);
 		if (armorTrim != null) {
 			
-			final String pattern = armorTrim.pattern.substring("minecraft:".length());
-			final String material = armorTrim.material.substring("minecraft:".length());
-			
-			final String materialTextureFile = String.format("trim_palette_%s", material);
-			final String paletteTextureFile = "trim_palette_trim_palette";
-			
-			String trimTextureFile = String.format("trim_%s%s", pattern, suffix);
-			SubTexture trimTexture = texturePack.findPalettedTexture(trimTextureFile, materialTextureFile, paletteTextureFile);
+			SubTexture trimTexture = texturePack.findArmorTrimTexture(armorTrim.pattern, armorTrim.material, armorMaterial, layer == 2);
 			
 			if (trimTexture != null)
 				meshBuilder.build(x, y, z, geometry, colour, angle, trimTexture, 1);
