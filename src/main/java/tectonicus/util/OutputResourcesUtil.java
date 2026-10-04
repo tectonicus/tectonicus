@@ -698,8 +698,16 @@ public class OutputResourcesUtil {
                                                                 String[] trimParts = textureId.split("_trim_");
                                                                 
                                                                 String trim = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
-                                                                String palette = "assets/" + namespace + "/textures/trims/color_palettes/" + trimParts[1] + ".png";
-                                                                String keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
+                                                                String palette;
+                                                                String keyPalette;
+                                                                String newKeyPalette = "assets/" + namespace + "/textures/palettes/trim_base.png";
+                                                                if (texturePack.getZipStack().hasFile(newKeyPalette)) { //26.3+
+                                                                        palette = "assets/" + namespace + "/textures/palettes/trim/" + trimParts[1] + ".png";
+                                                                        keyPalette = newKeyPalette;
+                                                                } else {
+                                                                        palette = "assets/" + namespace + "/textures/trims/color_palettes/" + trimParts[1] + ".png";
+                                                                        keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
+                                                                }
                                                                 
                                                                 texture = texturePack.loadPalettedTexture(trim, palette, keyPalette);
                                                         } else {

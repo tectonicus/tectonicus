@@ -217,7 +217,13 @@ public class TexturePack
 				loadTexturesFromDirectory("assets/minecraft/textures/models/armor", "armor_", StringUtils.EMPTY);
 			}
 			
-			loadTexturesFromDirectory("assets/minecraft/textures/trims/color_palettes", "trim_palette_", StringUtils.EMPTY);
+			String newTrimBasePalette = "assets/minecraft/textures/palettes/trim_base.png";
+			if (zipStack.hasFile(newTrimBasePalette)) { //26.3+
+				loadTexturesFromDirectory("assets/minecraft/textures/palettes/trim", "trim_palette_", StringUtils.EMPTY);
+				findTexture(loadTexture(newTrimBasePalette), "trim_palette_trim_palette");
+			} else {
+				loadTexturesFromDirectory("assets/minecraft/textures/trims/color_palettes", "trim_palette_", StringUtils.EMPTY);
+			}
 			
 			loadShulkerTextures();
 			loadMissingTexture();
