@@ -47,8 +47,7 @@ public class BlockVariant extends BlockState
         
         @Override
         void addModels(List<BlockStateModel> models, BlockProperties properties) {
-                String variantProperties = name;
-                if (variantProperties.equals(StringUtils.EMPTY) || properties.contains(variantProperties) || properties.containsAll(states)) {
+		if (name.equals(StringUtils.EMPTY) || properties.containsAll(states)) {
                         models.add(getRandomWeightedModel(modelsAndWeight));
                 }
         }
