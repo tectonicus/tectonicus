@@ -190,12 +190,12 @@ public class MeshUtil
 			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
 
 			selfFull = selfBlock.isFullBlock();
-			above = isFaceCovered(selfBlock, aboveBlock);
-			below = isFaceCovered(selfBlock, belowBlock);
-			north = isFaceCovered(selfBlock, northBlock);
-			south = isFaceCovered(selfBlock, southBlock);
-			east = isFaceCovered(selfBlock, eastBlock);
-			west = isFaceCovered(selfBlock, westBlock);
+			above = isFaceCovered(world, selfBlock, aboveBlock);
+			below = isFaceCovered(world, selfBlock, belowBlock);
+			north = isFaceCovered(world, selfBlock, northBlock);
+			south = isFaceCovered(world, selfBlock, southBlock);
+			east = isFaceCovered(world, selfBlock, eastBlock);
+			west = isFaceCovered(world, selfBlock, westBlock);
 
 			//If the block is covered by solid blocks then skip it
 			if (above && north && south && east && west)
@@ -784,7 +784,7 @@ public class MeshUtil
 		}
 	}
 
-	private boolean isFaceCovered(BlockStateWrapper selfBlock, BlockStateWrapper neighborBlock)
+	private boolean isFaceCovered(BlockContext world, BlockStateWrapper selfBlock, BlockStateWrapper neighborBlock)
 	{
 		//Ignore snow because it can have adjacent snow blocks with different heights, we could look up the snow layer height
 		//but I don't know if it's worth it
@@ -793,7 +793,8 @@ public class MeshUtil
 			return false;
 
 		return neighborBlock.isFullOpaqueBlock()
-				|| selfBlock.getBlockName().equals(neighborBlock.getBlockName());
+				|| world.shouldCullSameBlockFaces()
+					&& selfBlock.getBlockName().equals(neighborBlock.getBlockName());
 	}
 
 	private Mesh getMesh(Geometry geometry, ElementFace face, BlockModel model, boolean isGrassOverlay) {

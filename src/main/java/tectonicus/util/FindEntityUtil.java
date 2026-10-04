@@ -129,7 +129,7 @@ public class FindEntityUtil {
 			for (int x = 0; x < RawChunk.WIDTH; x++) {
 				for (int z = 0; z < RawChunk.DEPTH; z++) {
 					final String blockName = chunk.getBlockName(x, y, z);
-					if (blockName != null && blockName.contains("_bed")) {
+					if (blockName != null && blockName.contains("_bed") && !blockName.contains("straw_bed")) {
 						final BlockProperties blockProperties = chunk.getBlockState(x, y, z);
 						if (blockProperties.containsKey("part") && blockProperties.get("part").equals("head")) {
 							ChunkCoord coord = chunk.getChunkCoord();

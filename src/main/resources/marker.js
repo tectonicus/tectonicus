@@ -29,8 +29,8 @@ let controlState = {
 function createPlayerMarker(player, pos) {
 	let icon = L.icon({
 		iconUrl: player.icon,
-		// iconSize: [30, 30],
-		iconAnchor: [17, 20],
+		iconSize: [40, 40],
+		iconAnchor: [21, 25],
 		popupAnchor: [0, -10],
 		//shadowUrl: 'my-icon-shadow.png',
 		//shadowSize: [68, 95],

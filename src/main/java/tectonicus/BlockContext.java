@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -23,6 +23,8 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 
 public interface BlockContext {
+	default boolean shouldCullSameBlockFaces() { return true; }
+
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
 
 	BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);

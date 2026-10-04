@@ -183,6 +183,10 @@ public class ItemRenderer
 
 	public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception {
 		BlockModel model = registry.getModel(modelName);
+		if (model == null) {
+			// Some inventory models are only referenced by item definitions, not blockstates.
+			model = registry.loadModel(modelName, "", new HashMap<>(), null);
+		}
                 renderInventoryBlockModel(outFile, registry, texturePack, model);
 	}
         
@@ -270,6 +274,34 @@ public class ItemRenderer
                 
                 renderBed(outFile, registry, texturePack, 48, bounds, modelName);
         }
+
+	public void renderBed(File outFile, BlockRegistry registry, TexturePack texturePack, String modelName) throws Exception
+	{
+		String bedName = Strings.CI.removeEnd(Strings.CI.removeStart(modelName, "minecraft:"), "_bed");
+		String modelPrefix = "minecraft:block/" + bedName + "_bed_";
+		BlockModel headModel = registry.getModel(modelPrefix + "head");
+		BlockModel footModel = registry.getModel(modelPrefix + "foot");
+		if (headModel == null) {
+			headModel = registry.loadModel(modelPrefix + "head", "", new HashMap<>(), null);
+		}
+		if (footModel == null) {
+			footModel = registry.loadModel(modelPrefix + "foot", "", new HashMap<>(), null);
+		}
+
+		Geometry geometry = new Geometry(rasteriser);
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+		rawChunk.setBlockLight(0, 0, 1, (byte) 16);
+		rawChunk.setSkyLight(0, 0, 1, (byte) 16);
+		ItemContext context = new ItemContext(texturePack, null, registry);
+		MeshUtil.addBlock(context, rawChunk, 0, 0, 0, headModel, geometry, 0, 0);
+		MeshUtil.addBlock(context, rawChunk, 0, 0, 1, footModel, geometry, 0, 0);
+
+		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 9.0f / 16.0f, 2);
+		ItemGeometry item = new ItemGeometry(geometry, bounds);
+		renderItem(item, outFile, 48, 4, getAngleRad(65), getAngleRad(35));
+	}
 
        	private void renderBed(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int imageSize, BoundingBox bounds, String modelName) throws Exception
         {
@@ -630,6 +662,9 @@ public class ItemRenderer
 		private final TexturePack texturePack;
 		private final BlockTypeRegistry registry;
 		private final BlockRegistry blockRegistry;
+
+		@Override
+		public boolean shouldCullSameBlockFaces() { return false; }
 
 		@Override
 		public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z)

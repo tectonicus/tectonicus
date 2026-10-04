@@ -86,6 +86,7 @@ import java.util.concurrent.Executors;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
+import static tectonicus.Version.VERSION_26_2;
 
 @Slf4j
 @UtilityClass
@@ -609,12 +610,18 @@ public class OutputResourcesUtil {
 			Files.createDirectories(itemIconDir.toPath());
 			
                         for (Map.Entry<String, ItemModelDefinition> entry : itemModelDefinitionRegistry.getModelDefinitions().entrySet()) {
+                            try {
                                 final String entryKey = entry.getKey();
 				final ItemModelDefinition itemModelDefinition = entry.getValue();
                                 File outFile = new File(itemIconDir, entryKey + ".png");
 
                                 System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
                                 log.trace("\tRendering icon for: " + entryKey);
+
+                                if (entryKey.endsWith("_bed")) {
+                                        itemRenderer.renderBed(outFile, blockRegistry, texturePack, "minecraft:" + entryKey);
+                                        continue;
+                                }
 
                                 String modelName = itemModelDefinition.getModelName();
                                 
@@ -631,9 +638,13 @@ public class OutputResourcesUtil {
                                         // We do not need to do anything though, since all items from itemRegistry are iterated through and rendered below.
                                         // This also ensures compatibility with pre-1.21.4 versions
                                 }
+                            } catch (Exception e) {
+                                log.error("Unable to render item icon for {}", entry.getKey(), e);
+                            }
                         }
                         
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
+				try {
 				final String entryKey = entry.getKey();
 				final ItemModel itemModel = entry.getValue();
 				final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
@@ -667,7 +678,10 @@ public class OutputResourcesUtil {
                                 // Items that are just 2d textures
                                 if (modelName.endsWith("builtin/generated")) {
                                         final Map<String, String> textures = itemModel.getTextures();
-                                        if (textures != null) {
+                                        if (textures == null) {
+                                                // Textureless generated models are parent templates, not renderable items.
+                                                continue;
+                                        }
                                                 BufferedImage composited = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
                                                 for (var layer : textures.entrySet()) {
                                                         if (!layer.getKey().startsWith("layer")) {
@@ -722,7 +736,6 @@ public class OutputResourcesUtil {
                                                 }
                                                 writeImage(composited, 16, 16, outFile);
                                                 continue;
-                                        }
                                 }
                                 
                                 // Inventory block models are not loaded in the registry because they do not have a block state. Let's load them manually
@@ -734,6 +747,9 @@ public class OutputResourcesUtil {
                                 
                                 // Rest of the items
                                 itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
+				} catch (Exception e) {
+					log.error("Unable to render item icon for {}", entry.getKey(), e);
+				}
 			}
                         System.out.println();
 		} catch (Exception e) {
@@ -758,7 +774,12 @@ public class OutputResourcesUtil {
 				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, registry, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
 
-			itemRenderer.renderBed(new File(exportDir, "Images/Bed.png"), registryOld, texturePack);
+			File bedIcon = new File(exportDir, "Images/Bed.png");
+			if (texturePack.getVersion().getNumVersion() >= VERSION_26_2.getNumVersion()) {
+				itemRenderer.renderBed(bedIcon, registry, texturePack, "minecraft:red_bed");
+			} else {
+				itemRenderer.renderBed(bedIcon, registryOld, texturePack);
+			}
 			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
 			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
