@@ -39,6 +39,7 @@ import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
 import tectonicus.blockTypes.Conduit;
 import tectonicus.blockTypes.Crops;
+import tectonicus.blockTypes.Cushion;
 import tectonicus.blockTypes.DataSolid;
 import tectonicus.blockTypes.DaylightSensor;
 import tectonicus.blockTypes.DecoratedPot;
@@ -891,6 +892,9 @@ public class BlockRegistryParser
                 else if (nodeName.equals("armorstand")) {
                         blockType = new ArmorStand(name, texturePack);
                 }
+		else if (nodeName.equals("cushion")) {
+			blockType = new Cushion(name, texturePack);
+		}
 		else
 		{
 			log.warn("Unrecognised block type: {}", nodeName);

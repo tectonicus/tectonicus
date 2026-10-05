@@ -211,8 +211,13 @@ public class Chunk
 		if (type != null)
 			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
                 
-                // Create armor stand geometry
+		// Create armor stand geometry
 		type = registry.find(-3, 0);
+		if (type != null)
+			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
+
+		// Create cushion geometry
+		type = registry.find(-4, 0);
 		if (type != null)
 			type.addEdgeGeometry(0, 0, 0, world, registry, rawChunk, geometry);
 		

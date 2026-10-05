@@ -52,6 +52,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -71,7 +72,7 @@ public class RawChunk {
 	public static final int SECTION_HEIGHT = 16;
 	public static final int SECTION_DEPTH = 16;
         
-        public static final int SECTION_SIZE = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
+	public static final int SECTION_SIZE = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
 
 	public static final int MAX_LIGHT = 16;
 
@@ -79,6 +80,7 @@ public class RawChunk {
 
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	private static final ObjectWriter OBJECT_WRITER = FileUtils.getOBJECT_MAPPER().writer();
+	private static final java.util.regex.Pattern SIGN_TEXT_QUOTES_PATTERN = java.util.regex.Pattern.compile("^\"|\"$");
 
 	private int[][] biomes;
 	private int[][][] biomes3d;
@@ -98,12 +100,13 @@ public class RawChunk {
 	private Map<String, BeaconEntity> beacons;
 	private Map<String, BannerEntity> banners;
 	private Map<String, BedEntity> beds;
-        private Map<String, DecoratedPotEntity> decoratedPots;
+	private Map<String, DecoratedPotEntity> decoratedPots;
 
 	private List<PaintingEntity> paintings;
 	private List<PaintingEntity> itemFrames;
 	private List<ContainerEntity> chests;
-        private List<ArmorStandEntity> armorStands;
+	private List<ArmorStandEntity> armorStands;
+	private List<CushionEntity> cushions;
 
 	private final Map<String, Object> filterData = new HashMap<>();
 
@@ -155,12 +158,13 @@ public class RawChunk {
 		beacons = new HashMap<>();
 		banners = new HashMap<>();
 		beds = new HashMap<>();
-                decoratedPots = new HashMap<>();
+		decoratedPots = new HashMap<>();
 
 		paintings = new ArrayList<>();
 		itemFrames = new ArrayList<>();
 		chests = new ArrayList<>();
-                armorStands = new ArrayList<>();
+		armorStands = new ArrayList<>();
+		cushions = new ArrayList<>();
 
 		sections = new Section[maxSections];
 	}
@@ -241,16 +245,26 @@ public class RawChunk {
 	}
 
 	private void parseEntities(ListTag entitiesTag, boolean is118) {
+		if (entitiesTag == null)
+			return;
+
 		for (Tag t : entitiesTag.getValue()) {
 			if (t instanceof CompoundTag) {
 				CompoundTag entity = (CompoundTag) t;
 
 				StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
+				if (idTag == null)
+					continue;
 				String id = idTag.getValue();
 				
-                                boolean painting = id.endsWith("Painting") || id.equals("minecraft:painting");
+				boolean painting = id.endsWith("Painting") || id.equals("minecraft:painting");
 				boolean itemFrame = id.equals("ItemFrame") || id.equals("minecraft:item_frame") || id.equals("minecraft:glow_item_frame");
-                                boolean armorStand = id.equals("ArmorStand") || id.equals("minecraft:armor_stand");
+				boolean armorStand = id.equals("ArmorStand") || id.equals("minecraft:armor_stand");
+				boolean cushion = id.equals("Cushion") || id.equals("minecraft:cushion");
+
+				if (cushion) {
+					parseCushion(entity);
+				}
                                 
 				if (painting || itemFrame) {
 					ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
@@ -411,11 +425,32 @@ public class RawChunk {
 		}
 	}
 
+	private void parseCushion(CompoundTag entity) {
+		ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
+		IntArrayTag blockPos = NbtUtil.getChild(entity, "block_pos", IntArrayTag.class); //Do we actually need this for anything?
+		if (posTag == null || posTag.getValue().size() < 3 || blockPos == null || blockPos.getValue().length < 3)
+			return;
+
+		List<Tag> pos = posTag.getValue();
+		Object xValue = pos.get(0).getValue();
+		Object yValue = pos.get(1).getValue();
+		Object zValue = pos.get(2).getValue();
+		if (!(xValue instanceof Number) || !(yValue instanceof Number) || !(zValue instanceof Number))
+			return;
+		
+		int yOffset = Math.abs(minSectionY) * SECTION_HEIGHT;
+		float localX = ((Number)xValue).floatValue() - chunkX * WIDTH;
+		float localY = ((Number)yValue).floatValue() + yOffset;
+		float localZ = ((Number)zValue).floatValue() - chunkZ * DEPTH;
+		
+		String color = NbtUtil.getString(entity, "color", "white").toLowerCase(Locale.ROOT);
+
+		cushions.add(new CushionEntity(localX, localY, localZ, color));
+	}
+
 	private void parseBlockEntities(ListTag blockEntitiesTag, boolean is118) throws JacksonException {
 		for (Tag t : blockEntitiesTag.getValue()) {
-			if (t instanceof CompoundTag) {
-				CompoundTag entity = (CompoundTag) t;
-
+			if (t instanceof CompoundTag entity) {
 				StringTag idTag = NbtUtil.getChild(entity, "id", StringTag.class);
 				IntTag xTag = NbtUtil.getChild(entity, "x", IntTag.class);
 				IntTag yTag = NbtUtil.getChild(entity, "y", IntTag.class);
@@ -444,7 +479,7 @@ public class RawChunk {
 						CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
 						CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
 						
-						Consumer<Function<Integer, String>> parseSignText = (getText) -> {
+						Consumer<Function<Integer, String>> parseSignText = getText -> {
 							for (int i = 0; i < 4; i++) {
 								String text = getText.apply(i);
 								
@@ -453,9 +488,9 @@ public class RawChunk {
 									textLines.add(textFromJSON(text));
 								} else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
 								{
-									text = text.replaceAll("^\"|\"$", ""); //This removes begin and end double quotes
+									text = SIGN_TEXT_QUOTES_PATTERN.matcher(text).replaceAll(""); //This removes begin and end double quotes
 									try {
-										textLines.add(OBJECT_WRITER.writeValueAsString(text).replaceAll("^\"|\"$", ""));
+										textLines.add(SIGN_TEXT_QUOTES_PATTERN.matcher(OBJECT_WRITER.writeValueAsString(text)).replaceAll(""));
 									} catch (JacksonException e) {
 										throw new RuntimeException(e);
 									}
@@ -467,9 +502,7 @@ public class RawChunk {
 						
 						if (frontText == null) {
 							// Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
-							parseSignText.accept((i) -> {
-								return NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue();
-							});
+							parseSignText.accept(i -> NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue());
 							
 							StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
 							if (colorTag != null) {
@@ -480,16 +513,14 @@ public class RawChunk {
 							ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
 							ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
 							
-							parseSignText.accept((i) -> {
+							parseSignText.accept(i -> {
 								if (NbtUtil.getChild(frontMessages, i, StringTag.class) == null) {
 									return null;
 								} else {
 									return NbtUtil.getChild(frontMessages, i, StringTag.class).getValue();
 								}
 							});
-							parseSignText.accept((i) -> {
-								return NbtUtil.getChild(backMessages, i, StringTag.class).getValue();
-							});
+							parseSignText.accept(i -> NbtUtil.getChild(backMessages, i, StringTag.class).getValue());
 							
 							StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
 							if (colorTag != null) {
@@ -1517,6 +1548,10 @@ public class RawChunk {
         public List<ArmorStandEntity> getArmorStands() {
                 return armorStands;
         }
+
+	public List<CushionEntity> getCushions() {
+		return Collections.unmodifiableList(cushions);
+	}
 
 	public Map<String, SkullEntity> getSkulls() {
 		return Collections.unmodifiableMap(skulls);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,13 +9,16 @@
 
 package tectonicus.raw;
 
-public class BlockEntity
-{
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class BlockEntity {
 	private int x, y, z;
 	private final int localX, localY, localZ;
 	
-	public BlockEntity(int x, int y, int z, int localX, int localY, int localZ)
-	{
+	public BlockEntity(int x, int y, int z, int localX, int localY, int localZ) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -24,14 +27,4 @@ public class BlockEntity
 		this.localY = localY;
 		this.localZ = localZ;
 	}
-	
-	public int getX() {	return x; }
-	public int getY() {	return y; }
-	public int getZ() {	return z; }
-	public int getLocalX() { return localX; }
-	public int getLocalY() { return localY; }
-	public int getLocalZ() { return localZ; }
-	
-	public void setX(int x) { this.x = x; }
-	public void setZ(int z) { this.z = z; }
 }
