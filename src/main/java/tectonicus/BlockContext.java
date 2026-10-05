@@ -24,6 +24,7 @@ import tectonicus.util.Colour4f;
 
 public interface BlockContext {
 	default boolean shouldCullSameBlockFaces() { return true; }
+	default boolean isLegacyWater() { return true; }
 
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
 

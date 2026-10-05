@@ -224,6 +224,7 @@ public class XmlConfigurationParser
 			Element renderNode = getChild(mapElement, "render");
 			map.setSmoothLit(getBoolean(renderNode, "useSmoothLighting", smoothLighting));
 			map.setSortTranslucentFaces(getBoolean(renderNode, "sortTranslucentFaces", true));
+			map.setLegacyWater(getBoolean(renderNode, "legacyWater", false));
 			
 			map.setNorthDirection( parseNorthDirection( getString(mapElement, "north")));
 			map.setCustomCompassRose( getString(mapElement, "compassRose"));

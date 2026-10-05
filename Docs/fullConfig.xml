@@ -68,9 +68,11 @@
 		compassRose="" <!-- custom image path -->
 		origin="0, 0" <!-- If not set the map will center on the spawn point. This setting will be overridden if a map subset is specified -->
 	>
+		<!-- legacyWater=false suppresses top faces beneath water; true preserves them -->
 		<render
 			sortTranslucentFaces="true / false"
 			useSmoothLighting="true / false"
+			legacyWater="true / false"
 		/>
 
 		<mods>

@@ -53,6 +53,9 @@ public class MutableMap implements Map
 	@Getter
 	@Setter
 	private boolean sortTranslucentFaces;
+	@Getter
+	@Setter
+	private boolean legacyWater;
 	
 	@Getter
 	@Setter
@@ -126,6 +129,7 @@ public class MutableMap implements Map
 
 		this.smoothLit = true;
 		this.sortTranslucentFaces = true;
+		this.legacyWater = false;
 	}
 	
 	@Override

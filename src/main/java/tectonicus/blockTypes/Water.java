@@ -85,7 +85,7 @@ public class Water implements BlockType
 	{
 		Mesh mesh = geometry.getMesh(subTexture.texture, Geometry.MeshType.Transparent);
 		
-		final float alpha = 0.8f;
+		final float alpha = 0.95f;
 		final float internalAlpha = 0.3f;
 		final float waterLevel = 14.0f/16.0f;
 		final Colour4f waterColor;
@@ -163,7 +163,8 @@ public class Water implements BlockType
 										subTexture); 
 			}
 			
-			if (!above.isSolid() && !isWaterlogged(aboveProperties, above.getName())) {
+			if (!above.isSolid() && !isWaterlogged(aboveProperties, above.getName())
+					&& (world.isLegacyWater() || !above.isWater())) {
 				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
 				MeshUtil.addQuad(mesh,	new Vector3f(x,		y+waterLevel,	z),
 										new Vector3f(x+1,	y+waterLevel,	z),
@@ -229,7 +230,8 @@ public class Water implements BlockType
 										subTexture); 
 			}
 
-			if (!above.isSolid() && !isWaterlogged(aboveProperties, above.getName())) {
+			if (!above.isSolid() && !isWaterlogged(aboveProperties, above.getName())
+					&& (world.isLegacyWater() || !above.isWater())) {
 				final float aboveAlpha = above.isWater() ? internalAlpha : alpha;
 				MeshUtil.addQuad(mesh, new Vector3f(x, y + 1, z),
 									   new Vector3f(x + 1, y + 1, z),

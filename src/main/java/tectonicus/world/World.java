@@ -112,6 +112,8 @@ public class World implements BlockContext
 	private final Rasteriser rasteriser;
 	private final boolean sortTranslucentFaces;
 	@Getter
+	private final boolean legacyWater;
+	@Getter
 	private final File worldDir;
 	private final File dimensionDir;
 	@Getter
@@ -179,6 +181,7 @@ public class World implements BlockContext
 	{
 		this.rasteriser = rasteriser;
 		this.sortTranslucentFaces = map.isSortTranslucentFaces();
+		this.legacyWater = map.isLegacyWater();
 		this.signFilter = map.getSignFilter();
 		
 		this.defaultBlockId = BlockIds.AIR;

@@ -45,6 +45,7 @@ public interface Map
 	boolean useBiomeColours();
 	boolean isSmoothLit();
 	boolean isSortTranslucentFaces();
+	boolean isLegacyWater();
 
 	PlayerFilter getPlayerFilter();
 	SignFilter getSignFilter();
