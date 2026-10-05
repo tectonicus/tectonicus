@@ -33,6 +33,7 @@ public class Cushion implements BlockType {
 	};
 
 	private static final float HEIGHT = 4.0f / 16.0f;
+	private static final float FACE_OFFSET = 0.0001f;
 	private static final float TEXTURE_SIZE = 64.0f;
 
 	private final String name;
@@ -132,15 +133,17 @@ public class Cushion implements BlockType {
 	}
 
 	private void addBox(SubMesh mesh, CushionTextures textures, float topLight, float northSouthLight, float eastWestLight) {
+		float edge = 0.5f - FACE_OFFSET; // to avoid z-fighting
+		float topHeight = HEIGHT - FACE_OFFSET; // to avoid z-fighting
 		Vector4f top = new Vector4f(topLight, topLight, topLight, 1.0f);
 		Vector4f northSouth = new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1.0f);
 		Vector4f eastWest = new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1.0f);
 
-		mesh.addQuad(new Vector3f(-0.5f, HEIGHT, -0.5f), new Vector3f(0.5f, HEIGHT, -0.5f), new Vector3f(0.5f, HEIGHT, 0.5f), new Vector3f(-0.5f, HEIGHT, 0.5f), top, textures.top);
+		mesh.addQuad(new Vector3f(-edge, topHeight, -edge), new Vector3f(edge, topHeight, -edge), new Vector3f(edge, topHeight, edge), new Vector3f(-edge, topHeight, edge), top, textures.top);
 		mesh.addQuad(new Vector3f(-0.5f, 0, 0.5f), new Vector3f(0.5f, 0, 0.5f), new Vector3f(0.5f, 0, -0.5f), new Vector3f(-0.5f, 0, -0.5f), top, textures.bottom);
-		mesh.addQuad(new Vector3f(-0.5f, HEIGHT, -0.5f), new Vector3f(-0.5f, HEIGHT, 0.5f), new Vector3f(-0.5f, 0, 0.5f), new Vector3f(-0.5f, 0, -0.5f), eastWest, textures.west);
-		mesh.addQuad(new Vector3f(0.5f, HEIGHT, 0.5f), new Vector3f(0.5f, HEIGHT, -0.5f), new Vector3f(0.5f, 0, -0.5f), new Vector3f(0.5f, 0, 0.5f), eastWest, textures.east);
-		mesh.addQuad(new Vector3f(0.5f, HEIGHT, -0.5f), new Vector3f(-0.5f, HEIGHT, -0.5f), new Vector3f(-0.5f, 0, -0.5f), new Vector3f(0.5f, 0, -0.5f), northSouth, textures.north);
-		mesh.addQuad(new Vector3f(-0.5f, HEIGHT, 0.5f), new Vector3f(0.5f, HEIGHT, 0.5f), new Vector3f(0.5f, 0, 0.5f), new Vector3f(-0.5f, 0, 0.5f), northSouth, textures.south);
+		mesh.addQuad(new Vector3f(-edge, topHeight, -edge), new Vector3f(-edge, topHeight, edge), new Vector3f(-edge, 0, edge), new Vector3f(-edge, 0, -edge), eastWest, textures.west);
+		mesh.addQuad(new Vector3f(edge, topHeight, edge), new Vector3f(edge, topHeight, -edge), new Vector3f(edge, 0, -edge), new Vector3f(edge, 0, edge), eastWest, textures.east);
+		mesh.addQuad(new Vector3f(edge, topHeight, -edge), new Vector3f(-edge, topHeight, -edge), new Vector3f(-edge, 0, -edge), new Vector3f(edge, 0, -edge), northSouth, textures.north);
+		mesh.addQuad(new Vector3f(-edge, topHeight, edge), new Vector3f(edge, topHeight, edge), new Vector3f(edge, 0, edge), new Vector3f(-edge, 0, edge), northSouth, textures.south);
 	}
 }
