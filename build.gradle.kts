@@ -38,7 +38,7 @@ dependencies {
 	val joglVersion = "2.6.0"
     val jacksonVersion = "3.2.3"
 	val logbackVersion = "1.6.4"
-	val h2Version = "2.5.250"
+	val h2Version = "2.5.252"
 	val webpImageIoVersion = "0.1.6"
 	val hamcrestVersion = "3.0"
 
