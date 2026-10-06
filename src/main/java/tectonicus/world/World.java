@@ -869,9 +869,11 @@ public class World implements BlockContext
 	@Override
 	public BlockType getBlockType(RawChunk rawChunk, int x, int y, int z)
 	{
-		if (x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH
-				|| y < 0 || y >= Minecraft.getChunkHeight())
+		if (x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH)
 			return getBlockType(rawChunk.getChunkCoord(), x, y, z);
+
+		if (y < 0 || y >= Minecraft.getChunkHeight())
+			return registry.find(defaultBlockId, 0);
 
 		final String name = rawChunk.getBlockName(x, y, z);
 		if (name != null)
@@ -931,7 +933,12 @@ public class World implements BlockContext
 		if (block != null)
 			return block;
 
-		return getBlock(rawChunk.getChunkCoord(), x, y, z);
+		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
+		unknownBlocks.computeIfAbsent(new Location(chunkCoord, x, y, z), loc -> {
+			log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
+			return name;
+		});
+		return modelRegistry.getBlock(defaultBlockName);
 	}
 
 	@Override
