@@ -744,7 +744,7 @@ public class World implements BlockContext
 		
 		// Transparency pass
 		
-		rasteriser.enableDepthWriting(false);  //TODO: This is the cause of the weirdness involving ice as well as glass blocks in a beam
+		rasteriser.enableDepthWriting(false);
 		rasteriser.enableBlending(true);
 		rasteriser.enableAlphaTest(false);
 		
@@ -867,6 +867,22 @@ public class World implements BlockContext
 	}
 
 	@Override
+	public BlockType getBlockType(RawChunk rawChunk, int x, int y, int z)
+	{
+		if (x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH
+				|| y < 0 || y >= Minecraft.getChunkHeight())
+			return getBlockType(rawChunk.getChunkCoord(), x, y, z);
+
+		final String name = rawChunk.getBlockName(x, y, z);
+		if (name != null)
+			return registry.find(name);
+
+		final int id = rawChunk.getBlockId(x, y, z);
+		final int data = rawChunk.getBlockData(x, y, z);
+		return registry.find(id, data);
+	}
+
+	@Override
 	public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z)
 	{
 		if (y < 0 || y >= Minecraft.getChunkHeight())
@@ -900,22 +916,22 @@ public class World implements BlockContext
 		}
 	}
 
-	//Use with xyz that coords that don't go outside the chunk
+	@Override
 	public BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z)
 	{
-		final String name = rawChunk.getBlockName(x, y, z);
+		if (x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH
+				|| y < 0 || y >= Minecraft.getChunkHeight())
+			return getBlock(rawChunk.getChunkCoord(), x, y, z);
 
-		if (name != null) {
-			BlockStateWrapper block = modelRegistry.getBlock(name);
-			if (block != null) {
-				return block;
-			} else {
-				log.warn("Unable to find {} block in registry.", name);
-				return modelRegistry.getBlock(defaultBlockName);
-			}
-		} else {
+		final String name = rawChunk.getBlockName(x, y, z);
+		if (name == null)
 			return modelRegistry.getBlock(defaultBlockName);
-		}
+
+		BlockStateWrapper block = modelRegistry.getBlock(name);
+		if (block != null)
+			return block;
+
+		return getBlock(rawChunk.getChunkCoord(), x, y, z);
 	}
 
 	@Override
@@ -960,6 +976,15 @@ public class World implements BlockContext
 		RawChunk raw = c != null ? c.getRawChunk() : null;
 		
 		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
+	}
+
+	@Override
+	public float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face)
+	{
+		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
+			return Chunk.getLight(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment);
+
+		return getLight(rawChunk.getChunkCoord(), x, y, z, face);
 	}
 
 	/*

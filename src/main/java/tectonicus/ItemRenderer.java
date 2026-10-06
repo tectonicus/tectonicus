@@ -679,6 +679,12 @@ public class ItemRenderer
 		}
 
 		@Override
+		public BlockType getBlockType(RawChunk rawChunk, int x, int y, int z)
+		{
+			return registry.find(0, 0);
+		}
+
+		@Override
 		public BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z) { return blockRegistry.getBlock(Block.AIR.getName()); }
 
 		@Override
@@ -689,6 +695,12 @@ public class ItemRenderer
 		
 		@Override
 		public float getLight(ChunkCoord chunkCoord, int x, int y, int z, LightFace face)
+		{
+			return 1;
+		}
+
+		@Override
+		public float getLight(RawChunk rawChunk, int x, int y, int z, LightFace face)
 		{
 			return 1;
 		}

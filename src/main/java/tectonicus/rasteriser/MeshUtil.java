@@ -167,27 +167,27 @@ public class MeshUtil
 
 		Version textureVersion = world.getTexturePack().getVersion();
 		if (textureVersion.getNumVersion() <= Version.VERSION_12.getNumVersion()) {
-			above = world.getBlockType(rawChunk.getChunkCoord(), x, y + 1, z).isSolid();
-			below = world.getBlockType(rawChunk.getChunkCoord(), x, y - 1, z).isSolid();
-			north = world.getBlockType(rawChunk.getChunkCoord(), x, y, z - 1).isSolid();
-			south = world.getBlockType(rawChunk.getChunkCoord(), x, y, z + 1).isSolid();
-			east = world.getBlockType(rawChunk.getChunkCoord(), x + 1, y, z).isSolid();
-			west = world.getBlockType(rawChunk.getChunkCoord(), x - 1, y, z).isSolid();
+			above = world.getBlockType(rawChunk, x, y + 1, z).isSolid();
+			below = world.getBlockType(rawChunk, x, y - 1, z).isSolid();
+			north = world.getBlockType(rawChunk, x, y, z - 1).isSolid();
+			south = world.getBlockType(rawChunk, x, y, z + 1).isSolid();
+			east = world.getBlockType(rawChunk, x + 1, y, z).isSolid();
+			west = world.getBlockType(rawChunk, x - 1, y, z).isSolid();
 
-			topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z, LightFace.Top);
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z - 1, LightFace.NorthSouth);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z + 1, LightFace.NorthSouth);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z, LightFace.EastWest);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z, LightFace.EastWest);
+			topLight = world.getLight(rawChunk, x, y+1, z, LightFace.Top);
+			bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Top);
+			northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth);
+			southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth);
+			eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest);
+			westLight = world.getLight(rawChunk, x - 1, y, z, LightFace.EastWest);
 		} else {
 			BlockStateWrapper selfBlock = world.getBlock(rawChunk, x, y, z);
-			BlockStateWrapper aboveBlock = world.getBlock(rawChunk.getChunkCoord(), x, y+1, z);
-			BlockStateWrapper belowBlock = world.getBlock(rawChunk.getChunkCoord(), x, y-1, z);
-			BlockStateWrapper northBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z-1);
-			BlockStateWrapper southBlock = world.getBlock(rawChunk.getChunkCoord(), x, y, z+1);
-			BlockStateWrapper eastBlock = world.getBlock(rawChunk.getChunkCoord(), x+1, y, z);
-			BlockStateWrapper westBlock = world.getBlock(rawChunk.getChunkCoord(), x-1, y, z);
+			BlockStateWrapper aboveBlock = world.getBlock(rawChunk, x, y+1, z);
+			BlockStateWrapper belowBlock = world.getBlock(rawChunk, x, y-1, z);
+			BlockStateWrapper northBlock = world.getBlock(rawChunk, x, y, z-1);
+			BlockStateWrapper southBlock = world.getBlock(rawChunk, x, y, z+1);
+			BlockStateWrapper eastBlock = world.getBlock(rawChunk, x+1, y, z);
+			BlockStateWrapper westBlock = world.getBlock(rawChunk, x-1, y, z);
 
 			selfFull = selfBlock.isFullBlock();
 			above = isFaceCovered(world, selfBlock, aboveBlock);
@@ -206,12 +206,12 @@ public class MeshUtil
 				selfFull = true;
 			}
 
-			topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-			bottomLight = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z, LightFace.Top);
-			northLight = world.getLight(rawChunk.getChunkCoord(), x, y, z - 1, LightFace.NorthSouth);
-			southLight = world.getLight(rawChunk.getChunkCoord(), x, y, z + 1, LightFace.NorthSouth);
-			eastLight = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z, LightFace.EastWest);
-			westLight = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z, LightFace.EastWest);
+			topLight = world.getLight(rawChunk, x, y+1, z, LightFace.Top);
+			bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Top);
+			northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth);
+			southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth);
+			eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest);
+			westLight = world.getLight(rawChunk, x - 1, y, z, LightFace.EastWest);
 
 			String blockName = selfBlock.getBlockName();
 			if(!selfFull) {
@@ -275,26 +275,26 @@ public class MeshUtil
 		Vector4f westShaded = null;
 		boolean useSmoothLighting = world.isSmoothLit();
 		if (useSmoothLighting && model.isAmbientlyOccluded()) {
-			float northAbove = world.getLight(rawChunk.getChunkCoord(), x, y + 1, z - 1, LightFace.Top);
-			float northEastAbove = world.getLight(rawChunk.getChunkCoord(), x + 1, y + 1, z - 1, LightFace.Top);
-			float northWestAbove = world.getLight(rawChunk.getChunkCoord(), x - 1, y + 1, z - 1, LightFace.Top);
-			float southAbove = world.getLight(rawChunk.getChunkCoord(), x, y + 1, z + 1, LightFace.Top);
-			float southEastAbove = world.getLight(rawChunk.getChunkCoord(), x + 1, y + 1, z + 1, LightFace.Top);
-			float southWestAbove = world.getLight(rawChunk.getChunkCoord(), x - 1, y + 1, z + 1, LightFace.Top);
-			float eastAbove = world.getLight(rawChunk.getChunkCoord(), x + 1, y + 1, z, LightFace.Top);
-			float westAbove = world.getLight(rawChunk.getChunkCoord(), x - 1, y + 1, z, LightFace.Top);
-			float northEast = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z - 1, LightFace.Top);
-			float northWest = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z - 1, LightFace.Top);
-			float southEast = world.getLight(rawChunk.getChunkCoord(), x + 1, y, z + 1, LightFace.Top);
-			float southWest = world.getLight(rawChunk.getChunkCoord(), x - 1, y, z + 1, LightFace.Top);
-			float northBelow = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z - 1, LightFace.Top);
-			float northEastBelow = world.getLight(rawChunk.getChunkCoord(), x + 1, y - 1, z - 1, LightFace.Top);
-			float northWestBelow = world.getLight(rawChunk.getChunkCoord(), x - 1, y - 1, z - 1, LightFace.Top);
-			float southBelow = world.getLight(rawChunk.getChunkCoord(), x, y - 1, z + 1, LightFace.Top);
-			float southEastBelow = world.getLight(rawChunk.getChunkCoord(), x + 1, y - 1, z + 1, LightFace.Top);
-			float southWestBelow = world.getLight(rawChunk.getChunkCoord(), x - 1, y - 1, z + 1, LightFace.Top);
-			float eastBelow = world.getLight(rawChunk.getChunkCoord(), x + 1, y - 1, z, LightFace.Top);
-			float westBelow = world.getLight(rawChunk.getChunkCoord(), x - 1, y - 1, z, LightFace.Top);
+			float northAbove = world.getLight(rawChunk, x, y + 1, z - 1, LightFace.Top);
+			float northEastAbove = world.getLight(rawChunk, x + 1, y + 1, z - 1, LightFace.Top);
+			float northWestAbove = world.getLight(rawChunk, x - 1, y + 1, z - 1, LightFace.Top);
+			float southAbove = world.getLight(rawChunk, x, y + 1, z + 1, LightFace.Top);
+			float southEastAbove = world.getLight(rawChunk, x + 1, y + 1, z + 1, LightFace.Top);
+			float southWestAbove = world.getLight(rawChunk, x - 1, y + 1, z + 1, LightFace.Top);
+			float eastAbove = world.getLight(rawChunk, x + 1, y + 1, z, LightFace.Top);
+			float westAbove = world.getLight(rawChunk, x - 1, y + 1, z, LightFace.Top);
+			float northEast = world.getLight(rawChunk, x + 1, y, z - 1, LightFace.Top);
+			float northWest = world.getLight(rawChunk, x - 1, y, z - 1, LightFace.Top);
+			float southEast = world.getLight(rawChunk, x + 1, y, z + 1, LightFace.Top);
+			float southWest = world.getLight(rawChunk, x - 1, y, z + 1, LightFace.Top);
+			float northBelow = world.getLight(rawChunk, x, y - 1, z - 1, LightFace.Top);
+			float northEastBelow = world.getLight(rawChunk, x + 1, y - 1, z - 1, LightFace.Top);
+			float northWestBelow = world.getLight(rawChunk, x - 1, y - 1, z - 1, LightFace.Top);
+			float southBelow = world.getLight(rawChunk, x, y - 1, z + 1, LightFace.Top);
+			float southEastBelow = world.getLight(rawChunk, x + 1, y - 1, z + 1, LightFace.Top);
+			float southWestBelow = world.getLight(rawChunk, x - 1, y - 1, z + 1, LightFace.Top);
+			float eastBelow = world.getLight(rawChunk, x + 1, y - 1, z, LightFace.Top);
+			float westBelow = world.getLight(rawChunk, x - 1, y - 1, z, LightFace.Top);
 
 
 			float lightV1 = 0.0f;

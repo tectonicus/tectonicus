@@ -29,11 +29,13 @@ public interface BlockContext {
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
 
 	BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);
+	BlockType getBlockType(RawChunk rawChunk, int x, int y, int z);
 	BlockStateWrapper getBlock(ChunkCoord chunkCoord, int x, int y, int z);
 	BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z);
 	BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z);
 
 	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
+	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face);
 
 	LightStyle getLightStyle();
 	float getNightLightAdjustment();
