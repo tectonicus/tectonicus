@@ -225,7 +225,7 @@ public class ItemRenderer
 		}
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
-		renderItem(item, outFile, imageSize, 4, cameraAngle, cameraElevationAngle);
+		renderItem(item, outFile, imageSize, 2, cameraAngle, cameraElevationAngle);
 	}
 	
 	public void renderSign(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception

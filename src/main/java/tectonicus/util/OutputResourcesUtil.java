@@ -604,6 +604,7 @@ public class OutputResourcesUtil {
 		}
 		
 		log.info("Rendering icons for inventory items");
+		long startTime = System.nanoTime();
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			File itemIconDir = new File(args.getOutputDir(), "Images/Items/");
@@ -765,6 +766,8 @@ public class OutputResourcesUtil {
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		}
+		long elapsedTime = System.nanoTime() - startTime;
+		log.info("Icon Rendering took: {} seconds", elapsedTime / 1_000_000_000);
 	}
 
 	public static void outputIcons(File exportDir, Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser)
