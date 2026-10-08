@@ -9,6 +9,7 @@
 
 package tectonicus;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -41,21 +42,22 @@ public class InteractiveRenderer
 		PerspectiveView
 	}
 	
-	private OrthoCamera orthoCamera;
+	private final OrthoCamera orthoCamera;
 	private PerspectiveCamera perspectiveCamera;
 	
-	private Rasteriser rasteriser;
+	@Getter
+	private final Rasteriser rasteriser;
 	
 	private ViewMode viewMode;
 	
-	private Vector3f orthoCamPosition;
+	private final Vector3f orthoCamPosition;
 	private float orthoZoom;
 	private float orthoAngleOffset;
 	private float cameraElevation;
 	
 	private SignEntity perspectiveSign;
 	
-	private ArrayList<SignEntity> views;
+	private final ArrayList<SignEntity> views;
 	private int currentViewIndex;
 	
 	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight)
@@ -77,11 +79,6 @@ public class InteractiveRenderer
 	public void destroy()
 	{
 		rasteriser.destroy();
-	}
-	
-	public Rasteriser getRasteriser()
-	{
-		return rasteriser;
 	}
 	
 	private void updateOrthoCamera(BlockContext world)
@@ -241,7 +238,7 @@ public class InteractiveRenderer
 	public void display(World world) {
 		if (world.getSpawnDimension() == world.getDimension()) {
 			orthoCamPosition.x = world.getSpawnPosition().x;
-			orthoCamPosition.y = world.getSpawnPosition().y;
+			orthoCamPosition.y = world.getSpawnPosition().y + (float)(world.getWorldInfo().sectionArrayOffset() ? 64 : 0);
 			orthoCamPosition.z = world.getSpawnPosition().z;
 		} else {
 			log.warn("World spawn is in a different dimension to the one being rendered - ortho camera will be positioned at (0,0,0)");
@@ -253,6 +250,8 @@ public class InteractiveRenderer
 		orthoZoom = 32;
 		orthoAngleOffset = (float)Math.PI / 4.0f;
 		cameraElevation = (float)Math.PI / 4.0f; // todo: should come from config (first layer?)
+		orthoCamera.lookAt(orthoCamPosition.x, orthoCamPosition.y, orthoCamPosition.z,
+				orthoZoom, orthoAngleOffset, cameraElevation);
 		
 		while (!rasteriser.isCloseRequested())
 		{
