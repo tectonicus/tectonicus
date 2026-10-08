@@ -1711,6 +1711,15 @@
     "waterlogged": "true"
   },
   "minecraft:ice": {},
+  "minecraft:ice_crystal": {
+    "facing": "up",
+    "waterlogged": "false"
+  },
+  "minecraft:icicle": {
+    "attached": "false",
+    "thickness": "tip",
+    "vertical_direction": "up"
+  },
   "minecraft:infested_chiseled_stone_bricks": {},
   "minecraft:infested_cobblestone": {},
   "minecraft:infested_cracked_stone_bricks": {},
