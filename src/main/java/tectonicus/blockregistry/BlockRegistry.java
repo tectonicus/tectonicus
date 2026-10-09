@@ -57,8 +57,7 @@ import static tectonicus.blockregistry.BlockState.getRandomWeightedModel;
 
 @Slf4j
 @NoArgsConstructor
-public class BlockRegistry
-{
+public class BlockRegistry {
 	@Getter
 	private final Cache<String, BlockStateWrapper> blockStates = Caffeine.newBuilder().build();
 	@Getter
@@ -73,12 +72,12 @@ public class BlockRegistry
 	private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.readerFor(JsonNode.class).with(JsonReadFeature.ALLOW_TRAILING_COMMA);
 	private static final String ELEMENTS_FIELD = "elements";
 	private static final String TEXTURES_FIELD = "textures";
-        
-        private static final Map<String, String> renamedBlocks = Map.ofEntries(
-                new AbstractMap.SimpleImmutableEntry<>("minecraft:grass", "minecraft:short_grass"),     // Was renamed in 1.20.3
-                new AbstractMap.SimpleImmutableEntry<>("minecraft:chain", "minecraft:iron_chain")       // Renamed in 1.21.9 with the addition of copper chains
-        );
-		
+	
+	private static final Map<String, String> renamedBlocks = Map.ofEntries(
+		new AbstractMap.SimpleImmutableEntry<>("minecraft:grass", "minecraft:short_grass"),     // Was renamed in 1.20.3
+		new AbstractMap.SimpleImmutableEntry<>("minecraft:chain", "minecraft:iron_chain")       // Renamed in 1.21.9 with the addition of copper chains
+	);
+	
 	
 	public BlockRegistry(Rasteriser rasteriser) //This is only used by the draw model test code
 	{
@@ -93,8 +92,7 @@ public class BlockRegistry
 		}
 	}
 	
-	public BlockRegistry(TexturePack texturePack)
-	{
+	public BlockRegistry(TexturePack texturePack) {
 		this.texturePack = texturePack;
 		this.zips = texturePack.getZipStack();
 		log.info("Loading all block state and block model json files...");
@@ -102,23 +100,27 @@ public class BlockRegistry
 		deserializeModels();
 		checkBlockAttributes();
 	}
-
+	
 	public BlockStateWrapper getBlock(String blockName) {
-                BlockStateWrapper result = blockStates.getIfPresent(blockName);
-                
-                String newName;
-                if (result == null && (newName = renamedBlocks.get(blockName)) != null) {
-                    result = getBlock(newName);
-                }
-                
-                return result;
+		BlockStateWrapper result = blockStates.getIfPresent(blockName);
+		
+		String newName;
+		if (result == null && (newName = renamedBlocks.get(blockName)) != null) {
+			result = getBlock(newName);
+		}
+		
+		return result;
 	}
-
+	
 	public BlockStateModel getSingleVariantModel(String blockName, BlockProperties properties, int x, int y, int z) {
 		return getRandomWeightedModel(singleVariantBlocks.getIfPresent(blockName),
-				BlockState.createPositionRandom(blockName, properties, x, y, z));
+			BlockState.createPositionRandom(blockName, properties, x, y, z));
 	}
-	public BlockModel getModel(String model) { return blockModels.getIfPresent(model); }
+	
+	public BlockModel getModel(String model) {
+		return blockModels.getIfPresent(model);
+	}
+	
 	public boolean containsSingleVariantBlock(String blockName) {
 		return singleVariantBlocks.getIfPresent(blockName) != null;
 	}
@@ -134,36 +136,37 @@ public class BlockRegistry
 		} catch (IOException e) {
 			log.error("Exception: ", e);
 		}
-
+		
 		if (zips.getOverrideFileName() != null) {
 			log.debug("Loading blockstate json from resource pack");
 			try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getOverrideFileName()));
 				 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
 				deserializeBlockstates(entries);
-			} catch(NotDirectoryException e) {
+			} catch (NotDirectoryException e) {
 				log.info("No blockstate directory found in resource pack");
 			} catch (Exception e) {
 				log.error("Exception: ", e);
 			}
 		}
-
+		
 		applyDefaultBlockStates();
 	}
-
+	
 	private void loadDefaultBlockStates() {
 		try (InputStream in = BlockRegistry.class.getClassLoader().getResourceAsStream("default_block_states.json")) {
 			if (in == null) {
 				log.warn("Default block states resource was not found");
 				return;
 			}
-
-			defaultBlockStates = OBJECT_MAPPER.readValue(in, new TypeReference<>() {});
+			
+			defaultBlockStates = OBJECT_MAPPER.readValue(in, new TypeReference<>() {
+			});
 			log.debug("Loaded {} default block states", defaultBlockStates.size());
 		} catch (IOException e) {
 			log.error("Unable to load default block states", e);
 		}
 	}
-
+	
 	private void applyDefaultBlockStates() {
 		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
 			Map<String, String> defaultProperties = defaultBlockStates.get(wrapper.getBlockName());
@@ -172,7 +175,7 @@ public class BlockRegistry
 			}
 		}
 	}
-
+	
 	private void deserializeBlockstates(DirectoryStream<Path> entries) throws IOException {
 		for (Path blockStateFile : entries) {
 			String fileName = blockStateFile.getFileName().toString();
@@ -192,7 +195,7 @@ public class BlockRegistry
 				String name = "minecraft:" + Strings.CI.removeEnd(fileName, ".json");
 				singleVariantBlocks.invalidate(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
 				log.trace("Parsing {}.json", name);
-
+				
 				BlockStateWrapper states = new BlockStateWrapper(name);
 				if (root != null && root.has("multipart")) {
 					root.get("multipart").forEach(node -> {
@@ -209,7 +212,7 @@ public class BlockRegistry
 								whenClauses.add(parseStates(whenField));
 							}
 						}
-
+						
 						states.addState(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
 					});
 				} else if (root != null && root.has("variants")) {
@@ -228,12 +231,12 @@ public class BlockRegistry
 				} else {
 					log.warn("Invalid blockstate file: {}", blockStateFile);
 				}
-
+				
 				blockStates.put(name, states);
 			}
 		}
 	}
-
+	
 	public void deserializeModels() {
 		log.debug("Loading model json");
 		try {
@@ -256,63 +259,60 @@ public class BlockRegistry
 			log.error("Something bad happened", e);
 		}
 	}
-
+	
 	private Map<String, String> parseStates(JsonNode when) {
 		Map<String, String> states = new HashMap<>();
 		
 		for (Entry<String, JsonNode> entry : when.properties()) {
 			states.put(entry.getKey(), entry.getValue().asString());
 		}
-
+		
 		return states;
 	}
-
+	
 	public List<BlockStateModel> deserializeBlockStateModels(JsonNode models) {
 		List<BlockStateModel> stateModels = new ArrayList<>();
 		try {
 			if (models.isArray()) {
-				stateModels = OBJECT_MAPPER.readValue(models.toString(), new TypeReference<List<BlockStateModel>>(){});
+				stateModels = OBJECT_MAPPER.readValue(models.toString(), new TypeReference<List<BlockStateModel>>() {
+				});
 			} else {
-				stateModels = OBJECT_MAPPER.readValue("[" + models + "]", new TypeReference<List<BlockStateModel>>(){});
+				stateModels = OBJECT_MAPPER.readValue("[" + models + "]", new TypeReference<List<BlockStateModel>>() {
+				});
 			}
 		} catch (JacksonException e) {
 			log.error("Exception: ", e);
 		}
-
+		
 		return stateModels;
 	}
 	
-	public BlockModel loadModel(String modelName) throws Exception
-	{
+	public BlockModel loadModel(String modelName) {
 		if (!modelName.contains("block/")) {
 			modelName = "block/" + modelName;
 		}
-
-                return blockModels.get(modelName, (mn) -> {
-                        try
-                        {
-                                return loadModel(mn, StringUtils.EMPTY, new HashMap<>(), null);
-                        }
-                        catch (Exception e)
-                        {
-                                log.error("Exception: ", e);
-                                return null;
-                        }
-                });
+		
+		return blockModels.get(modelName, mn -> {
+			try {
+				return loadModel(mn, StringUtils.EMPTY, new HashMap<>(), null);
+			} catch (Exception e) {
+				log.error("Exception: ", e);
+				return null;
+			}
+		});
 	}
 	
 	// Recurse through model files and get block model information
-	public BlockModel loadModel(String modelPath, String modelName, Map<String, String> textureMap, JsonNode elements) throws Exception
-	{
+	public BlockModel loadModel(String modelPath, String modelName, Map<String, String> textureMap, JsonNode elements) throws Exception {
 		//TODO: we may need to deal with this namespace for future mod support
 		if (modelPath.contains("minecraft:")) {
 			modelPath = modelPath.replace("minecraft:", "");
 		}
-
+		
 		if (modelName.equals(StringUtils.EMPTY)) {
 			modelName = modelPath;
 		}
-
+		
 		String fullModelPath = "assets/minecraft/models/" + modelPath + ".json";
 		JsonNode json;
 		if (zips.hasFile(fullModelPath)) {
@@ -331,7 +331,7 @@ public class BlockRegistry
 			}
 			
 			String resourcePath = "models/" + modelPath + ".json";
-			try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
+			try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
 				if (in != null) {
 					log.trace("Loading model from local resource: {}", resourcePath);
 					json = OBJECT_READER.readTree(in);
@@ -343,29 +343,23 @@ public class BlockRegistry
 		}
 		
 		String parent;
-		if(json.has("parent")) // Get texture information and then load parent file
+		if (json.has("parent")) // Get texture information and then load parent file
 		{
 			parent = json.get("parent").asString();
-
-			if(json.has(ELEMENTS_FIELD) && elements == null)
-			{
+			
+			if (json.has(ELEMENTS_FIELD) && elements == null) {
 				elements = json.get(ELEMENTS_FIELD);
 			}
 			
-			if(json.has(TEXTURES_FIELD))
-			{
+			if (json.has(TEXTURES_FIELD)) {
 				return loadModel(parent, modelName, populateTextureMap(textureMap, json.get(TEXTURES_FIELD)), elements);
-			}
-			else
-			{
+			} else {
 				return loadModel(parent, modelName, textureMap, elements);
 			}
-		}
-		else if(json.has(ELEMENTS_FIELD) || elements != null)//Load all elements
+		} else if (json.has(ELEMENTS_FIELD) || elements != null)//Load all elements
 		{
 			Map<String, String> combineMap = new HashMap<>(textureMap);
-			if(json.has(TEXTURES_FIELD))
-			{
+			if (json.has(TEXTURES_FIELD)) {
 				Map<String, String> textures = populateTextureMap(textureMap, json.get(TEXTURES_FIELD));
 				for (Map.Entry<String, String> entry : textures.entrySet()) {
 					if (entry.getValue() != null) {
@@ -377,25 +371,23 @@ public class BlockRegistry
 					}
 				}
 			}
-
+			
 			boolean ao = true;
 			if (json.has("ambientocclusion")) {
 				ao = json.get("ambientocclusion").asBoolean();
 			}
 			
-			if(json.has(ELEMENTS_FIELD) && elements == null)
-			{
+			if (json.has(ELEMENTS_FIELD) && elements == null) {
 				elements = json.get(ELEMENTS_FIELD);
-			}			
-
+			}
+			
 			return new BlockModel(modelName, ao, combineMap, elements, texturePack);
 		} else {  //TODO: There is no block model so we need to use our own model for these blocks
 			return new BlockModel(modelName, false, null, null, null);
 		}
 	}
-
-	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures)
-	{
+	
+	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures) {
 		Map<String, String> newTexMap = new HashMap<>(textureMap);
 		
 		for (Entry<String, JsonNode> entry : textures.properties()) {
@@ -421,7 +413,7 @@ public class BlockRegistry
 		
 		return newTexMap;
 	}
-
+	
 	private String getTexture(StringBuilder tex, Map<String, String> textureMap) {
 		String texture = null;
 		
@@ -439,10 +431,11 @@ public class BlockRegistry
 	
 	private String getTextureOverride(String modelName, String texture, String resourcePath) {
 		String overrideTexture = texture;
-		try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
+		try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
 			if (in != null) {
 				log.trace("Loading override textures from local resource");
-				Map<String, String> textureOverrides = OBJECT_MAPPER.readValue(in, new TypeReference<>() {});
+				Map<String, String> textureOverrides = OBJECT_MAPPER.readValue(in, new TypeReference<>() {
+				});
 				if (texturePack.getVersion().getNumVersion() >= Version.VERSION_26_1.getNumVersion()) {
 					overrideTexture = textureOverrides.getOrDefault(modelName + "_26_1", texture);
 				} else {
@@ -458,12 +451,12 @@ public class BlockRegistry
 	
 	private void checkBlockAttributes() {
 		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
-                        for (BlockState state : wrapper.getStates()) {
+			for (BlockState state : wrapper.getStates()) {
 				setBlockAttributes(wrapper, state.getModelsAndWeight().getModels());
 			}
 		}
 	}
-
+	
 	//Set attributes on the entire block instead of just the individuals models. These are used to help with lighting and face culling
 	private void setBlockAttributes(BlockStateWrapper wrapper, List<BlockStateModel> models) {
 		boolean hasOpaqueFullBlockModel = false;
@@ -473,18 +466,18 @@ public class BlockRegistry
 				if (wrapper.isFullBlock() && !blockModel.isFullBlock()) {
 					wrapper.setFullBlock(false);
 				}
-
+				
 				if (blockModel.isFullBlock()
-						&& (blockModel.isSolid())) {
+					&& (blockModel.isSolid())) {
 					hasOpaqueFullBlockModel = true;
 				}
-
+				
 				if (!wrapper.isTransparent() && blockModel.isTranslucent() || wrapper.isFullBlock() && !blockModel.isSolid()) {
 					wrapper.setTransparent(true);
 				}
 			}
 		}
-
+		
 		// A block can have both an opaque full-block model and a transparent overlay
 		// (grass blocks for example). Such a block should still hide faces of
 		// neighboring blocks even though one of its model layers uses alpha.

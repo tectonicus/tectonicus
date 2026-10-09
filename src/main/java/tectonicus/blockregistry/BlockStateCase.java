@@ -16,6 +16,7 @@ import lombok.ToString;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
 import tectonicus.raw.BlockProperties;
 
 @Builder
@@ -24,26 +25,26 @@ import tectonicus.raw.BlockProperties;
 public class BlockStateCase extends BlockState {
 	List<Map<String, String>> whenClauses;
 	BlockStateModelsWeight modelsAndWeight;
-        
-        @Override
-        void addModels(List<BlockStateModel> models, BlockProperties properties, Random random) {
-                if (whenClauses.isEmpty()) {  // If no when clauses then always apply models
+	
+	@Override
+	void addModels(List<BlockStateModel> models, BlockProperties properties, Random random) {
+		if (whenClauses.isEmpty()) {  // If no when clauses then always apply models
 			models.add(getRandomWeightedModel(modelsAndWeight, random));
-                } else {
-                        for (Map<String, String> clause : whenClauses) {
-                                boolean addModel = true;
-                                for (Map.Entry<String, String> entry : clause.entrySet()) {
-                                        String key = entry.getKey();
-                                        if (!(properties.containsKey(key) && entry.getValue().contains(properties.get(key)))) {
-                                                addModel = false;
-                                                break;
-                                        }
-                                }
-                                if (addModel) {
+		} else {
+			for (Map<String, String> clause : whenClauses) {
+				boolean addModel = true;
+				for (Map.Entry<String, String> entry : clause.entrySet()) {
+					String key = entry.getKey();
+					if (!(properties.containsKey(key) && entry.getValue().contains(properties.get(key)))) {
+						addModel = false;
+						break;
+					}
+				}
+				if (addModel) {
 					models.add(getRandomWeightedModel(modelsAndWeight, random));
-                                        break;
-                                }
-                        }
-                }
-        }
+					break;
+				}
+			}
+		}
+	}
 }

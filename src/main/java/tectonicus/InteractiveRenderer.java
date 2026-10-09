@@ -34,12 +34,10 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 @Slf4j
-public class InteractiveRenderer
-{
-	private enum ViewMode
-	{
-		OrthoView,
-		PerspectiveView
+public class InteractiveRenderer {
+	private enum ViewMode {
+		ORTHO_VIEW,
+		PERSPECTIVE_VIEW
 	}
 	
 	private final OrthoCamera orthoCamera;
@@ -60,14 +58,13 @@ public class InteractiveRenderer
 	private final ArrayList<SignEntity> views;
 	private int currentViewIndex;
 	
-	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight)
-	{
+	public InteractiveRenderer(Configuration args, final int displayWidth, final int displayHeight) {
 		rasteriser = RasteriserFactory.createRasteriser(args.getRasteriserType(), DisplayType.WINDOW, displayWidth, displayHeight, 24, 8, 24, 4);
-		log.info("Using rasteriser: "+rasteriser);
+		log.info("Using rasteriser: " + rasteriser);
 		rasteriser.printInfo();
 		
-		viewMode = ViewMode.OrthoView;
-
+		viewMode = ViewMode.ORTHO_VIEW;
+		
 		orthoCamPosition = new Vector3f();
 		
 		orthoCamera = new OrthoCamera(rasteriser, displayWidth, displayHeight);
@@ -76,77 +73,64 @@ public class InteractiveRenderer
 		views = new ArrayList<>();
 	}
 	
-	public void destroy()
-	{
+	public void destroy() {
 		rasteriser.destroy();
 	}
 	
-	private void updateOrthoCamera(BlockContext world)
-	{
+	private void updateOrthoCamera() {
 		final float zoomInc = 0.5f;
 		
-		if (rasteriser.isKeyDown(KeyEvent.VK_LEFT))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_LEFT)) {
 			Vector3f right = orthoCamera.getRight();
 			orthoCamPosition.x -= right.x * orthoCamera.getVisibleWorldWidth() / 8;
 			orthoCamPosition.z -= right.z * orthoCamera.getVisibleWorldWidth() / 8;
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_RIGHT))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_RIGHT)) {
 			Vector3f right = orthoCamera.getRight();
 			orthoCamPosition.x += right.x * orthoCamera.getVisibleWorldWidth() / 8;
 			orthoCamPosition.z += right.z * orthoCamera.getVisibleWorldWidth() / 8;
 			
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_UP))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_UP)) {
 			Vector3f up = orthoCamera.getUp();
 			orthoCamPosition.x += up.x * orthoCamera.getVisibleWorldHeight() / 8;
 			orthoCamPosition.y += up.y * orthoCamera.getVisibleWorldHeight() / 8;
 			orthoCamPosition.z += up.z * orthoCamera.getVisibleWorldHeight() / 8;
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_DOWN))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_DOWN)) {
 			Vector3f up = orthoCamera.getUp();
 			orthoCamPosition.x -= up.x * orthoCamera.getVisibleWorldHeight() / 8;
 			orthoCamPosition.y -= up.y * orthoCamera.getVisibleWorldHeight() / 8;
 			orthoCamPosition.z -= up.z * orthoCamera.getVisibleWorldHeight() / 8;
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_MINUS))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_MINUS)) {
 			orthoZoom += zoomInc;
 			if (orthoZoom > 300)
 				orthoZoom = 300;
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_EQUALS))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_EQUALS)) {
 			orthoZoom -= zoomInc;
 			if (orthoZoom < 0.1f)
 				orthoZoom = 0.1f;
 		}
 		
-		if (rasteriser.isKeyDown(KeyEvent.VK_Q))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_Q)) {
 			orthoAngleOffset += 0.1f;
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_E))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_E)) {
 			orthoAngleOffset -= 0.1f;
 		}
 		
-		if (rasteriser.isKeyDown(KeyEvent.VK_W))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_W)) {
 			cameraElevation += 0.1f;
 		}
-		if (rasteriser.isKeyDown(KeyEvent.VK_S))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_S)) {
 			cameraElevation -= 0.1f;
 		}
 	}
-	private void updatePerspectiveCamera()
-	{
-		if (rasteriser.isKeyJustDown(KeyEvent.VK_EQUALS))
-		{
+	
+	private void updatePerspectiveCamera() {
+		if (rasteriser.isKeyJustDown(KeyEvent.VK_EQUALS)) {
 			currentViewIndex++;
 			if (currentViewIndex >= views.size())
 				currentViewIndex = 0;
@@ -155,30 +139,22 @@ public class InteractiveRenderer
 		}
 	}
 	
-	private void update(World world)
-	{
-		if (viewMode == ViewMode.OrthoView)
-		{
-			updateOrthoCamera(world);
-		}
-		else if (viewMode == ViewMode.PerspectiveView)
-		{
+	private void update(World world) {
+		if (viewMode == ViewMode.ORTHO_VIEW) {
+			updateOrthoCamera();
+		} else if (viewMode == ViewMode.PERSPECTIVE_VIEW) {
 			updatePerspectiveCamera();
 		}
 		
-		if (rasteriser.isKeyJustDown(KeyEvent.VK_P))
-		{
+		if (rasteriser.isKeyJustDown(KeyEvent.VK_P)) {
 			System.out.println("Toggling view mode");
-		
-			if (viewMode == ViewMode.OrthoView)
-			{
+			
+			if (viewMode == ViewMode.ORTHO_VIEW) {
 				// Find all views
 				views.clear();
 				SignEntity[] signs = world.getLoadedSigns();
-				for (SignEntity s : signs)
-				{
-					if (s.getText1().trim().startsWith("#view"))
-					{
+				for (SignEntity s : signs) {
+					if (s.getText1().trim().startsWith("#view")) {
 						views.add(s);
 					}
 				}
@@ -186,13 +162,11 @@ public class InteractiveRenderer
 				SignEntity nearest = null;
 				float currentDist = Float.MAX_VALUE;
 				
-				if (views.size() > 0)
-				{
-					nearest = views.get(0);
+				if (!views.isEmpty()) {
+					nearest = views.getFirst();
 					currentViewIndex = 0;
 				}
-				for (int i=0; i<views.size(); i++)
-				{
+				for (int i = 0; i < views.size(); i++) {
 					SignEntity s = views.get(i);
 					
 					Vector3f eye = orthoCamera.getEyePosition();
@@ -200,37 +174,31 @@ public class InteractiveRenderer
 					final float dx = eye.x - s.getX();
 					final float dy = eye.y - s.getY();
 					final float dz = eye.z - s.getZ();
-					final float dist = (float)Math.sqrt(dx*dx + dy*dy + dz*dz);
+					final float dist = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
 					
-					if (dist < currentDist)
-					{
+					if (dist < currentDist) {
 						nearest = s;
 						currentDist = dist;
 						currentViewIndex = i;
 					}
 				}
 				
-				if (nearest != null)
-				{
-					System.out.println("now viewing from "+nearest);
+				if (nearest != null) {
+					System.out.println("now viewing from " + nearest);
 					
-					viewMode = ViewMode.PerspectiveView;
+					viewMode = ViewMode.PERSPECTIVE_VIEW;
 					perspectiveSign = nearest;
 				}
-			}
-			else if (viewMode == ViewMode.PerspectiveView)
-			{
-				viewMode = ViewMode.OrthoView;
+			} else if (viewMode == ViewMode.PERSPECTIVE_VIEW) {
+				viewMode = ViewMode.ORTHO_VIEW;
 			}
 		}
 		
-		if (rasteriser.isKeyDown(KeyEvent.VK_SPACE))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_SPACE)) {
 			world.dumpMemStats();
 		}
 		
-		if (rasteriser.isKeyDown(KeyEvent.VK_F))
-		{
+		if (rasteriser.isKeyDown(KeyEvent.VK_F)) {
 			world.flushGeometryCache();
 		}
 	}
@@ -238,7 +206,7 @@ public class InteractiveRenderer
 	public void display(World world) {
 		if (world.getSpawnDimension() == world.getDimension()) {
 			orthoCamPosition.x = world.getSpawnPosition().x;
-			orthoCamPosition.y = world.getSpawnPosition().y + (float)(world.getWorldInfo().sectionArrayOffset() ? 64 : 0);
+			orthoCamPosition.y = world.getSpawnPosition().y + (float) (world.getWorldInfo().sectionArrayOffset() ? 64 : 0);
 			orthoCamPosition.z = world.getSpawnPosition().z;
 		} else {
 			log.warn("World spawn is in a different dimension to the one being rendered - ortho camera will be positioned at (0,0,0)");
@@ -248,13 +216,12 @@ public class InteractiveRenderer
 		}
 		
 		orthoZoom = 32;
-		orthoAngleOffset = (float)Math.PI / 4.0f;
-		cameraElevation = (float)Math.PI / 4.0f; // todo: should come from config (first layer?)
+		orthoAngleOffset = (float) Math.PI / 4.0f;
+		cameraElevation = (float) Math.PI / 4.0f; // todo: should come from config (first layer?)
 		orthoCamera.lookAt(orthoCamPosition.x, orthoCamPosition.y, orthoCamPosition.z,
-				orthoZoom, orthoAngleOffset, cameraElevation);
+			orthoZoom, orthoAngleOffset, cameraElevation);
 		
-		while (!rasteriser.isCloseRequested())
-		{
+		while (!rasteriser.isCloseRequested()) {
 			rasteriser.beginFrame();
 			
 			update(world);
@@ -264,19 +231,16 @@ public class InteractiveRenderer
 			rasteriser.clear(new Color(50, 50, 50, 0));
 			
 			Camera activeCamera = null;
-			if (viewMode == ViewMode.OrthoView)
-			{
+			if (viewMode == ViewMode.ORTHO_VIEW) {
 				//float cameraElevation = (float)Math.PI / 4.0f; // todo: should come from config (first layer?)
 				
 				orthoCamera.lookAt(orthoCamPosition.x, orthoCamPosition.y, orthoCamPosition.z, orthoZoom, orthoAngleOffset, cameraElevation);
 				
 				activeCamera = orthoCamera;
-			}
-			else if (viewMode == ViewMode.PerspectiveView)
-			{
-			//	Vector3f eye = new Vector3f(perspectiveSign.x, perspectiveSign.y + 4.0f, perspectiveSign.z);
-			//	Vector3f up = new Vector3f(0, 1, 0);
-			//	Vector3f lookAt = new Vector3f(eye.x + 1.0f, eye.y, eye.z + 1.0f);
+			} else if (viewMode == ViewMode.PERSPECTIVE_VIEW) {
+				//	Vector3f eye = new Vector3f(perspectiveSign.x, perspectiveSign.y + 4.0f, perspectiveSign.z);
+				//	Vector3f up = new Vector3f(0, 1, 0);
+				//	Vector3f lookAt = new Vector3f(eye.x + 1.0f, eye.y, eye.z + 1.0f);
 				
 				// TODO: Some duplication between here and TileRenderer
 				// Should commanalise extracting a view pos + angle from a sign
@@ -287,13 +251,13 @@ public class InteractiveRenderer
 				Vector3f up = new Vector3f(0, 1, 0);
 				Vector3f forward = new Vector3f((float)Math.cos(angleRad), 0, (float)Math.sin(angleRad));
 				Vector3f lookAt = new Vector3f(eye.x + forward.x, eye.y + forward.y, eye.z + forward.z);
-			*/	
-                                Viewpoint view = ViewUtil.findView(new tectonicus.world.Sign(perspectiveSign));
-                                MutableViewConfig viewConfig = new MutableViewConfig();
-                                viewConfig.setViewDistance(300);
+			*/
+				Viewpoint view = ViewUtil.findView(new tectonicus.world.Sign(perspectiveSign));
+				MutableViewConfig viewConfig = new MutableViewConfig();
+				viewConfig.setViewDistance(300);
 				perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig);
 				
-			//	perspectiveCamera.lookAt(eye, lookAt, up, 90.0f, 1.0f, 0.1f, 100f);
+				//	perspectiveCamera.lookAt(eye, lookAt, up, 90.0f, 1.0f, 0.1f, 100f);
 				
 				activeCamera = perspectiveCamera;
 			}
@@ -310,12 +274,11 @@ public class InteractiveRenderer
 		}
 	}
 	
-	public static void drawAxies(Rasteriser rasteriser)
-	{
+	public static void drawAxies(Rasteriser rasteriser) {
 		rasteriser.beginShape(PrimitiveType.LINES);
 		{
 			// Red x axis
-
+			
 			rasteriser.colour(1, 0, 0, 1);
 			rasteriser.vertex(0, 0, 0);
 			rasteriser.vertex(16, 0, 0);
@@ -332,51 +295,40 @@ public class InteractiveRenderer
 			rasteriser.vertex(0, 0, 0);
 			rasteriser.vertex(0, 0, 16);
 			rasteriser.vertex(0, 128, 0);
-			rasteriser.vertex(0, 128, 16);			
+			rasteriser.vertex(0, 128, 16);
 		}
 		rasteriser.endShape();
 	}
 	
-	public static void drawChunkCheckerboard(Rasteriser rasteriser)
-	{
+	public static void drawChunkCheckerboard(Rasteriser rasteriser) {
 		Mesh mesh = rasteriser.createMesh(null);
 		
-		for (int x=0; x<RawChunk.WIDTH; x++)
-		{
-			for (int z=0; z<RawChunk.DEPTH; z++)
-			{
+		for (int x = 0; x < RawChunk.WIDTH; x++) {
+			for (int z = 0; z < RawChunk.DEPTH; z++) {
 				
 				float r, g, b;
-				r = g = b = 1;
-				if (x == 0 && z == 0)
-				{
+				if (x == 0 && z == 0) {
 					r = 1;
 					g = 1;
 					b = 0;
-				}
-				else if (x == 0)
-				{
+				} else if (x == 0) {
 					r = 1;
 					g = 0;
 					b = 0;
-				}
-				else if (z == 0)
-				{
+				} else if (z == 0) {
 					r = 0;
 					g = 0;
 					b = 1;
-				}
-				else
-				{
-					r = g = b = (x + z) % 2 == 0? 1 : 0;
+				} else {
+					r = g = b = (x + z) % 2 == 0 ? 1 : 0;
 				}
 				
 				Vector4f colour = new Vector4f(r, g, b, 1);
 				
-				mesh.addVertex(new Vector3f(x,   0, z),   colour, 0, 0);
-				mesh.addVertex(new Vector3f(x+1, 0, z),   colour, 0, 0);
-				mesh.addVertex(new Vector3f(x+1, 0, z+1), colour, 0, 0);
-				mesh.addVertex(new Vector3f(x,   0, z+1), colour, 0, 0);
+				mesh.addVertex(new Vector3f(x, 0, z), colour, 0, 0);
+				mesh.addVertex(new Vector3f(x + 1f, 0, z), colour, 0, 0);
+				mesh.addVertex(new Vector3f(x + 1f, 0, z + 1f), colour, 0, 0);
+				mesh.addVertex(new Vector3f(x, 0, z + 1f), colour, 0, 0);
 			}
 		}
 		
@@ -384,6 +336,6 @@ public class InteractiveRenderer
 		mesh.bind();
 		mesh.draw(0, 0, 0);
 		
-	//	mesh.destroy();
+		//	mesh.destroy();
 	}
 }
