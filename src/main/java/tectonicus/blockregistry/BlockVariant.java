@@ -14,6 +14,7 @@ import lombok.Getter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
@@ -46,9 +47,9 @@ public class BlockVariant extends BlockState
 	}
         
         @Override
-        void addModels(List<BlockStateModel> models, BlockProperties properties) {
+        void addModels(List<BlockStateModel> models, BlockProperties properties, Random random) {
 		if (name.equals(StringUtils.EMPTY) || properties.containsAll(states)) {
-                        models.add(getRandomWeightedModel(modelsAndWeight));
+			models.add(getRandomWeightedModel(modelsAndWeight, random));
                 }
         }
 }

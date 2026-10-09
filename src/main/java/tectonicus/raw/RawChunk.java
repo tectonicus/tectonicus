@@ -1409,6 +1409,14 @@ public class RawChunk {
 		}
 	}
 
+	public int getWorldY(final int y) {
+		return toWorldY(y, minSectionY);
+	}
+
+	static int toWorldY(final int y, final int minSectionY) {
+		return y - Math.abs(minSectionY) * SECTION_HEIGHT;
+	}
+
 	public void setBlockName(final int x, final int y, final int z, final String blockName) {
 		final int sectionY = y / SECTION_HEIGHT;
 		final int localY = y % SECTION_HEIGHT;

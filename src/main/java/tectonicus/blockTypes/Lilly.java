@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.blockregistry.BlockState;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
@@ -83,10 +84,7 @@ public class Lilly implements BlockType
 		int wx = (int)rawChunk.getChunkCoord().x * 16 + x;
 		int wz = (int)rawChunk.getChunkCoord().z * 16 + z;
 		
-		/* The three lines below, to figure out lilypad rotation, were taken straight from this blog here: http://llbit.se/?p=1537 */
-		long pr = (wx * 3129871L) ^ (wz * 116129781L) ^ ((long) y);
-		pr = pr * pr * 42317861L + pr * 11L;
-		int rotation = 3 & (int)(pr >> 16);
+		int rotation = BlockState.createPositionRandom(wx, rawChunk.getWorldY(y), wz).nextInt(4);
 		
 		if(rotation == 0)
 		{

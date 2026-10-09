@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @Getter
 public class BlockStateWrapper {
@@ -50,10 +51,17 @@ public class BlockStateWrapper {
 		return properties;
 	}
 
-	public List<BlockStateModel> getModels(BlockProperties properties) {
+	public List<BlockStateModel> getModels(BlockProperties properties, int x, int y, int z) {
 		List<BlockStateModel> models = new ArrayList<>();
+		Random random = BlockState.createPositionRandom(blockName, properties, x, y, z);
+		boolean hasMultipart = states.stream().anyMatch(BlockStateCase.class::isInstance);
+		long multipartSeed = hasMultipart ? random.nextLong() : 0;
+		Random variantRandom = hasMultipart
+				? BlockState.createPositionRandom(blockName, properties, x, y, z)
+				: random;
 		for (BlockState state : states) {
-			state.addModels(models, properties);
+			Random stateRandom = state instanceof BlockStateCase ? new Random(multipartSeed) : variantRandom;
+			state.addModels(models, properties, stateRandom);
 		}
 		return models;
 	}

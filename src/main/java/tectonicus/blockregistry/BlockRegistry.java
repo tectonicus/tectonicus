@@ -20,6 +20,7 @@ import tectonicus.Minecraft;
 import tectonicus.Version;
 import tectonicus.configuration.MutableConfiguration;
 import tectonicus.rasteriser.Rasteriser;
+import tectonicus.raw.BlockProperties;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
 import tools.jackson.core.JacksonException;
@@ -112,8 +113,10 @@ public class BlockRegistry
                 
                 return result;
 	}
-	public BlockStateModel getSingleVariantModel(String blockName) {
-		return getRandomWeightedModel(singleVariantBlocks.getIfPresent(blockName));
+
+	public BlockStateModel getSingleVariantModel(String blockName, BlockProperties properties, int x, int y, int z) {
+		return getRandomWeightedModel(singleVariantBlocks.getIfPresent(blockName),
+				BlockState.createPositionRandom(blockName, properties, x, y, z));
 	}
 	public BlockModel getModel(String model) { return blockModels.getIfPresent(model); }
 	public boolean containsSingleVariantBlock(String blockName) {

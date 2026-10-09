@@ -152,14 +152,18 @@ public class Chunk
 							type = registry.find(blockName);
 
 							if(type instanceof Air) { // If the type is air then no block was found in the old registry
+								final int worldX = (int)(coord.x * RawChunk.WIDTH + x);
+								final int worldY = rawChunk.getWorldY(y);
+								final int worldZ = (int)(coord.z * RawChunk.DEPTH + z);
 								if (modelRegistry.containsSingleVariantBlock(blockName)) {
-									modelRegistry.getSingleVariantModel(blockName).createGeometry(x, y, z, world, rawChunk, geometry);
+									modelRegistry.getSingleVariantModel(blockName, effectiveProperties, worldX, worldY, worldZ)
+											.createGeometry(x, y, z, world, rawChunk, geometry);
 								} else {
 									//TODO: This is quite slow. Need to profile and figure out if it can be sped up
 									List<BlockStateModel> models;
 
 									if (stateWrapper != null)
-										models = stateWrapper.getModels(effectiveProperties);
+										models = stateWrapper.getModels(effectiveProperties, worldX, worldY, worldZ);
 									else
 										continue;
 

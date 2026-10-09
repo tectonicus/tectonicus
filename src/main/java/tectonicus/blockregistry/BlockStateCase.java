@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import lombok.ToString;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import tectonicus.raw.BlockProperties;
 
 @Builder
@@ -25,9 +26,9 @@ public class BlockStateCase extends BlockState {
 	BlockStateModelsWeight modelsAndWeight;
         
         @Override
-        void addModels(List<BlockStateModel> models, BlockProperties properties) {
+        void addModels(List<BlockStateModel> models, BlockProperties properties, Random random) {
                 if (whenClauses.isEmpty()) {  // If no when clauses then always apply models
-                        models.addAll(modelsAndWeight.getModels());
+			models.add(getRandomWeightedModel(modelsAndWeight, random));
                 } else {
                         for (Map<String, String> clause : whenClauses) {
                                 boolean addModel = true;
@@ -39,7 +40,7 @@ public class BlockStateCase extends BlockState {
                                         }
                                 }
                                 if (addModel) {
-                                        models.add(getRandomWeightedModel(modelsAndWeight));
+					models.add(getRandomWeightedModel(modelsAndWeight, random));
                                         break;
                                 }
                         }
