@@ -16,6 +16,7 @@ import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.configuration.LightFace;
 import tectonicus.raw.ArmorStandEntity;
 import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.DyedColorTag;
@@ -115,7 +116,8 @@ public class ArmorStand implements BlockType
                         y = entity.getLocalY();
                         z = entity.getLocalZ();
                     
-                        final Vector4f colour = new Vector4f(1, 1, 1, 1);
+                        float light = world.getLight(rawChunk, x, y + 1, z, LightFace.Top);
+                        final Vector4f colour = new Vector4f(light, light, light, 1);
 
                         if (!entity.getInvisible() && !entity.getNoBasePlate()) {
                                 buildBaseMesh(x, y, z, geometry, colour);
@@ -299,9 +301,11 @@ public class ArmorStand implements BlockType
 				meshBuilder.build(x, y, z, geometry, colour, angle, overlayTexture, 0);
 			
 			DyedColorTag dyedColor = armor.getComponent(DyedColorTag.class);
-			colour = dyedColor == null
+			Vector4f leatherColour = dyedColor == null
 					? new Vector4f(106 / 255f, 64 / 255f, 41 / 255f, 1) // Default brown leather
 					: new Vector4f(((dyedColor.color >> 16) & 255) / 255f, ((dyedColor.color >> 8) & 255) / 255f, (dyedColor.color & 255) / 255f, 1);
+			colour = new Vector4f(leatherColour.x * colour.x, leatherColour.y * colour.y,
+					leatherColour.z * colour.z, leatherColour.w);
 		}
 		
 		meshBuilder.build(x, y, z, geometry, colour, angle, layerTexture, -1);
@@ -334,7 +338,7 @@ public class ArmorStand implements BlockType
                                 rotation = rotation / 360f * 16;
 
                                 // Use constructor that acceptas yOffset to elevate the skull to correct position on armor stand
-                                SkullEntity skullEntity = new SkullEntity(0, 0, 0, x, y, z, skullType, (int)Math.round(rotation), 24*UNIT);
+                                SkullEntity skullEntity = new SkullEntity(0, 0, 0, x, y, z, skullType, Math.round(rotation), 24*UNIT);
                                 ((Skull)blockType).addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry, skullEntity);
                         } else if (blockType instanceof JackOLantern || armor.id.equals("minecraft:carved_pumpkin")) {
                                 SubTexture frontTexture = texturePack.findTexture("assets/minecraft/textures/block/carved_pumpkin.png");
