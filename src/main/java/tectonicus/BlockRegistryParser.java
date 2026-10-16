@@ -33,7 +33,6 @@ import tectonicus.blockTypes.Cauldron;
 import tectonicus.blockTypes.Chest;
 import tectonicus.blockTypes.ChestAlpha;
 import tectonicus.blockTypes.ChestNew;
-import tectonicus.blockTypes.ChiseledBookshelf;
 import tectonicus.blockTypes.ChorusFlower;
 import tectonicus.blockTypes.ChorusPlant;
 import tectonicus.blockTypes.CocoaPod;
@@ -883,15 +882,12 @@ public class BlockRegistryParser
 			SubTexture texture = parseTexture(element, "texture", null);
 			blockType = new Bell(name, stringId, texture);
 		}
-                else if (nodeName.equals("decoratedpot")) {
-                        blockType = new DecoratedPot(name, texturePack);
-                }
-                else if (nodeName.equals("chiseledbookshelf")) {
-                        blockType = new ChiseledBookshelf(name, texturePack);
-                }
-                else if (nodeName.equals("armorstand")) {
-                        blockType = new ArmorStand(name, texturePack);
-                }
+		else if (nodeName.equals("decoratedpot")) {
+				blockType = new DecoratedPot(name, texturePack);
+		}
+		else if (nodeName.equals("armorstand")) {
+				blockType = new ArmorStand(name, texturePack);
+		}
 		else if (nodeName.equals("cushion")) {
 			blockType = new Cushion(name, texturePack);
 		}
@@ -909,7 +905,7 @@ public class BlockRegistryParser
 					registry.register(id.id, id.data, blockType);
 			}
 
-			if(!stringId.equals(""))
+			if(!stringId.isEmpty())
 				registry.register(stringId, blockType);
 		}
 	}
@@ -953,7 +949,7 @@ public class BlockRegistryParser
 	private Color parseHtmlColor(String colorStr)
 	{
 		Color result = null;
-		if (colorStr != null && colorStr != "" && colorStr.charAt(0) == '#')
+		if (colorStr != null && !colorStr.isEmpty() && colorStr.charAt(0) == '#')
 		{
 			try {
 				result = new Color(Integer.parseInt(colorStr.substring(1,7), 16));

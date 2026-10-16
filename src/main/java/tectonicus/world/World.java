@@ -988,10 +988,19 @@ public class World implements BlockContext
 	@Override
 	public float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face)
 	{
+		return getLight(rawChunk, x, y, z, face, nightLightAdjustment);
+	}
+
+	@Override
+	public float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face, float nightLightAdjustment)
+	{
 		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
 			return Chunk.getLight(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment);
 
-		return getLight(rawChunk.getChunkCoord(), x, y, z, face);
+		Location loc = resolve(rawChunk.getChunkCoord(), x, y, z);
+		Chunk c = rawLoadedChunks.get(loc.coord);
+		RawChunk raw = c != null ? c.getRawChunk() : null;
+		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
 	}
 
 	/*

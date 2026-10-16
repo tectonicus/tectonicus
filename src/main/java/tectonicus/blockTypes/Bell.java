@@ -80,7 +80,7 @@ public class Bell implements BlockType
 				(int)(rawChunk.getChunkCoord().x * RawChunk.WIDTH + x), rawChunk.getWorldY(y),
 				(int)(rawChunk.getChunkCoord().z * RawChunk.DEPTH + z));
 		for (BlockStateModel bsc : models) {  //There should only be one model per variant for bells in vanilla Minecraft
-			bsc.getBlockModel().createGeometry(x, y, z, world, rawChunk, geometry, bsc.getXRotation(), bsc.getYRotation());
+			bsc.createGeometry(x, y, z, world, rawChunk, geometry);
 		}
 
 		float light = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);

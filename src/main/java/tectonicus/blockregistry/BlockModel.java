@@ -65,11 +65,19 @@ public class BlockModel
 			this.elements = Collections.emptyList();
 		}
 	}
+
+	BlockModel(String name, boolean ambientlyOccluded, List<BlockElement> elements)
+	{
+		this.name = name;
+		this.ambientlyOccluded = ambientlyOccluded;
+		this.elements = List.copyOf(elements);
+	}
 	
 	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry, int xRotation, int yRotation, int zRotation)
 	{
 		try {
-			MeshUtil.addBlock(world, rawChunk, x, y, z, this, geometry, xRotation, yRotation, zRotation);
+			MeshUtil.addBakedBlock(world, rawChunk, x, y, z,
+					new BakedBlockStateModel(this, xRotation, yRotation, zRotation, false), geometry);
 		} catch (Exception e) {
 			ChunkCoord cc = rawChunk.getChunkCoord();
 			log.error("Error adding block: {} in {} in {}", this.name, cc, RegionCoord.getFilenameFromChunkCoord(cc), e);
@@ -150,16 +158,22 @@ public class BlockModel
 				}
 			}
 
-			boolean shaded = true;
-			if(element.has("shade")) {
-				shaded = element.get("shade").asBoolean();
+			boolean shaded = !element.has("shade") || element.get("shade").asBoolean();
+			String shadeDirectionOverride = null;
+			if (element.has("shade_direction_override")) {
+				String direction = element.get("shade_direction_override").asString();
+				if (Set.of("down", "up", "north", "south", "west", "east").contains(direction)) {
+					shadeDirectionOverride = direction;
+				} else {
+					log.warn("Invalid shade_direction_override '{}' for block model: {}", direction, blockModel.getName());
+				}
 			}
 
 			JsonNode facesNode = element.get("faces");
 			SubTexture subTexture = new SubTexture(null, fromVector.x(), 16-toVector.y(), toVector.x(), 16-fromVector.y());
 			BlockElement be = new BlockElement(fromVector, toVector, rotationOrigin, rotAxis, rotationAngle,
 				rotationX, rotationY, rotationZ,
-				rotationScale, shaded, combineMap, subTexture, facesNode, texturePack, blockModel);
+				rotationScale, shaded, shadeDirectionOverride, combineMap, subTexture, facesNode, texturePack, blockModel);
 			elementsList.add(be);
 		}
 		return elementsList;
@@ -174,11 +188,12 @@ public class BlockModel
 		private final float rotationAngle;
 		private final float rotationX, rotationY, rotationZ;
 		private final boolean scaled, shaded;
+		private final String shadeDirectionOverride;
 		private final Map<String, ElementFace> faces;
 		
 		public BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, org.joml.Vector3f rotationAxis,
 							float rotationAngle, float rotationX, float rotationY, float rotationZ,
-							boolean scaled, boolean shaded, Map<String, String> combineMap,
+							boolean scaled, boolean shaded, String shadeDirectionOverride, Map<String, String> combineMap,
 							SubTexture subTexture, JsonNode facesNode, TexturePack texturePack, BlockModel blockModel)
 		{
 			this.from = from;
@@ -191,7 +206,31 @@ public class BlockModel
 			this.rotationZ = rotationZ;
 			this.scaled = scaled;
 			this.shaded = shaded;
+			this.shadeDirectionOverride = shadeDirectionOverride;
 			this.faces = deserializeElementFaces(combineMap, subTexture, facesNode, from, to, texturePack, blockModel);
+		}
+
+		BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, float rotationX, float rotationY,
+				float rotationZ, boolean scaled, boolean shaded, Map<String, ElementFace> faces)
+		{
+			this(from, to, rotationOrigin, rotationX, rotationY, rotationZ, scaled, shaded, null, faces);
+		}
+
+		BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, float rotationX, float rotationY,
+				float rotationZ, boolean scaled, boolean shaded, String shadeDirectionOverride, Map<String, ElementFace> faces)
+		{
+			this.from = from;
+			this.to = to;
+			this.rotationOrigin = rotationOrigin;
+			this.rotationAxis = new org.joml.Vector3f(0, 1, 0);
+			this.rotationAngle = 0;
+			this.rotationX = rotationX;
+			this.rotationY = rotationY;
+			this.rotationZ = rotationZ;
+			this.scaled = scaled;
+			this.shaded = shaded;
+			this.shadeDirectionOverride = shadeDirectionOverride;
+			this.faces = Map.copyOf(faces);
 		}
 
 		private Map<String, ElementFace> deserializeElementFaces(Map<String, String> combineMap, SubTexture texCoords,
@@ -280,13 +319,14 @@ public class BlockModel
 					frame = ThreadLocalRandom.current().nextInt(numTiles);
 				}
 				
-				SubTexture subTexture = new SubTexture(te.texture, u0, v0 + frame * (texWidth / texHeight), u1, v1 + frame * (texWidth / texHeight));
+				float frameOffset = frame * (texWidth / texHeight);
+				SubTexture subTexture = new SubTexture(te.texture, u0, v0 + frameOffset, u1, v1 + frameOffset);
 				
-				boolean cullFace = face.has("cullface");
+				String cullFace = face.has("cullface") ? face.get("cullface").asString() : null;
 				
 				boolean tintIndex = face.has("tintindex") && !modelName.contains("powder_snow_cauldron") && !modelName.contains("lava_cauldron"); //Hack to not tint lava or snow cauldrons
 				
-				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, tintIndex,
+				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, face.has("uv"), frameOffset, tintIndex,
 						pt != null && pt.isTranslucent(), pt != null && pt.isTransparent());
 				elementFaces.put(key, ef);
 			}
@@ -298,20 +338,39 @@ public class BlockModel
 		public static class ElementFace
 		{
 			private final SubTexture texture;
-			private final boolean faceCulled, tinted;  // May need to change the type of these variables in the future, for now they work fine as booleans
+			private final String cullFace;
+			private final boolean tinted;
 			private final boolean translucent, transparent;
 			private final int textureRotation;
+			private final boolean explicitUv;
+			private final float uvFrameOffset;
 			
-			public ElementFace(SubTexture texture, boolean faceCulled, int textureRotation, boolean tinted,
+			public ElementFace(SubTexture texture, String cullFace, int textureRotation, boolean tinted,
 							   boolean translucent, boolean transparent)
 			{
+				this(texture, cullFace, textureRotation, false, tinted, translucent, transparent);
+			}
+
+			public ElementFace(SubTexture texture, String cullFace, int textureRotation, boolean explicitUv,
+							   boolean tinted, boolean translucent, boolean transparent)
+			{
+				this(texture, cullFace, textureRotation, explicitUv, 0, tinted, translucent, transparent);
+			}
+
+			public ElementFace(SubTexture texture, String cullFace, int textureRotation, boolean explicitUv,
+							   float uvFrameOffset, boolean tinted, boolean translucent, boolean transparent)
+			{
 				this.texture = texture;
-				this.faceCulled = faceCulled;
+				this.cullFace = cullFace;
 				this.textureRotation = textureRotation;
+				this.explicitUv = explicitUv;
+				this.uvFrameOffset = uvFrameOffset;
 				this.tinted = tinted;
 				this.translucent = translucent;
 				this.transparent = transparent;
 			}
+
+			public boolean isFaceCulled() { return cullFace != null; }
 		}
 	}
 }

@@ -501,14 +501,8 @@ public class Chunk
 					result = Util.clamp((skyLight * 0.7f + blockLight) / RawChunk.MAX_LIGHT + 0.3f, 0, 1);
 				}
 
-				if (face == LightFace.NorthSouth)
-				{
-					result -= 0.15f;
-				}
-				else if (face == LightFace.EastWest)
-				{
-					result -= 0.30f;
-				}
+				result *= face == LightFace.NorthSouth ? 0.85f
+						: face == LightFace.EastWest ? 0.7f : 1.0f;
 				
 				break;
 			}
@@ -526,14 +520,8 @@ public class Chunk
 					result = Util.clamp((skyLight * 0.1f + blockLight * 0.7f) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
 				}
 
-				if (face == LightFace.NorthSouth)
-				{
-					result -= 0.05f;
-				}
-				else if (face == LightFace.EastWest)
-				{
-					result -= 0.1f;
-				}
+				result *= face == LightFace.NorthSouth ? 0.95f
+						: face == LightFace.EastWest ? 0.9f : 1.0f;
 				
 				break;
 			}
@@ -551,14 +539,8 @@ public class Chunk
 					result = Util.clamp(heightScale + blockLight * 0.5f, 0f, 1f);
 				}
 
-				if (face == LightFace.NorthSouth)
-				{
-					result -= 0.05f;
-				}
-				else if (face == LightFace.EastWest)
-				{
-					result -= 0.1f;
-				}
+				result *= face == LightFace.NorthSouth ? 0.95f
+						: face == LightFace.EastWest ? 0.9f : 1.0f;
 				
 				break;
 			}

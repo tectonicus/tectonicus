@@ -16,7 +16,8 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.Version;
-import tectonicus.blockTypes.BlockUtil;
+import tectonicus.blockregistry.BakedBlockStateModel;
+import tectonicus.blockregistry.BakedBlockStateModel.BakedQuad;
 import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BlockModel.BlockElement;
 import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
@@ -31,80 +32,26 @@ import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 import tectonicus.util.Util;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 @UtilityClass
-public class MeshUtil
-{
+public class MeshUtil {
+	private static final float BOOKSHELF_BOOK_WORLD_LIGHT_WEIGHT = 0.25f;
+	private static final Set<String> NIGHT_LIGHT_ADJUSTMENT_EXEMPT_BLOCKS = Set.of(
+			"minecraft:icicle",
+			"minecraft:amethyst_cluster",
+			"minecraft:large_amethyst_bud",
+			"minecraft:medium_amethyst_bud",
+			"minecraft:small_amethyst_bud");
 
-	public void addCube(final float x, final float y, final float z, Vector4f colour, final boolean addTop,
-							   final boolean addNorth, final boolean addSouth, final boolean addEast, final boolean addWest,
-							   Mesh geometry)
-	{
-		final float inc = 0.2f;
-		Vector4f lightColour = new Vector4f(colour.x + inc, colour.y + inc, colour.z + inc, colour.w);
-		Vector4f darkColour = new Vector4f(colour.x - inc, colour.y - inc, colour.z - inc, colour.w);
-		
-		BlockUtil.clamp(lightColour);
-		BlockUtil.clamp(darkColour);
-		
-		// Top
-		if (addTop)
-		{
-			geometry.addVertex(new Vector3f(x, y+1, z), colour, 0, 0);
-			geometry.addVertex(new Vector3f(x+1, y+1, z), colour, 1, 0);
-			geometry.addVertex(new Vector3f(x+1, y+1, z+1), colour, 1, 1);
-			geometry.addVertex(new Vector3f(x, y+1, z+1), colour, 0, 1);
-		}
-		
-		// North face
-		if (addNorth)
-		{
-			geometry.addVertex(new Vector3f(x, y, z), darkColour, 0, 0);
-			geometry.addVertex(new Vector3f(x, y+1, z), darkColour, 1, 0);
-			geometry.addVertex(new Vector3f(x, y+1, z+1), darkColour, 1, 1);
-			geometry.addVertex(new Vector3f(x, y, z+1), darkColour, 0, 1);	
-		}
-		
-		// South
-		if (addSouth)
-		{
-			geometry.addVertex(new Vector3f(x+1, y, z), darkColour, 0, 0);
-			geometry.addVertex(new Vector3f(x+1, y, z+1), darkColour, 0, 1);
-			geometry.addVertex(new Vector3f(x+1, y+1, z+1), darkColour, 1, 1);
-			geometry.addVertex(new Vector3f(x+1, y+1, z), darkColour, 1, 0);
-		}
-		
-		// East
-		if (addEast)
-		{
-			geometry.addVertex(new Vector3f(x+1, y+1, z), lightColour, 1, 1);
-			geometry.addVertex(new Vector3f(x, y+1, z), lightColour, 0, 1);
-			geometry.addVertex(new Vector3f(x, y, z), lightColour, 0, 0);
-			geometry.addVertex(new Vector3f(x+1, y, z), lightColour, 1, 0);
-		}
-		
-		// West
-		if (addWest)
-		{
-			geometry.addVertex(new Vector3f(x, y, z+1), lightColour, 0, 0);
-			geometry.addVertex(new Vector3f(x, y+1, z+1), lightColour, 0, 1);
-			geometry.addVertex(new Vector3f(x+1, y+1, z+1), lightColour, 1, 1);
-			geometry.addVertex(new Vector3f(x+1, y, z+1), lightColour, 1, 0);
-		}
-	}
-
-	public void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
-	{
+	public void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture) {
 		mesh.addVertex(p0, colour, texture.u0, texture.v0);
 		mesh.addVertex(p1, colour, texture.u1, texture.v0);
 		mesh.addVertex(p2, colour, texture.u1, texture.v1);
 		mesh.addVertex(p3, colour, texture.u0, texture.v1);
 	}
 	
-	public void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture)
-	{
+	public void addDoubleSidedQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture) {
 		// Clockwise
 		mesh.addVertex(p0, colour, texture.u0, texture.v0);
 		mesh.addVertex(p1, colour, texture.u1, texture.v0);
@@ -140,558 +87,191 @@ public class MeshUtil
 		mesh.addVertex(p2, colour, uv2.x, uv2.y);
 		mesh.addVertex(p3, colour, uv3.x, uv3.y);
 	}
-	
-	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation)
-	{
-		addBlock(world, rawChunk, x, y, z, model, geometry, xRotation, yRotation, 0);
-	}
 
-	public void addBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BlockModel model, Geometry geometry, int xRotation, int yRotation, int zRotation)
-	{
-		List<BlockElement> elements = model.getElements();
+	/** Emits geometry that was transformed and UV-mapped during blockstate model baking. */
+	public void addBakedBlock(BlockContext world, RawChunk rawChunk, int x, int y, int z, BakedBlockStateModel bakedModel, Geometry geometry) {
+		BlockModel model = bakedModel.getSourceModel();
+		if (model == null || bakedModel.getQuads().isEmpty())
+			return;
 
-		boolean selfFull = true;
-		boolean above;
-		boolean below;
-		boolean north;
-		boolean south;
-		boolean east;
-		boolean west;
+		boolean oldBlockStates = world.getTexturePack().getVersion().getNumVersion() <= Version.VERSION_12.getNumVersion();
+		BlockStateWrapper selfBlock = oldBlockStates ? null : world.getBlock(rawChunk, x, y, z);
+		float nightLightAdjustment = selfBlock != null
+				&& NIGHT_LIGHT_ADJUSTMENT_EXEMPT_BLOCKS.contains(selfBlock.getBlockName())
+				? 0 : world.getNightLightAdjustment();
+		boolean blockEmitsLight = !oldBlockStates && selfBlock != null
+				&& selfBlock.getLightEmission(rawChunk.getBlockState(x, y, z)) > 0;
+		boolean above = oldBlockStates
+				? world.getBlockType(rawChunk, x, y + 1, z).isSolid()
+				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y + 1, z));
+		boolean below = oldBlockStates
+				? world.getBlockType(rawChunk, x, y - 1, z).isSolid()
+				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y - 1, z));
+		boolean north = oldBlockStates
+				? world.getBlockType(rawChunk, x, y, z - 1).isSolid()
+				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y, z - 1));
+		boolean south = oldBlockStates
+				? world.getBlockType(rawChunk, x, y, z + 1).isSolid()
+				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y, z + 1));
+		boolean east = oldBlockStates
+				? world.getBlockType(rawChunk, x + 1, y, z).isSolid()
+				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x + 1, y, z));
+		boolean west = oldBlockStates
+				? world.getBlockType(rawChunk, x - 1, y, z).isSolid()
+				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x - 1, y, z));
 
-		float topLight;
-		float bottomLight;
-		float northLight;
-		float southLight;
-		float eastLight;
-		float westLight;
+		if (above && north && south && east && west)
+			return;
 
-		Version textureVersion = world.getTexturePack().getVersion();
-		if (textureVersion.getNumVersion() <= Version.VERSION_12.getNumVersion()) {
-			above = world.getBlockType(rawChunk, x, y + 1, z).isSolid();
-			below = world.getBlockType(rawChunk, x, y - 1, z).isSolid();
-			north = world.getBlockType(rawChunk, x, y, z - 1).isSolid();
-			south = world.getBlockType(rawChunk, x, y, z + 1).isSolid();
-			east = world.getBlockType(rawChunk, x + 1, y, z).isSolid();
-			west = world.getBlockType(rawChunk, x - 1, y, z).isSolid();
-
-			topLight = world.getLight(rawChunk, x, y+1, z, LightFace.Top);
-			bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Top);
-			northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth);
-			southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth);
-			eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest);
-			westLight = world.getLight(rawChunk, x - 1, y, z, LightFace.EastWest);
-		} else {
-			BlockStateWrapper selfBlock = world.getBlock(rawChunk, x, y, z);
-			BlockStateWrapper aboveBlock = world.getBlock(rawChunk, x, y+1, z);
-			BlockStateWrapper belowBlock = world.getBlock(rawChunk, x, y-1, z);
-			BlockStateWrapper northBlock = world.getBlock(rawChunk, x, y, z-1);
-			BlockStateWrapper southBlock = world.getBlock(rawChunk, x, y, z+1);
-			BlockStateWrapper eastBlock = world.getBlock(rawChunk, x+1, y, z);
-			BlockStateWrapper westBlock = world.getBlock(rawChunk, x-1, y, z);
-
-			selfFull = selfBlock.isFullBlock();
-			above = isFaceCovered(world, selfBlock, aboveBlock);
-			below = isFaceCovered(world, selfBlock, belowBlock);
-			north = isFaceCovered(world, selfBlock, northBlock);
-			south = isFaceCovered(world, selfBlock, southBlock);
-			east = isFaceCovered(world, selfBlock, eastBlock);
-			west = isFaceCovered(world, selfBlock, westBlock);
-
-			//If the block is covered by solid blocks then skip it
-			if (above && north && south && east && west)
-				return;
-
-			//Handle some special cases e.g. double slabs, 8 layer snow
-			if (!selfFull && model.isFullBlock()) {
-				selfFull = true;
-			}
-
-			topLight = world.getLight(rawChunk, x, y+1, z, LightFace.Top);
-			bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Top);
-			northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth);
-			southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth);
-			eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest);
-			westLight = world.getLight(rawChunk, x - 1, y, z, LightFace.EastWest);
-
+		boolean selfFull = oldBlockStates || selfBlock.isFullBlock();
+		if (!selfFull && model.isFullBlock())
+			selfFull = true;
+		float topLight = world.getLight(rawChunk, x, y + 1, z, LightFace.Top, nightLightAdjustment);
+		float bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Top, nightLightAdjustment);
+		float northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth, nightLightAdjustment);
+		float southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth, nightLightAdjustment);
+		float eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest, nightLightAdjustment);
+		float westLight = world.getLight(rawChunk, x - 1, y, z, LightFace.EastWest, nightLightAdjustment);
+		if (!selfFull) {
 			String blockName = selfBlock.getBlockName();
-			if(!selfFull) {
-				//Since stairs and slabs don't contain any lighting value we have to approximate it, it's not perfect but good enough for now
-				if(blockName.contains("stair") || blockName.contains("slab")) {
-					boolean aboveStairOrSlab = aboveBlock.getBlockName().contains("stair") || aboveBlock.getBlockName().contains("slab");
-					boolean belowStairOrSlab = belowBlock.getBlockName().contains("stair") || belowBlock.getBlockName().contains("slab");
-					boolean northStairOrSlab = northBlock.getBlockName().contains("stair") || northBlock.getBlockName().contains("slab");
-					boolean southStairOrSlab = southBlock.getBlockName().contains("stair") || southBlock.getBlockName().contains("slab");
-					boolean eastStairOrSlab = eastBlock.getBlockName().contains("stair") || eastBlock.getBlockName().contains("slab");
-					boolean westStairOrSlab = westBlock.getBlockName().contains("stair") || westBlock.getBlockName().contains("slab");
-
-					float lightTotal = 0;
-					int count = 0;
-					if (!above && !aboveStairOrSlab) {
-						lightTotal += topLight;
-						count++;
-					}
-					if (!below && !belowStairOrSlab) {
-						lightTotal += bottomLight;
-						count++;
-					}
-					if (!north && !northStairOrSlab) {
-						lightTotal += northLight;
-						count++;
-					}
-					if (!south && !southStairOrSlab) {
-						lightTotal += southLight;
-						count++;
-					}
-					if (!east && !eastStairOrSlab) {
-						lightTotal += eastLight;
-						count++;
-					}
-					if (!west && !westStairOrSlab) {
-						lightTotal += westLight;
-						count++;
-					}
-
-					float lightAvg = 0;
-					if (count > 0) {
-						lightAvg = Util.clamp(lightTotal / count, 0, 1);
-					}
-
-					topLight = bottomLight = northLight = southLight = eastLight = westLight = lightAvg;
-				} else {
-					float selfTopLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
-					float selfNorthSouthLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z, world.getNightLightAdjustment());
-					float selfEastWestLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z, world.getNightLightAdjustment());
-					topLight = bottomLight = selfTopLight;
-					northLight = southLight = selfNorthSouthLight;
-					eastLight = westLight = selfEastWestLight;
-				}
+			if (blockName.contains("stair") || blockName.contains("slab")) {
+				BlockStateWrapper aboveBlock = world.getBlock(rawChunk, x, y + 1, z);
+				BlockStateWrapper belowBlock = world.getBlock(rawChunk, x, y - 1, z);
+				BlockStateWrapper northBlock = world.getBlock(rawChunk, x, y, z - 1);
+				BlockStateWrapper southBlock = world.getBlock(rawChunk, x, y, z + 1);
+				BlockStateWrapper eastBlock = world.getBlock(rawChunk, x + 1, y, z);
+				BlockStateWrapper westBlock = world.getBlock(rawChunk, x - 1, y, z);
+				float total = 0;
+				int count = 0;
+				if (!above && !isStairOrSlab(aboveBlock)) { total += topLight; count++; }
+				if (!below && !isStairOrSlab(belowBlock)) { total += bottomLight; count++; }
+				if (!north && !isStairOrSlab(northBlock)) { total += northLight; count++; }
+				if (!south && !isStairOrSlab(southBlock)) { total += southLight; count++; }
+				if (!east && !isStairOrSlab(eastBlock)) { total += eastLight; count++; }
+				if (!west && !isStairOrSlab(westBlock)) { total += westLight; count++; }
+				float average = count == 0 ? 0 : Util.clamp(total / count, 0, 1);
+				topLight = bottomLight = northLight = southLight = eastLight = westLight = average;
+			} else {
+				topLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, nightLightAdjustment);
+				northLight = southLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z, nightLightAdjustment);
+				eastLight = westLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z, nightLightAdjustment);
+				bottomLight = topLight;
 			}
 		}
 
-		Vector4f topShaded = null;
-		Vector4f northShaded = null;
-		Vector4f southShaded = null;
-		Vector4f eastShaded = null;
-		Vector4f westShaded = null;
-		boolean useSmoothLighting = world.isSmoothLit();
-		if (useSmoothLighting && model.isAmbientlyOccluded()) {
-			float northAbove = world.getLight(rawChunk, x, y + 1, z - 1, LightFace.Top);
-			float northEastAbove = world.getLight(rawChunk, x + 1, y + 1, z - 1, LightFace.Top);
-			float northWestAbove = world.getLight(rawChunk, x - 1, y + 1, z - 1, LightFace.Top);
-			float southAbove = world.getLight(rawChunk, x, y + 1, z + 1, LightFace.Top);
-			float southEastAbove = world.getLight(rawChunk, x + 1, y + 1, z + 1, LightFace.Top);
-			float southWestAbove = world.getLight(rawChunk, x - 1, y + 1, z + 1, LightFace.Top);
-			float eastAbove = world.getLight(rawChunk, x + 1, y + 1, z, LightFace.Top);
-			float westAbove = world.getLight(rawChunk, x - 1, y + 1, z, LightFace.Top);
-			float northEast = world.getLight(rawChunk, x + 1, y, z - 1, LightFace.Top);
-			float northWest = world.getLight(rawChunk, x - 1, y, z - 1, LightFace.Top);
-			float southEast = world.getLight(rawChunk, x + 1, y, z + 1, LightFace.Top);
-			float southWest = world.getLight(rawChunk, x - 1, y, z + 1, LightFace.Top);
-			float northBelow = world.getLight(rawChunk, x, y - 1, z - 1, LightFace.Top);
-			float northEastBelow = world.getLight(rawChunk, x + 1, y - 1, z - 1, LightFace.Top);
-			float northWestBelow = world.getLight(rawChunk, x - 1, y - 1, z - 1, LightFace.Top);
-			float southBelow = world.getLight(rawChunk, x, y - 1, z + 1, LightFace.Top);
-			float southEastBelow = world.getLight(rawChunk, x + 1, y - 1, z + 1, LightFace.Top);
-			float southWestBelow = world.getLight(rawChunk, x - 1, y - 1, z + 1, LightFace.Top);
-			float eastBelow = world.getLight(rawChunk, x + 1, y - 1, z, LightFace.Top);
-			float westBelow = world.getLight(rawChunk, x - 1, y - 1, z, LightFace.Top);
+		Matrix4f rotation = new Matrix4f()
+				.rotateZ((float) Math.toRadians(-bakedModel.getZRotation()))
+				.rotateY((float) Math.toRadians(-bakedModel.getYRotation()))
+				.rotateX((float) Math.toRadians(-bakedModel.getXRotation()));
+		boolean bookshelfBookOverlay = model.getName().contains("chiseled_bookshelf_occupied_slot_");
+		for (BakedQuad quad : bakedModel.getQuads()) {
+			ElementFace face = quad.getFace();
+			FaceDirection direction = rotatedFaceDirection(rotation, quad.getSourceFace());
+			FaceDirection lightDirection = quad.getShadeDirectionOverride() != null
+					? faceDirection(quad.getShadeDirectionOverride())
+					: selfFull ? direction : faceDirection(quad.getSourceFace());
+			FaceDirection cullDirection = quad.getCullDirection() == null ? null : faceDirection(quad.getCullDirection());
+			if (cullDirection != null && isDirectionCovered(cullDirection, above, below, north, south, east, west))
+				continue;
 
-
-			float lightV1 = 0.0f;
-			lightV1 += northAbove;
-			lightV1 += westAbove;
-			lightV1 += northWestAbove;
-			lightV1 /= 3;
-			//System.out.println(lightV1);
-
-			float lightV2 = 0.0f;
-			lightV2 += northAbove;
-			lightV2 += eastAbove;
-			lightV2 += northEastAbove;
-			lightV2 /= 3;
-			//System.out.println(lightV2);
-
-			float lightV3 = 0.0f;
-			lightV3 += eastAbove;
-			lightV3 += southEastAbove;
-			lightV3 += southAbove;
-			lightV3 /= 3;
-
-			float lightV4 = 0.0f;
-			lightV4 += westAbove;
-			lightV4 += southWestAbove;
-			lightV4 += southAbove;
-			lightV4 /= 3;
-
-			topShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
-
-
-			lightV1 = 0.0f;
-			lightV1 += northEastAbove;
-			lightV1 += northEast;
-			lightV1 += northAbove;
-			lightV1 /= 3;
-
-			lightV2 = 0.0f;
-			lightV2 += northWestAbove;
-			lightV2 += northWest;
-			lightV2 += northAbove;
-			lightV2 /= 3;
-
-			lightV3 = 0.0f;
-			lightV3 += northBelow;
-			lightV3 += northWestBelow;
-			lightV3 += northWest;
-			lightV3 /= 3;
-
-			lightV4 = 0.0f;
-			lightV4 += northBelow;
-			lightV4 += northEastBelow;
-			lightV4 += northEast;
-			lightV4 /= 3;
-
-			northShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
-
-
-			lightV1 = 0.0f;
-			lightV1 += southWestAbove;
-			lightV1 += southWest;
-			lightV1 += southAbove;
-			lightV1 /= 3;
-
-			lightV2 = 0.0f;
-			lightV2 += southEastAbove;
-			lightV2 += southEast;
-			lightV2 += southAbove;
-			lightV2 /= 3;
-
-			lightV3 = 0.0f;
-			lightV3 += southBelow;
-			lightV3 += southEastBelow;
-			lightV3 += southEast;
-			lightV3 /= 3;
-
-			lightV4 = 0.0f;
-			lightV4 += southBelow;
-			lightV4 += southWestBelow;
-			lightV4 += southWest;
-			lightV4 /= 3;
-
-			southShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
-
-
-			lightV1 = 0.0f;
-			lightV1 += southEastAbove;
-			lightV1 += southEast;
-			lightV1 += eastAbove;
-			lightV1 /= 3;
-
-			lightV2 = 0.0f;
-			lightV2 += northEastAbove;
-			lightV2 += northEast;
-			lightV2 += eastAbove;
-			lightV2 /= 3;
-
-			lightV3 = 0.0f;
-			lightV3 += northEastBelow;
-			lightV3 += eastBelow;
-			lightV3 += northEast;
-			lightV3 /= 3;
-
-			lightV4 = 0.0f;
-			lightV4 += southEastBelow;
-			lightV4 += eastBelow;
-			lightV4 += southEast;
-			lightV4 /= 3;
-
-			eastShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
-
-
-			lightV1 = 0.0f;
-			lightV1 += northWestAbove;
-			lightV1 += northWest;
-			lightV1 += westAbove;
-			lightV1 /= 3;
-
-			lightV2 = 0.0f;
-			lightV2 += southWestAbove;
-			lightV2 += southWest;
-			lightV2 += westAbove;
-			lightV2 /= 3;
-
-			lightV3 = 0.0f;
-			lightV3 += southWestBelow;
-			lightV3 += westBelow;
-			lightV3 += southWest;
-			lightV3 /= 3;
-
-			lightV4 = 0.0f;
-			lightV4 += northWestBelow;
-			lightV4 += westBelow;
-			lightV4 += northWest;
-			lightV4 /= 3;
-
-			westShaded = new Vector4f(lightV1, lightV2, lightV3, lightV4);
-		}
-
-
-		boolean upFaceCovered = above;
-		boolean downFaceCovered = below;
-		boolean northFaceCovered = north;
-		boolean southFaceCovered = south;
-		boolean eastFaceCovered = east;
-		boolean westFaceCovered = west;
-
-		float topLightTemp = topLight;
-		float bottomLightTemp = bottomLight;
-		float northLightTemp = northLight;
-		float southLightTemp = southLight;
-		float eastLightTemp = eastLight;
-		float westLightTemp = westLight;
-
-		Vector4f topShadedTemp = topShaded;
-		Vector4f northShadedTemp = northShaded;
-		Vector4f southShadedTemp = southShaded;
-		Vector4f eastShadedTemp = eastShaded;
-		Vector4f westShadedTemp = westShaded;
-
-		Matrix4f blockRotation = null;
-
-		if (xRotation != 0 || yRotation != 0 || zRotation != 0) {
-			Vector3f rotOrigin = new Vector3f(x + 0.5f, y + 0.5f, z + 0.5f);
-			blockRotation = new Matrix4f().translate(rotOrigin)
-					.rotate(-(float) Math.toRadians(zRotation), 0, 0, 1)
-					.rotate(-(float) Math.toRadians(yRotation), 0, 1, 0)
-					.rotate(-(float) Math.toRadians(xRotation), 1, 0, 0)
-					.translate(rotOrigin.negate());
-
-			FaceDirection upDirection = rotatedFaceDirection(blockRotation, 0, 1, 0);
-			FaceDirection downDirection = rotatedFaceDirection(blockRotation, 0, -1, 0);
-			FaceDirection northDirection = rotatedFaceDirection(blockRotation, 0, 0, -1);
-			FaceDirection southDirection = rotatedFaceDirection(blockRotation, 0, 0, 1);
-			FaceDirection eastDirection = rotatedFaceDirection(blockRotation, 1, 0, 0);
-			FaceDirection westDirection = rotatedFaceDirection(blockRotation, -1, 0, 0);
-
-			upFaceCovered = isDirectionCovered(upDirection, above, below, north, south, east, west);
-			downFaceCovered = isDirectionCovered(downDirection, above, below, north, south, east, west);
-			northFaceCovered = isDirectionCovered(northDirection, above, below, north, south, east, west);
-			southFaceCovered = isDirectionCovered(southDirection, above, below, north, south, east, west);
-			eastFaceCovered = isDirectionCovered(eastDirection, above, below, north, south, east, west);
-			westFaceCovered = isDirectionCovered(westDirection, above, below, north, south, east, west);
-
-			if (selfFull) {
-				topLightTemp = getDirectionLight(upDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
-				bottomLightTemp = getDirectionLight(downDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
-				northLightTemp = getDirectionLight(northDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
-				southLightTemp = getDirectionLight(southDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
-				eastLightTemp = getDirectionLight(eastDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
-				westLightTemp = getDirectionLight(westDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
+			// shade=false disables directional face shading, not the block's world lighting.
+			float light;
+			if (bookshelfBookOverlay) {
+				float worldLight = world.getLight(rawChunk, x, y, z, LightFace.Top, nightLightAdjustment);
+				light = 1.0f - BOOKSHELF_BOOK_WORLD_LIGHT_WEIGHT * (1.0f - worldLight);
+			} else if (!quad.isShaded()) {
+				light = world.getLight(rawChunk, x, y, z, LightFace.Top, nightLightAdjustment);
+			} else {
+				light = getDirectionLight(lightDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
 			}
-		}
+			Colour4f colour = new Colour4f(light, light, light, 1);
+			if (face.isTinted())
+				colour.multiply(getTintColor(model.getName(), rawChunk, world, x, y, z, null));
 
-		if (selfFull && useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 && zRotation == 0) {
-			if (yRotation == 90 || yRotation == -270) {
-				topShadedTemp = new Vector4f(topShaded.y, topShaded.z, topShaded.w, topShaded.x);
-				northShadedTemp = eastShaded;
-				southShadedTemp = westShaded;
-				eastShadedTemp = southShaded;
-				westShadedTemp = northShaded;
-			} else if (Math.abs(yRotation) == 180) {
-				topShadedTemp = new Vector4f(topShaded.z, topShaded.w, topShaded.x, topShaded.y);
-				northShadedTemp = southShaded;
-				southShadedTemp = northShaded;
-				eastShadedTemp = westShaded;
-				westShadedTemp = eastShaded;
-			} else if (yRotation == 270 || yRotation == -90) {
-				topShadedTemp = new Vector4f(topShaded.w, topShaded.x, topShaded.y, topShaded.z);
-				northShadedTemp = westShaded;
-				southShadedTemp = eastShaded;
-				eastShadedTemp = northShaded;
-				westShadedTemp = southShaded;
+			MeshType meshType = model.getName().contains("grass_block") && !quad.isGrassOverlay()
+					? MeshType.Solid
+					: face.isTranslucent() ? MeshType.Transparent
+					: face.isTransparent() ? MeshType.AlphaTest : MeshType.Solid;
+			Mesh mesh = geometry.getMesh(face.getTexture().texture, meshType);
+			for (int vertex = 0; vertex < 4; vertex++) {
+				// Chiseled bookshelf books are single-face overlays on the front plane.
+				// The baked AO approximation treats their small rectangles as block corners,
+				// which darkens the book art much more than the surrounding bookshelf face.
+				float ao = !bookshelfBookOverlay && !blockEmitsLight && world.isSmoothLit()
+						&& model.isAmbientlyOccluded() && direction != FaceDirection.DOWN
+						? getBakedAo(world, rawChunk, x, y, z, direction, quad, vertex, nightLightAdjustment) : 1.0f;
+				Vector4f vertexColour = new Vector4f(colour.r * ao, colour.g * ao, colour.b * ao, colour.a);
+				mesh.addVertex(new Vector3f(x + quad.getPosition(vertex, 0), y + quad.getPosition(vertex, 1), z + quad.getPosition(vertex, 2)),
+						vertexColour, quad.getUv(vertex, 0), quad.getUv(vertex, 1));
 			}
-		}
-
-		for(BlockElement element : elements)
-		{
-			Matrix4f elementRotation = null;
-			if (element.getRotationX() != 0 || element.getRotationY() != 0 || element.getRotationZ() != 0) {
-				float xrot = x + element.getRotationOrigin().x()/16;
-				float yrot = y + element.getRotationOrigin().y()/16;
-				float zrot = z + element.getRotationOrigin().z()/16;
-				Vector3f rotationOrigin = new Vector3f(xrot, yrot, zrot);
-				//Rotate on multiple axes 
-				elementRotation = new Matrix4f().translate(rotationOrigin)
-						.rotateZ((float) Math.toRadians(element.getRotationZ()))
-						.rotateY((float) Math.toRadians(element.getRotationY()))
-						.rotateX((float) Math.toRadians(element.getRotationX()));
-				if (element.isScaled()) { //scale the non-rotated faces across the whole block by 1 / cos(angle)
-					elementRotation.scale(
-							rescaleFactor(element.getRotationY()) * rescaleFactor(element.getRotationZ()),
-							rescaleFactor(element.getRotationX()) * rescaleFactor(element.getRotationZ()),
-							rescaleFactor(element.getRotationX()) * rescaleFactor(element.getRotationY()));
-				}
-				elementRotation.translate(rotationOrigin.negate());
-			}
-			
-			float x1 = x + element.getFrom().x()/16;
-			float y1 = y + element.getFrom().y()/16;
-			float z1 = z + element.getFrom().z()/16;
-	        
-			float x2 = x + element.getTo().x()/16;
-			float y2 = y + element.getTo().y()/16;
-			float z2 = z + element.getTo().z()/16;
-	
-	        Vector3f topLeft, topRight, bottomRight, bottomLeft;
-			Map<String, ElementFace> faces = element.getFaces();
-			ElementFace upFace = faces.get("up");
-			ElementFace downFace = faces.get("down");
-			ElementFace northFace = faces.get("north");
-			ElementFace southFace = faces.get("south");
-			ElementFace eastFace = faces.get("east");
-			ElementFace westFace = faces.get("west");
-
-			boolean isGrassOverlay = false;
-			float fudgeFactor = 0;
-
-			//Set the tint color if any
-			Colour4f tintColor = new Colour4f();
-			if ((upFace != null && upFace.isTinted()) || (downFace != null && downFace.isTinted())
-					|| (northFace != null && northFace.isTinted()) || (southFace != null && southFace.isTinted())
-					|| (eastFace != null && eastFace.isTinted()) || (westFace != null && westFace.isTinted())) {
-
-				String modelName = model.getName();
-
-				tintColor = getTintColor(modelName, rawChunk, world, x, y, z, element);
-
-				//Grass block side overlay hack
-				if (modelName.contains("grass_block") && element.getFaces().size() == 4) {
-					isGrassOverlay = true;
-					fudgeFactor = 0.0001f;
-				}
-			}
-
-			if (upFace != null && !(upFaceCovered && upFace.isFaceCulled()))
-	        {
-				Colour4f color = new Colour4f(topLightTemp, topLightTemp, topLightTemp, 1);
-	        	if (upFace.isTinted()) {
-	        		color.multiply(tintColor);
-				}
-				
-				topLeft = new Vector3f(x1, y2, z1);
-		        topRight = new Vector3f(x2, y2, z1);
-		        bottomRight = new Vector3f(x2, y2, z2);
-		        bottomLeft = new Vector3f(x1, y2, z2);
-
-		        if (useSmoothLighting && model.isAmbientlyOccluded()) {
-					addVerticesShaded(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, topShadedTemp,
-							elementRotation, blockRotation, model, false);
-				} else {
-					addVertices(geometry, color, upFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, false);
-				}
-	        }
-
-			if (downFace != null && !(downFaceCovered && downFace.isFaceCulled()))
-	        {
-				Colour4f color = new Colour4f(bottomLightTemp, bottomLightTemp, bottomLightTemp, 1);
-				if (downFace.isTinted()) {
-					color.multiply(tintColor);
-				}
-				
-				topLeft = new Vector3f(x1, y1, z2);
-		        topRight = new Vector3f(x2, y1, z2);
-		        bottomRight = new Vector3f(x2, y1, z1);
-		        bottomLeft = new Vector3f(x1, y1, z1);
-
-		        addVertices(geometry, color, downFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, false);
-	        }
-
-			if (northFace != null && !(northFaceCovered && northFace.isFaceCulled()))
-	        {
-				Colour4f color = new Colour4f(northLightTemp, northLightTemp, northLightTemp, 1);
-				if (northFace.isTinted()) {
-					color.multiply(tintColor);
-				}
-
-				topLeft = new Vector3f(x2, y2, z1 - fudgeFactor);
-		        topRight = new Vector3f(x1, y2, z1 - fudgeFactor);
-		        bottomRight = new Vector3f(x1, y1, z1 - fudgeFactor);
-		        bottomLeft = new Vector3f(x2, y1, z1 - fudgeFactor);
-
-				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 ) {
-					addVerticesShaded(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, northShadedTemp,
-							elementRotation, blockRotation, model, isGrassOverlay);
-				} else {
-					addVertices(geometry, color, northFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
-				}
-	        }
-
-			if (southFace != null && !(southFaceCovered && southFace.isFaceCulled()))
-	        {
-				Colour4f color = new Colour4f(southLightTemp, southLightTemp, southLightTemp, 1);
-				if (southFace.isTinted()) {
-					color.multiply(tintColor);
-				}
-
-				topLeft = new Vector3f(x1, y2, z2 + fudgeFactor);
-		        topRight = new Vector3f(x2, y2, z2 + fudgeFactor);
-		        bottomRight = new Vector3f(x2, y1, z2 + fudgeFactor);
-		        bottomLeft = new Vector3f(x1, y1, z2 + fudgeFactor);
-
-				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 ) {
-					addVerticesShaded(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, southShadedTemp,
-							elementRotation, blockRotation, model, isGrassOverlay);
-				} else {
-					addVertices(geometry, color, southFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
-				}
-	        }
-
-			if (eastFace != null && !(eastFaceCovered && eastFace.isFaceCulled()))
-	        {
-				Colour4f color = new Colour4f(eastLightTemp, eastLightTemp, eastLightTemp, 1);
-				if (eastFace.isTinted()) {
-					color.multiply(tintColor);
-				}
-
-				topLeft = new Vector3f(x2 + fudgeFactor, y2, z2);
-		        topRight = new Vector3f(x2 + fudgeFactor, y2, z1);
-		        bottomRight = new Vector3f(x2 + fudgeFactor, y1, z1);
-		        bottomLeft = new Vector3f(x2 + fudgeFactor, y1, z2);
-
-				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0) {
-					addVerticesShaded(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, eastShadedTemp,
-							elementRotation, blockRotation, model, isGrassOverlay);
-				} else {
-					addVertices(geometry, color, eastFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
-				}
-	        }
-
-			if (westFace != null && !(westFaceCovered && westFace.isFaceCulled()))
-	        {
-				Colour4f color = new Colour4f(westLightTemp, westLightTemp, westLightTemp, 1);
-				if (westFace.isTinted()) {
-					color.multiply(tintColor);
-				}
-
-				topLeft = new Vector3f(x1 - fudgeFactor, y2, z1);
-		        topRight = new Vector3f(x1 - fudgeFactor, y2, z2);
-		        bottomRight = new Vector3f(x1 - fudgeFactor, y1, z2);
-		        bottomLeft = new Vector3f(x1 - fudgeFactor, y1, z1);
-
-				if (useSmoothLighting && model.isAmbientlyOccluded() && xRotation == 0 ) {
-					addVerticesShaded(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, westShadedTemp,
-							elementRotation, blockRotation, model, isGrassOverlay);
-				} else {
-					addVertices(geometry, color, westFace, topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation, model, isGrassOverlay);
-				}
-	        }
 		}
 	}
 
-	private float rescaleFactor(float angle) {
-		return 1.0f / (float) Math.cos(Math.toRadians(angle));
+	private boolean isStairOrSlab(BlockStateWrapper block) {
+		return block.getBlockName().contains("stair") || block.getBlockName().contains("slab");
+	}
+
+	private float getBakedAo(BlockContext world, RawChunk rawChunk, int x, int y, int z, FaceDirection face,
+			BakedQuad quad, int vertex, float nightLightAdjustment) {
+		int nx = 0, ny = 0, nz = 0;
+		switch (face) {
+			case UP -> ny = 1;
+			case DOWN -> ny = -1;
+			case NORTH -> nz = -1;
+			case SOUTH -> nz = 1;
+			case EAST -> nx = 1;
+			case WEST -> nx = -1;
+		}
+		int px = quad.getPosition(vertex, 0) >= 0.5f ? 1 : -1;
+		int py = quad.getPosition(vertex, 1) >= 0.5f ? 1 : -1;
+		int pz = quad.getPosition(vertex, 2) >= 0.5f ? 1 : -1;
+		int[] tangents = switch (face) {
+			case UP, DOWN -> new int[]{px, 0, 0, 0, 0, pz};
+			case NORTH, SOUTH -> new int[]{px, 0, 0, 0, py, 0};
+			case EAST, WEST -> new int[]{0, py, 0, 0, 0, pz};
+		};
+		float a = world.getLight(rawChunk, x + nx + tangents[0], y + ny + tangents[1], z + nz + tangents[2], LightFace.Top, nightLightAdjustment);
+		float b = world.getLight(rawChunk, x + nx + tangents[3], y + ny + tangents[4], z + nz + tangents[5], LightFace.Top, nightLightAdjustment);
+		float c = world.getLight(rawChunk, x + nx + tangents[0] + tangents[3], y + ny + tangents[1] + tangents[4],
+				z + nz + tangents[2] + tangents[5], LightFace.Top, nightLightAdjustment);
+		return Util.clamp((a + b + c) / 3.0f, 0, 1);
+	}
+
+	private FaceDirection rotatedFaceDirection(Matrix4f rotation, String face) {
+		Vector3f direction = rotation.transformDirection(faceNormal(face));
+		float absX = Math.abs(direction.x), absY = Math.abs(direction.y), absZ = Math.abs(direction.z);
+		if (absY >= absX && absY >= absZ) return direction.y >= 0 ? FaceDirection.UP : FaceDirection.DOWN;
+		if (absX >= absZ) return direction.x >= 0 ? FaceDirection.EAST : FaceDirection.WEST;
+		return direction.z >= 0 ? FaceDirection.SOUTH : FaceDirection.NORTH;
+	}
+
+	private Vector3f faceNormal(String face) {
+		return switch (face) {
+			case "up" -> new Vector3f(0, 1, 0);
+			case "down" -> new Vector3f(0, -1, 0);
+			case "north" -> new Vector3f(0, 0, -1);
+			case "south" -> new Vector3f(0, 0, 1);
+			case "east" -> new Vector3f(1, 0, 0);
+			default -> new Vector3f(-1, 0, 0);
+		};
+	}
+
+	private FaceDirection faceDirection(String face) {
+		return switch (face) {
+			case "up" -> FaceDirection.UP;
+			case "down" -> FaceDirection.DOWN;
+			case "north" -> FaceDirection.NORTH;
+			case "south" -> FaceDirection.SOUTH;
+			case "east" -> FaceDirection.EAST;
+			default -> FaceDirection.WEST;
+		};
 	}
 
 	private Colour4f getTintColor(String modelName, RawChunk rawChunk, BlockContext world, int x, int y, int z, BlockElement element) {
+		// The vanilla stonecutter model has tintindex on its saw, but the saw should keep its texture color.
+		if (modelName.contains("stonecutter"))
+			return new Colour4f(1, 1, 1, 1);
+
 		Colour4f tintColor;
 		Colour4f fixedTint = FixedBlockTint.find(modelName);
 
@@ -719,24 +299,7 @@ public class MeshUtil
 			tintColor = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 		}
 
-		//Stonecutter has tintindex but does not need tint
-
 		return tintColor;
-	}
-
-	private FaceDirection rotatedFaceDirection(Matrix4f rotation, float x, float y, float z) {
-		org.joml.Vector3f direction = rotation.transformDirection(new org.joml.Vector3f(x, y, z));
-		float absX = Math.abs(direction.x);
-		float absY = Math.abs(direction.y);
-		float absZ = Math.abs(direction.z);
-
-		if (absY >= absX && absY >= absZ) {
-			return direction.y >= 0 ? FaceDirection.UP : FaceDirection.DOWN;
-		}
-		if (absX >= absZ) {
-			return direction.x >= 0 ? FaceDirection.EAST : FaceDirection.WEST;
-		}
-		return direction.z >= 0 ? FaceDirection.SOUTH : FaceDirection.NORTH;
 	}
 
 	private boolean isDirectionCovered(FaceDirection direction, boolean above, boolean below, boolean north, boolean south,
@@ -766,24 +329,6 @@ public class MeshUtil
 		UP, DOWN, NORTH, SOUTH, EAST, WEST
 	}
 
-	private void doTransforms(Vector3f topLeft, Vector3f topRight, Vector3f bottomRight, Vector3f bottomLeft,
-							  Matrix4f elementRotation, Matrix4f blockRotation) {
-		if(elementRotation != null)
-		{
-			elementRotation.transformPosition(topLeft);
-			elementRotation.transformPosition(topRight);
-			elementRotation.transformPosition(bottomRight);
-			elementRotation.transformPosition(bottomLeft);
-		}
-
-		if (blockRotation != null) {
-			blockRotation.transformPosition(topLeft);
-			blockRotation.transformPosition(topRight);
-			blockRotation.transformPosition(bottomRight);
-			blockRotation.transformPosition(bottomLeft);
-		}
-	}
-
 	private boolean isFaceCovered(BlockContext world, BlockStateWrapper selfBlock, BlockStateWrapper neighborBlock)
 	{
 		//Ignore snow because it can have adjacent snow blocks with different heights, we could look up the snow layer height
@@ -795,130 +340,5 @@ public class MeshUtil
 		return neighborBlock.isFullOpaqueBlock()
 				|| world.shouldCullSameBlockFaces()
 					&& selfBlock.getBlockName().equals(neighborBlock.getBlockName());
-	}
-
-	private Mesh getMesh(Geometry geometry, ElementFace face, BlockModel model, boolean isGrassOverlay) {
-		MeshType meshType;
-		if (model.getName().contains("grass_block") && !isGrassOverlay) {
-			meshType = MeshType.Solid;
-		} else if (face.isTranslucent()) {
-			meshType = MeshType.Transparent;
-		} else if (face.isTransparent()) {
-			meshType = MeshType.AlphaTest;
-		} else {
-			meshType = MeshType.Solid;
-		}
-
-		return geometry.getMesh(face.getTexture().texture, meshType);
-	}
-	
-	private void addVertices(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
-							 Vector3f bottomRight, Vector3f bottomLeft, Matrix4f elementRotation, Matrix4f blockRotation, BlockModel model, boolean isGrassOverlay)
-	{
-		doTransforms(topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
-
-		SubTexture tex = face.getTexture();
-		Mesh mesh = getMesh(geometry, face, model, isGrassOverlay);
-		
-		int texRotation = face.getTextureRotation();
-		if(texRotation == 0)
-		{
-			mesh.addVertex(topLeft, color, tex.u0, tex.v0);
-			mesh.addVertex(topRight, color, tex.u1, tex.v0);
-			mesh.addVertex(bottomRight, color, tex.u1, tex.v1);
-			mesh.addVertex(bottomLeft, color, tex.u0, tex.v1);
-		}
-		else if (texRotation == 90)
-		{
-			mesh.addVertex(topLeft, color, tex.u0, tex.v1);
-			mesh.addVertex(topRight, color, tex.u0, tex.v0);
-			mesh.addVertex(bottomRight, color, tex.u1, tex.v0);
-			mesh.addVertex(bottomLeft, color, tex.u1, tex.v1);
-		}
-		else if (texRotation == 180)
-		{
-			mesh.addVertex(topLeft, color, tex.u1, tex.v1);
-			mesh.addVertex(topRight, color, tex.u0, tex.v1);
-			mesh.addVertex(bottomRight, color, tex.u0, tex.v0);
-			mesh.addVertex(bottomLeft, color, tex.u1, tex.v0);
-		}
-		else if (texRotation == 270)
-		{
-			mesh.addVertex(topLeft, color, tex.u1, tex.v0);
-			mesh.addVertex(topRight, color, tex.u1, tex.v1);
-			mesh.addVertex(bottomRight, color, tex.u0, tex.v1);
-			mesh.addVertex(bottomLeft, color, tex.u0, tex.v0);
-		}
-	}
-
-	private void addVerticesShaded(Geometry geometry, Colour4f color, ElementFace face, Vector3f topLeft, Vector3f topRight,
-								   Vector3f bottomRight, Vector3f bottomLeft, Vector4f ao, Matrix4f elementRotation, Matrix4f blockRotation,
-								   BlockModel model, boolean isGrassOverlay)
-	{
-		doTransforms(topLeft, topRight, bottomRight, bottomLeft, elementRotation, blockRotation);
-
-		SubTexture tex = face.getTexture();
-		Mesh mesh = getMesh(geometry, face, model, isGrassOverlay);
-
-		//TODO: if the block has ambient occlusion we should figure out smooth lighting
-
-		int texRotation = face.getTextureRotation();
-		if(texRotation == 0)
-		{
-			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u0, tex.v0);
-			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u1, tex.v0);
-			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u1, tex.v1);
-			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u0, tex.v1);
-		}
-		else if (texRotation == 90)
-		{
-			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u0, tex.v1);
-			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u0, tex.v0);
-			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u1, tex.v0);
-			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u1, tex.v1);
-		}
-		else if (texRotation == 180)
-		{
-			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u1, tex.v1);
-			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u0, tex.v1);
-			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u0, tex.v0);
-			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u1, tex.v0);
-		}
-		else if (texRotation == 270)
-		{
-			mesh.addVertex(topLeft, new Vector4f(color.r*ao.x, color.g*ao.x, color.b*ao.x, color.a), tex.u1, tex.v0);
-			mesh.addVertex(topRight, new Vector4f(color.r*ao.y, color.g*ao.y, color.b*ao.y, color.a), tex.u1, tex.v1);
-			mesh.addVertex(bottomRight, new Vector4f(color.r*ao.z, color.g*ao.z, color.b*ao.z, color.a), tex.u0, tex.v1);
-			mesh.addVertex(bottomLeft, new Vector4f(color.r*ao.w, color.g*ao.w, color.b*ao.w, color.a), tex.u0, tex.v0);
-		}
-
-//		if(texRotation == 0)
-//		{
-//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u0, tex.v0);
-//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u1, tex.v0);
-//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u1, tex.v1);
-//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u0, tex.v1);
-//		}
-//		else if (texRotation == 90)
-//		{
-//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u0, tex.v1);
-//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u0, tex.v0);
-//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u1, tex.v0);
-//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u1, tex.v1);
-//		}
-//		else if (texRotation == 180)
-//		{
-//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u1, tex.v1);
-//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u0, tex.v1);
-//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u0, tex.v0);
-//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u1, tex.v0);
-//		}
-//		else if (texRotation == 270)
-//		{
-//			mesh.addVertex(topLeft, new Vector4f(ao.x, ao.x, ao.x, color.a), tex.u1, tex.v0);
-//			mesh.addVertex(topRight, new Vector4f(ao.y, ao.y, ao.y, color.a), tex.u1, tex.v1);
-//			mesh.addVertex(bottomRight, new Vector4f(ao.z, ao.z, ao.z, color.a), tex.u0, tex.v1);
-//			mesh.addVertex(bottomLeft, new Vector4f(ao.w, ao.w, ao.w, color.a), tex.u0, tex.v0);
-//		}
 	}
 }

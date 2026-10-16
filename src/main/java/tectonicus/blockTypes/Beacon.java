@@ -120,7 +120,7 @@ public class Beacon implements BlockType {
 					(int)(rawChunk.getChunkCoord().x * RawChunk.WIDTH + x), rawChunk.getWorldY(y),
 					(int)(rawChunk.getChunkCoord().z * RawChunk.DEPTH + z));
 			for (BlockStateModel bsc : models) {  //There is only a single beacon model in vanilla Minecraft
-				bsc.getBlockModel().createGeometry(x, y, z, world, rawChunk, geometry, bsc.getXRotation(), bsc.getYRotation());
+				bsc.createGeometry(x, y, z, world, rawChunk, geometry);
 			}
 		} else {
 			Vector4f colour = new Vector4f(1, 1, 1, 1);

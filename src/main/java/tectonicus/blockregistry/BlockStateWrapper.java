@@ -15,6 +15,7 @@ import tectonicus.raw.BlockProperties;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -24,6 +25,8 @@ public class BlockStateWrapper {
 	private final String blockName;
 	private final List<BlockState> states = new ArrayList<>();
 	private Map<String, String> defaultProperties = Collections.emptyMap();
+	@Setter
+	private EmissiveBlock emissiveBlock;
 	@Setter
 	private boolean fullBlock = true;
 	@Setter
@@ -49,6 +52,15 @@ public class BlockStateWrapper {
 			return new BlockProperties(defaultProperties);
 
 		return properties;
+	}
+
+	public int getLightEmission(BlockProperties properties) {
+		if (emissiveBlock == null)
+			return 0;
+		Map<String, String> effectiveProperties = new HashMap<>(defaultProperties);
+		if (properties != null)
+			effectiveProperties.putAll(properties.getProperties());
+		return emissiveBlock.getLightEmission(effectiveProperties);
 	}
 
 	public List<BlockStateModel> getModels(BlockProperties properties, int x, int y, int z) {

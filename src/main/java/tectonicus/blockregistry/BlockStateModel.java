@@ -23,6 +23,7 @@ import tectonicus.renderer.Geometry;
 public class BlockStateModel {
 	private String model = "";
 	private BlockModel blockModel;
+	private BakedBlockStateModel bakedModel;
 	@JsonProperty("x")
 	private int xRotation = 0;
 	@JsonProperty("y")
@@ -33,8 +34,10 @@ public class BlockStateModel {
 	private boolean uvlock = false;
 
 	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry) {
-		if(blockModel != null) {
-			blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation, zRotation);  //TODO: pass in weight and uvlock
+		if (bakedModel != null) {
+			bakedModel.createGeometry(x, y, z, world, rawChunk, geometry);
+		} else if (blockModel != null) {
+			blockModel.createGeometry(x, y, z, world, rawChunk, geometry, xRotation, yRotation, zRotation);
 		} else {
 			log.warn("No block model found for model: {}", model);
 		}

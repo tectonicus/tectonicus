@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,7 +13,6 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.blockregistry.BlockModel;
-import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 
@@ -57,17 +56,14 @@ public class Observer implements BlockType
 	{
 		BlockModel model = world.getModelRegistry().getModel(stringId.replace("minecraft:", "block/"));
 		final int data = chunk.getBlockData(x, y, z);
-		if (data == 0)
-			MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 90, 0);
-		else if (data == 1)
-			MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 270, 0);
-		else if (data == 2)
-			MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 0, 0);
-		else if (data == 3)
-			MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 0, 180);
-		else if (data == 4)
-			MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 0, 270);
-		else if (data == 5)
-			MeshUtil.addBlock(world, chunk, x, y, z, model, geometry, 0, 90);
+		int xRotation = data == 0 ? 90 : data == 1 ? 270 : 0;
+		int yRotation = switch (data) {
+			case 3 -> 180;
+			case 4 -> 270;
+			case 5 -> 90;
+			default -> 0;
+		};
+		world.getModelRegistry().getBakedModel(model, xRotation, yRotation, 0, false)
+				.createGeometry(x, y, z, world, chunk, geometry);
 	}
 }

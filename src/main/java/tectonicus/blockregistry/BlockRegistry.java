@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static tectonicus.blockregistry.BlockState.getRandomWeightedModel;
 
@@ -65,6 +66,7 @@ public class BlockRegistry {
 	@Getter
 	private final Cache<String, BlockStateModelsWeight> singleVariantBlocks = Caffeine.newBuilder().build();
 	private final Set<String> missingBlockModels = new HashSet<>();
+	private final Map<BakeKey, BakedBlockStateModel> bakedModels = new ConcurrentHashMap<>();
 	private Map<String, Map<String, String>> defaultBlockStates = Collections.emptyMap();
 	private TexturePack texturePack;
 	private ZipStack zips;
@@ -119,6 +121,14 @@ public class BlockRegistry {
 	
 	public BlockModel getModel(String model) {
 		return blockModels.getIfPresent(model);
+	}
+
+	public BakedBlockStateModel getBakedModel(BlockModel model, int xRotation, int yRotation, int zRotation, boolean uvlock) {
+		if (model == null)
+			return null;
+		BakeKey key = new BakeKey(model, xRotation, yRotation, zRotation, uvlock);
+		return bakedModels.computeIfAbsent(key,
+				ignored -> new BakedBlockStateModel(model, xRotation, yRotation, zRotation, uvlock));
 	}
 	
 	public boolean containsSingleVariantBlock(String blockName) {
@@ -246,6 +256,8 @@ public class BlockRegistry {
 				for (BlockStateModel model : models) {
 					log.trace("Loading model: {} for {}", model, blockStateWrapper.getBlockName());
 					model.setBlockModel(loadModel(model.getModel()));
+					model.setBakedModel(getBakedModel(model.getBlockModel(), model.getXRotation(), model.getYRotation(),
+							model.getZRotation(), model.isUvlock()));
 					modelCount++;
 				}
 			}
@@ -259,6 +271,8 @@ public class BlockRegistry {
 			log.error("Something bad happened", e);
 		}
 	}
+
+	private record BakeKey(BlockModel model, int xRotation, int yRotation, int zRotation, boolean uvlock) { }
 	
 	private Map<String, String> parseStates(JsonNode when) {
 		Map<String, String> states = new HashMap<>();
@@ -451,6 +465,7 @@ public class BlockRegistry {
 	
 	private void checkBlockAttributes() {
 		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
+			wrapper.setEmissiveBlock(EmissiveBlock.forBlockName(wrapper.getBlockName()));
 			for (BlockState state : wrapper.getStates()) {
 				setBlockAttributes(wrapper, state.getModelsAndWeight().getModels());
 			}

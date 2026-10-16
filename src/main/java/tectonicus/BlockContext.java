@@ -36,6 +36,7 @@ public interface BlockContext {
 
 	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
 	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face);
+	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face, float nightLightAdjustment);
 
 	LightStyle getLightStyle();
 	float getNightLightAdjustment();

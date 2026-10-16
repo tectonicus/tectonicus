@@ -16,6 +16,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockModel;
+import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
@@ -221,7 +222,10 @@ public class ItemRenderer
 		{
 			type.addInteriorGeometry(0, 0, 0, context, registry, rawChunk, geometry);
 		} else if (model != null) {
-			MeshUtil.addBlock(context, rawChunk, 0, 0, 0, model, geometry, 0, 0);
+			BakedBlockStateModel bakedModel = context.blockRegistry == null
+					? new BakedBlockStateModel(model, 0, 0, 0, false)
+					: context.blockRegistry.getBakedModel(model, 0, 0, 0, false);
+			bakedModel.createGeometry(0, 0, 0, context, rawChunk, geometry);
 		}
 
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
@@ -295,8 +299,8 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 1, (byte) 16);
 		rawChunk.setSkyLight(0, 0, 1, (byte) 16);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		MeshUtil.addBlock(context, rawChunk, 0, 0, 0, headModel, geometry, 0, 0);
-		MeshUtil.addBlock(context, rawChunk, 0, 0, 1, footModel, geometry, 0, 0);
+		registry.getBakedModel(headModel, 0, 0, 0, false).createGeometry(0, 0, 0, context, rawChunk, geometry);
+		registry.getBakedModel(footModel, 0, 0, 0, false).createGeometry(0, 0, 1, context, rawChunk, geometry);
 
 		BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 9.0f / 16.0f, 2);
 		ItemGeometry item = new ItemGeometry(geometry, bounds);
@@ -701,6 +705,12 @@ public class ItemRenderer
 
 		@Override
 		public float getLight(RawChunk rawChunk, int x, int y, int z, LightFace face)
+		{
+			return 1;
+		}
+
+		@Override
+		public float getLight(RawChunk rawChunk, int x, int y, int z, LightFace face, float nightLightAdjustment)
 		{
 			return 1;
 		}
