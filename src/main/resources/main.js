@@ -2,6 +2,31 @@
 let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0);
 let tileLayers = new Map();
 let activeBaseLayer = null;
+let mapInfoTippy = null;
+let mapInfoContent = '';
+
+function bindMapInfoTippy() {
+    let mapInfoLink = document.querySelector('.leaflet-control-attribution #mapInfo');
+    if (mapInfoLink === null) {
+        return;
+    }
+
+    if (mapInfoTippy === null || mapInfoTippy.reference !== mapInfoLink) {
+        if (mapInfoTippy !== null) {
+            mapInfoTippy.destroy();
+        }
+
+        mapInfoTippy = tippy(mapInfoLink, {
+            content: mapInfoContent,
+            allowHTML: true,
+            interactive: true,
+            theme: 'light',
+            maxWidth: 500
+        });
+    } else {
+        mapInfoTippy.setContent(mapInfoContent);
+    }
+}
 
 function size(obj) {
 	var size = 0, key;
@@ -129,6 +154,8 @@ async function mainAsync()
 
 	// Add attribution control to the map
 	L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
+        let attributionContainer = mymap.attributionControl.getContainer();
+        new MutationObserver(bindMapInfoTippy).observe(attributionContainer, {childList: true});
 
         // We have done all we can. Now we have to await the containers initialization
         await containersMainPromise;
@@ -300,13 +327,8 @@ function onBaseLayerChange(e) {
 //            statsHtml += stat.name + ' ' + stat.count + '<br/>';
 //        }
 
-    tippy('#mapInfo', {
-        content: statsHtml,
-        allowHTML: true,
-        interactive: true,
-        theme: 'light',
-        maxWidth: 500
-    });
+    mapInfoContent = statsHtml;
+    bindMapInfoTippy();
 }
 
 function changeBackgroundColor(color) {
@@ -474,8 +496,8 @@ function refreshBedMarkers(layer, markersVisible) {
 
 		let icon = L.icon({
 			iconUrl: "Images/Items/" + bed.color + "_bed.png",
-			// iconSize: [30, 30],
-			iconAnchor: [25, 30],
+			iconSize: [38, 38],
+			iconAnchor: [20, 24],
 			popupAnchor: [0, -10],
 			//shadowUrl: 'my-icon-shadow.png',
 			//shadowSize: [68, 95],

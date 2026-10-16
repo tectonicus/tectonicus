@@ -113,9 +113,9 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 
 function SetToggleBg(control) {
 	if (control.checked)
-		control.style.backgroundColor = '#CCCCFF';
-	else
 		control.style.backgroundColor = '#FFFFFF';
+	else
+		control.style.backgroundColor = '#CCCCFF';
 }
 
 
