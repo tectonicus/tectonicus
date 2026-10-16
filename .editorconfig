@@ -1,0 +1,17 @@
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = false
+
+# Java files
+[*.java]
+indent_style = tab
+
+# XML files
+[*.xml]
+indent_style = space
+indent_size = 4
