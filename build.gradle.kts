@@ -32,7 +32,7 @@ dependencies {
 	val picocliVersion = "4.7.7"
 	val lombokVersion = "1.18.48"
 	val junitVersion = "6.1.3"
-	val caffeineVersion = "3.3.0"
+	val caffeineVersion = "3.3.1"
 	val commonsTextVersion = "1.15.0"
 	val jomlVersion = "1.10.9"
 	val joglVersion = "2.6.0"
