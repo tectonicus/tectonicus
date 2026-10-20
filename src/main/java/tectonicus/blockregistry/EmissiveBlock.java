@@ -42,6 +42,7 @@ public enum EmissiveBlock {
 	SCULK_SENSOR(names("sculk_sensor", "calibrated_sculk_sensor"), state -> "active".equals(state.get("sculk_sensor_phase")) ? 1 : 0),
 	SCULK_CATALYST(names("sculk_catalyst"), state -> bool(state, "bloom") ? 6 : 0),
 	AMETHYST_CLUSTER(names("amethyst_cluster"), state -> 5),
+	ICE_CRYSTAL(names("ice_crystal"), state -> 4),
 	LARGE_AMETHYST_BUD(names("large_amethyst_bud"), state -> 4),
 	MEDIUM_AMETHYST_BUD(names("medium_amethyst_bud"), state -> 2),
 	SMALL_AMETHYST_BUD(names("small_amethyst_bud"), state -> 1),

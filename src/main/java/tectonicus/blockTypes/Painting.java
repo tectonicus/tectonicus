@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -110,6 +110,7 @@ public class Painting implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		final float nightLightAdjustment = Math.max(0, world.getNightLightAdjustment() - 0.1f);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		final float texel = 1.0f/16.0f;
@@ -283,11 +284,11 @@ public class Painting implements BlockType
 				if (tempZ == 16)
 					tempZ--;
 				
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, world.getNightLightAdjustment());
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, nightLightAdjustment);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.Top, nightLightAdjustment);
+				final float northSouthLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.NorthSouth, nightLightAdjustment);
+				final float eastWestLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.EastWest, nightLightAdjustment);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 0, 0, 0, 
 													dim1, dim2, 1, colour, backing, topLight, northSouthLight, eastWestLight,
@@ -306,11 +307,11 @@ public class Painting implements BlockType
 				else if (tempX == 16)
 					tempX--;
 				
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, world.getNightLightAdjustment());
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, nightLightAdjustment);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.Top, nightLightAdjustment);
+				final float northSouthLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.NorthSouth, nightLightAdjustment);
+				final float eastWestLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.EastWest, nightLightAdjustment);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 15, 0, 0, 
 													1, dim2, dim1, colour, backing, topLight, northSouthLight, eastWestLight,
@@ -330,11 +331,11 @@ public class Painting implements BlockType
 				else if(tempZ == 16)
 					tempZ--;
 				
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, world.getNightLightAdjustment());
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, nightLightAdjustment);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.Top, nightLightAdjustment);
+				final float northSouthLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.NorthSouth, nightLightAdjustment);
+				final float eastWestLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.EastWest, nightLightAdjustment);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 0, 0, 15, 
 													dim1, dim2, 1, colour, backing, topLight, northSouthLight, eastWestLight,
@@ -354,11 +355,11 @@ public class Painting implements BlockType
 				else if (tempX == 16)
 					tempX--;
 				
-				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, world.getNightLightAdjustment());
+				final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, tempX, tempY, tempZ, nightLightAdjustment);
 				Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
-				final float topLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.Top);
-				final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.NorthSouth);
-				final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), tempX, tempY, tempZ, LightFace.EastWest);
+				final float topLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.Top, nightLightAdjustment);
+				final float northSouthLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.NorthSouth, nightLightAdjustment);
+				final float eastWestLight = world.getLight(rawChunk, tempX, tempY, tempZ, LightFace.EastWest, nightLightAdjustment);
 				
 				BlockUtil.addPartialBlock(mesh, x, y, z, 0, 0, 0, 
 													1, dim2, dim1, colour, backing, topLight, northSouthLight, eastWestLight,

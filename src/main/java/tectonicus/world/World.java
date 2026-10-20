@@ -978,6 +978,16 @@ public class World implements BlockContext
 	@Override
 	public float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face)
 	{
+		// Most callers sample the current block or a nearby block in the same chunk.
+		// Avoid allocating/resolving a Location in that common case; only resolve
+		// coordinates that actually cross a chunk boundary.
+		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
+		{
+			Chunk c = rawLoadedChunks.get(chunkCoord);
+			RawChunk raw = c != null ? c.getRawChunk() : null;
+			return Chunk.getLight(lightStyle, face, raw, x, y, z, nightLightAdjustment);
+		}
+
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;

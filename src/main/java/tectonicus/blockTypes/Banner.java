@@ -115,6 +115,7 @@ public class Banner implements BlockType
 	
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
+		final float nightLightAdjustment = Math.max(0, world.getNightLightAdjustment() - 0.1f);
 		Map<String, BufferedImage> patternImages = world.getTexturePack().getBannerPatternImages();
 		
 		String xyz = "x" + x + "y" + y + "z" + z;
@@ -195,7 +196,7 @@ public class Banner implements BlockType
 		final SubTexture frontTexture = new SubTexture(texture.texture, texture.u0+texel2, texture.v0+texel2, texture.u0+texel2*21, texture.v0+texel2*41);
 		final SubTexture backTexture = new SubTexture(texture.texture, texture.u0+texel2*22, texture.v0+texel2, texture.u0+texel2*42, texture.v0+texel2*41);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, nightLightAdjustment);
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final float texel = 1.0f / 16.0f;

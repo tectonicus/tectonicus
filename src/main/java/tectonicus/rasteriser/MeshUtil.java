@@ -38,6 +38,7 @@ import java.util.Set;
 public class MeshUtil {
 	private static final float BOOKSHELF_BOOK_WORLD_LIGHT_WEIGHT = 0.25f;
 	private static final Set<String> NIGHT_LIGHT_ADJUSTMENT_EXEMPT_BLOCKS = Set.of(
+			"minecraft:ice_crystal",
 			"minecraft:icicle",
 			"minecraft:amethyst_cluster",
 			"minecraft:large_amethyst_bud",
@@ -127,7 +128,7 @@ public class MeshUtil {
 		if (!selfFull && model.isFullBlock())
 			selfFull = true;
 		float topLight = world.getLight(rawChunk, x, y + 1, z, LightFace.Top, nightLightAdjustment);
-		float bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Top, nightLightAdjustment);
+		float bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Bottom, nightLightAdjustment);
 		float northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth, nightLightAdjustment);
 		float southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth, nightLightAdjustment);
 		float eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest, nightLightAdjustment);
@@ -155,7 +156,7 @@ public class MeshUtil {
 				topLight = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, nightLightAdjustment);
 				northLight = southLight = Chunk.getLight(world.getLightStyle(), LightFace.NorthSouth, rawChunk, x, y, z, nightLightAdjustment);
 				eastLight = westLight = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, rawChunk, x, y, z, nightLightAdjustment);
-				bottomLight = topLight;
+				bottomLight = Chunk.getLight(world.getLightStyle(), LightFace.Bottom, rawChunk, x, y, z, nightLightAdjustment);
 			}
 		}
 
