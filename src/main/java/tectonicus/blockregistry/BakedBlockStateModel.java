@@ -13,16 +13,15 @@ import lombok.Getter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import tectonicus.BlockContext;
+import tectonicus.blockregistry.BlockModel.BlockElement;
+import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
-import tectonicus.blockregistry.BlockModel.BlockElement;
-import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /** Geometry baked for one blockstate model entry. World lighting and visibility are deliberately deferred. */
 @Getter
@@ -124,7 +123,7 @@ public final class BakedBlockStateModel {
 
 		float[][] uv = bakeUv(face);
 		if (uvlock)
-			uv = lockUv(uv, xyz, faceName, blockRotation, face.isExplicitUv(), face);
+			uv = lockUv(uv, xyz, faceName, blockRotation, face);
 		float[] uvs = new float[8];
 		for (int i = 0; i < 4; i++) {
 			uvs[i * 2] = uv[i][0];
@@ -151,7 +150,7 @@ public final class BakedBlockStateModel {
 	}
 
 	private static float[][] lockUv(float[][] uv, float[] positions, String faceName, Matrix4f blockRotation,
-			boolean explicitUv, ElementFace face) {
+			ElementFace face) {
 		Vector3f sourceNormal = faceNormal(faceName);
 		blockRotation.transformDirection(sourceNormal);
 		String targetFace = dominantFace(sourceNormal);
@@ -172,11 +171,11 @@ public final class BakedBlockStateModel {
 			minV = Math.min(minV, vCoords[i]);
 			maxV = Math.max(maxV, vCoords[i]);
 		}
-		if (!explicitUv && face.getTextureRotation() == 0) {
-			// Default element UVs represent a projection of the full 16x16 block face. A
-			// rotated partial element must keep that texel-to-block-unit scale; mapping
-			// only the source rectangle's four corners would stretch it when its width
-			// and depth exchange places (as on rotated wall tops).
+		if (face.getTextureRotation() == 0) {
+			// UV lock projects the face into the world-facing block UV frame. This must
+			// also apply to explicit UV rectangles: stairs author a cropped rectangle
+			// for their upper tread, but after rotating the model the crop must follow
+			// the tread's world-space position in the full block texture.
 			float vScale = 1.0f;
 			if (face.getTexture().texture != null && face.getTexture().texture.getHeight() > 0)
 				vScale = (float) face.getTexture().texture.getWidth() / face.getTexture().texture.getHeight();

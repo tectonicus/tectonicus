@@ -754,6 +754,7 @@
   "minecraft:chiseled_copper": {},
   "minecraft:chiseled_deepslate": {},
   "minecraft:chiseled_nether_bricks": {},
+  "minecraft:chiseled_packed_ice": {},
   "minecraft:chiseled_polished_blackstone": {},
   "minecraft:chiseled_quartz_block": {},
   "minecraft:chiseled_red_sandstone": {},
@@ -2581,6 +2582,25 @@
     "waterlogged": "false"
   },
   "minecraft:packed_ice": {},
+  "minecraft:packed_ice_brick_slab": {
+    "type": "bottom",
+    "waterlogged": "false"
+  },
+  "minecraft:packed_ice_brick_stairs": {
+    "facing": "north",
+    "half": "bottom",
+    "shape": "straight",
+    "waterlogged": "false"
+  },
+  "minecraft:packed_ice_brick_wall": {
+    "east": "none",
+    "north": "none",
+    "south": "none",
+    "up": "true",
+    "waterlogged": "false",
+    "west": "none"
+  },
+  "minecraft:packed_ice_bricks": {},
   "minecraft:packed_mud": {},
   "minecraft:pale_hanging_moss": {
     "tip": "true"
