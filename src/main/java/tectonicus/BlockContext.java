@@ -43,6 +43,8 @@ public interface BlockContext {
 	boolean isSmoothLit();
 
 	TexturePack getTexturePack();
+	default float getCameraAngleRad() { return (float)Math.PI / 4.0f; }
+	default float getCameraElevationRad() { return (float)Math.PI / 4.0f; }
 
 	Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z);
 

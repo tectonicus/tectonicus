@@ -100,7 +100,8 @@ public enum Biomes implements Biome {
 	END_BARRENS("end_barrens", 63, 0.5f, 0.5f, END.getWaterColor()),
 	PALE_GARDEN("pale_garden", 64, 0.7f, 0.8f, PALE.getWaterColor(), HardcodedColors.PALE_GARDEN_GRASS, HardcodedColors.PALE_GARDEN_FOLIAGE, HardcodedColors.PALE_GARDEN_DRY_FOLIAGE),
 	SULFUR_CAVES("sulfur_caves", 65, 0.8f, 0.4f, SULFUR.getWaterColor(), HardcodedColors.SULFUR_CAVES_GRASS, null, null),
-	DAPPLED_FOREST("dappled_forest", 66, 0.6f, 0.6f, DAPPLED.getWaterColor(), HardcodedColors.DAPPLED_FOREST_GRASS, HardcodedColors.DAPPLED_FOREST_FOLIAGE, HardcodedColors.DAPPLED_FOREST_DRY_FOLIAGE);
+	DAPPLED_FOREST("dappled_forest", 66, 0.6f, 0.6f, DAPPLED.getWaterColor(), HardcodedColors.DAPPLED_FOREST_GRASS, HardcodedColors.DAPPLED_FOREST_FOLIAGE, HardcodedColors.DAPPLED_FOREST_DRY_FOLIAGE),
+	ICE_CAVES("ice_caves", 67, 0.0f, 0.0f, SNOWY.getWaterColor());
 	
 	Biomes(String id, int numericId, float temperature, float rainfall, Colour4f waterColor, Colour4f grassColor, Colour4f foliageColor, Colour4f dryFoliageColor) {
 		this(id, numericId, temperature, rainfall, BiomeUtils.getColorCoords(temperature, rainfall), waterColor, grassColor, foliageColor, dryFoliageColor);

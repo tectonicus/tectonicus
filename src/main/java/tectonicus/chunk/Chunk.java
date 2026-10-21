@@ -172,6 +172,10 @@ public class Chunk
 									}
 								}
 							}
+							if ((blockName.equals("minecraft:campfire") || blockName.equals("minecraft:soul_campfire"))
+									&& effectiveProperties != null && Boolean.parseBoolean(effectiveProperties.get("lit"))) {
+								tectonicus.blockTypes.CampfireSmoke.addGeometry(x, y, z, world, rawChunk, geometry);
+							}
 
 							//Render a water block at this same location if waterlogged
 							if ((effectiveProperties != null && effectiveProperties.containsKey("waterlogged") && effectiveProperties.get("waterlogged").equals("true"))

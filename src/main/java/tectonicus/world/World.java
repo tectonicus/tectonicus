@@ -174,6 +174,10 @@ public class World implements BlockContext
 	private final Geometry daySkybox, nightSkybox;
 	
 	private final SignFilter signFilter;
+	@Getter
+	private final float cameraAngleRad;
+	@Getter
+	private final float cameraElevationRad;
 
 	private final Map<Location, String> unknownBlocks;
 	
@@ -183,6 +187,8 @@ public class World implements BlockContext
 		this.sortTranslucentFaces = map.isSortTranslucentFaces();
 		this.legacyWater = map.isLegacyWater();
 		this.signFilter = map.getSignFilter();
+		this.cameraAngleRad = map.getCameraAngleRad();
+		this.cameraElevationRad = map.getCameraElevationRad();
 		
 		this.defaultBlockId = BlockIds.AIR;
 		this.blockFilter = new NullBlockFilter();
