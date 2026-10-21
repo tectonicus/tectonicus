@@ -22,7 +22,7 @@ Refer to `.editorconfig` for basic formatting conventions, and follow existing J
 - `UpperCamelCase` for classes, `lowerCamelCase` for fields/methods, `UPPER_SNAKE_CASE` for constants.
 - Keep packages under `tectonicus.*` and place new code in the closest domain package.
 
-Lombok is used in parts of the codebase; prefer explicit, readable APIs when adding new logic.
+Use Lombok where possible to reduce boilerplate, following existing usage patterns.
 
 ## Testing Guidelines
 Use JUnit Jupiter (`org.junit.jupiter`). Add tests under mirrored package paths in `src/test/java`. Name test classes `*Test` or `*Tests` (both patterns exist here). Keep fixtures in `src/test/resources` and prefer deterministic canned inputs over external dependencies.
