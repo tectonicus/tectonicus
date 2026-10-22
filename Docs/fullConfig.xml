@@ -68,10 +68,13 @@
 		compassRose="" <!-- custom image path -->
 		origin="0, 0" <!-- If not set the map will center on the spawn point. This setting will be overridden if a map subset is specified -->
 	>
-		<!-- legacyWater=false suppresses top faces beneath water; true preserves them -->
+		<!-- legacyWater=true Renders top water block faces beneath other water blocks; creates very deep looking water -->
+        <!-- useOldGrayscaleLighting=true Use the previous Alpha/Beta (pre Beta 1.8) grayscale color for night lighting instead of blue sky and warm block-light colors -->
+		<!-- sortTranslucentFaces=true Sorts translucent faces back to front within each chunk to get rid of rendering artifacts such as the ocean ice grid -->
 		<render
 			sortTranslucentFaces="true / false"
 			useSmoothLighting="true / false"
+			useOldGrayscaleLighting="false / true"
 			legacyWater="true / false"
 		/>
 

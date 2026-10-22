@@ -27,6 +27,15 @@ public record LightSample(float sky, float block, float ambient) {
 	}
 
 	public Colour4f toColour(LightStyle style) {
+		return toColour(style, false);
+	}
+
+	public Colour4f toColour(LightStyle style, boolean oldGrayscaleLighting) {
+		if (oldGrayscaleLighting) {
+			float brightness = Util.clamp(ambient + sky + block, 0, 1);
+			return new Colour4f(brightness, brightness, brightness, 1);
+		}
+
 		if (style == LightStyle.Night) {
 			// Minecraft's overworld night sky is blue, while block light remains warm.
 			return new Colour4f(

@@ -223,6 +223,7 @@ public class XmlConfigurationParser
 			boolean smoothLighting = getBoolean(mapElement, "useSmoothLighting", true);
 			Element renderNode = getChild(mapElement, "render");
 			map.setSmoothLit(getBoolean(renderNode, "useSmoothLighting", smoothLighting));
+			map.setOldGrayscaleLighting(getBoolean(renderNode, "useOldGrayscaleLighting", false));
 			map.setSortTranslucentFaces(getBoolean(renderNode, "sortTranslucentFaces", true));
 			map.setLegacyWater(getBoolean(renderNode, "legacyWater", false));
 			

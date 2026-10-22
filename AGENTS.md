@@ -18,7 +18,7 @@ Use the Gradle wrapper (`gradlew`/`gradlew.bat`) instead of a system Gradle inst
 
 ## Coding Style & Naming Conventions
 Refer to `.editorconfig` for basic formatting conventions, and follow existing Java style in this repository:
-- Braces on the same line for class/method declarations.
+- Braces on the same line for class/method declarations, K&R style.
 - `UpperCamelCase` for classes, `lowerCamelCase` for fields/methods, `UPPER_SNAKE_CASE` for constants.
 - Keep packages under `tectonicus.*` and place new code in the closest domain package.
 

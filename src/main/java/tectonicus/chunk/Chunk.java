@@ -48,6 +48,8 @@ import java.util.Map;
 
 public class Chunk
 {	
+	private static final float NIGHT_BLOCK_LIGHT_SCALE = 0.95f;
+	private static final float SMOOTH_NIGHT_BLOCK_LIGHT_SCALE = 1.4f;
 	private final ChunkCoord coord;
 	
 	private final BiomeCache biomeCache;
@@ -524,7 +526,7 @@ public class Chunk
 					final float skyLight = getSkyLight(c, x, y, z);
 					final float blockLight = getBlockLight(c, x, y, z);
 					
-					result = Util.clamp((skyLight * 0.24f + blockLight * 1.4f) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
+					result = Util.clamp((skyLight * 0.24f + blockLight * NIGHT_BLOCK_LIGHT_SCALE) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
 				}
 
 				result *= face == LightFace.Bottom ? 0.5f
@@ -584,8 +586,7 @@ public class Chunk
 	}
 
 	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
-			final int x, final int y, final int z, float nightLightAdjustment)
-	{
+			final int x, final int y, final int z, float nightLightAdjustment) {
 		if (lightStyle != LightStyle.Night || c == null || y >= Minecraft.getChunkHeight() || y < 0)
 			return LightSample.ambient(getLight(lightStyle, face, c, x, y, z, nightLightAdjustment));
 
@@ -593,7 +594,7 @@ public class Chunk
 				: face == LightFace.NorthSouth ? 0.95f
 				: face == LightFace.EastWest ? 0.9f : 1.0f;
 		float sky = getSkyLight(c, x, y, z) * 0.24f / RawChunk.MAX_LIGHT;
-		float block = getBlockLight(c, x, y, z) * 1.4f / RawChunk.MAX_LIGHT;
+		float block = getBlockLight(c, x, y, z) * SMOOTH_NIGHT_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT;
 		return new LightSample(sky * faceFactor, block * faceFactor, nightLightAdjustment * faceFactor);
 	}
 }

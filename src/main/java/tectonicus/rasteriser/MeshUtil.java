@@ -189,7 +189,20 @@ public class MeshUtil {
 				float worldLight = world.getLight(rawChunk, x, y, z, LightFace.Top, nightLightAdjustment);
 				light = 1.0f - BOOKSHELF_BOOK_WORLD_LIGHT_WEIGHT * (1.0f - worldLight);
 			} else if (!quad.isShaded()) {
-				light = world.getLight(rawChunk, x, y, z, LightFace.Top, nightLightAdjustment);
+				int sampleX = x, sampleY = y, sampleZ = z;
+				if (!samplePartialModelFromCell) {
+					switch (direction) {
+						case UP -> sampleY++;
+						case DOWN -> sampleY--;
+						case NORTH -> sampleZ--;
+						case SOUTH -> sampleZ++;
+						case EAST -> sampleX++;
+						case WEST -> sampleX--;
+					}
+				}
+				// Keep shade=false faces free of cardinal darkening, but sample the light
+				// across their actual surface so exposed tops still see full skylight.
+				light = world.getLight(rawChunk, sampleX, sampleY, sampleZ, LightFace.Top, nightLightAdjustment);
 			} else {
 				light = getDirectionLight(lightDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
 			}
@@ -212,7 +225,7 @@ public class MeshUtil {
 					LightSample lightSample = getSmoothVertexLight(world, rawChunk, x, y, z, direction, lightFace, samplePartialModelFromCell,
 							quad.getPosition(vertex, 0), quad.getPosition(vertex, 1), quad.getPosition(vertex, 2),
 							nightLightAdjustment);
-					vertexLight = lightSample.toColour(world.getLightStyle());
+					vertexLight = lightSample.toColour(world.getLightStyle(), world.useOldGrayscaleLighting());
 				}
 				// Chiseled bookshelf books are single-face overlays on the front plane.
 				// The baked AO approximation treats their small rectangles as block corners,

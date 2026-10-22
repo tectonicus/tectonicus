@@ -159,6 +159,8 @@ public class World implements BlockContext
 	@Getter
 	private final boolean smoothLit;
 	@Getter
+	private final boolean oldGrayscaleLighting;
+	@Getter
 	private final float nightLightAdjustment;
 
 	private int defaultBlockId;
@@ -331,7 +333,8 @@ public class World implements BlockContext
 		this.unknownBlocks = new HashMap<>();
 
 		this.smoothLit = map.isSmoothLit();
-		this.nightLightAdjustment = 0.15f;
+		this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
+		this.nightLightAdjustment = smoothLit ? 0.15f : 0.0f;
 	}
 	
 	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
@@ -459,6 +462,12 @@ public class World implements BlockContext
 	public LightStyle getLightStyle()
 	{
 		return lightStyle;
+	}
+
+	@Override
+	public boolean useOldGrayscaleLighting()
+	{
+		return oldGrayscaleLighting;
 	}
 	
 	public void setDefaultBlockId(final int blockId)

@@ -52,6 +52,9 @@ public class MutableMap implements Map
 	private boolean smoothLit;
 	@Getter
 	@Setter
+	private boolean oldGrayscaleLighting;
+	@Getter
+	@Setter
 	private boolean sortTranslucentFaces;
 	@Getter
 	@Setter
@@ -128,6 +131,7 @@ public class MutableMap implements Map
 		this.origin = new Vector3l(0, 0, 0);
 
 		this.smoothLit = true;
+		this.oldGrayscaleLighting = false;
 		this.sortTranslucentFaces = true;
 		this.legacyWater = false;
 	}
@@ -251,6 +255,13 @@ public class MutableMap implements Map
 	{
 		return useBiomeColours;
 	}
+
+	@Override
+	public boolean useOldGrayscaleLighting()
+	{
+		return oldGrayscaleLighting;
+	}
+
 	public void setUseBiomeColours(final boolean use)
 	{
 		this.useBiomeColours = use;

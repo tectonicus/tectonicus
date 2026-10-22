@@ -45,6 +45,7 @@ public interface BlockContext {
 	LightStyle getLightStyle();
 	float getNightLightAdjustment();
 	boolean isSmoothLit();
+	boolean useOldGrayscaleLighting();
 
 	TexturePack getTexturePack();
 	default float getCameraAngleRad() { return (float)Math.PI / 4.0f; }

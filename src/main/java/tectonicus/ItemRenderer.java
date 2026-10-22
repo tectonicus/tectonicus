@@ -730,6 +730,9 @@ public class ItemRenderer
 		public boolean isSmoothLit() { return true; }
 
 		@Override
+		public boolean useOldGrayscaleLighting() { return false; }
+
+		@Override
 		public TexturePack getTexturePack()
 		{
 			return texturePack;

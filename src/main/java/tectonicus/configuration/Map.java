@@ -44,6 +44,7 @@ public interface Map
 	
 	boolean useBiomeColours();
 	boolean isSmoothLit();
+	boolean useOldGrayscaleLighting();
 	boolean isSortTranslucentFaces();
 	boolean isLegacyWater();
 
