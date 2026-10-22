@@ -502,7 +502,9 @@ public class Chunk
 					final int skyLight = c.getSkyLight(x, y, z);
 					final int blockLight = c.getBlockLight(x, y, z);
 
-					result = Util.clamp((skyLight * 0.7f + blockLight) / RawChunk.MAX_LIGHT + 0.3f, 0, 1);
+					// MAX_LIGHT is the number of possible levels (0..15), not the brightest level.
+					// Normalize against 15 so full skylight reaches full daylight without help from block light.
+					result = Util.clamp((skyLight * 0.7f + blockLight) / (RawChunk.MAX_LIGHT - 1.0f) + 0.3f, 0, 1);
 				}
 
 				result *= face == LightFace.Bottom ? 0.5f
@@ -522,7 +524,7 @@ public class Chunk
 					final float skyLight = getSkyLight(c, x, y, z);
 					final float blockLight = getBlockLight(c, x, y, z);
 					
-					result = Util.clamp((skyLight * 0.1f + blockLight * 0.7f) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
+					result = Util.clamp((skyLight * 0.24f + blockLight * 1.4f) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
 				}
 
 				result *= face == LightFace.Bottom ? 0.5f
@@ -579,5 +581,19 @@ public class Chunk
 			result = 0;
 		
 		return result;
+	}
+
+	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
+			final int x, final int y, final int z, float nightLightAdjustment)
+	{
+		if (lightStyle != LightStyle.Night || c == null || y >= Minecraft.getChunkHeight() || y < 0)
+			return LightSample.ambient(getLight(lightStyle, face, c, x, y, z, nightLightAdjustment));
+
+		float faceFactor = face == LightFace.Bottom ? 0.5f
+				: face == LightFace.NorthSouth ? 0.95f
+				: face == LightFace.EastWest ? 0.9f : 1.0f;
+		float sky = getSkyLight(c, x, y, z) * 0.24f / RawChunk.MAX_LIGHT;
+		float block = getBlockLight(c, x, y, z) * 1.4f / RawChunk.MAX_LIGHT;
+		return new LightSample(sky * faceFactor, block * faceFactor, nightLightAdjustment * faceFactor);
 	}
 }

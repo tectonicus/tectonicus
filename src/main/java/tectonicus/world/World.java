@@ -35,6 +35,7 @@ import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
+import tectonicus.chunk.LightSample;
 import tectonicus.chunk.ChunkLocator;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
@@ -330,7 +331,7 @@ public class World implements BlockContext
 		this.unknownBlocks = new HashMap<>();
 
 		this.smoothLit = map.isSmoothLit();
-		this.nightLightAdjustment = smoothLit ? 0.3f : 0.1f;
+		this.nightLightAdjustment = 0.15f;
 	}
 	
 	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
@@ -999,6 +1000,18 @@ public class World implements BlockContext
 		RawChunk raw = c != null ? c.getRawChunk() : null;
 		
 		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
+	}
+
+	@Override
+	public LightSample getLightSample(RawChunk rawChunk, int x, int y, int z, LightFace face, float nightLightAdjustment)
+	{
+		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
+			return Chunk.getLightSample(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment);
+
+		Location loc = resolve(rawChunk.getChunkCoord(), x, y, z);
+		Chunk c = rawLoadedChunks.get(loc.coord);
+		RawChunk raw = c != null ? c.getRawChunk() : null;
+		return Chunk.getLightSample(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
 	}
 
 	@Override

@@ -108,9 +108,8 @@ public class Painting implements BlockType
 	}
 
 	@Override
-	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
-	{
-		final float nightLightAdjustment = Math.max(0, world.getNightLightAdjustment() - 0.1f);
+	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
+		final float nightLightAdjustment = world.getNightLightAdjustment();
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		final float texel = 1.0f/16.0f;

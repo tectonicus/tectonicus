@@ -23,7 +23,9 @@ import tectonicus.blockregistry.BlockModel.BlockElement;
 import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.chunk.Chunk;
+import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
+import tectonicus.configuration.LightStyle;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -127,12 +129,18 @@ public class MeshUtil {
 		boolean selfFull = oldBlockStates || selfBlock.isFullBlock();
 		if (!selfFull && model.isFullBlock())
 			selfFull = true;
+		boolean samplePartialModelFromCell = !selfFull
+				&& !selfBlock.getBlockName().contains("stair")
+				&& !selfBlock.getBlockName().contains("slab");
 		float topLight = world.getLight(rawChunk, x, y + 1, z, LightFace.Top, nightLightAdjustment);
 		float bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Bottom, nightLightAdjustment);
 		float northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth, nightLightAdjustment);
 		float southLight = world.getLight(rawChunk, x, y, z + 1, LightFace.NorthSouth, nightLightAdjustment);
 		float eastLight = world.getLight(rawChunk, x + 1, y, z, LightFace.EastWest, nightLightAdjustment);
 		float westLight = world.getLight(rawChunk, x - 1, y, z, LightFace.EastWest, nightLightAdjustment);
+		// Use the same adjacent-cell face samples for full cubes and partial models.
+		// Stairs and slabs keep their shape-aware average because their faces occupy
+		// only part of the block and their surrounding cells otherwise overstate light.
 		if (!selfFull) {
 			String blockName = selfBlock.getBlockName();
 			if (blockName.contains("stair") || blockName.contains("slab")) {
@@ -170,7 +178,7 @@ public class MeshUtil {
 			FaceDirection direction = rotatedFaceDirection(rotation, quad.getSourceFace());
 			FaceDirection lightDirection = quad.getShadeDirectionOverride() != null
 					? faceDirection(quad.getShadeDirectionOverride())
-					: selfFull ? direction : faceDirection(quad.getSourceFace());
+					: direction;
 			FaceDirection cullDirection = quad.getCullDirection() == null ? null : faceDirection(quad.getCullDirection());
 			if (cullDirection != null && isDirectionCovered(cullDirection, above, below, north, south, east, west))
 				continue;
@@ -185,9 +193,9 @@ public class MeshUtil {
 			} else {
 				light = getDirectionLight(lightDirection, topLight, bottomLight, northLight, southLight, eastLight, westLight);
 			}
-			Colour4f colour = new Colour4f(light, light, light, 1);
-			if (face.isTinted())
-				colour.multiply(getTintColor(model.getName(), rawChunk, world, x, y, z, null));
+			Colour4f tint = face.isTinted()
+					? getTintColor(model.getName(), rawChunk, world, x, y, z, null)
+					: new Colour4f(1, 1, 1, 1);
 
 			MeshType meshType = model.getName().contains("grass_block") && !quad.isGrassOverlay()
 					? MeshType.Solid
@@ -195,17 +203,76 @@ public class MeshUtil {
 					: face.isTransparent() ? MeshType.AlphaTest : MeshType.Solid;
 			Mesh mesh = geometry.getMesh(face.getTexture().texture, meshType);
 			for (int vertex = 0; vertex < 4; vertex++) {
+				Colour4f vertexLight = new Colour4f(light, light, light, 1);
+				if (world.isSmoothLit() && world.getLightStyle() == LightStyle.Night && !bookshelfBookOverlay) {
+					// Smooth lighting interpolates the light field around each quad corner.
+					// This is separate from model AO: models with ambientocclusion=false
+					// still receive smooth sky/block lighting, just without corner occlusion.
+					FaceDirection lightFace = quad.isShaded() ? lightDirection : FaceDirection.UP;
+					LightSample lightSample = getSmoothVertexLight(world, rawChunk, x, y, z, direction, lightFace, samplePartialModelFromCell,
+							quad.getPosition(vertex, 0), quad.getPosition(vertex, 1), quad.getPosition(vertex, 2),
+							nightLightAdjustment);
+					vertexLight = lightSample.toColour(world.getLightStyle());
+				}
 				// Chiseled bookshelf books are single-face overlays on the front plane.
 				// The baked AO approximation treats their small rectangles as block corners,
 				// which darkens the book art much more than the surrounding bookshelf face.
-				float ao = !bookshelfBookOverlay && !blockEmitsLight && world.isSmoothLit()
+				float ao = selfFull && !bookshelfBookOverlay && !blockEmitsLight && world.isSmoothLit()
 						&& model.isAmbientlyOccluded() && direction != FaceDirection.DOWN
 						? getBakedAo(world, rawChunk, x, y, z, direction, quad, vertex, nightLightAdjustment) : 1.0f;
-				Vector4f vertexColour = new Vector4f(colour.r * ao, colour.g * ao, colour.b * ao, colour.a);
+				Vector4f vertexColour = new Vector4f(vertexLight.r * tint.r * ao, vertexLight.g * tint.g * ao,
+						vertexLight.b * tint.b * ao, 1);
 				mesh.addVertex(new Vector3f(x + quad.getPosition(vertex, 0), y + quad.getPosition(vertex, 1), z + quad.getPosition(vertex, 2)),
 						vertexColour, quad.getUv(vertex, 0), quad.getUv(vertex, 1));
 			}
 		}
+	}
+
+	private LightSample getSmoothVertexLight(BlockContext world, RawChunk rawChunk, int x, int y, int z,
+			FaceDirection surface, FaceDirection shadeDirection, boolean sampleFromCell,
+			float vertexX, float vertexY, float vertexZ,
+			float nightLightAdjustment) {
+		int nx = 0, ny = 0, nz = 0;
+		int tangentAX, tangentAY, tangentAZ, tangentBX, tangentBY, tangentBZ;
+		switch (surface) {
+			case UP -> { ny = 1; tangentAX = 1; tangentAY = 0; tangentAZ = 0; tangentBX = 0; tangentBY = 0; tangentBZ = 1; }
+			case DOWN -> { ny = -1; tangentAX = 1; tangentAY = 0; tangentAZ = 0; tangentBX = 0; tangentBY = 0; tangentBZ = 1; }
+			case NORTH -> { nz = -1; tangentAX = 1; tangentAY = 0; tangentAZ = 0; tangentBX = 0; tangentBY = 1; tangentBZ = 0; }
+			case SOUTH -> { nz = 1; tangentAX = 1; tangentAY = 0; tangentAZ = 0; tangentBX = 0; tangentBY = 1; tangentBZ = 0; }
+			case EAST -> { nx = 1; tangentAX = 0; tangentAY = 1; tangentAZ = 0; tangentBX = 0; tangentBY = 0; tangentBZ = 1; }
+			case WEST -> { nx = -1; tangentAX = 0; tangentAY = 1; tangentAZ = 0; tangentBX = 0; tangentBY = 0; tangentBZ = 1; }
+			default -> throw new IllegalStateException("Unexpected face direction: " + surface);
+		}
+		if (sampleFromCell) {
+			nx = ny = nz = 0;
+		}
+		int offsetA = vertexCoordinate(vertexX, vertexY, vertexZ, tangentAX, tangentAY, tangentAZ) >= 0.5f ? 1 : -1;
+		int offsetB = vertexCoordinate(vertexX, vertexY, vertexZ, tangentBX, tangentBY, tangentBZ) >= 0.5f ? 1 : -1;
+		LightFace lightFace = toLightFace(shadeDirection);
+		LightSample total = world.getLightSample(rawChunk, x, y, z, lightFace, nightLightAdjustment);
+		for (int a = 0; a <= 1; a++) {
+			for (int b = 0; b <= 1; b++) {
+				total = total.add(world.getLightSample(rawChunk,
+						x + nx + (a == 1 ? offsetA * tangentAX : 0) + (b == 1 ? offsetB * tangentBX : 0),
+						y + ny + (a == 1 ? offsetA * tangentAY : 0) + (b == 1 ? offsetB * tangentBY : 0),
+						z + nz + (a == 1 ? offsetA * tangentAZ : 0) + (b == 1 ? offsetB * tangentBZ : 0),
+						lightFace, nightLightAdjustment));
+			}
+		}
+		return total.scale(0.2f);
+	}
+
+	private float vertexCoordinate(float x, float y, float z, int axisX, int axisY, int axisZ) {
+		return x * axisX + y * axisY + z * axisZ;
+	}
+
+	private LightFace toLightFace(FaceDirection direction) {
+		return switch (direction) {
+			case UP -> LightFace.Top;
+			case DOWN -> LightFace.Bottom;
+			case NORTH, SOUTH -> LightFace.NorthSouth;
+			case EAST, WEST -> LightFace.EastWest;
+		};
 	}
 
 	private boolean isStairOrSlab(BlockStateWrapper block) {
@@ -231,11 +298,24 @@ public class MeshUtil {
 			case NORTH, SOUTH -> new int[]{px, 0, 0, 0, py, 0};
 			case EAST, WEST -> new int[]{0, py, 0, 0, 0, pz};
 		};
-		float a = world.getLight(rawChunk, x + nx + tangents[0], y + ny + tangents[1], z + nz + tangents[2], LightFace.Top, nightLightAdjustment);
-		float b = world.getLight(rawChunk, x + nx + tangents[3], y + ny + tangents[4], z + nz + tangents[5], LightFace.Top, nightLightAdjustment);
+		float a = world.getLight(rawChunk, x + nx + tangents[0], y + ny + tangents[1], z + nz + tangents[2], LightFace.Top,
+				world.getLightStyle() == LightStyle.Night ? 0 : nightLightAdjustment);
+		float b = world.getLight(rawChunk, x + nx + tangents[3], y + ny + tangents[4], z + nz + tangents[5], LightFace.Top,
+				world.getLightStyle() == LightStyle.Night ? 0 : nightLightAdjustment);
 		float c = world.getLight(rawChunk, x + nx + tangents[0] + tangents[3], y + ny + tangents[1] + tangents[4],
-				z + nz + tangents[2] + tangents[5], LightFace.Top, nightLightAdjustment);
-		return Util.clamp((a + b + c) / 3.0f, 0, 1);
+				z + nz + tangents[2] + tangents[5], LightFace.Top,
+				world.getLightStyle() == LightStyle.Night ? 0 : nightLightAdjustment);
+		if (world.getLightStyle() != LightStyle.Night)
+			return Util.clamp((a + b + c) / 3.0f, 0, 1);
+
+		float localLight = world.getLight(rawChunk, x, y, z, LightFace.Top, 0);
+		if (localLight <= 0.0001f)
+			return 1.0f;
+
+		// Use neighboring samples as an attenuation ratio, not as another absolute
+		// brightness multiplier. This keeps global night light from being applied
+		// twice to AO-enabled models while still darkening locally occluded corners.
+		return Util.clamp(((a + b + c) / 3.0f) / localLight, 0, 1);
 	}
 
 	private FaceDirection rotatedFaceDirection(Matrix4f rotation, String face) {

@@ -62,7 +62,7 @@ public class PaintingNew implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
 		final float texel = 1.0f/16.0f;
-	final float nightLightAdjustment = Math.max(0, world.getNightLightAdjustment() - 0.1f);
+		final float nightLightAdjustment = world.getNightLightAdjustment();
 		PaintingRegistry paintingRegistry = world.getPaintingRegistry();
 		TexturePack texturePack = world.getTexturePack();
 

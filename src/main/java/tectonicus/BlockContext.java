@@ -13,6 +13,7 @@ import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.chunk.ChunkCoord;
+import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.paintingregistry.PaintingRegistry;
@@ -37,6 +38,9 @@ public interface BlockContext {
 	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
 	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face);
 	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face, float nightLightAdjustment);
+	default LightSample getLightSample(RawChunk rawChunk, int x, int y, int z, LightFace face, float nightLightAdjustment) {
+		return LightSample.ambient(getLight(rawChunk, x, y, z, face, nightLightAdjustment));
+	}
 
 	LightStyle getLightStyle();
 	float getNightLightAdjustment();
