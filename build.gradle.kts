@@ -133,15 +133,6 @@ distributions {
 	}
 }
 
-// This enables generatePomFileForReleasePublication for the GitHub dependency graph.
-publishing {
-	publications {
-		create<MavenPublication>("release") {
-			from(components["java"])
-		}
-	}
-}
-
 tasks.test {
 	useJUnitPlatform()
 }
