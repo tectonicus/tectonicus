@@ -519,6 +519,9 @@
     "west": "none"
   },
   "minecraft:bricks": {},
+  "minecraft:brittle_ice": {
+    "age": "0"
+  },
   "minecraft:brown_banner": {
     "rotation": "8"
   },

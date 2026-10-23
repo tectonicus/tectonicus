@@ -39,13 +39,6 @@ import java.util.Set;
 @UtilityClass
 public class MeshUtil {
 	private static final float BOOKSHELF_BOOK_WORLD_LIGHT_WEIGHT = 0.25f;
-	private static final Set<String> NIGHT_LIGHT_ADJUSTMENT_EXEMPT_BLOCKS = Set.of(
-			"minecraft:ice_crystal",
-			"minecraft:icicle",
-			"minecraft:amethyst_cluster",
-			"minecraft:large_amethyst_bud",
-			"minecraft:medium_amethyst_bud",
-			"minecraft:small_amethyst_bud");
 
 	public void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture) {
 		mesh.addVertex(p0, colour, texture.u0, texture.v0);
@@ -99,9 +92,7 @@ public class MeshUtil {
 
 		boolean oldBlockStates = world.getTexturePack().getVersion().getNumVersion() <= Version.VERSION_12.getNumVersion();
 		BlockStateWrapper selfBlock = oldBlockStates ? null : world.getBlock(rawChunk, x, y, z);
-		float nightLightAdjustment = selfBlock != null
-				&& NIGHT_LIGHT_ADJUSTMENT_EXEMPT_BLOCKS.contains(selfBlock.getBlockName())
-				? 0 : world.getNightLightAdjustment();
+		
 		boolean blockEmitsLight = !oldBlockStates && selfBlock != null
 				&& selfBlock.getLightEmission(rawChunk.getBlockState(x, y, z)) > 0;
 		boolean above = oldBlockStates
@@ -132,6 +123,9 @@ public class MeshUtil {
 		boolean samplePartialModelFromCell = !selfFull
 				&& !selfBlock.getBlockName().contains("stair")
 				&& !selfBlock.getBlockName().contains("slab");
+		
+		float nightLightAdjustment = world.getNightLightAdjustment();
+		
 		float topLight = world.getLight(rawChunk, x, y + 1, z, LightFace.Top, nightLightAdjustment);
 		float bottomLight = world.getLight(rawChunk, x, y - 1, z, LightFace.Bottom, nightLightAdjustment);
 		float northLight = world.getLight(rawChunk, x, y, z - 1, LightFace.NorthSouth, nightLightAdjustment);
