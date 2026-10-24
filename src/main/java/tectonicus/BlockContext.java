@@ -28,6 +28,7 @@ public interface BlockContext {
 	default boolean isLegacyWater() { return true; }
 
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);
+	default int getBlockData(ChunkCoord chunkCoord, int x, int y, int z) { return 0; }
 
 	BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z);
 	BlockType getBlockType(RawChunk rawChunk, int x, int y, int z);

@@ -50,13 +50,13 @@
 	
 	<Solid id="7" stringId="minecraft:bedrock" name="Bedrock" texture="bedrock.png" />
 	
-	<Water id="8" stringId="minecraft:flowing_water" name="Water" texture="water_still.png" />
+	<Water id="8" stringId="minecraft:flowing_water" name="Water" texture="water_still.png" flow="water_flow.png" />
 	
-	<Water id="9" stringId="minecraft:water" name="Water" texture="water_still.png" />
+	<Water id="9" stringId="minecraft:water" name="Water" texture="water_still.png" flow="water_flow.png" />
 	
-	<Solid id="10" stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" />	
+	<Lava id="10" stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" flow="lava_flow.png" />
 	
-	<Solid id="11" stringId="minecraft:lava" name="Lava" texture="lava_still.png" />
+	<Lava id="11" stringId="minecraft:lava" name="Lava" texture="lava_still.png" flow="lava_flow.png" />
 	
 	<Solid id="12:0" stringId="minecraft:sand" name="Sand" texture="sand.png" />
 	<Solid id="12:1" stringId="minecraft:sand" name="Red Sand" texture="red_sand.png" />

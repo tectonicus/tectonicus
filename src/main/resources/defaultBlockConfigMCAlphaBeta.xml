@@ -48,9 +48,9 @@
 
     <Water id="9" name="Water" texture="terrain[15, 12]" />
 
-    <Solid id="10" name="Lava" texture="terrain[15, 15]" />
+    <Lava id="10" name="Lava" texture="terrain[15, 15]" />
 
-    <Solid id="11" name="Lava" texture="terrain[15, 15]" />
+    <Lava id="11" name="Lava" texture="terrain[15, 15]" />
 
     <Solid id="12" name="Sand" texture="terrain[2, 1]" />
 

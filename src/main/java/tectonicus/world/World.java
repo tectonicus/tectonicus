@@ -858,6 +858,15 @@ public class World implements BlockContext
 	}
 	
 	@Override
+	public int getBlockData(ChunkCoord chunkCoord, int x, int y, int z) {
+		if (y < 0 || y >= Minecraft.getChunkHeight())
+			return 0;
+		Location loc = resolve(chunkCoord, x, y, z);
+		Chunk chunk = rawLoadedChunks.get(loc.coord);
+		return chunk == null ? 0 : chunk.getRawChunk().getBlockData(loc.x, loc.y, loc.z);
+	}
+
+	@Override
 	public BlockType getBlockType(ChunkCoord chunkCoord, int x, int y, int z)
 	{
 		if (y < 0 || y >= Minecraft.getChunkHeight())

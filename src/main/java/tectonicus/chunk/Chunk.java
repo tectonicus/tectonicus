@@ -17,6 +17,7 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.Minecraft;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.Water;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateModel;
 import tectonicus.blockregistry.BlockStateWrapper;
@@ -183,8 +184,7 @@ public class Chunk
 							}
 
 							//Render a water block at this same location if waterlogged
-							if ((effectiveProperties != null && effectiveProperties.containsKey("waterlogged") && effectiveProperties.get("waterlogged").equals("true"))
-									|| blockName.equals("minecraft:kelp") || blockName.equals("minecraft:kelp_plant") || blockName.contains("seagrass")) {  //TODO: is there some way to avoid hard-coding these blocks?
+							if (Water.containsWater(blockName, effectiveProperties, stateWrapper)) {
 								registry.find("minecraft:water").addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
 							}
 						}

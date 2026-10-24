@@ -44,13 +44,13 @@
 	
 	<Solid id="7" name="Bedrock" texture="bedrock.png" />
 	
-	<Water id="8" name="Water" texture="water.png" />
+	<Water id="8" name="Water" texture="water.png" flow="water_flow.png" />
 	
-	<Water id="9" name="Water" texture="water.png" />
+	<Water id="9" name="Water" texture="water.png" flow="water_flow.png" />
 	
-	<Solid id="10" name="Lava" texture="lava.png" />	
+	<Lava id="10" name="Lava" texture="lava.png" flow="lava_flow.png" />
 	
-	<Solid id="11" name="Lava" texture="lava.png" />
+	<Lava id="11" name="Lava" texture="lava.png" flow="lava_flow.png" />
 	
 	<Solid id="12" name="Sand" texture="sand.png" />
 	

@@ -67,6 +67,7 @@ import tectonicus.blockTypes.ItemFrame;
 import tectonicus.blockTypes.ItemFrameNew;
 import tectonicus.blockTypes.JackOLantern;
 import tectonicus.blockTypes.Ladder;
+import tectonicus.blockTypes.Lava;
 import tectonicus.blockTypes.Leaves;
 import tectonicus.blockTypes.Lever;
 import tectonicus.blockTypes.Lilly;
@@ -254,8 +255,14 @@ public class BlockRegistryParser
 		else if (nodeName.equals("water"))
 		{
 			SubTexture tex = parseTexture(element, "texture", null);
-			
-			blockType = new Water(name, tex, parseFrame(element));
+			SubTexture flow = parseTexture(element, "flow", tex);
+			SubTexture overlay = parseTexture(element, "overlay", null);
+			blockType = new Water(name, tex, flow, overlay, parseFrame(element));
+		}
+		else if (nodeName.equals("lava")) {
+			SubTexture still = parseTexture(element, "texture", null);
+			SubTexture flow = parseTexture(element, "flow", still);
+			blockType = new Lava(name, still, flow, parseFrame(element));
 		}
 		else if (nodeName.equals("grass"))
 		{

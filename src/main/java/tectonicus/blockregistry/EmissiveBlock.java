@@ -27,7 +27,7 @@ public enum EmissiveBlock {
 	CANDLE_CAKE(candleCakes(), state -> bool(state, "lit") ? 3 : 0),
 	SEA_PICKLE(names("sea_pickle"), state -> {
 		int pickles = integer(state, "pickles", 0);
-		return pickles == 0 ? 0 : 3 + 3 * pickles;
+		return !bool(state, "waterlogged") || pickles == 0 ? 0 : 3 + 3 * pickles;
 	}),
 	RESPAWN_ANCHOR(names("respawn_anchor"), state -> switch (integer(state, "charges", 0)) {
 		case 1 -> 3;

@@ -36,6 +36,16 @@ class BlockRegistryAttributesTest {
 	}
 
 	@ParameterizedTest
+	@ValueSource(ints = {1, 2, 3, 4})
+	void seaPickleLightEmissionRequiresWaterlogging(int pickles) {
+		BlockStateWrapper block = new BlockStateWrapper("minecraft:sea_pickle");
+		block.setDefaultProperties(Map.of("pickles", "1", "waterlogged", "true"));
+		block.setEmissiveBlock(EmissiveBlock.forBlockName(block.getBlockName()));
+		assertEquals(3 + 3 * pickles, block.getLightEmission(new BlockProperties(Map.of("pickles", Integer.toString(pickles)))));
+		assertEquals(0, block.getLightEmission(new BlockProperties(Map.of("pickles", Integer.toString(pickles), "waterlogged", "false"))));
+	}
+
+	@ParameterizedTest
 	@ValueSource(booleans = {false, true})
 	void bookshelfBodyStillOccludesWhenBookOverlaysArePartial(boolean overlayFirst) {
 		BlockStateWrapper block = new BlockStateWrapper("minecraft:chiseled_bookshelf");

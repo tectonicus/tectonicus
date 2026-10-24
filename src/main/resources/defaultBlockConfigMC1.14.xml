@@ -3,12 +3,12 @@
 	<Air stringId="minecraft:air" name="Air" />
 	<Air stringId="minecraft:cave_air" name="Air" />
 
-	<Water stringId="minecraft:flowing_water" name="Water" texture="water_still.png" />
-	<Water stringId="minecraft:water" name="Water" texture="water_still.png" />
-	<Water stringId="minecraft:bubble_column" name="Bubble Column" texture="water_still.png" />
+	<Water stringId="minecraft:flowing_water" name="Water" texture="water_still.png" flow="water_flow.png" overlay="water_overlay.png" />
+	<Water stringId="minecraft:water" name="Water" texture="water_still.png" flow="water_flow.png" overlay="water_overlay.png" />
+	<Water stringId="minecraft:bubble_column" name="Bubble Column" texture="water_still.png" flow="water_flow.png" overlay="water_overlay.png" />
 
-	<Solid stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" />
-	<Solid stringId="minecraft:lava" name="Lava" texture="lava_still.png" />
+	<Lava stringId="minecraft:flowing_lava" name="Lava" texture="lava_still.png" flow="lava_flow.png" />
+	<Lava stringId="minecraft:lava" name="Lava" texture="lava_still.png" flow="lava_flow.png" />
 
 	<!-- We only keep these here to make rendering the portal icon easier -->
 	<Solid id="49" name="Obsidian" texture="obsidian.png" />
