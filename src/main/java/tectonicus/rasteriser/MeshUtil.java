@@ -83,8 +83,8 @@ public class MeshUtil {
 		if (model == null || bakedModel.getQuads().isEmpty())
 			return;
 
-		// Numeric-ID chunks have no named block states; keep their legacy culling lookup.
-		boolean legacyBlock = rawChunk.getBlockName(x, y, z) == null;
+		// Empty item-model chunks have neither a name nor an ID and need no legacy lookup.
+		boolean legacyBlock = rawChunk.getBlockName(x, y, z) == null && rawChunk.getBlockId(x, y, z) != 0;
 		BlockStateWrapper selfBlock = legacyBlock ? null : world.getBlock(rawChunk, x, y, z);
 		
 		boolean blockEmitsLight = selfBlock != null
