@@ -44,7 +44,7 @@ public class ParseUtil {
 	public static RenderStyle parseRenderStyle(String renderStyleStr) {
 		renderStyleStr = renderStyleStr.toLowerCase();
 
-		RenderStyle renderStyle = RenderStyle.REGULAR;
+		RenderStyle renderStyle = RenderStyle.NORMAL;
 
 		if (renderStyleStr.equalsIgnoreCase("cave"))
 			renderStyle = RenderStyle.CAVE;

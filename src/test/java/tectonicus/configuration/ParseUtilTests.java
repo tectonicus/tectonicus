@@ -16,6 +16,22 @@ import static org.hamcrest.Matchers.is;
 
 class ParseUtilTests {
 	@Test
+	void testParseRenderStyleAcceptsRegularAndNormal() {
+		for (String style : new String[] {"regular", "normal", "REGULAR", "NORMAL", "Regular", "Normal"}) {
+			assertThat(ParseUtil.parseRenderStyle(style), is(Configuration.RenderStyle.NORMAL));
+		}
+	}
+
+	@Test
+	void testParseRenderStylePreservesOtherStylesAndDefault() {
+		assertThat(ParseUtil.parseRenderStyle("cave"), is(Configuration.RenderStyle.CAVE));
+		assertThat(ParseUtil.parseRenderStyle("exploredCaves"), is(Configuration.RenderStyle.EXPLORED_CAVES));
+		assertThat(ParseUtil.parseRenderStyle("nether"), is(Configuration.RenderStyle.NETHER));
+		assertThat(ParseUtil.parseRenderStyle(""), is(Configuration.RenderStyle.NORMAL));
+		assertThat(ParseUtil.parseRenderStyle("unknown"), is(Configuration.RenderStyle.NORMAL));
+	}
+
+	@Test
 	void testParseDimension() {
 		DimensionInfo dimensionInfo = ParseUtil.parseDimension("the_nether");
 		

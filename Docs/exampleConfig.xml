@@ -96,7 +96,7 @@
 		<layer
 			name="Caves"
 			lighting="day"
-			renderStyle="caves"
+			renderStyle="cave"
 			imageFormat="jpg"
 			imageCompressionLevel="0.85"
 		/>
