@@ -10,6 +10,8 @@
 package tectonicus.blockregistry;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import tectonicus.blockregistry.BlockModel.BlockElement;
 import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 import tectonicus.texture.SubTexture;
@@ -21,6 +23,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BakedBlockStateModelTest {
 	@Test
@@ -68,5 +71,40 @@ class BakedBlockStateModelTest {
 		assertThat(java.util.Arrays.equals(uvLocked.getQuads().getFirst().getUvs(), rotated.getQuads().getFirst().getUvs()),
 				org.hamcrest.Matchers.is(false));
 	}
+	@ParameterizedTest
+	@CsvSource({
+			"0, 0, 0, down",
+			"90, 0, 0, north",
+			"-90, 0, 0, south",
+			"180, 0, 0, up",
+			"0, 0, 115, east",
+			"0, 0, -115, west",
+			"0, 90, 0, down",
+			"30, 0, 60, east"
+	})
+	void bottomFaceLightingFollowsElementRotation(float xRotation, float yRotation, float zRotation, String expected) {
+		BlockModel model = bottomFaceModel(xRotation, yRotation, zRotation);
+		BakedBlockStateModel.BakedQuad quad = new BakedBlockStateModel(model, 0, 0, 0, false).getQuads().getFirst();
 
+		assertEquals("down", quad.getSourceFace());
+		assertEquals(expected, quad.getDirection());
+	}
+
+	@ParameterizedTest
+	@CsvSource({"0, north", "90, east", "180, south", "270, west"})
+	void bottomFaceLightingCombinesElementAndBlockstateRotation(int yRotation, String expected) {
+		BlockModel model = bottomFaceModel(90, 0, 0);
+		BakedBlockStateModel.BakedQuad quad = new BakedBlockStateModel(model, 0, yRotation, 0, false).getQuads().getFirst();
+
+		assertEquals(expected, quad.getDirection());
+		// Cull directions are declared separately and follow only blockstate rotation.
+		assertEquals("down", quad.getCullDirection());
+	}
+
+	private BlockModel bottomFaceModel(float xRotation, float yRotation, float zRotation) {
+		ElementFace down = new ElementFace(new SubTexture(null, 0, 0, 1, 1), "down", 0, false, false, false);
+		BlockElement element = new BlockElement(new Vector3f(4, 0, 4), new Vector3f(12, 8, 12),
+				new org.joml.Vector3f(8, 8, 8), xRotation, yRotation, zRotation, false, true, Map.of("down", down));
+		return new BlockModel("minecraft:block/test", false, List.of(element));
+	}
 }

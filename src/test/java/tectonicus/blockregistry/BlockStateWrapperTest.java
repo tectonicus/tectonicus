@@ -10,6 +10,8 @@
 package tectonicus.blockregistry;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.databind.ObjectMapper;
 import tectonicus.raw.BlockProperties;
 
@@ -22,6 +24,29 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 class BlockStateWrapperTest {
+	@ParameterizedTest
+	@ValueSource(strings = {"glass", "tinted_glass", "white_stained_glass", "orange_stained_glass", "magenta_stained_glass",
+			"light_blue_stained_glass", "yellow_stained_glass", "lime_stained_glass", "pink_stained_glass", "gray_stained_glass",
+			"light_gray_stained_glass", "cyan_stained_glass", "purple_stained_glass", "blue_stained_glass", "brown_stained_glass",
+			"green_stained_glass", "red_stained_glass", "black_stained_glass"})
+	void glassDoesNotContributeAmbientOcclusion(String name) {
+		BlockStateWrapper block = new BlockStateWrapper("minecraft:" + name);
+		block.setTransparent(true);
+		block.setFullOpaqueBlock(false);
+
+		assertThat(block.isFullBlock(), is(true));
+		assertThat(block.getShadeBrightness(), is(1.0f));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"ice", "frosted_ice", "packed_ice", "blue_ice", "brittle_ice", "oak_leaves"})
+	void transparentFullCubesOtherThanGlassStillContributeShade(String name) {
+		BlockStateWrapper block = new BlockStateWrapper("minecraft:" + name);
+		block.setTransparent(true);
+		block.setFullOpaqueBlock(false);
+
+		assertThat(block.getShadeBrightness(), is(0.2f));
+	}
 
 	@Test
 	void deserializesZRotationAndDefaultsItToZero() {

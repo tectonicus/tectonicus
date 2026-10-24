@@ -49,6 +49,9 @@ import java.util.Map;
 public class Chunk
 {	
 	private static final float NIGHT_BLOCK_LIGHT_SCALE = 0.95f;
+	private static final float NIGHT_SKY_LIGHT_SCALE = 0.24f;
+	private static final float DAY_SKY_LIGHT_SCALE = 0.7f;
+	private static final float DAY_AMBIENT_LIGHT = 0.3f;
 	private static final float SMOOTH_NIGHT_BLOCK_LIGHT_SCALE = 1.4f;
 	private final ChunkCoord coord;
 	
@@ -387,16 +390,6 @@ public class Chunk
 	
 	public static int getSkyLight(RawChunk rawChunk, final int x, final int y, final int z)
 	{
-		//TODO: do we need this for backwards compatibility?
-//		int actualY = y;
-//		if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
-//		{
-//			if (y == Minecraft.getChunkHeight()-1)
-//				return RawChunk.MAX_LIGHT;
-//			else
-//				actualY++;
-//		}
-			
 		return rawChunk.getSkyLight(x, y, z);
 	}
 	
@@ -406,21 +399,7 @@ public class Chunk
 	}
 	public static int getBlockLight(RawChunk rawChunk, final int x, final int y, final int z)
 	{
-//		if (rawChunk == null)
-//			return RawChunk.MAX_LIGHT;
-//		else
-//		{
-			//int actualY = y;
-//			if (rawChunk.getBlockIdClamped(x, y, z, BlockIds.AIR) == BlockIds.SLAB)
-//			{
-//				if (y == Minecraft.getChunkHeight()-1)
-//					return RawChunk.MAX_LIGHT;
-//				else
-//					actualY++;
-//			}
-			
 		return rawChunk.getBlockLight(x, y, z);
-//		}
 	}
 	
 	public long getRawMemorySize()
@@ -506,13 +485,9 @@ public class Chunk
 
 					// MAX_LIGHT is the number of possible levels (0..15), not the brightest level.
 					// Normalize against 15 so full skylight reaches full daylight without help from block light.
-					result = Util.clamp((skyLight * 0.7f + blockLight) / (RawChunk.MAX_LIGHT - 1.0f) + 0.3f, 0, 1);
+					result = Util.clamp((skyLight * DAY_SKY_LIGHT_SCALE + blockLight) / (RawChunk.MAX_LIGHT - 1.0f) + DAY_AMBIENT_LIGHT, 0, 1);
 				}
 
-				result *= face == LightFace.Bottom ? 0.5f
-						: face == LightFace.NorthSouth ? 0.85f
-						: face == LightFace.EastWest ? 0.7f : 1.0f;
-				
 				break;
 			}
 			case Night:
@@ -526,13 +501,9 @@ public class Chunk
 					final float skyLight = getSkyLight(c, x, y, z);
 					final float blockLight = getBlockLight(c, x, y, z);
 					
-					result = Util.clamp((skyLight * 0.24f + blockLight * NIGHT_BLOCK_LIGHT_SCALE) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
+					result = Util.clamp((skyLight * NIGHT_SKY_LIGHT_SCALE + blockLight * NIGHT_BLOCK_LIGHT_SCALE) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
 				}
 
-				result *= face == LightFace.Bottom ? 0.5f
-						: face == LightFace.NorthSouth ? 0.95f
-						: face == LightFace.EastWest ? 0.9f : 1.0f;
-				
 				break;
 			}
 			case Cave:
@@ -549,36 +520,18 @@ public class Chunk
 					result = Util.clamp(heightScale + blockLight * 0.5f, 0f, 1f);
 				}
 
-				result *= face == LightFace.Bottom ? 0.5f
-						: face == LightFace.NorthSouth ? 0.95f
-						: face == LightFace.EastWest ? 0.9f : 1.0f;
-				
 				break;
 			}
 			case None:
 			{
-				if (face == LightFace.Top)
-				{
-					result = 1.0f;
-				}
-				else if (face == LightFace.Bottom)
-				{
-					result = 0.5f;
-				}
-				else if (face == LightFace.NorthSouth)
-				{
-					result = 0.85f;
-				}
-				else if (face == LightFace.EastWest)
-				{
-					result = 0.7f;
-				}
+				result = 1.0f;
 				break;
 			}
 			default:
 				assert false;
 		}
 
+		result *= getFaceFactor(lightStyle, face);
 		if(result < 0)
 			result = 0;
 		
@@ -587,14 +540,44 @@ public class Chunk
 
 	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
 			final int x, final int y, final int z, float nightLightAdjustment) {
-		if (lightStyle != LightStyle.Night || c == null || y >= Minecraft.getChunkHeight() || y < 0)
+		if ((lightStyle != LightStyle.Day && lightStyle != LightStyle.Night) || c == null || y >= Minecraft.getChunkHeight() || y < 0)
 			return LightSample.ambient(getLight(lightStyle, face, c, x, y, z, nightLightAdjustment));
 
-		float faceFactor = face == LightFace.Bottom ? 0.5f
-				: face == LightFace.NorthSouth ? 0.95f
-				: face == LightFace.EastWest ? 0.9f : 1.0f;
-		float sky = getSkyLight(c, x, y, z) * 0.24f / RawChunk.MAX_LIGHT;
+		float faceFactor = getFaceFactor(lightStyle, face);
+		if (lightStyle == LightStyle.Day) {
+			float sky = getSkyLight(c, x, y, z) * DAY_SKY_LIGHT_SCALE / (RawChunk.MAX_LIGHT - 1.0f);
+			float block = getBlockLight(c, x, y, z) / (RawChunk.MAX_LIGHT - 1.0f);
+			return new LightSample(sky * faceFactor, block * faceFactor, DAY_AMBIENT_LIGHT * faceFactor);
+		}
+		float sky = getSkyLight(c, x, y, z) * NIGHT_SKY_LIGHT_SCALE / RawChunk.MAX_LIGHT;
 		float block = getBlockLight(c, x, y, z) * SMOOTH_NIGHT_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT;
 		return new LightSample(sky * faceFactor, block * faceFactor, nightLightAdjustment * faceFactor);
+	}
+
+	public static LightSample applySmoothLightFallback(LightSample sample, LightSample center, LightFace face, LightStyle lightStyle) {
+		// Match Minecraft's smoothBlend rule in our scaled light units: only borrow
+		// light when the face center has sky or block light above level 2.
+		float faceFactor = getFaceFactor(lightStyle, face);
+		float maxLight = lightStyle == LightStyle.Day ? RawChunk.MAX_LIGHT - 1.0f : RawChunk.MAX_LIGHT;
+		float skyScale = lightStyle == LightStyle.Day ? DAY_SKY_LIGHT_SCALE : NIGHT_SKY_LIGHT_SCALE;
+		float blockScale = lightStyle == LightStyle.Day ? 1.0f : SMOOTH_NIGHT_BLOCK_LIGHT_SCALE;
+		float skyThreshold = 2 * skyScale / maxLight * faceFactor;
+		float blockThreshold = 2 * blockScale / maxLight * faceFactor;
+		if (center.sky() <= skyThreshold && center.block() <= blockThreshold || sample.sky() != 0)
+			return sample;
+
+		// An entirely unlit neighbor borrows both components; a neighbor with block
+		// light borrows only skylight. Ambient brightness remains independent.
+		return new LightSample(center.sky(), sample.block() == 0 ? center.block() : sample.block(), sample.ambient());
+	}
+
+	public static float getFaceFactor(LightStyle lightStyle, LightFace face) {
+		if (lightStyle == LightStyle.Day || lightStyle == LightStyle.None)
+			return face == LightFace.Bottom ? 0.5f
+					: face == LightFace.NorthSouth ? 0.85f
+					: face == LightFace.EastWest ? 0.7f : 1.0f;
+		return face == LightFace.Bottom ? 0.5f
+				: face == LightFace.NorthSouth ? 0.95f
+				: face == LightFace.EastWest ? 0.9f : 1.0f;
 	}
 }

@@ -334,7 +334,7 @@ public class World implements BlockContext
 
 		this.smoothLit = map.isSmoothLit();
 		this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
-		this.nightLightAdjustment = smoothLit ? 0.15f : 0.0f;
+		this.nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
 	}
 	
 	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset

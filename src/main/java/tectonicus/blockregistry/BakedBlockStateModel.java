@@ -131,7 +131,10 @@ public final class BakedBlockStateModel {
 		}
 		String cullDirection = face.getCullFace() == null ? null
 				: dominantFace(blockRotation.transformDirection(faceNormal(face.getCullFace())));
-		result.add(new BakedQuad(model, face, faceName, cullDirection, xyz, uvs,
+		// Lighting must follow element rotations as well as blockstate rotations.
+		Vector3f normal = elementRotation.transformDirection(faceNormal(faceName));
+		String direction = dominantFace(blockRotation.transformDirection(normal));
+		result.add(new BakedQuad(model, face, faceName, direction, cullDirection, xyz, uvs,
 				element.getFaces().size() == 4, element.isShaded() || element.getShadeDirectionOverride() != null,
 				element.getShadeDirectionOverride()));
 	}
@@ -245,6 +248,7 @@ public final class BakedBlockStateModel {
 		private final BlockModel model;
 		private final ElementFace face;
 		private final String sourceFace;
+		private final String direction;
 		private final String cullDirection;
 		private final float[] positions;
 		private final float[] uvs;
@@ -252,11 +256,12 @@ public final class BakedBlockStateModel {
 		private final boolean shaded;
 		private final String shadeDirectionOverride;
 
-		private BakedQuad(BlockModel model, ElementFace face, String sourceFace, String cullDirection,
+		private BakedQuad(BlockModel model, ElementFace face, String sourceFace, String direction, String cullDirection,
 				float[] positions, float[] uvs, boolean grassOverlay, boolean shaded, String shadeDirectionOverride) {
 			this.model = model;
 			this.face = face;
 			this.sourceFace = sourceFace;
+			this.direction = direction;
 			this.cullDirection = cullDirection;
 			this.positions = positions;
 			this.uvs = uvs;

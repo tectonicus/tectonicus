@@ -466,16 +466,15 @@ public class BlockRegistry {
 	private void checkBlockAttributes() {
 		for (BlockStateWrapper wrapper : blockStates.asMap().values()) {
 			wrapper.setEmissiveBlock(EmissiveBlock.forBlockName(wrapper.getBlockName()));
-			for (BlockState state : wrapper.getStates()) {
-				setBlockAttributes(wrapper, state.getModelsAndWeight().getModels());
-			}
+			setBlockAttributes(wrapper);
 		}
 	}
 	
 	//Set attributes on the entire block instead of just the individuals models. These are used to help with lighting and face culling
-	private void setBlockAttributes(BlockStateWrapper wrapper, List<BlockStateModel> models) {
+	static void setBlockAttributes(BlockStateWrapper wrapper) {
+		boolean multipart = wrapper.getStates().stream().anyMatch(BlockStateCase.class::isInstance);
 		boolean hasOpaqueFullBlockModel = false;
-		for (BlockStateModel model : models) {
+		for (BlockStateModel model : wrapper.getAllModels()) {
 			BlockModel blockModel = model.getBlockModel();
 			if (blockModel != null) {
 				if (wrapper.isFullBlock() && !blockModel.isFullBlock()) {
@@ -493,9 +492,9 @@ public class BlockRegistry {
 			}
 		}
 		
-		// A block can have both an opaque full-block model and a transparent overlay
-		// (grass blocks for example). Such a block should still hide faces of
-		// neighboring blocks even though one of its model layers uses alpha.
-		wrapper.setFullOpaqueBlock(wrapper.isFullBlock() && hasOpaqueFullBlockModel);
+		// Multipart overlays do not remove an opaque cube supplied by the body.
+		// Keep fullBlock conservative for lighting individual partial model parts;
+		// alternatives such as single/double slab variants must remain partial.
+		wrapper.setFullOpaqueBlock(hasOpaqueFullBlockModel && (wrapper.isFullBlock() || multipart));
 	}
 }

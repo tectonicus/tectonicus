@@ -37,6 +37,17 @@ public class BlockStateWrapper {
 	public BlockStateWrapper(String blockName) {
 		this.blockName = blockName;
 	}
+	
+	public float getShadeBrightness() {
+		// The beacon is a full cube despite its inset elements.
+		if (blockName.equals("minecraft:beacon"))
+			return 0.2f;
+		// Glass does not shade neighbors, unlike ice.
+		if (blockName.equals("minecraft:glass") || blockName.equals("minecraft:tinted_glass")
+				|| blockName.startsWith("minecraft:") && blockName.endsWith("_stained_glass"))
+			return 1.0f;
+		return fullBlock || fullOpaqueBlock ? 0.2f : 1.0f;
+	}
 
 	public void addState(BlockState state) {
 		states.add(state);
