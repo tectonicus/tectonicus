@@ -34,6 +34,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 abstract class FluidTestFixture {
 	final Texture still = texture(16, 320);
@@ -47,6 +48,8 @@ abstract class FluidTestFixture {
 	LightStyle lightStyle = LightStyle.Day;
 	boolean legacyWater;
 	boolean grayscale;
+	float cameraAngle = (float) Math.PI / 4;
+	float cameraElevation = (float) Math.PI / 4;
 	private int previousHeight;
 	RawChunk chunk;
 	BlockContext world;
@@ -63,6 +66,8 @@ abstract class FluidTestFixture {
 						case "getLightStyle": return lightStyle;
 						case "getNightLightAdjustment": return 0.1f;
 						case "useOldGrayscaleLighting": return grayscale;
+						case "getCameraAngleRad": return cameraAngle;
+						case "getCameraElevationRad": return cameraElevation;
 					}
 					Position position = new Position((int) args[1], (int) args[2], (int) args[3]);
 					Cell cell = cells.get(position);
@@ -107,6 +112,10 @@ abstract class FluidTestFixture {
 	}
 
 	void render(Fluid type, int x, int y, int z) {
+		render(geometry -> type.addEdgeGeometry(x, y, z, world, null, chunk, geometry));
+	}
+
+	void render(Consumer<Geometry> emitter) {
 		vertices.clear();
 		meshTypes.clear();
 		Rasteriser rasteriser = (Rasteriser) Proxy.newProxyInstance(Rasteriser.class.getClassLoader(), new Class<?>[]{Rasteriser.class},
@@ -122,7 +131,7 @@ abstract class FluidTestFixture {
 						return null;
 					});
 				});
-		type.addEdgeGeometry(x, y, z, world, null, chunk, new Geometry(rasteriser) {
+		emitter.accept(new Geometry(rasteriser) {
 			@Override
 			public Mesh getMesh(Texture texture, MeshType type) {
 				meshTypes.add(type);

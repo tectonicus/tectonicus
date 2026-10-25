@@ -182,6 +182,9 @@ public class Chunk
 									&& effectiveProperties != null && Boolean.parseBoolean(effectiveProperties.get("lit"))) {
 								tectonicus.blockTypes.CampfireSmoke.addGeometry(x, y, z, world, rawChunk, geometry);
 							}
+							if (blockName.equals("minecraft:bubble_column")) {
+								tectonicus.blockTypes.BubbleColumnParticles.addGeometry(x, y, z, effectiveProperties, world, rawChunk, geometry);
+							}
 
 							//Render a water block at this same location if waterlogged
 							if (Water.containsWater(blockName, effectiveProperties, stateWrapper)) {

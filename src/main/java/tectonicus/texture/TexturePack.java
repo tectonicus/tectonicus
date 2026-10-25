@@ -12,6 +12,7 @@ package tectonicus.texture;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tectonicus.Minecraft;
@@ -50,10 +51,12 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
@@ -105,6 +108,7 @@ public class TexturePack
 	private final ZipStack zipStack;
 	
 	private final Map<String, PackTexture> loadedPackTextures;
+	private final Map<String, List<SubTexture>> particleTextures = new HashMap<>();
 	@Getter
 	private final Map<String, BufferedImage> bannerPatternImages;
 	private final List<String> dataPacks;
@@ -367,6 +371,51 @@ public class TexturePack
 	public SubTexture findTexture(String texturePath) {
 		return findTextureOrDefault(texturePath, null);
 	}
+
+	/** Particle definitions and sprites both honor resource-pack overrides. */
+	public List<SubTexture> findParticleTextures(String particleId) {
+		return particleTextures.computeIfAbsent(particleId,
+				id -> loadParticleTextures(zipStack, id, this::findTexture));
+	}
+
+	static List<SubTexture> loadParticleTextures(ZipStack stack, String particleId, Function<String, SubTexture> textureLoader) {
+		String[] id = splitId(particleId);
+		try (InputStream stream = stack.getStream("assets/" + id[0] + "/particles/" + id[1] + ".json")) {
+			if (stream == null)
+				return loadLegacyBubbleTexture(id, textureLoader);
+			JsonNode definition = JSON_MAPPER.readTree(stream);
+			JsonNode textures = definition == null ? null : definition.get("textures");
+			if (textures == null || !textures.isArray())
+				return List.of();
+			List<SubTexture> sprites = new ArrayList<>();
+			for (JsonNode texture : textures) {
+				if (!texture.isString())
+					continue;
+				String[] spriteId = splitId(texture.asString());
+				SubTexture sprite = textureLoader.apply("assets/" + spriteId[0] + "/textures/particle/" + spriteId[1] + ".png");
+				if (sprite != null && sprite.texture != null)
+					sprites.add(sprite);
+			}
+			return List.copyOf(sprites);
+		} catch (IOException | JacksonException e) {
+			return List.of();
+		}
+	}
+
+	private static List<SubTexture> loadLegacyBubbleTexture(String[] id, Function<String, SubTexture> textureLoader) {
+		if (!id[0].equals("minecraft") || !(id[1].equals("bubble_column_up") || id[1].equals("current_down")))
+			return List.of();
+		SubTexture atlas = textureLoader.apply("assets/minecraft/textures/particle/particles.png");
+		if (atlas == null || atlas.texture == null)
+			return List.of();
+		// 1.13 uses particle index 32: column 0, row 2. Its UV grid is 32x32,
+		// despite the index-to-row calculation using a stride of 16.
+		float tileU = (atlas.u1 - atlas.u0) / 32;
+		float tileV = (atlas.v1 - atlas.v0) / 32;
+		float v0 = atlas.v0 + 2 * tileV;
+		return List.of(new SubTexture(atlas.texture, atlas.u0, v0,
+				atlas.u0 + tileU * 0.999f, v0 + tileV * 0.999f, atlas.texturePackVersion));
+	}
 	
 	public SubTexture findPalettedTexture(String texturePath, String palettePath, String keyPalettePath) {
 		if (texturePath == null || palettePath == null || keyPalettePath == null)
@@ -508,7 +557,7 @@ public class TexturePack
 		return value == null || !value.isString() || value.asString().equals(id);
 	}
 
-	private String[] splitId(String id) {
+	private static String[] splitId(String id) {
 		String[] parts = id.split(":", 2);
 		return parts.length == 1 ? new String[] {"minecraft", parts[0]} : parts;
 	}

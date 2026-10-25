@@ -15,8 +15,8 @@ import org.apache.commons.lang3.Strings;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
-import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BakedBlockStateModel;
+import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.PlayerSkinCache;
@@ -27,7 +27,6 @@ import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.Map;
 import tectonicus.configuration.NorthDirection;
 import tectonicus.paintingregistry.PaintingRegistry;
-import tectonicus.rasteriser.MeshUtil;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -347,11 +346,11 @@ public class ItemRenderer
 		renderItem(item, outFile, imageSize, 4, getAngleRad(65), getAngleRad(35));
 	}
         
-        public void renderItem(File outFile, BlockTypeRegistry registry, TexturePack texturePack, String blockName, List<java.util.Map<String, ArrayList<Float>>> transforms) throws Exception {
+        public void renderItem(File outFile, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack, String blockName, List<java.util.Map<String, ArrayList<Float>>> transforms) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		BlockType type = registry.find(blockName);
-		ItemContext context = new ItemContext(texturePack, registry, null);
+		ItemContext context = new ItemContext(texturePack, registry, modelRegistry);
                 
                 BoundingBox bounds = new BoundingBox(new org.joml.Vector3f(), 1, 1, 1);
                 

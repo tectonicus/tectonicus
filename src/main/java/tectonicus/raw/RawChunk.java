@@ -54,7 +54,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -231,12 +230,13 @@ public class RawChunk {
 	}
 
 	private void loadStatus(CompoundTag root) {
-		Optional.ofNullable(NbtUtil.getChild(root, "Status", StringTag.class)).ifPresent(statusTag -> {
-			String status = statusTag.getValue();
-			if (!status.contains("full")) {
-				fullChunk = false;
-			}
-		});
+		StringTag status = NbtUtil.getChild(root, "Status", StringTag.class);
+		// 1.13's terminal generation status is postprocessed, following fullchunk.
+		// Older saves have no status; modern saves use full or minecraft:full.
+		fullChunk = status == null || switch (status.getValue()) {
+			case "fullchunk", "postprocessed", "full", "minecraft:full" -> true;
+			default -> false;
+		};
 	}
 	
 	private void parseChunkPosition(CompoundTag tag) {

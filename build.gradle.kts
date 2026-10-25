@@ -112,6 +112,8 @@ tasks.named<ShadowJar>("shadowJar") {
 	from(buildInfoDir)
 
 	minimize {
+		// LWJGL selects memory backends and native libraries through reflection.
+		exclude(dependency("org.lwjgl:.*:.*"))
 		exclude(dependency("tools.jackson.core:jackson-databind:.*"))
 		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
 		exclude(dependency("org.apache.logging.log4j:log4j-core:.*"))

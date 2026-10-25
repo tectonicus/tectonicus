@@ -674,7 +674,7 @@ public class OutputResourcesUtil {
 				if (modelName.endsWith("builtin/entity")) {  //TODO: this doesn't appear to exist anymore with 1.21.4
 					modelName = "minecraft:" + entryKey;
 					List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);
-					itemRenderer.renderItem(outFile, blockTypeRegistry, texturePack, modelName, transforms);
+					itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack, modelName, transforms);
 					continue;
 				}
                                 
