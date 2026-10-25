@@ -40,7 +40,7 @@ import java.util.Set;
 public class FileTileCache implements TileCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
-	private static final int RENDERER_VERSION = 16;
+	private static final int RENDERER_VERSION = 17;
 
 	private final File tileCacheDir;
 	

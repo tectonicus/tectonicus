@@ -31,7 +31,7 @@ import java.util.List;
 public class FileViewCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
-	private static final int VIEW_RENDERER_VERSION = 7;
+	private static final int VIEW_RENDERER_VERSION = 8;
 	
 	private final File cacheDir;
 	private final TempArea tempArea;

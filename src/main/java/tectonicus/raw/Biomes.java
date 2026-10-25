@@ -29,7 +29,7 @@ public enum Biomes implements Biome {
 	ICE_SPIKES("ice_spikes", 4, 0.0f, 0.5f, ColorsWater.DEFAULT.getWaterColor()),
 	DESERT("desert", 5, 2.0f, 0.0f, ColorsWater.DEFAULT.getWaterColor()),
 	SWAMP("swamp", 6, 0.8f, 0.9f, ColorsWater.SWAMP.getWaterColor(), HardcodedColors.SWAMP, HardcodedColors.SWAMP, HardcodedColors.DRY_FOLIAGE),
-	MANGROVE_SWAMP("mangrove_swamp", 7, 0.8f, 0.9f, ColorsWater.MANGROVE_SWAMP.getWaterColor()),
+	MANGROVE_SWAMP("mangrove_swamp", 7, 0.8f, 0.9f, ColorsWater.MANGROVE_SWAMP.getWaterColor(), HardcodedColors.SWAMP, HardcodedColors.MANGROVE_FOLIAGE, HardcodedColors.DRY_FOLIAGE),
 	FOREST("forest", 8, 0.7f, 0.8f, ColorsWater.DEFAULT.getWaterColor()),
 	FLOWER_FOREST("flower_forest", 9, 0.7f, 0.8f, ColorsWater.DEFAULT.getWaterColor()),
 	BIRCH_FOREST("birch_forest", 10, 0.6f, 0.6f, ColorsWater.DEFAULT.getWaterColor()),
@@ -126,6 +126,7 @@ public enum Biomes implements Biome {
 		public static final Colour4f BADLANDS_GRASS = new Colour4f(new Color(144, 129, 77));
 		public static final Colour4f BADLANDS_FOLIAGE = new Colour4f(new Color(158, 129, 77));
 		public static final Colour4f SWAMP = new Colour4f(new Color(106, 112, 57));
+		public static final Colour4f MANGROVE_FOLIAGE = new Colour4f(new Color(141, 177, 39));
 		public static final Colour4f CHERRY_GROVE = new Colour4f(new Color(182, 219, 97));
 		public static final Colour4f DRY_FOLIAGE = new Colour4f(new Color(123, 83, 52));
 		public static final Colour4f PALE_GARDEN_GRASS = new Colour4f(new Color(119, 130, 114));

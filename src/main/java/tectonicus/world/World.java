@@ -1298,6 +1298,8 @@ public class World implements BlockContext
 			// Preserve the tint calculation appropriate to the selected texture version.
 			if (version < VERSIONS_6_TO_8.getNumVersion())
 				return getTintColorOld(biome.getNumericId(), isFoliage);
+			if (!isFoliage && !isDryFoliage && SwampGrassColor.applies(biome))
+				return SwampGrassColor.getColor(chunkCoord, sampleX, sampleZ);
 			if (version < VERSION_15.getNumVersion())
 				return getTintColor(biome, elevation, isFoliage);
 			return getTintColor(biome, isFoliage, isDryFoliage);

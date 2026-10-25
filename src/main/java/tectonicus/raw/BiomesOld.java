@@ -79,7 +79,7 @@ public enum BiomesOld implements Biome {
 	GRAVELLY_MOUNTAINS(131, 0.2f, 0.3f, ColorsWater.DEFAULT.getWaterColor()),
 	FLOWER_FOREST(132, 0.7f, 0.8f, ColorsWater.DEFAULT.getWaterColor()),
 	TAIGA_MOUNTAINS(133, 0.25f, 0.8f, ColorsWater.DEFAULT.getWaterColor()),
-	SWAMP_HILLS(134, 0.8f, 0.9f, ColorsWater.SWAMP.getWaterColor()),
+	SWAMP_HILLS(134, 0.8f, 0.9f, ColorsWater.SWAMP.getWaterColor(), HardcodedColors.SWAMP, HardcodedColors.SWAMP),
 	ICE_SPIKES(140, 0.0f, 0.5f, ColorsWater.DEFAULT.getWaterColor()),
 	MODIFIED_JUNGLE(149, 0.95f, 0.9f, ColorsWater.DEFAULT.getWaterColor()),
 	MODIFIED_JUNGLE_EDGE(151, 0.95f, 0.8f, ColorsWater.DEFAULT.getWaterColor()),
