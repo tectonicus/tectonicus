@@ -373,6 +373,7 @@ public class FileTileCache implements TileCache
 		
 		// Create uber hash of all chunk's hashes combined
 		hashAlgorithm.reset();
+		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		for (byte[] b : hashes)
 		{
 			hashAlgorithm.update(b);

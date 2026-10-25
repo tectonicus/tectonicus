@@ -15,6 +15,7 @@ import org.jnbt.CompoundTag;
 import org.jnbt.IntArrayTag;
 import org.jnbt.IntTag;
 import org.jnbt.ListTag;
+import org.jnbt.LongTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.Tag;
 import tectonicus.configuration.Dimension;
@@ -42,6 +43,7 @@ public class LevelDat {
 	private Player singlePlayer;
 	private String version;
 	private boolean snapshot;
+	private Long worldSeed;
 	private List<String> dataPacks = Collections.emptyList();
 	
 	public LevelDat(Path datFile, String singlePlayerName) {
@@ -106,9 +108,37 @@ public class LevelDat {
 					version = NbtUtil.getString(versionTag, "Name", "");
 					snapshot = NbtUtil.getByte(versionTag, "Snapshot", (byte) 0) == 1;
 				});
+				loadWorldSeed(data, datFile.toAbsolutePath().getParent());
 			}
 		} catch (IOException e) {
 			log.error("Exception: ", e);
+		}
+	}
+
+	private void loadWorldSeed(CompoundTag data, Path worldDir) throws IOException {
+		// Through 1.15 the seed lived directly in level.dat; 1.16 moved it into WorldGenSettings.
+		CompoundTag settings = NbtUtil.getChild(data, "WorldGenSettings", CompoundTag.class);
+		LongTag seedTag = settings != null ? NbtUtil.getChild(settings, "seed", LongTag.class) : null;
+		if (seedTag == null)
+			seedTag = NbtUtil.getChild(data, "RandomSeed", LongTag.class);
+		if (seedTag != null) {
+			worldSeed = seedTag.getValue();
+			return;
+		}
+
+		// Newer worlds keep the world generation settings in a separate saved-data file.
+		Path settingsFile = worldDir.resolve("data/minecraft/world_gen_settings.dat");
+		if (Files.isRegularFile(settingsFile)) {
+			try (NBTInputStream in = new NBTInputStream(Files.newInputStream(settingsFile))) {
+				if (in.readTag() instanceof CompoundTag root) {
+					CompoundTag savedData = NbtUtil.getChild(root, "data", CompoundTag.class);
+					if (savedData != null) {
+						LongTag savedSeed = NbtUtil.getChild(savedData, "seed", LongTag.class);
+						if (savedSeed != null)
+							worldSeed = savedSeed.getValue();
+					}
+				}
+			}
 		}
 	}
 	

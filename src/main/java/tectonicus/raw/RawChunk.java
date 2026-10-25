@@ -75,6 +75,8 @@ public class RawChunk {
 	public static final int SECTION_SIZE = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
 
 	public static final int MAX_LIGHT = 16;
+	// 26.4 Snapshot 1 stores final biomes per block, rather than per quart cell.
+	private static final int BLOCK_BIOMES_DATA_VERSION = 5119;
 
 	private final int maxSections;
 
@@ -1026,33 +1028,37 @@ public class RawChunk {
 
 			CompoundTag biomesContainer = NbtUtil.getChild(compound, "biomes", CompoundTag.class);
 			if (biomesContainer != null) {
-				ListTag biomePaletteTag = NbtUtil.getChild(biomesContainer, "palette", ListTag.class);
-				LongArrayTag biomeDataTag = NbtUtil.getChild(biomesContainer, "data", LongArrayTag.class);
-				List<Tag> palette = biomePaletteTag.getValue();
-				// one string id per 4x4x4 volume within the section
-				if (biomeDataTag != null) {
-					/* The code for dealing with the new biomes palette comes from piegamesde in an Overviewer Github issue
-					 *  https://github.com/overviewer/Minecraft-Overviewer/issues/2022 */
-					long[] data = biomeDataTag.getValue();
-					int paletteSize = palette.size();
-					int bitsPerEntry = Integer.SIZE - Integer.numberOfLeadingZeros(paletteSize - 1);
-					int entriesPerLong = Math.floorDiv(64, bitsPerEntry);
-					int mask = (1 << bitsPerEntry) - 1;
-
-					int index = 0;
-					for (long l : data) {
-						for (int i = 0; i < entriesPerLong && index < 64; i++) {
-							newSection.biomeIds[index++] = (String) palette.get((int) (l & mask)).getValue();
-							l >>= bitsPerEntry;
-						}
-					}
-				} else { //only a single entry in the biome palette
-					Arrays.fill(newSection.biomeIds, palette.get(0).getValue());
-				}
+				// Older sections contain 64 quart cells; 26.4+ contains 4096 final block biomes.
+				newSection.biomeIds = parseBiomePalette(biomesContainer,
+						dataVersion >= BLOCK_BIOMES_DATA_VERSION ? SECTION_SIZE : 64);
 			} else {
 				Arrays.fill(newSection.biomeIds, "minecraft:plains");
 			}
+			CompoundTag noiseBiomes = NbtUtil.getChild(compound, "noise_biomes", CompoundTag.class);
+			if (noiseBiomes != null)
+				newSection.noiseBiomeIds = parseBiomePalette(noiseBiomes, 64);
 		}
+	}
+
+	private static String[] parseBiomePalette(CompoundTag container, int size) {
+		List<Tag> palette = NbtUtil.getChild(container, "palette", ListTag.class).getValue();
+		String[] ids = new String[size];
+		if (palette.size() == 1) {
+			Arrays.fill(ids, palette.getFirst().getValue());
+			return ids;
+		}
+		long[] data = NbtUtil.getChild(container, "data", LongArrayTag.class).getValue();
+		int bits = Integer.SIZE - Integer.numberOfLeadingZeros(palette.size() - 1);
+		int entriesPerLong = Long.SIZE / bits;
+		int mask = (1 << bits) - 1;
+		int index = 0;
+		for (long packed : data) {
+			for (int i = 0; i < entriesPerLong && index < size; i++) {
+				ids[index++] = (String)palette.get((int)(packed & mask)).getValue();
+				packed >>>= bits;
+			}
+		}
+		return ids;
 	}
 
 	private void parseAnvilData(CompoundTag tag, ListTag sectionsTag, WorldStats worldStats, WorldInfo worldInfo) {
@@ -1179,7 +1185,7 @@ public class RawChunk {
 				for (int z = 0; z < SECTION_DEPTH; z++) {
 					final int index = z * SECTION_WIDTH + x;
 					if (biomeDataTag != null) {
-						biomes[x][z] = biomeDataTag.getValue()[index];
+						biomes[x][z] = Byte.toUnsignedInt(biomeDataTag.getValue()[index]);
 					} else {
 						biomes[x][z] = intBiomeDataTag.getValue()[index];
 					}
@@ -1595,6 +1601,9 @@ public class RawChunk {
 				update(hashAlgorithm, s.blockIds);
 				update(hashAlgorithm, s.blockData);
 				update(hashAlgorithm, s.blockNames);
+				update(hashAlgorithm, s.biomeIds);
+				if (s.noiseBiomeIds != null)
+					update(hashAlgorithm, s.noiseBiomeIds);
 
 				update(hashAlgorithm, s.skylight);
 				update(hashAlgorithm, s.blocklight);
@@ -1603,6 +1612,14 @@ public class RawChunk {
 				update(hashAlgorithm, dummy);
 			}
 		}
+
+		if (biomes != null)
+			for (int[] column : biomes)
+				update(hashAlgorithm, column);
+		if (biomes3d != null)
+			for (int[][] plane : biomes3d)
+				for (int[] column : plane)
+					update(hashAlgorithm, column);
 
 		for (SignEntity sign : signs.values()) {
 			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
@@ -1638,21 +1655,44 @@ public class RawChunk {
                 hashAlgorithm.update(data);
 	}
 
-	public Biome getBiome(final int x, final int y, final int z) {
-		if (biomes3d != null) { //1.16-1.17
+	public boolean usesQuartBiomes(int y) {
+		if (biomes3d != null)
+			return true;
+		if (biomes != null)
+			return false;
+		Section section = sections[Math.clamp(y / SECTION_HEIGHT, 0, sections.length - 1)];
+		return section != null && section.biomeIds.length == 64 && section.biomeIds[0] != null;
+	}
+
+	/** Quart lookup for resolving an old chunk beside a newer chunk with separate final biomes. */
+	public Biome getNoiseBiome(int x, int y, int z) {
+		int clampedY = Math.clamp(y, 0, sections.length * SECTION_HEIGHT - 1);
+		Section section = sections[clampedY / SECTION_HEIGHT];
+		if (section != null && section.noiseBiomeIds != null) {
+			int index = (((clampedY & 15) >> 2) * 4 + (z >> 2)) * 4 + (x >> 2);
+			return Biomes.byId(section.noiseBiomeIds[index].substring(10));
+		}
+		return getBiome(x, y, z);
+	}
+
+	public Biome getBiome(final int x, int y, final int z) {
+		if (biomes3d != null) { //1.15-1.17
 			int xIndex = Math.floorDiv(x, 4);
-			int yIndex = Math.floorDiv(y, 4);
+			int yIndex = Math.clamp(Math.floorDiv(y, 4), 0, biomes3d[0].length - 1);
 			int zIndex = Math.floorDiv(z, 4);
 
 			return BiomesOld.byId(biomes3d[xIndex][yIndex][zIndex]);
-		} else if (biomes != null) { //1.15 and older
+		} else if (biomes != null) { //1.14 and older
 			return BiomesOld.byId(biomes[x][z]);
 		} else { //1.18+ (or 1.2 and older)
+			y = Math.clamp(y, 0, sections.length * SECTION_HEIGHT - 1);
 			final int sectionY = y / SECTION_HEIGHT;
 			final int localY = y % SECTION_HEIGHT;
 
 			Section s = sections[sectionY];
 			if (s != null) {
+				if (s.biomeIds.length == SECTION_SIZE)
+					return Biomes.byId(s.biomeIds[(localY * SECTION_DEPTH + z) * SECTION_WIDTH + x].substring(10));
 				int xIndex = Math.floorDiv(x, 4);
 				int yIndex = Math.floorDiv(localY, 4);
 				int zIndex = Math.floorDiv(z, 4);
@@ -1675,7 +1715,8 @@ public class RawChunk {
 		public String[] blockNames;
 		public BlockProperties[] blockStates;
 
-		private final String[] biomeIds;
+		private String[] biomeIds;
+		private String[] noiseBiomeIds;
 
 		public byte[] skylight;
 		public byte[] blocklight;

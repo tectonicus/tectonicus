@@ -116,6 +116,7 @@ public class World implements BlockContext
 	private final boolean legacyWater;
 	@Getter
 	private final int biomeBlendRadius;
+	private final BiomeSampler biomeSampler;
 	@Getter
 	private final File worldDir;
 	private final File dimensionDir;
@@ -268,6 +269,9 @@ public class World implements BlockContext
 		texturePack = new TexturePack(rasteriser, config, map.getModJars(), levelDat.getDataPacks());
 		this.textureVersion = texturePack.getVersion();
 		this.biomeBlendRadius = BiomeColorBlender.resolveRadius(map, version, textureVersion);
+		this.biomeSampler = new BiomeSampler(levelDat.getWorldSeed(), version, dimension);
+		if (levelDat.getWorldSeed() == null && version.getNumVersion() >= VERSION_15.getNumVersion())
+			log.warn("World seed is missing; falling back to direct biome lookup");
 		log.debug("Biome blend radius: {}", biomeBlendRadius);
 		
 		log.debug("World version: {}", worldVersion);
@@ -1001,7 +1005,14 @@ public class World implements BlockContext
 			return Biomes.THE_VOID;
 		}
 		else
-			return c.getBiome(loc.x, loc.y, loc.z);
+			return getBiome(c.getRawChunk(), loc.x, loc.y, loc.z);
+	}
+
+	private Biome getBiome(RawChunk rawChunk, int x, int y, int z) {
+		return biomeSampler.getBiome(rawChunk, x, y, z, coord -> {
+			Chunk neighbor = rawLoadedChunks.get(coord);
+			return neighbor != null ? neighbor.getRawChunk() : null;
+		});
 	}
 	
 	@Override
@@ -1364,7 +1375,7 @@ public class World implements BlockContext
 		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
 		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
 			Biome biome = sampleX >= 0 && sampleX < RawChunk.WIDTH && sampleZ >= 0 && sampleZ < RawChunk.DEPTH
-					? rawChunk.getBiome(sampleX, y, sampleZ)
+					? getBiome(rawChunk, sampleX, y, sampleZ)
 					: getBiome(chunkCoord, sampleX, y, sampleZ);
 			return biome.getWaterColor();
 		});

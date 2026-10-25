@@ -117,6 +117,7 @@ public class FileViewCache
 		
 		hashAlgorithm.update(Integer.toString(VIEW_RENDERER_VERSION).getBytes());
 		hashAlgorithm.update(("biomeBlendRadius=" + world.getBiomeBlendRadius() + "\n").getBytes());
+		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		
 		hashAlgorithm.update(sign.getText(0).getBytes());
 		hashAlgorithm.update(sign.getText(1).getBytes());
