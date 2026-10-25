@@ -41,6 +41,8 @@ public final class SulfurSpringParticles {
 		List<SubTexture> gas = gasState(state) ? world.getTexturePack().findParticleTextures("minecraft:noxious_gas") : List.of();
 		List<SubTexture> bubbles = world.getTexturePack().findParticleTextures("minecraft:sulfur_bubbles");
 		addGeometry(x, y, z, properties, world, chunk, geometry, gas, bubbles);
+		if (state.equals("continuous") || state.equals("erupting"))
+			GeyserParticles.addGeometry(x, y, z, properties, world, chunk, geometry);
 	}
 
 	static void addGeometry(int x, int y, int z, BlockProperties properties, BlockContext world, RawChunk chunk,
@@ -117,7 +119,7 @@ public final class SulfurSpringParticles {
 		}
 	}
 
-	private static int findSurface(int x, int y, int z, BlockContext world, RawChunk chunk) {
+	static int findSurface(int x, int y, int z, BlockContext world, RawChunk chunk) {
 		for (int offset = 1; offset <= MAX_WATER_DEPTH + 1; offset++) {
 			int py = y + offset;
 			if (!passable(x, py, z, world, chunk))
@@ -153,7 +155,7 @@ public final class SulfurSpringParticles {
 		}
 	}
 
-	private static boolean sourceWater(int x, int y, int z, BlockContext world, RawChunk chunk) {
+	static boolean sourceWater(int x, int y, int z, BlockContext world, RawChunk chunk) {
 		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return false;
 		BlockType type = world.getBlockType(chunk, x, y, z);
@@ -169,7 +171,7 @@ public final class SulfurSpringParticles {
 		return Water.containsWater(name, properties, model);
 	}
 
-	private static boolean passable(int x, int y, int z, BlockContext world, RawChunk chunk) {
+	static boolean passable(int x, int y, int z, BlockContext world, RawChunk chunk) {
 		if (y < 0 || y >= Minecraft.getChunkHeight())
 			return false;
 		BlockType type = world.getBlockType(chunk, x, y, z);
@@ -184,7 +186,7 @@ public final class SulfurSpringParticles {
 		return !type.isSolid() && model != null && !model.isFullBlock() && !model.isFullOpaqueBlock();
 	}
 
-	private static void addParticle(Vector3f position, float size, float alpha, SubTexture sprite, Geometry.MeshType type,
+	static void addParticle(Vector3f position, float size, float alpha, SubTexture sprite, Geometry.MeshType type,
 			BlockContext world, RawChunk chunk, Geometry geometry) {
 		float angle = world.getCameraAngleRad(), elevation = world.getCameraElevationRad();
 		Vector3f right = new Vector3f((float) Math.sin(angle), 0, -(float) Math.cos(angle)).mul(size);
@@ -217,7 +219,7 @@ public final class SulfurSpringParticles {
 
 	private static float jitter(Random random, float amount) { return (random.nextFloat() * 2 - 1) * amount; }
 
-	private static long positionSeed(long x, int y, long z) {
+	static long positionSeed(long x, int y, long z) {
 		long seed = (0x9E3779B97F4A7C15L ^ x) * 0xBF58476D1CE4E5B9L;
 		seed = (seed ^ y) * 0x94D049BB133111EBL;
 		seed = (seed ^ z) * 0x9E3779B97F4A7C15L;
