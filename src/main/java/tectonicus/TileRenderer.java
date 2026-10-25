@@ -69,6 +69,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.util.OutputResourcesUtil.outputBeacons;
+import static tectonicus.util.FindEntityUtil.findBeacons;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
@@ -614,11 +615,12 @@ public class TileRenderer
 			
 			ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
 			Queue<BedEntity> beds = world.getBeds();
-			Queue<BeaconEntity> beacons = world.getBeacons();
+			findBeacons(c.getRawChunk(), world.getBeacons(), map.getBeaconFilter(),
+					beacon -> world.getBeaconLevels(c.getRawChunk(), beacon));
 			
 			try {
 				// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
-				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds, beacons);
+				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds);
 			} catch (CloneNotSupportedException e) {
 				log.error("Exception: ", e);
 			}

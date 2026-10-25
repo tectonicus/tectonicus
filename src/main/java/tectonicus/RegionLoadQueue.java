@@ -15,7 +15,6 @@ import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.Chunk;
 import tectonicus.configuration.Map;
 import tectonicus.configuration.filter.PortalFilter;
-import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.world.Sign;
@@ -30,7 +29,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static tectonicus.util.FindEntityUtil.findBeacons;
 import static tectonicus.util.FindEntityUtil.findBeds;
 import static tectonicus.util.FindEntityUtil.findChests;
 import static tectonicus.util.FindEntityUtil.findPortals;
@@ -54,9 +52,9 @@ public class RegionLoadQueue
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 					 Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds, Queue<BeaconEntity> beacons) {
+					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds) {
 		numberOfRegionsStarted.incrementAndGet();
-		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds, beacons);
+		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds);
 		executor.submit(task);
 	}
 	
@@ -83,11 +81,10 @@ public class RegionLoadQueue
 		private final HddObjectListWriter<Sign> views;
 		private final ConcurrentLinkedQueue<ContainerEntity> chests;
 		private final Queue<BedEntity> beds;
-		private final Queue<BeaconEntity> beacons;
 		
 		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 						tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds, Queue<BeaconEntity> beacons) {
+						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds) {
 			this.chunk = chunk;
 			this.regionHashStore = regionHashStore;
 			this.hashAlgorithm = hashAlgorithm;
@@ -97,7 +94,6 @@ public class RegionLoadQueue
 			this.views = views;
 			this.chests = chests;
 			this.beds = beds;
-			this.beacons = beacons;
 		}
 		
 		@Override
@@ -117,7 +113,6 @@ public class RegionLoadQueue
 				findViews(chunk.getRawChunk(), views, map.getViewFilter());
 				
 				findChests(chunk.getRawChunk(), map.getChestFilter(), chests);
-				findBeacons(chunk.getRawChunk(), beacons, map.getBeaconFilter());
 			} catch (Exception e) {
 				log.error("Exception: ", e);
 			}

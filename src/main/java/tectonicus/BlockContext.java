@@ -18,12 +18,14 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.raw.Biome;
+import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 
 public interface BlockContext {
+	default int getBeaconLevels(RawChunk chunk, BeaconEntity beacon) { return beacon.getLevels(); }
 	default boolean shouldCullSameBlockFaces() { return true; }
 	default boolean isLegacyWater() { return true; }
 

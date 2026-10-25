@@ -142,7 +142,7 @@ public class Beacon implements BlockType {
 		if(world instanceof ItemRenderer.ItemContext) { // We're rendering an icon
 			entity = new BeaconEntity(0, 0, 0, 0, 0, 0, 0, Effect.NONE, Effect.NONE);
 		}
-		if (entity.getLevels() > 0)
+		if (entity != null && world.getBeaconLevels(rawChunk, entity) > 0)
 		{
 			final int localY = entity.getLocalY();
 			

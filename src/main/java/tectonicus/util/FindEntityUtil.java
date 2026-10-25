@@ -32,6 +32,7 @@ import tectonicus.world.Sign;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.ToIntFunction;
 
 @UtilityClass
 public class FindEntityUtil {
@@ -142,10 +143,16 @@ public class FindEntityUtil {
 		}
 	}
 	
-	public static void findBeacons(RawChunk chunk, Queue<BeaconEntity> beacons, BeaconFilter filter) {
+	public static void findBeacons(RawChunk chunk, Queue<BeaconEntity> beacons, BeaconFilter filter,
+			ToIntFunction<BeaconEntity> resolveLevels) {
+		if (!filter.passesFilter(true))
+			return;
 		for (BeaconEntity beaconEntity: chunk.getBeacons().values()) {
-			if (filter.passesFilter(beaconEntity.getLevels()>0)) {
-				beacons.add(beaconEntity);
+			int levels = resolveLevels.applyAsInt(beaconEntity);
+			if (filter.passesFilter(levels > 0)) {
+				beacons.add(new BeaconEntity(beaconEntity.getX(), beaconEntity.getY(), beaconEntity.getZ(),
+						beaconEntity.getLocalX(), beaconEntity.getLocalY(), beaconEntity.getLocalZ(), levels,
+						beaconEntity.getPrimaryEffect(), beaconEntity.getSecondaryEffect()));
 			}
 		}
 	}

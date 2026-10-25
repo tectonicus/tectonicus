@@ -9,6 +9,8 @@
 
 package tectonicus.world;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +92,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -148,6 +151,10 @@ public class World implements BlockContext
 	private final Queue<BedEntity> beds;
 	@Getter
 	private final Queue<BeaconEntity> beacons;
+	private record BeaconPosition(int x, int y, int z) {}
+	private final Map<BeaconPosition, Integer> beaconLevels = new ConcurrentHashMap<>();
+	// Render filters and map cropping must not remove blocks from a beacon's pyramid.
+	private final Cache<ChunkCoord, RawChunk> beaconChunks = Caffeine.newBuilder().maximumSize(32).build();
 	
 	@Getter
 	private final TexturePack texturePack;
@@ -395,7 +402,8 @@ public class World implements BlockContext
 		registry = new BlockTypeRegistry();
 		registry.setDefaultBlock(new Air());
 		
-		modelRegistry = new BlockRegistry(texturePack);  //model registry loads all states and models now
+		if (modelRegistry == null)
+			modelRegistry = new BlockRegistry(texturePack);  // Shared across layers and beacon discovery
 		paintingRegistry = new PaintingRegistry(texturePack);
 		
 		BlockRegistryParser parser = new BlockRegistryParser(texturePack, biomeCache, signFilter);
@@ -545,6 +553,37 @@ public class World implements BlockContext
 		composite.add(worldSubset.getBlockFilter(coord));
 		
 		return chunkLocator.loadChunk(coord, composite, worldStats, worldInfo);
+	}
+
+	@Override
+	public int getBeaconLevels(RawChunk chunk, BeaconEntity beacon) {
+		return beaconLevels.computeIfAbsent(new BeaconPosition(beacon.getX(), beacon.getY(), beacon.getZ()), key -> {
+			return BeaconActivation.resolve(chunk, beacon, coord ->
+				beaconChunks.get(coord, neighborCoord -> {
+					Chunk neighbor = chunkLocator.loadChunk(neighborCoord, new NullBlockFilter(), null, worldInfo);
+					return neighbor != null ? neighbor.getRawChunk() : null;
+				}), (raw, x, y, z) -> {
+				String name = raw.getBlockName(x, y, z);
+				if ("minecraft:air".equals(name) || "minecraft:cave_air".equals(name) || "minecraft:void_air".equals(name)
+						|| name == null && raw.getBlockId(x, y, z) == 0)
+					return false;
+				// Discovery precedes layer setup. Empty columns and inactive pyramids
+				// need no registry; initialize it only for a potential obstruction.
+				if (registry == null)
+					loadBlockRegistry(null, true);
+				if (name == null)
+					return registry.find(raw.getBlockId(x, y, z), raw.getBlockData(x, y, z)).isSolid();
+				BlockStateWrapper block = modelRegistry.getBlock(name);
+				if (block == null)
+					return false;
+				if (block.isFullOpaqueBlock())
+					return true;
+				// Slabs and other blocks can have both partial and full-cube states.
+				return block.getModels(block.getPropertiesWithDefaults(raw.getBlockState(x, y, z)),
+						x, raw.getWorldY(y), z).stream().anyMatch(model -> model.getBlockModel() != null
+						&& model.getBlockModel().isFullBlock() && model.getBlockModel().isSolid());
+			});
+		});
 	}
 	
 	public boolean contains(ChunkCoord coord)

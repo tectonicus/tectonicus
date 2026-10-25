@@ -638,7 +638,7 @@ public class RawChunk {
 							secondaryEffect = Effect.byId(secondaryEffectInt.getValue());
 						}
 						
-						beacons.put(createKey(localX, localY, localZ), new BeaconEntity(x, y, z, localX, localY, localZ, levels.getValue(), primaryEffect, secondaryEffect));
+						beacons.put(createKey(localX, localY, localZ), new BeaconEntity(x, y, z, localX, localY, localZ, levels != null ? levels.getValue() : 0, primaryEffect, secondaryEffect));
 					} else if (id.equals("Banner") || id.equals("minecraft:banner")) {
 						IntTag base = NbtUtil.getChild(entity, "Base", IntTag.class);
 						Integer baseVal = null;

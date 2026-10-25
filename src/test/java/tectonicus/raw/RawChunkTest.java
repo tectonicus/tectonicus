@@ -111,6 +111,34 @@ class RawChunkTest {
 				"DataVersion", new IntTag("DataVersion", 1631), "Level", new CompoundTag("Level", level))), Version.VERSION_13);
 	}
 
+	@Test
+	void missingBeaconLevelsStillLoadsEffectsAndUsesResolvedLevelsForMarkers() throws Exception {
+		CompoundTag beacon = new CompoundTag("", Map.of(
+				"id", new StringTag("id", "minecraft:beacon"),
+				"x", new IntTag("x", 8), "y", new IntTag("y", 36), "z", new IntTag("z", 8),
+				"primary_effect", new StringTag("primary_effect", "minecraft:speed")));
+		CompoundTag root = new CompoundTag("", Map.of(
+				"DataVersion", new IntTag("DataVersion", 3953),
+				"Status", new StringTag("Status", "minecraft:full"),
+				"yPos", new IntTag("yPos", -4),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of(beacon)),
+				"sections", new ListTag("sections", CompoundTag.class, List.of())));
+		RawChunk chunk = readChunk(root, Version.VERSION_21);
+		BeaconEntity entity = chunk.getBeacons().values().iterator().next();
+		assertEquals(0, entity.getLevels());
+		assertEquals(tectonicus.world.Effect.SPEED, entity.getPrimaryEffect());
+		var markers = new java.util.ArrayDeque<BeaconEntity>();
+		var filter = new tectonicus.configuration.filter.BeaconFilter(tectonicus.configuration.filter.BeaconFilterType.ACTIVATED);
+		tectonicus.util.FindEntityUtil.findBeacons(chunk, markers, filter, ignored -> 4);
+		assertEquals(1, markers.size());
+		assertEquals(4, markers.peek().getLevels());
+		assertEquals(entity.getY(), markers.peek().getY());
+		assertEquals(entity.getPrimaryEffect(), markers.peek().getPrimaryEffect());
+		markers.clear();
+		tectonicus.util.FindEntityUtil.findBeacons(chunk, markers, filter, ignored -> 0);
+		assertTrue(markers.isEmpty());
+	}
+
 	private RawChunk readChunk(CompoundTag root, Version version) throws Exception {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {
