@@ -59,6 +59,10 @@ public class MutableMap implements Map
 	@Getter
 	@Setter
 	private boolean legacyWater;
+	@Getter
+	private int biomeBlendRadius;
+	@Getter
+	private boolean biomeBlendRadiusConfigured;
 	
 	@Getter
 	@Setter
@@ -134,6 +138,14 @@ public class MutableMap implements Map
 		this.oldGrayscaleLighting = false;
 		this.sortTranslucentFaces = true;
 		this.legacyWater = false;
+		this.biomeBlendRadius = DEFAULT_BIOME_BLEND_RADIUS;
+	}
+
+	public void setBiomeBlendRadius(int radius) {
+		if (radius < 0 || radius > MAX_BIOME_BLEND_RADIUS)
+			throw new IllegalArgumentException("biomeBlendRadius must be between 0 and " + MAX_BIOME_BLEND_RADIUS);
+		this.biomeBlendRadius = radius;
+		this.biomeBlendRadiusConfigured = true;
 	}
 	
 	@Override

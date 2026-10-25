@@ -115,6 +115,8 @@ public class World implements BlockContext
 	@Getter
 	private final boolean legacyWater;
 	@Getter
+	private final int biomeBlendRadius;
+	@Getter
 	private final File worldDir;
 	private final File dimensionDir;
 	@Getter
@@ -265,6 +267,8 @@ public class World implements BlockContext
 		log.info("Loading textures");
 		texturePack = new TexturePack(rasteriser, config, map.getModJars(), levelDat.getDataPacks());
 		this.textureVersion = texturePack.getVersion();
+		this.biomeBlendRadius = BiomeColorBlender.resolveRadius(map, version, textureVersion);
+		log.debug("Biome blend radius: {}", biomeBlendRadius);
 		
 		log.debug("World version: {}", worldVersion);
 		// Is this actually helpful?
@@ -1287,77 +1291,17 @@ public class World implements BlockContext
 	}
 
 	public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage, boolean isDryFoliage) {
-		final Biome biome = getBiome(chunkCoord, x, y, z);
-		final Biome northBiome = getBiome(chunkCoord, x, y, z-1);
-		final Biome southBiome = getBiome(chunkCoord, x, y, z+1);
-		final Biome eastBiome = getBiome(chunkCoord, x+1, y, z);
-		final Biome westBiome = getBiome(chunkCoord, x-1, y, z);
-		final Biome northEastBiome = getBiome(chunkCoord, x+1, y, z-1);
-		final Biome northWestBiome = getBiome(chunkCoord, x-1, y, z-1);
-		final Biome southEastBiome = getBiome(chunkCoord, x+1, y, z+1);
-		final Biome southWestBiome = getBiome(chunkCoord, x-1, y, z+1);
-
-		Colour4f centerColor;
-		Colour4f northColor;
-		Colour4f southColor;
-		Colour4f eastColor;
-		Colour4f westColor;
-		Colour4f northEastColor;
-		Colour4f northWestColor;
-		Colour4f southEastColor;
-		Colour4f southWestColor;
-
-		//TODO: this version checking may need to be based off the chunk version not the texturepack version.  Do some testing.
-		//The new way to find biome colors was actually only added in 1.7.2, but for my own
-		//sanity I'm not going to worry about letting the new method work with 1.6
-		if (textureVersion.getNumVersion() < VERSIONS_6_TO_8.getNumVersion()) {
-			centerColor = getTintColorOld(biome.getNumericId(), isFoliage);
-			northColor = getTintColorOld(northBiome.getNumericId(), isFoliage);
-			southColor = getTintColorOld(southBiome.getNumericId(), isFoliage);
-			eastColor = getTintColorOld(eastBiome.getNumericId(), isFoliage);
-			westColor = getTintColorOld(westBiome.getNumericId(), isFoliage);
-			northEastColor = getTintColorOld(northEastBiome.getNumericId(), isFoliage);
-			northWestColor = getTintColorOld(northWestBiome.getNumericId(), isFoliage);
-			southEastColor = getTintColorOld(southEastBiome.getNumericId(), isFoliage);
-			southWestColor = getTintColorOld(southWestBiome.getNumericId(), isFoliage);
-		} else {
-			if (textureVersion.getNumVersion() < VERSION_15.getNumVersion()) {
-				int elevation = Math.max(y - 64, 0);
-
-				centerColor = getTintColor(biome, elevation, isFoliage);
-				northColor = getTintColor(northBiome, elevation, isFoliage);
-				southColor = getTintColor(southBiome, elevation, isFoliage);
-				eastColor = getTintColor(eastBiome, elevation, isFoliage);
-				westColor = getTintColor(westBiome, elevation, isFoliage);
-				northEastColor = getTintColor(northEastBiome, elevation, isFoliage);
-				northWestColor = getTintColor(northWestBiome, elevation, isFoliage);
-				southEastColor = getTintColor(southEastBiome, elevation, isFoliage);
-				southWestColor = getTintColor(southWestBiome, elevation, isFoliage);
-			} else { //1.15+
-				centerColor = getTintColor(biome, isFoliage, isDryFoliage);
-				northColor = getTintColor(northBiome, isFoliage, isDryFoliage);
-				southColor = getTintColor(southBiome, isFoliage, isDryFoliage);
-				eastColor = getTintColor(eastBiome, isFoliage, isDryFoliage);
-				westColor = getTintColor(westBiome, isFoliage, isDryFoliage);
-				northEastColor = getTintColor(northEastBiome, isFoliage, isDryFoliage);
-				northWestColor = getTintColor(northWestBiome, isFoliage, isDryFoliage);
-				southEastColor = getTintColor(southEastBiome, isFoliage, isDryFoliage);
-				southWestColor = getTintColor(southWestBiome, isFoliage, isDryFoliage);
-			}
-		}
-
-		Colour4f color = new Colour4f(centerColor);
-		color.add(northColor);
-		color.add(southColor);
-		color.add(eastColor);
-		color.add(westColor);
-		color.add(northEastColor);
-		color.add(northWestColor);
-		color.add(southEastColor);
-		color.add(southWestColor);
-		color.divide(9);
-
-		return color;
+		final int version = textureVersion.getNumVersion();
+		final int elevation = Math.max(y - 64, 0);
+		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
+			Biome biome = getBiome(chunkCoord, sampleX, y, sampleZ);
+			// Preserve the tint calculation appropriate to the selected texture version.
+			if (version < VERSIONS_6_TO_8.getNumVersion())
+				return getTintColorOld(biome.getNumericId(), isFoliage);
+			if (version < VERSION_15.getNumVersion())
+				return getTintColor(biome, elevation, isFoliage);
+			return getTintColor(biome, isFoliage, isDryFoliage);
+		});
 	}
 
 	/** Get tint color for Minecraft 1.6 and earlier */
@@ -1416,27 +1360,11 @@ public class World implements BlockContext
 	@Override
 	public Colour4f getWaterColor(RawChunk rawChunk, int x, int y, int z) {
 		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
-		final Biome biome = rawChunk.getBiome(x, y, z);
-		final Biome northBiome = getBiome(chunkCoord, x, y, z-1);
-		final Biome southBiome = getBiome(chunkCoord, x, y, z+1);
-		final Biome eastBiome = getBiome(chunkCoord, x+1, y, z);
-		final Biome westBiome = getBiome(chunkCoord, x-1, y, z);
-		final Biome northEastBiome = getBiome(chunkCoord, x+1, y, z-1);
-		final Biome northWestBiome = getBiome(chunkCoord, x-1, y, z-1);
-		final Biome southEastBiome = getBiome(chunkCoord, x+1, y, z+1);
-		final Biome southWestBiome = getBiome(chunkCoord, x-1, y, z+1);
-
-		Colour4f colour = new Colour4f(biome.getWaterColor());
-		colour.add(northBiome.getWaterColor());
-		colour.add(southBiome.getWaterColor());
-		colour.add(eastBiome.getWaterColor());
-		colour.add(westBiome.getWaterColor());
-		colour.add(northEastBiome.getWaterColor());
-		colour.add(northWestBiome.getWaterColor());
-		colour.add(southEastBiome.getWaterColor());
-		colour.add(southWestBiome.getWaterColor());
-		colour.divide(9);
-
-		return colour;
+		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
+			Biome biome = sampleX >= 0 && sampleX < RawChunk.WIDTH && sampleZ >= 0 && sampleZ < RawChunk.DEPTH
+					? rawChunk.getBiome(sampleX, y, sampleZ)
+					: getBiome(chunkCoord, sampleX, y, sampleZ);
+			return biome.getWaterColor();
+		});
 	}
 }

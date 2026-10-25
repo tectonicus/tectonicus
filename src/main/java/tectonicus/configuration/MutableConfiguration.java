@@ -232,6 +232,7 @@ public class MutableConfiguration implements Configuration, Callable<MutableConf
 			log.debug("\tuseSmoothLighting:{}", m.isSmoothLit());
 			log.debug("\tsortTranslucentFaces:{}", m.isSortTranslucentFaces());
 			log.debug("\tlegacyWater:{}", m.isLegacyWater());
+			log.debug("\tbiomeBlendRadius: {}", m.isBiomeBlendRadiusConfigured() ? m.getBiomeBlendRadius() : "automatic");
 			log.debug("\tuseBiomeColours: {}", m.useBiomeColours());
 
 			for (Layer l : m.getLayers())

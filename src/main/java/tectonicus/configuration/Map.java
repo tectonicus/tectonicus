@@ -23,6 +23,9 @@ import java.util.List;
 
 public interface Map
 {
+	int DEFAULT_BIOME_BLEND_RADIUS = 2;
+	int MAX_BIOME_BLEND_RADIUS = 7;
+
 	String getId();
 	
 	String getName();
@@ -47,6 +50,8 @@ public interface Map
 	boolean useOldGrayscaleLighting();
 	boolean isSortTranslucentFaces();
 	boolean isLegacyWater();
+	int getBiomeBlendRadius();
+	boolean isBiomeBlendRadiusConfigured();
 
 	PlayerFilter getPlayerFilter();
 	SignFilter getSignFilter();

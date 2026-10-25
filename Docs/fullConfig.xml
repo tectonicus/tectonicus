@@ -71,11 +71,14 @@
 		<!-- legacyWater=true Renders top water block faces beneath other water blocks; creates very deep looking water -->
         <!-- useOldGrayscaleLighting=true Use the previous Alpha/Beta (pre Beta 1.8) grayscale color for night lighting instead of blue sky and warm block-light colors -->
 		<!-- sortTranslucentFaces=true Sorts translucent faces back to front within each chunk to get rid of rendering artifacts such as the ocean ice grid -->
+		<!-- biomeBlendRadius: 0=off, 1=3x3, 2=5x5, 3=7x7, 4=9x9, 5=11x11, 6=13x13, 7=15x15. Applies to grass, foliage, dry foliage, and water.
+		     Omit for defaults: 1 for Minecraft 1.12 and older, 2 for 1.13 and newer.-->
 		<render
 			sortTranslucentFaces="true / false"
 			useSmoothLighting="true / false"
 			useOldGrayscaleLighting="false / true"
 			legacyWater="true / false"
+			biomeBlendRadius="1 or 2 / 0 - 7"
 		/>
 
 		<mods>

@@ -288,6 +288,17 @@ public class ParseUtil {
 		return 45;
 	}
 
+	public static int parseBiomeBlendRadius(String radiusStr) {
+		if (StringUtils.isBlank(radiusStr))
+			return Map.DEFAULT_BIOME_BLEND_RADIUS;
+		try {
+			return Math.clamp(Integer.parseInt(radiusStr.trim()), 0, Map.MAX_BIOME_BLEND_RADIUS);
+		} catch (NumberFormatException e) {
+			log.warn("Invalid biomeBlendRadius '{}'; using {}", radiusStr, Map.DEFAULT_BIOME_BLEND_RADIUS);
+			return Map.DEFAULT_BIOME_BLEND_RADIUS;
+		}
+	}
+
 	public static int parseElevationAngle(String angleStr) {
 		try {
 			final int angle = Integer.parseInt(angleStr);

@@ -47,6 +47,7 @@ import java.util.List;
 import static tectonicus.configuration.ParseUtil.parseAlphaBits;
 import static tectonicus.configuration.ParseUtil.parseBackgroundColor;
 import static tectonicus.configuration.ParseUtil.parseBeaconFilter;
+import static tectonicus.configuration.ParseUtil.parseBiomeBlendRadius;
 import static tectonicus.configuration.ParseUtil.parseCacheDir;
 import static tectonicus.configuration.ParseUtil.parseCameraAngle;
 import static tectonicus.configuration.ParseUtil.parseChestFilter;
@@ -226,6 +227,9 @@ public class XmlConfigurationParser
 			map.setOldGrayscaleLighting(getBoolean(renderNode, "useOldGrayscaleLighting", false));
 			map.setSortTranslucentFaces(getBoolean(renderNode, "sortTranslucentFaces", true));
 			map.setLegacyWater(getBoolean(renderNode, "legacyWater", false));
+			String biomeBlendRadius = getString(renderNode, "biomeBlendRadius");
+			if (StringUtils.isNotBlank(biomeBlendRadius))
+				map.setBiomeBlendRadius(parseBiomeBlendRadius(biomeBlendRadius));
 			
 			map.setNorthDirection( parseNorthDirection( getString(mapElement, "north")));
 			map.setCustomCompassRose( getString(mapElement, "compassRose"));
