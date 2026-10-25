@@ -167,7 +167,6 @@ public class Banner implements BlockType
 		identifier.append("banner_base_").append(baseColor.getName());
 
 		if (texturePackVersion.getNumVersion() >= Version.VERSION_15.getNumVersion()) {
-			//TODO: the base pattern is not being composited correctly for 1.15 and higher versions
 			addPattern(patternImages.get("base"), baseColor.getColor(), g);
 		} else { //1.8 - 1.14
 			addPattern(base, patternImages.get("base"), baseColor.getColor(), g);
@@ -190,6 +189,7 @@ public class Banner implements BlockType
 			}
 		}
 		
+		g.dispose();
 		SubTexture texture = world.getTexturePack().findTexture(finalImage, identifier.toString());
 		final float texel2 = 1.0f / 64.0f;
 		final SubTexture frontTexture = new SubTexture(texture.texture, texture.u0+texel2, texture.v0+texel2, texture.u0+texel2*21, texture.v0+texel2*41);
@@ -303,45 +303,24 @@ public class Banner implements BlockType
 
 
 
-	private void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
-		//tint(p, Colors.byId(pattern.color).getColor());
+	static void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
 		if (pattern != null) {
-			tintFast(pattern, color);
-			g.drawImage(pattern, 0, 0, null);
-		}
-	}
-
-	private void tint(BufferedImage image, Color color) {
-		for (int x = 0; x < image.getWidth(); x++) {
-			for (int y = 0; y < image.getHeight(); y++) {
-				Color pixelColor = new Color(image.getRGB(x, y), true);
-				int r = color.getRed();
-				int g = color.getGreen();
-				int b = color.getBlue();
-				int a = pixelColor.getAlpha();
-				int rgba = (a << 24) | (r << 16) | (g << 8) | b;
-				image.setRGB(x, y, rgba);
+			// Since 1.15, each pattern contains its own cloth shading and alpha mask.
+			// Multiply by the dye color without modifying the shared pattern texture.
+			int width = pattern.getWidth();
+			int height = pattern.getHeight();
+			int[] pixels = pattern.getRGB(0, 0, width, height, null, 0, width);
+			for (int i = 0; i < pixels.length; i++) {
+				int pixel = pixels[i];
+				int red = ((pixel >>> 16) & 0xff) * color.getRed() / 255;
+				int green = ((pixel >>> 8) & 0xff) * color.getGreen() / 255;
+				int blue = (pixel & 0xff) * color.getBlue() / 255;
+				pixels[i] = (pixel & 0xff000000) | (red << 16) | (green << 8) | blue;
 			}
+			BufferedImage tinted = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+			tinted.setRGB(0, 0, width, height, pixels, 0, width);
+			g.drawImage(tinted, 0, 0, null);
 		}
-	}
-
-	//I haven't actually tested if this method is faster but I put Fast in the name just in case :)
-	private void tintFast(BufferedImage image, Color color) {
-		final float heightRatio = 41.0f/64.0f;
-		final float widthRatio = 42.0f/64.0f;
-		//We use this smaller width and height because banner patterns don't take up all of the 64x64 image
-		final int height = (int) (image.getHeight() * heightRatio);
-		final int width = (int) (image.getWidth() * widthRatio);
-
-		int newRgb = (color.getRed() << 16) | (color.getGreen() << 8) | color.getBlue();
-
-		int[] rgb = image.getRGB(0, 0, width, height, null, 0, width);
-
-		int alphaMask = 0xff000000;
-		for (int i = 0; i < rgb.length; i++) {
-			rgb[i] = (rgb[i] & alphaMask) | newRgb;
-		}
-		image.setRGB(0, 0, width, height, rgb, 0, width);
 	}
 
 	private void addPattern(BufferedImage base, BufferedImage pattern, Color currentColor, Graphics2D g)
