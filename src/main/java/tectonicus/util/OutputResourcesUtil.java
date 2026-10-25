@@ -1122,6 +1122,9 @@ public class OutputResourcesUtil {
 					writer.println("\t\t\t\tdimension: \"" + m.getDimension() + "\",");
 					writer.println("\t\t\t\tbackgroundColor: \""+l.getBackgroundColor()+"\",");
 					writer.println("\t\t\t\timageFormat: \""+l.getImageFormat().getExtension()+"\",");
+					writer.print("\t\t\t\ttileIndex: ");
+					TileIndexWriter.write(writer, DirUtils.getLayerDir(config.getOutputDir(), l).toPath(), config.getNumZoomLevels(), l.getImageFormat());
+					writer.println(",");
 					writer.println("\t\t\t\tisPng: \""+l.getImageFormat().isPng()+"\"");
 
 					if (j < m.numLayers()-1)

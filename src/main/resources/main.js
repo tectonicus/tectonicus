@@ -62,6 +62,34 @@ async function mainAsync()
 	let fragmentParams = getFragmentParams();
 	
 	L.TileLayer.Tectonicus = L.TileLayer.extend({
+        _isValidTile: function(coords) {
+            if (!L.TileLayer.prototype._isValidTile.call(this, coords)) {
+                return false;
+            }
+            // Older contents.js files have no index; keep them compatible with this viewer.
+            if (!this.tileIndex) {
+                return true;
+            }
+            const rows = this.tileIndex[coords.z];
+            const ranges = rows && rows[coords.y];
+            if (!ranges) {
+                return false;
+            }
+            // Rows contain sorted, inclusive [start, end] pairs, preserving holes in coverage.
+            let low = 0;
+            let high = ranges.length / 2 - 1;
+            while (low <= high) {
+                const middle = Math.floor((low + high) / 2);
+                if (coords.x < ranges[middle * 2]) {
+                    high = middle - 1;
+                } else if (coords.x > ranges[middle * 2 + 1]) {
+                    low = middle + 1;
+                } else {
+                    return true;
+                }
+            }
+            return false;
+        },
         getTileUrl: function(coords) {
             let xBin = coords.x % 16;
             let yBin = coords.y % 16;
@@ -73,7 +101,7 @@ async function mainAsync()
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
         },
         initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, beacons, worldVectors, projection,
-            blockStats, worldStats, viewPosition, controlState) {
+            blockStats, worldStats, viewPosition, controlState, tileIndex) {
                 this.mapId = mapId;
                 this.layerId = layerId;
                 this.dimension = dimension;
@@ -94,6 +122,7 @@ async function mainAsync()
                 this.worldStats = worldStats;
                 this.viewPosition = viewPosition;
                 this.controlState = JSON.parse(JSON.stringify(controlState));
+                this.tileIndex = tileIndex;
             }
         });
 
@@ -107,7 +136,7 @@ async function mainAsync()
                             let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
                 let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState);
+                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState, layer.tileIndex);
 
                 if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
                     layer.name = layer.name + i + j; //A hack to handle duplicate layer names in the layer control
