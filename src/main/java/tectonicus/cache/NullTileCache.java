@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,9 +13,6 @@ import tectonicus.TileCoord;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Map;
-import tectonicus.renderer.OrthoCamera;
-import tectonicus.world.World;
 
 import java.io.File;
 
@@ -40,8 +37,7 @@ public class NullTileCache implements TileCache
 	}
 	
 	@Override
-	public HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles,
-										RegionHashStore regionHashStore, World world, Map map, OrthoCamera camera, int zoom, int tileWidth, int tileHeight, File layerDir)
+	public HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles, TileHashCache tileHashes, File layerDir)
 	{
 		return visibleTiles;
 	}

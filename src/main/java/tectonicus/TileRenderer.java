@@ -19,6 +19,7 @@ import tectonicus.cache.FileViewCache;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.TileCache;
+import tectonicus.cache.TileHashCache;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
@@ -271,31 +272,36 @@ public class TileRenderer
 			if (map.getLayers().isEmpty())
 				log.warn("No layers found!!!");
 			
-			for (Layer layer : map.getLayers())
-			{
-				// Setup per-layer config
-				setupWorldForLayer(layer, world);
-				
-				
-				// Set new tile cache for this layer
-				String optionString = FileTileCache.calcOptionsString(config);
-				TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
-			
-				File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
-				FileUtils.ensureExists(baseTilesDir);
+			File tileHashFile = config.useCache() && map.numLayers() > 1
+					? tempArea.generateTempFile("tileHashes", ".cache") : null;
+			try (TileHashCache tileHashes = new TileHashCache(tileHashFile, world, map, camera, regionHashStore,
+					tileWidth, tileHeight, hashAlgorithm)) {
+				for (Layer layer : map.getLayers()) {
+					// Setup per-layer config
+					setupWorldForLayer(layer, world);
 
-				// Find changed tiles
-				HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, regionHashStore, world, map, camera, map.getClosestZoomSize(), tileWidth, tileHeight, baseTilesDir);
-				
-				// Trim changed tiles to size
-				changedTiles = trimTileList(changedTiles, config.getMaxTiles());
-				
-				// Render base tiles
-				renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
+					// Set new tile cache for this layer
+					String optionString = FileTileCache.calcOptionsString(config);
+					TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
+					try {
+						File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
+						FileUtils.ensureExists(baseTilesDir);
 
-				// Create downsampled layers
-				bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
-				tileCache.closeTileCache();
+						// Share current hashes, but check each layer's saved cache and output independently.
+						HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, tileHashes, baseTilesDir);
+
+						// Trim changed tiles to size
+						changedTiles = trimTileList(changedTiles, config.getMaxTiles());
+
+						// Render base tiles
+						renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
+
+						// Create downsampled layers
+						bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
+					} finally {
+						tileCache.closeTileCache();
+					}
+				}
 			}
 
 			outputIcons(exportDir, config, map, world, rasteriser);

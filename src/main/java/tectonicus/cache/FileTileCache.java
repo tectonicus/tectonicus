@@ -17,22 +17,16 @@ import tectonicus.TileCoord;
 import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
-import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
-import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.FileUtils;
-import tectonicus.world.World;
 
 import java.io.File;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,8 +40,6 @@ public class FileTileCache implements TileCache
 	
 	private final ImageFormat imageFormat;
 	
-	private final MessageDigest hashAlgorithm;
-	
 	private final Map<TileCoord, byte[]> tileHashes;
 	
 	private boolean wasExistingCacheValid;
@@ -58,7 +50,6 @@ public class FileTileCache implements TileCache
 
 	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.Map map, Layer layer, String optionString, MessageDigest hashAlgorithm)
 	{
-		this.hashAlgorithm = hashAlgorithm;
 		this.imageFormat = imageFormat;
 		
 		this.tileCacheDir = tileCacheDir;
@@ -244,7 +235,7 @@ public class FileTileCache implements TileCache
 	}
 
 	@Override
-	public HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles, RegionHashStore regionHashStore, World world, tectonicus.configuration.Map map, OrthoCamera camera, final int zoom, final int tileWidth, final int tileHeight, File layerDir)
+	public HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles, TileHashCache currentTileHashes, File layerDir)
 	{
 		final long start = System.currentTimeMillis();
 		
@@ -258,7 +249,7 @@ public class FileTileCache implements TileCache
 			
 			boolean cacheOk = false;
 			
-			final byte[] newHash = calculateTileHash(world, map, regionHashStore, camera, coord, zoom, tileWidth, tileHeight);
+			final byte[] newHash = currentTileHashes.getHash(coord);
 			
 			File imgFile = TileRenderer.getImageFile(layerDir, coord.x, coord.y, imageFormat);
 			if (imgFile.exists()) {
@@ -347,57 +338,9 @@ public class FileTileCache implements TileCache
 		downsampleCache.put("tile_" + coord.x + "_" + coord.y + "_zoom" + zoomLevel, true);
 	}
 	
-	private byte[] calculateTileHash(World world, tectonicus.configuration.Map map, RegionHashStore regionHashStore, OrthoCamera camera, TileCoord tile, final int zoom, final int tileWidth, final int tileHeight)
-	{
-		assert (world != null);
-		assert (camera != null);
-		assert (tile != null);
-		
-		TileRenderer.setupCameraForTile(camera, tile, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
-		
-		List<ChunkCoord> chunks = world.findVisible(camera);
-		
-		if (chunks.isEmpty())
-			return new byte[0];
-		
-		chunks.sort(ChunkSorter.instance);
-		
-		// Find hash of each chunk
-		List<byte[]> hashes = new ArrayList<>();
-		for (ChunkCoord coord : chunks)
-		{
-			final byte[] hash = regionHashStore.getChunkHash(coord);
-			if (hash != null)
-				hashes.add(hash);
-		}
-		
-		// Create uber hash of all chunk's hashes combined
-		hashAlgorithm.reset();
-		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-		for (byte[] b : hashes)
-		{
-			hashAlgorithm.update(b);
-		}
-		byte[] fullHash = hashAlgorithm.digest();
-		
-		assert (fullHash != null);
-		
-		return fullHash;
-	}
-	
 	private static File getCacheFile(File cacheDir, TileCoord coord)
 	{
 		return new File(cacheDir, "tile_"+coord.x+"_"+coord.y+".cache");
 	}
 
-	public static class ChunkSorter implements Comparator<ChunkCoord>
-	{
-		public static final ChunkSorter instance = new ChunkSorter();
-		
-		@Override
-		public int compare(ChunkCoord lhs, ChunkCoord rhs)
-		{
-			return lhs.compareTo(rhs);
-		}
-	}
 }
