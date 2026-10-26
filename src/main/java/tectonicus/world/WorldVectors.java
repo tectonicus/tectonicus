@@ -12,7 +12,8 @@ package tectonicus.world;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.joml.Vector3f;
+import org.joml.Vector2d;
+import org.joml.Vector3d;
 import tectonicus.Minecraft;
 import tectonicus.Portal;
 import tectonicus.TileRenderer;
@@ -49,15 +50,15 @@ public class WorldVectors {
 		// Calculate origin and axes needed for the js to convert from world to map coords
 
 		// Vectors for world->map projection
-		Vector2f originScreenPos = camera.projectf(new Vector3f(0, 0, 0));
-		Vector2f p100 = camera.projectf(new Vector3f(1, 0, 0));
-		Vector2f p010 = camera.projectf(new Vector3f(0, 1, 0));
-		Vector2f p001 = camera.projectf(new Vector3f(0, 0, 1));
+		Vector2d originScreenPos = camera.projectd(0, 0, 0);
+		Vector2d p100 = camera.projectd(1, 0, 0);
+		Vector2d p010 = camera.projectd(0, 1, 0);
+		Vector2d p001 = camera.projectd(0, 0, 1);
 
 		// Vectors for map->world projection
-		Vector3f base = camera.unproject(new Vector2f(0, 0));
-		Vector3f mapXUnit = camera.unproject(new Vector2f(1, 0));
-		Vector3f mapYUnit = camera.unproject(new Vector2f(0, 1));
+		Vector3d base = camera.unprojectd(0, 0);
+		Vector3d mapXUnit = camera.unprojectd(1, 0);
+		Vector3d mapYUnit = camera.unprojectd(0, 1);
 
 		// For 1.18 and higher we need to offset the map markers
 		int yOffset = 0;
@@ -66,12 +67,12 @@ public class WorldVectors {
 		}
 
 		return WorldVectors.builder()
-				.origin(new Vector2f(originScreenPos.x, originScreenPos.y))
-				.xAxis(new Vector2f(p100.x - originScreenPos.x, p100.y - originScreenPos.y))
-				.yAxis(new Vector2f(p010.x - originScreenPos.x, p010.y - originScreenPos.y))
-				.zAxis(new Vector2f(p001.x - originScreenPos.x, p001.y - originScreenPos.y))
-				.mapXUnit(new Vector2f(mapXUnit.x - base.x, mapXUnit.z - base.z))
-				.mapYUnit(new Vector2f(mapYUnit.x - base.x, mapYUnit.z - base.z))
+				.origin(new Vector2f((float)originScreenPos.x, (float)originScreenPos.y))
+				.xAxis(new Vector2f((float)(p100.x - originScreenPos.x), (float)(p100.y - originScreenPos.y)))
+				.yAxis(new Vector2f((float)(p010.x - originScreenPos.x), (float)(p010.y - originScreenPos.y)))
+				.zAxis(new Vector2f((float)(p001.x - originScreenPos.x), (float)(p001.y - originScreenPos.y)))
+				.mapXUnit(new Vector2f((float)(mapXUnit.x - base.x), (float)(mapXUnit.z - base.z)))
+				.mapYUnit(new Vector2f((float)(mapYUnit.x - base.x), (float)(mapYUnit.z - base.z)))
 				.yOffset(yOffset).build();
 	}
 

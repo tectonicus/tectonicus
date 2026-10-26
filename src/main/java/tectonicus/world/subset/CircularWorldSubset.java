@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -24,13 +24,17 @@ import java.io.File;
 @AllArgsConstructor
 public class CircularWorldSubset implements WorldSubset
 {
+	private static final long CHUNK_BUFFER = RawChunk.WIDTH + RawChunk.DEPTH + RawChunk.WIDTH;
+
 	private Vector3l origin;
 	private final long radius;
 
 	@Override
 	public RegionIterator createRegionIterator(SaveFormat saveFormat, File dimensionDir)
 	{
-		return new CircularRegionIterator(dimensionDir, saveFormat, origin, radius);
+		// Rendering includes neighboring chunks for geometry at the circle's edge.
+		// Preprocessing must visit their regions too, so every rendered chunk has a hash.
+		return new CircularRegionIterator(dimensionDir, saveFormat, origin, radius + CHUNK_BUFFER);
 	}
 	
 	@Override
@@ -39,7 +43,7 @@ public class CircularWorldSubset implements WorldSubset
 		Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + RawChunk.WIDTH/2, 0, coord.z * RawChunk.DEPTH + RawChunk.DEPTH/2);
 		final long dist = pos.separation(origin);
 		
-		final float bufferedRadius = radius + (float)(RawChunk.WIDTH + RawChunk.DEPTH + RawChunk.WIDTH);
+		final long bufferedRadius = radius + CHUNK_BUFFER;
 		
 		return dist <= bufferedRadius;
 	}

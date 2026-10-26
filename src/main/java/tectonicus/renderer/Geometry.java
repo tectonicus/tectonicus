@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -150,7 +150,7 @@ public class Geometry
 		if (hasCachedTransparentSort && sameDirection(forward)) {
 			faceCount = cachedTransparentFaceCount;
 		} else {
-			Vector3f eye = camera.getEyePosition();
+			Vector3f eye = camera.getRenderEyePosition();
 			faceCount = 0;
 			faceCount = addFaces(transparentFaceSortBuffer, faceCount, transparentMesh, eye, forward, xOffset, yOffset, zOffset);
 			Map<Texture, Mesh> transparentMeshes = meshes.get(MeshType.Transparent);

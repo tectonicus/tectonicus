@@ -622,7 +622,7 @@ public class World implements BlockContext
 		long minZ = Long.MAX_VALUE;
 		long maxX = Long.MIN_VALUE;
 		long maxZ = Long.MIN_VALUE;
-		for (Vector3f corner : camera.getFrustumVertices())
+		for (org.joml.Vector3d corner : camera.getWorldFrustumVertices())
 		{
 			RegionCoord coord = RegionCoord.fromWorldCoord(corner.x, corner.z);
 			minX = Math.min(minX, coord.x);
@@ -717,7 +717,8 @@ public class World implements BlockContext
 		{
 			Geometry skybox = lightStyle == LightStyle.Night ? nightSkybox : daySkybox;
 			
-			skybox.drawSolidSurfaces(camera.getEyePosition().x, camera.getEyePosition().y, camera.getEyePosition().z);
+			Vector3f eye = camera.getRenderEyePosition();
+			skybox.drawSolidSurfaces(eye.x, eye.y, eye.z);
 			rasteriser.clearDepthBuffer();
 		}
 		

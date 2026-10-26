@@ -11,7 +11,7 @@ package tectonicus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.joml.Vector3f;
+import org.joml.Vector2d;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
@@ -34,12 +34,10 @@ import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
-import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
-import tectonicus.util.BoundingBox;
 import tectonicus.util.DirUtils;
 import tectonicus.util.FileUtils;
 import tectonicus.util.TempArea;
@@ -55,12 +53,10 @@ import tectonicus.world.filter.NetherBlockFilter113;
 import tectonicus.world.subset.RegionIterator;
 
 import java.awt.Color;
-import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -699,53 +695,7 @@ public class TileRenderer
 
 	public static void setupCameraForTile(OrthoCamera camera, TileCoord tile, final int tileWidth, final int tileHeight, final float cameraAngleRads, final float cameraElevationRads, final int zoom)
 	{
-		Point lookAt = tileToScreen(tile, tileWidth, tileHeight);
-		
-		// Adjust so that we're looking at the center of the tile
-		lookAt.x += tileWidth / 2;
-		lookAt.y += tileHeight / 2;
-		
-		// Use up/right to slide camera to correct world pos
-		
-		Vector3f up = camera.getUp();
-		Vector3f right = camera.getRight();
-		
-		Vector3f cameraPos = new Vector3f(0, 0, 0);
-		cameraPos.x += right.x * camera.getVisibleWorldWidth() * tile.x;
-		cameraPos.y += right.y * camera.getVisibleWorldWidth() * tile.x;
-		cameraPos.z += right.z * camera.getVisibleWorldWidth() * tile.x;
-		
-		cameraPos.x -= up.x * camera.getVisibleWorldHeight() * tile.y;
-		cameraPos.y -= up.y * camera.getVisibleWorldHeight() * tile.y;
-		cameraPos.z -= up.z * camera.getVisibleWorldHeight() * tile.y;
-		
-		camera.lookAt(cameraPos.x, cameraPos.y, cameraPos.z, zoom, cameraAngleRads, cameraElevationRads);
-
-		// Correct the height so the terrain lies between the near and far planes
-		{
-			Vector3f forward = camera.getForward(); 
-			
-			final float inc = 400;
-			
-			// March the camera backwards until it's above the ground
-			while (cameraPos.y < 128)
-			{
-				cameraPos.x -= forward.x * inc;
-				cameraPos.y -= forward.y * inc;
-				cameraPos.z -= forward.z * inc;
-			}
-			
-			// Move the camera forwards so it's close-ish to the ground
-			while (cameraPos.y > 512)
-			{
-				cameraPos.x += forward.x * inc;
-				cameraPos.y += forward.y * inc;
-				cameraPos.z += forward.z * inc;
-			}
-			
-			camera.lookAt(cameraPos.x, cameraPos.y, cameraPos.z, zoom, cameraAngleRads, cameraElevationRads);
-		}
-		
+		camera.lookAtTile(tile.x, tile.y, zoom, cameraAngleRads, cameraElevationRads);
 		camera.apply();
 	}
 	
@@ -825,32 +775,36 @@ public class TileRenderer
 	}
 	
 	private void addVisibleTilesForChunk(HddTileList visible, OrthoCamera camera, ChunkCoord coord) {
-		BoundingBox bounds = new BoundingBox(new Vector3f(coord.x * RawChunk.WIDTH, 0, coord.z * RawChunk.DEPTH), RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
-		ArrayList<Vector3f> cornerPoints = bounds.getCornerPoints();
-		
+		TileCoordBounds bounds = getTileBoundsForChunk(camera, coord, tileWidth, tileHeight);
+		for (int x = bounds.min.x; x <= bounds.max.x; x++) {
+			for (int y = bounds.min.y; y <= bounds.max.y; y++) {
+				visible.add(new TileCoord(x, y));
+			}
+		}
+	}
+
+	static TileCoordBounds getTileBoundsForChunk(OrthoCamera camera, ChunkCoord coord, int tileWidth, int tileHeight) {
 		int minX = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
 		int minY = Integer.MAX_VALUE;
 		int maxY = Integer.MIN_VALUE;
-		
-		// Project corners to find screen rect
-		for (Vector3f corner : cornerPoints) {
-			Point screenPos = camera.project(corner);
-			
-			minX = Math.min(screenPos.x, minX);
-			maxX = Math.max(screenPos.x, maxX);
-			
-			minY = Math.min(screenPos.y, minY);
-			maxY = Math.max(screenPos.y, maxY);
-		}
-		
-		// Find tiles that screen rect overlaps
-		for (int x = minX; x <= maxX + tileWidth; x += tileWidth) {
-			for (int y = minY; y <= maxY + tileHeight; y += tileHeight) {
-				TileCoord tile = screenToTile(new Point(x, y));
-				visible.add(tile);
+		// Convert directly from double screen positions to tile indices. Pixel positions
+		// can exceed the integer range near the world border at high zoom levels.
+		for (int x = 0; x <= 1; x++) {
+			for (int y = 0; y <= 1; y++) {
+				for (int z = 0; z <= 1; z++) {
+					Vector2d screen = camera.projectd(((double)coord.x + x) * RawChunk.WIDTH,
+							y * Minecraft.getChunkHeight(), ((double)coord.z + z) * RawChunk.DEPTH);
+					int tileX = (int)Math.floor(screen.x / tileWidth);
+					int tileY = (int)Math.floor(screen.y / tileHeight);
+					minX = Math.min(minX, tileX);
+					maxX = Math.max(maxX, tileX);
+					minY = Math.min(minY, tileY);
+					maxY = Math.max(maxY, tileY);
+				}
 			}
 		}
+		return new TileCoordBounds(new TileCoord(minX, minY), new TileCoord(maxX, maxY));
 	}
 	
 	private HddTileList trimTileList(HddTileList inTiles, final int maxTiles)
@@ -948,22 +902,6 @@ public class TileRenderer
 		changedFileList = null;
 	}
 	
-	private TileCoord screenToTile(Point screenPos)
-	{
-		final float tileX = (float)screenPos.x / (float)tileWidth;
-		final float tileY = (float)screenPos.y / (float)tileHeight;
-		
-		final int wholeTileX = (int)Math.floor(tileX);
-		final int wholeTileY = (int)Math.floor(tileY);
-		
-		return new TileCoord(wholeTileX, wholeTileY);
-	}
-	
-	private static Point tileToScreen(TileCoord tilePos, final int tileWidth, final int tileHeight)
-	{
-		return new Point(tilePos.x * tileWidth, tilePos.y * tileHeight);
-	}
-	
 	public static File getImageFile(File dir, final int x, final int y, ImageFormat imageFormat)
 	{
 		final int xBin = x % 16;
@@ -972,18 +910,7 @@ public class TileRenderer
 		File dir2 = new File(dir1, ""+yBin);
 		return new File(dir2, "tile_"+x+"_"+y+"."+imageFormat.getExtension());
 	}
-	
-	//TODO: Why is this here?
-	public static String jsEscape(String text)
-	{
-		text = text.replace("\\", "\\\\");	// Replace \ with \\
-		text = text.replace(" ", "&nbsp;");	// Replace spaces with &nbsp;
-		text = text.replace("\"", "\\\"");	// Replace " with \"
-		text = text.replace("\'", "\\\'");	// Replace ' with \'
-		
-		return text;
-	}
-	
+
 	public static class Result
 	{
 		public final boolean aborted;

@@ -264,9 +264,9 @@ public class InteractiveRenderer {
 			
 			activeCamera.apply();
 			
-			drawAxies(rasteriser);
+			drawAxies(rasteriser, activeCamera);
 			
-			drawChunkCheckerboard(rasteriser);
+			drawChunkCheckerboard(rasteriser, activeCamera);
 			
 			world.draw(activeCamera, true, false);
 			
@@ -274,33 +274,34 @@ public class InteractiveRenderer {
 		}
 	}
 	
-	public static void drawAxies(Rasteriser rasteriser) {
+	public static void drawAxies(Rasteriser rasteriser, Camera camera) {
+		Vector3f offset = camera.toRenderPosition(0, 0, 0);
 		rasteriser.beginShape(PrimitiveType.LINES);
 		{
 			// Red x axis
 			
 			rasteriser.colour(1, 0, 0, 1);
-			rasteriser.vertex(0, 0, 0);
-			rasteriser.vertex(16, 0, 0);
-			rasteriser.vertex(0, 128, 0);
-			rasteriser.vertex(16, 128, 0);
+			rasteriser.vertex(offset.x, offset.y, offset.z);
+			rasteriser.vertex(offset.x + 16, offset.y, offset.z);
+			rasteriser.vertex(offset.x, offset.y + 128, offset.z);
+			rasteriser.vertex(offset.x + 16, offset.y + 128, offset.z);
 			
 			// Green y axis
 			rasteriser.colour(0, 1, 0, 1);
-			rasteriser.vertex(0, 0, 0);
-			rasteriser.vertex(0, 128, 0);
+			rasteriser.vertex(offset.x, offset.y, offset.z);
+			rasteriser.vertex(offset.x, offset.y + 128, offset.z);
 			
 			// Blue z axis
 			rasteriser.colour(0, 0, 1, 1);
-			rasteriser.vertex(0, 0, 0);
-			rasteriser.vertex(0, 0, 16);
-			rasteriser.vertex(0, 128, 0);
-			rasteriser.vertex(0, 128, 16);
+			rasteriser.vertex(offset.x, offset.y, offset.z);
+			rasteriser.vertex(offset.x, offset.y, offset.z + 16);
+			rasteriser.vertex(offset.x, offset.y + 128, offset.z);
+			rasteriser.vertex(offset.x, offset.y + 128, offset.z + 16);
 		}
 		rasteriser.endShape();
 	}
 	
-	public static void drawChunkCheckerboard(Rasteriser rasteriser) {
+	public static void drawChunkCheckerboard(Rasteriser rasteriser, Camera camera) {
 		Mesh mesh = rasteriser.createMesh(null);
 		
 		for (int x = 0; x < RawChunk.WIDTH; x++) {
@@ -334,7 +335,8 @@ public class InteractiveRenderer {
 		
 		mesh.finalise();
 		mesh.bind();
-		mesh.draw(0, 0, 0);
+		Vector3f offset = camera.toRenderPosition(0, 0, 0);
+		mesh.draw(offset.x, offset.y, offset.z);
 		
 		//	mesh.destroy();
 	}

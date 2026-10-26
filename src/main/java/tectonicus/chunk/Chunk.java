@@ -327,11 +327,11 @@ public class Chunk
 	
 	public static float getDistance(Camera camera, final float pointX, final float pointY, final float pointZ)
 	{
-		Vector3f eye = camera.getEyePosition();
-		
-		final float deltaX = eye.x - pointX;
-		final float deltaY = eye.y - pointY;
-		final float deltaZ = eye.z - pointZ;
+		Vector3f eye = camera.getRenderEyePosition();
+		Vector3f point = camera.toRenderPosition(pointX, pointY, pointZ);
+		final float deltaX = eye.x - point.x;
+		final float deltaY = eye.y - point.y;
+		final float deltaZ = eye.z - point.z;
 		
 		return tectonicus.util.Vector3f.length(deltaX, deltaY, deltaZ);
 	}
@@ -341,9 +341,8 @@ public class Chunk
 		if (geometry == null)
 			return;
 
-		geometry.drawSolidSurfaces(	coord.x * RawChunk.WIDTH,
-									0,
-									coord.z * RawChunk.DEPTH);
+		Vector3f offset = camera.toRenderPosition((double)coord.x * RawChunk.WIDTH, 0, (double)coord.z * RawChunk.DEPTH);
+		geometry.drawSolidSurfaces(offset.x, offset.y, offset.z);
 	}
 	
 	public void drawAlphaTestedSurfaces(Camera camera)
@@ -351,9 +350,8 @@ public class Chunk
 		if (geometry == null)
 			return;
 
-		geometry.drawAlphaTestedSurfaces(	coord.x * RawChunk.WIDTH,
-											0,
-											coord.z * RawChunk.DEPTH);
+		Vector3f offset = camera.toRenderPosition((double)coord.x * RawChunk.WIDTH, 0, (double)coord.z * RawChunk.DEPTH);
+		geometry.drawAlphaTestedSurfaces(offset.x, offset.y, offset.z);
 	}
 	
 	public void drawTransparentSurfaces(Camera camera)
@@ -366,9 +364,8 @@ public class Chunk
 		if (geometry == null)
 			return;
 
-		geometry.drawTransparentSurfaces(camera, sortFaces,	coord.x * RawChunk.WIDTH,
-											0,
-											coord.z * RawChunk.DEPTH);
+		Vector3f offset = camera.toRenderPosition((double)coord.x * RawChunk.WIDTH, 0, (double)coord.z * RawChunk.DEPTH);
+		geometry.drawTransparentSurfaces(camera, sortFaces, offset.x, offset.y, offset.z);
 	}
 	
 	public ArrayList<Vector3f> getCornerPoints()

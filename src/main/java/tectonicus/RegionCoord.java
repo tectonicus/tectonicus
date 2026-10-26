@@ -21,32 +21,20 @@ public class RegionCoord implements Comparable<RegionCoord>
 
 	@Getter
 	public final long x, z;
-	
-	public RegionCoord()
-	{
-		this.x = 0;
-		this.z = 0;
-	}
-	
+
 	public RegionCoord(final long x, final long z)
 	{
 		this.x = x;
 		this.z = z;
 	}
-	
-	public RegionCoord(RegionCoord other)
+
+	public static RegionCoord fromWorldCoord(final double worldX, final double worldZ)
 	{
-		this.x = other.x;
-		this.z = other.z;
-	}
-	
-	public static RegionCoord fromWorldCoord(final float worldX, final float worldZ)
-	{
-		final long chunkX = (long)Math.floor(worldX / (float)RawChunk.WIDTH);
-		final long chunkZ = (long)Math.floor(worldZ / (float)RawChunk.DEPTH);
+		final long chunkX = (long)Math.floor(worldX / RawChunk.WIDTH);
+		final long chunkZ = (long)Math.floor(worldZ / RawChunk.DEPTH);
 		
-		final long regionX = (long)Math.floor(chunkX / (float)REGION_WIDTH);
-		final long regionZ = (long)Math.floor(chunkZ / (float)REGION_HEIGHT);
+		final long regionX = Math.floorDiv(chunkX, REGION_WIDTH);
+		final long regionZ = Math.floorDiv(chunkZ, REGION_HEIGHT);
 		
 		return new RegionCoord(regionX, regionZ);
 	}

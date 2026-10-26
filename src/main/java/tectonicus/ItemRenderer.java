@@ -463,13 +463,14 @@ public class ItemRenderer
 		camera.apply();
 		
 		geometry.finalise();
+		Vector3f offset = camera.toRenderPosition(0, 0, 0);
 		
 		{
 			rasteriser.enableAlphaTest(false);
 			rasteriser.enableBlending(false);
 			rasteriser.enableDepthWriting(true);
 			
-			geometry.drawSolidSurfaces(0, 0, 0);
+			geometry.drawSolidSurfaces(offset.x, offset.y, offset.z);
 		}
 		
 		{
@@ -477,7 +478,7 @@ public class ItemRenderer
 			rasteriser.enableBlending(false);
 			rasteriser.enableDepthWriting(true);
 			
-			geometry.drawAlphaTestedSurfaces(0, 0, 0);
+			geometry.drawAlphaTestedSurfaces(offset.x, offset.y, offset.z);
 		}
 		
 		{
@@ -485,7 +486,7 @@ public class ItemRenderer
 			rasteriser.enableBlending(true);
 			rasteriser.enableDepthWriting(false);
 			
-			geometry.drawTransparentSurfaces(camera, 0, 0, 0);
+			geometry.drawTransparentSurfaces(camera, offset.x, offset.y, offset.z);
 		}
 		
 		// Reset to default
