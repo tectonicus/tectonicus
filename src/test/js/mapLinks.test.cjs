@@ -5,6 +5,9 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 function createViewer(yOffset = 64) {
+    const corner = {children: []};
+    const zoomContainer = {children: ['zoom-in', 'zoom-out'], parentNode: corner, offsetTop: 10, offsetHeight: 64};
+    corner.children.push(zoomContainer);
     const entries = [new URL('https://example.test/maps/index.html?theme=dark')];
     const state = {theme: 'dark'};
     const location = {
@@ -27,6 +30,7 @@ function createViewer(yOffset = 64) {
         center: {lat: 0, lng: 0},
         zoom: 4,
         layers: new Set(),
+        zoomControl: {getContainer: () => zoomContainer},
         getCenter() { return this.center; },
         getZoom() { return this.zoom; },
         addControl() {},
@@ -39,7 +43,19 @@ function createViewer(yOffset = 64) {
     };
     const window = Object.assign(new EventTarget(), {location, history});
     const context = vm.createContext({
-        L: {map: () => map, CRS: {Simple: {}}, Point: function(x, y) { this.x = x; this.y = y; }},
+        L: {
+            map: () => map,
+            CRS: {Simple: {}},
+            Point: function(x, y) { this.x = x; this.y = y; },
+            Control: {extend: definition => function() { Object.assign(this, definition); }},
+            DomUtil: {create(tag, className, parent) {
+                const element = {style: {}, tag, className, children: [], parentNode: parent,
+                    setAttribute(name, value) { this[name] = value; }};
+                if (parent) parent.children.push(element);
+                return element;
+            }},
+            DomEvent: {disableClickPropagation() {}, preventDefault: event => event.preventDefault()}
+        },
         maxZoom: 8,
         window,
         URLSearchParams
@@ -171,6 +187,56 @@ test('URL y values are ignored when loading and editing coordinates', () => {
         assert.equal(map.center.lng, expected[1]);
         assert.equal(map.zoom, 6);
     }
+});
+
+test('the reset button below zoom resets the active layer without switching layers or reloading', () => {
+    const {context, map, layer, vectors, entries, window} = createViewer();
+    const otherVectors = {...vectors, startView: {x: 200, y: 90, z: 300}};
+    const otherLayer = {
+        layerId: 'LayerB',
+        worldVectors: otherVectors,
+        projection: new context.MinecraftProjection(otherVectors),
+        viewPosition: {}
+    };
+    const location = window.location;
+    const button = context.CreateResetViewButton(map);
+    const zoomContainer = map.zoomControl.getContainer();
+    assert.deepEqual(zoomContainer.children, ['zoom-in', 'zoom-out']);
+    assert.equal(button.parentNode.parentNode, zoomContainer.parentNode);
+    assert.equal(button.parentNode.className, 'leaflet-bar leaflet-control leaflet-control-reset');
+    for (const selectedLayer of [layer, otherLayer]) {
+        context.selectedLayer = selectedLayer;
+        vm.runInContext('activeBaseLayer = selectedLayer;', context);
+        map.layers = new Set([selectedLayer]);
+        for (let reset = 0; reset < 2; reset++) {
+            map.center = {lat: -500 - reset, lng: 1000 + reset};
+            map.zoom = 6;
+            context.onProjectionChanged();
+            const click = new Event('click', {cancelable: true});
+            button.onclick(click);
+            assert.equal(click.defaultPrevented, true);
+
+            const expected = selectedLayer.projection.worldToMap(selectedLayer.worldVectors.startView);
+            assert.equal(map.center.lat, expected[0]);
+            assert.equal(map.center.lng, expected[1]);
+            assert.equal(map.zoom, 0);
+            assert.deepEqual([...map.layers], [selectedLayer]);
+            assert.equal(window.location, location);
+            assert.equal(entries.length, 1);
+            assert.equal(entries[0].search, '?theme=dark');
+            const params = new URLSearchParams(location.hash.slice(1));
+            assert.equal(params.get('layer'), selectedLayer.layerId);
+            assert.equal(Number(params.get('x')), selectedLayer.worldVectors.startView.x);
+            assert.equal(Number(params.get('z')), selectedLayer.worldVectors.startView.z);
+            assert.equal(params.get('zoom'), '0');
+        }
+    }
+});
+
+test('the compass is no longer a reset button', () => {
+    const {context, map} = createViewer();
+    const compass = context.CreateCompassControl('Compass.png').onAdd(map);
+    assert.equal(compass.onclick, undefined);
 });
 
 test('invalid fragment edits leave the current view unchanged', () => {

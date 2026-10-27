@@ -52,15 +52,30 @@ function CreateCompassControl(initialImage) {
 			container.style.width = '100px';
 			container.style.height = '80px';
 
-			container.onclick = function () { //Reload the map with default starting view
-                window.location = window.location.href.split('?')[0].split('#')[0];
-            }
-
 			return container;
 		}
 	});
 
 	return new compassControl();
+}
+
+function CreateResetViewButton(map) {
+    const zoomContainer = map.zoomControl.getContainer();
+    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-reset', zoomContainer.parentNode);
+    // Anchor a separate toolbar below zoom without moving the compass beside it.
+    container.style.top = (zoomContainer.offsetTop + zoomContainer.offsetHeight) + 'px';
+    const button = L.DomUtil.create('a', 'leaflet-control-reset-view', container);
+    button.href = '#';
+    button.title = 'Reset Map View';
+    button.setAttribute('role', 'button');
+    button.setAttribute('aria-label', 'Reset Map View');
+    button.onclick = function (event) {
+        L.DomEvent.preventDefault(event);
+        const layer = activeBaseLayer;
+        map.setView(layer.projection.worldToMap(layer.worldVectors.startView), 0, {animate: false});
+    };
+    L.DomEvent.disableClickPropagation(button);
+    return button;
 }
 
 // Creates a toggle box to turn on and off a set of markers

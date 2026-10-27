@@ -49,6 +49,7 @@ import tectonicus.raw.Player;
 import tectonicus.raw.PotionContentsTag;
 import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
+import tectonicus.texture.ZipStack;
 import tectonicus.world.Colors;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
@@ -900,6 +901,8 @@ public class OutputResourcesUtil {
 				}
 		}
 
+		outputSpawnCompass(texturePack.getZipStack(), new File(imagesDir, "SpawnCompass.png"));
+
                 writeImage(texturePack.getEmptyHeartImage(), 18, 18, new File(imagesDir, "EmptyHeart.png"));
                 writeImage(texturePack.getHalfHeartImage(), 18, 18, new File(imagesDir, "HalfHeart.png"));
                 writeImage(texturePack.getFullHeartImage(), 18, 18, new File(imagesDir, "FullHeart.png"));
@@ -942,6 +945,38 @@ public class OutputResourcesUtil {
 		scriptResources.add("containers.js");
 		scriptResources.add("main.js");
 		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, config, tileWidth, tileHeight);
+	}
+
+	private static void outputSpawnCompass(ZipStack zipStack, File file) {
+		// Use vanilla textures: resource packs may split the compass into custom model layers.
+		String[] paths = {
+				"assets/minecraft/textures/item/compass_16.png",
+				"assets/minecraft/textures/items/compass_16.png",
+				"assets/minecraft/textures/items/compass.png",
+				"textures/items/compass.png",
+				"gui/items.png"
+		};
+		for (String path : paths) {
+			try (InputStream stream = zipStack.getStream(path, false)) {
+				if (stream == null)
+					continue;
+				BufferedImage image = ImageIO.read(stream);
+				if (path.equals("gui/items.png")) {
+					int width = image.getWidth() / 16;
+					int height = image.getHeight() / 16;
+					image = image.getSubimage(6 * width, 3 * height, width, height);
+				} else {
+					// Before 1.9 the frames are stored in a vertical animation strip.
+					int size = Math.min(image.getWidth(), image.getHeight());
+					image = image.getSubimage(0, 0, size, size);
+				}
+				// Preserve the palette and transparency when scaling indexed vanilla textures.
+				writeImage(ImageUtils.copy(image), 32, 32, file);
+				return;
+			} catch (IOException e) {
+				log.error("Unable to export spawn compass", e);
+			}
+		}
 	}
 
 	public static void writeImage(BufferedImage img, final int width, final int height, File file) {

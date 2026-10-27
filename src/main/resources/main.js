@@ -166,6 +166,7 @@ async function mainAsync()
         if (tileLayers.size > 1) {
             layerControl = L.control.layers(baseMaps);
         }
+        CreateResetViewButton(mymap);
 	    compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
         viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
         signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
@@ -174,7 +175,7 @@ async function mainAsync()
         respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
         beaconToggleControl = CreateToggleControl('beacons', 'Images/beacon.png', beaconMarkers, beaconsInitiallyVisible);
         portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
-        spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
+        spawnToggleControl = CreateToggleControl('spawn', 'Images/SpawnCompass.png', spawnMarkers, spawnInitiallyVisible);
         chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, chestsInitiallyVisible);
 
 	//CreateLinkControl(map);
@@ -329,13 +330,6 @@ function onBaseLayerChange(e) {
 	compassControl = CreateCompassControl(e.layer.mapId + '/Compass.png');
 	mymap.addControl(compassControl);
 
-	tippy('.compass', {
-        content: 'Reset Map View',
-        placement: 'top',
-        theme: 'light',
-        offset: [0,-30],
-    });
-
 	// Add map info popup
     let peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
     let statsHtml = '';
@@ -411,7 +405,7 @@ function refreshSpawnMarker(layer, markersVisible) {
 		let point = layer.projection.worldToMap(spawn);
 
 		let myIcon = L.icon({
-			iconUrl: 'Images/Spawn.png',
+			iconUrl: 'Images/SpawnCompass.png',
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
