@@ -21,11 +21,18 @@ public class ImageUtils {
 	public static boolean isFullyTransparent(BufferedImage image) {
 		if (!image.getColorModel().hasAlpha())
 			return false;
+		Raster alpha = image.getAlphaRaster();
+		// Preserve getRGB's alpha conversion for indexed images and other alpha depths.
+		boolean useAlphaRaster = alpha != null && alpha.getSampleModel().getSampleSize(0) == 8;
 		int[] row = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
-			image.getRGB(0, y, image.getWidth(), 1, row, 0, image.getWidth());
+			if (useAlphaRaster)
+				alpha.getSamples(0, y, image.getWidth(), 1, 0, row);
+			else
+				image.getRGB(0, y, image.getWidth(), 1, row, 0, image.getWidth());
 			for (int pixel : row) {
-				if ((pixel >>> 24) != 0)
+				int alphaValue = useAlphaRaster ? pixel : pixel >>> 24;
+				if (alphaValue != 0)
 					return false;
 			}
 		}

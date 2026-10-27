@@ -18,6 +18,8 @@ import tectonicus.configuration.Layer;
 import tectonicus.util.ImageUtils;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -26,6 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.nio.file.Files;
+import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -170,9 +173,21 @@ public class Downsampler {
 		
 		private static BufferedImage getTile(File file) {
 			try {
-				// Use input stream instead of file to fix ImageIO returning null for some WEBP images
-				try (var inputStream = new FileInputStream(file)) {
-					return ImageIO.read(inputStream);
+				// Keep stream-based WebP decoding without ImageIO's temporary disk cache.
+				try (var inputStream = new FileInputStream(file);
+					 var imageInput = new MemoryCacheImageInputStream(inputStream)) {
+					Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInput);
+					if (!readers.hasNext())
+						return null;
+
+					ImageReader reader = readers.next();
+					try {
+						var readParam = reader.getDefaultReadParam();
+						reader.setInput(imageInput, true, true);
+						return reader.read(0, readParam);
+					} finally {
+						reader.dispose();
+					}
 				}
 			} catch (FileNotFoundException e) {
 				return null;

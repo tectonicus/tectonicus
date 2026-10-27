@@ -71,6 +71,7 @@ class DownsamplerEmptyTilesTest {
 		run();
 		assertNull(emptyStatus.get());
 		assertEquals("old parent", Files.readString(output()));
+		assertEquals("", Files.readString(directory.resolve("changed.txt")));
 	}
 
 	private void writeChild(BufferedImage image) throws Exception {

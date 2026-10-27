@@ -11,6 +11,7 @@ package tectonicus.cache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.TileCoord;
+import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
@@ -18,6 +19,7 @@ import tectonicus.configuration.MutableLayer;
 import tectonicus.configuration.MutableMap;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Set;
 
@@ -68,6 +70,31 @@ class EmptyTileCacheTest {
 			assertEquals(Set.of(tile), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
 			cache.updateTileDownsampleStatus(tile, 1, false);
 			assertEquals(Set.of(tile), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
+		} finally { cache.closeTileCache(); }
+	}
+
+	@Test
+	void selectsPendingAndMissingParentsButSkipsCompletedEmptyAndOtherZooms() throws Exception {
+		HddTileListFactory factory = new HddTileListFactory(directory.resolve("lists").toFile());
+		HddTileList children = factory.createList();
+		children.add(new TileCoord(tile.x * 2, tile.y * 2));
+		TileCoord completedEmpty = new TileCoord(2, 3);
+		TileCoord completedImage = new TileCoord(4, 5);
+		TileCoord missingImage = new TileCoord(6, 7);
+		TileCoord otherZoom = new TileCoord(8, 9);
+		FileTileCache cache = open();
+		try {
+			cache.updateTileDownsampleStatus(tile, 1, true);
+			cache.calculateDownsampledTileCoordinates(children, 1);
+			cache.updateTileDownsampleStatus(completedEmpty, 1, true);
+			cache.updateTileDownsampleStatus(completedImage, 1, false);
+			cache.updateTileDownsampleStatus(missingImage, 1, false);
+			cache.updateTileDownsampleStatus(otherZoom, 10, false);
+			Path image = TileRenderer.getImageFile(directory.toFile(), completedImage.x, completedImage.y, ImageFormat.PNG).toPath();
+			Files.createDirectories(image.getParent());
+			Files.createFile(image);
+			assertEquals(Set.of(tile, missingImage), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
+			assertEquals(Set.of(otherZoom), cache.findTilesForDownsampling(factory, 10, directory.toFile(), ImageFormat.PNG).toSet());
 		} finally { cache.closeTileCache(); }
 	}
 

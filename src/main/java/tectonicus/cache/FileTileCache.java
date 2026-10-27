@@ -253,9 +253,9 @@ public class FileTileCache implements TileCache
 			
 			final byte[] newHash = currentTileHashes.getHash(coord);
 			
-			File imgFile = TileRenderer.getImageFile(layerDir, coord.x, coord.y, imageFormat);
-			if (imgFile.exists() || Boolean.TRUE.equals(emptyTiles.get("tile_" + coord.x + "_" + coord.y))) {
-				final byte[] cachedHash = hashCache.get("tile_"+coord.x+"_"+coord.y);
+			String key = "tile_" + coord.x + "_" + coord.y;
+			if (Boolean.TRUE.equals(emptyTiles.get(key)) || TileRenderer.getImageFile(layerDir, coord.x, coord.y, imageFormat).exists()) {
+				final byte[] cachedHash = hashCache.get(key);
 
 				if (cachedHash != null) {
 					cacheOk = CacheUtil.equal(cachedHash, newHash);
@@ -296,8 +296,9 @@ public class FileTileCache implements TileCache
 			for (TileCoord c : prevTiles) {
 				final int x = (int) Math.floor(c.x / 2.0f);
 				final int y = (int) Math.floor(c.y / 2.0f);
-				nextTiles.add(new TileCoord(x, y));
-				downsampleCache.put("tile_" + x + "_" + y + "_zoom" + zoomLevel, false);
+				if (nextTiles.add(new TileCoord(x, y))) {
+					downsampleCache.put("tile_" + x + "_" + y + "_zoom" + zoomLevel, false);
+				}
 			}
 
 			zoomLevel--;
@@ -308,16 +309,20 @@ public class FileTileCache implements TileCache
 	@Override
 	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel, File baseDir, ImageFormat imageFormat) {
 		HddTileList result = factory.createList();
+		String zoomSuffix = "_zoom" + zoomLevel;
 
 		for (Map.Entry<String, Boolean> entry : downsampleCache.entrySet()) {
 			String key = entry.getKey();
-                        String[] keyStr = key.split("_");
-                        
-                        TileCoord coord = new TileCoord(Integer.parseInt(keyStr[1]), Integer.parseInt(keyStr[2]));
-                        File tileFile = TileRenderer.getImageFile(baseDir, coord.x, coord.y, imageFormat);
-                        
-                        if (key.endsWith("_zoom" + zoomLevel) && (!Boolean.TRUE.equals(entry.getValue())
-                                || (!tileFile.exists() && !Boolean.TRUE.equals(emptyTiles.get(key))))) {
+			if (!key.endsWith(zoomSuffix))
+				continue;
+
+			boolean pending = !Boolean.TRUE.equals(entry.getValue());
+			if (!pending && Boolean.TRUE.equals(emptyTiles.get(key)))
+				continue;
+
+			String[] keyStr = key.split("_");
+			TileCoord coord = new TileCoord(Integer.parseInt(keyStr[1]), Integer.parseInt(keyStr[2]));
+			if (pending || !TileRenderer.getImageFile(baseDir, coord.x, coord.y, imageFormat).exists()) {
 				result.add(coord);
 			}
 		}

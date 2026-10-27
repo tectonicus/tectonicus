@@ -15,7 +15,13 @@ import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
 
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
@@ -27,7 +33,8 @@ class EmptyTileTest {
 
 	@Test
 	void transparencyRequiresEveryPixelToHaveExactlyZeroAlpha() {
-		for (int type : new int[] {BufferedImage.TYPE_INT_ARGB, BufferedImage.TYPE_4BYTE_ABGR, BufferedImage.TYPE_INT_ARGB_PRE}) {
+		for (int type : new int[] {BufferedImage.TYPE_INT_ARGB, BufferedImage.TYPE_4BYTE_ABGR,
+				BufferedImage.TYPE_INT_ARGB_PRE, BufferedImage.TYPE_4BYTE_ABGR_PRE}) {
 			BufferedImage image = new BufferedImage(16, 16, type);
 			assertTrue(ImageUtils.isFullyTransparent(image));
 			image.setRGB(15, 15, 0x01010203);
@@ -36,6 +43,44 @@ class EmptyTileTest {
 			assertTrue(ImageUtils.isFullyTransparent(image));
 		}
 		assertFalse(ImageUtils.isFullyTransparent(new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB)));
+	}
+
+	@Test
+	void transparencyChecksRespectSubimageOffsetsAndBounds() {
+		for (int type : new int[] {BufferedImage.TYPE_INT_ARGB, BufferedImage.TYPE_4BYTE_ABGR,
+				BufferedImage.TYPE_INT_ARGB_PRE, BufferedImage.TYPE_4BYTE_ABGR_PRE}) {
+			BufferedImage image = new BufferedImage(32, 32, type);
+			image.setRGB(0, 0, 0xff123456);
+			BufferedImage crop = image.getSubimage(5, 7, 16, 16);
+			assertTrue(ImageUtils.isFullyTransparent(crop));
+			crop.setRGB(15, 15, 0x01010203);
+			assertFalse(ImageUtils.isFullyTransparent(crop));
+		}
+	}
+
+	@Test
+	void indexedTransparencyUsesPaletteAlpha() {
+		byte[] colors = {0, 42, (byte) 255};
+		byte[] alphas = {0, 1, (byte) 255};
+		IndexColorModel palette = new IndexColorModel(8, 3, colors, colors, colors, alphas);
+		BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_BYTE_INDEXED, palette);
+		assertTrue(ImageUtils.isFullyTransparent(image));
+		image.getRaster().setSample(15, 15, 0, 1);
+		assertFalse(ImageUtils.isFullyTransparent(image));
+	}
+
+	@Test
+	void sixteenBitTransparencyPreservesRgbAlphaConversion() {
+		ComponentColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY),
+				new int[] {16, 16}, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_USHORT);
+		BufferedImage image = new BufferedImage(colorModel,
+				Raster.createInterleavedRaster(DataBuffer.TYPE_USHORT, 16, 16, 2, null), false, null);
+		image.getRaster().setSample(15, 15, 1, 1);
+		assertEquals(0, image.getRGB(15, 15) >>> 24);
+		assertTrue(ImageUtils.isFullyTransparent(image));
+		image.getRaster().setSample(15, 15, 1, 257);
+		assertEquals(1, image.getRGB(15, 15) >>> 24);
+		assertFalse(ImageUtils.isFullyTransparent(image));
 	}
 
 	@Test
