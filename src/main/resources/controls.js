@@ -125,14 +125,11 @@ function SetToggleBg(control) {
 function updateLinkUrl(currentLayer) {
     let worldCent = currentLayer.projection.mapToWorld(mymap.getCenter());
 
-    // Update the url in the browser's address bar with the new location
-    // Have to pack the coords into the fragment as this is the only place we can put them
-    // that won't trigger a page reload
+    // Update the current URL without reloading or adding browser history entries.
     let fragment = '';
     fragment += 'layer=' + currentLayer.layerId;
-    fragment += '&x=' + Math.ceil(worldCent.x);
-    fragment += '&y=' + Math.ceil(worldCent.y); //TODO: do we need to show the Y coord? it will always be the same
-    fragment += '&z=' + Math.ceil(worldCent.z);
+    fragment += '&x=' + Math.round(worldCent.x);
+    fragment += '&z=' + Math.round(worldCent.z);
     fragment += '&zoom=' + mymap.getZoom();
-    window.location.hash = fragment;
+    window.history.replaceState(window.history.state, '', '#' + fragment);
 }

@@ -23,7 +23,7 @@ async function createLayer(tileIndex) {
     const context = {
         L: {map: () => map, CRS: {Simple: {}}, TileLayer},
         maxZoom: 2,
-        window: {},
+        window: new EventTarget(),
         containersMainAsync: async () => {},
         getQueryParams: () => ({}),
         getFragmentParams: () => ({}),

@@ -379,6 +379,28 @@ function onProjectionChanged(e) {
 	updateLinkUrl(activeBaseLayer);
 }
 
+function onHashChange() {
+    if (activeBaseLayer === null) {
+        return;
+    }
+
+    const params = getFragmentParams();
+    const layer = tileLayers.get(params.layer || activeBaseLayer.layerId);
+    if (!layer || ['x', 'z', 'zoom'].some(key =>
+        params.hasOwnProperty(key) && !Number.isFinite(parseInt(params[key])))) {
+        return;
+    }
+
+    const view = findStartView(params, layer.layerId, layer.worldVectors.startView);
+    const {startPoint, zoom} = view;
+    layer.viewPosition = view;
+    if (layer !== activeBaseLayer) {
+        mymap.removeLayer(activeBaseLayer);
+        layer.addTo(mymap);
+    }
+    mymap.setView(startPoint, zoom, {animate: false});
+}
+
 //TODO: refactor these refresh marker methods to use Leaflet LayerGroups
 function refreshSpawnMarker(layer, markersVisible) {
 	destroyMarkers(spawnMarkers);
@@ -704,21 +726,19 @@ function ViewPos(layerId, worldPos, zoom, startPoint) {
 
 function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	let queryLayerId = defaultLayerId;
-	let queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
 	let queryZoom = 0;
 
 	if (params.hasOwnProperty('layer')) {
 		queryLayerId = params['layer'];
 	}
+	let layer = tileLayers.get(queryLayerId);
+	let queryPos = new WorldCoord(defaultSpawnPos.x, layer.worldVectors.startView.y, defaultSpawnPos.z);
 
 	if (params.hasOwnProperty('x')
-		&& params.hasOwnProperty('y')
 		&& params.hasOwnProperty('z')) {
 		queryPos.x = parseInt(params['x']);
-		queryPos.y = parseInt(params['y']);
 		queryPos.z = parseInt(params['z']);
 	}
-
 	if (params.hasOwnProperty('zoom')) {
 		queryZoom = parseInt(params['zoom']);
 	}
@@ -728,10 +748,10 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	if (queryZoom > maxZoom)
 		queryZoom = maxZoom;
 
-	let layer = tileLayers.get(queryLayerId);
 	let startPoint = layer.projection.worldToMap(queryPos);
 
 	return new ViewPos(queryLayerId, queryPos, queryZoom, startPoint);
 }
 
 window.onload = mainAsync;
+window.addEventListener('hashchange', onHashChange);
