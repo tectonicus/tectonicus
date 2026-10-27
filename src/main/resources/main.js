@@ -1,5 +1,5 @@
 
-let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0);
+let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false});
 let tileLayers = new Map();
 let activeBaseLayer = null;
 let mapInfoTippy = null;
@@ -150,25 +150,23 @@ async function mainAsync()
         let defaultLayer = tileLayers.get("LayerA");
         let startView;
         if (size(fragmentParams) > 0) {
-                startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+            startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
         } else {
-                startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+            startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
         }
 
-        // Set the starting view
+        // Add the starting layer to the map
         let startLayer = tileLayers.get(startView.layerId);
         activeBaseLayer = startLayer;
         startLayer.addTo(mymap);
-        mymap.setView(startView.startPoint, startView.zoom);
-
-        // And store the updated start point in the layer
+        // Store the updated start point in the layer
         startLayer.viewPosition = startView;
 
         // Create controls
         if (tileLayers.size > 1) {
             layerControl = L.control.layers(baseMaps);
         }
-	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
+	    compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
         viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
         signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
         playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
@@ -189,13 +187,15 @@ async function mainAsync()
         // We have done all we can. Now we have to await the containers initialization
         await containersMainPromise;
 
-	// Register these last so that they don't get called while we're still initialising
+	// Register these last so that they don't get called while we're still initializing
 	mymap.on('baselayerchange', onBaseLayerChange);
 	mymap.on('zoomend', onProjectionChanged);
-        mymap.on('moveend', onProjectionChanged);
+    mymap.on('moveend', onProjectionChanged);
 
+	// Load the map
+	mymap.setView(startView.startPoint, startView.zoom);
 	// Manually fire this event to set the initial state
-        mymap.fireEvent('baselayerchange', {layer: startLayer});
+    mymap.fireEvent('baselayerchange', {layer: startLayer});
 }
 
 spawnMarkers = [];
@@ -329,6 +329,13 @@ function onBaseLayerChange(e) {
 	compassControl = CreateCompassControl(e.layer.mapId + '/Compass.png');
 	mymap.addControl(compassControl);
 
+	tippy('.compass', {
+        content: 'Reset Map View',
+        placement: 'top',
+        theme: 'light',
+        offset: [0,-30],
+    });
+
 	// Add map info popup
     let peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
     let statsHtml = '';
@@ -369,6 +376,7 @@ function onProjectionChanged(e) {
 	// Store the previous coords in the layer
 	activeBaseLayer.viewPosition.startPoint = mymap.getCenter();
 	activeBaseLayer.viewPosition.zoom = mymap.getZoom();
+	updateLinkUrl(activeBaseLayer);
 }
 
 //TODO: refactor these refresh marker methods to use Leaflet LayerGroups
@@ -699,16 +707,16 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	let queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
 	let queryZoom = 0;
 
-	if (params.hasOwnProperty('layerId')) {
-		queryLayerId = params['layerId'];
+	if (params.hasOwnProperty('layer')) {
+		queryLayerId = params['layer'];
 	}
 
-	if (params.hasOwnProperty('worldX')
-		&& params.hasOwnProperty('worldY')
-		&& params.hasOwnProperty('worldZ')) {
-		queryPos.x = parseInt(params['worldX']);
-		queryPos.y = parseInt(params['worldY']);
-		queryPos.z = parseInt(params['worldZ']);
+	if (params.hasOwnProperty('x')
+		&& params.hasOwnProperty('y')
+		&& params.hasOwnProperty('z')) {
+		queryPos.x = parseInt(params['x']);
+		queryPos.y = parseInt(params['y']);
+		queryPos.z = parseInt(params['z']);
 	}
 
 	if (params.hasOwnProperty('zoom')) {

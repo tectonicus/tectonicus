@@ -187,14 +187,7 @@ function getDonationHtml(player) {
 	return html;
 }
 
-function getUrlWithoutParams()
-{
-	parts = window.location.href.split('?');
-	return parts[0];
-}
-
-function getQueryParams()
-{
+function getQueryParams() {
 	var urlParams = {};
 	var e,
 	a = /\+/g,  // Regex for replacing addition symbol with a space
@@ -208,8 +201,7 @@ function getQueryParams()
 	return urlParams;
 }
 
-function getFragmentParams()
-{	
+function getFragmentParams() {
 	var hashParams = {};
 	var e,
 	a = /\+/g,  // Regex for replacing addition symbol with a space

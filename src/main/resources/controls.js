@@ -52,6 +52,10 @@ function CreateCompassControl(initialImage) {
 			container.style.width = '100px';
 			container.style.height = '80px';
 
+			container.onclick = function () { //Reload the map with default starting view
+                window.location = window.location.href.split('?')[0].split('#')[0];
+            }
+
 			return container;
 		}
 	});
@@ -118,150 +122,17 @@ function SetToggleBg(control) {
 		control.style.backgroundColor = '#CCCCFF';
 }
 
+function updateLinkUrl(currentLayer) {
+    let worldCent = currentLayer.projection.mapToWorld(mymap.getCenter());
 
-// The little box that you click to get an url to the current view
-//function CreateLinkControl(map)
-//{
-//	/*
-//	// Create the DIV to hold the control
-//	var controlDiv = document.createElement('DIV');
-//	controlDiv.index = 1;
-//
-//	// Pad by a few pixels to offset from the edges of the map
-//	controlDiv.style.padding = '5px';
-//
-//	// Set CSS for the control border
-//	var controlUI = document.createElement('DIV');
-//	controlUI.style.backgroundColor = 'white';
-//	controlUI.style.borderStyle = 'solid';
-//	controlUI.style.borderWidth = '2px';
-//	controlUI.style.textAlign = 'center';
-//	controlUI.style.padding = '2px';
-//	controlDiv.appendChild(controlUI);
-//
-//	// The text to show the link box
-//	var link = document.createElement('A');
-//	link.innerHTML = 'Get Link';
-//	link.style.cursor = 'pointer';
-//	controlUI.appendChild(link);
-//
-//	var linkTextBox = document.createElement('INPUT');
-//	controlUI.appendChild(linkTextBox);
-//
-//	// The text to hide the link box
-//	var hideLink = document.createElement('A');
-//	hideLink.innerHTML = 'Hide';
-//	hideLink.style.cursor = 'pointer';
-//	hideLink.style.display = 'none';
-//	controlUI.appendChild(hideLink);
-//
-//	linkTextBox.style.display = 'none';
-//	var textVisible = false;
-//
-//	google.maps.event.addDomListener(link, 'click', function()
-//	{
-//		toggleLink();
-//	});
-//	google.maps.event.addDomListener(hideLink, 'click', function()
-//	{
-//		toggleLink();
-//	});
-//
-//	function toggleLink()
-//	{
-//		updateLinkUrl();
-//
-//		if (textVisible)
-//		{
-//			// Becoming hidden
-//			link.style.display = '';
-//			hideLink.style.display = 'none';
-//			linkTextBox.style.display = 'none';
-//		}
-//		else
-//		{
-//			// Becoming visible
-//			link.style.display = 'none';
-//			hideLink.style.display = '';
-//			linkTextBox.style.display = '';
-//			linkTextBox.select();
-//		}
-//		textVisible = !textVisible;
-//	}
-//	*/
-//
-//	google.maps.event.addListener(map, 'zoom_changed',
-//	function()
-//	{
-//		updateLinkUrl();
-//	});
-//
-///*	google.maps.event.addListener(map, 'mousemove',
-//	function(event)
-//	{
-//		updateVisibleCoord(event.latLng);
-//	});
-//*/
-//	google.maps.event.addListener(map, 'dragend',
-//	function(event)
-//	{
-//		updateLinkUrl();
-//	});
-//
-//	google.maps.event.addListener(map, 'maptypeid_changed',
-//	function(event)
-//	{
-//		updateLinkUrl();
-//	});
-//
-//	function updateLinkUrl()
-//	{
-//		latLong = map.getCenter();
-//
-//		var projection = map.getProjection();
-//
-//		mapCent = projection.fromLatLngToPoint(latLong);
-//		worldCent = projection.mapToWorld(mapCent);
-//
-//		/*
-//		url = '';
-//		url += getUrlWithoutParams();
-//		url += '?layerId=' + map.getMapTypeId();
-//		url += '&worldX=' + Math.round(worldCent.x);
-//		url += '&worldY=' + Math.round(worldCent.y);
-//		url += '&worldZ=' + Math.round(worldCent.z);
-//		url += '&zoom=' + map.getZoom();
-//
-//		linkTextBox.value = url;
-//		*/
-//
-//		// Update the url in the browser's address bar with the new location
-//		// Have to pack the coords into the fragment as this is the only place we can put them
-//		// that won't trigger a page reload
-//		var fragment = '';
-//		fragment += 'layerId=' + map.getMapTypeId();
-//		fragment += '&worldX=' + Math.round(worldCent.x);
-//		fragment += '&worldY=' + Math.round(worldCent.y);
-//		fragment += '&worldZ=' + Math.round(worldCent.z);
-//		fragment += '&zoom=' + map.getZoom();
-//		window.location.hash = fragment;
-//	}
-//
-//	/*
-//	function updateVisibleCoord(latLong)
-//	{
-//		var projection = map.getProjection();
-//
-//		mapCent = projection.fromLatLngToPoint(latLong);
-//		worldCent = projection.mapToWorld(mapCent);
-//
-//		x = Math.round(worldCent.x);
-//		y = Math.round(worldCent.y);
-//		z = Math.round(worldCent.z);
-//
-//		link.innerHTML = 'Get link to ('+x+', '+y+', '+z+')';
-//	}
-//
-//	return controlDiv;
-//	*/
-//}
+    // Update the url in the browser's address bar with the new location
+    // Have to pack the coords into the fragment as this is the only place we can put them
+    // that won't trigger a page reload
+    let fragment = '';
+    fragment += 'layer=' + currentLayer.layerId;
+    fragment += '&x=' + Math.ceil(worldCent.x);
+    fragment += '&y=' + Math.ceil(worldCent.y); //TODO: do we need to show the Y coord? it will always be the same
+    fragment += '&z=' + Math.ceil(worldCent.z);
+    fragment += '&zoom=' + mymap.getZoom();
+    window.location.hash = fragment;
+}
