@@ -21,7 +21,6 @@ public class PackMcmeta {
 	@Data
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Pack {
-		private String description = "";
 		@JsonProperty("pack_format")
 		private int packVersion = 0;
 	}

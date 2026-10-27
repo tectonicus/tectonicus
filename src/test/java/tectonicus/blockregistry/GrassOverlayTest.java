@@ -29,6 +29,7 @@ import tectonicus.util.Colour4f;
 import tectonicus.util.Vector3f;
 
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,44 @@ class GrassOverlayTest {
 	@ValueSource(booleans = {false, true})
 	void grassSidesKeepTheirTransparencyWhenTopSharesTheOverlayElement(boolean topWithOverlay) {
 		BakedBlockStateModel baked = grass(topWithOverlay);
+		Map<MeshType, Integer> vertices = renderVertices(baked);
+
+		assertEquals(16, vertices.get(MeshType.AlphaTest), "Four side overlays must discard transparent pixels");
+		assertEquals(24, vertices.get(MeshType.Solid), "Dirt and grass top remain opaque");
+		assertFalse(vertices.containsKey(MeshType.Transparent));
+		assertEquals(4, baked.getQuads().stream().filter(BakedBlockStateModel.BakedQuad::isGrassOverlay).count());
+		for (var quad : baked.getQuads()) {
+			if (quad.getSourceFace().equals("north"))
+				assertEquals(quad.isGrassOverlay() ? -0.0001f : 0, quad.getPosition(0, 2), 0.000001f);
+			if (quad.getSourceFace().equals("up")) {
+				assertFalse(quad.isGrassOverlay());
+				assertEquals(1, quad.getPosition(0, 1));
+			}
+		}
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	void grassTopDecorationsKeepTheirTextureTransparency(boolean translucent) {
+		List<BlockElement> elements = new ArrayList<>(grass(false).getSourceModel().getElements());
+		ElementFace decoration = new ElementFace(new SubTexture(null, 0, 0, 1, 1), null, 0,
+				false, translucent, true);
+		elements.add(new BlockElement(new Vector3f(0, 16.2f, 0), new Vector3f(16, 16.2f, 16),
+				new org.joml.Vector3f(8, 8, 8), 0, 0, 0, false, true,
+				Map.of("up", decoration, "down", decoration)));
+		BlockModel model = new BlockModel("block/soil/grass/grass_block_rock1", true, elements);
+
+		Map<MeshType, Integer> vertices = renderVertices(new BakedBlockStateModel(model, 0, 0, 0, false));
+
+		assertEquals(24, vertices.get(MeshType.Solid), "Only dirt and the opaque grass top use the solid pass");
+		assertEquals(translucent ? 16 : 24, vertices.get(MeshType.AlphaTest));
+		if (translucent)
+			assertEquals(8, vertices.get(MeshType.Transparent));
+		else
+			assertFalse(vertices.containsKey(MeshType.Transparent));
+	}
+
+	private Map<MeshType, Integer> renderVertices(BakedBlockStateModel baked) {
 		Map<MeshType, Integer> vertices = new EnumMap<>(MeshType.class);
 		Mesh unused = mesh(MeshType.Solid, new EnumMap<>(MeshType.class));
 		Rasteriser rasteriser = (Rasteriser) Proxy.newProxyInstance(Rasteriser.class.getClassLoader(), new Class<?>[]{Rasteriser.class},
@@ -80,19 +119,7 @@ class GrassOverlayTest {
 				});
 
 		baked.createGeometry(0, 0, 0, world, new RawChunk(), geometry);
-
-		assertEquals(16, vertices.get(MeshType.AlphaTest), "Four side overlays must discard transparent pixels");
-		assertEquals(24, vertices.get(MeshType.Solid), "Dirt and grass top remain opaque");
-		assertFalse(vertices.containsKey(MeshType.Transparent));
-		assertEquals(4, baked.getQuads().stream().filter(BakedBlockStateModel.BakedQuad::isGrassOverlay).count());
-		for (var quad : baked.getQuads()) {
-			if (quad.getSourceFace().equals("north"))
-				assertEquals(quad.isGrassOverlay() ? -0.0001f : 0, quad.getPosition(0, 2), 0.000001f);
-			if (quad.getSourceFace().equals("up")) {
-				assertFalse(quad.isGrassOverlay());
-				assertEquals(1, quad.getPosition(0, 1));
-			}
-		}
+		return vertices;
 	}
 
 	@Test

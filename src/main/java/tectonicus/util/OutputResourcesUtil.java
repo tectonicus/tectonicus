@@ -948,8 +948,15 @@ public class OutputResourcesUtil {
 		try {
 			BufferedImage toWrite;
 			if (img.getWidth() != width || img.getHeight() != height) {
-				toWrite = new BufferedImage(width, height, img.getType());
-				toWrite.getGraphics().drawImage(img, 0, 0, width, height, null);
+				// Custom color models (such as grayscale with alpha) have no predefined image type.
+				int imageType = img.getType() == BufferedImage.TYPE_CUSTOM ? BufferedImage.TYPE_INT_ARGB : img.getType();
+				toWrite = new BufferedImage(width, height, imageType);
+				var graphics = toWrite.createGraphics();
+				try {
+					graphics.drawImage(img, 0, 0, width, height, null);
+				} finally {
+					graphics.dispose();
+				}
 			} else {
 				toWrite = img;
 			}
