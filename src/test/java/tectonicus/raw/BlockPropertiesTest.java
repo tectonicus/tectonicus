@@ -11,13 +11,18 @@ package tectonicus.raw;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockPropertiesTest {
 
@@ -43,25 +48,30 @@ class BlockPropertiesTest {
 	}
 
 	@Test
-	void propertiesContainsVariantString() {
-		boolean containsString = properties.contains("facing=west,half=lower,hinge=left,open=false");
+	void containsAllMatchesAnUnorderedSubset() {
+		Map<String, String> required = new LinkedHashMap<>();
+		required.put("open", "false");
+		required.put("hinge", "left");
+		required.put("facing", "west");
+		required.put("half", "lower");
 
-		assertThat(containsString, is(true));
+		assertTrue(properties.containsAll(required));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"east", "wes"})
+	void containsAllRejectsMismatchedValuesEvenWhenAnotherPropertyMatches(String facing) {
+		assertFalse(properties.containsAll(Map.of("facing", facing, "half", "lower")));
 	}
 
 	@Test
-	void insertInMapUnorderedReturnsTrue() {
-		Map<String, String> unordered = new HashMap<>();
-		unordered.put("half", "lower");
-		unordered.put("open", "false");
-		unordered.put("facing", "west");
-		unordered.put("powered", "false");
-		unordered.put("hinge", "left");
+	void containsAllRejectsMissingKeysEvenWhenAnotherPropertyMatches() {
+		assertFalse(properties.containsAll(Map.of("missing", "west", "half", "lower")));
+	}
 
-		BlockProperties properties = new BlockProperties(unordered);
-
-		boolean containsString = properties.contains("facing=west,half=lower,hinge=left,open=false");
-
-		assertThat(containsString, is(true));
+	@Test
+	void containsAllMatchesEmptyRequirementsForPopulatedAndEmptyProperties() {
+		assertTrue(properties.containsAll(Map.of()));
+		assertTrue(new BlockProperties().containsAll(Map.of()));
 	}
 }
