@@ -302,10 +302,11 @@ public class BlockRegistry {
 	}
 	
 	public BlockModel loadModel(String modelName) {
-		if (!modelName.contains("block/")) {
-			modelName = "block/" + modelName;
-		}
-		
+		String modelPath = modelName.replace("minecraft:", "");
+		// Older blockstates omit block/. Modern packs can instead use paths directly under models/.
+		if (!modelPath.startsWith("block/") && !hasModel(modelPath) && hasModel("block/" + modelPath))
+			modelName = "block/" + modelPath;
+
 		return blockModels.get(modelName, mn -> {
 			try {
 				return loadModel(mn, StringUtils.EMPTY, new HashMap<>(), null);
@@ -314,6 +315,11 @@ public class BlockRegistry {
 				return null;
 			}
 		});
+	}
+
+	private boolean hasModel(String path) {
+		return zips.hasFile("assets/minecraft/models/" + path + ".json")
+				|| Thread.currentThread().getContextClassLoader().getResource("models/" + path + ".json") != null;
 	}
 	
 	// Recurse through model files and get block model information
@@ -330,7 +336,9 @@ public class BlockRegistry {
 		String fullModelPath = "assets/minecraft/models/" + modelPath + ".json";
 		JsonNode json;
 		if (zips.hasFile(fullModelPath)) {
-			json = OBJECT_READER.readTree(new InputStreamReader(zips.getStream(fullModelPath)));
+			try (InputStream in = zips.getStream(fullModelPath)) {
+				json = OBJECT_READER.readTree(in);
+			}
 		} else {
 			if (modelPath.contains("copper_golem")) { //maintain fewer model files by using the same model file for different oxidation states of the copper golem statue and just changing the texture.
 				if (modelPath.contains("standing")) {
@@ -372,18 +380,12 @@ public class BlockRegistry {
 			}
 		} else if (json.has(ELEMENTS_FIELD) || elements != null)//Load all elements
 		{
-			Map<String, String> combineMap = new HashMap<>(textureMap);
-			if (json.has(TEXTURES_FIELD)) {
-				Map<String, String> textures = populateTextureMap(textureMap, json.get(TEXTURES_FIELD));
-				for (Map.Entry<String, String> entry : textures.entrySet()) {
-					if (entry.getValue() != null) {
-						String texture = entry.getValue();
-						if (modelName.contains("copper_golem")) { //Override textures for copper golem statues. This lets us use the same model file for all oxidation states of the statues and handle renamed textures.
-							texture = getTextureOverride(modelName, texture, "models/block/copper_golem_texture_overrides.json");
-						}
-						combineMap.putIfAbsent(entry.getKey(), texture);
-					}
-				}
+			Map<String, String> textures = json.has(TEXTURES_FIELD)
+					? populateTextureMap(textureMap, json.get(TEXTURES_FIELD)) : textureMap;
+			Map<String, String> combineMap = resolveTextureMap(textures);
+			if (modelName.contains("copper_golem")) { // Share geometry between oxidation states, with version-specific textures.
+				for (Entry<String, String> entry : combineMap.entrySet())
+					entry.setValue(getTextureOverride(modelName, entry.getValue(), "models/block/copper_golem_texture_overrides.json"));
 			}
 			
 			boolean ao = true;
@@ -401,46 +403,48 @@ public class BlockRegistry {
 		}
 	}
 	
-	private Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures) {
+	static Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures) {
 		Map<String, String> newTexMap = new HashMap<>(textureMap);
 		
 		for (Entry<String, JsonNode> entry : textures.properties()) {
 			String key = entry.getKey();
 			JsonNode value = entry.getValue();
 			//TODO: handle the new 26.1 format with force_translucent and sprite. Have to create a sprite object
-			StringBuilder tex = null;
+			String texture = null;
 			if (value.isString()) {
-				tex = new StringBuilder(value.asString());
+				texture = value.asString();
 			} else if (value.isObject()) {
-				tex = new StringBuilder(value.get("sprite").asString()); //TODO: this is just a temp fix to get this working with 26.1
+				texture = value.get("sprite").asString(); //TODO: this is just a temp fix to get this working with 26.1
 			} else {
 				log.warn("Unexpected texture value: {} for key: {}", value, key);
 			}
 			
-			if (tex != null) {
-				String texture = getTexture(tex, textureMap);
-				if (texture != null) {
-					newTexMap.put(key, texture);
-				}
-			}
+			// Models are visited child first. Keep aliases until every ancestor has been merged.
+			if (texture != null)
+				newTexMap.putIfAbsent(key, texture);
 		}
 		
 		return newTexMap;
 	}
 	
-	private String getTexture(StringBuilder tex, Map<String, String> textureMap) {
-		String texture = null;
-		
-		if (tex.charAt(0) == '#') {
-			String lookupTexture = textureMap.get(tex.deleteCharAt(0).toString());
-			if (lookupTexture != null) {
-				texture = lookupTexture;
+	static Map<String, String> resolveTextureMap(Map<String, String> textures) {
+		Map<String, String> resolved = new HashMap<>();
+		for (String key : textures.keySet()) {
+			Set<String> visited = new HashSet<>();
+			visited.add(key);
+			String texture = textures.get(key);
+			while (texture != null && texture.startsWith("#")) {
+				String reference = texture.substring(1);
+				if (!visited.add(reference)) {
+					texture = null;
+					break;
+				}
+				texture = textures.get(reference);
 			}
-		} else {
-			texture = tex.toString();
+			if (texture != null)
+				resolved.put(key, texture);
 		}
-		
-		return texture;
+		return resolved;
 	}
 	
 	private String getTextureOverride(String modelName, String texture, String resourcePath) {

@@ -103,7 +103,11 @@ public final class BakedBlockStateModel {
 			return;
 
 		float[] xyz = new float[12];
-		float fudge = model.getName().contains("grass_block") && element.getFaces().size() == 4 ? 0.0001f : 0;
+		// Resource packs may put the top and side overlays in the same element.
+		boolean grassOverlay = model.getName().contains("grass_block") && face.isTinted()
+				&& (face.isTransparent() || face.isTranslucent())
+				&& !faceName.equals("up") && !faceName.equals("down");
+		float fudge = grassOverlay ? 0.0001f : 0;
 		for (int i = 0; i < 4; i++) {
 			float px = positions[i][0], py = positions[i][1], pz = positions[i][2];
 			switch (faceName) {
@@ -135,7 +139,7 @@ public final class BakedBlockStateModel {
 		Vector3f normal = elementRotation.transformDirection(faceNormal(faceName));
 		String direction = dominantFace(blockRotation.transformDirection(normal));
 		result.add(new BakedQuad(model, face, faceName, direction, cullDirection, xyz, uvs,
-				element.getFaces().size() == 4, element.isShaded() || element.getShadeDirectionOverride() != null,
+				grassOverlay, element.isShaded() || element.getShadeDirectionOverride() != null,
 				element.getShadeDirectionOverride()));
 	}
 

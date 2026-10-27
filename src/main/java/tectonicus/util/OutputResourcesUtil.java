@@ -865,11 +865,15 @@ public class OutputResourcesUtil {
 				writeImage(texturePack.getItem(path + "iron_ingot.png"), 32, 32, new File(imagesDir, "IronIcon.png"));
 				writeImage(texturePack.getItem(path + "gold_ingot.png"), 32, 32, new File(imagesDir, "GoldIcon.png"));
 				writeImage(texturePack.getItem(path + "diamond.png"), 32, 32, new File(imagesDir, "DiamondIcon.png"));
-				writeImage(texturePack.getSubImage(beaconPath, 17, 21, 21, 22), 32, 32, new File(imagesDir, "beacon_level_1.png"));
-				writeImage(texturePack.getSubImage(beaconPath, 17, 46, 21, 22), 32, 32, new File(imagesDir, "beacon_level_2.png"));
-				writeImage(texturePack.getSubImage(beaconPath, 17, 71, 21, 22), 32, 32, new File(imagesDir, "beacon_level_3.png"));
-				writeImage(texturePack.getSubImage(beaconPath, 157, 21, 21, 22), 32, 32, new File(imagesDir, "beacon_level_4.png"));
-				writeImage(texturePack.getSubImage(beaconPath, 232, 0, 18, 18), 18, 18, new File(effectsDir, "none.png"));
+				BufferedImage beaconImage = texturePack.getGuiImage(beaconPath, 256, 256);
+				if (beaconImage != null) {
+					int scale = beaconImage.getWidth() / 256;
+					writeImage(beaconImage.getSubimage(17 * scale, 21 * scale, 21 * scale, 22 * scale), 32, 32, new File(imagesDir, "beacon_level_1.png"));
+					writeImage(beaconImage.getSubimage(17 * scale, 46 * scale, 21 * scale, 22 * scale), 32, 32, new File(imagesDir, "beacon_level_2.png"));
+					writeImage(beaconImage.getSubimage(17 * scale, 71 * scale, 21 * scale, 22 * scale), 32, 32, new File(imagesDir, "beacon_level_3.png"));
+					writeImage(beaconImage.getSubimage(157 * scale, 21 * scale, 21 * scale, 22 * scale), 32, 32, new File(imagesDir, "beacon_level_4.png"));
+					writeImage(beaconImage.getSubimage(232 * scale, 0, 18 * scale, 18 * scale), 18, 18, new File(effectsDir, "none.png"));
+				}
 				//TODO: for older resource packs we need to get the effect icons from assets/minecraft/textures/gui/container/inventory.png (1.13 and older use this texture)
 				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(texturePack.getZipStack().getBaseFileName()));
 					 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/mob_effect"))) {

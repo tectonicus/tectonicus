@@ -59,7 +59,12 @@ public class BlockModel
 		this.ambientlyOccluded = ambientlyOccluded;
 		if (elementsNode != null) {
 			this.elements = deserializeBlockElements(combineMap, elementsNode, texturePack, this);
-			missingTextures.forEach(s -> log.warn("Missing texture: {} for model: {}", s, name));
+			missingTextures.forEach(s -> {
+				if (s.startsWith("#"))
+					log.warn("Unresolved texture reference '{}' for model: {}", s, name);
+				else
+					log.warn("Missing texture: {} for model: {}", s, name);
+			});
 		} else {
 			this.isFullBlock = false;  //This assumes that any block with no elements is not a full block, this isn't correct (shulker box) but works fine
 			this.elements = Collections.emptyList();
@@ -91,6 +96,14 @@ public class BlockModel
 
 	public void addMissingTexture(String missingTexture) {
 		missingTextures.add(missingTexture);
+	}
+
+	static String resolveTexturePath(String reference, Map<String, String> textures) {
+		// Some bundled legacy models use texture keys without the # prefix.
+		String texture = reference.startsWith("#") ? textures.get(reference.substring(1)) : textures.getOrDefault(reference, reference);
+		if (texture == null || texture.isBlank() || texture.startsWith("#"))
+			return null;
+		return texture.replace("minecraft:", "") + ".png";
 	}
 
 	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap, JsonNode elements, TexturePack texturePack, BlockModel blockModel)
@@ -267,22 +280,14 @@ public class BlockModel
 					rotation = face.get(ROTATION_FIELD).asInt();
 				
 				String modelName = blockModel.getName();
-				StringBuilder tex = new StringBuilder(face.get("texture").asString());
-				String texture = tex.toString();
-				if (tex.charAt(0) == '#')
-					texture = tex.deleteCharAt(0).toString();				
-					
-				//TODO: For mod support we may need to keep this namespace
-				String texturePath = combineMap.get(texture) + ".png";
-				if (texturePath.contains("minecraft:")) {
-					texturePath = texturePath.replace("minecraft:", "");
-				}
+				String reference = face.get("texture").asString();
+				String texturePath = resolveTexturePath(reference, combineMap);
 				
-				SubTexture te = texturePack.findTexture(texturePath);
+				SubTexture te = texturePath == null ? null : texturePack.findTexture(texturePath);
 				PackTexture pt = null;
 				if (te == null) {
 					te = texturePack.getPackTexture("missing_texture").getFullTexture();
-					blockModel.addMissingTexture(texturePath);
+					blockModel.addMissingTexture(texturePath == null ? reference : texturePath);
 				} else {
 					pt = texturePack.getPackTexture("assets/minecraft/textures/" + texturePath);
 				}

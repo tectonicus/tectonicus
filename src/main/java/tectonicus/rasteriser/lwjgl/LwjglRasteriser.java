@@ -440,6 +440,11 @@ public class LwjglRasteriser implements Rasteriser {
 		return height;
 	}
 	
+	@Override
+	public int getMaxTextureSize() {
+		return GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);
+	}
+
 	public Texture createTexture(BufferedImage image, TextureFilter filter) {
 		final int id = LwjglTextureUtils.createTexture(image, filter);
 		return new LwjglTexture(id, image.getWidth(), image.getHeight());

@@ -54,8 +54,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
@@ -108,6 +110,7 @@ public class TexturePack
 	private final ZipStack zipStack;
 	
 	private final Map<String, PackTexture> loadedPackTextures;
+	private final Set<String> missingTexturePaths = new HashSet<>();
 	private final Map<String, List<SubTexture>> particleTextures = new HashMap<>();
 	@Getter
 	private final Map<String, BufferedImage> bannerPatternImages;
@@ -284,10 +287,7 @@ public class TexturePack
                         }                        
 			
 			try {
-				InputStream imgStream = zipStack.getStream(path + "gui/container.png");
-				if (imgStream == null)
-					imgStream = zipStack.getStream(path + "gui/container/generic_54.png");
-				chestImage = copy( ImageIO.read( imgStream ) );
+				chestImage = loadChestImage(zipStack, path);
 			} catch (IllegalArgumentException e) {
 				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, resourcePack));
 			}
@@ -370,6 +370,44 @@ public class TexturePack
 	
 	public SubTexture findTexture(String texturePath) {
 		return findTextureOrDefault(texturePath, null);
+	}
+
+	/** Static lava needs one frame, not an animation strip that can exceed the GPU's size limit. */
+	public SubTexture findTextureFrameOrDefault(String texturePath, int frame, SubTexture defaultTexture) {
+		TextureRequest request = parseRequest(texturePath);
+		if (request.isTile())
+			return findTextureOrDefault(texturePath, defaultTexture);
+		String key = request.path + "#frame=" + Math.max(1, frame);
+		PackTexture texture = loadedPackTextures.get(key);
+		if (texture == null) {
+			if (missingTexturePaths.contains(request.path))
+				return defaultTexture;
+			try {
+				texture = loadTextureFrame(rasteriser, key, loadTexture(request.path), frame);
+				loadedPackTextures.put(key, texture);
+			} catch (FileNotFoundException e) {
+				reportMissingTexture(request.path);
+				return defaultTexture;
+			}
+		}
+		return texture.find(new TextureRequest(key, ""), version);
+	}
+
+	static PackTexture loadTextureFrame(Rasteriser rasteriser, String path, BufferedImage image, int frame) {
+		int frames = image.getHeight() / image.getWidth();
+		if (frames > 0 && image.getHeight() % image.getWidth() == 0) {
+			int index = Math.floorMod(Math.max(1, frame) - 1, frames);
+			image = image.getSubimage(0, index * image.getWidth(), image.getWidth(), image.getWidth());
+		}
+		return createPackTexture(rasteriser, path, image);
+	}
+
+	private static PackTexture createPackTexture(Rasteriser rasteriser, String path, BufferedImage image) {
+		BufferedImage argb = copy(image);
+		ImageUtils.normalizeAlpha(argb);
+		ImageUtils.Opacity opacity = ImageUtils.testOpacity(argb);
+		return new PackTexture(rasteriser, path, argb,
+				opacity == ImageUtils.Opacity.TRANSPARENT, opacity == ImageUtils.Opacity.TRANSLUCENT);
 	}
 
 	/** Particle definitions and sprites both honor resource-pack overrides. */
@@ -674,33 +712,27 @@ public class TexturePack
 		PackTexture tex = loadedPackTextures.get(request.path);
 		
 		if (tex == null) {
+			if (missingTexturePaths.contains(request.path))
+				return null;
 			try {
 				IIOImage image = loadImage(request.path);
 				if (image != null) {
 					BufferedImage bufferedImage = (BufferedImage) image.getRenderedImage();
-					BufferedImage argbImage = copy(bufferedImage);
-
-					ImageUtils.normalizeAlpha(argbImage); // We need to do this to handle some resource pack textures
-					ImageUtils.Opacity opacity = ImageUtils.testOpacity(argbImage);
-
-					if (opacity == ImageUtils.Opacity.TRANSPARENT) {
-						tex = new PackTexture(rasteriser, request.path, argbImage, true, false);
-						log.trace("{} contains transparency", request.path);
-					} else if (opacity == ImageUtils.Opacity.TRANSLUCENT) {
-						tex = new PackTexture(rasteriser, request.path, argbImage, false, true);
-						log.trace("{} contains translucency", request.path);
-					} else {
-						tex = new PackTexture(rasteriser, request.path, argbImage);
-					}
+					tex = createPackTexture(rasteriser, request.path, bufferedImage);
 					
 					loadedPackTextures.put(request.path, tex);
 				}
 			} catch (FileNotFoundException e) {
-				log.warn("\nThe texture file '{}' could not be found.", request.path);
+				reportMissingTexture(request.path);
 			}
 		}
 		
 		return tex;
+	}
+
+	private void reportMissingTexture(String path) {
+		if (missingTexturePaths.add(path))
+			log.warn("The texture file '{}' could not be found.", path);
 	}
 	
 	public SubTexture findTexture(BufferedImage img, String path) {
@@ -1115,13 +1147,72 @@ public class TexturePack
 		}
 	}
 	
-	public BufferedImage getSubImage(String fileName, int tileX, int tileY, int width, int height) {
+	public BufferedImage getGuiImage(String fileName, int width, int height) {
 		try {
-			BufferedImage fullImage = loadTexture(fileName);
-			return fullImage.getSubimage(tileX, tileY, width, height);
-		} catch (FileNotFoundException e) {
+			return loadGuiImage(zipStack, fileName, width, height);
+		} catch (IOException e) {
 			log.error("Exception: ", e);
 			return null;
+		}
+	}
+
+	static BufferedImage loadGuiImage(ZipStack stack, String fileName, int width, int height) throws IOException {
+		BufferedImage image = readImage(stack, fileName, true);
+		int scale = image.getWidth() / width;
+		if (scale > 0 && image.getWidth() % width == 0 && image.getHeight() == height * scale)
+			return image;
+
+		log.warn("GUI texture {} is {}x{} and does not match the {}x{} layout; using Minecraft's sheet for all icons",
+				fileName, image.getWidth(), image.getHeight(), width, height);
+		return readImage(stack, fileName, false);
+	}
+
+	public BufferedImage getSubImage(String fileName, int tileX, int tileY, int width, int height) {
+		try {
+			return getSubImage(zipStack, fileName, tileX, tileY, width, height);
+		} catch (IOException e) {
+			log.error("Exception: ", e);
+			return null;
+		}
+	}
+
+	static BufferedImage getSubImage(ZipStack stack, String fileName, int tileX, int tileY, int width, int height) throws IOException {
+		BufferedImage fullImage = readImage(stack, fileName, true);
+		if (tileX >= 0 && tileY >= 0 && width > 0 && height > 0
+				&& tileX <= fullImage.getWidth() - width && tileY <= fullImage.getHeight() - height)
+			return fullImage.getSubimage(tileX, tileY, width, height);
+
+		// Resource packs can rearrange GUI sheets or remove the unused area containing this icon.
+		log.warn("Texture {} is {}x{} and cannot supply icon at {},{} ({}x{}); using Minecraft's texture",
+				fileName, fullImage.getWidth(), fullImage.getHeight(), tileX, tileY, width, height);
+		fullImage = readImage(stack, fileName, false);
+		return fullImage.getSubimage(tileX, tileY, width, height);
+	}
+
+	static BufferedImage loadChestImage(ZipStack stack, String textureDirectory) throws IOException {
+		String legacyPath = textureDirectory + "gui/container.png";
+		String modernPath = textureDirectory + "gui/container/generic_54.png";
+		String path = stack.hasFile(legacyPath) ? legacyPath : modernPath;
+		BufferedImage image = readImage(stack, path, true);
+		int factor = image.getWidth() / 256;
+		if (factor > 0 && image.getWidth() % 256 == 0 && image.getHeight() >= factor * 222)
+			return image;
+
+		log.warn("Chest texture {} is {}x{} and does not fit the chest GUI layout; using Minecraft's texture",
+				path, image.getWidth(), image.getHeight());
+		try {
+			return readImage(stack, legacyPath, false);
+		} catch (FileNotFoundException e) {
+			return readImage(stack, modernPath, false);
+		}
+	}
+
+	private static BufferedImage readImage(ZipStack stack, String fileName, boolean useResourcePack) throws IOException {
+		try (InputStream in = stack.getStream(fileName, useResourcePack)) {
+			BufferedImage image;
+			if (in == null || (image = ImageIO.read(in)) == null)
+				throw new FileNotFoundException("Unable to read texture " + fileName);
+			return image;
 		}
 	}
 	

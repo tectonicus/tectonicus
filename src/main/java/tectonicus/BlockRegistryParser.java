@@ -260,8 +260,8 @@ public class BlockRegistryParser
 			blockType = new Water(name, tex, flow, overlay, parseFrame(element));
 		}
 		else if (nodeName.equals("lava")) {
-			SubTexture still = parseTexture(element, "texture", null);
-			SubTexture flow = parseTexture(element, "flow", still);
+			SubTexture still = parseTextureFrame(element, "texture", null);
+			SubTexture flow = parseTextureFrame(element, "flow", still);
 			blockType = new Lava(name, still, flow, parseFrame(element));
 		}
 		else if (nodeName.equals("grass"))
@@ -930,6 +930,12 @@ public class BlockRegistryParser
 			return defaultTex;
 		
 		return result;
+	}
+
+	private SubTexture parseTextureFrame(Element element, String attribName, SubTexture defaultTex) {
+		if (!element.hasAttribute(attribName))
+			return defaultTex;
+		return texturePack.findTextureFrameOrDefault(element.getAttribute(attribName), parseFrame(element), defaultTex);
 	}
 
 	private boolean hasTexture(Element element, String attribName) {

@@ -52,6 +52,8 @@ public interface Rasteriser {
 	BufferedImage takeScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat);
 	
 	// Texturing
+	default int getMaxTextureSize() { return Integer.MAX_VALUE; }
+
 	Texture createTexture(BufferedImage image, TextureFilter filter);
 	
 	Texture createTexture(BufferedImage[] mips, TextureFilter filter);

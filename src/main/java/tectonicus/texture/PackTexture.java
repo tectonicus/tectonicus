@@ -17,6 +17,7 @@ import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.Version;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
@@ -24,6 +25,7 @@ import tectonicus.rasteriser.TextureFilter;
 
 import static tectonicus.util.ImageUtils.copy;
 
+@Slf4j
 public class PackTexture
 {
 	private final Rasteriser rasteriser;
@@ -57,6 +59,13 @@ public class PackTexture
 
 		this.path = path;
 
+		int maxSize = rasteriser.getMaxTextureSize();
+		if (image.getWidth() <= maxSize && image.getHeight() > maxSize && image.getHeight() % image.getWidth() == 0) {
+			// Block models (for example lava cauldrons) also use animated fluid sprites.
+			log.warn("Texture {} is {}x{}, exceeding the GPU limit {}; using its first square frame",
+					path, image.getWidth(), image.getHeight(), maxSize);
+			image = copy(image.getSubimage(0, 0, image.getWidth(), image.getWidth()));
+		}
 		this.image = image;
 		this.isTransparent = isTransparent;
 		this.isTranslucent = isTranslucent;
