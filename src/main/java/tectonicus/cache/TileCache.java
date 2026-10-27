@@ -33,5 +33,13 @@ public interface TileCache {
 	void writeImageCache(TileCoord coord);
 	void updateTileDownsampleStatus(TileCoord coord, int zoomLevel);
 
+	default void writeImageCache(TileCoord coord, boolean empty) {
+		writeImageCache(coord);
+	}
+
+	default void updateTileDownsampleStatus(TileCoord coord, int zoomLevel, boolean empty) {
+		updateTileDownsampleStatus(coord, zoomLevel);
+	}
+
 	void closeTileCache();
 }

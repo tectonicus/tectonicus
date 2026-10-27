@@ -1409,6 +1409,35 @@ public class RawChunk {
 		return toWorldY(y, minSectionY);
 	}
 
+	/** Internal render coordinates, including padding for models and particle columns. */
+	public int[] getRenderHeightBounds() {
+		// These renderers can place geometry independently of the occupied block sections.
+		if (!beacons.isEmpty() || !paintings.isEmpty() || !itemFrames.isEmpty()
+				|| !armorStands.isEmpty() || !cushions.isEmpty())
+			return new int[] {0, Minecraft.getChunkHeight()};
+		int min = Minecraft.getChunkHeight();
+		int max = 0;
+		for (int sectionY = 0; sectionY < sections.length; sectionY++) {
+			Section section = sections[sectionY];
+			if (section == null)
+				continue;
+			for (int i = 0; i < SECTION_SIZE; i++) {
+				String name = section.blockNames[i];
+				boolean occupied = name == null ? section.blockIds[i] != BlockIds.AIR
+						: !name.equals("minecraft:air") && !name.equals("minecraft:cave_air") && !name.equals("minecraft:void_air");
+				if (occupied) {
+					min = Math.min(min, sectionY * SECTION_HEIGHT);
+					max = (sectionY + 1) * SECTION_HEIGHT;
+					break;
+				}
+			}
+		}
+		if (max == 0)
+			return null;
+		// Signal campfire smoke rises 24 blocks. Two sections also cover model overhangs.
+		return new int[] {Math.max(0, min - 32), Math.min(Minecraft.getChunkHeight(), max + 32)};
+	}
+
 	static int toWorldY(final int y, final int minSectionY) {
 		return y - Math.abs(minSectionY) * SECTION_HEIGHT;
 	}

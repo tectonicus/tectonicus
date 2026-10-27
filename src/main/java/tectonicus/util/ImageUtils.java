@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -18,6 +18,19 @@ import java.awt.image.SampleModel;
 
 @UtilityClass
 public class ImageUtils {
+	public static boolean isFullyTransparent(BufferedImage image) {
+		if (!image.getColorModel().hasAlpha())
+			return false;
+		int[] row = new int[image.getWidth()];
+		for (int y = 0; y < image.getHeight(); y++) {
+			image.getRGB(0, y, image.getWidth(), 1, row, 0, image.getWidth());
+			for (int pixel : row) {
+				if ((pixel >>> 24) != 0)
+					return false;
+			}
+		}
+		return true;
+	}
 
 	/** Makes a copy of the input image. Also converts to INT_ARGB so that we're always
 	 *  working in the same colour space.

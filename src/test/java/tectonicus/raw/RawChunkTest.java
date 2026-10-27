@@ -58,6 +58,33 @@ class RawChunkTest {
 		assertEquals(5, RawChunk.toWorldY(5, 0));
 	}
 
+	@Test
+	void renderBoundsIgnoreAirAndLightOnlySections() {
+		RawChunk chunk = new RawChunk();
+		chunk.setBlockName(0, 240, 0, "minecraft:cave_air");
+		chunk.setBlockName(1, 240, 0, "minecraft:void_air");
+		chunk.setBlockData(0, 128, 0, (byte) 0);
+		assertNull(chunk.getRenderHeightBounds());
+		chunk.setBlockName(0, 64, 0, "minecraft:stone");
+		assertArrayEquals(new int[] {32, 112}, chunk.getRenderHeightBounds());
+	}
+
+	@Test
+	void legacyIdsAndUpperSectionsContributeToRenderBounds() {
+		RawChunk chunk = new RawChunk();
+		chunk.setBlockId(0, 15, 0, 1);
+		assertArrayEquals(new int[] {0, 48}, chunk.getRenderHeightBounds());
+		chunk.setBlockId(0, 240, 0, 1);
+		assertArrayEquals(new int[] {0, 256}, chunk.getRenderHeightBounds());
+	}
+
+	@Test
+	void entitiesKeepFullHeightBoundsEvenWithoutBlocks() {
+		RawChunk chunk = new RawChunk();
+		chunk.getPaintings().add(null);
+		assertArrayEquals(new int[] {0, 256}, chunk.getRenderHeightBounds());
+	}
+
 	@ParameterizedTest
 	@CsvSource({"postprocessed,true", "fullchunk,true", "full,true", "minecraft:full,true",
 			"empty,false", "carved,false", "liquid_carved,false", "decorated,false", "lighted,false", "not_full,false"})
@@ -125,6 +152,7 @@ class RawChunkTest {
 				"sections", new ListTag("sections", CompoundTag.class, List.of())));
 		RawChunk chunk = readChunk(root, Version.VERSION_21);
 		BeaconEntity entity = chunk.getBeacons().values().iterator().next();
+		assertArrayEquals(new int[] {0, 256}, chunk.getRenderHeightBounds());
 		assertEquals(0, entity.getLevels());
 		assertEquals(tectonicus.world.Effect.SPEED, entity.getPrimaryEffect());
 		var markers = new java.util.ArrayDeque<BeaconEntity>();

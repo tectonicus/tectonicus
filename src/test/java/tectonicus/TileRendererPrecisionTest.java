@@ -11,6 +11,8 @@ package tectonicus;
 import org.joml.Vector2d;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import tectonicus.raw.RawChunk;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.chunk.ChunkCoord;
@@ -46,5 +48,27 @@ class TileRendererPrecisionTest {
 		assertTrue(tiles.min.y <= y && tiles.max.y >= y);
 		assertTrue(tiles.max.x - tiles.min.x < 10);
 		assertTrue(tiles.max.y - tiles.min.y < 100);
+	}
+
+	@Test
+	void occupiedHeightBoundsReduceFlatWorldCandidatesWithoutDroppingTheirCorners() {
+		OrthoCamera camera = new OrthoCamera(null, 512, 512);
+		camera.lookAtTile(0, 0, 10, (float)Math.toRadians(225), (float)Math.toRadians(45));
+		ChunkCoord chunk = new ChunkCoord(-7, 3);
+		RawChunk raw = new RawChunk();
+		raw.setBlockName(0, 64, 0, "minecraft:stone");
+		int[] height = raw.getRenderHeightBounds();
+		var tight = TileRenderer.getTileBoundsForChunk(camera, chunk, 512, 512, height[0], height[1]);
+		var full = TileRenderer.getTileBoundsForChunk(camera, chunk, 512, 512);
+		assertTrue(tight.max.y - tight.min.y < full.max.y - full.min.y);
+		for (int x : new int[] {0, 16}) {
+			for (int y : height) {
+				for (int z : new int[] {0, 16}) {
+					Vector2d point = camera.projectd(chunk.x * 16 + x, y, chunk.z * 16 + z);
+					assertTrue(tight.min.x <= Math.floor(point.x / 512) && tight.max.x >= Math.floor(point.x / 512));
+					assertTrue(tight.min.y <= Math.floor(point.y / 512) && tight.max.y >= Math.floor(point.y / 512));
+				}
+			}
+		}
 	}
 }

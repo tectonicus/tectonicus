@@ -15,6 +15,7 @@ import tectonicus.cache.TileCache;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.Layer;
+import tectonicus.util.ImageUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -24,6 +25,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
+import java.nio.file.Files;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -94,13 +96,28 @@ public class Downsampler {
 		@Override
 		public Void call() throws Exception {
 			// Find the four input files
-			BufferedImage in00 = getTile( TileRenderer.getImageFile(state.inputDir, tile.x * 2, tile.y * 2, state.imageFormat) );
-			BufferedImage in10 = getTile( TileRenderer.getImageFile(state.inputDir, tile.x * 2 + 1, tile.y * 2, state.imageFormat) );
-			BufferedImage in01 = getTile( TileRenderer.getImageFile(state.inputDir, tile.x * 2, tile.y * 2 + 1, state.imageFormat) );
-			BufferedImage in11 = getTile( TileRenderer.getImageFile(state.inputDir, tile.x * 2 + 1, tile.y * 2 + 1, state.imageFormat) );
+			BufferedImage[] inputs = new BufferedImage[4];
+			for (int i = 0; i < inputs.length; i++) {
+				File file = TileRenderer.getImageFile(state.inputDir, tile.x * 2 + i % 2, tile.y * 2 + i / 2, state.imageFormat);
+				inputs[i] = getTile(file);
+				// Unreadable files must not be mistaken for deliberately omitted empty children.
+				if (inputs[i] == null && file.exists())
+					return null;
+			}
+			BufferedImage in00 = inputs[0], in10 = inputs[1], in01 = inputs[2], in11 = inputs[3];
 			
-			if (in00 == null && in10 == null && in01 == null && in11 == null)
+			File outputFile = TileRenderer.getImageFile(state.outputDir, tile.x, tile.y, state.imageFormat);
+			if (in00 == null && in10 == null && in01 == null && in11 == null) {
+				Files.deleteIfExists(outputFile.toPath());
+				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, true);
 				return null;
+			}
+
+			if (state.imageFormat.hasAlpha() && isEmpty(in00) && isEmpty(in10) && isEmpty(in01) && isEmpty(in11)) {
+				Files.deleteIfExists(outputFile.toPath());
+				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, true);
+				return null;
+			}
 			
 			log.trace("\tDownsampling to create meta tile at "+tile.x+","+tile.y);
 			
@@ -129,19 +146,26 @@ public class Downsampler {
 				g.drawImage(in01, 0, halfHeight, halfWidth, halfHeight, null);
 			if (in11 != null)
 				g.drawImage(in11, halfWidth, halfHeight, halfWidth, halfHeight, null);
+			g.dispose();
 			
 			try {
-				File outputFile = TileRenderer.getImageFile(state.outputDir, tile.x, tile.y, state.imageFormat);
-				
-				Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel);
-				
-				changedFileList.writeLine( outputFile.getAbsolutePath() );
-				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel);
+				boolean empty = state.imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(outImg);
+				if (empty) {
+					Files.deleteIfExists(outputFile.toPath());
+				} else {
+					Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel);
+					changedFileList.writeLine(outputFile.getAbsolutePath());
+				}
+				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, empty);
 			} catch (Exception e) {
 				log.error("Exception: ", e);
 			}
 			
 			return null;
+		}
+
+		private static boolean isEmpty(BufferedImage image) {
+			return image == null || ImageUtils.isFullyTransparent(image);
 		}
 		
 		private static BufferedImage getTile(File file) {

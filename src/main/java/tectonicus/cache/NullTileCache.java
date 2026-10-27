@@ -15,9 +15,13 @@ import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NullTileCache implements TileCache
 {
+	private final java.util.Map<Integer, Set<TileCoord>> downsampleTiles = new HashMap<>();
 	@Override
 	public void reset()
 	{
@@ -44,12 +48,22 @@ public class NullTileCache implements TileCache
 
 	@Override
 	public void calculateDownsampledTileCoordinates(HddTileList baseTiles, int zoomLevel) {
-
+		Set<TileCoord> previous = baseTiles.toSet();
+		while (zoomLevel >= 0) {
+			Set<TileCoord> next = new HashSet<>();
+			for (TileCoord tile : previous)
+				next.add(new TileCoord(Math.floorDiv(tile.x, 2), Math.floorDiv(tile.y, 2)));
+			downsampleTiles.computeIfAbsent(zoomLevel--, key -> new HashSet<>()).addAll(next);
+			previous = next;
+		}
 	}
 
 	@Override
 	public HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel, File baseDir, ImageFormat imageFormat) {
-		return null;
+		HddTileList result = factory.createList();
+		for (TileCoord tile : downsampleTiles.getOrDefault(zoomLevel, Set.of()))
+			result.add(tile);
+		return result;
 	}
 
 	@Override

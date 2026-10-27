@@ -34,7 +34,7 @@ import java.util.Set;
 public class FileTileCache implements TileCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
-	private static final int RENDERER_VERSION = 17;
+	private static final int RENDERER_VERSION = 18;
 
 	private final File tileCacheDir;
 	
@@ -47,6 +47,7 @@ public class FileTileCache implements TileCache
 	private final MVStore store;
 	private final MVMap<String, byte[]> hashCache;
 	private final MVMap<String, Boolean> downsampleCache;
+	private final MVMap<String, Boolean> emptyTiles;
 
 	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.Map map, Layer layer, String optionString, MessageDigest hashAlgorithm)
 	{
@@ -76,6 +77,7 @@ public class FileTileCache implements TileCache
 		store = new MVStore.Builder().fileName(tileCacheDir + "/tileRender.cache").compressHigh().open();
 		hashCache = store.openMap("tileHashes");
 		downsampleCache = store.openMap("tileDownsample");
+		emptyTiles = store.openMap("emptyTiles");
 
 		tileHashes = new HashMap<>();
 	}
@@ -252,7 +254,7 @@ public class FileTileCache implements TileCache
 			final byte[] newHash = currentTileHashes.getHash(coord);
 			
 			File imgFile = TileRenderer.getImageFile(layerDir, coord.x, coord.y, imageFormat);
-			if (imgFile.exists()) {
+			if (imgFile.exists() || Boolean.TRUE.equals(emptyTiles.get("tile_" + coord.x + "_" + coord.y))) {
 				final byte[] cachedHash = hashCache.get("tile_"+coord.x+"_"+coord.y);
 
 				if (cachedHash != null) {
@@ -314,7 +316,8 @@ public class FileTileCache implements TileCache
                         TileCoord coord = new TileCoord(Integer.parseInt(keyStr[1]), Integer.parseInt(keyStr[2]));
                         File tileFile = TileRenderer.getImageFile(baseDir, coord.x, coord.y, imageFormat);
                         
-                        if (key.contains("zoom" + zoomLevel) && (Boolean.TRUE.equals(!entry.getValue()) || !tileFile.exists())) {
+                        if (key.endsWith("_zoom" + zoomLevel) && (!Boolean.TRUE.equals(entry.getValue())
+                                || (!tileFile.exists() && !Boolean.TRUE.equals(emptyTiles.get(key))))) {
 				result.add(coord);
 			}
 		}
@@ -324,18 +327,40 @@ public class FileTileCache implements TileCache
 	
 	public void writeImageCache(TileCoord coord)
 	{
+		writeImageCache(coord, false);
+	}
+
+	@Override
+	public void writeImageCache(TileCoord coord, boolean empty)
+	{
 		assert (coord != null);
 
 		byte[] hash = tileHashes.get(coord);
 		if (hash == null)
 			throw new RuntimeException("No hash for tile coord "+coord);
 
-		hashCache.put("tile_" + coord.x + "_" + coord.y, hash);
+		String key = "tile_" + coord.x + "_" + coord.y;
+		setEmpty(key, empty);
+		hashCache.put(key, hash);
 	}
 
 	@Override
 	public void updateTileDownsampleStatus(TileCoord coord, int zoomLevel) {
-		downsampleCache.put("tile_" + coord.x + "_" + coord.y + "_zoom" + zoomLevel, true);
+		updateTileDownsampleStatus(coord, zoomLevel, false);
+	}
+
+	@Override
+	public void updateTileDownsampleStatus(TileCoord coord, int zoomLevel, boolean empty) {
+		String key = "tile_" + coord.x + "_" + coord.y + "_zoom" + zoomLevel;
+		setEmpty(key, empty);
+		downsampleCache.put(key, true);
+	}
+
+	private void setEmpty(String key, boolean empty) {
+		if (empty)
+			emptyTiles.put(key, true);
+		else
+			emptyTiles.remove(key);
 	}
 	
 	private static File getCacheFile(File cacheDir, TileCoord coord)

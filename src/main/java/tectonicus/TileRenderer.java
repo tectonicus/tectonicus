@@ -41,6 +41,8 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.DirUtils;
 import tectonicus.util.FileUtils;
+import tectonicus.util.ImageUtils;
+import tectonicus.util.TileOutput;
 import tectonicus.util.TempArea;
 import tectonicus.util.Util;
 import tectonicus.view.ViewRenderer;
@@ -57,6 +59,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Date;
@@ -138,6 +141,8 @@ public class TileRenderer
 	private final MemoryMonitor memoryMonitor;
 	
 	private boolean abort;
+	private HddTileList discoveredTiles;
+	private boolean useFullHeightBounds;
 	
 	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
 	{
@@ -201,7 +206,7 @@ public class TileRenderer
 		this.abort = true;
 	}
 	
-	public Result output()
+	public Result output() throws IOException
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
 		
@@ -242,10 +247,15 @@ public class TileRenderer
 			File signsFile = tempArea.generateTempFile("signs", ".list");
 			File viewsFile = tempArea.generateTempFile("views", ".list");
 
+			discoveredTiles = hddTileListFactory.createList();
+			useFullHeightBounds = map.getLayers().stream().anyMatch(layer ->
+					(layer.getCustomBlockConfig() != null && !layer.getCustomBlockConfig().isBlank()) || !layer.useDefaultBlockConfig());
 			WorldStats worldStats = preProcess(world, map, portalsFile, signsFile, viewsFile);
 			
 			// Find visible tiles
-			HddTileList visibleTiles = findVisibleTiles(world, camera, worldStats.numChunks());
+			HddTileList visibleTiles = discoveredTiles;
+			discoveredTiles = null;
+			log.info("found {} total tiles to output using occupied chunk heights", visibleTiles.size());
 			
 			
 			// Figure out which tiles we need to render
@@ -296,8 +306,20 @@ public class TileRenderer
 						// Render base tiles
 						renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
 
+						// Retire old candidates, including tiles vacated if terrain shrinks.
+						HddTileList removed = hddTileListFactory.createList();
+						TileOutput.removeObsolete(baseTilesDir.toPath(), visibleTiles, layer.getImageFormat(), removed);
+						HddTileList downsampleChanges = changedTiles;
+						if (removed.size() > 0) {
+							downsampleChanges = hddTileListFactory.createList();
+							for (TileCoord tile : changedTiles)
+								downsampleChanges.add(tile);
+							for (TileCoord tile : removed)
+								downsampleChanges.add(tile);
+						}
+
 						// Create downsampled layers
-						bounds = downsample(visibleTiles, changedTiles, exportDir, layer, baseTilesDir, tileCache);
+						bounds = downsample(visibleTiles, downsampleChanges, exportDir, layer, baseTilesDir, tileCache);
 					} finally {
 						tileCache.closeTileCache();
 					}
@@ -614,6 +636,16 @@ public class TileRenderer
 	private void chunkSearch(World world, Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
 		if (c != null && c.getRawChunk().isFullChunk()) {
 			worldStats.incNumChunks();
+			if (discoveredTiles != null && world.contains(c.getCoord())) {
+				int[] height = useFullHeightBounds ? new int[] {0, Minecraft.getChunkHeight()}
+						: c.getRawChunk().getRenderHeightBounds();
+				if (height != null) {
+					TileCoordBounds tileBounds = getTileBoundsForChunk(camera, c.getCoord(), tileWidth, tileHeight, height[0], height[1]);
+					for (int x = tileBounds.min.x; x <= tileBounds.max.x; x++)
+						for (int y = tileBounds.min.y; y <= tileBounds.max.y; y++)
+							discoveredTiles.add(new TileCoord(x, y));
+				}
+			}
 			
 			ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
 			Queue<BedEntity> beds = world.getBeds();
@@ -679,14 +711,21 @@ public class TileRenderer
 			File outputFile = getImageFile(layerDir, t.x, t.y, imageFormat);
 			BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, tileWidth, tileHeight, imageFormat);
 			if (tileImage != null) {
-				imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel());
+				boolean empty = imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(tileImage);
+				if (empty) {
+					try {
+						Files.deleteIfExists(outputFile.toPath());
+					} catch (IOException e) {
+						throw new IllegalStateException("Could not remove empty tile " + outputFile, e);
+					}
+				} else {
+					imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel());
+					changedFileList.writeLine(outputFile.getAbsolutePath());
+				}
+				tileCache.writeImageCache(t, empty);
 			} else {
 				log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:" + tileWidth + " height:" + tileHeight + " format:" + imageFormat + ")");
 			}
-
-			tileCache.writeImageCache(t);
-
-			changedFileList.writeLine(outputFile.getAbsolutePath());
 
 			done++;
 
@@ -714,82 +753,11 @@ public class TileRenderer
 		setupCameraForTile(camera, new TileCoord(0, 0), tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), map.getClosestZoomSize());
 	}
 	
-	private HddTileList findVisibleTiles(World world, OrthoCamera camera, final int numChunks)
-	{
-		HddTileList visible = hddTileListFactory.createList();
-		
-		if (abort)
-			return visible;
-
-		progressListener.onTaskStarted(Task.FIND_VISIBLE_TILES.toString());
-		
-		// Method:
-		//	for each chunk:
-		//		- find corner vertices in world space
-		//		- project into screen space
-		//		- keep screen min / max in both axies, convert to screen aligned rectangle containing chunk
-		//		- loop over screen rect and generate all tiles which it intersects
-		
-		int count = 0;
-		
-		if (world.isAlphaWorld()) {
-			findVisibleFromChunks(world, camera, numChunks, world.getAlphaChunkCoords(), visible);
-		} else {
-			RegionIterator it = world.createRegionIterator();
-			while (it.hasNext()) {
-				File regionFile = it.next();
-				if (regionFile == null || regionFile.length() == 0)
-					continue;
-				
-				Region region = null;
-				try {
-					region = new Region(regionFile);
-				} catch (Exception e) {
-					log.error("Exception: ", e);
-				}
-				if (region != null) {
-					count += findVisibleFromChunks(world, camera, numChunks, region.getContainedChunkCoords(), visible);
-				}
-			}
-		}
-
-		System.out.println("100%");
-		
-		log.info("found {} total tiles to output", visible.size());
-		
-		return visible;
-	}
-	
-	private int findVisibleFromChunks(World world, OrthoCamera camera, int numChunks, ChunkCoord[] chunkCoords, HddTileList visible) {
-		int count = 0;
-		for (ChunkCoord coord : chunkCoords) {
-			if (coord != null && world.contains(coord)) {
-				addVisibleTilesForChunk(visible, camera, coord);
-				
-				count++;
-				if (count % 100 == 0) {
-					final int percentage = (int) Math.floor((count / (float) numChunks) * 100);
-					System.out.print(percentage + "%\r"); //prints a carriage return after line
-				}
-				progressListener.onTaskUpdate(count, numChunks);
-			}
-			
-			if (abort)
-				break;
-		}
-		return count;
-	}
-	
-	private void addVisibleTilesForChunk(HddTileList visible, OrthoCamera camera, ChunkCoord coord) {
-		TileCoordBounds bounds = getTileBoundsForChunk(camera, coord, tileWidth, tileHeight);
-		for (int x = bounds.min.x; x <= bounds.max.x; x++) {
-			for (int y = bounds.min.y; y <= bounds.max.y; y++) {
-				visible.add(new TileCoord(x, y));
-			}
-		}
-	}
-
 	static TileCoordBounds getTileBoundsForChunk(OrthoCamera camera, ChunkCoord coord, int tileWidth, int tileHeight) {
+		return getTileBoundsForChunk(camera, coord, tileWidth, tileHeight, 0, Minecraft.getChunkHeight());
+	}
+
+	static TileCoordBounds getTileBoundsForChunk(OrthoCamera camera, ChunkCoord coord, int tileWidth, int tileHeight, int minHeight, int maxHeight) {
 		int minX = Integer.MAX_VALUE;
 		int maxX = Integer.MIN_VALUE;
 		int minY = Integer.MAX_VALUE;
@@ -800,7 +768,7 @@ public class TileRenderer
 			for (int y = 0; y <= 1; y++) {
 				for (int z = 0; z <= 1; z++) {
 					Vector2d screen = camera.projectd(((double)coord.x + x) * RawChunk.WIDTH,
-							y * Minecraft.getChunkHeight(), ((double)coord.z + z) * RawChunk.DEPTH);
+							y == 0 ? minHeight : maxHeight, ((double)coord.z + z) * RawChunk.DEPTH);
 					int tileX = (int)Math.floor(screen.x / tileWidth);
 					int tileY = (int)Math.floor(screen.y / tileHeight);
 					minX = Math.min(minX, tileX);
@@ -842,6 +810,8 @@ public class TileRenderer
 
 		if (!tileCache.hasCreatedDownsampleCache()) {
 			tileCache.calculateDownsampledTileCoordinates(baseTiles, zoomLevel);
+			// Removed tiles may have parents beyond the new candidate bounds.
+			tileCache.calculateDownsampledTileCoordinates(changedTiles, zoomLevel);
 		}
                 else {
                         tileCache.calculateDownsampledTileCoordinates(changedTiles, zoomLevel);
@@ -885,7 +855,13 @@ public class TileRenderer
 		final String downsampleTime = Util.getElapsedTime(downsampleStart, downsampleEnd);
 		log.debug("Downsampling took "+downsampleTime);
 		
-		return new TileCoordBounds(prevTiles.getAbsoluteMinCoord(), prevTiles.getAbsoluteMaxCoord());
+		TileCoord min = baseTiles.size() == 0 ? new TileCoord(0, 0) : baseTiles.getAbsoluteMinCoord();
+		TileCoord max = baseTiles.size() == 0 ? new TileCoord(0, 0) : baseTiles.getAbsoluteMaxCoord();
+		for (int zoom = 0; zoom < numZoomLevels; zoom++) {
+			min = new TileCoord(Math.floorDiv(min.x, 2), Math.floorDiv(min.y, 2));
+			max = new TileCoord(Math.floorDiv(max.x, 2), Math.floorDiv(max.y, 2));
+		}
+		return new TileCoordBounds(min, max);
 	}
 
 	public static class TileCoordBounds
