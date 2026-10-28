@@ -1167,28 +1167,6 @@ public class TexturePack
 		return readImage(stack, fileName, false);
 	}
 
-	public BufferedImage getSubImage(String fileName, int tileX, int tileY, int width, int height) {
-		try {
-			return getSubImage(zipStack, fileName, tileX, tileY, width, height);
-		} catch (IOException e) {
-			log.error("Exception: ", e);
-			return null;
-		}
-	}
-
-	static BufferedImage getSubImage(ZipStack stack, String fileName, int tileX, int tileY, int width, int height) throws IOException {
-		BufferedImage fullImage = readImage(stack, fileName, true);
-		if (tileX >= 0 && tileY >= 0 && width > 0 && height > 0
-				&& tileX <= fullImage.getWidth() - width && tileY <= fullImage.getHeight() - height)
-			return fullImage.getSubimage(tileX, tileY, width, height);
-
-		// Resource packs can rearrange GUI sheets or remove the unused area containing this icon.
-		log.warn("Texture {} is {}x{} and cannot supply icon at {},{} ({}x{}); using Minecraft's texture",
-				fileName, fullImage.getWidth(), fullImage.getHeight(), tileX, tileY, width, height);
-		fullImage = readImage(stack, fileName, false);
-		return fullImage.getSubimage(tileX, tileY, width, height);
-	}
-
 	static BufferedImage loadChestImage(ZipStack stack, String textureDirectory) throws IOException {
 		String legacyPath = textureDirectory + "gui/container.png";
 		String modernPath = textureDirectory + "gui/container/generic_54.png";

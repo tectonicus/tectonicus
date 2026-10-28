@@ -1,5 +1,5 @@
 
-let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false}).setView([0, 0], 0);
+let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false});
 let tileLayers = new Map();
 let activeBaseLayer = null;
 let mapInfoTippy = null;
@@ -150,25 +150,24 @@ async function mainAsync()
         let defaultLayer = tileLayers.get("LayerA");
         let startView;
         if (size(fragmentParams) > 0) {
-                startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+            startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
         } else {
-                startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+            startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
         }
 
-        // Set the starting view
+        // Add the starting layer to the map
         let startLayer = tileLayers.get(startView.layerId);
         activeBaseLayer = startLayer;
         startLayer.addTo(mymap);
-        mymap.setView(startView.startPoint, startView.zoom);
-
-        // And store the updated start point in the layer
+        // Store the updated start point in the layer
         startLayer.viewPosition = startView;
 
         // Create controls
         if (tileLayers.size > 1) {
             layerControl = L.control.layers(baseMaps);
         }
-	compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
+        CreateResetViewButton(mymap);
+	    compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
         viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
         signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
         playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
@@ -176,7 +175,7 @@ async function mainAsync()
         respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
         beaconToggleControl = CreateToggleControl('beacons', 'Images/beacon.png', beaconMarkers, beaconsInitiallyVisible);
         portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
-        spawnToggleControl = CreateToggleControl('spawn', 'Images/Spawn.png', spawnMarkers, spawnInitiallyVisible);
+        spawnToggleControl = CreateToggleControl('spawn', 'Images/SpawnCompass.png', spawnMarkers, spawnInitiallyVisible);
         chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, chestsInitiallyVisible);
 
 	//CreateLinkControl(map);
@@ -189,13 +188,15 @@ async function mainAsync()
         // We have done all we can. Now we have to await the containers initialization
         await containersMainPromise;
 
-	// Register these last so that they don't get called while we're still initialising
+	// Register these last so that they don't get called while we're still initializing
 	mymap.on('baselayerchange', onBaseLayerChange);
 	mymap.on('zoomend', onProjectionChanged);
-        mymap.on('moveend', onProjectionChanged);
+    mymap.on('moveend', onProjectionChanged);
 
+	// Load the map
+	mymap.setView(startView.startPoint, startView.zoom);
 	// Manually fire this event to set the initial state
-        mymap.fireEvent('baselayerchange', {layer: startLayer});
+    mymap.fireEvent('baselayerchange', {layer: startLayer});
 }
 
 spawnMarkers = [];
@@ -369,6 +370,29 @@ function onProjectionChanged(e) {
 	// Store the previous coords in the layer
 	activeBaseLayer.viewPosition.startPoint = mymap.getCenter();
 	activeBaseLayer.viewPosition.zoom = mymap.getZoom();
+	updateLinkUrl(activeBaseLayer);
+}
+
+function onHashChange() {
+    if (activeBaseLayer === null) {
+        return;
+    }
+
+    const params = getFragmentParams();
+    const layer = tileLayers.get(params.layer || activeBaseLayer.layerId);
+    if (!layer || ['x', 'z', 'zoom'].some(key =>
+        params.hasOwnProperty(key) && !Number.isFinite(parseInt(params[key])))) {
+        return;
+    }
+
+    const view = findStartView(params, layer.layerId, layer.worldVectors.startView);
+    const {startPoint, zoom} = view;
+    layer.viewPosition = view;
+    if (layer !== activeBaseLayer) {
+        mymap.removeLayer(activeBaseLayer);
+        layer.addTo(mymap);
+    }
+    mymap.setView(startPoint, zoom, {animate: false});
 }
 
 //TODO: refactor these refresh marker methods to use Leaflet LayerGroups
@@ -381,7 +405,7 @@ function refreshSpawnMarker(layer, markersVisible) {
 		let point = layer.projection.worldToMap(spawn);
 
 		let myIcon = L.icon({
-			iconUrl: 'Images/Spawn.png',
+			iconUrl: 'Images/SpawnCompass.png',
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -696,21 +720,19 @@ function ViewPos(layerId, worldPos, zoom, startPoint) {
 
 function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	let queryLayerId = defaultLayerId;
-	let queryPos = new WorldCoord(defaultSpawnPos.x, defaultSpawnPos.y, defaultSpawnPos.z);
 	let queryZoom = 0;
 
-	if (params.hasOwnProperty('layerId')) {
-		queryLayerId = params['layerId'];
+	if (params.hasOwnProperty('layer')) {
+		queryLayerId = params['layer'];
 	}
+	let layer = tileLayers.get(queryLayerId);
+	let queryPos = new WorldCoord(defaultSpawnPos.x, layer.worldVectors.startView.y, defaultSpawnPos.z);
 
-	if (params.hasOwnProperty('worldX')
-		&& params.hasOwnProperty('worldY')
-		&& params.hasOwnProperty('worldZ')) {
-		queryPos.x = parseInt(params['worldX']);
-		queryPos.y = parseInt(params['worldY']);
-		queryPos.z = parseInt(params['worldZ']);
+	if (params.hasOwnProperty('x')
+		&& params.hasOwnProperty('z')) {
+		queryPos.x = parseInt(params['x']);
+		queryPos.z = parseInt(params['z']);
 	}
-
 	if (params.hasOwnProperty('zoom')) {
 		queryZoom = parseInt(params['zoom']);
 	}
@@ -720,10 +742,10 @@ function findStartView(params, defaultLayerId, defaultSpawnPos) {
 	if (queryZoom > maxZoom)
 		queryZoom = maxZoom;
 
-	let layer = tileLayers.get(queryLayerId);
 	let startPoint = layer.projection.worldToMap(queryPos);
 
 	return new ViewPos(queryLayerId, queryPos, queryZoom, startPoint);
 }
 
 window.onload = mainAsync;
+window.addEventListener('hashchange', onHashChange);

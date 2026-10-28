@@ -282,14 +282,15 @@ public class BlockModel
 				String modelName = blockModel.getName();
 				String reference = face.get("texture").asString();
 				String texturePath = resolveTexturePath(reference, combineMap);
+				String assetPath = texturePath == null ? null : "assets/minecraft/textures/" + texturePath;
 				
-				SubTexture te = texturePath == null ? null : texturePack.findTexture(texturePath);
+				SubTexture te = assetPath == null ? null : texturePack.findTexture(assetPath);
 				PackTexture pt = null;
 				if (te == null) {
 					te = texturePack.getPackTexture("missing_texture").getFullTexture();
 					blockModel.addMissingTexture(texturePath == null ? reference : texturePath);
 				} else {
-					pt = texturePack.getPackTexture("assets/minecraft/textures/" + texturePath);
+					pt = texturePack.getPackTexture(assetPath);
 				}
 				
 				if (pt != null) {

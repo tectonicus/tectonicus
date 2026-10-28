@@ -136,9 +136,7 @@ public class MeshUtil {
 					? getTintColor(model.getName(), rawChunk, world, x, y, z)
 					: new Colour4f(1, 1, 1, 1);
 
-			MeshType meshType = model.getName().contains("grass_block") && !quad.isGrassOverlay()
-					? MeshType.Solid
-					: face.isTranslucent() ? MeshType.Transparent
+			MeshType meshType = face.isTranslucent() ? MeshType.Transparent
 					: face.isTransparent() ? MeshType.AlphaTest : MeshType.Solid;
 			Mesh mesh = geometry.getMesh(face.getTexture().texture, meshType);
 			LightFace smoothLightFace = quad.isShaded() ? lightDirection.lightFace : LightFace.Top;

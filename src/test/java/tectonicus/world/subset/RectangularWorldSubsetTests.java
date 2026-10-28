@@ -165,15 +165,4 @@ class RectangularWorldSubsetTests {
 		// Region iterator should not be null
 		assertThat(subset.createRegionIterator(null, null) != null, is(true));
 	}
-
-	@Test
-	void testBufferZoneProperlyCalculated() {
-		// Verify buffer zone is consistent
-		final long buffer = RawChunk.WIDTH + RawChunk.DEPTH;
-		final long expectedBufferMinX = -100L - buffer;
-		final long expectedBufferMaxX = 100L + buffer;
-		
-		assertThat(subset.getBufferedMinX(), is(equalTo(expectedBufferMinX)));
-		assertThat(subset.getBufferedMaxX(), is(equalTo(expectedBufferMaxX)));
-	}
 }

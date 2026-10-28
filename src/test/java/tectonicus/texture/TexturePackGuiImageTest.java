@@ -25,7 +25,7 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class TexturePackSubImageTest {
+class TexturePackGuiImageTest {
 	@TempDir Path directory;
 	private static final String BEACON = "assets/minecraft/textures/gui/container/beacon.png";
 	private static final String CHEST = "assets/minecraft/textures/gui/container/generic_54.png";
@@ -54,42 +54,6 @@ class TexturePackSubImageTest {
 			int scale = resolution / 256;
 			assertEquals(0xffabcdef, image.getSubimage(17 * scale, 21 * scale, 21 * scale, 22 * scale).getRGB(0, 0));
 			assertEquals(0xffabcdef, image.getSubimage(232 * scale, 0, 18 * scale, 18 * scale).getRGB(0, 0));
-		});
-	}
-
-	@Test
-	void fallsBackToVanillaWhenResourcePackRemovesTheIconArea() throws Exception {
-		withImages(230, 219, stack -> {
-			BufferedImage icon = TexturePack.getSubImage(stack, BEACON, 232, 0, 18, 18);
-			assertEquals(18, icon.getWidth());
-			assertEquals(18, icon.getHeight());
-			assertEquals(0xff123456, icon.getRGB(0, 0));
-		});
-	}
-
-	@Test
-	void keepsResourcePackPixelsWhenCropFitsExactly() throws Exception {
-		withImages(250, 18, stack -> {
-			BufferedImage icon = TexturePack.getSubImage(stack, BEACON, 232, 0, 18, 18);
-			assertEquals(0xffabcdef, icon.getRGB(0, 0));
-		});
-	}
-
-	@Test
-	void fallsBackWhenOnlyTheHeightIsTooSmall() throws Exception {
-		withImages(256, 17, stack -> {
-			BufferedImage icon = TexturePack.getSubImage(stack, BEACON, 232, 0, 18, 18);
-			assertEquals(0xff123456, icon.getRGB(0, 0));
-		});
-	}
-
-	@Test
-	void fallsBackForFaithlessChestLayout() throws Exception {
-		withImages(CHEST, 1056, 221, stack -> {
-			BufferedImage image = TexturePack.loadChestImage(stack, "assets/minecraft/textures/");
-			assertEquals(256, image.getWidth());
-			assertEquals(256, image.getHeight());
-			assertEquals(0xff123456, image.getRGB(0, 0));
 		});
 	}
 

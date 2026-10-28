@@ -57,7 +57,7 @@ class BlockModelTextureDiagnosticsTest {
 			for (String path : List.of("gui/sprites/hud/heart/container.png", "gui/sprites/hud/heart/half.png",
 					"gui/sprites/hud/heart/full.png", "gui/sprites/hud/food_empty.png", "gui/sprites/hud/food_half.png",
 					"gui/sprites/hud/food_full.png", "gui/sprites/hud/air_bursting.png", "gui/sprites/hud/air.png",
-					"gui/container/generic_54.png", "block/dirt.png")) {
+					"gui/container/generic_54.png", "block/dirt.png", "item/mace.png")) {
 				out.putNextEntry(new ZipEntry("assets/minecraft/textures/" + path));
 				ImageIO.write(image(path.contains("generic_54") ? 256 : 16), "png", out);
 				out.closeEntry();
@@ -131,6 +131,18 @@ class BlockModelTextureDiagnosticsTest {
 
 		assertTrue(model.getMissingTextures().isEmpty());
 		assertTrue(messages.list.isEmpty());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"#all", "all", "item/mace", "minecraft:item/mace"})
+	void blockModelsCanUseItemTextures(String reference) throws Exception {
+		BlockModel model = model("block/heavy_core", reference, Map.of("all", "item/mace"));
+		var expected = textures.findTexture("assets/minecraft/textures/item/mace.png");
+
+		assertTrue(model.getMissingTextures().isEmpty());
+		assertTrue(messages.list.isEmpty());
+		for (var face : model.getElements().getFirst().getFaces().values())
+			assertSame(expected.texture, face.getTexture().texture);
 	}
 
 	private BlockModel model(String name, String reference, Map<String, String> textureMap) throws Exception {

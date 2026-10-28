@@ -12,6 +12,16 @@ html, body, #map {
     clear: none;
 }
 
+.leaflet-control-reset {
+    position: absolute;
+}
+
+.leaflet-control-reset-view {
+    background-image: url('../Images/Spawn.png');
+    background-size: 24px 24px;
+    image-rendering: pixelated;
+}
+
 .button.leaflet-control-custom {
     margin-left: -2px;
     clear: none;
