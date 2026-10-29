@@ -73,12 +73,29 @@ test('chest images, item masks, overlays, player status and markers use the sele
     const viewer = createAssetsViewer();
     const item = {id: 'minecraft:leather_helmet', count: 2, slot: 0, color: 0x123456,
         enchantments: [{id: 'minecraft:protection', level: 1}]};
-    for (const index of [0, 1]) {
+    for (const index of [0, 1, 0]) {
         viewer.selectWorld(index);
         const prefix = `World${index}/Images/`;
         const html = viewer.context.createChestPopup({name: 'Chest', items: [item]});
-        for (const name of ['SmallChest.png', 'Items/leather_helmet.png', 'Items/leather_helmet_overlay.png']) {
-            assert.ok(html.includes(prefix + name), name);
+        assert.ok(html.includes(prefix + 'SmallChest.png'));
+        assert.ok(viewer.context.createChestPopup({name: 'Large Chest', large: true, items: []}).includes(prefix + 'LargeChest.png'));
+        const player = {name: 'Explorer', icon: prefix + 'PlayerIcons/Explorer.png', donation: '',
+            health: 20, food: 20, air: 300, xpLevel: 12,
+            inventory: [{...item, slot: 103}], enderChestInventory: [item]};
+        for (const markup of [html, viewer.context.createItemHtml(item, 1, 1),
+            viewer.context.getInventoryHtml(player), viewer.context.getEnderChestHtml(player),
+            viewer.context.getPlayerHtml(player)]) {
+            for (const name of ['Items/leather_helmet.png', 'Items/leather_helmet_overlay.png']) {
+                assert.ok(markup.includes(prefix + name), name);
+            }
+            assert.match(markup, /class="mc_text_container item_count"/);
+            assert.match(markup, /class="item_description"/);
+            assert.match(markup, /background-color: #123456/);
+            const urls = Array.from(markup.matchAll(/(?:src="|url\(')([^"')]+)/g), match => match[1]);
+            assert.ok(urls.length > 0);
+            assert.ok(urls.every(url => url.startsWith(prefix) || url === 'Images/Spacer.png'), urls.join(', '));
+            assert.ok(!markup.includes(`World${1 - index}/Images/`));
+            assert.doesNotMatch(markup, /null|undefined/);
         }
         assert.ok(viewer.context.getHealthHtml({health: 20}).includes(prefix + 'FullHeart.png'));
         assert.ok(viewer.context.getFoodHtml({food: 20}).includes(prefix + 'FullFood.png'));
@@ -86,6 +103,70 @@ test('chest images, item masks, overlays, player status and markers use the sele
         viewer.context.refreshSignMarkers(viewer.context.selectedLayer, false);
         assert.equal(viewer.markers.at(-1).options.icon.iconUrl, prefix + 'Sign.png');
         assert.ok(!html.includes(`World${1 - index}/Images/`));
+    }
+});
+
+test('item names, descriptions and enchantments use each world translations after switching back', async () => {
+    const viewer = createAssetsViewer(async url => {
+        const world = url.includes('World0') ? 'Survival' : 'Creative';
+        return {ok: true, json: async () => ({
+            'item.minecraft.diamond_sword': world + ' Sword',
+            'item.minecraft.diamond_sword.desc': world + ' Description',
+            'enchantment.minecraft.sharpness': world + ' Sharpness'
+        })};
+    });
+    await viewer.context.containersMainAsync();
+    const item = {id: 'minecraft:diamond_sword', count: 1, slot: 0,
+        enchantments: [{id: 'minecraft:sharpness', level: 5}]};
+    for (const index of [0, 1, 0]) {
+        viewer.selectWorld(index);
+        const world = index === 0 ? 'Survival' : 'Creative';
+        for (const html of [viewer.context.createItemHtml(item, 1, 1),
+            viewer.context.createChestPopup({name: 'Chest', items: [item]}),
+            viewer.context.getInventoryHtml({inventory: [item]}),
+            viewer.context.getEnderChestHtml({enderChestInventory: [item]})]) {
+            assert.ok(html.includes(viewer.context.renderMinecraftText(world + ' Sword', 'name enchanted')));
+            assert.ok(html.includes(viewer.context.renderMinecraftText(world + ' Description')));
+            assert.ok(html.includes(viewer.context.renderMinecraftText(world + ' Sharpness V')));
+            assert.ok(html.includes(`World${index}/Images/Items/diamond_sword.png`));
+        }
+    }
+});
+
+test('trimmed armor, potion overlays and glint masks keep the selected world image paths', () => {
+    const viewer = createAssetsViewer();
+    const items = [
+        {id: 'minecraft:leather_chestplate', count: 1, color: 0x123456,
+            trim: {material: 'minecraft:gold', pattern: 'minecraft:spire'},
+            enchantments: [{id: 'minecraft:protection', level: 4}]},
+        {id: 'minecraft:potion', count: 1, components: {potionContents: {potion: 'minecraft:healing'}}},
+        {id: 'minecraft:enchanted_golden_apple', count: 1}
+    ];
+    for (const index of [0, 1, 0]) {
+        viewer.selectWorld(index);
+        const prefix = `World${index}/Images/Items/`;
+        const [armor, potion, apple] = items.map(item => viewer.context.createItemHtml(item, 1, 1));
+        assert.ok(armor.includes('src="' + prefix + 'leather_chestplate_gold_trim.png"'));
+        assert.ok(armor.includes('src="' + prefix + 'leather_chestplate_gold_trim_overlay.png"'));
+        assert.ok(armor.includes("mask-image: url('" + prefix + "leather_chestplate.png')"));
+        assert.ok(armor.includes("mask-image: url('" + prefix + "leather_chestplate_gold_trim.png')"));
+        assert.ok(potion.includes('src="' + prefix + 'potion.png"'));
+        assert.ok(potion.includes('src="' + prefix + 'potion_overlay.png"'));
+        assert.match(potion, /background-color: #f82423/);
+        assert.ok(apple.includes("mask-image: url('" + prefix + "enchanted_golden_apple.png')"));
+    }
+});
+
+test('item rendering retains shared Images paths for older map exports', () => {
+    const viewer = createAssetsViewer();
+    viewer.evaluate('activeBaseLayer = null;');
+    const item = {id: 'minecraft:stone', count: 2, slot: 0};
+    for (const html of [viewer.context.createItemHtml(item, 1, 1),
+        viewer.context.createChestPopup({name: 'Chest', items: [item]})]) {
+        assert.ok(html.includes('src="Images/Items/stone.png"'));
+        assert.match(html, /item_count/);
+        assert.match(html, /item_description/);
+        assert.doesNotMatch(html, /null|undefined/);
     }
 });
 

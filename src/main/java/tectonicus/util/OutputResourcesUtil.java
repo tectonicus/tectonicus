@@ -77,10 +77,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -188,6 +190,10 @@ public class OutputResourcesUtil {
 
 						args.put("xpLevel", "" + player.getXpLevel());
 						args.put("xpTotal", "" + player.getXpTotal());
+						if (map.isShowPlayerInventories()) {
+							args.put("inventory", outputItems(player.getInventory()));
+							args.put("enderChestInventory", outputItems(player.getEnderChestInventory()));
+						}
 
 						jsWriter.write(args);
 
@@ -546,13 +552,20 @@ public class OutputResourcesUtil {
 		}
 	}
         
+	private static String outputItems(List<Item> items) {
+		StringBuilder result = new StringBuilder("[");
+		for (Item item : items)
+			result.append(outputItem(item, false));
+		return result.append("]").toString();
+	}
+
         private static String outputItem(Item item, Boolean isLeft) {
-                String result = "\t\t\t{ id: \"" + item.id + "\", ";
+                String result = "\t\t\t{ id: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(item.id) + ", ";
 
                 CustomNameTag customNameTag = item.getComponent(CustomNameTag.class);
                 if (customNameTag != null) {
                         if (customNameTag.name != null) {
-                                result += "customName: \"" + customNameTag.name + "\", ";
+                                result += "customName: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(customNameTag.name) + ", ";
                         }
                 }
 
@@ -611,11 +624,13 @@ public class OutputResourcesUtil {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			File itemIconDir = new File(imagesDir, "Items");
 			Files.createDirectories(itemIconDir.toPath());
+			Set<String> renderedEntityItems = new HashSet<>();
+			Map<String, String> itemIconAliases = new HashMap<>();
 			
                         for (Map.Entry<String, ItemModelDefinition> entry : itemModelDefinitionRegistry.getModelDefinitions().entrySet()) {
                             try {
                                 final String entryKey = entry.getKey();
-				final ItemModelDefinition itemModelDefinition = entry.getValue();
+				final ItemModelDefinition itemModelDefinition = entry.getValue().getInventoryModel();
                                 File outFile = new File(itemIconDir, entryKey + ".png");
 
                                 System.out.print("\tRendering icon for: " + entryKey + "                    \r"); //prints a carriage return after line
@@ -628,6 +643,21 @@ public class OutputResourcesUtil {
 									continue;
 								}
 
+				if ("minecraft:special".equals(itemModelDefinition.getType()) || "special".equals(itemModelDefinition.getType())) {
+					String blockName = "minecraft:" + entryKey;
+					if (blockTypeRegistry != null && !(blockTypeRegistry.find(blockName) instanceof tectonicus.blockTypes.Air)) {
+						itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack, blockName, List.of());
+					} else if (blockRegistry.getBlock(blockName) != null) {
+						itemRenderer.renderInventoryBlockState(outFile, blockRegistry, texturePack, blockName);
+					} else if ("minecraft:shield".equals(itemModelDefinition.getInnerModel().getType())) {
+						itemRenderer.renderShield(outFile, blockRegistry, texturePack);
+					} else {
+						continue;
+					}
+					renderedEntityItems.add(entryKey);
+					continue;
+				}
+
                                 String modelName = itemModelDefinition.getModelName();
                                 
                                 if (modelName == null) {
@@ -638,10 +668,10 @@ public class OutputResourcesUtil {
                                         itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
                                 }
                                 else if (modelName.startsWith("minecraft:item")) {
-                                        // We should get entry from itemRegistry and render 2d texture item.
-                                        
-                                        // We do not need to do anything though, since all items from itemRegistry are iterated through and rendered below.
-                                        // This also ensures compatibility with pre-1.21.4 versions
+					// Definitions can reuse another item's model without having their own model file.
+					String sourceName = modelName.substring("minecraft:item/".length());
+					if (!entryKey.equals(sourceName))
+						itemIconAliases.put(entryKey, sourceName);
                                 }
                             } catch (Exception e) {
                                 log.error("Unable to render item icon for {}", entry.getKey(), e);
@@ -651,6 +681,8 @@ public class OutputResourcesUtil {
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
 				try {
 				final String entryKey = entry.getKey();
+				if (renderedEntityItems.contains(entryKey))
+					continue;
 				final ItemModel itemModel = entry.getValue();
 				final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
 				File outFile = new File(itemIconDir, entryKey + ".png");
@@ -665,6 +697,14 @@ public class OutputResourcesUtil {
 					continue;
 				}
 				
+				// Entity items can have no renderable parent model in 1.21.4+.
+				if (modelName == null && blockTypeRegistry != null
+						&& !(blockTypeRegistry.find("minecraft:" + entryKey) instanceof tectonicus.blockTypes.Air)) {
+					itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack,
+							"minecraft:" + entryKey, itemRegistry.getTransformsList(itemModel));
+					continue;
+				}
+
 				if (modelName == null) {
 					//TODO: multiple models now no longer have parent models because of the new item model definitions
 					//System.out.println("Models with no parent: " + entryKey);
@@ -762,6 +802,13 @@ public class OutputResourcesUtil {
                                 itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
 				} catch (Exception e) {
 					log.error("Unable to render item icon for {}", entry.getKey(), e);
+				}
+			}
+			for (var alias : itemIconAliases.entrySet()) {
+				for (String suffix : List.of(".png", "_overlay.png")) {
+					Path source = itemIconDir.toPath().resolve(alias.getValue() + suffix);
+					if (Files.exists(source))
+						Files.copy(source, itemIconDir.toPath().resolve(alias.getKey() + suffix), StandardCopyOption.REPLACE_EXISTING);
 				}
 			}
                         System.out.println();
@@ -921,6 +968,11 @@ public class OutputResourcesUtil {
 
 		writeImage(texturePack.getChestImage(), 176, 78, new File(imagesDir, "SmallChest.png"));
 		writeImage(texturePack.getLargeChestImage(), 176, 132, new File(imagesDir, "LargeChest.png"));
+		BufferedImage playerInventory = texturePack.getPlayerInventoryImage(false);
+		writeImage(playerInventory, playerInventory.getWidth(), playerInventory.getHeight(), new File(imagesDir, "PlayerInventory.png"));
+		BufferedImage playerInventoryWithEnderChest = texturePack.getPlayerInventoryImage(true);
+		writeImage(playerInventoryWithEnderChest, playerInventoryWithEnderChest.getWidth(), playerInventoryWithEnderChest.getHeight(),
+				new File(imagesDir, "PlayerInventoryWithEnderChest.png"));
                 
                 // Write font texture
                 writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));

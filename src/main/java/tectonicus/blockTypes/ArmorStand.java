@@ -9,11 +9,13 @@
 
 package tectonicus.blockTypes;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.itemregistry.ShieldModel;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.configuration.LightFace;
@@ -124,6 +126,10 @@ public class ArmorStand implements BlockType
                         }
                         if (!entity.getInvisible()) {
                                 buildStandMesh(x, y, z, geometry, colour, entity.getYaw());
+				if (entity.isShowArms()) {
+					buildArmMesh(x, y, z, geometry, colour, entity, false);
+					buildArmMesh(x, y, z, geometry, colour, entity, true);
+				}
                         }
                         
                         Item feetArmor = entity.getFeetArmor();
@@ -143,9 +149,60 @@ public class ArmorStand implements BlockType
                         if (headArmor != null) {
                                 buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, headArmor, (byte)1, this::buildHeadArmorMesh);
                         }
+			buildHeldShield(x, y, z, world, geometry, entity, colour, entity.getMainHandItem(), entity.isLeftHanded());
+			buildHeldShield(x, y, z, world, geometry, entity, colour, entity.getOffHandItem(), !entity.isLeftHanded());
                 }
 	}
         
+	private void buildHeldShield(int x, int y, int z, BlockContext world, Geometry geometry, ArmorStandEntity stand,
+			Vector4f colour, Item item, boolean leftHand) {
+		if (item != null && "minecraft:shield".equals(item.id))
+			ShieldModel.addGeometry(world.getModelRegistry(), texturePack, geometry, shieldTransform(x, y, z, stand, leftHand), colour);
+	}
+
+	static Matrix4f shieldTransform(int x, int y, int z, ArmorStandEntity stand, boolean leftHand) {
+		return armTransform(x, y, z, stand, leftHand)
+				.mul(ShieldModel.handTransform(leftHand));
+	}
+
+	static Matrix4f armTransform(int x, int y, int z, ArmorStandEntity stand, boolean leftArm) {
+		Vector3f pose = leftArm ? stand.getLeftArmPose() : stand.getRightArmPose();
+		return new Matrix4f().translate(x + 0.5f, y, z + 0.5f)
+				.rotateY((float) Math.toRadians(-stand.getYaw()))
+				.translate((leftArm ? 5 : -5) * UNIT, 22 * UNIT, 0)
+				.rotateZ((float) Math.toRadians(-pose.z))
+				.rotateY((float) Math.toRadians(-pose.y))
+				.rotateX((float) Math.toRadians(pose.x));
+	}
+
+	private void buildArmMesh(int x, int y, int z, Geometry geometry, Vector4f colour, ArmorStandEntity stand, boolean leftArm) {
+		Matrix4f transform = armTransform(x, y, z, stand, leftArm);
+		float minX = leftArm ? 0 : -2;
+		Vector3f[] corners = new Vector3f[8];
+		for (int i = 0; i < corners.length; i++)
+			corners[i] = transform.transformPosition(new Vector3f((minX + ((i & 1) != 0 ? 2 : 0)) * UNIT,
+					((i & 2) != 0 ? 2 : -10) * UNIT, ((i & 4) != 0 ? 1 : -1) * UNIT));
+
+		// Minecraft's wood model uses (24, 0) for the right arm and mirrored (32, 16) for the left.
+		int u = leftArm ? 32 : 24;
+		int v = leftArm ? 16 : 0;
+		SubMesh mesh = new SubMesh();
+		mesh.addQuad(corners[2], corners[3], corners[7], corners[6], colour, armTexture(u + 2, v, u + 4, v + 2, leftArm));
+		mesh.addQuad(corners[4], corners[5], corners[1], corners[0], colour, armTexture(u + 4, v, u + 6, v + 2, leftArm));
+		mesh.addQuad(corners[3], corners[2], corners[0], corners[1], colour, armTexture(u + 6, v + 2, u + 8, v + 14, leftArm));
+		mesh.addQuad(corners[6], corners[7], corners[5], corners[4], colour, armTexture(u + 2, v + 2, u + 4, v + 14, leftArm));
+		mesh.addQuad(corners[2], corners[6], corners[4], corners[0], colour,
+				armTexture(u + (leftArm ? 4 : 0), v + 2, u + (leftArm ? 6 : 2), v + 14, leftArm));
+		mesh.addQuad(corners[7], corners[3], corners[1], corners[5], colour,
+				armTexture(u + (leftArm ? 0 : 4), v + 2, u + (leftArm ? 2 : 6), v + 14, leftArm));
+		mesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Solid), 0, 0, 0, Rotation.None, 0);
+	}
+
+	private SubTexture armTexture(int u0, int v0, int u1, int v1, boolean mirrored) {
+		return new SubTexture(texture.texture, texture.u0 + (mirrored ? u1 : u0) / 64f, texture.v0 + v0 / 64f,
+				texture.u0 + (mirrored ? u0 : u1) / 64f, texture.v0 + v1 / 64f);
+	}
+
         private void buildBaseMesh(int x, int y, int z, Geometry geometry, Vector4f colour) {
                 SubMesh mesh = new SubMesh();
 		

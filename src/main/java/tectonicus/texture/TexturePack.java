@@ -35,6 +35,7 @@ import tools.jackson.databind.ObjectReader;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -1257,6 +1258,36 @@ public class TexturePack
 		return finalImg;
 	}
         
+	public BufferedImage getPlayerInventoryImage(boolean includeEnderChest) {
+		return composePlayerInventoryImage(chestImage, includeEnderChest);
+	}
+
+	static BufferedImage composePlayerInventoryImage(BufferedImage sheet, boolean includeEnderChest) {
+		int scale = sheet.getWidth() / 256;
+		int equipmentTop = includeEnderChest ? 85 : 17;
+		int inventoryTop = equipmentTop + 18;
+		BufferedImage result = new BufferedImage(176 * scale, (inventoryTop + 97) * scale, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = result.createGraphics();
+		try {
+			graphics.setComposite(AlphaComposite.Src);
+			if (includeEnderChest) {
+				// Three Ender Chest rows, followed by a heading and one equipment row.
+				graphics.drawImage(sheet.getSubimage(0, 0, 176 * scale, 71 * scale), 0, 0, null);
+				graphics.drawImage(sheet.getSubimage(0, 125 * scale, 176 * scale, 32 * scale), 0, 71 * scale, null);
+			} else {
+				graphics.drawImage(sheet.getSubimage(0, 0, 176 * scale, 35 * scale), 0, 0, null);
+			}
+			// Keep four armor slots and the offhand slot; fill the gap using the pack's heading background.
+			graphics.drawImage(sheet, 79 * scale, equipmentTop * scale, 151 * scale, (equipmentTop + 18) * scale,
+					79 * scale, 125 * scale, 151 * scale, 139 * scale, null);
+			// The original lower section includes the player storage, hotbar, and bottom border.
+			graphics.drawImage(sheet.getSubimage(0, 125 * scale, 176 * scale, 97 * scale), 0, inventoryTop * scale, null);
+		} finally {
+			graphics.dispose();
+		}
+		return result;
+	}
+
         public BufferedImage getLargeChestImage()
 	{
 		int factor = (int) (chestImage.getWidth() / 256.0f);

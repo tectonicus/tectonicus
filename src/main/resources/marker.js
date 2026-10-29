@@ -37,7 +37,7 @@ function createPlayerMarker(player, pos) {
 		//shadowAnchor: [22, 94]
 	});
 
-	return L.marker(pos, { icon: icon }).bindPopup(getPlayerHtml(player)).bindTooltip(player.name);
+	return L.marker(pos, { icon: icon }).bindPopup(getPlayerHtml(player), {maxWidth: 380}).bindTooltip(player.name);
 }
 
 function getPlayerHtml(player) {
@@ -63,20 +63,20 @@ function getPlayerHtml(player) {
 	let html = ''
 		+ '<div style=\"text-align:center\">'
 			+ '<div class=\"playerName\" style=\"text-align:center; font-size:110%\" >' + player.name + '</div>'
-			+ '<div style=\"width:300px; margin:4px;\" >'
+			+ '<div style=\"width:300px; margin:4px auto;\" >'
 			+ 	'<img style=\"float:left; margin:4px;\" src=\"' + player.icon + '\" width=\"64\" height=\"64\" />'
 			+	'<div>'
 			+		'<div>' + getHealthHtml(player) + '</div>'
 			+		'<div>' + getFoodHtml(player) + '</div>'
 			+		'<div>' + getAirHtml(player) + '</div>'
-			+		'<div>' + getInventoryHtml(player) + '</div>'
-			+		'<div>' + getItemsHtml(player) + '</div>'
 			+	'</div>'
 			+ '</div>'
 
 			+ '<div id=\"xpDiv\" style=\"clear:both; text-align:center\" >'
 			+   'Experience level '+player.xpLevel
 			+ '</div>'
+
+			+ getInventoryHtml(player)
 
 			+ '<div id=\"donationDiv\" style=\"clear:both; text-align:center\" >'
 			+	getDonationHtml(player)
@@ -142,32 +142,52 @@ function getAirHtml(player) {
 }
 
 function getInventoryHtml(player) {
-	var html = '';
-	/*
-		html += '<table>'
+	// Older map exports do not include inventory data.
+	const hasEnderChest = Array.isArray(player.enderChestInventory);
+	if (!Array.isArray(player.inventory) && !hasEnderChest)
+		return '';
 
-		html += '<tr>'
-
-		for (var x=0; x<9; x++)
-		{
-			html += '<td>'
-			html += 'item'
-			html += '</td>'
-		}
-
-		html += '</tr>'
-
-		html += '</table>'
-	*/
-	return html;
+	const items = new Map((player.inventory || []).map(item => [item.slot, item]));
+	const equipmentTop = hasEnderChest ? 85 : 17;
+	const inventoryTop = hasEnderChest ? 117 : 49;
+	const background = hasEnderChest ? 'PlayerInventoryWithEnderChest.png' : 'PlayerInventory.png';
+	let html = '<div class="player_inventory' + (hasEnderChest ? ' with_ender_chest' : '') + '"><div class="player_inventory_scaler">';
+	html += '<img class="player_inventory_background" src="' + worldImageUrl(background) + '" alt="" />';
+	html += getEnderChestHtml(player);
+	html += renderMinecraftText(localize('attribute.name.armor', localize('attribute.name.generic.armor', 'Armor')), 'inventory_label armor_label');
+	html += renderMinecraftText('Offhand', 'inventory_label armor_label offhand_label');
+	[103, 102, 101, 100].forEach((slot, index) => {
+		html += createInventorySlotHtml(items, slot, equipmentTop, 7 + 18 * index, ['Helmet', 'Chestplate', 'Leggings', 'Boots'][index]);
+	});
+	html += createInventorySlotHtml(items, -106, equipmentTop, 151, 'Offhand');
+	html += '<div class="player_storage">';
+	html += renderMinecraftText(localize('container.inventory', 'Inventory'), 'inventory_label');
+	for (let slot = 9; slot < 36; slot++)
+		html += createInventorySlotHtml(items, slot, inventoryTop + 18 * Math.floor((slot - 9) / 9), 7 + 18 * (slot % 9));
+	for (let slot = 0; slot < 9; slot++)
+		html += createInventorySlotHtml(items, slot, inventoryTop + 58, 7 + 18 * slot);
+	return html + '</div></div></div>';
 }
 
-function getItemsHtml(player) {
-	var html = '';
+function getEnderChestHtml(player) {
+	if (!Array.isArray(player.enderChestInventory))
+		return '';
 
-	// ..
+	const items = new Map(player.enderChestInventory.map(item => [item.slot, item]));
+	let html = '<div class="ender_chest_inventory">';
+	html += renderMinecraftText(localize('container.enderchest', 'Ender Chest'), 'inventory_label');
+	for (let slot = 0; slot < 27; slot++)
+		html += createInventorySlotHtml(items, slot, 17 + 18 * Math.floor(slot / 9), 7 + 18 * (slot % 9));
+	return html + '</div>';
+}
 
-	return html;
+function createInventorySlotHtml(items, slot, top, left, label) {
+	let html = '<div class="inventory_slot" data-slot="' + slot + '" style="top: ' + top + 'px; left: ' + left + 'px;"';
+	html += label ? ' title="' + label + '">' : '>';
+	const item = items.get(slot);
+	if (item && item.count > 0 && item.id !== 'minecraft:air')
+		html += createItemHtml(item, 1, 1);
+	return html + '</div>';
 }
 
 function getDonationHtml(player) {

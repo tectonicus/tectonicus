@@ -46,6 +46,7 @@ public class DimensionConfig extends RenderOptions {
 	private int cameraElevationDeg = 45;
 	private boolean useBiomeColours;
 	private PlayerFilter playerFilter = new PlayerFilter();
+	private boolean showPlayerInventories;
 	private SignFilter signFilter = new SignFilter(SignFilterType.ALL);
 	private PortalFilter portalFilter = new PortalFilter(PortalFilterType.All);
 	private ViewFilter viewFilter = new ViewFilter(ViewFilterType.All);

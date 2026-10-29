@@ -96,7 +96,8 @@ function updateContainerItemTooltipPosition(e) {
             
                 let rect = itemDescriptionTooltip.parentElement.getBoundingClientRect();
 
-                const scale = 3; // The scale should be set to the same scale as in CSS
+                // Player inventories and chest popups use different display scales.
+                const scale = rect.width / itemDescriptionTooltip.parentElement.offsetWidth;
 
                 itemDescriptionTooltip.style.top = (y - rect.top - 10) / scale + 'px';
                 itemDescriptionTooltip.style.left = (x - rect.left + 20) / scale + 'px';
@@ -209,43 +210,42 @@ function createChestPopup(chest) {
 
         markerPopup += renderMinecraftText(chest.name, 'chest_name');
 
-        for (j in chest.items) {
-                const item = chest.items[j];
+        const items = new Map(chest.items.map(item => [item.slot, item]));
+        const slotCount = chest.large ? 54 : 27;
+        for (let slot = 0; slot < slotCount; slot++) {
+                const row = Math.floor(slot/9);
+                const col = slot%9;
 
-                const [namespace, itemId] = item.id.split(":");
-                const itemDescKey = `item.${namespace}.${itemId}.desc`;
-                                
-                let itemNameAndDescription = getItemName(item);
-                itemNameAndDescription += renderMinecraftText(localize(itemDescKey, null));
-                itemNameAndDescription += getTrimDescription(item);
-                itemNameAndDescription += getEnchantmentsDescription(item);
-                itemNameAndDescription += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
+                const top = 17+18*row;
+                const left = 7+18*col;
 
-                const row = Math.floor(item.slot/9);
-                const col = item.slot%9;
-
-                const top = 18+18*row;
-                const left = 8+18*col;
-
-                let pngName = getPngName(item, itemId);
-                
-                markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-                markerPopup += '<img src="' + worldImageUrl('Items/' + pngName + '.png') + '" onload="checkImageSize(this)" />';
-                
-                markerPopup += getColorLayer(item, itemId);
-                markerPopup += getOverlay(item, itemId, pngName);
-                markerPopup += getEnchantmentGlint(item, itemId, pngName);
-
-                if (item.count > 1) {
-                        markerPopup += renderMinecraftText(item.count.toString(), 'item_count');
-                }
-
-                markerPopup += '<div class=item_description>' + itemNameAndDescription + '</div></div>';
+                markerPopup += createInventorySlotHtml(items, slot, top, left);
         }
 
         markerPopup += '</div></div>';
         
         return markerPopup;
+}
+
+function createItemHtml(item, top, left) {
+        const [namespace, itemId] = item.id.split(":");
+        const itemDescKey = `item.${namespace}.${itemId}.desc`;
+        let description = getItemName(item);
+        description += renderMinecraftText(localize(itemDescKey, null)) || '';
+        description += getTrimDescription(item);
+        description += getEnchantmentsDescription(item);
+        description += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
+
+        const pngName = getPngName(item, itemId);
+        let html = '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
+        html += '<img src="' + worldImageUrl('Items/' + pngName + '.png') + '" onload="checkImageSize(this)" />';
+        html += getColorLayer(item, itemId);
+        html += getOverlay(item, itemId, pngName);
+        html += getEnchantmentGlint(item, itemId, pngName);
+        if (item.count > 1) {
+                html += renderMinecraftText(item.count.toString(), 'item_count');
+        }
+        return html + '<div class="item_description">' + description + '</div></div>';
 }
 
 function getPngName(item, itemId) {

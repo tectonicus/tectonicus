@@ -57,6 +57,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static tectonicus.raw.ItemNbtParser.parseComponentsTag;
+import static tectonicus.raw.ItemNbtParser.parseTagTag;
+
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_18;
 import static tectonicus.Version.VERSION_UNKNOWN;
@@ -353,7 +356,7 @@ public class RawChunk {
 					ByteTag invisibleTag = NbtUtil.getChild(entity, "Invisible", ByteTag.class);
 					ByteTag noBasePlateTag = NbtUtil.getChild(entity, "NoBasePlate", ByteTag.class);
 					
-					if (posTag != null && rotationTag != null && invisibleTag != null && noBasePlateTag != null) {
+					if (posTag != null && rotationTag != null) {
 						List<Tag> pos = posTag.getValue();
 						
 						int x = (int) Math.round(Math.floor((double) pos.get(0).getValue()));
@@ -372,8 +375,8 @@ public class RawChunk {
 						List<Tag> rotation = rotationTag.getValue();
 						float yaw = (float) rotation.get(0).getValue();
 						
-						boolean invisible = invisibleTag.getValue() == 1;
-						boolean noBasePlate = noBasePlateTag.getValue() == 1;
+						boolean invisible = invisibleTag != null && invisibleTag.getValue() == 1;
+						boolean noBasePlate = noBasePlateTag != null && noBasePlateTag.getValue() == 1;
 						
 						Item feetArmor = null;
 						Item legsArmor = null;
@@ -415,12 +418,39 @@ public class RawChunk {
 							headArmor = parseArmorItem.apply(NbtUtil.getChild(armorItemsTag, 3, CompoundTag.class));
 						}
 						
-						armorStands.add(new ArmorStandEntity(x, y, z, localX, localY, localZ,
-								yaw, invisible, noBasePlate, feetArmor, legsArmor, chestArmor, headArmor));
+						ArmorStandEntity stand = new ArmorStandEntity(x, y, z, localX, localY, localZ,
+								yaw, invisible, noBasePlate, feetArmor, legsArmor, chestArmor, headArmor);
+						if (equipment != null) {
+							stand.setMainHandItem(parseArmorItem.apply(NbtUtil.getChild(equipment, "mainhand", CompoundTag.class)));
+							stand.setOffHandItem(parseArmorItem.apply(NbtUtil.getChild(equipment, "offhand", CompoundTag.class)));
+						} else {
+							ListTag hands = NbtUtil.getChild(entity, "HandItems", ListTag.class);
+							if (hands != null) {
+								stand.setMainHandItem(parseArmorItem.apply(NbtUtil.getChild(hands, 0, CompoundTag.class)));
+								stand.setOffHandItem(parseArmorItem.apply(NbtUtil.getChild(hands, 1, CompoundTag.class)));
+							}
+						}
+						stand.setLeftHanded(NbtUtil.getByte(entity, "LeftHanded", (byte) 0) != 0);
+						stand.setShowArms(NbtUtil.getByte(entity, "ShowArms", (byte) 0) != 0);
+						CompoundTag pose = NbtUtil.getChild(entity, "Pose", CompoundTag.class);
+						if (pose != null) {
+							stand.setLeftArmPose(parseArmorStandArmPose(pose, "LeftArm", stand.getLeftArmPose()));
+							stand.setRightArmPose(parseArmorStandArmPose(pose, "RightArm", stand.getRightArmPose()));
+						}
+						armorStands.add(stand);
 					}
 				}
 			}
 		}
+	}
+
+	private org.joml.Vector3f parseArmorStandArmPose(CompoundTag pose, String arm, org.joml.Vector3f defaultPose) {
+		ListTag angles = NbtUtil.getChild(pose, arm, ListTag.class);
+		if (angles == null || angles.getValue().size() < 3)
+			return defaultPose;
+		return new org.joml.Vector3f(((Number) angles.getValue().get(0).getValue()).floatValue(),
+				((Number) angles.getValue().get(1).getValue()).floatValue(),
+				((Number) angles.getValue().get(2).getValue()).floatValue());
 	}
 
 	private void parseCushion(CompoundTag entity) {
@@ -781,80 +811,6 @@ public class RawChunk {
 		}
 	}
 	
-	// 1.20.5 and later
-	private List<Object> parseComponentsTag(CompoundTag componentsTag) {
-		if (componentsTag == null) {
-			return null;
-		}
-		
-		List<Object> components = new ArrayList<>();
-		
-		final CompoundTag potionContentsTag = NbtUtil.getChild(componentsTag, "minecraft:potion_contents", CompoundTag.class);
-		if (potionContentsTag != null) {
-			final StringTag potionTag = NbtUtil.getChild(potionContentsTag, "potion", StringTag.class);
-			if (potionTag != null) {
-				components.add(new PotionContentsTag(potionTag.getValue()));
-			}
-		}
-		
-		final IntTag dyedColorTagInt = NbtUtil.getChild(componentsTag, "minecraft:dyed_color", IntTag.class); //As of 1.21.5 dyed_color will always be an int tag
-		final CompoundTag dyedColorTag = NbtUtil.getChild(componentsTag, "minecraft:dyed_color", CompoundTag.class);
-		if (dyedColorTagInt != null) {
-			components.add(new DyedColorTag(dyedColorTagInt.getValue()));
-		} else if (dyedColorTag != null) {
-			IntTag rgbTag = NbtUtil.getChild(dyedColorTag, "rgb", IntTag.class);
-			if (rgbTag != null) {
-				components.add(new DyedColorTag(rgbTag.getValue()));
-			}
-		}
-		
-		final StringTag customNameTag = NbtUtil.getChild(componentsTag, "minecraft:custom_name", StringTag.class);
-		if (customNameTag != null) {
-			final String name = customNameTag.getValue().replace("\"", ""); // Replace " characters
-			components.add(new CustomNameTag(name));
-		}
-		
-		boolean isStoredEnchantments = true;
-		CompoundTag enchantmentsTag = NbtUtil.getChild(componentsTag, "minecraft:stored_enchantments", CompoundTag.class);
-		if (enchantmentsTag == null) {
-			isStoredEnchantments = false;
-			enchantmentsTag = NbtUtil.getChild(componentsTag, "minecraft:enchantments", CompoundTag.class);
-		}
-		
-		if (enchantmentsTag != null) {
-			CompoundTag levelsTag = NbtUtil.getChild(enchantmentsTag, "levels", CompoundTag.class);
-			
-			if (levelsTag == null) {
-				// From 1.21.5, simplified format is used, where levels field is inlined to top-level
-				levelsTag = enchantmentsTag;
-			}
-			
-			List<EnchantmentTag> enchantments = new ArrayList<>();
-			
-			for (var levelTagId : levelsTag.getValue().keySet()) {
-				IntTag levelTag = NbtUtil.getChild(levelsTag, levelTagId, IntTag.class);
-				if (levelTag != null) {
-					enchantments.add(new EnchantmentTag(levelTagId, levelTag.getValue()));
-				}
-			}
-			
-			components.add(isStoredEnchantments
-				? new StoredEnchantmentsTag(enchantments)
-				: new EnchantmentsTag(enchantments));
-		}
-		
-		CompoundTag trimTag = NbtUtil.getChild(componentsTag, "minecraft:trim", CompoundTag.class);
-		if (trimTag != null) {
-			StringTag materialTag = NbtUtil.getChild(trimTag, "material", StringTag.class);
-			StringTag patternTag = NbtUtil.getChild(trimTag, "pattern", StringTag.class);
-			if (materialTag != null && patternTag != null) {
-				components.add(new ArmorTrimTag(materialTag.getValue(), patternTag.getValue()));
-			}
-		}
-		
-		return components;
-	}
-	
 	private String getDecoratedPotSherd(CompoundTag sherds, String side, String defaultValue) {
 		final Tag sherdTag = NbtUtil.getChild(sherds, side, Tag.class);
 		if (sherdTag instanceof StringTag stringTag) {
@@ -869,70 +825,6 @@ public class RawChunk {
 		return defaultValue;
 	}
 	
-	// 1.20.4 and older
-	private List<Object> parseTagTag(CompoundTag tagTag) {
-		if (tagTag == null) {
-			return null;
-		}
-		
-		List<Object> tag = new ArrayList<>();
-		
-		final StringTag potionTag = NbtUtil.getChild(tagTag, "Potion", StringTag.class);
-		if (potionTag != null) {
-			tag.add(new PotionContentsTag(potionTag.getValue()));
-		}
-		
-		final CompoundTag displayTag = NbtUtil.getChild(tagTag, "display", CompoundTag.class);
-		if (displayTag != null) {
-			final StringTag nameTag = NbtUtil.getChild(displayTag, "Name", StringTag.class);
-			if (nameTag != null) {
-				String name = nameTag.getValue().replace("\"", ""); // Replace " characters
-				tag.add(new CustomNameTag(name));
-			}
-			
-			IntTag colorTag = NbtUtil.getChild(displayTag, "color", IntTag.class);
-			if (colorTag != null) {
-				tag.add(new DyedColorTag(colorTag.getValue()));
-			}
-		}
-		
-		boolean isStoredEnchantments = true;
-		ListTag enchantmentsTag = NbtUtil.getChild(tagTag, "StoredEnchantments", ListTag.class);
-		if (enchantmentsTag == null) {
-			isStoredEnchantments = false;
-			enchantmentsTag = NbtUtil.getChild(tagTag, "Enchantments", ListTag.class);
-		}
-		
-		if (enchantmentsTag != null) {
-			List<EnchantmentTag> enchantments = new ArrayList<>();
-			
-			for (var enchantmentTag : enchantmentsTag.getValue()) {
-				if (enchantmentTag instanceof CompoundTag enchantmentCompoundTag) {
-					StringTag idTag = NbtUtil.getChild(enchantmentCompoundTag, "id", StringTag.class);
-					ShortTag levelTag = NbtUtil.getChild(enchantmentCompoundTag, "lvl", ShortTag.class);
-					if (idTag != null && levelTag != null) {
-						enchantments.add(new EnchantmentTag(idTag.getValue(), Integer.valueOf(levelTag.getValue())));
-					}
-				}
-			}
-			
-			tag.add(isStoredEnchantments
-				? new StoredEnchantmentsTag(enchantments)
-				: new EnchantmentsTag(enchantments));
-		}
-		
-		CompoundTag trimTag = NbtUtil.getChild(tagTag, "Trim", CompoundTag.class);
-		if (trimTag != null) {
-			StringTag materialTag = NbtUtil.getChild(trimTag, "material", StringTag.class);
-			StringTag patternTag = NbtUtil.getChild(trimTag, "pattern", StringTag.class);
-			if (materialTag != null && patternTag != null) {
-				tag.add(new ArmorTrimTag(materialTag.getValue(), patternTag.getValue()));
-			}
-		}
-		
-		return tag;
-	}
-
 	private String createKey(int x, int y, int z) {
 		return "x" + x + "y" + y + "z" + z;
 	}

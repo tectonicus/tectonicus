@@ -32,6 +32,7 @@ public class WorldConfig extends RenderOptions {
 	private boolean usingProgrammerArt;
 	private List<File> modJars = new ArrayList<>();
 	private MarkerVisibility markerVisibility = new MarkerVisibility();
+	private boolean showPlayerInventories;
 	@Setter(lombok.AccessLevel.NONE)
 	@Getter(lombok.AccessLevel.NONE)
 	private final List<DimensionConfig> dimensions = new ArrayList<>();

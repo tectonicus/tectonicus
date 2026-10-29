@@ -20,6 +20,26 @@ class ConfigurationHierarchyTest {
 	Path directory;
 
 	@Test
+	void inheritsPlayerInventoryVisibilityAndAllowsOverrides() throws Exception {
+		Configuration config = parse("""
+				<config showPlayerInventories="false"/>
+				<world worldDir="save" showPlayerInventories="true">
+				    <dimension><layer/></dimension>
+					<dimension showPlayerInventories="false"><layer/></dimension>
+				</world>
+				<world worldDir="other"><dimension><layer/></dimension></world>
+				<dimension worldDir="legacy" showPlayerInventories="true"><layer/></dimension>
+				""");
+		assertFalse(config.isShowPlayerInventories());
+		assertTrue(config.getWorlds().getFirst().isShowPlayerInventories());
+		assertFalse(config.getWorlds().get(1).isShowPlayerInventories());
+		assertEquals(java.util.List.of(true, false, false, true), config.getDimensions().stream()
+				.map(DimensionConfig::isShowPlayerInventories).toList());
+		assertFalse(parse("<world worldDir='save'><dimension><layer/></dimension></world>")
+				.getDimensionConfig(0).isShowPlayerInventories());
+	}
+
+	@Test
 	void defaultsNamesFromWorldMetadataDimensionAndLayerIdsWithoutInheritingNames() throws Exception {
 		Path save = Files.createDirectories(directory.resolve("Save folder"));
 		Files.copy(Path.of("src/test/resources/level1_12.dat"), save.resolve("level.dat"));

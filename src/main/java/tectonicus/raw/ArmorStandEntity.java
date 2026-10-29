@@ -9,6 +9,12 @@
 
 package tectonicus.raw;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.joml.Vector3f;
+
+@Getter
+@Setter
 public class ArmorStandEntity extends BlockEntity
 {
         private final float yaw;
@@ -19,6 +25,12 @@ public class ArmorStandEntity extends BlockEntity
         private final Item legsArmor;
         private final Item chestArmor;
         private final Item headArmor;
+	private Item mainHandItem;
+	private Item offHandItem;
+	private boolean leftHanded;
+	private boolean showArms;
+	private Vector3f leftArmPose = new Vector3f(-10, 0, -10);
+	private Vector3f rightArmPose = new Vector3f(-15, 0, 10);
     
 	public ArmorStandEntity(int x, int y, int z, int localX, int localY, int localZ, float yaw, boolean invisible, boolean noBasePlate,
                                 Item feetArmor, Item legsArmor, Item chestArmor, Item headArmor)

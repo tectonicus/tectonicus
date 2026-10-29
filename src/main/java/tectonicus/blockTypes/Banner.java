@@ -121,7 +121,7 @@ public class Banner implements BlockType
 		BannerEntity entity = rawChunk.getBanners().get(xyz);
 		if (entity == null) {
 			// There is no entity when rendering item icons. Use default values...
-			entity = new BannerEntity(0, 0, 0, 0, 0, 0, 0, new ArrayList<>());
+			entity = new BannerEntity(0, 0, 0, 0, 0, 0, StringUtils.isEmpty(id) ? 0 : null, new ArrayList<>());
 		}
 		
 		int data = rawChunk.getBlockData(x, y, z);

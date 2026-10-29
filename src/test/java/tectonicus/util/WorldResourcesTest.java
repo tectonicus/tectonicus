@@ -57,6 +57,7 @@ class WorldResourcesTest {
 			String id = "World" + i;
 			int color = i == 0 ? 0xff123456 : 0xffabcdef;
 			for (String name : List.of("Sign.png", "FullHeart.png", "Font.png", "EnchantedGlint.png",
+					"PlayerInventory.png", "PlayerInventoryWithEnderChest.png",
 					"PlayerIcons/Tectonicus_Default_Player_Icon.png", "effects/speed.png", "Items/leather_helmet.png", "Items/leather_helmet_overlay.png")) {
 				BufferedImage image = ImageIO.read(directory.resolve(id + "/Images/" + name).toFile());
 				assertEquals(color, image.getRGB(16 < image.getWidth() ? 16 : 0, 0), name);

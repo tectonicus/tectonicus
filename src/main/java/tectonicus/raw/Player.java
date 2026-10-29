@@ -71,6 +71,7 @@ public class Player {
 	private int xpTotal;
 	
 	private List<Item> inventory;
+	private List<Item> enderChestInventory;
 	
 	public static final int MAX_HEALTH = 20;
 	public static final int MAX_AIR = 300;
@@ -83,6 +84,7 @@ public class Player {
 		spawnDimensionId = spawnDimension.getId();
 		position = new Vector3d();
 		inventory = new ArrayList<>();
+		enderChestInventory = new ArrayList<>();
 	}
 	
 	public Player(Path playerFile) throws Exception {
@@ -191,23 +193,39 @@ public class Player {
 		xpTotal = NbtUtil.getInt(root, "XpTotal", 0);
 		
 		// Parse inventory items (both inventory items and worn items)
-		ListTag inventoryList = NbtUtil.getChild(root, "Inventory", ListTag.class);
-		if (inventoryList != null) {
-			for (Tag t : inventoryList.getValue()) {
-				if (t instanceof CompoundTag) {
-					CompoundTag itemTag = (CompoundTag) t;
-					
-					StringTag idTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-					ShortTag damageTag = NbtUtil.getChild(itemTag, "Damage", ShortTag.class);
-					ByteTag countTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
-					ByteTag slotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
-					
-					if (idTag != null && damageTag != null && countTag != null && slotTag != null) {
-						inventory.add(new Item(idTag.getValue(), damageTag.getValue(), countTag.getValue(), slotTag.getValue(), null));
-					}
-				}
+		parseInventory(root, "Inventory", inventory);
+		parseInventory(root, "EnderItems", enderChestInventory);
+
+		// Since 1.21.5 armor and offhand stacks are saved separately from Inventory.
+		CompoundTag equipment = NbtUtil.getChild(root, "equipment", CompoundTag.class);
+		if (equipment != null) {
+			String[] slots = {"feet", "legs", "chest", "head", "offhand"};
+			for (int i = 0; i < slots.length; i++) {
+				CompoundTag itemTag = NbtUtil.getChild(equipment, slots[i], CompoundTag.class);
+				if (itemTag != null)
+					addInventoryItem(itemTag, i == 4 ? -106 : 100 + i, inventory);
 			}
 		}
+	}
+
+	private static void parseInventory(CompoundTag root, String tagName, List<Item> items) {
+		ListTag inventoryList = NbtUtil.getChild(root, tagName, ListTag.class);
+		if (inventoryList == null)
+			return;
+		for (Tag tag : inventoryList.getValue()) {
+			if (tag instanceof CompoundTag itemTag) {
+				ByteTag slotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
+				if (slotTag != null)
+					addInventoryItem(itemTag, slotTag.getValue(), items);
+			}
+		}
+	}
+
+	private static void addInventoryItem(CompoundTag itemTag, int slot, List<Item> items) {
+		Item item = ItemNbtParser.parse(itemTag, slot);
+		items.removeIf(existing -> existing.slot == slot);
+		if (item != null)
+			items.add(item);
 	}
 	
 	

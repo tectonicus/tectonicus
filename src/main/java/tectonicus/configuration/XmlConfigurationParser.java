@@ -163,6 +163,7 @@ public class XmlConfigurationParser
 
 			config.setSpawnInitiallyVisible(getBoolean(configNode, "spawnInitiallyVisible", true));
 			config.setPlayersInitiallyVisible(getBoolean(configNode, "playersInitiallyVisible", true));
+			config.setShowPlayerInventories(getBoolean(configNode, "showPlayerInventories", false));
 			config.setBedsInitiallyVisible(getBoolean(configNode, "bedsInitiallyVisible", true));
 			config.setRespawnAnchorsInitiallyVisible(getBoolean(configNode, "respawnAnchorsInitiallyVisible", true));
 			config.setSignsInitiallyVisible(getBoolean(configNode, "signsInitiallyVisible", true));
@@ -195,6 +196,7 @@ public class XmlConfigurationParser
 			DimensionConfig map = new DimensionConfig(entry.id());
 			map.setNumZoomLevels(parseNumZoomLevels(getString(mapElement, "numZoomLevels")));
 			map.setMarkerVisibility(parseMarkerVisibility(mapElement));
+			map.setShowPlayerInventories(getBoolean(mapElement, "showPlayerInventories", false));
 			
 			map.setWorldDir( new File(getString(mapElement, "worldDir")) );
 			
@@ -384,6 +386,7 @@ public class XmlConfigurationParser
 				world.setTexturePack(pack.isBlank() ? null : new File(pack));
 				world.setUsingProgrammerArt(getBoolean(effective, "useProgrammerArt", false));
 				world.setMarkerVisibility(parseMarkerVisibility(effective));
+				world.setShowPlayerInventories(getBoolean(effective, "showPlayerInventories", false));
 				parseRenderOptions(effective, world);
 				Element mods = getChild(effective, "mods");
 				if (mods != null)

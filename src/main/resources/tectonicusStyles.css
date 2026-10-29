@@ -73,6 +73,109 @@ html, body, #map {
         position: absolute;
     }
 
+.chest_scaler .inventory_slot,
+.player_inventory_scaler .inventory_slot {
+    background: transparent;
+    box-shadow: none;
+}
+
+.chest_scaler .inventory_slot:hover,
+.player_inventory_scaler .inventory_slot:hover {
+    background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)) center / 16px 16px no-repeat;
+}
+
+.player_inventory {
+    position: relative;
+    clear: both;
+    margin: 12px auto 0;
+    width: 352px;
+    height: 264px;
+    text-align: left;
+}
+
+.player_inventory.with_ender_chest {
+    height: 400px;
+}
+
+.player_inventory_scaler {
+    position: relative;
+    width: 176px;
+    height: 132px;
+    scale: 2;
+    transform-origin: top left;
+    image-rendering: pixelated;
+    font-size: 0;
+    line-height: 0;
+}
+
+.with_ender_chest .player_inventory_scaler {
+    height: 200px;
+}
+
+.player_inventory_background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 176px;
+    height: 132px;
+}
+
+.with_ender_chest .player_inventory_background {
+    height: 200px;
+}
+
+.inventory_label {
+    position: absolute;
+    top: 38px;
+    left: 7px;
+}
+
+.with_ender_chest .player_storage .inventory_label {
+    top: 106px;
+}
+
+.armor_label,
+.ender_chest_inventory .inventory_label {
+    top: 6px;
+}
+
+.with_ender_chest .armor_label {
+    top: 74px;
+}
+
+.offhand_label {
+    left: auto;
+    right: 7px;
+    width: max-content;
+}
+
+.inventory_label .mc_char::before {
+    background: #3f3f3f;
+}
+
+.inventory_label .mc_char {
+    filter: unset;
+}
+
+.inventory_slot {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #8b8b8b;
+    box-shadow: inset 1px 1px #373737, inset -1px -1px #fff;
+}
+
+.inventory_slot:hover {
+    background: #aaa;
+    z-index: 1;
+}
+
+.item {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+}
+
 .item img {
     width: 16px;
     height: 16px;

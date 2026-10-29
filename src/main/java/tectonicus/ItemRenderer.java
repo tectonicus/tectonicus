@@ -15,6 +15,9 @@ import org.apache.commons.lang3.Strings;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.Banner;
+import tectonicus.blockTypes.DecoratedPot;
+import tectonicus.blockTypes.ShulkerBox;
 import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BlockRegistry;
@@ -26,6 +29,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.NorthDirection;
+import tectonicus.itemregistry.ShieldModel;
 import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
@@ -54,6 +58,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class ItemRenderer
@@ -188,6 +193,32 @@ public class ItemRenderer
 			model = registry.loadModel(modelName, "", new HashMap<>(), null);
 		}
                 renderInventoryBlockModel(outFile, registry, texturePack, model);
+	}
+
+	public void renderInventoryBlockState(File outFile, BlockRegistry registry, TexturePack texturePack, String blockName) {
+		BlockStateWrapper block = registry.getBlock(blockName);
+		BlockProperties properties = block.getPropertiesWithDefaults(null);
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockName(0, 0, 0, blockName);
+		rawChunk.setBlockState(0, 0, 0, properties);
+		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+		ItemContext context = new ItemContext(texturePack, null, registry);
+		Geometry geometry = new Geometry(rasteriser);
+		float height = 1;
+		for (var model : block.getModels(properties, 0, 0, 0)) {
+			model.createGeometry(0, 0, 0, context, rawChunk, geometry);
+			for (var element : model.getBlockModel().getElements())
+				height = Math.max(height, element.getTo().y() / 16);
+		}
+		renderItem(new ItemGeometry(geometry, new BoundingBox(new Vector3f(), 1, height, 1)),
+				outFile, 48, 2, getAngleRad(315), getAngleRad(30));
+	}
+
+	public void renderShield(File outFile, BlockRegistry registry, TexturePack texturePack) throws Exception {
+		BlockModel model = ShieldModel.getModel(registry, texturePack);
+		renderBlock(outFile, null, new ItemContext(texturePack, null, registry), new RawChunk(), null, model,
+				48, getAngleRad(290), getAngleRad(15), new BoundingBox(new Vector3f(), 1, 1.5f, 1));
 	}
         
         public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, BlockModel model) throws Exception {
@@ -351,8 +382,14 @@ public class ItemRenderer
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		BlockType type = registry.find(blockName);
 		ItemContext context = new ItemContext(texturePack, registry, modelRegistry);
+		if (type instanceof ShulkerBox)
+			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("facing", "up")));
                 
                 BoundingBox bounds = new BoundingBox(new org.joml.Vector3f(), 1, 1, 1);
+		if (type instanceof Banner)
+			bounds = new BoundingBox(new Vector3f(), 1, 2, 1);
+		else if (type instanceof DecoratedPot)
+			bounds = new BoundingBox(new Vector3f(), 1, 1.25f, 1);
                 
                 float cameraAngle = getAngleRad(45 + 270);
                 float cameraElevationAngle = getAngleRad(30);

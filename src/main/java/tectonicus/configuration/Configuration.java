@@ -122,6 +122,7 @@ public class Configuration implements Callable<Configuration> {
 	private boolean signsInitiallyVisible;
 	@Option(names = {"--playersInitiallyVisible", "playersInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean playersInitiallyVisible;
+	private boolean showPlayerInventories;
 	@Option(names = {"--portalsInitiallyVisible", "portalsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean portalsInitiallyVisible;
 	@Option(names = {"--bedsInitiallyVisible", "bedsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
