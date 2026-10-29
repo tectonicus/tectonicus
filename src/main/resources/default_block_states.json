@@ -3545,6 +3545,25 @@
     "layers": "1"
   },
   "minecraft:snow_block": {},
+  "minecraft:snow_brick_slab": {
+    "type": "bottom",
+    "waterlogged": "false"
+  },
+  "minecraft:snow_brick_stairs": {
+    "facing": "north",
+    "half": "bottom",
+    "shape": "straight",
+    "waterlogged": "false"
+  },
+  "minecraft:snow_brick_wall": {
+    "east": "none",
+    "north": "none",
+    "south": "none",
+    "up": "true",
+    "waterlogged": "false",
+    "west": "none"
+  },
+  "minecraft:snow_bricks": {},
   "minecraft:soul_campfire": {
     "facing": "north",
     "lit": "true",

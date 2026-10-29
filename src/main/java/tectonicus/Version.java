@@ -41,7 +41,9 @@ public enum Version {
     VERSION_21_9_PLUS("1.21.{9,10,11}", 22, 4554),
     VERSION_26_1("26.1", 261, 4779),
 	VERSION_26_2("26.2", 262, 4903),
-	VERSION_26_3("26.3", 263, 5023);
+	VERSION_26_3("26.3", 263, 5023),
+	// world_version from the 26.4 Snapshot 6 version.json.
+	VERSION_26_4("26.4", 264, 5126);
 
     private final String name;
     private final int numVersion;
