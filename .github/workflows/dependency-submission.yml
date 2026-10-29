@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   dependency-submission:
+    if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
