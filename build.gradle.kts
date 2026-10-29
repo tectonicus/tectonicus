@@ -36,10 +36,10 @@ dependencies {
 	val commonsTextVersion = "1.15.0"
 	val jomlVersion = "1.10.9"
 	val joglVersion = "2.6.0"
-    val jacksonVersion = "3.2.3"
+    val jacksonVersion = "3.2.4"
 	val logbackVersion = "1.6.5"
 	val h2Version = "2.5.252"
-	val webpImageIoVersion = "0.1.6"
+	val webpImageIoVersion = "0.11.0"
 	val hamcrestVersion = "3.0"
 
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
@@ -58,7 +58,7 @@ dependencies {
 	implementation("ch.qos.logback:logback-classic:$logbackVersion")
 	implementation("com.h2database:h2-mvstore:$h2Version")
 	implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
-	implementation("org.sejda.imageio:webp-imageio:$webpImageIoVersion")
+	implementation("com.github.usefulness:webp-imageio:$webpImageIoVersion")
 	implementation(files("libs/jnbt.jar", "libs/BiomeExtractor.jar"))
 
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows")
@@ -111,6 +111,10 @@ tasks.named<ShadowJar>("shadowJar") {
 	dependsOn(buildInfo)
 	from(buildInfoDir)
 
+	filesMatching("META-INF/*.kotlin_module") {
+		duplicatesStrategy = DuplicatesStrategy.INCLUDE
+	}
+
 	minimize {
 		// LWJGL selects memory backends and native libraries through reflection.
 		exclude(dependency("org.lwjgl:.*:.*"))
@@ -118,7 +122,9 @@ tasks.named<ShadowJar>("shadowJar") {
 		exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
 		exclude(dependency("org.apache.logging.log4j:log4j-core:.*"))
 		exclude(dependency("ch.qos.logback:logback-classic:.*"))
-		exclude(dependency("org.sejda.imageio:webp-imageio:.*"))
+		// ImageIO discovers WebP providers through service files; the plugin uses Kotlin at runtime.
+		exclude(dependency("com.github.usefulness:webp-imageio:.*"))
+		exclude(dependency("org.jetbrains.kotlin:kotlin-stdlib.*:.*"))
 	}
 }
 
