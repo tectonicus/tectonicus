@@ -323,7 +323,7 @@ public class BlockRegistry {
 	}
 	
 	// Recurse through model files and get block model information
-	public BlockModel loadModel(String modelPath, String modelName, Map<String, String> textureMap, JsonNode elements) throws Exception {
+	public BlockModel loadModel(String modelPath, String modelName, Map<String, ModelTexture> textureMap, JsonNode elements) throws Exception {
 		//TODO: we may need to deal with this namespace for future mod support
 		if (modelPath.contains("minecraft:")) {
 			modelPath = modelPath.replace("minecraft:", "");
@@ -380,12 +380,15 @@ public class BlockRegistry {
 			}
 		} else if (json.has(ELEMENTS_FIELD) || elements != null)//Load all elements
 		{
-			Map<String, String> textures = json.has(TEXTURES_FIELD)
+			Map<String, ModelTexture> textures = json.has(TEXTURES_FIELD)
 					? populateTextureMap(textureMap, json.get(TEXTURES_FIELD)) : textureMap;
-			Map<String, String> combineMap = resolveTextureMap(textures);
+			Map<String, ModelTexture> combineMap = resolveTextureMap(textures);
 			if (modelName.contains("copper_golem")) { // Share geometry between oxidation states, with version-specific textures.
-				for (Entry<String, String> entry : combineMap.entrySet())
-					entry.setValue(getTextureOverride(modelName, entry.getValue(), "models/block/copper_golem_texture_overrides.json"));
+				for (Entry<String, ModelTexture> entry : combineMap.entrySet()) {
+					ModelTexture texture = entry.getValue();
+					entry.setValue(new ModelTexture(getTextureOverride(modelName, texture.sprite(), "models/block/copper_golem_texture_overrides.json"),
+							texture.forceTranslucent()));
+				}
 			}
 			
 			boolean ao = true;
@@ -403,18 +406,18 @@ public class BlockRegistry {
 		}
 	}
 	
-	static Map<String, String> populateTextureMap(Map<String, String> textureMap, JsonNode textures) {
-		Map<String, String> newTexMap = new HashMap<>(textureMap);
+	static Map<String, ModelTexture> populateTextureMap(Map<String, ModelTexture> textureMap, JsonNode textures) {
+		Map<String, ModelTexture> newTexMap = new HashMap<>(textureMap);
 		
 		for (Entry<String, JsonNode> entry : textures.properties()) {
 			String key = entry.getKey();
 			JsonNode value = entry.getValue();
-			//TODO: handle the new 26.1 format with force_translucent and sprite. Have to create a sprite object
-			String texture = null;
+			ModelTexture texture = null;
 			if (value.isString()) {
-				texture = value.asString();
-			} else if (value.isObject()) {
-				texture = value.get("sprite").asString(); //TODO: this is just a temp fix to get this working with 26.1
+				texture = new ModelTexture(value.asString());
+			} else if (value.isObject() && value.has("sprite") && value.get("sprite").isString()) {
+				texture = new ModelTexture(value.get("sprite").asString(),
+						value.has("force_translucent") && value.get("force_translucent").asBoolean());
 			} else {
 				log.warn("Unexpected texture value: {} for key: {}", value, key);
 			}
@@ -427,14 +430,14 @@ public class BlockRegistry {
 		return newTexMap;
 	}
 	
-	static Map<String, String> resolveTextureMap(Map<String, String> textures) {
-		Map<String, String> resolved = new HashMap<>();
+	static Map<String, ModelTexture> resolveTextureMap(Map<String, ModelTexture> textures) {
+		Map<String, ModelTexture> resolved = new HashMap<>();
 		for (String key : textures.keySet()) {
 			Set<String> visited = new HashSet<>();
 			visited.add(key);
-			String texture = textures.get(key);
-			while (texture != null && texture.startsWith("#")) {
-				String reference = texture.substring(1);
+			ModelTexture texture = textures.get(key);
+			while (texture != null && texture.sprite().startsWith("#")) {
+				String reference = texture.sprite().substring(1);
 				if (!visited.add(reference)) {
 					texture = null;
 					break;

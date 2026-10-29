@@ -15,6 +15,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.ModelTexture;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.TexturePack;
@@ -46,7 +47,7 @@ public class ShieldModel {
 			String texture = textures.fileExists("assets/minecraft/textures/entity/shield/shield_base_nopattern.png")
 					? "minecraft:entity/shield/shield_base_nopattern" : "minecraft:entity/shield_base_nopattern";
 			try {
-				return registry.loadModel("minecraft:item/shield_inventory", "", new HashMap<>(Map.of("shield", texture)), null);
+				return registry.loadModel("minecraft:item/shield_inventory", "", new HashMap<>(Map.of("shield", new ModelTexture(texture))), null);
 			} catch (Exception e) {
 				log.error("Unable to load shield model", e);
 				return null;

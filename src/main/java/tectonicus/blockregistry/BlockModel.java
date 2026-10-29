@@ -53,7 +53,7 @@ public class BlockModel
 	private static final String TEXTURES_FIELD = "textures";
 	private static final String ROTATION_FIELD = "rotation";
 	
-	public BlockModel(String name, boolean ambientlyOccluded, Map<String, String> combineMap, JsonNode elementsNode, TexturePack texturePack)
+	public BlockModel(String name, boolean ambientlyOccluded, Map<String, ModelTexture> combineMap, JsonNode elementsNode, TexturePack texturePack)
 	{
 		this.name = name;
 		this.ambientlyOccluded = ambientlyOccluded;
@@ -98,15 +98,16 @@ public class BlockModel
 		missingTextures.add(missingTexture);
 	}
 
-	static String resolveTexturePath(String reference, Map<String, String> textures) {
+	static ModelTexture resolveTexture(String reference, Map<String, ModelTexture> textures) {
 		// Some bundled legacy models use texture keys without the # prefix.
-		String texture = reference.startsWith("#") ? textures.get(reference.substring(1)) : textures.getOrDefault(reference, reference);
-		if (texture == null || texture.isBlank() || texture.startsWith("#"))
+		ModelTexture texture = reference.startsWith("#") ? textures.get(reference.substring(1))
+				: textures.getOrDefault(reference, new ModelTexture(reference));
+		if (texture == null || texture.sprite().isBlank() || texture.sprite().startsWith("#"))
 			return null;
-		return texture.replace("minecraft:", "") + ".png";
+		return texture;
 	}
 
-	private List<BlockElement> deserializeBlockElements(Map<String, String> combineMap, JsonNode elements, TexturePack texturePack, BlockModel blockModel)
+	private List<BlockElement> deserializeBlockElements(Map<String, ModelTexture> combineMap, JsonNode elements, TexturePack texturePack, BlockModel blockModel)
 	{
 		List<BlockElement> elementsList = new ArrayList<>();
 
@@ -206,7 +207,7 @@ public class BlockModel
 		
 		public BlockElement(Vector3f from, Vector3f to, org.joml.Vector3f rotationOrigin, org.joml.Vector3f rotationAxis,
 							float rotationAngle, float rotationX, float rotationY, float rotationZ,
-							boolean scaled, boolean shaded, String shadeDirectionOverride, Map<String, String> combineMap,
+							boolean scaled, boolean shaded, String shadeDirectionOverride, Map<String, ModelTexture> combineMap,
 							SubTexture subTexture, JsonNode facesNode, TexturePack texturePack, BlockModel blockModel)
 		{
 			this.from = from;
@@ -246,7 +247,7 @@ public class BlockModel
 			this.faces = Map.copyOf(faces);
 		}
 
-		private Map<String, ElementFace> deserializeElementFaces(Map<String, String> combineMap, SubTexture texCoords,
+		private Map<String, ElementFace> deserializeElementFaces(Map<String, ModelTexture> combineMap, SubTexture texCoords,
 																 JsonNode faces, Vector3f fromVector, Vector3f toVector, TexturePack texturePack, BlockModel blockModel)
 		{
 			Map<String, ElementFace> elementFaces = new HashMap<>();
@@ -281,7 +282,8 @@ public class BlockModel
 				
 				String modelName = blockModel.getName();
 				String reference = face.get("texture").asString();
-				String texturePath = resolveTexturePath(reference, combineMap);
+				ModelTexture modelTexture = resolveTexture(reference, combineMap);
+				String texturePath = modelTexture == null ? null : modelTexture.sprite().replace("minecraft:", "") + ".png";
 				String assetPath = texturePath == null ? null : "assets/minecraft/textures/" + texturePath;
 				
 				SubTexture te = assetPath == null ? null : texturePack.findTexture(assetPath);
@@ -293,13 +295,13 @@ public class BlockModel
 					pt = texturePack.getPackTexture(assetPath);
 				}
 				
-				if (pt != null) {
-					if (pt.isTranslucent()) {
-						blockModel.setSolid(false);
-						blockModel.setTranslucent(true);
-					} else if (pt.isTransparent()) {
-						blockModel.setSolid(false);
-					}
+				boolean translucent = modelTexture != null && modelTexture.forceTranslucent() || pt != null && pt.isTranslucent();
+				boolean transparent = pt != null && pt.isTransparent();
+				if (translucent) {
+					blockModel.setSolid(false);
+					blockModel.setTranslucent(true);
+				} else if (transparent) {
+					blockModel.setSolid(false);
 				}
 				
 				final float texHeight = te.texture.getHeight();
@@ -333,7 +335,7 @@ public class BlockModel
 				boolean tintIndex = face.has("tintindex") && !modelName.contains("powder_snow_cauldron") && !modelName.contains("lava_cauldron"); //Hack to not tint lava or snow cauldrons
 				
 				ElementFace ef = new ElementFace(subTexture, cullFace, rotation, face.has("uv"), frameOffset, tintIndex,
-						pt != null && pt.isTranslucent(), pt != null && pt.isTransparent());
+						translucent, transparent);
 				elementFaces.put(key, ef);
 			}
 

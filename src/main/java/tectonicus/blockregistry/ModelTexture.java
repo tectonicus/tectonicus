@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) 2026 Tectonicus contributors. All rights reserved.
+ *
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution. The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
+ */
+
+package tectonicus.blockregistry;
+
+/** A model texture entry, independent of the shared sprite's pixel transparency. */
+public record ModelTexture(String sprite, boolean forceTranslucent) {
+	public ModelTexture(String sprite) {
+		this(sprite, false);
+	}
+}

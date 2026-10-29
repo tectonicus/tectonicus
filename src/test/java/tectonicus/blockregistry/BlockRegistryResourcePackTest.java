@@ -92,42 +92,71 @@ class BlockRegistryResourcePackTest {
 			"{\"inside\":\"block/spawner_inner\",\"top\":\"block/spawner_top\",\"intop\":\"#inside\",\"bottom\":\"#top\"}"
 	})
 	void resolvesSiblingAliasesRegardlessOfDeclarationOrder(String json) throws Exception {
-		Map<String, String> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree(json));
-		Map<String, String> resolved = BlockRegistry.resolveTextureMap(textures);
+		Map<String, ModelTexture> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree(json));
+		Map<String, ModelTexture> resolved = BlockRegistry.resolveTextureMap(textures);
 
-		assertEquals("block/spawner_top", resolved.get("bottom"));
-		assertEquals("block/spawner_inner", resolved.get("intop"));
+		assertEquals(new ModelTexture("block/spawner_top"), resolved.get("bottom"));
+		assertEquals(new ModelTexture("block/spawner_inner"), resolved.get("intop"));
 	}
 
 	@Test
 	void resolvesAliasChainsAfterInheritanceAndKeepsChildOverrides() throws Exception {
-		Map<String, String> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree("""
+		Map<String, ModelTexture> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree("""
 				{"side":"block/custom", "bottom":"#top"}
 				"""));
 		textures = BlockRegistry.populateTextureMap(textures, mapper.readTree("""
 				{"top":"#side", "side":"block/parent", "particle":"#bottom"}
 				"""));
-		Map<String, String> resolved = BlockRegistry.resolveTextureMap(textures);
+		Map<String, ModelTexture> resolved = BlockRegistry.resolveTextureMap(textures);
 
-		assertEquals(Map.of("side", "block/custom", "bottom", "block/custom",
-				"top", "block/custom", "particle", "block/custom"), resolved);
+		ModelTexture custom = new ModelTexture("block/custom");
+		assertEquals(Map.of("side", custom, "bottom", custom, "top", custom, "particle", custom), resolved);
 	}
 
 	@Test
-	void unresolvedAndCyclicAliasesDoNotPreventOtherTexturesFromLoading() {
-		Map<String, String> resolved = BlockRegistry.resolveTextureMap(Map.of(
-				"a", "#b", "b", "#a", "self", "#self", "missing", "#absent", "side", "block/stone"));
+	void unresolvedAndCyclicAliasesDoNotPreventOtherTexturesFromLoading() throws Exception {
+		Map<String, ModelTexture> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree("""
+				{"a":"#b", "b":"#a", "self":"#self", "missing":"#absent", "side":"block/stone"}
+				"""));
+		Map<String, ModelTexture> resolved = BlockRegistry.resolveTextureMap(textures);
 
-		assertEquals(Map.of("side", "block/stone"), resolved);
+		assertEquals(Map.of("side", new ModelTexture("block/stone")), resolved);
 	}
 
 	@Test
 	void supportsSpriteObjectsWhenResolvingAliases() throws Exception {
-		Map<String, String> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree("""
+		Map<String, ModelTexture> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree("""
 				{"bottom":"#top", "top":{"sprite":"minecraft:block/stone", "force_translucent":true}}
 				"""));
 
-		assertEquals("minecraft:block/stone", BlockRegistry.resolveTextureMap(textures).get("bottom"));
+		assertEquals(new ModelTexture("minecraft:block/stone", true), BlockRegistry.resolveTextureMap(textures).get("bottom"));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"\"block/stone\"", "{\"sprite\":\"block/stone\"}",
+			"{\"sprite\":\"block/stone\",\"force_translucent\":false}"})
+	void childTextureOverridesReplaceParentTranslucency(String childTexture) throws Exception {
+		Map<String, ModelTexture> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree(
+				"{\"side\":" + childTexture + ",\"bottom\":\"#top\"}"));
+		textures = BlockRegistry.populateTextureMap(textures, mapper.readTree("""
+				{"side":{"sprite":"block/stone","force_translucent":true}, "top":"#side"}
+				"""));
+
+		assertEquals(new ModelTexture("block/stone", false), BlockRegistry.resolveTextureMap(textures).get("bottom"));
+	}
+
+	@Test
+	void inheritedAliasesRetainChildTranslucency() throws Exception {
+		Map<String, ModelTexture> textures = BlockRegistry.populateTextureMap(Map.of(), mapper.readTree("""
+				{"side":{"sprite":"block/stone","force_translucent":true}, "bottom":"#top"}
+				"""));
+		textures = BlockRegistry.populateTextureMap(textures, mapper.readTree("""
+				{"top":"#side", "side":"block/parent", "particle":"#bottom"}
+				"""));
+
+		ModelTexture forced = new ModelTexture("block/stone", true);
+		assertEquals(Map.of("side", forced, "top", forced, "bottom", forced, "particle", forced),
+				BlockRegistry.resolveTextureMap(textures));
 	}
 
 	private Path zip(String name, Map<String, String> entries) throws Exception {
