@@ -16,18 +16,17 @@ import picocli.CommandLine;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
-import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionInfo;
-import tectonicus.configuration.Layer;
-import tectonicus.configuration.MutableConfiguration;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.Configuration;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
 import tectonicus.raw.Player;
 import tectonicus.util.FileUtils;
+import tectonicus.util.DirUtils;
 import tectonicus.util.OutputResourcesUtil;
 import tectonicus.util.Util;
 import tectonicus.world.World;
@@ -97,8 +96,8 @@ public class TectonicusApp
 			{
 				interactiveRenderer = new InteractiveRenderer(config, 1024, 1024);
 
-				tectonicus.configuration.Map map = config.getMap(0);
-				Layer layer = map.getLayer(0);
+				tectonicus.configuration.DimensionConfig map = config.getDimensionConfig(0);
+				LayerConfig layer = map.getLayer(0);
 				
 				BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
 				PlayerSkinCache skinCache = new PlayerSkinCache(config, hashAlgorithm);
@@ -137,14 +136,15 @@ public class TectonicusApp
 				PlayerSkinCache skinCache = new PlayerSkinCache(config, hashAlgorithm);
 				PlayerIconAssembler iconAssembler = new PlayerIconAssembler(skinCache);
 				
-				for (tectonicus.configuration.Map map : config.getMaps())
+				for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
 				{
 					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache, null);
 									
-					File mapDir = new File(config.getOutputDir(), map.getId());
+					File mapDir = new File(config.getOutputDir(), "Scripts/" + map.getId());
 					File playerDir = new File(mapDir, "players.js");
 					
-					File imagesDir = new File(config.getOutputDir(), "Images");
+					File imagesDir = new File(DirUtils.getWorldImagesDir(config.getOutputDir(), map.getWorld()), "PlayerIcons");
+					FileUtils.ensureExists(mapDir);
 
 					OutputResourcesUtil.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
 				}
@@ -236,7 +236,7 @@ public class TectonicusApp
 		log = org.slf4j.LoggerFactory.getLogger(TectonicusApp.class);
 		
 		//Parse command line to get config file
-		MutableConfiguration m = new MutableConfiguration();
+		Configuration m = new Configuration();
 		CommandLine cmd = new CommandLine(m);
 		cmd.registerConverter(Level.class, Level::toLevel);
 		cmd.setCaseInsensitiveEnumValuesAllowed(true);
@@ -263,7 +263,7 @@ public class TectonicusApp
 			}
 		}
 		
-		MutableConfiguration config = new MutableConfiguration();
+		Configuration config = new Configuration();
 		if (configFile != null) {
 			// Load config from xml first
 			config = XmlConfigurationParser.parseConfiguration(configFile.toFile());
@@ -280,19 +280,23 @@ public class TectonicusApp
 			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
 		}
 
-		if (config.numMaps() == 0) { //If no maps were specified in xml config add a single map and layer
-			MutableMap map = new MutableMap("Map0");
-			MutableLayer layer = new MutableLayer("LayerA", map.getId());
+		if (config.numDimensions() == 0) { //If no maps were specified in xml config add a single map and layer
+			DimensionConfig map = new DimensionConfig("Map0");
+			map.setNumZoomLevels(config.getNumZoomLevels());
+			LayerConfig layer = new LayerConfig("LayerA", map.getId());
 			map.addLayer(layer);
 			map.setWorldDir(config.getWorldDir());
 			//TODO: add additional map config options from command line
-			config.addMap(map);
+			config.addDimension(map);
 		}
+
+		// Command-line values explicitly override XML defaults for every rendered dimension.
+		config.applyCommandLineOverrides(commandLine.getParseResult());
 
 		if (config.getDimension() != null) {
 			Dimension dimension = config.getDimension();
-			config.getMap(0).setDimension(dimension);
-			config.getMap(0).setDimensionInfo(new DimensionInfo(dimension, dimension.getId()));
+			config.getDimensionConfig(0).setDimension(dimension);
+			config.getDimensionConfig(0).setDimensionInfo(new DimensionInfo(dimension, dimension.getId()));
 		}
 
 		TectonicusApp app = new TectonicusApp(config);

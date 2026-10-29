@@ -75,13 +75,14 @@ function createViewer(yOffset = 64) {
     };
     const layer = {
         layerId: 'LayerA',
+        urlId: 'world.day',
         worldVectors: vectors,
         projection: new context.MinecraftProjection(vectors),
         viewPosition: {}
     };
     context.layer = layer;
     map.layers.add(layer);
-    vm.runInContext('tileLayers.set(layer.layerId, layer); activeBaseLayer = layer;', context);
+    vm.runInContext('tileLayers.set(layer.layerId, layer); urlLayers.set(layer.urlId, layer); activeBaseLayer = layer;', context);
     return {context, map, layer, vectors, entries, history, state, window};
 }
 
@@ -95,7 +96,7 @@ test('panning and zooming update the URL without adding history entries or losin
         assert.equal(entries[0].pathname, '/maps/index.html');
         assert.equal(entries[0].search, '?theme=dark');
         const params = new URLSearchParams(entries[0].hash.substring(1));
-        assert.equal(params.get('layer'), 'LayerA');
+        assert.equal(params.get('layer'), 'world.day');
         assert.equal(params.get('zoom'), String(i));
     }
     assert.equal(history.state, state);
@@ -103,7 +104,7 @@ test('panning and zooming update the URL without adding history entries or losin
 
 for (const yOffset of [0, 64]) {
     test(`shared integer coordinates remain stable across repeated reloads with yOffset=${yOffset}`, () => {
-        const {context, map, layer, vectors, entries} = createViewer(yOffset);
+        const {context, map, layer, entries} = createViewer(yOffset);
         for (const worldPos of [{x: -1000, y: 64, z: -10}, {x: 1000, y: 64, z: 10}]) {
             let point = layer.projection.worldToMap(worldPos);
             for (let reload = 0; reload < 5; reload++) {
@@ -113,7 +114,7 @@ for (const yOffset of [0, 64]) {
                 assert.equal(Number(params.x), worldPos.x);
                 assert.equal(params.y, undefined);
                 assert.equal(Number(params.z), worldPos.z);
-                const restored = context.findStartView(params, layer.layerId, vectors.startView);
+                const restored = context.findStartView(params, layer.layerId);
                 assert.equal(restored.zoom, map.zoom);
                 assert.equal(restored.worldPos.y, worldPos.y);
                 point = restored.startPoint;
@@ -124,7 +125,7 @@ for (const yOffset of [0, 64]) {
 
 test('editing fragment coordinates moves the map without adding another history entry', () => {
     const {map, layer, window, entries} = createViewer();
-    window.location.hash = '#layer=LayerA&x=-1000&z=250&zoom=6';
+    window.location.hash = '#layer=world.day&x=-1000&z=250&zoom=6';
     window.dispatchEvent(new Event('hashchange'));
     const expected = layer.projection.worldToMap({x: -1000, y: 64, z: 250});
     assert.equal(map.center.lat, expected[0]);
@@ -143,10 +144,11 @@ test('editing the layer switches base layers and uses the target map height', ()
     context.CreateCompassControl = () => control;
     context.tippy = () => {};
     context.stats = {peakMemoryBytes: 0};
-    context.document = {querySelector: selector => selector === '#map' ? {style: {}} : null};
+    context.document = {querySelector: selector => selector === '#map' ? {style: {setProperty() {}}} : null};
     const targetVectors = {...vectors, startView: {x: 200, y: 90, z: 300}};
     const targetLayer = {
         layerId: 'LayerB',
+        urlId: 'world.night',
         worldVectors: targetVectors,
         projection: new context.MinecraftProjection(targetVectors),
         controlState: {},
@@ -159,8 +161,8 @@ test('editing the layer switches base layers and uses the target map height', ()
         }
     };
     context.targetLayer = targetLayer;
-    vm.runInContext('tileLayers.set(targetLayer.layerId, targetLayer);', context);
-    window.location.hash = '#layer=LayerB&x=100&y=12&z=-200&zoom=5';
+    vm.runInContext('tileLayers.set(targetLayer.layerId, targetLayer); urlLayers.set(targetLayer.urlId, targetLayer);', context);
+    window.location.hash = '#layer=world.night&x=100&y=12&z=-200&zoom=5';
     window.dispatchEvent(new Event('hashchange'));
     const expected = targetLayer.projection.worldToMap({x: 100, y: 90, z: -200});
     assert.equal(map.layers.has(layer), false);
@@ -169,19 +171,19 @@ test('editing the layer switches base layers and uses the target map height', ()
     assert.equal(map.center.lng, expected[1]);
     assert.equal(map.zoom, 5);
     assert.equal(targetLayer.viewPosition.worldPos.y, 90);
-    assert.equal(context.findStartView({layer: 'LayerB', x: '100', y: '12', z: '-200'}, layer.layerId, vectors.startView).worldPos.y, 90);
+    assert.equal(context.findStartView({layer: 'world.night', x: '100', y: '12', z: '-200'}, layer.layerId).worldPos.y, 90);
 });
 
 test('URL y values are ignored when loading and editing coordinates', () => {
     const {context, map, layer, vectors, window} = createViewer();
     const expected = layer.projection.worldToMap({x: -1000, y: vectors.startView.y, z: 250});
     for (const y of ['200', 'invalid']) {
-        const restored = context.findStartView({x: '-1000', y, z: '250'}, layer.layerId, vectors.startView);
+        const restored = context.findStartView({x: '-1000', y, z: '250'}, layer.layerId);
         assert.equal(restored.worldPos.y, vectors.startView.y);
         assert.equal(restored.startPoint[0], expected[0]);
         assert.equal(restored.startPoint[1], expected[1]);
 
-        window.location.hash = `#layer=LayerA&x=-1000&y=${y}&z=250&zoom=6`;
+        window.location.hash = `#layer=world.day&x=-1000&y=${y}&z=250&zoom=6`;
         window.dispatchEvent(new Event('hashchange'));
         assert.equal(map.center.lat, expected[0]);
         assert.equal(map.center.lng, expected[1]);
@@ -194,6 +196,7 @@ test('the reset button below zoom resets the active layer without switching laye
     const otherVectors = {...vectors, startView: {x: 200, y: 90, z: 300}};
     const otherLayer = {
         layerId: 'LayerB',
+        urlId: 'world.night',
         worldVectors: otherVectors,
         projection: new context.MinecraftProjection(otherVectors),
         viewPosition: {}
@@ -225,7 +228,7 @@ test('the reset button below zoom resets the active layer without switching laye
             assert.equal(entries.length, 1);
             assert.equal(entries[0].search, '?theme=dark');
             const params = new URLSearchParams(location.hash.slice(1));
-            assert.equal(params.get('layer'), selectedLayer.layerId);
+            assert.equal(params.get('layer'), selectedLayer.urlId);
             assert.equal(Number(params.get('x')), selectedLayer.worldVectors.startView.x);
             assert.equal(Number(params.get('z')), selectedLayer.worldVectors.startView.z);
             assert.equal(params.get('zoom'), '0');

@@ -10,18 +10,18 @@ package tectonicus.world;
 
 import lombok.experimental.UtilityClass;
 import tectonicus.Version;
-import tectonicus.configuration.Map;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.util.Colour4f;
 
 @UtilityClass
 class BiomeColorBlender {
-	static int resolveRadius(Map map, Version worldVersion, Version textureVersion) {
+	static int resolveRadius(DimensionConfig map, Version worldVersion, Version textureVersion) {
 		if (map.isBiomeBlendRadiusConfigured())
 			return map.getBiomeBlendRadius();
 
 		// Worlds saved before 1.9 have no version name; use the texture version as a fallback.
 		Version version = worldVersion == Version.VERSION_UNKNOWN ? textureVersion : worldVersion;
-		return version.getNumVersion() <= Version.VERSION_12.getNumVersion() ? 1 : Map.DEFAULT_BIOME_BLEND_RADIUS;
+		return version.getNumVersion() <= Version.VERSION_12.getNumVersion() ? 1 : DimensionConfig.DEFAULT_BIOME_BLEND_RADIUS;
 	}
 
 	static Colour4f blend(int x, int z, int radius, ColorResolver resolver) {

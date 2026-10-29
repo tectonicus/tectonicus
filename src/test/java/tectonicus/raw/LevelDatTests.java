@@ -16,6 +16,8 @@ import java.util.Map;
 
 import org.jnbt.CompoundTag;
 import org.jnbt.LongTag;
+import org.jnbt.IntArrayTag;
+import org.jnbt.StringTag;
 import org.jnbt.NBTOutputStream;
 import org.jnbt.Tag;
 
@@ -59,6 +61,17 @@ class LevelDatTests {
 		Path level = directory.resolve("level.dat");
 		writeNbt(level, new CompoundTag("", Map.of("Data", new CompoundTag("Data", Map.of()))));
 		assertNull(new LevelDat(level, "").getWorldSeed());
+	}
+
+	@Test
+	void retainsTheCustomWorldSpawnDimension() throws Exception {
+		Path level = directory.resolve("level.dat");
+		writeNbt(level, new CompoundTag("", Map.of("Data", new CompoundTag("Data", Map.of(
+				"spawn", new CompoundTag("spawn", Map.of("dimension", new StringTag("dimension", "example:moon"),
+						"pos", new IntArrayTag("pos", new int[]{10, 64, 20}))))))));
+		LevelDat data = new LevelDat(level, "");
+		assertEquals(Dimension.OTHER, data.getSpawnDimension());
+		assertEquals("example:moon", data.getSpawnDimensionId());
 	}
 
 	private void writeNbt(Path path, Tag tag) throws Exception {

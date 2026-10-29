@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.Chunk;
-import tectonicus.configuration.Map;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.filter.PortalFilter;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
@@ -51,7 +51,7 @@ public class RegionLoadQueue
 	}
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
-					 Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
+					 DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
 					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds) {
 		numberOfRegionsStarted.incrementAndGet();
 		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds);
@@ -75,7 +75,7 @@ public class RegionLoadQueue
 		private final Chunk chunk;
 		private final RegionHashStore regionHashStore;
 		private final MessageDigest hashAlgorithm;
-		private final tectonicus.configuration.Map map;
+		private final DimensionConfig map;
 		private final HddObjectListWriter<Portal> portals;
 		private final HddObjectListWriter<Sign> signs;
 		private final HddObjectListWriter<Sign> views;
@@ -83,7 +83,7 @@ public class RegionLoadQueue
 		private final Queue<BedEntity> beds;
 		
 		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
-						tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
+						DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
 						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds) {
 			this.chunk = chunk;
 			this.regionHashStore = regionHashStore;

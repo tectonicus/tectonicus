@@ -1,7 +1,14 @@
 
 let mymap = L.map('map', {crs: L.CRS.Simple, minZoom: 0, maxZoom: maxZoom, attributionControl: false});
 let tileLayers = new Map();
+let urlLayers = new Map();
 let activeBaseLayer = null;
+let worldLayers = new Map();
+let selectedWorldLayers = new Map();
+let markerVisibilityOverrides = new Map();
+let worldControl = null;
+let layerControlWorldId = null;
+let changingBaseLayer = false;
 let mapInfoTippy = null;
 let mapInfoContent = '';
 
@@ -94,16 +101,17 @@ async function mainAsync()
             let xBin = coords.x % 16;
             let yBin = coords.y % 16;
 
-            return this.mapId + "/" + this.layerId + "/Zoom"+coords.z
+            return this.mapId + "/" + this.directoryName + "/Zoom"+coords.z
                 +"/"+xBin+"/"+yBin+"/tile_"+coords.x+"_"+coords.y+"."+this.imageFormat;
         },
         getAttribution: function() {
-            return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + this.mapName + '</a>';
+            return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + escapeHtml(this.mapName) + '</a>';
         },
         initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, beacons, worldVectors, projection,
             blockStats, worldStats, viewPosition, controlState, tileIndex) {
                 this.mapId = mapId;
                 this.layerId = layerId;
+                this.directoryName = layerId;
                 this.dimension = dimension;
                 this.imageFormat = imageFormat;
                 this.mapName = mapName;
@@ -121,12 +129,12 @@ async function mainAsync()
                 this.blockStats = blockStats;
                 this.worldStats = worldStats;
                 this.viewPosition = viewPosition;
-                this.controlState = JSON.parse(JSON.stringify(controlState));
+                this.controlState = controlState;
                 this.tileIndex = tileIndex;
             }
         });
 
-        let baseMaps = {}
+        let dimensionStates = new Map();
         for (let i = 0; i < contents.length; i++) {
             let tecMap = contents[i];
             for (let j = 0; j < tecMap.layers.length; j++) {
@@ -135,53 +143,74 @@ async function mainAsync()
                             // 'startPosition' stores view pos for a given layer, so we remember where we were when switching layers
                             let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
-                let tileLayer = new L.TileLayer.Tectonicus(tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, controlState, layer.tileIndex);
-
-                if (baseMaps.hasOwnProperty(tecMap.name + " - " + layer.name)) {
-                    layer.name = layer.name + i + j; //A hack to handle duplicate layer names in the layer control
+                let tileLayer = new L.TileLayer.Tectonicus(tecMap.outputId || tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
+                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, tecMap.controlState || controlState, layer.tileIndex);
+                tileLayer.worldId = tecMap.worldId || 'World0';
+                tileLayer.worldName = tecMap.worldName || 'World';
+                tileLayer.images = tecMap.images || 'Images/';
+                tileLayer.localizationsUrl = tecMap.localizations || 'Scripts/localizations.json';
+                tileLayer.maxZoom = tecMap.maxZoom ?? maxZoom;
+                L.setOptions(tileLayer, {maxZoom: tileLayer.maxZoom});
+                if (!dimensionStates.has(tecMap.id)) {
+                    dimensionStates.set(tecMap.id, {...tileLayer.controlState});
                 }
-                baseMaps[tecMap.name + " - " + layer.name] = tileLayer;
+                tileLayer.controlState = dimensionStates.get(tecMap.id);
+                tileLayer.label = tecMap.name + " - " + layer.name;
+                tileLayer.layerName = layer.name;
+                tileLayer.directoryName = layer.directory || layer.id;
+                tileLayer.compassUrl = tecMap.compass || tecMap.id + '/Compass.png';
+                if (!worldLayers.has(tileLayer.worldId)) {
+                    worldLayers.set(tileLayer.worldId, []);
+                }
+                worldLayers.get(tileLayer.worldId).push(tileLayer);
+
                 tileLayers.set(layer.id, tileLayer);
             }
         }
 
+        assignLayerUrlIds();
+
         // Try and get a starting view from the fragment params, query params, or fall back to default
-        let defaultLayer = tileLayers.get("LayerA");
+        let defaultLayer = tileLayers.values().next().value;
+        if (!defaultLayer) {
+            return;
+        }
         let startView;
         if (size(fragmentParams) > 0) {
-            startView = findStartView(fragmentParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+            startView = findStartView(fragmentParams, defaultLayer.layerId);
         } else {
-            startView = findStartView(queryParams, defaultLayer.layerId, defaultLayer.viewPosition.worldPos);
+            startView = findStartView(queryParams, defaultLayer.layerId);
         }
 
         // Add the starting layer to the map
         let startLayer = tileLayers.get(startView.layerId);
         activeBaseLayer = startLayer;
+        // Register attribution before layers so Leaflet also observes removal of the first layer.
+        L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
+        mymap.setView(startView.startPoint, startView.zoom);
         startLayer.addTo(mymap);
         // Store the updated start point in the layer
         startLayer.viewPosition = startView;
 
         // Create controls
-        if (tileLayers.size > 1) {
-            layerControl = L.control.layers(baseMaps);
+        if (worldLayers.size > 1) {
+            worldControl = CreateWorldControl(worldLayers, startLayer.worldId, switchWorld);
+            worldControl.addTo(mymap);
         }
+        updateWorldLayerControl(startLayer);
         CreateResetViewButton(mymap);
-	    compassControl = CreateCompassControl(startLayer.mapId + '/Compass.png');
-        viewToggleControl = CreateToggleControl('views', 'Images/Picture.png', viewMarkers, viewsInitiallyVisible);
-        signToggleControl = CreateToggleControl('signs', 'Images/Sign.png', signMarkers, signsInitiallyVisible);
-        playerToggleControl = CreateToggleControl('players', 'Images/PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible);
-        bedToggleControl = CreateToggleControl('beds', 'Images/Bed.png', bedMarkers, bedsInitiallyVisible);
-        respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'Images/RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible);
-        beaconToggleControl = CreateToggleControl('beacons', 'Images/beacon.png', beaconMarkers, beaconsInitiallyVisible);
-        portalToggleControl = CreateToggleControl('portals', 'Images/Portal.png', portalMarkers, portalsInitiallyVisible);
-        spawnToggleControl = CreateToggleControl('spawn', 'Images/SpawnCompass.png', spawnMarkers, spawnInitiallyVisible);
-        chestToggleControl = CreateToggleControl('chests', 'Images/Chest.png', chestMarkers, chestsInitiallyVisible);
+	    compassControl = CreateCompassControl(startLayer.compassUrl);
+        viewToggleControl = CreateToggleControl('views', 'Picture.png', viewMarkers, viewsInitiallyVisible, 'viewControlChecked');
+        signToggleControl = CreateToggleControl('signs', 'Sign.png', signMarkers, signsInitiallyVisible, 'signControlChecked');
+        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible, 'playerControlChecked');
+        bedToggleControl = CreateToggleControl('beds', 'Bed.png', bedMarkers, bedsInitiallyVisible, 'bedControlChecked');
+        respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
+        beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconMarkers, beaconsInitiallyVisible, 'beaconControlChecked');
+        portalToggleControl = CreateToggleControl('portals', 'Portal.png', portalMarkers, portalsInitiallyVisible, 'portalControlChecked');
+        spawnToggleControl = CreateToggleControl('spawn', 'SpawnCompass.png', spawnMarkers, spawnInitiallyVisible, 'spawnControlChecked');
+        chestToggleControl = CreateToggleControl('chests', 'Chest.png', chestMarkers, chestsInitiallyVisible, 'chestControlChecked');
 
-	//CreateLinkControl(map);
-
-	// Add attribution control to the map
-	L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
+        // Rebind the map information tooltip when attribution changes with the layer.
         let attributionContainer = mymap.attributionControl.getContainer();
         new MutationObserver(bindMapInfoTippy).observe(attributionContainer, {childList: true});
 
@@ -193,8 +222,6 @@ async function mainAsync()
 	mymap.on('zoomend', onProjectionChanged);
     mymap.on('moveend', onProjectionChanged);
 
-	// Load the map
-	mymap.setView(startView.startPoint, startView.zoom);
 	// Manually fire this event to set the initial state
     mymap.fireEvent('baselayerchange', {layer: startLayer});
 }
@@ -210,34 +237,26 @@ beaconMarkers = [];
 chestMarkers = [];
 
 function onBaseLayerChange(e) {
-    //Save current control states to previous layer
-    if (spawnToggleControl.hasOwnProperty('_container')) // check if control exists on map
-        controlState.spawnControlChecked = spawnToggleControl._container.checked;
-    if (signToggleControl.hasOwnProperty('_container'))
-        controlState.signControlChecked = signToggleControl._container.checked;
-    if (viewToggleControl.hasOwnProperty('_container'))
-        controlState.viewControlChecked = viewToggleControl._container.checked;
-    if (playerToggleControl.hasOwnProperty('_container'))
-        controlState.playerControlChecked = playerToggleControl._container.checked;
-    if (portalToggleControl.hasOwnProperty('_container'))
-        controlState.portalControlChecked = portalToggleControl._container.checked;
-    if (bedToggleControl.hasOwnProperty('_container'))
-        controlState.bedControlChecked = bedToggleControl._container.checked;
-    if (respawnAnchorToggleControl.hasOwnProperty('_container'))
-        controlState.respawnAnchorControlChecked = respawnAnchorToggleControl._container.checked;
-    if (beaconToggleControl.hasOwnProperty('_container'))
-        controlState.beaconControlChecked = beaconToggleControl._container.checked;
-    if (chestToggleControl.hasOwnProperty('_container'))
-        controlState.chestControlChecked = chestToggleControl._container.checked;
-
-    activeBaseLayer.controlState = JSON.parse(JSON.stringify(controlState));
-
+    changingBaseLayer = true;
+    const targetView = {...e.layer.viewPosition};
     activeBaseLayer = e.layer;
-    controlState = e.layer.controlState;
+    controlState = {...e.layer.controlState, ...markerVisibilityOverrides.get(e.layer.worldId)};
+    selectedWorldLayers.set(e.layer.worldId, e.layer.layerId);
+    if (mymap.setMaxZoom) {
+        mymap.setMaxZoom(e.layer.maxZoom ?? maxZoom);
+    }
+    updateWorldLayerControl(e.layer);
+    if (worldControl) {
+        worldControl.setWorld(e.layer.worldId);
+    }
 
-	mymap.setView(e.layer.viewPosition.startPoint, e.layer.viewPosition.zoom);
+	mymap.setView(targetView.startPoint, targetView.zoom, {animate: false});
+    changingBaseLayer = false;
 
 	changeBackgroundColor(e.layer.backgroundColor);
+    const mapStyle = document.querySelector('#map').style;
+    mapStyle.setProperty('--minecraft-font', 'url("' + worldImageUrl('Font.png', e.layer) + '")');
+    mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
 
     spawnToggleControl.remove();
     if (e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER") {
@@ -293,8 +312,11 @@ function onBaseLayerChange(e) {
         chestToggleControl.setChecked(controlState.chestControlChecked);
     }
 
-	if (layerControl != null) {
-        mymap.addControl(layerControl);
+    // Marker controls are rebuilt on layer changes; keep navigation below their row.
+    for (const navigationControl of [worldControl, layerControl]) {
+        if (navigationControl) {
+            L.DomUtil.toFront(navigationControl.getContainer());
+        }
     }
 
 	// Add tooltips to the toggle buttons
@@ -327,7 +349,7 @@ function onBaseLayerChange(e) {
     refreshChestMarkers(e.layer, controlState.chestControlChecked);
 
 	compassControl.remove();
-	compassControl = CreateCompassControl(e.layer.mapId + '/Compass.png');
+	compassControl = CreateCompassControl(e.layer.compassUrl);
 	mymap.addControl(compassControl);
 
 	// Add map info popup
@@ -359,6 +381,97 @@ function onBaseLayerChange(e) {
 
     mapInfoContent = statsHtml;
     bindMapInfoTippy();
+    onProjectionChanged();
+}
+
+
+function setMarkerVisibility(key, visible) {
+    controlState[key] = visible;
+    if (!markerVisibilityOverrides.has(activeBaseLayer.worldId)) {
+        markerVisibilityOverrides.set(activeBaseLayer.worldId, {});
+    }
+    markerVisibilityOverrides.get(activeBaseLayer.worldId)[key] = visible;
+}
+
+function updateWorldLayerControl(layer) {
+    if (layerControlWorldId === layer.worldId) {
+        return;
+    }
+    if (layerControl) {
+        layerControl.remove();
+        layerControl = null;
+    }
+    layerControlWorldId = layer.worldId;
+    const layers = worldLayers.get(layer.worldId) || [];
+    if (layers.length > 1) {
+        const baseMaps = Object.create(null);
+        for (const candidate of layers) {
+            let label = candidate.label;
+            let suffix = 2;
+            while (Object.hasOwn(baseMaps, escapeHtml(label))) {
+                label = candidate.label + ' (' + suffix++ + ')';
+            }
+            baseMaps[escapeHtml(label)] = candidate;
+        }
+        layerControl = L.control.layers(baseMaps).addTo(mymap);
+    }
+}
+
+// Reserve unsuffixed names first so a duplicate "Day" cannot take an existing "Day1".
+function uniqueUrlNames(names, fallback) {
+    const bases = names.map(name => String(name || '').normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || fallback);
+    const reserved = new Set(bases);
+    const used = new Set();
+    return bases.map(base => {
+        let name = base;
+        let suffix = 1;
+        while (used.has(name)) {
+            do { name = base + suffix++; } while (reserved.has(name));
+        }
+        used.add(name);
+        return name;
+    });
+}
+
+function assignLayerUrlIds() {
+    const worlds = [...worldLayers.values()];
+    const worldNames = uniqueUrlNames(worlds.map(layers => layers[0].worldName), 'world');
+    worlds.forEach((layers, worldIndex) => {
+        const layerNames = uniqueUrlNames(layers.map(layer => layer.layerName), 'layer');
+        layers.forEach((layer, layerIndex) => {
+            layer.urlId = worldNames[worldIndex] + '.' + layerNames[layerIndex];
+            urlLayers.set(layer.urlId, layer);
+        });
+    });
+}
+
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[character]);
+}
+
+function selectBaseLayer(layer) {
+    if (layer === activeBaseLayer) {
+        return;
+    }
+    mymap.removeLayer(activeBaseLayer);
+    layer.addTo(mymap);
+    // Leaflet only emits this event for layers registered in its current control.
+    if (activeBaseLayer !== layer) {
+        onBaseLayerChange({layer});
+    }
+}
+
+function switchWorld(worldId) {
+    const layers = worldLayers.get(worldId);
+    if (!layers || layers.length === 0) {
+        return;
+    }
+    const remembered = tileLayers.get(selectedWorldLayers.get(worldId));
+    selectBaseLayer(remembered || layers[0]);
 }
 
 function changeBackgroundColor(color) {
@@ -366,7 +479,12 @@ function changeBackgroundColor(color) {
 	mapContainer.style.backgroundColor = color;
 }
 
+function worldImageUrl(filename, layer = activeBaseLayer) {
+    return (layer?.images || 'Images/') + filename;
+}
+
 function onProjectionChanged(e) {
+    if (changingBaseLayer || activeBaseLayer === null) return;
 	// Store the previous coords in the layer
 	activeBaseLayer.viewPosition.startPoint = mymap.getCenter();
 	activeBaseLayer.viewPosition.zoom = mymap.getZoom();
@@ -379,18 +497,17 @@ function onHashChange() {
     }
 
     const params = getFragmentParams();
-    const layer = tileLayers.get(params.layer || activeBaseLayer.layerId);
+    const layer = urlLayers.get(params.layer || activeBaseLayer.urlId);
     if (!layer || ['x', 'z', 'zoom'].some(key =>
         params.hasOwnProperty(key) && !Number.isFinite(parseInt(params[key])))) {
         return;
     }
 
-    const view = findStartView(params, layer.layerId, layer.worldVectors.startView);
+    const view = findStartView(params, layer.layerId);
     const {startPoint, zoom} = view;
     layer.viewPosition = view;
     if (layer !== activeBaseLayer) {
-        mymap.removeLayer(activeBaseLayer);
-        layer.addTo(mymap);
+        selectBaseLayer(layer);
     }
     mymap.setView(startPoint, zoom, {animate: false});
 }
@@ -405,7 +522,7 @@ function refreshSpawnMarker(layer, markersVisible) {
 		let point = layer.projection.worldToMap(spawn);
 
 		let myIcon = L.icon({
-			iconUrl: 'Images/SpawnCompass.png',
+			iconUrl: worldImageUrl('SpawnCompass.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -434,7 +551,7 @@ function refreshSignMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(sign.worldPos);
 
 		let myIcon = L.icon({
-			iconUrl: 'Images/Sign.png',
+			iconUrl: worldImageUrl('Sign.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -465,7 +582,7 @@ function refreshViewMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(view.worldPos);
 
 		let icon = L.icon({
-			iconUrl: 'Images/Picture.png',
+			iconUrl: worldImageUrl('Picture.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -497,25 +614,27 @@ function refreshViewMarkers(layer, markersVisible) {
 	}
 }
 
-function loadIcon(src, player, pos, markersVisible) {
+function loadIcon(src, player, pos, markersVisible, layer) {
 	var icon = new Image();
 	icon.onload = function () {
+        if (layer !== activeBaseLayer) return;
 		player.icon = src;
 		var marker = createPlayerMarker(player, pos);
 
 		// Add marker to map if players are initially visible
-		if (markersVisible) {
+		if (controlState.playerControlChecked) {
 			marker.addTo(mymap);
 		}
 
 		playerMarkers.push(marker);
 	};
 	icon.onerror = function () {
-		player.icon = player.icon = "Images/PlayerIcons/Tectonicus_Default_Player_Icon.png";
+        if (layer !== activeBaseLayer) return;
+		player.icon = worldImageUrl('PlayerIcons/Tectonicus_Default_Player_Icon.png', layer);
 		var marker = createPlayerMarker(player, pos);
 
 		// Add marker to map if players are initially visible
-		if (markersVisible) {
+		if (controlState.playerControlChecked) {
 			marker.addTo(mymap);
 		}
 
@@ -535,7 +654,7 @@ function refreshPlayerMarkers(layer, markersVisible) {
 
 		let point = layer.projection.worldToMap(player.worldPos);
 
-		loadIcon("Images/PlayerIcons/" + player.name + ".png", player, point, markersVisible);
+		loadIcon(worldImageUrl('PlayerIcons/' + player.name + '.png', layer), player, point, markersVisible, layer);
 	}
 }
 
@@ -548,7 +667,7 @@ function refreshBedMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(bed.worldPos);
 
 		let icon = L.icon({
-			iconUrl: "Images/Items/" + bed.color + "_bed.png",
+			iconUrl: worldImageUrl('Items/' + bed.color + '_bed.png', layer),
 			iconSize: [38, 38],
 			iconAnchor: [20, 24],
 			popupAnchor: [0, -10],
@@ -577,7 +696,7 @@ function refreshRespawnAnchorMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(anchor.worldPos);
 
 		let icon = L.icon({
-			iconUrl: 'Images/RespawnAnchor.png',
+			iconUrl: worldImageUrl('RespawnAnchor.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -606,7 +725,7 @@ function refreshBeaconMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(beacon.worldPos);
 
 		let icon = L.icon({
-			iconUrl: 'Images/beacon.png',
+			iconUrl: worldImageUrl('beacon.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -620,9 +739,9 @@ function refreshBeaconMarkers(layer, markersVisible) {
 		    let primaryEffect = beacon.primaryEffect !== "none" ? localize("effect.minecraft." + beacon.primaryEffect) : "None";
 		    let secondaryEffect = beacon.secondaryEffect !== "none" ? localize("effect.minecraft." + beacon.secondaryEffect) : "None";
 
-		    marker = L.marker(point, { icon: icon }).bindPopup(`<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="Images/beacon_level_${parseInt(beacon.levels)}.png" width="64" height="64" />
-		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.primaryEffect}.png" />${primaryEffect}<br />
-		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="Images/effects/${beacon.secondaryEffect}.png" />${secondaryEffect}</p>`);
+		    marker = L.marker(point, { icon: icon }).bindPopup(`<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="${worldImageUrl('beacon_level_' + parseInt(beacon.levels) + '.png', layer)}" width="64" height="64" />
+		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.primaryEffect + '.png', layer)}" />${primaryEffect}<br />
+		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.secondaryEffect + '.png', layer)}" />${secondaryEffect}</p>`);
 		} else {
 		    marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">Not Activated</p>');
 		}
@@ -649,7 +768,7 @@ function refreshPortalMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(portal.worldPos);
 
 		let icon = L.icon({
-			iconUrl: 'Images/Portal.png',
+			iconUrl: worldImageUrl('Portal.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -678,7 +797,7 @@ function refreshChestMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(layer.chests[i].worldPos);
 
 		let icon = L.icon({
-			iconUrl: 'Images/Chest.png',
+			iconUrl: worldImageUrl('Chest.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -718,29 +837,29 @@ function ViewPos(layerId, worldPos, zoom, startPoint) {
 	this.startPoint = startPoint;
 }
 
-function findStartView(params, defaultLayerId, defaultSpawnPos) {
+function findStartView(params, defaultLayerId) {
 	let queryLayerId = defaultLayerId;
 	let queryZoom = 0;
 
-	if (params.hasOwnProperty('layer')) {
-		queryLayerId = params['layer'];
+	if (params.hasOwnProperty('layer') && urlLayers.get(params.layer)) {
+		queryLayerId = urlLayers.get(params.layer).layerId;
 	}
 	let layer = tileLayers.get(queryLayerId);
-	let queryPos = new WorldCoord(defaultSpawnPos.x, layer.worldVectors.startView.y, defaultSpawnPos.z);
+	let queryPos = new WorldCoord(layer.worldVectors.startView.x, layer.worldVectors.startView.y, layer.worldVectors.startView.z);
 
 	if (params.hasOwnProperty('x')
 		&& params.hasOwnProperty('z')) {
-		queryPos.x = parseInt(params['x']);
-		queryPos.z = parseInt(params['z']);
+		queryPos.x = Number.isFinite(parseInt(params.x)) ? parseInt(params.x) : queryPos.x;
+		queryPos.z = Number.isFinite(parseInt(params.z)) ? parseInt(params.z) : queryPos.z;
 	}
 	if (params.hasOwnProperty('zoom')) {
-		queryZoom = parseInt(params['zoom']);
+		queryZoom = Number.isFinite(parseInt(params.zoom)) ? parseInt(params.zoom) : 0;
 	}
 
 	if (queryZoom < 0)
 		queryZoom = 0;
-	if (queryZoom > maxZoom)
-		queryZoom = maxZoom;
+	if (queryZoom > (layer.maxZoom ?? maxZoom))
+		queryZoom = layer.maxZoom ?? maxZoom;
 
 	let startPoint = layer.projection.worldToMap(queryPos);
 

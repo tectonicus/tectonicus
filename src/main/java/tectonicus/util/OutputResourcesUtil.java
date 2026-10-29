@@ -26,7 +26,8 @@ import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.WorldConfig;
 import tectonicus.configuration.filter.PlayerFilter;
 import tectonicus.configuration.filter.SignFilterType;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinition;
@@ -92,7 +93,7 @@ import static tectonicus.Version.VERSION_26_2;
 @Slf4j
 @UtilityClass
 public class OutputResourcesUtil {
-	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.Map map) {
+	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.DimensionConfig map) {
 		HddObjectListReader<Sign> signsIn = null;
 		try {
 			signsIn = new HddObjectListReader<>(signListFile);
@@ -105,12 +106,12 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	private static void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.Map map) throws IOException {
+	private static void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.DimensionConfig map) throws IOException {
 		log.info("Exporting signs to {}", signFile.getAbsolutePath());
 
 		Files.deleteIfExists(signFile.toPath());
 
-		try (JsArrayWriter jsWriter = new JsArrayWriter(signFile, map.getId() + "_signData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(signFile, map.getJavascriptId() + "_signData")) {
 
 			WorldSubset worldSubset = map.getWorldSubset();
 			Sign sign = new Sign();
@@ -150,7 +151,7 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.Map map, List<Player> players, PlayerIconAssembler playerIconAssembler) {
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.DimensionConfig map, List<Player> players, PlayerIconAssembler playerIconAssembler) {
 		try {
 			Files.deleteIfExists(playersFile.toPath());
 		} catch (IOException e) {
@@ -163,12 +164,12 @@ public class OutputResourcesUtil {
 
 		int numOutput = 0;
 		ExecutorService executor = Executors.newCachedThreadPool();
-		try (JsArrayWriter jsWriter = new JsArrayWriter(playersFile, map.getId() + "_playerData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(playersFile, map.getJavascriptId() + "_playerData")) {
 
 			PlayerFilter playerFilter = map.getPlayerFilter();
 			WorldSubset worldSubset = map.getWorldSubset();
 			for (Player player : players) {
-				if (playerFilter.passesFilter(player)) {
+				if (player.isInDimension(map.getDimensionInfo()) && playerFilter.passesFilter(player)) {
 					Vector3d position = player.getPosition();
 					if (worldSubset.containsBlock(position.x, position.z)) {
 						log.debug("\texporting {}", player.getName());
@@ -206,7 +207,7 @@ public class OutputResourcesUtil {
 		log.debug("Exported {} players", numOutput);
 	}
 
-	public static void outputBeds(File exportDir, tectonicus.configuration.Map map, List<Player> players, Queue<BedEntity> beds) {
+	public static void outputBeds(File exportDir, tectonicus.configuration.DimensionConfig map, List<Player> players, Queue<BedEntity> beds) {
 		File bedsFile = new File(exportDir, "beds.js");
 		try {
 			Files.deleteIfExists(bedsFile.toPath());
@@ -218,7 +219,7 @@ public class OutputResourcesUtil {
 
 		int numOutput = 0;
 
-		try (JsArrayWriter jsWriter = new JsArrayWriter(bedsFile, map.getId() + "_bedData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(bedsFile, map.getJavascriptId() + "_bedData")) {
 
 			if (map.getDimension() == Dimension.OVERWORLD) // Beds only exist in the overworld dimension
 			{
@@ -261,7 +262,7 @@ public class OutputResourcesUtil {
 		log.debug("Exported {} beds", numOutput);
 	}
 
-	public static void outputRespawnAnchors(File exportDir, tectonicus.configuration.Map map, List<Player> players) {
+	public static void outputRespawnAnchors(File exportDir, tectonicus.configuration.DimensionConfig map, List<Player> players) {
 		File anchorsFile = new File(exportDir, "respawnAnchors.js");
 		try {
 			Files.deleteIfExists(anchorsFile.toPath());
@@ -273,7 +274,7 @@ public class OutputResourcesUtil {
 
 		int numOutput = 0;
 
-		try (JsArrayWriter jsWriter = new JsArrayWriter(anchorsFile, map.getId() + "_respawnAnchorData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(anchorsFile, map.getJavascriptId() + "_respawnAnchorData")) {
 
 			if (map.getDimension() == Dimension.NETHER) // Respawn anchors only work in the nether dimension
 			{
@@ -307,7 +308,7 @@ public class OutputResourcesUtil {
 		log.debug("Exported {} respawn anchors", numOutput);
 	}
 
-	public static List<Portal> outputPortals(File outFile, File portalListFile, tectonicus.configuration.Map map) {
+	public static List<Portal> outputPortals(File outFile, File portalListFile, tectonicus.configuration.DimensionConfig map) {
 		List<Portal> portals = new ArrayList<>();
 
 		try {
@@ -321,13 +322,13 @@ public class OutputResourcesUtil {
 		return portals;
 	}
 
-	private static List<Portal> outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.Map map) throws IOException {
+	private static List<Portal> outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.DimensionConfig map) throws IOException {
 		log.info("Exporting portals...");
 
 		Files.deleteIfExists(portalFile.toPath());
 
 		List<Portal> portals = new ArrayList<>();
-		try (JsArrayWriter jsWriter = new JsArrayWriter(portalFile, map.getId() + "_portalData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(portalFile, map.getJavascriptId() + "_portalData")) {
 			if (portalPositions.hasNext()) {
 				long prevX;
 				long prevY;
@@ -385,7 +386,7 @@ public class OutputResourcesUtil {
 		return portals;
 	}
 
-	public static void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.Map map) {
+	public static void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.DimensionConfig map) {
 		HddObjectListReader<Sign> viewsIn = null;
 		try {
 			viewsIn = new HddObjectListReader<>(viewsListFile);
@@ -398,12 +399,12 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	private static void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.Map map) throws IOException {
+	private static void outputViews(File viewsFile, HddObjectListReader<Sign> views, tectonicus.configuration.DimensionConfig map) throws IOException {
 		log.info("Exporting views...");
 
 		Files.deleteIfExists(viewsFile.toPath());
 
-		try (JsArrayWriter jsWriter = new JsArrayWriter(viewsFile, map.getId() + "_viewData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(viewsFile, map.getJavascriptId() + "_viewData")) {
 			Sign sign = new Sign();
 			while (views.hasNext()) {
 				views.read(sign);
@@ -427,7 +428,7 @@ public class OutputResourcesUtil {
 				viewArgs.put("text", "\"" + text.toString().trim() + "\"");
 
 				ImageFormat imageFormat = map.getViewConfig().getImageFormat();
-				String filename = map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
+				String filename = "Scripts/" + map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
 				viewArgs.put("imageFile", "\"" + filename + "\"");
 
 				if (map.getWorldSubset().containsBlock(sign.getX(), sign.getZ())) {
@@ -439,7 +440,7 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static void outputChests(File chestFile, tectonicus.configuration.Map map, ConcurrentLinkedQueue<ContainerEntity> chestList) {
+	public static void outputChests(File chestFile, tectonicus.configuration.DimensionConfig map, ConcurrentLinkedQueue<ContainerEntity> chestList) {
 		log.info("Exporting chests to {}", chestFile.getAbsolutePath());
 
 		try {
@@ -448,7 +449,7 @@ public class OutputResourcesUtil {
 			log.error("Exception: ", e);
 		}
 
-		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getId() + "_chestData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getJavascriptId() + "_chestData")) {
 			WorldSubset worldSubset = map.getWorldSubset();
 			for (ContainerEntity entity : chestList) {
                                 if ("left".equals(entity.getType())) {
@@ -514,7 +515,7 @@ public class OutputResourcesUtil {
 		}
 	}
 	
-	public static void outputBeacons(File beaconFile, tectonicus.configuration.Map map, Queue<BeaconEntity> beacons) {
+	public static void outputBeacons(File beaconFile, tectonicus.configuration.DimensionConfig map, Queue<BeaconEntity> beacons) {
 		log.info("Exporting beacons to {}", beaconFile.getAbsolutePath());
 		
 		try {
@@ -523,7 +524,7 @@ public class OutputResourcesUtil {
 			log.error("Exception: ", e);
 		}
 		
-		try (JsArrayWriter jsWriter = new JsArrayWriter(beaconFile, map.getId() + "_beaconData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(beaconFile, map.getJavascriptId() + "_beaconData")) {
 			WorldSubset worldSubset = map.getWorldSubset();
 			for (BeaconEntity beacon : beacons) {
 				float worldX = beacon.getX() + 0.5f;
@@ -598,7 +599,7 @@ public class OutputResourcesUtil {
                 return result;
         }
 
-	public static void outputInventoryItemIcons(Configuration args, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry) {
+	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry) {
 		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
 			log.info("Skipping icon rendering. Chest items are supported for 1.13 and newer.");
 			return;
@@ -608,7 +609,7 @@ public class OutputResourcesUtil {
 		long startTime = System.nanoTime();
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
-			File itemIconDir = new File(args.getOutputDir(), "Images/Items/");
+			File itemIconDir = new File(imagesDir, "Items");
 			Files.createDirectories(itemIconDir.toPath());
 			
                         for (Map.Entry<String, ItemModelDefinition> entry : itemModelDefinitionRegistry.getModelDefinitions().entrySet()) {
@@ -741,7 +742,7 @@ public class OutputResourcesUtil {
                                                                 // Split the leather armor, potion and tipped arrow icons into base layer and overlay
                                                                 // so that the base layer can be coloured in CSS due to the colour not being known at this time.
                                                                 writeImage(texture, 16, 16, outFile);
-                                                                outFile = new File(args.getOutputDir(), "Images/Items/" + entryKey + "_overlay.png");
+								outFile = new File(itemIconDir, entryKey + "_overlay.png");
                                                         } else {
                                                                 composited.getGraphics().drawImage(texture, 0, 0, null);
                                                         }
@@ -771,8 +772,17 @@ public class OutputResourcesUtil {
 		log.info("Icon Rendering took: {} seconds", elapsedTime / 1_000_000_000);
 	}
 
-	public static void outputIcons(File exportDir, Configuration args, tectonicus.configuration.Map map, World world, Rasteriser rasteriser)
+	public static void outputCompass(File exportDir, tectonicus.configuration.DimensionConfig map, Rasteriser rasteriser) {
+		try {
+			new ItemRenderer(rasteriser).renderCompass(map, new File(exportDir, "Scripts/" + map.getId() + "/Compass.png"));
+		} catch (Exception e) {
+			log.error("Unable to render compass", e);
+		}
+	}
+
+	public static void outputIcons(File imagesDir, World world, Rasteriser rasteriser)
 	{
+		FileUtils.ensureExists(imagesDir);
 		BlockTypeRegistry registryOld = world.getBlockTypeRegistry();
 		BlockRegistry registry = world.getModelRegistry();
 		TexturePack texturePack = world.getTexturePack();
@@ -781,44 +791,39 @@ public class OutputResourcesUtil {
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			if (texturePack.getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
-				itemRenderer.renderBlockOld(new File(exportDir, "Images/Chest.png"), registryOld, texturePack, BlockIds.CHEST, 5);
+				itemRenderer.renderBlockOld(new File(imagesDir, "Chest.png"), registryOld, texturePack, BlockIds.CHEST, 5);
 			} else {
 				Map<String, String> properties = new HashMap<>();
 				properties.put("facing", "south");
-				itemRenderer.renderBlock(new File(exportDir, "Images/Chest.png"), registryOld, registry, texturePack, Block.CHEST, new BlockProperties(properties));
+				itemRenderer.renderBlock(new File(imagesDir, "Chest.png"), registryOld, registry, texturePack, Block.CHEST, new BlockProperties(properties));
 			}
 
-			File bedIcon = new File(exportDir, "Images/Bed.png");
+			File bedIcon = new File(imagesDir, "Bed.png");
 			if (texturePack.getVersion().getNumVersion() >= VERSION_26_2.getNumVersion()) {
 				itemRenderer.renderBed(bedIcon, registry, texturePack, "minecraft:red_bed");
 			} else {
 				itemRenderer.renderBed(bedIcon, registryOld, texturePack);
 			}
-			itemRenderer.renderCompass(map, new File(exportDir, map.getId()+"/Compass.png"));
-			itemRenderer.renderPortal(new File(args.getOutputDir(), "Images/Portal.png"), registryOld, texturePack);
+			itemRenderer.renderPortal(new File(imagesDir, "Portal.png"), registryOld, texturePack);
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
-				itemRenderer.renderBlockModel(new File(args.getOutputDir(), "Images/RespawnAnchor.png"), registry, texturePack, Block.RESPAWN_ANCHOR, "_4");
+				itemRenderer.renderBlockModel(new File(imagesDir, "RespawnAnchor.png"), registry, texturePack, Block.RESPAWN_ANCHOR, "_4");
 			}
-			itemRenderer.renderBlock(new File(exportDir, "Images/beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
+			itemRenderer.renderBlock(new File(imagesDir, "beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		}
 	}
 
-	public static void outputHtmlResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
-		log.info("Writing javascript and image resources...");
+	public static void outputWorldResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config, File exportDir, WorldConfig world) {
+		log.info("Writing image resources for {}...", world.getName());
 		String defaultSkin = config.getDefaultSkin();
 
-		File imagesDir = new File(exportDir, "Images");
+		File imagesDir = DirUtils.getWorldImagesDir(exportDir, world);
 		File itemsDir = new File(imagesDir, "Items");
 		itemsDir.mkdirs();
+		FileUtils.ensureExists(new File(imagesDir, "PlayerIcons"));
 		File effectsDir = new File(imagesDir, "effects");
 		effectsDir.mkdir();
-
-		FileUtils.extractResource("Images/Spawn.png", new File(imagesDir, "Spawn.png"));
-		FileUtils.extractResource("Images/Logo.png", new File(imagesDir, "Logo.png"));
-
-		FileUtils.extractResource("Images/Spacer.png", new File(imagesDir, "Spacer.png"));
 
 		String defaultSkinPath = defaultSkin;
 		Version texturePackVersion = texturePack.getVersion();
@@ -931,12 +936,24 @@ public class OutputResourcesUtil {
                 // Extract enchanted glint texture
                 extractFile(texturePack, "assets/minecraft/textures/misc/enchanted_glint_item.png", new File(imagesDir, "EnchantedGlint.png"), true);
 
-		// Extract Leaflet resources
-                File scriptsDir = new File(exportDir, "Scripts");
-		extractMapResources(scriptsDir);
-                
-                // Extract localized texts
-                extractFile(texturePack, "assets/minecraft/lang/en_us.json", new File(scriptsDir, "localizations.json"), false);
+		File scriptsDir = new File(exportDir, "Scripts/" + world.getId());
+		FileUtils.ensureExists(scriptsDir);
+		File localizations = new File(scriptsDir, "localizations.json");
+		try {
+			Files.writeString(localizations.toPath(), "{}");
+		} catch (IOException e) {
+			log.error("Unable to initialize world localizations", e);
+		}
+		extractFile(texturePack, "assets/minecraft/lang/en_us.json", localizations, false);
+	}
+
+	public static void outputHtmlResources(Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
+		log.info("Writing shared viewer resources...");
+		File imagesDir = new File(exportDir, "Images");
+		FileUtils.ensureExists(imagesDir);
+		for (String image : List.of("Spawn.png", "Logo.png", "Spacer.png"))
+			FileUtils.extractResource("Images/" + image, new File(imagesDir, image));
+		extractMapResources(new File(exportDir, "Scripts"));
 
 		List<String> scriptResources = new ArrayList<>();
 		scriptResources.add("marker.js");
@@ -1128,48 +1145,63 @@ public class OutputResourcesUtil {
 		try (PrintWriter writer = new PrintWriter(outputFile))
 		{
 			writer.println("tileSize = "+config.getTileSize()+";");
-			writer.println("maxZoom = "+config.getNumZoomLevels()+";");
+			writer.println("maxZoom = " + config.getDimensions().stream().mapToInt(tectonicus.configuration.DimensionConfig::getNumZoomLevels).max().orElse(config.getNumZoomLevels()) + ";");
 			writer.println();
 
 			writer.println("var contents = ");
 			writer.println("[");
 
-			List<tectonicus.configuration.Map> maps = config.getMaps();
+			List<tectonicus.configuration.DimensionConfig> maps = config.getDimensions();
 			for (int i=0; i<maps.size(); i++)
 			{
-				tectonicus.configuration.Map m = maps.get(i);
+				tectonicus.configuration.DimensionConfig m = maps.get(i);
 
 				writer.println("\t{");
 
-				writer.println("\t\tid: \""+m.getId()+"\",");
-				writer.println("\t\tname: \""+m.getName()+"\",");
-				writer.println("\t\tplayers: "+m.getId()+"_playerData,");
-				writer.println("\t\tbeds: "+m.getId()+"_bedData,");
-				writer.println("\t\trespawnAnchors: "+m.getId()+"_respawnAnchorData,");
-				writer.println("\t\tbeacons: "+m.getId()+"_beaconData,");
-				writer.println("\t\tsigns: "+m.getId()+"_signData,");
-				writer.println("\t\tportals: "+m.getId()+"_portalData,");
-				writer.println("\t\tviews: "+m.getId()+"_viewData,");
-				writer.println("\t\tchests: "+m.getId()+"_chestData,");
-				writer.println("\t\tblockStats: "+m.getId()+"_blockStats,");
-				writer.println("\t\tworldStats: "+m.getId()+"_worldStats,");
-				writer.println("\t\tworldVectors: "+m.getId()+"_worldVectors,");
+				writer.println("\t\tid: \"" + m.getId() + "\",");
+				writer.println("\t\toutputId: \"" + m.getWorld().getId() + "\",");
+				writer.println("\t\tcompass: \"Scripts/" + m.getId() + "/Compass.png\",");
+				writer.println("\t\tname: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getName()) + ",");
+				writer.println("\t\tworldId: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getId()) + ",");
+				writer.println("\t\timages: \"" + m.getWorld().getId() + "/Images/\",");
+				writer.println("\t\tlocalizations: \"Scripts/" + m.getWorld().getId() + "/localizations.json\",");
+				writer.println("\t\tworldName: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getName()) + ",");
+				writer.println("\t\tdimensionId: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getDimensionInfo().name()) + ",");
+				writer.println("\t\tmaxZoom: " + m.getNumZoomLevels() + ",");
+				var visibility = m.getMarkerVisibility();
+				writer.println("\t\tcontrolState: {spawnControlChecked: " + visibility.isSpawn()
+						+ ", playerControlChecked: " + visibility.isPlayers() + ", portalControlChecked: " + visibility.isPortals()
+						+ ", signControlChecked: " + visibility.isSigns() + ", bedControlChecked: " + visibility.isBeds()
+						+ ", respawnAnchorControlChecked: " + visibility.isRespawnAnchors() + ", viewControlChecked: " + visibility.isViews()
+						+ ", chestControlChecked: " + visibility.isChests() + ", beaconControlChecked: " + visibility.isBeacons() + "},");
+				writer.println("\t\tplayers: "+m.getJavascriptId()+"_playerData,");
+				writer.println("\t\tbeds: "+m.getJavascriptId()+"_bedData,");
+				writer.println("\t\trespawnAnchors: "+m.getJavascriptId()+"_respawnAnchorData,");
+				writer.println("\t\tbeacons: "+m.getJavascriptId()+"_beaconData,");
+				writer.println("\t\tsigns: "+m.getJavascriptId()+"_signData,");
+				writer.println("\t\tportals: "+m.getJavascriptId()+"_portalData,");
+				writer.println("\t\tviews: "+m.getJavascriptId()+"_viewData,");
+				writer.println("\t\tchests: "+m.getJavascriptId()+"_chestData,");
+				writer.println("\t\tblockStats: "+m.getJavascriptId()+"_blockStats,");
+				writer.println("\t\tworldStats: "+m.getJavascriptId()+"_worldStats,");
+				writer.println("\t\tworldVectors: "+m.getJavascriptId()+"_worldVectors,");
 
 				writer.println("\t\tlayers:");
 				writer.println("\t\t[");
 				for (int j=0; j<m.numLayers(); j++)
 				{
-					Layer l = m.getLayer(j);
+					LayerConfig l = m.getLayer(j);
 
 					writer.println("\t\t\t{");
 
 					writer.println("\t\t\t\tid: \""+l.getId()+"\",");
-					writer.println("\t\t\t\tname: \""+l.getName()+"\",");
+					writer.println("\t\t\t\tdirectory: \"" + l.getDirectoryName() + "\",");
+					writer.println("\t\t\t\tname: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(l.getName()) + ",");
 					writer.println("\t\t\t\tdimension: \"" + m.getDimension() + "\",");
 					writer.println("\t\t\t\tbackgroundColor: \""+l.getBackgroundColor()+"\",");
 					writer.println("\t\t\t\timageFormat: \""+l.getImageFormat().getExtension()+"\",");
 					writer.print("\t\t\t\ttileIndex: ");
-					TileIndexWriter.write(writer, DirUtils.getLayerDir(config.getOutputDir(), l).toPath(), config.getNumZoomLevels(), l.getImageFormat());
+					TileIndexWriter.write(writer, DirUtils.getLayerDir(config.getOutputDir(), l).toPath(), m.getNumZoomLevels(), l.getImageFormat());
 					writer.println(",");
 					writer.println("\t\t\t\tisPng: \""+l.getImageFormat().isPng()+"\"");
 
@@ -1273,50 +1305,50 @@ public class OutputResourcesUtil {
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
                                                         
-							for (tectonicus.configuration.Map map : config.getMaps())
+							for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
 							{
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/players.js");
+								outLine.append("Scripts/").append(map.getId()).append("/players.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/beds.js");
+								outLine.append("Scripts/").append(map.getId()).append("/beds.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/respawnAnchors.js");
+								outLine.append("Scripts/").append(map.getId()).append("/respawnAnchors.js");
 								outLine.append(templateEnd);
 								
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/beacons.js");
+								outLine.append("Scripts/").append(map.getId()).append("/beacons.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/portals.js");
+								outLine.append("Scripts/").append(map.getId()).append("/portals.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/signs.js");
+								outLine.append("Scripts/").append(map.getId()).append("/signs.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/views.js");
+								outLine.append("Scripts/").append(map.getId()).append("/views.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/chests.js");
+								outLine.append("Scripts/").append(map.getId()).append("/chests.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/worldVectors.js");
+								outLine.append("Scripts/").append(map.getId()).append("/worldVectors.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/blockStats.js");
+								outLine.append("Scripts/").append(map.getId()).append("/blockStats.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append(map.getId()).append("/worldStats.js");
+								outLine.append("Scripts/").append(map.getId()).append("/worldStats.js");
 								outLine.append(templateEnd);
 
 								// Any per layer includes?

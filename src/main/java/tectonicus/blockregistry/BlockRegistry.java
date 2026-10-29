@@ -18,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import tectonicus.Minecraft;
 import tectonicus.Version;
-import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.Configuration;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.BlockProperties;
 import tectonicus.texture.TexturePack;
@@ -84,7 +84,7 @@ public class BlockRegistry {
 	public BlockRegistry(Rasteriser rasteriser) //This is only used by the draw model test code
 	{
 		File minecraftJar = Minecraft.findLatestMinecraftJar();
-		MutableConfiguration config = new MutableConfiguration();
+		Configuration config = new Configuration();
 		config.setMinecraftJar(minecraftJar);
 		texturePack = new TexturePack(rasteriser, config, Collections.emptyList(), Collections.emptyList());
 		try {

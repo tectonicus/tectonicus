@@ -26,17 +26,17 @@ class BiomeBlendConfigurationTest {
 	@ParameterizedTest
 	@ValueSource(ints = {0, 1, 2, 3, 4, 5, 6, 7})
 	void readsEveryMinecraftRadiusFromRenderConfig(int radius) throws Exception {
-		Map map = parseMap("<render biomeBlendRadius=\"" + radius + "\" />");
+		DimensionConfig map = parseMap("<render biomeBlendRadius=\"" + radius + "\" />");
 		assertEquals(radius, map.getBiomeBlendRadius());
 		assertTrue(map.isBiomeBlendRadiusConfigured());
 	}
 
 	@Test
 	void omittedOptionUsesMinecraftDefault() throws Exception {
-		assertEquals(2, new MutableMap("map").getBiomeBlendRadius());
+		assertEquals(2, new DimensionConfig("map").getBiomeBlendRadius());
 		assertEquals(2, parseMap("").getBiomeBlendRadius());
 		assertEquals(2, parseMap("<render />").getBiomeBlendRadius());
-		assertFalse(new MutableMap("map").isBiomeBlendRadiusConfigured());
+		assertFalse(new DimensionConfig("map").isBiomeBlendRadiusConfigured());
 		assertFalse(parseMap("").isBiomeBlendRadiusConfigured());
 		assertFalse(parseMap("<render />").isBiomeBlendRadiusConfigured());
 		assertFalse(parseMap("<render biomeBlendRadius=\" \" />").isBiomeBlendRadiusConfigured());
@@ -57,22 +57,22 @@ class BiomeBlendConfigurationTest {
 					<map name="Maximum" worldDir="."><render biomeBlendRadius="7" /></map>
 				</tectonicus>
 				""");
-		var maps = XmlConfigurationParser.parseConfiguration(file.toFile()).getMaps();
+		var maps = XmlConfigurationParser.parseConfiguration(file.toFile()).getDimensions();
 		assertEquals(0, maps.get(0).getBiomeBlendRadius());
 		assertEquals(7, maps.get(1).getBiomeBlendRadius());
 	}
 
 	@Test
 	void programmaticConfigRejectsUnsupportedRadii() {
-		MutableMap map = new MutableMap("map");
+		DimensionConfig map = new DimensionConfig("map");
 		assertThrows(IllegalArgumentException.class, () -> map.setBiomeBlendRadius(-1));
 		assertThrows(IllegalArgumentException.class, () -> map.setBiomeBlendRadius(8));
 	}
 
-	private Map parseMap(String render) throws Exception {
+	private DimensionConfig parseMap(String render) throws Exception {
 		Path file = directory.resolve("config.xml");
 		Files.writeString(file, "<tectonicus version=\"2\"><map name=\"Test\" worldDir=\".\">"
 				+ render + "</map></tectonicus>");
-		return XmlConfigurationParser.parseConfiguration(file.toFile()).getMaps().getFirst();
+		return XmlConfigurationParser.parseConfiguration(file.toFile()).getDimensions().getFirst();
 	}
 }

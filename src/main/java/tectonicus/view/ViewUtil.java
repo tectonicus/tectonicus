@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -196,8 +196,10 @@ public class ViewUtil {
 	
 	
 	public static PerspectiveCamera createCamera(Rasteriser rasteriser, Viewpoint view, ViewConfig viewConfig) {
+		// Rendering and cache visibility checks must use the same effective field of view.
+		final float fov = view.getFov() >= 30 && view.getFov() <= 110 ? view.getFov() : viewConfig.getFOV();
                 PerspectiveCamera perspectiveCamera = new PerspectiveCamera(rasteriser, viewConfig.getWidth(), viewConfig.getHeight());
-		perspectiveCamera.lookAt(view.getEye(), view.getLookAt(), view.getUp(), view.getFov(), (float) viewConfig.getWidth() /(float) viewConfig.getHeight(), 0.1f, viewConfig.getViewDistance());
+		perspectiveCamera.lookAt(view.getEye(), view.getLookAt(), view.getUp(), fov, (float) viewConfig.getWidth() /(float) viewConfig.getHeight(), 0.1f, viewConfig.getViewDistance());
 		
 		return perspectiveCamera;
 	}

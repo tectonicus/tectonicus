@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 import tectonicus.cache.NullTileCache;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.MutableLayer;
+import tectonicus.configuration.LayerConfig;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -90,7 +90,7 @@ class DownsamplerEmptyTilesTest {
 	private void run() {
 		HddTileList tiles = new HddTileList(directory.resolve("tiles").toFile());
 		tiles.add(parent);
-		MutableLayer layer = new MutableLayer("day", "map");
+		LayerConfig layer = new LayerConfig("day", "map");
 		layer.setBackgroundColor("#123456");
 		ChangeFile changes = new ChangeFile(directory.resolve("changed.txt").toFile());
 		try {

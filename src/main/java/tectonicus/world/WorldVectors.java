@@ -76,9 +76,9 @@ public class WorldVectors {
 				.yOffset(yOffset).build();
 	}
 
-	public void outputWorldVectors(File vectorsFile, tectonicus.configuration.Map map, TileRenderer.TileCoordBounds bounds, World world,
+	public void outputWorldVectors(File vectorsFile, tectonicus.configuration.DimensionConfig map, TileRenderer.TileCoordBounds bounds, World world,
 								   final int numChunks, List<Portal> portals, int numZoomLevels, int tileWidth, int tileHeight) {
-		String varNamePrefix = map.getId();
+		String varNamePrefix = map.getJavascriptId();
 		LevelDat levelDat = world.getLevelDat();
 		List<Player> players = world.getAllPlayers();
 		int numPlayers = players.size();
@@ -161,7 +161,7 @@ public class WorldVectors {
 		}
 	}
 
-	private Vector3l getStartView(tectonicus.configuration.Map map, World world, List<Portal> portals) {
+	private Vector3l getStartView(tectonicus.configuration.DimensionConfig map, World world, List<Portal> portals) {
 		LevelDat levelDat = world.getLevelDat();
 
 		Vector3l startView;
@@ -177,7 +177,7 @@ public class WorldVectors {
 			if (map.getDimension() == Dimension.OVERWORLD && levelDat.getSpawnDimension() != Dimension.OVERWORLD) {
 				//For the Overworld we try to find a player or bed closest to (0,64, 0) and use that as the start view
 				//otherwise we just use (0, 64, 0) as the start view
-				startView = world.getOriginFromPlayers(new Vector3l(0, 64, 0), Dimension.OVERWORLD);
+				startView = world.getOriginFromPlayers(new Vector3l(0, 64, 0), map.getDimensionInfo());
 			} else if (map.getDimension() == Dimension.NETHER && levelDat.getSpawnDimension() != Dimension.NETHER) {
 				//For the Nether we try to find a portal, player or Respawn Anchor closest to world spawn and use that as the start view
 				//otherwise we just use the world spawn position as the start view
@@ -193,7 +193,7 @@ public class WorldVectors {
 						}
 					}
 				} else { //If no portals then try players
-					startView = world.getOriginFromPlayers(spawnPosition, Dimension.NETHER);
+					startView = world.getOriginFromPlayers(spawnPosition, map.getDimensionInfo());
 				}
 			}
 		}

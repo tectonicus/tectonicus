@@ -28,8 +28,8 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
-import tectonicus.configuration.Map;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
@@ -63,8 +63,10 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
@@ -73,6 +75,7 @@ import static tectonicus.util.FindEntityUtil.findBeacons;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
 import static tectonicus.util.OutputResourcesUtil.outputChests;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
+import static tectonicus.util.OutputResourcesUtil.outputCompass;
 import static tectonicus.util.OutputResourcesUtil.outputHtml;
 import static tectonicus.util.OutputResourcesUtil.outputHtmlResources;
 import static tectonicus.util.OutputResourcesUtil.outputIcons;
@@ -83,6 +86,7 @@ import static tectonicus.util.OutputResourcesUtil.outputRenderStats;
 import static tectonicus.util.OutputResourcesUtil.outputRespawnAnchors;
 import static tectonicus.util.OutputResourcesUtil.outputSigns;
 import static tectonicus.util.OutputResourcesUtil.outputViews;
+import static tectonicus.util.OutputResourcesUtil.outputWorldResources;
 
 @Slf4j
 public class TileRenderer
@@ -118,7 +122,7 @@ public class TileRenderer
 	private final int tileWidth;
 	private final int tileHeight;
 	
-	private final int numZoomLevels;
+	private int numZoomLevels;
 	
 	private final File exportDir;
 	
@@ -220,8 +224,9 @@ public class TileRenderer
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
                 World world = null;
+		Set<String> exportedWorlds = new HashSet<>();
                 
-		for (tectonicus.configuration.Map map : config.getMaps())
+		for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
 		{
 			// Clear shared state?
 			// ..
@@ -229,7 +234,8 @@ public class TileRenderer
 			// Clear region cache?
 			// ..
 			
-			File mapDir = new File(exportDir, map.getId());
+			numZoomLevels = map.getNumZoomLevels();
+			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
 
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
@@ -263,7 +269,7 @@ public class TileRenderer
 
 			// Output entity javascript for creating map markers
 			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
-			outputPlayers(new File(mapDir, "players.js"), new File(exportDir, "Images/PlayerIcons/"), map, world.getPlayers(map.getDimension()), playerIconAssembler);
+			outputPlayers(new File(mapDir, "players.js"), new File(DirUtils.getWorldImagesDir(exportDir, map.getWorld()), "PlayerIcons"), map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler);
 			outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
 			outputRespawnAnchors(mapDir, map, world.getAllPlayers());
 			List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
@@ -286,12 +292,12 @@ public class TileRenderer
 					? tempArea.generateTempFile("tileHashes", ".cache") : null;
 			try (TileHashCache tileHashes = new TileHashCache(tileHashFile, world, map, camera, regionHashStore,
 					tileWidth, tileHeight, hashAlgorithm)) {
-				for (Layer layer : map.getLayers()) {
+				for (LayerConfig layer : map.getLayers()) {
 					// Setup per-layer config
 					setupWorldForLayer(layer, world);
 
 					// Set new tile cache for this layer
-					String optionString = FileTileCache.calcOptionsString(config);
+					String optionString = FileTileCache.calcOptionsString(config, map);
 					TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
 					try {
 						File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
@@ -326,11 +332,19 @@ public class TileRenderer
 				}
 			}
 
-			outputIcons(exportDir, config, map, world, rasteriser);
+			outputCompass(exportDir, map, rasteriser);
+			if (exportedWorlds.add(map.getWorld().getId())) {
+				File imagesDir = DirUtils.getWorldImagesDir(exportDir, map.getWorld());
+				outputIcons(imagesDir, world, rasteriser);
+				ItemModelDefinitionRegistry itemModels = new ItemModelDefinitionRegistry(world.getTexturePack());
+				ItemRegistry items = new ItemRegistry(world.getTexturePack());
+				outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels);
+				outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld());
+			}
 			
 			// Output world stats
-			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getId(), world.getBlockTypeRegistry());
-			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getId());
+			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getJavascriptId(), world.getBlockTypeRegistry());
+			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getJavascriptId());
 			
 			// Output world vectors for this camera config
 			worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
@@ -340,10 +354,7 @@ public class TileRenderer
                 if (world == null) {
                         System.out.println("Unable to render. No map is defined in config.");
                 } else {
-                        ItemModelDefinitionRegistry itemModelDefinitionRegistry = new ItemModelDefinitionRegistry(world.getTexturePack());
-                        ItemRegistry itemRegistry = new ItemRegistry(world.getTexturePack());
-                        outputInventoryItemIcons(config, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), itemRegistry, itemModelDefinitionRegistry);
-                        outputHtmlResources(world.getTexturePack(), playerIconAssembler, config, exportDir, numZoomLevels, tileWidth, tileHeight);
+                        outputHtmlResources(config, exportDir, config.getDimensions().stream().mapToInt(DimensionConfig::getNumZoomLevels).max().orElse(config.getNumZoomLevels()), tileWidth, tileHeight);
                 }
 		
 		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), config);
@@ -387,9 +398,9 @@ public class TileRenderer
 		
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
-		for (tectonicus.configuration.Map map : config.getMaps())
+		for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
 		{
-			File mapDir = new File(exportDir, map.getId());
+			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
 
 			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
@@ -425,9 +436,10 @@ public class TileRenderer
 		return new Result(abort, null);
 	}
 	
-	public static void setupWorldForLayer(Layer layer, World world)
+	public static void setupWorldForLayer(LayerConfig layer, World world)
 	{
 		log.info("Creating block registry");
+		world.applyRenderOptions(layer);
 		world.loadBlockRegistry(layer.getCustomBlockConfig(), layer.useDefaultBlockConfig());
 		
 		world.setLightStyle(layer.getLightStyle());
@@ -459,7 +471,7 @@ public class TileRenderer
 		}	
 	}
 
-	private WorldStats preProcess(World world, tectonicus.configuration.Map map, File portalsFile, File signsFile, File viewsFile)
+	private WorldStats preProcess(World world, tectonicus.configuration.DimensionConfig map, File portalsFile, File signsFile, File viewsFile)
 	{
 		WorldStats stats = null;
 		
@@ -491,12 +503,12 @@ public class TileRenderer
 				views.close();
 		}
 		
-		stats.setNumPlayers(world.getPlayers(map.getDimension()).size());
+		stats.setNumPlayers(world.getPlayers(map.getDimensionInfo()).size());
 		
 		return stats;
 	}
 	
-	private WorldStats preProcess(World world, tectonicus.configuration.Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
+	private WorldStats preProcess(World world, tectonicus.configuration.DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
 	{
 		// Pre-render pass - calc chunk hashes and project signs
 		if (progressListener != null)
@@ -504,7 +516,7 @@ public class TileRenderer
 		
 		WorldStats worldStats = new WorldStats();
 		
-		regionHashStore = new RegionHashStore(config.getCacheDir());
+		regionHashStore = new RegionHashStore(new File(config.getCacheDir(), map.getId()));
 		
 		log.info("Discovering chunks...");
 		//	Iterate over regions, then over chunks
@@ -633,7 +645,7 @@ public class TileRenderer
 		return worldStats;
 	}
 	
-	private void chunkSearch(World world, Map map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
+	private void chunkSearch(World world, DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
 		if (c != null && c.getRawChunk().isFullChunk()) {
 			worldStats.incNumChunks();
 			if (discoveredTiles != null && world.contains(c.getCoord())) {
@@ -678,7 +690,7 @@ public class TileRenderer
 		regionHashStore.endRegion();
 	}
 	
-	private void renderBaseTiles(World world, tectonicus.configuration.Map map, Layer layer, File layerDir, HddTileList tiles, TileCache tileCache)
+	private void renderBaseTiles(World world, tectonicus.configuration.DimensionConfig map, LayerConfig layer, File layerDir, HddTileList tiles, TileCache tileCache)
 	{
 		if (abort)
 			return;
@@ -744,7 +756,7 @@ public class TileRenderer
 		camera.apply();
 	}
 	
-	private void setupInitialCamera(tectonicus.configuration.Map map)
+	private void setupInitialCamera(tectonicus.configuration.DimensionConfig map)
 	{
 		final int zoom = map.getClosestZoomSize();
 		
@@ -802,11 +814,11 @@ public class TileRenderer
 		}
 	}
 	
-	private TileCoordBounds downsample(HddTileList baseTiles, HddTileList changedTiles, File exportDir, Layer layer, File baseDir, TileCache tileCache)
+	private TileCoordBounds downsample(HddTileList baseTiles, HddTileList changedTiles, File exportDir, LayerConfig layer, File baseDir, TileCache tileCache)
 	{
 		final Date downsampleStart = new Date();
 		
-		int zoomLevel = config.getNumZoomLevels() - 1;
+		int zoomLevel = numZoomLevels - 1;
 
 		if (!tileCache.hasCreatedDownsampleCache()) {
 			tileCache.calculateDownsampledTileCoordinates(baseTiles, zoomLevel);

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
-import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.Configuration;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.texture.TexturePack;
@@ -75,7 +75,7 @@ class BlockModelTextureDiagnosticsTest {
 						@Override public int getHeight() { return image.getHeight(); }
 					};
 				});
-		MutableConfiguration config = new MutableConfiguration();
+		Configuration config = new Configuration();
 		config.setMinecraftJar(jar.toFile());
 		textures = new TexturePack(rasteriser, config, List.of(), List.of());
 		messages.start();

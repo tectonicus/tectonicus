@@ -24,7 +24,7 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
-import tectonicus.configuration.Map;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.NorthDirection;
 import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.Rasteriser;
@@ -65,7 +65,7 @@ public class ItemRenderer
 		this.rasteriser = rasteriser;
 	}
 	
-	public void renderCompass(Map map, File outFile) throws Exception
+	public void renderCompass(DimensionConfig map, File outFile) throws Exception
 	{
 		log.info("Generating compass image...");
 		

@@ -25,6 +25,7 @@ import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import tectonicus.configuration.Dimension;
+import tectonicus.configuration.DimensionInfo;
 import tectonicus.util.FileUtils;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
@@ -55,12 +56,14 @@ public class Player {
 	@Setter
 	private String skinURL;
 	private Dimension dimension;
+	private String dimensionId;
 	private Vector3d position;
 	/**
 	 * Caution - may be null if the player hasn't built a bed yet!
 	 */
 	private Vector3l spawnPosition;
 	private Dimension spawnDimension;
+	private String spawnDimensionId;
 	private float health; // 0-20
 	private int food; // 0-20
 	private int air; // 0-300
@@ -75,7 +78,9 @@ public class Player {
 	
 	public Player() {
 		dimension = Dimension.OVERWORLD;
+		dimensionId = dimension.getId();
 		spawnDimension = Dimension.OVERWORLD;
+		spawnDimensionId = spawnDimension.getId();
 		position = new Vector3d();
 		inventory = new ArrayList<>();
 	}
@@ -115,6 +120,7 @@ public class Player {
 	}
 	
 	public Player(String name, String uuid, String skinURL) {
+		this();
 		this.name = name;
 		this.uuid = uuid;
 		this.skinURL = skinURL;
@@ -133,7 +139,8 @@ public class Player {
 		//This changed to a string in 1.16
 		StringTag dimensionStr = NbtUtil.getChild(root, "Dimension", StringTag.class);
 		if (dimensionStr != null) {
-			dimension = Dimension.byId(dimensionStr.getValue());
+			dimensionId = dimensionStr.getValue();
+			dimension = Dimension.byId(dimensionId);
 		} else {
 			final int dimensionVal = NbtUtil.getInt(root, "Dimension", 0);
 			if (dimensionVal == 0)
@@ -142,6 +149,7 @@ public class Player {
 				dimension = Dimension.END;
 			else if (dimensionVal == -1)
 				dimension = Dimension.NETHER;
+			dimensionId = dimension.getId();
 		}
 		
 		ListTag posList = NbtUtil.getChild(root, "Pos", ListTag.class);
@@ -166,7 +174,8 @@ public class Player {
 		if (respawnTag != null) {
 			int[] pos = NbtUtil.getChild(respawnTag, "pos", IntArrayTag.class).getValue();
 			spawnPosition = new Vector3l(pos[0], pos[1], pos[2]);
-			spawnDimension = Dimension.byId(NbtUtil.getString(respawnTag, "dimension", "minecraft:overworld"));
+			spawnDimensionId = NbtUtil.getString(respawnTag, "dimension", Dimension.OVERWORLD.getId());
+			spawnDimension = Dimension.byId(spawnDimensionId);
 		} else if (spawnXTag != null && spawnYTag != null && spawnZTag != null) {
 			spawnPosition = new Vector3l(spawnXTag.getValue(), spawnYTag.getValue(), spawnZTag.getValue());
 		}
@@ -174,7 +183,8 @@ public class Player {
 		//May exist in 1.21.4 and older
 		StringTag spawnDimensionTag = NbtUtil.getChild(root, "SpawnDimension", StringTag.class);
 		if (spawnDimensionTag != null) {
-			spawnDimension = Dimension.byId(spawnDimensionTag.getValue());
+			spawnDimensionId = spawnDimensionTag.getValue();
+			spawnDimension = Dimension.byId(spawnDimensionId);
 		}
 		
 		xpLevel = NbtUtil.getInt(root, "XpLevel", 0);
@@ -201,6 +211,10 @@ public class Player {
 	}
 	
 	
+	public boolean isInDimension(DimensionInfo dimension) {
+		return dimensionId.equals(dimension.name());
+	}
+
 	public class RequestPlayerInfoTask implements Callable<Void> {
 		@Override
 		public Void call() throws Exception {

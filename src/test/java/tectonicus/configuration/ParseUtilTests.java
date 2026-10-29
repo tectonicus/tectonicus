@@ -36,7 +36,7 @@ class ParseUtilTests {
 		DimensionInfo dimensionInfo = ParseUtil.parseDimension("the_nether");
 		
 		assertThat(dimensionInfo.dimension(), is(Dimension.NETHER));
-		assertThat(dimensionInfo.name(), is("the_nether"));
+		assertThat(dimensionInfo.name(), is("minecraft:the_nether"));
 	}
 
 	@Test
@@ -50,7 +50,7 @@ class ParseUtilTests {
 		DimensionInfo dimensionInfo = ParseUtil.parseDimension("other");
 
 		assertThat(dimensionInfo.dimension(), is(Dimension.OTHER));
-		assertThat(dimensionInfo.name(), is("other"));
+		assertThat(dimensionInfo.name(), is("minecraft:other"));
 	}
 
 	@Test

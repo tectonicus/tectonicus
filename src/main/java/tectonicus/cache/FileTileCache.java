@@ -19,7 +19,7 @@ import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
+import tectonicus.configuration.LayerConfig;
 import tectonicus.util.FileUtils;
 
 import java.io.File;
@@ -49,7 +49,7 @@ public class FileTileCache implements TileCache
 	private final MVMap<String, Boolean> downsampleCache;
 	private final MVMap<String, Boolean> emptyTiles;
 
-	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.Map map, Layer layer, String optionString, MessageDigest hashAlgorithm)
+	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.DimensionConfig map, LayerConfig layer, String optionString, MessageDigest hashAlgorithm)
 	{
 		this.imageFormat = imageFormat;
 		
@@ -104,8 +104,7 @@ public class FileTileCache implements TileCache
 		return new File(cacheDir, "tiles.cache");
 	}
 	
-	public static String calcOptionsString(Configuration args)
-	{
+	public static String calcOptionsString(Configuration args, tectonicus.configuration.DimensionConfig dimension) {
 		StringBuffer buffer = new StringBuffer();
 		
 		buffer.append(RENDERER_VERSION);
@@ -118,7 +117,7 @@ public class FileTileCache implements TileCache
 		// Render config
 		buffer.append(args.getMaxTiles());
 		buffer.append('\n');
-		buffer.append(args.getNumZoomLevels());
+		buffer.append(dimension != null ? dimension.getNumZoomLevels() : args.getNumZoomLevels());
 		buffer.append('\n');
 		buffer.append(args.getTileSize());
 		buffer.append('\n');
@@ -130,27 +129,32 @@ public class FileTileCache implements TileCache
 		buffer.append('\n');
 		buffer.append(args.getNumSamples());
 		buffer.append('\n');
+		boolean programmerArt = dimension != null && dimension.getWorld() != null
+				? dimension.getWorld().isUsingProgrammerArt() : args.isUsingProgrammerArt();
+		buffer.append("useProgrammerArt=").append(programmerArt).append('\n');
 		
 		// Paths
 		buffer.append(args.getOutputDir().getAbsolutePath());
 		buffer.append('\n');
-		buffer.append(args.getMinecraftJar().getAbsolutePath());
+		File jar = dimension != null && dimension.getWorld() != null ? dimension.getWorld().getMinecraftJar() : args.getMinecraftJar();
+		buffer.append(jar != null ? jar.getAbsolutePath() : "");
 		buffer.append('\n');
-		buffer.append(args.getTexturePack() != null ? args.getTexturePack().getAbsolutePath() : "");
+		File pack = dimension != null && dimension.getWorld() != null ? dimension.getWorld().getTexturePack() : args.getTexturePack();
+		buffer.append(pack != null ? pack.getAbsolutePath() : "");
 		buffer.append('\n');
 		
 		return buffer.toString();
 	}
 	
-	private static String getMapString(tectonicus.configuration.Map map)
+	private static String getMapString(tectonicus.configuration.DimensionConfig map)
 	{
 		String mapStr = "";
 		
 		mapStr += map.getId() + "\n";
-		mapStr += map.getName() + "\n";
 		mapStr += map.getCameraAngleRad() + "\n";
 		mapStr += map.getCameraElevationRad() + "\n";
-		mapStr += map.getDimension() + "\n";
+		mapStr += map.getDimensionInfo().name() + "\n";
+		mapStr += map.getWorldDir().getAbsolutePath() + "\n";
 		mapStr += map.getClosestZoomSize() + "\n";
 		mapStr += map.getWorldSubset() + "\n";
 		mapStr += "biomeBlendRadius=" + map.getBiomeBlendRadius() + "\n";
@@ -159,12 +163,17 @@ public class FileTileCache implements TileCache
 		return mapStr;
 	}
 		
-	private static String getLayerString(Layer layer)
+	private static String getLayerString(LayerConfig layer)
 	{
 		String layerStr = "";
 		
 		layerStr += layer.getId() + "\n";
-		layerStr += layer.getName() + "\n";
+		layerStr += "smoothLit=" + layer.isSmoothLit() + "\n";
+		layerStr += "oldGrayscaleLighting=" + layer.useOldGrayscaleLighting() + "\n";
+		layerStr += "sortTranslucentFaces=" + layer.isSortTranslucentFaces() + "\n";
+		layerStr += "legacyWater=" + layer.isLegacyWater() + "\n";
+		layerStr += "biomeBlendRadius=" + layer.getBiomeBlendRadius() + "\n";
+		layerStr += "biomeBlendRadiusConfigured=" + layer.isBiomeBlendRadiusConfigured() + "\n";
 		layerStr += layer.getLightStyle() + "\n";
 		layerStr += layer.getRenderStyle() + "\n";
 		layerStr += layer.getImageFormat() + "\n";
@@ -178,7 +187,7 @@ public class FileTileCache implements TileCache
 		return layerStr;
 	}
 	
-	public static String getCustomBlocksString(Layer layer)
+	public static String getCustomBlocksString(LayerConfig layer)
 	{
 		String configStr = "";
 		

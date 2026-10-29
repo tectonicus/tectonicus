@@ -17,16 +17,18 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public enum Dimension {
-	OVERWORLD("minecraft:overworld"),
-	NETHER("minecraft:the_nether"),
-	END("minecraft:the_end"),
-	OTHER("minecraft:other"),
-	UNKNOWN("unknown");
+	OVERWORLD("minecraft:overworld", "Overworld"),
+	NETHER("minecraft:the_nether", "The Nether"),
+	END("minecraft:the_end", "The End"),
+	OTHER("minecraft:other", "Other"),
+	UNKNOWN("unknown", "Other");
 
 	private static final Map<String, Dimension> ID_LOOKUP = new HashMap<>(values().length);
 
 	@Getter
 	private final String id;
+	@Getter
+	private final String name;
 
 	static {
 		for (Dimension dimension : values()) {
@@ -35,6 +37,6 @@ public enum Dimension {
 	}
 
 	public static Dimension byId(String id) {
-		return ID_LOOKUP.getOrDefault(id, OVERWORLD);
+		return ID_LOOKUP.getOrDefault(id, id != null && id.contains(":") ? OTHER : OVERWORLD);
 	}
 }

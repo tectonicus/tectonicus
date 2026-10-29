@@ -1,4 +1,4 @@
-var localizations = null;
+const localizationTables = new Map();
 
 const hiddenEnchantmentLevels = [
         'aqua_affinity',
@@ -74,23 +74,17 @@ const potionColors = {
 };
 
 async function containersMainAsync() {
-        let localizationsResponse;
-        
-        try {
-                localizationsResponse = await fetch('Scripts/localizations.json');
-        } catch (NetworkError) {
-                console.error(
-                        'There was a network error during localizations fetch. ' +
-                        'If the map is open directly from the file system, the problem was probably that the request was denied due to CORS policy.' +
-                        'There is no way of overriding the browser CORS policy on Tectonicus side. Please host the map on web server.');
-        }
-        
-        try {
-                localizations = await localizationsResponse.json();
-        } catch {
-                console.error('Unable to parse localizations');
-        }
-
+        const urls = new Set(contents.map(dimension => dimension.localizations || 'Scripts/localizations.json'));
+        await Promise.all([...urls].map(async url => {
+                try {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        localizationTables.set(url, await response.json());
+                } catch (error) {
+                        localizationTables.set(url, {});
+                        console.error('Unable to load localizations from ' + url + '. Please host the map on a web server.', error);
+                }
+        }));
 }
 
 function updateContainerItemTooltipPosition(e) {
@@ -110,6 +104,7 @@ function updateContainerItemTooltipPosition(e) {
 }
 
 function localize(key, fallbackString) {
+        const localizations = localizationTables.get(activeBaseLayer?.localizationsUrl || 'Scripts/localizations.json');
         if (localizations && localizations[key]) {
                 return localizations[key];
         }
@@ -209,8 +204,8 @@ function renderMinecraftText(text, className) {
 
 function createChestPopup(chest) {
         let markerPopup = chest.large
-                ? '<div class="chest_container large"><div class="chest_scaler"><img src="Images/LargeChest.png" />'
-                : '<div class="chest_container"><div class="chest_scaler"><img src="Images/SmallChest.png" />';
+                ? '<div class="chest_container large"><div class="chest_scaler"><img src="' + worldImageUrl('LargeChest.png') + '" />'
+                : '<div class="chest_container"><div class="chest_scaler"><img src="' + worldImageUrl('SmallChest.png') + '" />';
 
         markerPopup += renderMinecraftText(chest.name, 'chest_name');
 
@@ -235,7 +230,7 @@ function createChestPopup(chest) {
                 let pngName = getPngName(item, itemId);
                 
                 markerPopup += '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-                markerPopup += '<img src="Images/Items/' + pngName + '.png" onload="checkImageSize(this)" />';
+                markerPopup += '<img src="' + worldImageUrl('Items/' + pngName + '.png') + '" onload="checkImageSize(this)" />';
                 
                 markerPopup += getColorLayer(item, itemId);
                 markerPopup += getOverlay(item, itemId, pngName);
@@ -345,7 +340,8 @@ function getEnchantmentsDescription(item) {
 function getEnchantmentGlint(item, itemId, pngName) {
         if (item.enchantments || itemId === 'enchanted_golden_apple')
         {
-                return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'Images/Items/' + pngName + '\.png\'); mask-image: url(\'Images/Items/' + pngName + '.png\');"></div>';
+                const url = worldImageUrl('Items/' + pngName + '.png');
+                return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'' + url + '\'); mask-image: url(\'' + url + '\');"></div>';
         }
         return '';
 }
@@ -376,7 +372,7 @@ function getColorLayer(item, itemId) {
         
         if (color || itemId.indexOf('leather_') >= 0) {
                 color ??= 'rgb(106, 64, 41)';
-                return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'Images/Items/' + itemId + '.png\');"></div>';
+                return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'' + worldImageUrl('Items/' + itemId + '.png') + '\');"></div>';
         }
         
         return '';
@@ -386,7 +382,7 @@ function getOverlay(item, itemId, pngName) {
         let result = '';
         if (itemId === 'leather_boots' || itemId === 'leather_chestplate' || itemId === 'leather_helmet' || itemId === 'leather_leggings' || itemId.indexOf('potion') >= 0 || itemId === 'tipped_arrow') {
                 let overlayId = pngName + '_overlay';
-                result += '<img src="Images/Items/' + overlayId + '.png" />';
+                result += '<img src="' + worldImageUrl('Items/' + overlayId + '.png') + '" />';
                 result += getEnchantmentGlint(item, overlayId, overlayId);
         }
         return result;

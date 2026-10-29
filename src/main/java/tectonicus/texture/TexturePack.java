@@ -118,8 +118,11 @@ public class TexturePack
 
 	public TexturePack(Rasteriser rasteriser, Configuration config, List<File> modJars, List<String> dataPacks)
 	{
-		File minecraftJar = config.getMinecraftJar();
-		File resourcePack = config.getTexturePack();
+		this(rasteriser, config.getMinecraftJar(), config.getTexturePack(), config.isUsingProgrammerArt(), modJars, dataPacks);
+	}
+
+	public TexturePack(Rasteriser rasteriser, File minecraftJar, File resourcePack, boolean usingProgrammerArt,
+			List<File> modJars, List<String> dataPacks) {
 		
 		if (!minecraftJar.exists())
 			throw new MissingMinecraftJarException("Couldn't find minecraft.jar at " + minecraftJar.getAbsolutePath());
@@ -130,7 +133,7 @@ public class TexturePack
 		loadedPackTextures = new HashMap<>();
 
 		try {
-			if (config.isUsingProgrammerArt()) { //programmer art resource pack added in 1.14
+			if (usingProgrammerArt) { //programmer art resource pack added in 1.14
 				//TODO: currently we are overwriting the value of resourcePack if useProgrammerArt is true, we need to implement an ordered list of resource packs instead
 				File programmerArtResourcePack = new File(Minecraft.findMinecraftDir(), "assets/objects/1c/1cbd8e7b9a0d2f5e4a3c8b9cbbd1e7e6a9f0b2a");
 				if (programmerArtResourcePack.isFile()) {

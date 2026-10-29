@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,9 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import tectonicus.ProgressListener;
 import tectonicus.TileRenderer;
 import tectonicus.configuration.Configuration;
-import tectonicus.configuration.MutableConfiguration;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -223,11 +222,11 @@ public class Gui
 				// Disable all controls
 				setControlsEnabled(false);
 				
-				MutableConfiguration config = new MutableConfiguration();
-				MutableMap map = new MutableMap("Map0");
-				MutableLayer layer = new MutableLayer("LayerA", map.getId());
+				Configuration config = new Configuration();
+				DimensionConfig map = new DimensionConfig("Map0");
+				LayerConfig layer = new LayerConfig("LayerA", map.getId());
 				map.addLayer(layer);
-				config.addMap(map);
+				config.addDimension(map);
 				
 				worldBrowser.apply(config);
 				outputBrowser.apply(config);

@@ -14,7 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import tectonicus.cache.NullTileCache;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.MutableLayer;
+import tectonicus.configuration.LayerConfig;
 
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
@@ -52,7 +52,7 @@ class DownsamplerTest {
 	}
 
 	private void assertMatchesBicubicReference(ImageFormat format, boolean sparse) throws Exception {
-		MutableLayer layer = layer(format);
+		LayerConfig layer = layer(format);
 		BufferedImage expected = new BufferedImage(64, 64,
 				format.hasAlpha() ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR);
 		Graphics2D graphics = expected.createGraphics();
@@ -95,8 +95,8 @@ class DownsamplerTest {
 		assertEquals(List.of(output(format).getAbsolutePath()), Files.readAllLines(directory.resolve("changes.txt")));
 	}
 
-	private MutableLayer layer(ImageFormat format) {
-		MutableLayer layer = new MutableLayer("day", "map");
+	private LayerConfig layer(ImageFormat format) {
+		LayerConfig layer = new LayerConfig("day", "map");
 		layer.setImageFormat(format);
 		layer.setImageCompressionLevel(0.75f);
 		layer.setBackgroundColor("#123456");
@@ -112,7 +112,7 @@ class DownsamplerTest {
 		return TileRenderer.getImageFile(directory.resolve("output").toFile(), parent.x, parent.y, format);
 	}
 
-	private void run(MutableLayer layer) {
+	private void run(LayerConfig layer) {
 		HddTileList tiles = new HddTileList(directory.resolve("tiles").toFile());
 		tiles.add(parent);
 		ChangeFile changes = new ChangeFile(directory.resolve("changes.txt").toFile());

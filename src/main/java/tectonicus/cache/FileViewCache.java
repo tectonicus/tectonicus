@@ -31,7 +31,7 @@ import java.util.List;
 public class FileViewCache
 {
 	// Change this every time we have a major renderer change and need to invalidate the cache
-	private static final int VIEW_RENDERER_VERSION = 8;
+	private static final int VIEW_RENDERER_VERSION = 9;
 	
 	private final File cacheDir;
 	private final TempArea tempArea;
@@ -116,6 +116,7 @@ public class FileViewCache
 		hashAlgorithm.reset();
 		
 		hashAlgorithm.update(Integer.toString(VIEW_RENDERER_VERSION).getBytes());
+		hashAlgorithm.update(("useProgrammerArt=" + world.isUsingProgrammerArt() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		hashAlgorithm.update(("biomeBlendRadius=" + world.getBiomeBlendRadius() + "\n").getBytes());
 		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		
@@ -126,6 +127,10 @@ public class FileViewCache
                 
                 hashAlgorithm.update(Integer.toString(viewConfig.getWidth()).getBytes());
                 hashAlgorithm.update(Integer.toString(viewConfig.getHeight()).getBytes());
+		hashAlgorithm.update(("fov=" + viewConfig.getFOV() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		hashAlgorithm.update(("viewDistance=" + viewConfig.getViewDistance() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		hashAlgorithm.update(("compression=" + viewConfig.getImageCompressionLevel() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		hashAlgorithm.update(("rotation=" + sign.getData() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 	
 		Viewpoint view = ViewUtil.findView(sign);
 		PerspectiveCamera camera = ViewUtil.createCamera(rasteriser, view, viewConfig);

@@ -88,9 +88,9 @@ public class XmlConfigurationParser
 {
 	private static final int VERSION = 2;
 	
-	public static MutableConfiguration parseConfiguration(File file) throws Exception
+	public static Configuration parseConfiguration(File file) throws Exception
 	{
-		MutableConfiguration config = new MutableConfiguration();
+		Configuration config = new Configuration();
 		
 		log.info("Parsing config from {}", file.getAbsolutePath());
 		
@@ -188,24 +188,23 @@ public class XmlConfigurationParser
 			config.setUseEGL(getBoolean(rasteriserNode, "useEGL", false));
 		}
 		
-		int mapNumber = 0;
-		char layerNumber = 'A';
-		
-		Element[] maps = getChildren(root, "map");
-		for (Element mapElement : maps)
-		{
-			MutableMap map = new MutableMap("Map"+mapNumber);
-			mapNumber++;
-			
-			map.setName( getString(mapElement, "name") );
+		int legacyLayerNumber = 0;
+		List<DimensionEntry> dimensions = normalizeDimensions(root, configNode, config);
+		for (DimensionEntry entry : dimensions) {
+			Element mapElement = entry.element();
+			DimensionConfig map = new DimensionConfig(entry.id());
+			map.setNumZoomLevels(parseNumZoomLevels(getString(mapElement, "numZoomLevels")));
+			map.setMarkerVisibility(parseMarkerVisibility(mapElement));
 			
 			map.setWorldDir( new File(getString(mapElement, "worldDir")) );
 			
 			map.setClosestZoomSize( parseClosestZoomSize(getString(mapElement, "closestZoomSize")));
 			
-			DimensionInfo dimensionInfo = parseDimension(getString(mapElement, "dimension"));
+			DimensionInfo dimensionInfo = parseDimension(getString(mapElement, "id", getString(mapElement, "dimension")));
 			map.setDimension(dimensionInfo.dimension());
 			map.setDimensionInfo(dimensionInfo);
+			String name = getString(mapElement, "name");
+			map.setName(name.isBlank() ? dimensionInfo.dimension().getName() : name);
 			
 			final int cameraAngle = parseCameraAngle( getString(mapElement, "cameraAngle") );
 			map.setCameraAngleDeg(cameraAngle);
@@ -221,15 +220,7 @@ public class XmlConfigurationParser
 			final boolean useBiomeColours = getBoolean(mapElement, "useBiomeColours", false);
 			map.setUseBiomeColours(useBiomeColours);
 
-			boolean smoothLighting = getBoolean(mapElement, "useSmoothLighting", true);
-			Element renderNode = getChild(mapElement, "render");
-			map.setSmoothLit(getBoolean(renderNode, "useSmoothLighting", smoothLighting));
-			map.setOldGrayscaleLighting(getBoolean(renderNode, "useOldGrayscaleLighting", false));
-			map.setSortTranslucentFaces(getBoolean(renderNode, "sortTranslucentFaces", true));
-			map.setLegacyWater(getBoolean(renderNode, "legacyWater", false));
-			String biomeBlendRadius = getString(renderNode, "biomeBlendRadius");
-			if (StringUtils.isNotBlank(biomeBlendRadius))
-				map.setBiomeBlendRadius(parseBiomeBlendRadius(biomeBlendRadius));
+			parseRenderOptions(mapElement, map);
 			
 			map.setNorthDirection( parseNorthDirection( getString(mapElement, "north")));
 			map.setCustomCompassRose( getString(mapElement, "compassRose"));
@@ -246,7 +237,7 @@ public class XmlConfigurationParser
 				ViewFilterType viewFilterType = parseViewFilter( getString(viewsNode, "filter"));
 				map.setViewFilter( new ViewFilter(viewFilterType) );
 				
-				MutableViewConfig viewConfig = map.getViewConfig();
+				ViewConfig viewConfig = map.getViewConfig();
 				
 				ImageFormat imageFormat = parseImageFormat( getString(viewsNode, "imageFormat") );
 				viewConfig.setImageFormat(imageFormat);
@@ -316,17 +307,22 @@ public class XmlConfigurationParser
 			}
 			
 			Element[] layers = getChildren(mapElement, "layer");
-			for (Element layerElement : layers)
+			for (Element ownLayer : layers)
 			{
-				MutableLayer layer = new MutableLayer("Layer"+layerNumber, map.getId());
-				layerNumber++;
+				Element layerElement = inherit(mapElement, ownLayer);
+				String layerId = entry.legacy() ? "Layer" + layerSuffix(legacyLayerNumber++)
+						: entry.world().getId() + ".Layer" + (entry.world().getDimensions().stream().mapToInt(DimensionConfig::numLayers).sum() + map.numLayers());
+				LayerConfig layer = new LayerConfig(layerId, map.getId());
+				parseRenderOptions(layerElement, layer);
 				
-				layer.setName( getString(layerElement, "name") );
 				
 				LightStyle style = parseLightStyle(getString(layerElement, "lighting") );
 				if (style == null)
 					style = LightStyle.Day;
 				layer.setLightStyle(style);
+				String layerName = getString(layerElement, "name");
+				layer.setName(layerName.isBlank()
+						? layerId.substring(layerId.lastIndexOf('.') + 1).toLowerCase(java.util.Locale.ROOT) : layerName);
 				
 				layer.setRenderStyle( parseRenderStyle(getString(layerElement, "renderStyle")));
 				
@@ -340,107 +336,11 @@ public class XmlConfigurationParser
 				map.addLayer(layer);
 			}
 			
-			config.addMap(map);
-		}
-		/*
-		Element layerNode = getChild(root, "layer");
-		if (layerNode != null)
-		{
-			Dimension dimension = parseDimension( getString(layerNode, "dimension") );
-			config.setDimension(dimension);
-			
-			RenderStyle renderStyle = parseRenderStyle( getString(layerNode, "renderStyle") );
-			config.setRenderStyle(renderStyle);
-			
-			File dimensionDir;
-			if (dimension == Dimension.Terra)
-			{
-				dimensionDir = config.worldDir();
-			}
-			else if (dimension == Dimension.Nether)
-			{
-				dimensionDir = new File(config.worldDir(), "DIM-1");
-			}
+			if (entry.world() == null)
+				config.addDimension(map);
 			else
-			{
-				dimensionDir = config.worldDir();
-			}
-			config.setDimensionDir(dimensionDir);
-			
-			config.setWorldSubsetFactory( new FullWorldSubsetFactory() );
-			
-			final int cameraAngle = parseCameraAngle( getString(layerNode, "cameraAngle") );
-			config.setCameraAngleDeg(cameraAngle);
-			
-			final int elevationAngle = parseElevationAngle( getString(layerNode, "cameraElevation") );
-			config.setCameraElevationDeg(elevationAngle);
-			
-			ImageFormat imageFormat = parseImageFormat( getString(layerNode, "imageFormat") );
-			config.setImageFormat(imageFormat);
-			
-			final float imageCompression = parseImageCompression( getString(layerNode, "imageCompressionLevel") );
-			config.setImageCompressionLevel(imageCompression);
-			
-			LightStyle lightStyle = parseLightStyle( getString(layerNode, "lighting") );
-			if (lightStyle != null)
-				config.setLightStyle(lightStyle);
-			
-			config.setNumZoomLevels( parseNumZoomLevels( getString(layerNode, "numZoomLevels") ) );
-			
-			config.setClosestZoomSize( parseClosestZoomSize( getString(layerNode, "closestZoomSize") ) );
-			
-			config.setUseBiomeColours( parseUseBiomeColours( getString(layerNode, "useBiomeColours") ) );
-			
-			String playerName = getString(layerNode, "singlePlayerName");
-			if (playerName != null && playerName.length() > 0)
-				config.setSinglePlayerName(playerName);
-			
-			Element signsNode = getChild(layerNode, "signs");
-			if (signsNode != null)
-			{
-				SignFilter signFilter = parseSignFilter( getString(signsNode, "filter") );
-				config.setSignFilter(signFilter);
-				
-				config.setSignsInitiallyVisible( parseInitiallyVisible( getString(signsNode, "initiallyVisible") ) );
-			}
-			
-			Element playersNode = getChild(layerNode, "players");
-			if (playersNode != null)
-			{
-				PlayerFilterType playerFilterType = parsePlayerFilterType( getString(playersNode, "filter") );
-				File playerFilterFile = parsePlayerFilterFile( getString(playersNode, "playerFilterFile") );
-				
-				PlayerFilter playerFilter = new PlayerFilter(playerFilterType, playerFilterFile);
-				config.setPlayerFilter(playerFilter);
-				
-				config.setPlayersInitiallyVisible( parseInitiallyVisible( getString(playersNode, "initiallyVisible") ) );
-			}
-			
-			Element portalsNode = getChild(layerNode, "portals");
-			if (portalsNode != null)
-			{
-				PortalFilterType portalFilterType = parsePortalFilter( getString(portalsNode, "filter") );
-				config.setPortalFilter( new PortalFilter(portalFilterType) );
-				
-				config.setPortalsInitiallyVisible( parseInitiallyVisible( getString(portalsNode, "initiallyVisible") ) );
-			}
-			
-			Element spawnNode = getChild(layerNode, "spawn");
-			if (spawnNode != null)
-			{
-				config.setShowPlayerSpawn( parseShowSpawn( getString(spawnNode, "showSpawn") ) );
-				
-				config.setSpawnInitiallyVisible( parseInitiallyVisible( getString(spawnNode, "initiallyVisible") ) );
-			}
-			
-			Element bedsNode = getChild(layerNode, "beds");
-			if (bedsNode != null)
-			{
-				config.setBedsInitiallyVisible( parseInitiallyVisible( getString(bedsNode, "initiallyVisible") ) );	
-			}
+				entry.world().addDimension(map);
 		}
-		*/
-		
 		Element tweaksNode = getChild(root, "tweeks"); //Backwards compatibility with misspelled tag
 		if (tweaksNode == null) {
 			tweaksNode = getChild(root, "tweaks");
@@ -459,6 +359,139 @@ public class XmlConfigurationParser
 		return config;
 	}
 	
+
+	private record DimensionEntry(Element element, WorldConfig world, String id, boolean legacy) {}
+
+	private static final List<String> RENDER_ATTRIBUTES = List.of("useSmoothLighting", "useOldGrayscaleLighting",
+			"sortTranslucentFaces", "legacyWater", "biomeBlendRadius");
+
+	private static List<DimensionEntry> normalizeDimensions(Element root, Element defaults, Configuration config) {
+		List<DimensionEntry> result = new ArrayList<>();
+		int legacyNumber = 0;
+		for (Element element : getChildren(root, null)) {
+			if (element.getTagName().equals("world")) {
+				String id = "World" + config.getWorlds().size();
+				Element effective = inherit(defaults, element);
+				String worldDir = getString(effective, "worldDir");
+				if (worldDir.isBlank())
+					throw new IllegalArgumentException("World " + id + " requires worldDir");
+				WorldConfig world = new WorldConfig(id, new File(worldDir));
+				String worldName = getString(element, "name");
+				world.setName(worldName.isBlank() ? WorldConfig.defaultName(world.getWorldDir()) : worldName);
+				String jar = getString(effective, "minecraftJar");
+				world.setMinecraftJar(jar.isBlank() ? null : new File(jar));
+				String pack = getString(effective, "texturePack");
+				world.setTexturePack(pack.isBlank() ? null : new File(pack));
+				world.setUsingProgrammerArt(getBoolean(effective, "useProgrammerArt", false));
+				world.setMarkerVisibility(parseMarkerVisibility(effective));
+				parseRenderOptions(effective, world);
+				Element mods = getChild(effective, "mods");
+				if (mods != null)
+					world.setModJars(java.util.Arrays.stream(getChildren(mods, "mod"))
+							.map(mod -> new File(getString(mod, "path"))).toList());
+				config.addWorld(world);
+				int dimensionNumber = 0;
+				for (Element dimension : getChildren(element, null)) {
+					if (!isDimension(dimension))
+						continue;
+					Element resolved = inherit(effective, dimension);
+					// The save directory belongs to the world, never to a nested dimension.
+					resolved.setAttribute("worldDir", worldDir);
+					result.add(new DimensionEntry(resolved, world, id + ".Dimension" + dimensionNumber++, false));
+				}
+			} else if (isDimension(element)) {
+				result.add(new DimensionEntry(inherit(defaults, element), null, "Map" + legacyNumber++, true));
+			}
+		}
+		return result;
+	}
+
+	private static boolean isDimension(Element element) {
+		return element.getTagName().equals("dimension") || element.getTagName().equals("map");
+	}
+
+	private static String layerSuffix(int index) {
+		StringBuilder result = new StringBuilder();
+		do {
+			result.insert(0, (char) ('A' + index % 26));
+			index = index / 26 - 1;
+		} while (index >= 0);
+		return result.toString();
+	}
+
+	/** Merge only settings; hierarchy children always belong to their original scope. */
+	private static Element inherit(Element defaults, Element overrides) {
+		Element result = (Element) overrides.cloneNode(false);
+		if (defaults != null) {
+			for (int i = 0; i < defaults.getAttributes().getLength(); i++) {
+				Node attribute = defaults.getAttributes().item(i);
+				if (attribute.getNodeName().equals("name"))
+					continue;
+				result.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+			}
+			for (Element child : getChildren(defaults, null)) {
+				if (!List.of("world", "dimension", "map", "layer").contains(child.getTagName()))
+					result.appendChild(child.cloneNode(true));
+			}
+		}
+		for (int i = 0; i < overrides.getAttributes().getLength(); i++) {
+			Node attribute = overrides.getAttributes().item(i);
+			result.setAttribute(attribute.getNodeName(), attribute.getNodeValue());
+		}
+		for (Element child : getChildren(overrides, null)) {
+			Element previous = getChild(result, child.getTagName());
+			if (previous != null && !List.of("layer", "map", "dimension", "world").contains(child.getTagName())) {
+				Element merged = List.of("mods", "subset").contains(child.getTagName())
+						? (Element) child.cloneNode(true) : inherit(previous, child);
+				result.replaceChild(merged, previous);
+			} else {
+				result.appendChild(child.cloneNode(true));
+			}
+		}
+		if (!List.of("config", "world", "dimension", "map", "layer").contains(overrides.getTagName()))
+			return result;
+		Element render = getChild(result, "render");
+		if (render == null) {
+			render = result.getOwnerDocument().createElement("render");
+			result.appendChild(render);
+		}
+		Element ownRender = getChild(overrides, "render");
+		for (String attribute : RENDER_ATTRIBUTES) {
+			if (defaults != null && defaults.hasAttribute(attribute) && !render.hasAttribute(attribute))
+				render.setAttribute(attribute, defaults.getAttribute(attribute));
+			if (overrides.hasAttribute(attribute))
+				render.setAttribute(attribute, overrides.getAttribute(attribute));
+			if (ownRender != null && ownRender.hasAttribute(attribute))
+				render.setAttribute(attribute, ownRender.getAttribute(attribute));
+		}
+		return result;
+	}
+
+	private static void parseRenderOptions(Element element, RenderOptions options) {
+		Element render = getChild(element, "render");
+		options.setSmoothLit(getBoolean(render, "useSmoothLighting", getBoolean(element, "useSmoothLighting", true)));
+		options.setOldGrayscaleLighting(getBoolean(render, "useOldGrayscaleLighting", false));
+		options.setSortTranslucentFaces(getBoolean(render, "sortTranslucentFaces", true));
+		options.setLegacyWater(getBoolean(render, "legacyWater", false));
+		String radius = getString(render, "biomeBlendRadius");
+		if (StringUtils.isNotBlank(radius))
+			options.setBiomeBlendRadius(parseBiomeBlendRadius(radius));
+	}
+
+	private static MarkerVisibility parseMarkerVisibility(Element element) {
+		MarkerVisibility visibility = new MarkerVisibility();
+		visibility.setSpawn(getBoolean(element, "spawnInitiallyVisible", true));
+		visibility.setPlayers(getBoolean(element, "playersInitiallyVisible", true));
+		visibility.setPortals(getBoolean(element, "portalsInitiallyVisible", true));
+		visibility.setSigns(getBoolean(element, "signsInitiallyVisible", true));
+		visibility.setBeds(getBoolean(element, "bedsInitiallyVisible", true));
+		visibility.setRespawnAnchors(getBoolean(element, "respawnAnchorsInitiallyVisible", true));
+		visibility.setViews(getBoolean(element, "viewsInitiallyVisible", true));
+		visibility.setChests(getBoolean(element, "chestsInitiallyVisible", false));
+		visibility.setBeacons(getBoolean(element, "beaconsInitiallyVisible", true));
+		return visibility;
+	}
+
 	private static Element loadXml(File file, String rootName) {
 		try {
 			DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -477,6 +510,8 @@ public class XmlConfigurationParser
 	
 	public static Element getChild(Element parent, String name)
 	{
+		if (parent == null)
+			return null;
 		NodeList list = parent.getChildNodes();
 		for (int i=0; i<list.getLength(); i++)
 		{
@@ -498,7 +533,7 @@ public class XmlConfigurationParser
 		for (int i=0; i<list.getLength(); i++)
 		{
 			Node n = list.item(i);
-			if (n.getNodeType() == Node.ELEMENT_NODE && n.getNodeName().equals(name))
+			if (n.getNodeType() == Node.ELEMENT_NODE && (name == null || n.getNodeName().equals(name)))
 			{
 				result.add( (Element)n );
 			}

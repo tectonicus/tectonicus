@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,7 +15,7 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 
-import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.Configuration;
 
 public class OutputBrowserLine
 {
@@ -53,7 +53,7 @@ public class OutputBrowserLine
 		return line.getFile() != null;
 	}
 	
-	public void apply(MutableConfiguration config)
+	public void apply(Configuration config)
 	{
 		config.setOutputDir( line.getFile() );
 	}

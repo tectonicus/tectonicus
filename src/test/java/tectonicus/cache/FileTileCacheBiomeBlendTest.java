@@ -11,8 +11,8 @@ package tectonicus.cache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -25,7 +25,7 @@ class FileTileCacheBiomeBlendTest {
 
 	@Test
 	void changingTheRadiusInvalidatesTheTileCache() throws Exception {
-		MutableMap map = new MutableMap("map");
+		DimensionConfig map = new DimensionConfig("map");
 		assertFalse(openAndCloseCache(map));
 		assertTrue(openAndCloseCache(map));
 		map.setBiomeBlendRadius(7);
@@ -35,9 +35,9 @@ class FileTileCacheBiomeBlendTest {
 		assertFalse(openAndCloseCache(map));
 	}
 
-	private boolean openAndCloseCache(MutableMap map) throws Exception {
+	private boolean openAndCloseCache(DimensionConfig map) throws Exception {
 		FileTileCache cache = new FileTileCache(directory.resolve("tiles").toFile(), ImageFormat.PNG,
-				map, new MutableLayer("layer", map.getId()), "options", MessageDigest.getInstance("SHA-1"));
+				map, new LayerConfig("layer", map.getId()), "options", MessageDigest.getInstance("SHA-1"));
 		try {
 			return cache.isUsingExistingCache();
 		} finally {
@@ -47,11 +47,35 @@ class FileTileCacheBiomeBlendTest {
 
 	@Test
 	void changingAutomaticRadiusToExplicitDefaultInvalidatesTheTileCache() throws Exception {
-		MutableMap map = new MutableMap("map");
+		DimensionConfig map = new DimensionConfig("map");
 		assertFalse(openAndCloseCache(map));
 		assertTrue(openAndCloseCache(map));
 		map.setBiomeBlendRadius(2);
 		assertFalse(openAndCloseCache(map));
 		assertTrue(openAndCloseCache(map));
+	}
+
+	@Test
+	void changingLayerRenderingOverridesInvalidatesOnlyItsCache() throws Exception {
+		DimensionConfig dimension = new DimensionConfig("map");
+		LayerConfig layer = new LayerConfig("day", dimension.getId());
+		assertFalse(openAndCloseCache(dimension, layer));
+		assertTrue(openAndCloseCache(dimension, layer));
+		layer.setSmoothLit(false);
+		assertFalse(openAndCloseCache(dimension, layer));
+		assertTrue(openAndCloseCache(dimension, layer));
+		layer.setBiomeBlendRadius(0);
+		assertFalse(openAndCloseCache(dimension, layer));
+		assertTrue(openAndCloseCache(dimension, layer));
+	}
+
+	private boolean openAndCloseCache(DimensionConfig dimension, LayerConfig layer) throws Exception {
+		FileTileCache cache = new FileTileCache(directory.resolve("tiles").toFile(), ImageFormat.PNG,
+				dimension, layer, "options", MessageDigest.getInstance("SHA-1"));
+		try {
+			return cache.isUsingExistingCache();
+		} finally {
+			cache.closeTileCache();
+		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,8 +13,8 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
-import tectonicus.configuration.Map;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.util.TempArea;
 
 import java.io.BufferedInputStream;
@@ -188,7 +188,7 @@ public class CacheUtil
 		return true;
 	}
 	
-	public static BiomeCache createBiomeCache(Configuration config, Map map, MessageDigest hashAlgorithm)
+	public static BiomeCache createBiomeCache(Configuration config, DimensionConfig map, MessageDigest hashAlgorithm)
 	{
 		BiomeCache biomeCache = null;
 		if (map.useBiomeColours())
@@ -196,7 +196,8 @@ public class CacheUtil
 			try
 			{
 				File actualDir = new File(config.getCacheDir(), map.getId());
-				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), config.getMinecraftJar(), hashAlgorithm);
+				File jar = map.getWorld() != null ? map.getWorld().getMinecraftJar() : config.getMinecraftJar();
+				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), jar, hashAlgorithm);
 			}
 			catch (Exception e)
 			{
@@ -212,11 +213,11 @@ public class CacheUtil
 		return biomeCache;
 	}
 
-	public static TileCache createTileCache(final boolean useCache, String optionString, ImageFormat imageFormat, File rootCacheDir, tectonicus.configuration.Map map, Layer layer, MessageDigest hashAlgorithm) {
+	public static TileCache createTileCache(final boolean useCache, String optionString, ImageFormat imageFormat, File rootCacheDir, tectonicus.configuration.DimensionConfig map, LayerConfig layer, MessageDigest hashAlgorithm) {
 		if (useCache) {
 			File subDir = new File(rootCacheDir, "tileHashes");
-			File mapDir = new File(subDir, layer.getMapId());
-			File layerDir = new File(mapDir, layer.getId());
+			File mapDir = new File(subDir, layer.getWorldId());
+			File layerDir = new File(mapDir, layer.getDirectoryName());
 
 			return new FileTileCache(layerDir, imageFormat, map, layer, optionString, hashAlgorithm);
 		} else {
@@ -224,7 +225,7 @@ public class CacheUtil
 		}
 	}
 
-	public static FileViewCache createViewCache(File cacheDir, tectonicus.configuration.Map map, TempArea tempArea, MessageDigest hashAlgorithm, RegionHashStore regionHashStore) {
+	public static FileViewCache createViewCache(File cacheDir, tectonicus.configuration.DimensionConfig map, TempArea tempArea, MessageDigest hashAlgorithm, RegionHashStore regionHashStore) {
 		File viewsCache = new File(cacheDir, "views");
 		File mapViewsCache = new File(viewsCache, map.getId());
 

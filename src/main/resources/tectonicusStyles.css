@@ -31,6 +31,17 @@ html, body, #map {
     border-color: rgb(137, 132, 209);
 }
 
+.world-control {
+    padding: 6px 8px;
+    background: white;
+    font: 13px/1.5 Arial, sans-serif;
+}
+
+.world-control select {
+    max-width: 220px;
+    font: inherit;
+}
+
 .button:hover {
     border-color: rgb(137, 132, 209);
 }
@@ -104,7 +115,7 @@ html, body, #map {
     position: absolute;
     top: 0;
     bottom: 0;
-    background-image: url('../Images/EnchantedGlint.png');
+    background-image: var(--enchanted-glint, url('../Images/EnchantedGlint.png'));
     mix-blend-mode: color-dodge;
     animation: enchanted_glint 60s linear infinite;
 }
@@ -297,7 +308,7 @@ html, body, #map {
         top: 0;
         bottom: 0;
         background: #fcfcfc;
-        mask: url('../Images/Font.png');
+        mask: var(--minecraft-font, url('../Images/Font.png'));
         mask-position: inherit;
         display: inherit;
         width: inherit;

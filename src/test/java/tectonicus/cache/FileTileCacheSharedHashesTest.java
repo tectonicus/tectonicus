@@ -17,8 +17,8 @@ import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightStyle;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -32,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class FileTileCacheSharedHashesTest {
 	@TempDir
 	Path directory;
-	private final MutableMap map = new MutableMap("map");
-	private final MutableLayer day = new MutableLayer("day", map.getId());
-	private final MutableLayer night = new MutableLayer("night", map.getId());
+	private final DimensionConfig map = new DimensionConfig("map");
+	private final LayerConfig day = new LayerConfig("day", map.getId());
+	private final LayerConfig night = new LayerConfig("night", map.getId());
 	private final TileCoord first = new TileCoord(1, -2);
 	private final TileCoord second = new TileCoord(-3, 4);
 	private HddTileListFactory factory;
@@ -86,6 +86,21 @@ class FileTileCacheSharedHashesTest {
 	}
 
 	@Test
+	void displayNameChangesKeepBothLayersCached() throws Exception {
+		prime(day, Set.of(first, second));
+		prime(night, Set.of(first, second));
+		try (TileHashCache hashes = currentHashes(new AtomicInteger(), (byte) 1)) {
+			map.setName("Renamed dimension");
+			assertEquals(Set.of(), changed(day, hashes));
+			assertEquals(Set.of(), changed(night, hashes));
+
+			day.setName("Renamed day layer");
+			assertEquals(Set.of(), changed(day, hashes));
+			assertEquals(Set.of(), changed(night, hashes));
+		}
+	}
+
+	@Test
 	void aWorldChangeInvalidatesBothLayersOnTheNextRender() throws Exception {
 		prime(day, Set.of(first, second));
 		prime(night, Set.of(first, second));
@@ -111,20 +126,20 @@ class FileTileCacheSharedHashesTest {
 		});
 	}
 
-	private FileTileCache open(MutableLayer layer) throws Exception {
+	private FileTileCache open(LayerConfig layer) throws Exception {
 		return new FileTileCache(directory.resolve("saved").resolve(layer.getId()).toFile(), ImageFormat.PNG,
 				map, layer, "options", MessageDigest.getInstance("SHA-1"));
 	}
 
-	private File output(MutableLayer layer) {
+	private File output(LayerConfig layer) {
 		return directory.resolve("images").resolve(layer.getId()).toFile();
 	}
 
-	private Path image(MutableLayer layer, TileCoord tile) {
+	private Path image(LayerConfig layer, TileCoord tile) {
 		return TileRenderer.getImageFile(output(layer), tile.x, tile.y, ImageFormat.PNG).toPath();
 	}
 
-	private void prime(MutableLayer layer, Set<TileCoord> completed) throws Exception {
+	private void prime(LayerConfig layer, Set<TileCoord> completed) throws Exception {
 		FileTileCache cache = open(layer);
 		try (TileHashCache hashes = currentHashes(new AtomicInteger(), (byte) 1)) {
 			HddTileList changed = cache.findChangedTiles(factory, visible, hashes, output(layer));
@@ -141,7 +156,7 @@ class FileTileCacheSharedHashesTest {
 		}
 	}
 
-	private Set<TileCoord> changed(MutableLayer layer, TileHashCache hashes) throws Exception {
+	private Set<TileCoord> changed(LayerConfig layer, TileHashCache hashes) throws Exception {
 		FileTileCache cache = open(layer);
 		try {
 			return cache.findChangedTiles(factory, visible, hashes, output(layer)).toSet();

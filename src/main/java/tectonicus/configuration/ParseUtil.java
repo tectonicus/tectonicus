@@ -57,16 +57,26 @@ public class ParseUtil {
 	}
 
 	public static DimensionInfo parseDimension(String dimensionStr) {
-		dimensionStr = dimensionStr.toLowerCase();
-
-		Dimension dimension = switch (dimensionStr) {
-            case "the_nether", "nether" -> Dimension.NETHER;
-			case "the_end", "end", "ender" -> Dimension.END;
-			case "other" -> Dimension.OTHER;
-			default -> Dimension.OVERWORLD;
+		String id = dimensionStr.trim().toLowerCase(java.util.Locale.ROOT);
+		id = switch (id) {
+			case "", "terra", "overworld" -> Dimension.OVERWORLD.getId();
+			case "the_nether", "nether" -> Dimension.NETHER.getId();
+			case "the_end", "end", "ender" -> Dimension.END.getId();
+			case "other" -> "minecraft:other";
+			default -> id.contains(":") ? id : Dimension.OVERWORLD.getId();
 		};
-
-		return new DimensionInfo(dimension, dimensionStr);
+		if (!id.matches("[a-z0-9_.-]+:[a-z0-9_./-]+") || id.startsWith(".:") || id.startsWith("..:")
+				|| id.substring(id.indexOf(':') + 1).startsWith("/")
+				|| java.util.Arrays.asList(id.substring(id.indexOf(':') + 1).split("/", -1)).stream()
+				.anyMatch(part -> part.isEmpty() || part.equals(".") || part.equals("..")))
+			throw new IllegalArgumentException("Invalid dimension ID: " + dimensionStr);
+		Dimension dimension = switch (id) {
+			case "minecraft:overworld" -> Dimension.OVERWORLD;
+			case "minecraft:the_nether" -> Dimension.NETHER;
+			case "minecraft:the_end" -> Dimension.END;
+			default -> Dimension.OTHER;
+		};
+		return new DimensionInfo(dimension, id);
 	}
 
 	public static ImageFormat parseImageFormat(String imageStr) {
@@ -151,7 +161,7 @@ public class ParseUtil {
 		} catch (Exception e) {
 		}
 
-		return MutableViewConfig.DEFAULT_WIDTH;
+		return ViewConfig.DEFAULT_WIDTH;
 	}
 
 	public static int parseHeight(String heightStr) {
@@ -166,7 +176,7 @@ public class ParseUtil {
 		} catch (Exception e) {
 		}
 
-		return MutableViewConfig.DEFAULT_HEIGHT;
+		return ViewConfig.DEFAULT_HEIGHT;
 	}
 
 	public static SignFilter parseSignFilter(String filterStr) {
@@ -290,12 +300,12 @@ public class ParseUtil {
 
 	public static int parseBiomeBlendRadius(String radiusStr) {
 		if (StringUtils.isBlank(radiusStr))
-			return Map.DEFAULT_BIOME_BLEND_RADIUS;
+			return DimensionConfig.DEFAULT_BIOME_BLEND_RADIUS;
 		try {
-			return Math.clamp(Integer.parseInt(radiusStr.trim()), 0, Map.MAX_BIOME_BLEND_RADIUS);
+			return Math.clamp(Integer.parseInt(radiusStr.trim()), 0, DimensionConfig.MAX_BIOME_BLEND_RADIUS);
 		} catch (NumberFormatException e) {
-			log.warn("Invalid biomeBlendRadius '{}'; using {}", radiusStr, Map.DEFAULT_BIOME_BLEND_RADIUS);
-			return Map.DEFAULT_BIOME_BLEND_RADIUS;
+			log.warn("Invalid biomeBlendRadius '{}'; using {}", radiusStr, DimensionConfig.DEFAULT_BIOME_BLEND_RADIUS);
+			return DimensionConfig.DEFAULT_BIOME_BLEND_RADIUS;
 		}
 	}
 

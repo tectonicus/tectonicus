@@ -3,9 +3,9 @@ package tectonicus.util;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.MutableConfiguration;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.Configuration;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -53,17 +53,18 @@ class TileIndexWriterTest {
 
 	@Test
 	void exportsSeparateIndexesForEachLayerInContents() throws IOException {
-		MutableConfiguration config = new MutableConfiguration();
+		Configuration config = new Configuration();
 		config.setOutputDir(tempDir.toFile());
 		config.setNumZoomLevels(0);
-		MutableMap map = new MutableMap("Map0");
-		MutableLayer first = new MutableLayer("LayerA", "Map0");
-		MutableLayer second = new MutableLayer("LayerB", "Map0");
+		DimensionConfig map = new DimensionConfig("Map0");
+		map.setNumZoomLevels(0);
+		LayerConfig first = new LayerConfig("LayerA", "Map0");
+		LayerConfig second = new LayerConfig("LayerB", "Map0");
 		map.addLayer(first);
 		map.addLayer(second);
-		config.addMap(map);
-		createTile(tempDir.resolve("Map0/LayerA"), 0, -5, -5, "png");
-		createTile(tempDir.resolve("Map0/LayerB"), 0, 2, 3, "png");
+		config.addDimension(map);
+		createTile(DirUtils.getLayerDir(config.getOutputDir(), first).toPath(), 0, -5, -5, "png");
+		createTile(DirUtils.getLayerDir(config.getOutputDir(), second).toPath(), 0, 2, 3, "png");
 		Path contents = tempDir.resolve("contents.js");
 		OutputResourcesUtil.outputContents(contents.toFile(), config);
 		String output = Files.readString(contents);

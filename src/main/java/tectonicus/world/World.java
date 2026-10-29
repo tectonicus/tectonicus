@@ -112,14 +112,17 @@ public class World implements BlockContext
 	private static final int BATCH_SIZE = 128;
 	
 	private final Version textureVersion;
+	@Getter
+	private final boolean usingProgrammerArt;
 	
 	private final Rasteriser rasteriser;
-	private final boolean sortTranslucentFaces;
+	private boolean sortTranslucentFaces;
 	@Getter
-	private final boolean legacyWater;
+	private boolean legacyWater;
 	@Getter
-	private final int biomeBlendRadius;
+	private int biomeBlendRadius;
 	private final BiomeSampler biomeSampler;
+	private final int defaultBiomeBlendRadius;
 	@Getter
 	private final File worldDir;
 	private final File dimensionDir;
@@ -167,11 +170,11 @@ public class World implements BlockContext
 	
 	private LightStyle lightStyle;
 	@Getter
-	private final boolean smoothLit;
+	private boolean smoothLit;
 	@Getter
-	private final boolean oldGrayscaleLighting;
+	private boolean oldGrayscaleLighting;
 	@Getter
-	private final float nightLightAdjustment;
+	private float nightLightAdjustment;
 
 	private int defaultBlockId;
 	private String defaultBlockName = Block.AIR.getName();
@@ -194,7 +197,7 @@ public class World implements BlockContext
 
 	private final Map<Location, String> unknownBlocks;
 	
-	public World(Rasteriser rasteriser, tectonicus.configuration.Map map, BiomeCache biomeCache, PlayerSkinCache playerSkinCache, Configuration config)
+	public World(Rasteriser rasteriser, tectonicus.configuration.DimensionConfig map, BiomeCache biomeCache, PlayerSkinCache playerSkinCache, Configuration config)
 	{
 		this.rasteriser = rasteriser;
 		this.sortTranslucentFaces = map.isSortTranslucentFaces();
@@ -257,25 +260,31 @@ public class World implements BlockContext
 		if (!alphaWorld && !Minecraft.isValidDimensionDir(dimensionDir))
 			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
 
-		if (config.getMinecraftJar() == null) {
+		tectonicus.configuration.WorldConfig worldConfig = map.getWorld();
+		File minecraftJar = worldConfig != null ? worldConfig.getMinecraftJar() : config.getMinecraftJar();
+		if (minecraftJar == null) {
 			log.info("No Minecraft jar specified.");
-			if (worldVersion != null && !worldVersion.isBlank()) {
-				Minecraft.findMatchingMinecraftJar(worldVersion).ifPresentOrElse(config::setMinecraftJar, () -> config.setMinecraftJar(Minecraft.findLatestMinecraftJar()));
-			}
-			else {
-				config.setMinecraftJar(Minecraft.findLatestMinecraftJar());
-			}
+			minecraftJar = worldVersion != null && !worldVersion.isBlank()
+					? Minecraft.findMatchingMinecraftJar(worldVersion).orElseGet(Minecraft::findLatestMinecraftJar)
+					: Minecraft.findLatestMinecraftJar();
 		}
-		log.info("Using Minecraft jar: {}", config.getMinecraftJar().getName());
+		if (worldConfig != null)
+			worldConfig.setMinecraftJar(minecraftJar);
+		log.info("Using Minecraft jar: {}", minecraftJar.getName());
 
 		worldInfo = new WorldInfo(version, sectionArrayOffset);
 
 		this.blockMaskFactory = new NullBlockMaskFactory();
 
 		log.info("Loading textures");
-		texturePack = new TexturePack(rasteriser, config, map.getModJars(), levelDat.getDataPacks());
+		usingProgrammerArt = worldConfig != null ? worldConfig.isUsingProgrammerArt() : config.isUsingProgrammerArt();
+		texturePack = new TexturePack(rasteriser, minecraftJar,
+				worldConfig != null ? worldConfig.getTexturePack() : config.getTexturePack(),
+				usingProgrammerArt,
+				map.getModJars(), levelDat.getDataPacks());
 		this.textureVersion = texturePack.getVersion();
-		this.biomeBlendRadius = BiomeColorBlender.resolveRadius(map, version, textureVersion);
+		this.defaultBiomeBlendRadius = BiomeColorBlender.resolveRadius(map, version, textureVersion);
+		this.biomeBlendRadius = defaultBiomeBlendRadius;
 		this.biomeSampler = new BiomeSampler(levelDat.getWorldSeed(), version, dimension);
 		if (levelDat.getWorldSeed() == null && version.getNumVersion() >= VERSION_15.getNumVersion())
 			log.warn("World seed is missing; falling back to direct biome lookup");
@@ -363,20 +372,20 @@ public class World implements BlockContext
 		Dimension spawnDimension = levelDat.getSpawnDimension();
 		
 		if(dimension == Dimension.OVERWORLD && spawnDimension != Dimension.OVERWORLD) {
-			origin = getOriginFromPlayers(new Vector3l(0, 64, 0), dimension);
+			origin = getOriginFromPlayers(new Vector3l(0, 64, 0), dimensionInfo);
 		} else if (dimension == Dimension.NETHER && spawnDimension != Dimension.NETHER) {
-			origin = getOriginFromPlayers(origin, dimension);
+			origin = getOriginFromPlayers(origin, dimensionInfo);
 		}
 		return origin;
 	}
 	
-	public Vector3l getOriginFromPlayers(Vector3l startPoint, Dimension dimension) {
+	public Vector3l getOriginFromPlayers(Vector3l startPoint, DimensionInfo dimension) {
 		Vector3l origin = startPoint;
 		double prevDistance = 99999999999d;
 		
 		//TODO: need to use player filter here
 		for (Player player : players) {
-			if (player.getDimension() == dimension) {
+			if (player.isInDimension(dimension)) {
 				Vector3d position = player.getPosition();
 				double distance = Math.hypot(position.x - startPoint.x, position.z - startPoint.z);
 				if (distance < prevDistance) {
@@ -386,7 +395,7 @@ public class World implements BlockContext
 			}
 			
 			Vector3l position = player.getSpawnPosition();
-			if (position != null && player.getSpawnDimension() == dimension) { //Players may not have a spawn position set
+			if (position != null && player.getSpawnDimensionId().equals(dimension.name())) { //Players may not have a spawn position set
 				double distance = Math.hypot(position.x - (double) startPoint.x, position.z - (double) startPoint.z);
 				if (distance < prevDistance) {
 					origin = new Vector3l(position.x, position.y, position.z);
@@ -461,6 +470,16 @@ public class World implements BlockContext
 	public BiomeCache getBiomeCache()
 	{
 		return biomeCache;
+	}
+
+	public void applyRenderOptions(tectonicus.configuration.RenderOptions options) {
+		flushGeometryCache();
+		smoothLit = options.isSmoothLit();
+		oldGrayscaleLighting = options.useOldGrayscaleLighting();
+		sortTranslucentFaces = options.isSortTranslucentFaces();
+		legacyWater = options.isLegacyWater();
+		biomeBlendRadius = options.isBiomeBlendRadiusConfigured() ? options.getBiomeBlendRadius() : defaultBiomeBlendRadius;
+		nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
 	}
 
 	public void setLightStyle(LightStyle style)
@@ -597,11 +616,11 @@ public class World implements BlockContext
 	}
 
 	/** Gets the players for a particular dimension */
-	public List<Player> getPlayers(Dimension dimension)
+	public List<Player> getPlayers(DimensionInfo dimension)
 	{
 		List<Player> result = new ArrayList<>();
 		for (Player p : players) {
-			if (p.getDimension() == dimension)
+			if (p.isInDimension(dimension))
 				result.add(p);
 		}
 		return result;

@@ -15,8 +15,8 @@ import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.MutableLayer;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.DimensionConfig;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,9 +61,9 @@ class FileTileCacheDownsamplingTest {
 	}
 
 	private FileTileCache open() throws Exception {
-		MutableMap map = new MutableMap("map");
+		DimensionConfig map = new DimensionConfig("map");
 		return new FileTileCache(directory.resolve("cache").toFile(), ImageFormat.PNG, map,
-				new MutableLayer("day", map.getId()), "options", MessageDigest.getInstance("SHA-1"));
+				new LayerConfig("day", map.getId()), "options", MessageDigest.getInstance("SHA-1"));
 	}
 
 	private Set<TileCoord> pending(FileTileCache cache, int zoom) {

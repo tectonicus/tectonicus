@@ -14,7 +14,7 @@ import org.h2.mvstore.MVStore;
 import tectonicus.TileCoord;
 import tectonicus.TileRenderer;
 import tectonicus.chunk.ChunkCoord;
-import tectonicus.configuration.Map;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.world.World;
 
@@ -35,7 +35,7 @@ public final class TileHashCache implements AutoCloseable {
 	private final Function<TileCoord, byte[]> calculator;
 
 	/** A null cache file disables memoization for single-layer or uncached renders. */
-	public TileHashCache(File cacheFile, World world, Map map, OrthoCamera camera, RegionHashStore regionHashes,
+	public TileHashCache(File cacheFile, World world, DimensionConfig map, OrthoCamera camera, RegionHashStore regionHashes,
 			int tileWidth, int tileHeight, MessageDigest hashAlgorithm) {
 		this(cacheFile, tile -> {
 			TileRenderer.setupCameraForTile(camera, tile, tileWidth, tileHeight,

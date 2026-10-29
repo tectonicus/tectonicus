@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tectonicus version="2">
+    <config outputDir="RenderedMaps" numZoomLevels="8" imageFormat="webp"
+            playersInitiallyVisible="true" chestsInitiallyVisible="false">
+        <render useSmoothLighting="true" biomeBlendRadius="2"/>
+    </config>
+    <rasteriser tileSize="512"/>
+
+    <world name="Survival" worldDir="Worlds/Survival">
+        <dimension id="minecraft:overworld" name="Overworld" cameraAngle="45" cameraElevation="45">
+            <layer name="Day" lighting="day"/>
+            <layer name="Night" lighting="night"/>
+        </dimension>
+        <dimension id="minecraft:the_nether" name="Nether" spawnInitiallyVisible="false">
+            <layer name="Nether" renderStyle="nether"/>
+        </dimension>
+        <dimension id="minecraft:the_end" name="End">
+            <layer name="Day"/>
+        </dimension>
+    </world>
+
+    <world name="Creative" worldDir="Worlds/Creative" playersInitiallyVisible="false">
+        <dimension id="minecraft:overworld" name="Overworld">
+            <layer name="Day"/>
+            <layer name="No biome blending">
+                <render biomeBlendRadius="0"/>
+            </layer>
+        </dimension>
+    </world>
+</tectonicus>

@@ -127,7 +127,7 @@ public class PlayerFilter
 	@Override
 	public String toString()
 	{
-		// We override this so that MutableConfiguration.printActive works
+		// We override this so that Configuration.printActive works
 		StringBuilder result = new StringBuilder(filter.toString());
 		
 		if (filterFile != null)

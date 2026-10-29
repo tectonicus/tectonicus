@@ -13,7 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import tectonicus.Version;
-import tectonicus.configuration.MutableMap;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.util.Colour4f;
 
 import java.util.HashSet;
@@ -31,12 +31,12 @@ class BiomeColorBlenderTest {
 					VERSIONS_9_TO_11, VERSION_9, VERSION_10, VERSION_11, VERSION_12 -> 1;
 			default -> 2;
 		};
-		assertEquals(expected, BiomeColorBlender.resolveRadius(new MutableMap("map"), version, Version.VERSION_26_3));
+		assertEquals(expected, BiomeColorBlender.resolveRadius(new DimensionConfig("map"), version, Version.VERSION_26_3));
 	}
 
 	@Test
 	void unversionedWorldsUseTheTextureVersion() {
-		MutableMap map = new MutableMap("map");
+		DimensionConfig map = new DimensionConfig("map");
 		assertEquals(1, BiomeColorBlender.resolveRadius(map, Version.VERSION_UNKNOWN, Version.VERSION_4));
 		assertEquals(1, BiomeColorBlender.resolveRadius(map, Version.VERSION_UNKNOWN, Version.VERSION_12));
 		assertEquals(2, BiomeColorBlender.resolveRadius(map, Version.VERSION_UNKNOWN, Version.VERSION_13));
@@ -45,13 +45,13 @@ class BiomeColorBlenderTest {
 
 	@Test
 	void knownWorldVersionTakesPrecedenceOverTextureVersion() {
-		assertEquals(2, BiomeColorBlender.resolveRadius(new MutableMap("map"), Version.VERSION_13, Version.VERSION_12));
+		assertEquals(2, BiomeColorBlender.resolveRadius(new DimensionConfig("map"), Version.VERSION_13, Version.VERSION_12));
 	}
 
 	@ParameterizedTest
 	@ValueSource(ints = {0, 1, 2, 3, 4, 5, 6, 7})
 	void explicitConfigOverridesBothLegacyAndModernDefaults(int radius) {
-		MutableMap map = new MutableMap("map");
+		DimensionConfig map = new DimensionConfig("map");
 		map.setBiomeBlendRadius(radius);
 		assertEquals(radius, BiomeColorBlender.resolveRadius(map, Version.VERSION_12, Version.VERSION_12));
 		assertEquals(radius, BiomeColorBlender.resolveRadius(map, Version.VERSION_13, Version.VERSION_13));

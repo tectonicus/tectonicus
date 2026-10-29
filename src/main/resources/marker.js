@@ -48,7 +48,7 @@ function getPlayerHtml(player) {
 		html += '<center><table><tr>'
 
 		html += '<td>'
-		html += '<img src=\"Images/IronIcon.png\"/>'
+		html += '<img src="' + worldImageUrl('IronIcon.png') + '"/>'
 		html += '</td>'
 
 		html += '<td>'
@@ -93,13 +93,13 @@ function getHealthHtml(player) {
 	for (var i = 0; i < NUM_ICONS; i++) {
 		var image;
 		if (i * 2 + 1 < player.health)
-			image = 'Images/FullHeart.png';
+			image = 'FullHeart.png';
 		else if (i * 2 < player.health)
-			image = 'Images/HalfHeart.png';
+			image = 'HalfHeart.png';
 		else
-			image = 'Images/EmptyHeart.png';
+			image = 'EmptyHeart.png';
 
-		html += '<img style=\"margin:1px\" src=\"' + image + '" width=\"18\" height=\"18\" />';
+		html += '<img style=\"margin:1px\" src=\"' + worldImageUrl(image) + '" width=\"18\" height=\"18\" />';
 	}
 
 	return html;
@@ -112,13 +112,13 @@ function getFoodHtml(player) {
 	for (var i = 0; i < NUM_ICONS; i++) {
 		var image;
 		if (i * 2 + 1 < player.food)
-			image = 'Images/FullFood.png';
+			image = 'FullFood.png';
 		else if (i * 2 < player.food)
-			image = 'Images/HalfFood.png';
+			image = 'HalfFood.png';
 		else
-			image = 'Images/EmptyFood.png';
+			image = 'EmptyFood.png';
 
-		html += '<img style=\"margin:1px\" src=\"' + image + '" width=\"18\" height=\"18\" />';
+		html += '<img style=\"margin:1px\" src=\"' + worldImageUrl(image) + '" width=\"18\" height=\"18\" />';
 	}
 
 	return html;
@@ -131,11 +131,11 @@ function getAirHtml(player) {
 	for (var i = 0; i < NUM_ICONS; i++) {
 		var image;
 		if (i * 30 < player.air)
-			image = 'Images/FullAir.png';
+			image = 'FullAir.png';
 		else
-			image = 'Images/EmptyAir.png';
+			image = 'EmptyAir.png';
 
-		html += '<img style=\"margin:1px\" src=\"' + image + '" width=\"18\" height=\"18\" />';
+		html += '<img style=\"margin:1px\" src=\"' + worldImageUrl(image) + '" width=\"18\" height=\"18\" />';
 	}
 
 	return html;

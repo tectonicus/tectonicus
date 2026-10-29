@@ -39,6 +39,7 @@ public class LevelDat {
 	private boolean alpha;
 	private final Vector3l spawnPosition;
 	private Dimension spawnDimension;
+	private String spawnDimensionId = Dimension.OVERWORLD.getId();
 	private long sizeOnDisk;
 	private Player singlePlayer;
 	private String version;
@@ -79,7 +80,8 @@ public class LevelDat {
 								spawnPosition.z = 0;
 							}
 							
-							spawnDimension = Dimension.byId(NbtUtil.getString(spawnTag, "dimension", Dimension.OVERWORLD.getId()));
+							spawnDimensionId = NbtUtil.getString(spawnTag, "dimension", Dimension.OVERWORLD.getId());
+							spawnDimension = Dimension.byId(spawnDimensionId);
 						},
 						() -> {
 							log.info("No spawn CompoundTag found in level.dat, using SpawnX, SpawnY and SpawnZ instead");

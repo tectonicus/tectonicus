@@ -8,6 +8,7 @@ async function createLayer(tileIndex) {
     const stop = new Error('Stop before creating viewer controls');
     let layer;
     function TileLayer() {}
+    TileLayer.prototype.options = {pane: "tilePane", tileSize: 256};
     TileLayer.prototype._isValidTile = coords => coords.z >= 0;
     TileLayer.extend = definition => {
         function Tectonicus(...args) {
@@ -21,7 +22,9 @@ async function createLayer(tileIndex) {
     };
     const map = {setView() { return this; }};
     const context = {
-        L: {map: () => map, CRS: {Simple: {}}, TileLayer},
+        L: {map: () => map, CRS: {Simple: {}}, TileLayer,
+            setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },
+            control: {attribution: () => ({setPrefix() { return this; }, addTo() { return this; }})}},
         maxZoom: 2,
         window: new EventTarget(),
         containersMainAsync: async () => {},
@@ -48,6 +51,8 @@ test('viewer skips outside tiles and holes while allowing range endpoints at eve
     assert.equal(layer._isValidTile({x: -18, y: -3, z: 1}), false);
     assert.equal(layer._isValidTile({x: -1, y: 2, z: 2}), true);
     assert.equal(layer._isValidTile({x: -1, y: 2, z: 3}), false);
+    assert.equal(layer.options.pane, 'tilePane');
+    assert.equal(layer.options.tileSize, 256);
     assert.equal(layer.getTileUrl({x: -18, y: -3, z: 0}), 'Map0/LayerA/Zoom0/-2/-3/tile_-18_-3.webp');
 });
 

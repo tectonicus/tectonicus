@@ -79,7 +79,7 @@ function CreateResetViewButton(map) {
 }
 
 // Creates a toggle box to turn on and off a set of markers
-function CreateToggleControl(text, image, markers, startEnabled) {
+function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 	let toggleControl = L.Control.extend({
 		options: {
 			position: 'topright'
@@ -88,7 +88,7 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 		onAdd: function (map) {
 			let container = L.DomUtil.create('input', 'leaflet-bar leaflet-control leaflet-control-custom button');
 			container.type = "image";
-			container.src = image;
+			container.src = worldImageUrl(image);
 			container.title = text;
 			container.style.padding = '5px';
 			container.style.width = '34px';
@@ -97,6 +97,9 @@ function CreateToggleControl(text, image, markers, startEnabled) {
 
 			container.onclick = function () {
 				this.checked = !this.checked;
+                if (stateKey) {
+                    setMarkerVisibility(stateKey, this.checked);
+                }
 
 				SetToggleBg(this);
 
@@ -142,9 +145,38 @@ function updateLinkUrl(currentLayer) {
 
     // Update the current URL without reloading or adding browser history entries.
     let fragment = '';
-    fragment += 'layer=' + currentLayer.layerId;
+    fragment += 'layer=' + encodeURIComponent(currentLayer.urlId);
     fragment += '&x=' + Math.round(worldCent.x);
     fragment += '&z=' + Math.round(worldCent.z);
     fragment += '&zoom=' + mymap.getZoom();
     window.history.replaceState(window.history.state, '', '#' + fragment);
+}
+
+// A world selector is created only when at least two saves are configured.
+function CreateWorldControl(worlds, selectedWorldId, onChange) {
+    const WorldControl = L.Control.extend({
+        options: {position: 'topright'},
+        onAdd: function() {
+            const container = L.DomUtil.create('div', 'leaflet-bar world-control');
+            const label = L.DomUtil.create('label', '', container);
+            label.textContent = 'World ';
+            const select = L.DomUtil.create('select', '', label);
+            select.setAttribute('aria-label', 'World');
+            for (const [id, layers] of worlds) {
+                const option = L.DomUtil.create('option', '', select);
+                option.value = id;
+                option.textContent = layers[0].worldName;
+            }
+            select.value = selectedWorldId;
+            select.onchange = () => onChange(select.value);
+            this.select = select;
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.disableScrollPropagation(container);
+            return container;
+        },
+        setWorld: function(id) {
+            this.select.value = id;
+        }
+    });
+    return new WorldControl();
 }

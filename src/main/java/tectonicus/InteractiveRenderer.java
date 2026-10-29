@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.configuration.Configuration;
-import tectonicus.configuration.MutableViewConfig;
+import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.PrimitiveType;
 import tectonicus.rasteriser.Rasteriser;
@@ -204,7 +204,7 @@ public class InteractiveRenderer {
 	}
 	
 	public void display(World world) {
-		if (world.getSpawnDimension() == world.getDimension()) {
+		if (world.getLevelDat().getSpawnDimensionId().equals(world.getDimensionInfo().name())) {
 			orthoCamPosition.x = world.getSpawnPosition().x;
 			orthoCamPosition.y = world.getSpawnPosition().y + (float) (world.getWorldInfo().sectionArrayOffset() ? 64 : 0);
 			orthoCamPosition.z = world.getSpawnPosition().z;
@@ -253,7 +253,7 @@ public class InteractiveRenderer {
 				Vector3f lookAt = new Vector3f(eye.x + forward.x, eye.y + forward.y, eye.z + forward.z);
 			*/
 				Viewpoint view = ViewUtil.findView(new tectonicus.world.Sign(perspectiveSign));
-				MutableViewConfig viewConfig = new MutableViewConfig();
+				ViewConfig viewConfig = new ViewConfig();
 				viewConfig.setViewDistance(300);
 				perspectiveCamera = ViewUtil.createCamera(rasteriser, view, viewConfig);
 				

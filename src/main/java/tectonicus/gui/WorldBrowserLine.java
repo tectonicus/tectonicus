@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -16,7 +16,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 
 import tectonicus.Minecraft;
-import tectonicus.configuration.MutableConfiguration;
+import tectonicus.configuration.Configuration;
 
 public class WorldBrowserLine
 {
@@ -65,10 +65,10 @@ public class WorldBrowserLine
 		return Minecraft.isValidWorldDir(worldDir.toPath());
 	}
 	
-	public void apply(MutableConfiguration config)
+	public void apply(Configuration config)
 	{
 		File worldDir = line.getFile();
-		config.getMap(0).setWorldDir(worldDir);
+		config.getDimensionConfig(0).setWorldDir(worldDir);
 	}
 	
 	private void onInternalFileChanged()

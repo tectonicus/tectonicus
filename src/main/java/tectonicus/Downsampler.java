@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.TileCache;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
-import tectonicus.configuration.Layer;
+import tectonicus.configuration.LayerConfig;
 import tectonicus.util.ImageUtils;
 
 import javax.imageio.ImageIO;
@@ -45,7 +45,7 @@ public class Downsampler {
 		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(64), new ResubmitHandler());
 	}
 	
-	public void downsample(File inputDir, File outputDir, HddTileList tiles, Layer layer, final int tileWidth, final int tileHeight, ProgressListener progressListener, TileCache tileCache, int zoomLevel) {
+	public void downsample(File inputDir, File outputDir, HddTileList tiles, LayerConfig layer, final int tileWidth, final int tileHeight, ProgressListener progressListener, TileCache tileCache, int zoomLevel) {
 		int count = 0;
 		
 		Shared state = new Shared(inputDir, outputDir, layer.getImageFormat(), layer.getImageCompressionLevel(), layer.getBackgroundColorRGB(), tileWidth, tileHeight, zoomLevel);
