@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.PlayerIconAssembler;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.raw.CustomNameTag;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.EnchantmentsTag;
 import tectonicus.raw.Item;
@@ -30,11 +31,30 @@ import java.awt.image.Raster;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class OutputResourcesUtilTest {
 	@TempDir Path directory;
+
+	@Test
+	void exportsEnderChestMarkerTypeAndPositionAlongsideOrdinaryChests() throws Exception {
+		var chests = new ConcurrentLinkedQueue<ContainerEntity>();
+		chests.add(new ContainerEntity(-17, -36, -1, 15, 28, 15, "Ender Chest", "", false,
+				"south", "single", List.of(), true));
+		chests.add(new ContainerEntity(8, 64, 8, 8, 64, 8, "Chest", "", false,
+				"south", "single", List.of(new Item("minecraft:stone", 0, 32, 0, List.of()))));
+		Path output = directory.resolve("chests.js");
+		OutputResourcesUtil.outputChests(output.toFile(), new DimensionConfig("Overworld"), chests);
+		String javascript = Files.readString(output);
+		assertTrue(javascript.contains("enderChest: true"));
+		assertEquals(1, javascript.split("enderChest: true", -1).length - 1);
+		assertTrue(javascript.contains("worldPos: new WorldCoord(-16.5, -36.0, -0.5)"));
+		assertTrue(javascript.contains("name: \"Ender Chest\""));
+		assertTrue(javascript.contains("name: \"Chest\""));
+		assertTrue(javascript.contains("id: \"minecraft:stone\""));
+	}
 
 	@Test
 	void exportsPlayerInventoryWithItemDetailsAndEscapedNames() throws Exception {

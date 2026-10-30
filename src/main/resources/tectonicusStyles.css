@@ -432,6 +432,53 @@ html, body, #map {
     transform-origin: top left;
 }
 
+.marker_copy_controls {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    min-width: 102px;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    border-top: 1px solid #ccc;
+    padding-top: 8px;
+}
+
+.marker_copy_controls button {
+    box-sizing: border-box;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+    color: #333;
+    background: #f5f5f5;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+}
+
+.marker_copy_controls button:hover {
+    background: #e5e5e5;
+    border-color: #888;
+}
+
+.marker_copy_controls button:focus-visible {
+    outline: 2px solid #5265b5;
+    outline-offset: 2px;
+}
+
+.marker_copy_controls svg {
+    width: 18px;
+    height: 18px;
+}
+
+.marker_copy_status {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 12px;
+}
+
 .chest_name {
     top: 6px;
     left: 7px;

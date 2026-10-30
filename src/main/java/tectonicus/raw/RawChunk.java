@@ -703,7 +703,9 @@ public class RawChunk {
 							}
 						}
 						banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
-					} else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box") || id.equals("minecraft:barrel")) {
+					} else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box") || id.equals("minecraft:barrel")
+							|| id.equals("EnderChest") || id.equals("minecraft:ender_chest")) {
+						boolean enderChest = id.equals("EnderChest") || id.equals("minecraft:ender_chest");
 						BlockProperties blockState = getBlockState(localX, localY, localZ);
 						String facing = null;
 						String type = null;
@@ -716,6 +718,10 @@ public class RawChunk {
 						String name;
 						if (customName == null) {
 							switch (id) {
+								case "EnderChest":
+								case "minecraft:ender_chest":
+									name = "Ender Chest";
+									break;
 								case "minecraft:barrel":
 									name = "Barrel";
 									break;
@@ -771,7 +777,7 @@ public class RawChunk {
 							}
 						}
 						
-						chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest, facing, type, items));
+						chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest, facing, type, items, enderChest));
 					} else if (id.equals("minecraft:bed")) {
 						final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
 						int colorVal = 0;

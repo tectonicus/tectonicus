@@ -344,7 +344,7 @@ public class TileRenderer
 			
 			// Output world stats
 			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getJavascriptId(), world.getBlockTypeRegistry());
-			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getJavascriptId());
+			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getJavascriptId(), world.getWorldInfo().version());
 			
 			// Output world vectors for this camera config
 			worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,

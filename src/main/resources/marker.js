@@ -26,7 +26,7 @@ let controlState = {
 
 }
 
-function createPlayerMarker(player, pos) {
+function createPlayerMarker(player, pos, layer = activeBaseLayer) {
 	let icon = L.icon({
 		iconUrl: player.icon,
 		iconSize: [40, 40],
@@ -37,7 +37,92 @@ function createPlayerMarker(player, pos) {
 		//shadowAnchor: [22, 94]
 	});
 
-	return L.marker(pos, { icon: icon }).bindPopup(getPlayerHtml(player), {maxWidth: 380}).bindTooltip(player.name);
+	return bindMarkerPopup(L.marker(pos, { icon: icon }), getPlayerHtml(player), player.worldPos, layer, {maxWidth: 380}).bindTooltip(player.name);
+}
+
+function bindMarkerPopup(marker, html, worldPos, layer, options) {
+	return marker.bindPopup(html + markerCopyControls(worldPos, layer), options);
+}
+
+function markerTeleportCommand(worldPos, layer) {
+	const x = Math.floor(worldPos.x) + 0.5;
+	const y = Math.floor(worldPos.y) + 1;
+	const z = Math.floor(worldPos.z) + 0.5;
+	const destination = `${x} ${y} ${z}`;
+	const dimension = layer.dimensionId;
+	return layer.worldStats?.minecraftVersion >= 13 && /^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(dimension || '')
+		? `/execute in ${dimension} run tp @s ${destination}`
+		: `/tp ${destination}`;
+}
+
+function markerShareLink(worldPos, layer) {
+	const url = new URL(window.location.href);
+	// Links use the map's reference height. Project the marker onto that plane
+	// so elevated markers land at the same screen position after opening a link.
+	const point = layer.projection.worldToMap(worldPos);
+	const position = layer.projection.mapToWorld({lat: point[0], lng: point[1]});
+	url.hash = new URLSearchParams({
+		layer: layer.urlId,
+		x: Math.round(position.x), z: Math.round(position.z),
+		zoom: Math.min(mymap.getZoom(), layer.maxZoom ?? maxZoom)
+	}).toString();
+	return url.href;
+}
+
+function markerCopyControls(worldPos, layer) {
+	if (!layer || !worldPos || !['x', 'y', 'z'].every(axis => Number.isFinite(worldPos[axis]))) return '';
+	const coords = ['x', 'y', 'z'].map(axis => Math.floor(worldPos[axis])).join(' ');
+	const command = markerTeleportCommand(worldPos, layer);
+	const icon = paths => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths + '</svg>';
+	const coordsIcon = icon('<circle cx="12" cy="12" r="7"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="1"/>');
+	const teleportIcon = icon('<path d="m5 7 5 5-5 5m8 0h6"/>');
+	const linkIcon = icon('<path d="m10 13 4-4m-6 1-2 2a4 4 0 0 0 6 6l2-2m2-2 2-2a4 4 0 0 0-6-6l-2 2"/>');
+	return '<div class="marker_copy_controls">'
+		+ `<button type="button" data-copy-text="${escapeHtml(coords)}" title="Copy coords" aria-label="Copy coords" onclick="copyMarkerValue(this)">${coordsIcon}</button>`
+		+ `<button type="button" data-copy-text="${escapeHtml(command)}" title="Copy teleport command (above this position)" aria-label="Copy teleport command" onclick="copyMarkerValue(this)">${teleportIcon}</button>`
+		+ `<button type="button" data-copy-layer="${escapeHtml(layer.layerId)}" data-copy-position="${escapeHtml(JSON.stringify(worldPos))}" title="Copy map link" aria-label="Copy map link" onclick="copyMarkerValue(this)">${linkIcon}</button>`
+		+ '<span class="marker_copy_status" role="status" aria-live="polite"></span></div>';
+}
+
+async function copyMarkerValue(button) {
+	const status = button.parentElement.querySelector('.marker_copy_status');
+	try {
+		const text = button.dataset.copyText ?? markerShareLink(
+			JSON.parse(button.dataset.copyPosition), tileLayers.get(button.dataset.copyLayer));
+		let copied = false;
+		try {
+			if (window.navigator?.clipboard?.writeText) {
+				await window.navigator.clipboard.writeText(text);
+				copied = true;
+			}
+		} catch (error) {
+			// Local files and HTTP maps may deny Clipboard API access.
+		}
+		if (!copied) {
+			const field = document.createElement('textarea');
+			field.value = text;
+			field.style.cssText = 'position:fixed;left:-9999px;top:0';
+			document.body.appendChild(field);
+			try {
+				field.focus();
+				field.select();
+				copied = !!document.execCommand?.('copy');
+			} catch (error) {
+				copied = false;
+			} finally {
+				field.remove();
+				button.focus();
+			}
+		}
+		if (!copied) {
+			window.prompt('Copy this text:', text);
+			status.textContent = 'Text ready to copy';
+		} else {
+			status.textContent = 'Copied!';
+		}
+	} catch (error) {
+		status.textContent = 'Could not copy';
+	}
 }
 
 function getPlayerHtml(player) {

@@ -204,6 +204,12 @@ function renderMinecraftText(text, className) {
 }
 
 function createChestPopup(chest) {
+	if (chest.enderChest) {
+		const pos = chest.worldPos;
+		return '<div style="text-align:center">Ender Chest</div><br/> position ('
+			+ Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + ')';
+	}
+
         let markerPopup = chest.large
                 ? '<div class="chest_container large"><div class="chest_scaler"><img src="' + worldImageUrl('LargeChest.png') + '" />'
                 : '<div class="chest_container"><div class="chest_scaler"><img src="' + worldImageUrl('SmallChest.png') + '" />';

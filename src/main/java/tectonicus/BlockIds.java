@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -108,6 +108,7 @@ public class BlockIds
 	//public static final int REDSTONE_REPEATER_OFF	= 93;
 	//public static final int REDSTONE_REPEATER_ON	= 94;
 	public static final int END_STONE				= 121;
+	public static final int ENDER_CHEST				= 130;
 	public static final int COMMAND_BLOCK			= 137;
 	public static final int WOOD_BUTTON				= 143;
 	public static final int TRAPPED_CHEST			= 146;

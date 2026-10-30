@@ -506,6 +506,9 @@ public class OutputResourcesUtil {
                                 items += "\t\t]";
                                 
 				chestArgs.put("worldPos", "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")");
+				if (entity.isEnderChest()) {
+					chestArgs.put("enderChest", "true");
+				}
                                 chestArgs.put("name", "\"" + entity.getCustomName() + "\"");
                                 chestArgs.put("items", items);
                                 if ("right".equals(entity.getType())) {
@@ -839,10 +842,14 @@ public class OutputResourcesUtil {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			if (texturePack.getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
 				itemRenderer.renderBlockOld(new File(imagesDir, "Chest.png"), registryOld, texturePack, BlockIds.CHEST, 5);
+				if (texturePack.getVersion().getNumVersion() >= Version.VERSION_4.getNumVersion()) {
+					itemRenderer.renderBlockOld(new File(imagesDir, "EnderChest.png"), registryOld, texturePack, BlockIds.ENDER_CHEST, 5);
+				}
 			} else {
 				Map<String, String> properties = new HashMap<>();
 				properties.put("facing", "south");
 				itemRenderer.renderBlock(new File(imagesDir, "Chest.png"), registryOld, registry, texturePack, Block.CHEST, new BlockProperties(properties));
+				itemRenderer.renderBlock(new File(imagesDir, "EnderChest.png"), registryOld, registry, texturePack, Block.ENDER_CHEST, new BlockProperties(properties));
 			}
 
 			File bedIcon = new File(imagesDir, "Bed.png");

@@ -146,6 +146,7 @@ async function mainAsync()
                 let tileLayer = new L.TileLayer.Tectonicus(tecMap.outputId || tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
                     tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, tecMap.controlState || controlState, layer.tileIndex);
                 tileLayer.worldId = tecMap.worldId || 'World0';
+				tileLayer.dimensionId = tecMap.dimensionId;
                 tileLayer.worldName = tecMap.worldName || 'World';
                 tileLayer.images = tecMap.images || 'Images/';
                 tileLayer.localizationsUrl = tecMap.localizations || 'Scripts/localizations.json';
@@ -531,7 +532,7 @@ function refreshSpawnMarker(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-        let marker = L.marker(point, { icon: myIcon }).bindPopup('<p class="center">' + spawn.x + ', ' + spawn.y + ', ' + spawn.z + '</p>').bindTooltip("Spawn Point");
+        let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }), '<p class="center">' + spawn.x + ', ' + spawn.y + ', ' + spawn.z + '</p>', spawn, layer).bindTooltip("Spawn Point");
 
 		// Add marker to map if spawn is initially visible
 		if (markersVisible) {
@@ -560,8 +561,8 @@ function refreshSignMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = L.marker(point, { icon: myIcon }).bindPopup(
-			'<pre><center>' + sign.text1 + '<br/>' + sign.text2 + '<br/>' + sign.text3 + '<br/>' + sign.text4 + '</center></pre>');
+		let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }),
+			'<pre><center>' + sign.text1 + '<br/>' + sign.text2 + '<br/>' + sign.text3 + '<br/>' + sign.text4 + '</center></pre>', sign.worldPos, layer);
 
 		// Add marker to map if signs are initially visible
 		if (markersVisible) {
@@ -603,7 +604,7 @@ function refreshViewMarkers(layer, markersVisible) {
 		html += '</center>';
 		html += '';
 
-		let marker = L.marker(point, { icon: icon }).bindPopup(html, {maxWidth: "auto"});
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), html, view.worldPos, layer, {maxWidth: "auto"});
 
 		// Add marker to map if chests are initially visible
 		if (markersVisible) {
@@ -619,7 +620,7 @@ function loadIcon(src, player, pos, markersVisible, layer) {
 	icon.onload = function () {
         if (layer !== activeBaseLayer) return;
 		player.icon = src;
-		var marker = createPlayerMarker(player, pos);
+		var marker = createPlayerMarker(player, pos, layer);
 
 		// Add marker to map if players are initially visible
 		if (controlState.playerControlChecked) {
@@ -631,7 +632,7 @@ function loadIcon(src, player, pos, markersVisible, layer) {
 	icon.onerror = function () {
         if (layer !== activeBaseLayer) return;
 		player.icon = worldImageUrl('PlayerIcons/Tectonicus_Default_Player_Icon.png', layer);
-		var marker = createPlayerMarker(player, pos);
+		var marker = createPlayerMarker(player, pos, layer);
 
 		// Add marker to map if players are initially visible
 		if (controlState.playerControlChecked) {
@@ -676,7 +677,7 @@ function refreshBedMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">' + bed.playerName + "'s bed</p>");
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + bed.playerName + "'s bed</p>", bed.worldPos, layer);
 
 		// Add marker to map if beds are initially visible
 		if (markersVisible) {
@@ -705,7 +706,7 @@ function refreshRespawnAnchorMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">' + anchor.playerName + "'s respawn anchor</p>");
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + anchor.playerName + "'s respawn anchor</p>", anchor.worldPos, layer);
 
 		// Add marker to map if beds are initially visible
 		if (markersVisible) {
@@ -739,11 +740,11 @@ function refreshBeaconMarkers(layer, markersVisible) {
 		    let primaryEffect = beacon.primaryEffect !== "none" ? localize("effect.minecraft." + beacon.primaryEffect) : "None";
 		    let secondaryEffect = beacon.secondaryEffect !== "none" ? localize("effect.minecraft." + beacon.secondaryEffect) : "None";
 
-		    marker = L.marker(point, { icon: icon }).bindPopup(`<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="${worldImageUrl('beacon_level_' + parseInt(beacon.levels) + '.png', layer)}" width="64" height="64" />
+		    marker = bindMarkerPopup(L.marker(point, { icon: icon }), `<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="${worldImageUrl('beacon_level_' + parseInt(beacon.levels) + '.png', layer)}" width="64" height="64" />
 		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.primaryEffect + '.png', layer)}" />${primaryEffect}<br />
-		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.secondaryEffect + '.png', layer)}" />${secondaryEffect}</p>`);
+		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.secondaryEffect + '.png', layer)}" />${secondaryEffect}</p>`, beacon.worldPos, layer);
 		} else {
-		    marker = L.marker(point, { icon: icon }).bindPopup('<p class="center">Not Activated</p>');
+		    marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">Not Activated</p>', beacon.worldPos, layer);
 		}
 
 //		let marker = L.marker(point, { icon: icon }).bindPopup('<p style="width:200px; height:64px"><img style=\"float:left; margin:4px;\" src=\"Images/beacon_level_1.png\" width=\"64\" height=\"64\" />Primary Power: <img src="Images/' + beacon.primaryEffect + '.png" alt="' + localize("effect.minecraft." + beacon.primaryEffect)
@@ -777,8 +778,8 @@ function refreshPortalMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = L.marker(point, { icon: icon }).bindPopup(
-			'<div style=\"text-align:center\">Portal</div><br/> position (' + portal.worldPos.x + ', ' + portal.worldPos.y + ', ' + portal.worldPos.z + ')');
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
+			'<div style=\"text-align:center\">Portal</div><br/> position (' + portal.worldPos.x + ', ' + portal.worldPos.y + ', ' + portal.worldPos.z + ')', portal.worldPos, layer);
 
 		// Add marker to map if chests are initially visible
 		if (markersVisible) {
@@ -797,7 +798,7 @@ function refreshChestMarkers(layer, markersVisible) {
 		let point = layer.projection.worldToMap(layer.chests[i].worldPos);
 
 		let icon = L.icon({
-			iconUrl: worldImageUrl('Chest.png', layer),
+			iconUrl: worldImageUrl(layer.chests[i].enderChest ? 'EnderChest.png' : 'Chest.png', layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -807,8 +808,9 @@ function refreshChestMarkers(layer, markersVisible) {
 		});
                 
                 let markerPopup = createChestPopup(layer.chests[i]);
-		let marker = L.marker(point, { icon: icon }).bindPopup(
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
                         markerPopup,
+                        layer.chests[i].worldPos, layer,
                         { maxWidth: "auto" } // Fix for incorrect sizing of the popup
                 );
 

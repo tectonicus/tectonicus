@@ -58,6 +58,7 @@ function createViewer(yOffset = 64) {
         },
         maxZoom: 8,
         window,
+		URL,
         URLSearchParams
     });
     for (const file of ['math.js', 'minecraftProjection.js', 'controls.js', 'marker.js', 'main.js']) {
@@ -85,6 +86,23 @@ function createViewer(yOffset = 64) {
     vm.runInContext('tileLayers.set(layer.layerId, layer); urlLayers.set(layer.urlId, layer); activeBaseLayer = layer;', context);
     return {context, map, layer, vectors, entries, history, state, window};
 }
+
+test('marker links retain query parameters, select the marker layer and center on its projected position', () => {
+    const {context, map, layer, entries} = createViewer();
+    for (const pos of [{x: -16.5, y: -36, z: -0.5}, {x: 100.5, y: 300, z: -80.5}]) {
+        const originalUrl = entries[0].href;
+        const url = new URL(context.markerShareLink(pos, layer));
+        assert.equal(url.search, '?theme=dark');
+        assert.equal(entries[0].href, originalUrl);
+        const params = Object.fromEntries(new URLSearchParams(url.hash.slice(1)));
+        assert.equal(params.layer, layer.urlId);
+        assert.equal(Number(params.zoom), map.zoom);
+        const target = layer.projection.worldToMap(pos);
+        const restored = context.findStartView(params, layer.layerId).startPoint;
+        assert.ok(Math.abs(target[0] - restored[0]) < 0.5);
+        assert.ok(Math.abs(target[1] - restored[1]) < 0.5);
+    }
+});
 
 test('panning and zooming update the URL without adding history entries or losing query parameters', () => {
     const {context, map, entries, history, state} = createViewer();

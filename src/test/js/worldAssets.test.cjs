@@ -19,7 +19,7 @@ function createAssetsViewer(fetch) {
         L: {
             map: () => ({}), CRS: {Simple: {}}, icon: options => options,
             marker(point, options) {
-                const marker = {point, options, addTo() { return this; }, remove() {},
+                const marker = {point, options, addTo() { this.added = true; return this; }, remove() { this.removed = true; },
                     bindPopup(html) { this.html = html; return this; }, bindTooltip() { return this; }};
                 markers.push(marker);
                 return marker;
@@ -33,6 +33,7 @@ function createAssetsViewer(fetch) {
     }
     function selectWorld(index) {
         context.selectedLayer = {
+            layerId: `World${index}.day`,
             images: `World${index}/Images/`, localizationsUrl: `Scripts/World${index}/localizations.json`,
             projection: {worldToMap: point => point},
             signs: [{worldPos: {x: 0, y: 64, z: 0}, text1: 'Sign'}]
@@ -103,6 +104,32 @@ test('chest images, item masks, overlays, player status and markers use the sele
         viewer.context.refreshSignMarkers(viewer.context.selectedLayer, false);
         assert.equal(viewer.markers.at(-1).options.icon.iconUrl, prefix + 'Sign.png');
         assert.ok(!html.includes(`World${1 - index}/Images/`));
+    }
+});
+
+test('ender chest markers use world icons, show block coordinates and follow the chest toggle', () => {
+    const viewer = createAssetsViewer();
+    for (const index of [0, 1, 0]) {
+        viewer.selectWorld(index);
+        const layer = viewer.context.selectedLayer;
+        layer.chests = [
+            {enderChest: true, worldPos: {x: -16.5, y: -36, z: -0.5}},
+            {name: 'Chest', items: [], worldPos: {x: 8.5, y: 64, z: 8.5}}
+        ];
+        viewer.context.refreshChestMarkers(layer, false);
+        const [enderChest, chest] = viewer.markers.slice(-2);
+        assert.equal(enderChest.options.icon.iconUrl, `World${index}/Images/EnderChest.png`);
+        assert.equal(chest.options.icon.iconUrl, `World${index}/Images/Chest.png`);
+        assert.equal(enderChest.point, layer.chests[0].worldPos);
+        assert.match(enderChest.html, /Ender Chest/);
+        assert.match(enderChest.html, /position \(-17, -36, -1\)/);
+        assert.doesNotMatch(enderChest.html, /inventory_slot|SmallChest.png|undefined/);
+        assert.match(chest.html, /SmallChest.png/);
+        assert.equal(viewer.evaluate('chestMarkers.length'), 2);
+        assert.ok(!enderChest.added && !chest.added);
+        viewer.context.refreshChestMarkers(layer, true);
+        assert.ok(enderChest.removed && chest.removed);
+        assert.ok(viewer.markers.slice(-2).every(marker => marker.added));
     }
 });
 

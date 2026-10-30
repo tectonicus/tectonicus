@@ -114,6 +114,7 @@
 
 		<portals filter="all / none" />
 
+		<!-- Includes ender chest markers with coordinate popups, controlled by the chest toggle. -->
 		<chests filter="none / all / player" />
 
 		<beacons filter="all / activated / none" />

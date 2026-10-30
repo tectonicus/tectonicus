@@ -167,6 +167,41 @@ class RawChunkTest {
 		assertTrue(markers.isEmpty());
 	}
 
+	@ParameterizedTest
+	@CsvSource({"EnderChest,true", "minecraft:ender_chest,true", "minecraft:chest,false"})
+	void chestMarkersIncludeEnderChestsAndRespectChestFilter(String id, boolean enderChest) throws Exception {
+		CompoundTag chest = new CompoundTag("", Map.of(
+				"id", new StringTag("id", id),
+				"x", new IntTag("x", -17), "y", new IntTag("y", 36), "z", new IntTag("z", -1)));
+		boolean legacy = id.equals("EnderChest");
+		Map<String, Tag> chunkTags = new HashMap<>();
+		chunkTags.put("Status", new StringTag("Status", "full"));
+		chunkTags.put("yPos", new IntTag("yPos", -4));
+		String entitiesKey = legacy ? "TileEntities" : "block_entities";
+		String sectionsKey = legacy ? "Sections" : "sections";
+		chunkTags.put(entitiesKey, new ListTag(entitiesKey, CompoundTag.class, List.of(chest)));
+		chunkTags.put(sectionsKey, new ListTag(sectionsKey, CompoundTag.class, List.of()));
+		CompoundTag root = legacy
+				? new CompoundTag("", Map.of("Level", new CompoundTag("Level", chunkTags), "DataVersion", new IntTag("DataVersion", 1343)))
+				: new CompoundTag("", chunkTags);
+		RawChunk chunk = readChunk(root, legacy ? Version.VERSION_12 : Version.VERSION_21);
+		assertEquals(1, chunk.getChests().size());
+		ContainerEntity entity = chunk.getChests().getFirst();
+		assertEquals(enderChest, entity.isEnderChest());
+		assertEquals(enderChest ? "Ender Chest" : "Chest", entity.getCustomName());
+		assertEquals(-17, entity.getX());
+		assertEquals(36, entity.getY());
+		assertEquals(-1, entity.getZ());
+		assertTrue(entity.getItems().isEmpty());
+
+		var markers = new java.util.concurrent.ConcurrentLinkedQueue<ContainerEntity>();
+		tectonicus.util.FindEntityUtil.findChests(chunk, new tectonicus.configuration.filter.ChestFilter(), markers);
+		assertTrue(markers.isEmpty());
+		tectonicus.util.FindEntityUtil.findChests(chunk,
+				new tectonicus.configuration.filter.ChestFilter(tectonicus.configuration.filter.ChestFilterType.PLAYER), markers);
+		assertEquals(List.of(entity), List.copyOf(markers));
+	}
+
 	private RawChunk readChunk(CompoundTag root, Version version) throws Exception {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {
