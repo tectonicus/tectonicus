@@ -51,10 +51,10 @@ test('every positioned marker gets the three copy actions outside its popup cont
         signs: [{worldPos: pos, text1: 'Hello'}], views: [{worldPos: pos, text: 'View'}],
         beds: [{worldPos: pos}], anchors: [{worldPos: pos}], portals: [{worldPos: pos}],
         beacons: [{worldPos: pos, levels: 0}, {worldPos: pos, levels: 4, primaryEffect: 'none', secondaryEffect: 'none'}],
-        chests: [{worldPos: pos, name: 'Chest', items: []}, {worldPos: pos, enderChest: true}]};
+        containers: [{worldPos: pos, name: 'Chest', items: []}, {worldPos: pos, enderChest: true}]};
     vm.runInContext('showSpawn = true;', context);
     for (const refresh of ['SpawnMarker', 'SignMarkers', 'ViewMarkers', 'BedMarkers',
-        'RespawnAnchorMarkers', 'BeaconMarkers', 'PortalMarkers', 'ChestMarkers']) {
+        'RespawnAnchorMarkers', 'BeaconMarkers', 'PortalMarkers', 'ContainerMarkers']) {
         context['refresh' + refresh](layer, false);
     }
     context.createPlayerMarker({name: 'Alex', worldPos: pos, donation: ''}, [0, 0], layer);

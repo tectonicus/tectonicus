@@ -10,7 +10,7 @@ var bedsInitiallyVisible = {{bedsInitiallyVisible}};
 var respawnAnchorsInitiallyVisible = {{respawnAnchorsInitiallyVisible}};
 var spawnInitiallyVisible = {{spawnInitiallyVisible}};
 var viewsInitiallyVisible = {{viewsInitiallyVisible}};
-var chestsInitiallyVisible = {{chestsInitiallyVisible}};
+var containersInitiallyVisible = {{containersInitiallyVisible}};
 var beaconsInitiallyVisible = {{beaconsInitiallyVisible}};
 
 let controlState = {
@@ -21,7 +21,7 @@ let controlState = {
 	portalControlChecked: portalsInitiallyVisible,
 	bedControlChecked: bedsInitiallyVisible,
 	respawnAnchorControlChecked: respawnAnchorsInitiallyVisible,
-	chestControlChecked: chestsInitiallyVisible,
+	containerControlChecked: containersInitiallyVisible,
 	beaconControlChecked: beaconsInitiallyVisible,
 
 }

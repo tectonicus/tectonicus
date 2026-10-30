@@ -53,7 +53,7 @@ var respawnAnchorToggleControl = null;
 var beaconToggleControl = null;
 var portalToggleControl = null;
 var spawnToggleControl = null;
-var chestToggleControl = null;
+var containerToggleControl = null;
 
 async function mainAsync()
 {        
@@ -107,7 +107,7 @@ async function mainAsync()
         getAttribution: function() {
             return '<a href="https://github.com/tectonicus/tectonicus">Tectonicus</a> - <a tabindex="0" id="mapInfo">' + escapeHtml(this.mapName) + '</a>';
         },
-        initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, chests, views, portals, beds, anchors, beacons, worldVectors, projection,
+        initialize: function(mapId, layerId, dimension, imageFormat, mapName, backgroundColor, signs, players, containers, views, portals, beds, anchors, beacons, worldVectors, projection,
             blockStats, worldStats, viewPosition, controlState, tileIndex) {
                 this.mapId = mapId;
                 this.layerId = layerId;
@@ -118,7 +118,7 @@ async function mainAsync()
                 this.backgroundColor = backgroundColor;
                 this.signs = signs;
                 this.players = players;
-                this.chests = chests;
+                this.containers = containers;
                 this.views = views;
                 this.portals = portals;
                 this.beds = beds;
@@ -129,7 +129,7 @@ async function mainAsync()
                 this.blockStats = blockStats;
                 this.worldStats = worldStats;
                 this.viewPosition = viewPosition;
-                this.controlState = controlState;
+                this.controlState = normalizeContainerVisibility(controlState);
                 this.tileIndex = tileIndex;
             }
         });
@@ -144,7 +144,7 @@ async function mainAsync()
                             let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
 
                 let tileLayer = new L.TileLayer.Tectonicus(tecMap.outputId || tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
-                    tecMap.chests, tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, tecMap.controlState || controlState, layer.tileIndex);
+                    tecMap.containers ?? tecMap.chests ?? [], tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, tecMap.controlState || controlState, layer.tileIndex);
                 tileLayer.worldId = tecMap.worldId || 'World0';
 				tileLayer.dimensionId = tecMap.dimensionId;
                 tileLayer.worldName = tecMap.worldName || 'World';
@@ -209,7 +209,7 @@ async function mainAsync()
         beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconMarkers, beaconsInitiallyVisible, 'beaconControlChecked');
         portalToggleControl = CreateToggleControl('portals', 'Portal.png', portalMarkers, portalsInitiallyVisible, 'portalControlChecked');
         spawnToggleControl = CreateToggleControl('spawn', 'SpawnCompass.png', spawnMarkers, spawnInitiallyVisible, 'spawnControlChecked');
-        chestToggleControl = CreateToggleControl('chests', 'Chest.png', chestMarkers, chestsInitiallyVisible, 'chestControlChecked');
+        containerToggleControl = CreateToggleControl('containers', 'Chest.png', containerMarkers, containersInitiallyVisible, 'containerControlChecked');
 
         // Rebind the map information tooltip when attribution changes with the layer.
         let attributionContainer = mymap.attributionControl.getContainer();
@@ -235,7 +235,7 @@ portalMarkers = [];
 bedMarkers = [];
 respawnAnchorMarkers = [];
 beaconMarkers = [];
-chestMarkers = [];
+containerMarkers = [];
 
 function onBaseLayerChange(e) {
     changingBaseLayer = true;
@@ -307,10 +307,10 @@ function onBaseLayerChange(e) {
         beaconToggleControl.setChecked(controlState.beaconControlChecked);
     }
 
-    chestToggleControl.remove();
-    if (e.layer.chests.length != 0) {
-        mymap.addControl(chestToggleControl);
-        chestToggleControl.setChecked(controlState.chestControlChecked);
+    containerToggleControl.remove();
+    if (e.layer.containers.length != 0) {
+        mymap.addControl(containerToggleControl);
+        containerToggleControl.setChecked(controlState.containerControlChecked);
     }
 
     // Marker controls are rebuilt on layer changes; keep navigation below their row.
@@ -347,7 +347,7 @@ function onBaseLayerChange(e) {
     refreshBedMarkers(e.layer, controlState.bedControlChecked);
     refreshRespawnAnchorMarkers(e.layer, controlState.respawnAnchorControlChecked);
     refreshBeaconMarkers(e.layer, controlState.beaconControlChecked);
-    refreshChestMarkers(e.layer, controlState.chestControlChecked);
+    refreshContainerMarkers(e.layer, controlState.containerControlChecked);
 
 	compassControl.remove();
 	compassControl = CreateCompassControl(e.layer.compassUrl);
@@ -385,6 +385,15 @@ function onBaseLayerChange(e) {
     onProjectionChanged();
 }
 
+
+// Normalize old map exports at the boundary; the viewer uses container names internally.
+function normalizeContainerVisibility(state = {}) {
+    const result = {...state};
+    result.containerControlChecked = state.containerControlChecked ?? state.chestControlChecked
+        ?? (typeof containersInitiallyVisible === 'undefined' ? false : containersInitiallyVisible);
+    delete result.chestControlChecked;
+    return result;
+}
 
 function setMarkerVisibility(key, visible) {
     controlState[key] = visible;
@@ -606,7 +615,7 @@ function refreshViewMarkers(layer, markersVisible) {
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), html, view.worldPos, layer, {maxWidth: "auto"});
 
-		// Add marker to map if chests are initially visible
+		// Add marker to map if containers are initially visible
 		if (markersVisible) {
 			marker.addTo(mymap);
 		}
@@ -781,7 +790,7 @@ function refreshPortalMarkers(layer, markersVisible) {
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
 			'<div style=\"text-align:center\">Portal</div><br/> position (' + portal.worldPos.x + ', ' + portal.worldPos.y + ', ' + portal.worldPos.z + ')', portal.worldPos, layer);
 
-		// Add marker to map if chests are initially visible
+		// Add marker to map if containers are initially visible
 		if (markersVisible) {
 			marker.addTo(mymap);
 		}
@@ -790,15 +799,15 @@ function refreshPortalMarkers(layer, markersVisible) {
 	}
 }
 
-function refreshChestMarkers(layer, markersVisible) {
-	destroyMarkers(chestMarkers);
+function refreshContainerMarkers(layer, markersVisible) {
+	destroyMarkers(containerMarkers);
         
- 	// Chest markers
-	for (i in layer.chests) {
-		let point = layer.projection.worldToMap(layer.chests[i].worldPos);
+	// Container markers
+	for (i in layer.containers) {
+		let point = layer.projection.worldToMap(layer.containers[i].worldPos);
 
 		let icon = L.icon({
-			iconUrl: worldImageUrl(layer.chests[i].enderChest ? 'EnderChest.png' : 'Chest.png', layer),
+			iconUrl: worldImageUrl(containerMarkerIcon(layer.containers[i]), layer),
 			// iconSize: [30, 30],
 			iconAnchor: [17, 20],
 			popupAnchor: [0, -10],
@@ -807,19 +816,19 @@ function refreshChestMarkers(layer, markersVisible) {
 			//shadowAnchor: [22, 94]
 		});
                 
-                let markerPopup = createChestPopup(layer.chests[i]);
+                let markerPopup = createContainerPopup(layer.containers[i]);
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
                         markerPopup,
-                        layer.chests[i].worldPos, layer,
+                        layer.containers[i].worldPos, layer,
                         { maxWidth: "auto" } // Fix for incorrect sizing of the popup
                 );
 
-		// Add marker to map if chests are initially visible
+		// Add marker to map if containers are initially visible
 		if (markersVisible) {
 			marker.addTo(mymap);
 		}
 
-		chestMarkers.push(marker);
+		containerMarkers.push(marker);
 	}
 }
 

@@ -170,7 +170,7 @@ public class ItemRenderer
 
 	public void renderBlockOld(File outFile, BlockTypeRegistry registry, TexturePack texturePack, int blockId, int blockData) throws Exception {
 		RawChunk rawChunk = new RawChunk();
-		rawChunk.setBlockId(0, 0, 0, (byte) blockId);
+		rawChunk.setBlockId(0, 0, 0, blockId);
 		rawChunk.setBlockData(0, 0, 0, (byte) blockData);
 		BlockType type = registry.find(blockId, blockData);
 		ItemContext context = new ItemContext(texturePack, registry, null);
@@ -229,12 +229,26 @@ public class ItemRenderer
         }
 
 	public void renderBlock(File outFile, BlockTypeRegistry registryOld, BlockRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
-		String blockName = block.getName();
+		renderBlock(outFile, registryOld, registry, texturePack, block.getName(), properties);
+	}
+
+	public void renderBlock(File outFile, BlockTypeRegistry registryOld, BlockRegistry registry, TexturePack texturePack, String blockName, BlockProperties properties) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		rawChunk.setBlockState(0, 0, 0, properties);
 		BlockType type = registryOld.find(blockName);
 		ItemContext context = new ItemContext(texturePack, registryOld, registry);
+		if (type instanceof tectonicus.blockTypes.Air) {
+			var block = registry.getBlock(blockName);
+			properties = block.getPropertiesWithDefaults(properties);
+			rawChunk.setBlockState(0, 0, 0, properties);
+			Geometry geometry = new Geometry(rasteriser);
+			rawChunk.setBlockLight(0, 0, 0, (byte) 16);
+			rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+			for (var model : block.getModels(properties, 0, 0, 0)) model.createGeometry(0, 0, 0, context, rawChunk, geometry);
+			renderItem(new ItemGeometry(geometry, new BoundingBox(new Vector3f(), 1, 1, 1)), outFile, 32, 2, getAngleRad(45), getAngleRad(25));
+			return;
+		}
 		renderBlock(outFile, registryOld, context, rawChunk, type, null, 32);
 	}
  

@@ -149,7 +149,7 @@ public class World implements BlockContext
 	private final PlayerSkinCache playerSkinCache;
 	
 	@Getter
-	private final ConcurrentLinkedQueue<ContainerEntity> chests;
+	private final ConcurrentLinkedQueue<ContainerEntity> containers;
 	@Getter
 	private final Queue<BedEntity> beds;
 	@Getter
@@ -312,7 +312,7 @@ public class World implements BlockContext
 
 		players = loadPlayers(worldDir, playerSkinCache, levelDat.getSinglePlayer());
 		
-		chests = new ConcurrentLinkedQueue<>();
+		containers = new ConcurrentLinkedQueue<>();
 		beds = new ConcurrentLinkedQueue<>();
 		beacons = new ConcurrentLinkedQueue<>();
 		

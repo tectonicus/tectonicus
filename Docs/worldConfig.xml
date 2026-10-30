@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tectonicus version="2">
     <config outputDir="RenderedMaps" numZoomLevels="8" imageFormat="webp"
-            playersInitiallyVisible="true" chestsInitiallyVisible="false">
+            playersInitiallyVisible="true" containersInitiallyVisible="false">
         <render useSmoothLighting="true" biomeBlendRadius="2"/>
+        <containers filter="player"/>
     </config>
     <rasteriser tileSize="512"/>
 

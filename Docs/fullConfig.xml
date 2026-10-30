@@ -39,7 +39,7 @@
 		signsInitiallyVisible="true / false"
 		portalsInitiallyVisible="true / false"
 		viewsInitiallyVisible="true / false"
-		chestsInitiallyVisible="false / true"
+		containersInitiallyVisible="false / true" <!-- chestsInitiallyVisible is also accepted -->
 		beaconsInitiallyVisible="true / false"
 		customStyle="<your_css_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		customScript="<your_javascript_filename>" <!-- the custom file should be placed in the Scripts directory -->
@@ -114,8 +114,9 @@
 
 		<portals filter="all / none" />
 
-		<!-- Includes ender chest markers with coordinate popups, controlled by the chest toggle. -->
-		<chests filter="none / all / player" />
+		<!-- Omit types to select all five kinds; shulker_box includes every dye color.
+		     The legacy <chests> element accepts the same options. -->
+		<containers filter="none / all / player" types="chest,trapped_chest,ender_chest,barrel,shulker_box" />
 
 		<beacons filter="all / activated / none" />
 

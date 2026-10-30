@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import tectonicus.configuration.filter.BeaconFilter;
 import tectonicus.configuration.filter.BeaconFilterType;
-import tectonicus.configuration.filter.ChestFilter;
+import tectonicus.configuration.filter.ContainerFilter;
 import tectonicus.configuration.filter.PlayerFilter;
 import tectonicus.configuration.filter.PortalFilter;
 import tectonicus.configuration.filter.PortalFilterType;
@@ -50,7 +50,7 @@ public class DimensionConfig extends RenderOptions {
 	private SignFilter signFilter = new SignFilter(SignFilterType.ALL);
 	private PortalFilter portalFilter = new PortalFilter(PortalFilterType.All);
 	private ViewFilter viewFilter = new ViewFilter(ViewFilterType.All);
-	private ChestFilter chestFilter = new ChestFilter();
+	private ContainerFilter containerFilter = new ContainerFilter();
 	private BeaconFilter beaconFilter = new BeaconFilter(BeaconFilterType.ALL);
 	private final ViewConfig viewConfig = new ViewConfig();
 	private WorldSubset worldSubset = new FullWorldSubset();

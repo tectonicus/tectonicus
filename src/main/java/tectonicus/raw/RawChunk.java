@@ -108,7 +108,7 @@ public class RawChunk {
 
 	private List<PaintingEntity> paintings;
 	private List<PaintingEntity> itemFrames;
-	private List<ContainerEntity> chests;
+	private List<ContainerEntity> containers;
 	private List<ArmorStandEntity> armorStands;
 	private List<CushionEntity> cushions;
 
@@ -166,7 +166,7 @@ public class RawChunk {
 
 		paintings = new ArrayList<>();
 		itemFrames = new ArrayList<>();
-		chests = new ArrayList<>();
+		containers = new ArrayList<>();
 		armorStands = new ArrayList<>();
 		cushions = new ArrayList<>();
 
@@ -500,6 +500,9 @@ public class RawChunk {
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
+					final String containerBlock = getBlockName(localX, localY, localZ);
+					final int containerBlockId = getBlockId(localX, localY, localZ);
+					final ContainerKind containerKind = ContainerKind.fromBlock(id, containerBlock, containerBlockId);
 					if (id.equals("Sign") || id.equals("minecraft:sign") || id.equals("minecraft:hanging_sign")) {
 						List<String> textLines = new ArrayList<>();
 						String color = "black";
@@ -703,9 +706,7 @@ public class RawChunk {
 							}
 						}
 						banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
-					} else if (id.equals("Chest") || id.equals("minecraft:chest") || id.equals("minecraft:shulker_box") || id.equals("minecraft:barrel")
-							|| id.equals("EnderChest") || id.equals("minecraft:ender_chest")) {
-						boolean enderChest = id.equals("EnderChest") || id.equals("minecraft:ender_chest");
+					} else if (containerKind != null) {
 						BlockProperties blockState = getBlockState(localX, localY, localZ);
 						String facing = null;
 						String type = null;
@@ -713,25 +714,17 @@ public class RawChunk {
 							facing = blockState.get("facing");
 							type = blockState.get("type");
 						}
+						if (!containerKind.isChest()) type = null;
+						if (containerKind.isChest() && facing == null) {
+							facing = switch (getBlockData(localX, localY, localZ)) {
+								case 2 -> "north"; case 3 -> "south"; case 4 -> "west"; case 5 -> "east"; default -> null;
+							};
+						}
 						
 						final StringTag customName = NbtUtil.getChild(entity, "CustomName", StringTag.class);
 						String name;
 						if (customName == null) {
-							switch (id) {
-								case "EnderChest":
-								case "minecraft:ender_chest":
-									name = "Ender Chest";
-									break;
-								case "minecraft:barrel":
-									name = "Barrel";
-									break;
-								case "minecraft:shulker_box":
-									name = "Shulker Box";
-									break;
-								default:
-									name = "left".equals(type) || "right".equals(type) ? "Large Chest" : "Chest";
-									break;
-							}
+							name = ("left".equals(type) || "right".equals(type) ? "Large " : "") + containerKind.getDisplayName();
 						} else {
 							name = customName.getValue();
 							name = name.replace("\"", ""); // Remove " characters
@@ -743,7 +736,7 @@ public class RawChunk {
 							lockStr = lock.getValue();
 						
 						final StringTag lootTable = NbtUtil.getChild(entity, "LootTable", StringTag.class);
-						boolean unopenedChest = lootTable != null;
+						boolean unopenedContainer = lootTable != null;
 						
 						final List<Item> items = new ArrayList<>();
 						final ListTag itemsTag = NbtUtil.getChild(entity, "Items", ListTag.class);
@@ -777,7 +770,8 @@ public class RawChunk {
 							}
 						}
 						
-						chests.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedChest, facing, type, items, enderChest));
+						containers.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedContainer, facing, type, items,
+								containerKind, containerKind == ContainerKind.SHULKER_BOX ? ContainerKind.shulkerColor(containerBlock, containerBlockId) : null));
 					} else if (id.equals("minecraft:bed")) {
 						final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
 						int colorVal = 0;
@@ -1504,8 +1498,8 @@ public class RawChunk {
 		return itemFrames;
 	}
 
-	public List<ContainerEntity> getChests() {
-		return Collections.unmodifiableList(chests);
+	public List<ContainerEntity> getContainers() {
+		return Collections.unmodifiableList(containers);
 	}
 
 	public Map<String, BedEntity> getBeds() {

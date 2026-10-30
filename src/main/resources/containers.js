@@ -96,7 +96,7 @@ function updateContainerItemTooltipPosition(e) {
             
                 let rect = itemDescriptionTooltip.parentElement.getBoundingClientRect();
 
-                // Player inventories and chest popups use different display scales.
+                // Player inventories and container popups use different display scales.
                 const scale = rect.width / itemDescriptionTooltip.parentElement.offsetWidth;
 
                 itemDescriptionTooltip.style.top = (y - rect.top - 10) / scale + 'px';
@@ -203,21 +203,34 @@ function renderMinecraftText(text, className) {
     return html;
 }
 
-function createChestPopup(chest) {
-	if (chest.enderChest) {
-		const pos = chest.worldPos;
+function containerMarkerIcon(container) {
+	switch (container.containerType) {
+		case 'trapped_chest': return 'TrappedChest.png';
+		case 'barrel': return 'Barrel.png';
+		case 'shulker_box': {
+			const colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black'];
+			return 'ShulkerBox' + (colors.includes(container.shulkerColor) ? '_' + container.shulkerColor : '') + '.png';
+		}
+		case 'ender_chest': return 'EnderChest.png';
+		default: return container.enderChest ? 'EnderChest.png' : 'Chest.png';
+	}
+}
+
+function createContainerPopup(container) {
+	if (container.enderChest || container.containerType === 'ender_chest') {
+		const pos = container.worldPos;
 		return '<div style="text-align:center">Ender Chest</div><br/> position ('
 			+ Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + ')';
 	}
 
-        let markerPopup = chest.large
-                ? '<div class="chest_container large"><div class="chest_scaler"><img src="' + worldImageUrl('LargeChest.png') + '" />'
-                : '<div class="chest_container"><div class="chest_scaler"><img src="' + worldImageUrl('SmallChest.png') + '" />';
+        let markerPopup = container.large
+                ? '<div class="container_inventory large"><div class="container_inventory_scaler"><img src="' + worldImageUrl('LargeChest.png') + '" />'
+                : '<div class="container_inventory"><div class="container_inventory_scaler"><img src="' + worldImageUrl('SmallChest.png') + '" />';
 
-        markerPopup += renderMinecraftText(chest.name, 'chest_name');
+        markerPopup += renderMinecraftText(container.name, 'container_name');
 
-        const items = new Map(chest.items.map(item => [item.slot, item]));
-        const slotCount = chest.large ? 54 : 27;
+        const items = new Map(container.items.map(item => [item.slot, item]));
+        const slotCount = container.large ? 54 : 27;
         for (let slot = 0; slot < slotCount; slot++) {
                 const row = Math.floor(slot/9);
                 const col = slot%9;

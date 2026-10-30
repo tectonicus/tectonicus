@@ -22,8 +22,8 @@ import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.filter.BeaconFilter;
 import tectonicus.configuration.filter.BeaconFilterType;
-import tectonicus.configuration.filter.ChestFilter;
-import tectonicus.configuration.filter.ChestFilterType;
+import tectonicus.configuration.filter.ContainerFilter;
+import tectonicus.configuration.filter.ContainerFilterType;
 import tectonicus.configuration.filter.PlayerFilter;
 import tectonicus.configuration.filter.PlayerFilterType;
 import tectonicus.configuration.filter.PortalFilter;
@@ -50,7 +50,7 @@ import static tectonicus.configuration.ParseUtil.parseBeaconFilter;
 import static tectonicus.configuration.ParseUtil.parseBiomeBlendRadius;
 import static tectonicus.configuration.ParseUtil.parseCacheDir;
 import static tectonicus.configuration.ParseUtil.parseCameraAngle;
-import static tectonicus.configuration.ParseUtil.parseChestFilter;
+import static tectonicus.configuration.ParseUtil.parseContainerFilter;
 import static tectonicus.configuration.ParseUtil.parseClosestZoomSize;
 import static tectonicus.configuration.ParseUtil.parseColourDepth;
 import static tectonicus.configuration.ParseUtil.parseCustomBlockConfig;
@@ -101,6 +101,7 @@ public class XmlConfigurationParser
 		final int version = ParseUtil.parseVersion( getString(root, "version"));
 		if (version != VERSION)
 			throw new RuntimeException("Old or incompatible config file. Please update to the latest format");
+		normalizeContainerAliases(root);
 		
 		// Parse base config
 		Element configNode = getChild(root, "config");
@@ -169,7 +170,7 @@ public class XmlConfigurationParser
 			config.setSignsInitiallyVisible(getBoolean(configNode, "signsInitiallyVisible", true));
 			config.setPortalsInitiallyVisible(getBoolean(configNode, "portalsInitiallyVisible", true));
 			config.setViewsInitiallyVisible(getBoolean(configNode, "viewsInitiallyVisible", true));
-			config.setChestsInitiallyVisible(getBoolean(configNode, "chestsInitiallyVisible", false));
+			config.setContainersInitiallyVisible(getBoolean(configNode, "containersInitiallyVisible", false));
 			config.setBeaconsInitiallyVisible(getBoolean(configNode, "beaconsInitiallyVisible", true));
 			
 			config.setCustomStyle(getString(configNode, "customStyle", null));
@@ -281,11 +282,11 @@ public class XmlConfigurationParser
 				map.setPortalFilter( new PortalFilter(portalFilterType) );
 			}
 			
-			// Chest filter
-			Element chestsNode = getChild(mapElement, "chests");
-			if (chestsNode != null) {
-				ChestFilterType chestFilterType = parseChestFilter(getString(chestsNode, "filter"));
-				map.setChestFilter(new ChestFilter(chestFilterType));
+			// Container filter (legacy aliases have already been normalized).
+			Element containersNode = getChild(mapElement, "containers");
+			if (containersNode != null) {
+				ContainerFilterType containerFilterType = parseContainerFilter(getString(containersNode, "filter"));
+				map.setContainerFilter(new ContainerFilter(containerFilterType, containersNode.hasAttribute("types") ? containersNode.getAttribute("types") : null));
 			}
 			
 			// Beacon filter
@@ -361,6 +362,23 @@ public class XmlConfigurationParser
 		return config;
 	}
 	
+
+	private static void normalizeContainerAliases(Element element) {
+		if (!element.hasAttribute("containersInitiallyVisible") && element.hasAttribute("chestsInitiallyVisible")) {
+			element.setAttribute("containersInitiallyVisible", element.getAttribute("chestsInitiallyVisible"));
+		}
+		element.removeAttribute("chestsInitiallyVisible");
+		Element legacy = getChild(element, "chests");
+		if (legacy != null) {
+			if (getChild(element, "containers") != null) {
+				log.warn("Both <containers> and <chests> are configured; using <containers>.");
+				element.removeChild(legacy);
+			} else {
+				element.getOwnerDocument().renameNode(legacy, null, "containers");
+			}
+		}
+		for (Element child : getChildren(element, null)) normalizeContainerAliases(child);
+	}
 
 	private record DimensionEntry(Element element, WorldConfig world, String id, boolean legacy) {}
 
@@ -490,7 +508,7 @@ public class XmlConfigurationParser
 		visibility.setBeds(getBoolean(element, "bedsInitiallyVisible", true));
 		visibility.setRespawnAnchors(getBoolean(element, "respawnAnchorsInitiallyVisible", true));
 		visibility.setViews(getBoolean(element, "viewsInitiallyVisible", true));
-		visibility.setChests(getBoolean(element, "chestsInitiallyVisible", false));
+		visibility.setContainers(getBoolean(element, "containersInitiallyVisible", false));
 		visibility.setBeacons(getBoolean(element, "beaconsInitiallyVisible", true));
 		return visibility;
 	}

@@ -65,7 +65,7 @@ test('player popup and chest share item details, colors, trims and enchantments'
     assert.match(html, /enchanted_glint/);
     assert.match(html, /item_description/);
     assert.doesNotMatch(html, /null|undefined/);
-    const chest = context.createChestPopup({name: 'Chest', items: [{...item, slot: 0}]});
+    const chest = context.createContainerPopup({name: 'Chest', items: [{...item, slot: 0}]});
     assert.match(chest, /leather_chestplate_gold_trim.png/);
     assert.match(slotHtml(chest, 0), /top: 17px; left: 7px;.*class="item" style="top: 1px; left: 1px;/s);
     assert.doesNotMatch(chest, /null|undefined/);

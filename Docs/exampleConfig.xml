@@ -64,7 +64,7 @@
 		<views filter="all" />
 		<players filter="all" />
 		<portals filter="all" />
-		<chests filter="player" />
+		<containers filter="player" types="chest,trapped_chest,ender_chest,barrel,shulker_box" />
 		
 		<mods>
 			<mod name="AwesomeMod" path="/Users/xxx/AppData/roaming/.minecraft/mods/AwesomeMod1.8.jar" />

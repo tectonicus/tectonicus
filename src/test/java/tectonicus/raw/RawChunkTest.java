@@ -169,7 +169,7 @@ class RawChunkTest {
 
 	@ParameterizedTest
 	@CsvSource({"EnderChest,true", "minecraft:ender_chest,true", "minecraft:chest,false"})
-	void chestMarkersIncludeEnderChestsAndRespectChestFilter(String id, boolean enderChest) throws Exception {
+	void containerMarkersIncludeEnderChestsAndRespectContainerFilter(String id, boolean enderChest) throws Exception {
 		CompoundTag chest = new CompoundTag("", Map.of(
 				"id", new StringTag("id", id),
 				"x", new IntTag("x", -17), "y", new IntTag("y", 36), "z", new IntTag("z", -1)));
@@ -185,8 +185,8 @@ class RawChunkTest {
 				? new CompoundTag("", Map.of("Level", new CompoundTag("Level", chunkTags), "DataVersion", new IntTag("DataVersion", 1343)))
 				: new CompoundTag("", chunkTags);
 		RawChunk chunk = readChunk(root, legacy ? Version.VERSION_12 : Version.VERSION_21);
-		assertEquals(1, chunk.getChests().size());
-		ContainerEntity entity = chunk.getChests().getFirst();
+		assertEquals(1, chunk.getContainers().size());
+		ContainerEntity entity = chunk.getContainers().getFirst();
 		assertEquals(enderChest, entity.isEnderChest());
 		assertEquals(enderChest ? "Ender Chest" : "Chest", entity.getCustomName());
 		assertEquals(-17, entity.getX());
@@ -195,11 +195,54 @@ class RawChunkTest {
 		assertTrue(entity.getItems().isEmpty());
 
 		var markers = new java.util.concurrent.ConcurrentLinkedQueue<ContainerEntity>();
-		tectonicus.util.FindEntityUtil.findChests(chunk, new tectonicus.configuration.filter.ChestFilter(), markers);
+		tectonicus.util.FindEntityUtil.findContainers(chunk, new tectonicus.configuration.filter.ContainerFilter(), markers);
 		assertTrue(markers.isEmpty());
-		tectonicus.util.FindEntityUtil.findChests(chunk,
-				new tectonicus.configuration.filter.ChestFilter(tectonicus.configuration.filter.ChestFilterType.PLAYER), markers);
+		tectonicus.util.FindEntityUtil.findContainers(chunk,
+				new tectonicus.configuration.filter.ContainerFilter(tectonicus.configuration.filter.ContainerFilterType.PLAYER), markers);
 		assertEquals(List.of(entity), List.copyOf(markers));
+	}
+
+	@Test
+	void loadsAllModernContainerKindsAndShulkerColorsFromActualBlocks() throws Exception {
+		var blocks = new java.util.ArrayList<String>();
+		for (ContainerKind kind : ContainerKind.values()) blocks.add(kind.getId());
+		for (tectonicus.world.Colors color : tectonicus.world.Colors.values()) blocks.add(ContainerKind.colorName(color) + "_shulker_box");
+		for (String block : blocks) {
+			String id = block.endsWith("shulker_box") ? "minecraft:shulker_box" : "minecraft:" + block;
+			CompoundTag entity = new CompoundTag("", Map.of("id", new StringTag("id", id),
+					"x", new IntTag("x", 8), "y", new IntTag("y", 4), "z", new IntTag("z", 8)));
+			CompoundTag palette = new CompoundTag("", Map.of("Name", new StringTag("Name", "minecraft:" + block)));
+			CompoundTag section = new CompoundTag("", Map.of("Y", new ByteTag("Y", (byte) 0),
+					"block_states", new CompoundTag("block_states", Map.of("palette", new ListTag("palette", CompoundTag.class, List.of(palette))))));
+			CompoundTag root = new CompoundTag("", Map.of("Status", new StringTag("Status", "full"), "yPos", new IntTag("yPos", 0),
+					"block_entities", new ListTag("block_entities", CompoundTag.class, List.of(entity)),
+					"sections", new ListTag("sections", CompoundTag.class, List.of(section))));
+			ContainerEntity loaded = readChunk(root, Version.VERSION_21).getContainers().getFirst();
+			assertEquals(block.endsWith("shulker_box") ? ContainerKind.SHULKER_BOX : ContainerKind.valueOf(block.toUpperCase(java.util.Locale.ROOT)), loaded.getContainerKind());
+			assertEquals(ContainerKind.shulkerColor("minecraft:" + block, 0), loaded.getShulkerColor());
+		}
+	}
+
+	@Test
+	void legacyBlockIdsDistinguishTrappedChestsAndEveryShulkerColor() throws Exception {
+		for (int blockId : java.util.stream.IntStream.concat(java.util.stream.IntStream.of(54, 130, 146), java.util.stream.IntStream.rangeClosed(219, 234)).toArray()) {
+			byte[] blocks = new byte[4096];
+			java.util.Arrays.fill(blocks, (byte) blockId);
+			byte[] data = new byte[2048];
+			java.util.Arrays.fill(data, (byte) 0x55);
+			String id = blockId == 130 ? "EnderChest" : blockId >= 219 ? "minecraft:shulker_box" : "Chest";
+			CompoundTag entity = new CompoundTag("", Map.of("id", new StringTag("id", id),
+					"x", new IntTag("x", 8), "y", new IntTag("y", 4), "z", new IntTag("z", 8)));
+			CompoundTag section = new CompoundTag("", Map.of("Y", new ByteTag("Y", (byte) 0),
+					"Blocks", new org.jnbt.ByteArrayTag("Blocks", blocks), "Data", new org.jnbt.ByteArrayTag("Data", data)));
+			CompoundTag level = new CompoundTag("Level", Map.of("TileEntities", new ListTag("TileEntities", CompoundTag.class, List.of(entity)),
+					"Sections", new ListTag("Sections", CompoundTag.class, List.of(section))));
+			ContainerEntity loaded = readChunk(new CompoundTag("", Map.of("Level", level)), Version.VERSION_12).getContainers().getFirst();
+			assertEquals(ContainerKind.fromBlock(id, null, blockId), loaded.getContainerKind());
+			assertEquals(ContainerKind.shulkerColor(null, blockId), loaded.getShulkerColor());
+			if (loaded.getContainerKind().isChest()) assertEquals("east", loaded.getFacing());
+		}
+		assertNull(ContainerKind.fromBlock("minecraft:chest", "minecraft:copper_chest", 0));
 	}
 
 	private RawChunk readChunk(CompoundTag root, Version version) throws Exception {

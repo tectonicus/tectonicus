@@ -77,9 +77,9 @@ test('chest images, item masks, overlays, player status and markers use the sele
     for (const index of [0, 1, 0]) {
         viewer.selectWorld(index);
         const prefix = `World${index}/Images/`;
-        const html = viewer.context.createChestPopup({name: 'Chest', items: [item]});
+        const html = viewer.context.createContainerPopup({name: 'Chest', items: [item]});
         assert.ok(html.includes(prefix + 'SmallChest.png'));
-        assert.ok(viewer.context.createChestPopup({name: 'Large Chest', large: true, items: []}).includes(prefix + 'LargeChest.png'));
+        assert.ok(viewer.context.createContainerPopup({name: 'Large Chest', large: true, items: []}).includes(prefix + 'LargeChest.png'));
         const player = {name: 'Explorer', icon: prefix + 'PlayerIcons/Explorer.png', donation: '',
             health: 20, food: 20, air: 300, xpLevel: 12,
             inventory: [{...item, slot: 103}], enderChestInventory: [item]};
@@ -107,27 +107,55 @@ test('chest images, item masks, overlays, player status and markers use the sele
     }
 });
 
-test('ender chest markers use world icons, show block coordinates and follow the chest toggle', () => {
+test('all container kinds use world-specific icons and retain copy actions and inventory popups', () => {
+    const viewer = createAssetsViewer();
+    const containers = [
+        {containerType: 'chest', icon: 'Chest'},
+        {containerType: 'trapped_chest', icon: 'TrappedChest'},
+        {containerType: 'ender_chest', icon: 'EnderChest'},
+        {containerType: 'barrel', icon: 'Barrel'},
+        {containerType: 'shulker_box', icon: 'ShulkerBox'},
+        ...['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray',
+            'light_gray', 'cyan', 'purple', 'blue', 'brown', 'green', 'red', 'black']
+            .map(color => ({containerType: 'shulker_box', shulkerColor: color, icon: 'ShulkerBox_' + color}))
+    ];
+    for (const index of [0, 1, 0]) {
+        viewer.selectWorld(index);
+        const layer = viewer.context.selectedLayer;
+        layer.containers = containers.map(container => ({...container, name: 'Storage', items: [], worldPos: {x: 0.5, y: 64, z: 0.5}}));
+        viewer.context.refreshContainerMarkers(layer, false);
+        viewer.markers.slice(-containers.length).forEach((marker, i) => {
+            assert.equal(marker.options.icon.iconUrl, `World${index}/Images/${containers[i].icon}.png`);
+            assert.equal((marker.html.match(/<button /g) || []).length, 3);
+            assert.equal((marker.html.match(/class="inventory_slot"/g) || []).length,
+                containers[i].containerType === 'ender_chest' ? 0 : 27);
+        });
+    }
+    assert.equal(viewer.context.containerMarkerIcon({}), 'Chest.png');
+    assert.equal(viewer.context.containerMarkerIcon({enderChest: true}), 'EnderChest.png');
+});
+
+test('ender chest markers use world icons, show block coordinates and follow the container toggle', () => {
     const viewer = createAssetsViewer();
     for (const index of [0, 1, 0]) {
         viewer.selectWorld(index);
         const layer = viewer.context.selectedLayer;
-        layer.chests = [
+        layer.containers = [
             {enderChest: true, worldPos: {x: -16.5, y: -36, z: -0.5}},
             {name: 'Chest', items: [], worldPos: {x: 8.5, y: 64, z: 8.5}}
         ];
-        viewer.context.refreshChestMarkers(layer, false);
+        viewer.context.refreshContainerMarkers(layer, false);
         const [enderChest, chest] = viewer.markers.slice(-2);
         assert.equal(enderChest.options.icon.iconUrl, `World${index}/Images/EnderChest.png`);
         assert.equal(chest.options.icon.iconUrl, `World${index}/Images/Chest.png`);
-        assert.equal(enderChest.point, layer.chests[0].worldPos);
+        assert.equal(enderChest.point, layer.containers[0].worldPos);
         assert.match(enderChest.html, /Ender Chest/);
         assert.match(enderChest.html, /position \(-17, -36, -1\)/);
         assert.doesNotMatch(enderChest.html, /inventory_slot|SmallChest.png|undefined/);
         assert.match(chest.html, /SmallChest.png/);
-        assert.equal(viewer.evaluate('chestMarkers.length'), 2);
+        assert.equal(viewer.evaluate('containerMarkers.length'), 2);
         assert.ok(!enderChest.added && !chest.added);
-        viewer.context.refreshChestMarkers(layer, true);
+        viewer.context.refreshContainerMarkers(layer, true);
         assert.ok(enderChest.removed && chest.removed);
         assert.ok(viewer.markers.slice(-2).every(marker => marker.added));
     }
@@ -149,7 +177,7 @@ test('item names, descriptions and enchantments use each world translations afte
         viewer.selectWorld(index);
         const world = index === 0 ? 'Survival' : 'Creative';
         for (const html of [viewer.context.createItemHtml(item, 1, 1),
-            viewer.context.createChestPopup({name: 'Chest', items: [item]}),
+            viewer.context.createContainerPopup({name: 'Chest', items: [item]}),
             viewer.context.getInventoryHtml({inventory: [item]}),
             viewer.context.getEnderChestHtml({enderChestInventory: [item]})]) {
             assert.ok(html.includes(viewer.context.renderMinecraftText(world + ' Sword', 'name enchanted')));
@@ -189,7 +217,7 @@ test('item rendering retains shared Images paths for older map exports', () => {
     viewer.evaluate('activeBaseLayer = null;');
     const item = {id: 'minecraft:stone', count: 2, slot: 0};
     for (const html of [viewer.context.createItemHtml(item, 1, 1),
-        viewer.context.createChestPopup({name: 'Chest', items: [item]})]) {
+        viewer.context.createContainerPopup({name: 'Chest', items: [item]})]) {
         assert.ok(html.includes('src="Images/Items/stone.png"'));
         assert.match(html, /item_count/);
         assert.match(html, /item_description/);

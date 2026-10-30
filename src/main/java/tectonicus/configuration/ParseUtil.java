@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.filter.BeaconFilterType;
-import tectonicus.configuration.filter.ChestFilterType;
+import tectonicus.configuration.filter.ContainerFilterType;
 import tectonicus.configuration.filter.PlayerFilterType;
 import tectonicus.configuration.filter.PortalFilterType;
 import tectonicus.configuration.filter.SignFilter;
@@ -235,16 +235,16 @@ public class ParseUtil {
 		return portalFilterType;
 	}
 
-	public static ChestFilterType parseChestFilter(String chestFilterStr) {
-		chestFilterStr = chestFilterStr.toLowerCase();
+	public static ContainerFilterType parseContainerFilter(String containerFilterStr) {
+		containerFilterStr = containerFilterStr.toLowerCase();
 
-		ChestFilterType chestFilterType = ChestFilterType.NONE;
-		if (chestFilterStr.equalsIgnoreCase("all"))
-			chestFilterType = ChestFilterType.ALL;
-		else if (chestFilterStr.equalsIgnoreCase("player"))
-			chestFilterType = ChestFilterType.PLAYER;
+		ContainerFilterType containerFilterType = ContainerFilterType.NONE;
+		if (containerFilterStr.equalsIgnoreCase("all"))
+			containerFilterType = ContainerFilterType.ALL;
+		else if (containerFilterStr.equalsIgnoreCase("player"))
+			containerFilterType = ContainerFilterType.PLAYER;
 
-		return chestFilterType;
+		return containerFilterType;
 	}
 
 	public static BeaconFilterType parseBeaconFilter(String beaconFilterStr) {

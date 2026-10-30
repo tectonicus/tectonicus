@@ -22,6 +22,6 @@ public class MarkerVisibility {
 	private boolean beds = true;
 	private boolean respawnAnchors = true;
 	private boolean views = true;
-	private boolean chests;
+	private boolean containers;
 	private boolean beacons = true;
 }

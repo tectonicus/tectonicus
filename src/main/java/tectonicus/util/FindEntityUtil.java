@@ -17,7 +17,7 @@ import tectonicus.Portal;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.filter.BeaconFilter;
-import tectonicus.configuration.filter.ChestFilter;
+import tectonicus.configuration.filter.ContainerFilter;
 import tectonicus.configuration.filter.PortalFilter;
 import tectonicus.configuration.filter.SignFilter;
 import tectonicus.configuration.filter.ViewFilter;
@@ -117,10 +117,10 @@ public class FindEntityUtil {
                 }
 	}
 
-	public static void findChests(RawChunk chunk, ChestFilter filter, ConcurrentLinkedQueue<ContainerEntity> chests) {
-                for (ContainerEntity entity : chunk.getChests()) {
-                        if (filter.passesFilter(entity.isUnopenedContainer())) {
-                                chests.add(entity);
+	public static void findContainers(RawChunk chunk, ContainerFilter filter, ConcurrentLinkedQueue<ContainerEntity> containers) {
+                for (ContainerEntity entity : chunk.getContainers()) {
+                        if (filter.passesFilter(entity)) {
+                                containers.add(entity);
                         }
                 }
 	}

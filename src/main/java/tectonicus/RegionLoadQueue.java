@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static tectonicus.util.FindEntityUtil.findBeds;
-import static tectonicus.util.FindEntityUtil.findChests;
+import static tectonicus.util.FindEntityUtil.findContainers;
 import static tectonicus.util.FindEntityUtil.findPortals;
 import static tectonicus.util.FindEntityUtil.findSigns;
 import static tectonicus.util.FindEntityUtil.findViews;
@@ -52,9 +52,9 @@ public class RegionLoadQueue
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 					 DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds) {
+					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
 		numberOfRegionsStarted.incrementAndGet();
-		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, chests, beds);
+		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, containers, beds);
 		executor.submit(task);
 	}
 	
@@ -79,12 +79,12 @@ public class RegionLoadQueue
 		private final HddObjectListWriter<Portal> portals;
 		private final HddObjectListWriter<Sign> signs;
 		private final HddObjectListWriter<Sign> views;
-		private final ConcurrentLinkedQueue<ContainerEntity> chests;
+		private final ConcurrentLinkedQueue<ContainerEntity> containers;
 		private final Queue<BedEntity> beds;
 		
 		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 						DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
-						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> chests, Queue<BedEntity> beds) {
+						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
 			this.chunk = chunk;
 			this.regionHashStore = regionHashStore;
 			this.hashAlgorithm = hashAlgorithm;
@@ -92,7 +92,7 @@ public class RegionLoadQueue
 			this.portals = portals;
 			this.signs = signs;
 			this.views = views;
-			this.chests = chests;
+			this.containers = containers;
 			this.beds = beds;
 		}
 		
@@ -112,7 +112,7 @@ public class RegionLoadQueue
 				
 				findViews(chunk.getRawChunk(), views, map.getViewFilter());
 				
-				findChests(chunk.getRawChunk(), map.getChestFilter(), chests);
+				findContainers(chunk.getRawChunk(), map.getContainerFilter(), containers);
 			} catch (Exception e) {
 				log.error("Exception: ", e);
 			}

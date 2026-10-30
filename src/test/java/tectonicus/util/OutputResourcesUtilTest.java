@@ -16,6 +16,7 @@ import tectonicus.PlayerIconAssembler;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.raw.CustomNameTag;
 import tectonicus.raw.ContainerEntity;
+import tectonicus.raw.ContainerKind;
 import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.EnchantmentsTag;
 import tectonicus.raw.Item;
@@ -39,14 +40,74 @@ class OutputResourcesUtilTest {
 	@TempDir Path directory;
 
 	@Test
+	void exportsDistinctKindsColorsAndEscapedNames() throws Exception {
+		var containers = new ConcurrentLinkedQueue<ContainerEntity>();
+		for (ContainerKind kind : ContainerKind.values()) containers.add(container(0, 0, "single", kind, "diamond"));
+		Path output = directory.resolve("containers.js");
+		OutputResourcesUtil.outputContainers(output.toFile(), new DimensionConfig("Map"), containers);
+		String script = Files.readString(output);
+		for (ContainerKind kind : ContainerKind.values()) assertTrue(script.contains("containerType: \"" + kind.getId() + "\""));
+		assertTrue(script.contains("shulkerColor: \"light_gray\""));
+		assertTrue(script.contains("name: \"Custom \\\"name\\\"\""));
+		assertEquals(5, script.split("containerType:", -1).length - 1);
+	}
+
+	@Test
+	void mergesMatchingAdjacentChestHalvesOnlyAndRetainsOrphanedHalves() throws Exception {
+		for (ContainerKind kind : List.of(ContainerKind.CHEST, ContainerKind.TRAPPED_CHEST)) {
+			for (String half : new String[] {"left", null}) {
+				var containers = new ConcurrentLinkedQueue<ContainerEntity>();
+				containers.add(container(1, 0, half, kind, "emerald"));
+				containers.add(container(0, 0, half == null ? null : "right", kind, "diamond"));
+				containers.add(container(20, 0, "left", kind, "stone"));
+				containers.add(container(30, 0, "right", kind, "gold_ingot"));
+				containers.add(container(31, 0, "left", kind == ContainerKind.CHEST ? ContainerKind.TRAPPED_CHEST : ContainerKind.CHEST, "iron_ingot"));
+				containers.add(container(40, 0, "left", ContainerKind.BARREL, "dirt"));
+				containers.add(container(41, 0, "right", ContainerKind.BARREL, "sand"));
+				Path output = directory.resolve("merged.js");
+				OutputResourcesUtil.outputContainers(output.toFile(), new DimensionConfig("Map"), containers);
+				String script = Files.readString(output);
+				assertEquals(6, script.split("containerType:", -1).length - 1);
+				assertEquals(1, script.split("large: true", -1).length - 1);
+				assertTrue(script.contains("slot: 27"));
+				for (String item : List.of("emerald", "diamond", "stone", "gold_ingot", "iron_ingot", "dirt", "sand")) {
+					assertEquals(1, script.split("id: \"minecraft:" + item + "\"", -1).length - 1);
+				}
+			}
+		}
+	}
+
+	private ContainerEntity container(int x, int z, String half, ContainerKind kind, String item) {
+		return new ContainerEntity(x, 64, z, x, 64, z, "Custom \"name\"", "", false, "south", half,
+				List.of(new Item("minecraft:" + item, 0, 1, 0, List.of())), kind, kind == ContainerKind.SHULKER_BOX ? "light_gray" : null);
+	}
+
+	@ParameterizedTest
+	@org.junit.jupiter.params.provider.CsvSource({"north,-1,0", "south,1,0", "east,0,-1", "west,0,1"})
+	void mergesTrappedChestHalvesInEveryFacingDirection(String facing, int dx, int dz) throws Exception {
+		var containers = new ConcurrentLinkedQueue<ContainerEntity>();
+		containers.add(new ContainerEntity(0, 64, 0, 0, 64, 0, "Trapped Chest", "", false, facing, "right",
+				List.of(new Item("minecraft:diamond", 0, 1, 0, List.of())), ContainerKind.TRAPPED_CHEST, null));
+		containers.add(new ContainerEntity(dx, 64, dz, 0, 64, 0, "Trapped Chest", "", false, facing, "left",
+				List.of(new Item("minecraft:emerald", 0, 1, 0, List.of())), ContainerKind.TRAPPED_CHEST, null));
+		Path output = directory.resolve("facing.js");
+		OutputResourcesUtil.outputContainers(output.toFile(), new DimensionConfig("Map"), containers);
+		String script = Files.readString(output);
+		assertEquals(1, script.split("containerType:", -1).length - 1);
+		assertTrue(script.contains("large: true"));
+		assertTrue(script.contains("name: \"Large Trapped Chest\""));
+		assertTrue(script.contains("id: \"minecraft:emerald\", count: 1, slot: 27"));
+	}
+
+	@Test
 	void exportsEnderChestMarkerTypeAndPositionAlongsideOrdinaryChests() throws Exception {
-		var chests = new ConcurrentLinkedQueue<ContainerEntity>();
-		chests.add(new ContainerEntity(-17, -36, -1, 15, 28, 15, "Ender Chest", "", false,
+		var containers = new ConcurrentLinkedQueue<ContainerEntity>();
+		containers.add(new ContainerEntity(-17, -36, -1, 15, 28, 15, "Ender Chest", "", false,
 				"south", "single", List.of(), true));
-		chests.add(new ContainerEntity(8, 64, 8, 8, 64, 8, "Chest", "", false,
+		containers.add(new ContainerEntity(8, 64, 8, 8, 64, 8, "Chest", "", false,
 				"south", "single", List.of(new Item("minecraft:stone", 0, 32, 0, List.of()))));
-		Path output = directory.resolve("chests.js");
-		OutputResourcesUtil.outputChests(output.toFile(), new DimensionConfig("Overworld"), chests);
+		Path output = directory.resolve("containers.js");
+		OutputResourcesUtil.outputContainers(output.toFile(), new DimensionConfig("Overworld"), containers);
 		String javascript = Files.readString(output);
 		assertTrue(javascript.contains("enderChest: true"));
 		assertEquals(1, javascript.split("enderChest: true", -1).length - 1);

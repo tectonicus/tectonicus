@@ -41,6 +41,7 @@ import tectonicus.raw.BedEntity;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
+import tectonicus.raw.ContainerKind;
 import tectonicus.raw.CustomNameTag;
 import tectonicus.raw.DyedColorTag;
 import tectonicus.raw.EnchantmentTag;
@@ -446,84 +447,78 @@ public class OutputResourcesUtil {
 		}
 	}
 
-	public static void outputChests(File chestFile, tectonicus.configuration.DimensionConfig map, ConcurrentLinkedQueue<ContainerEntity> chestList) {
-		log.info("Exporting chests to {}", chestFile.getAbsolutePath());
+	public static void outputContainers(File containerFile, tectonicus.configuration.DimensionConfig map, ConcurrentLinkedQueue<ContainerEntity> containerList) {
+		log.info("Exporting containers to {}", containerFile.getAbsolutePath());
 
 		try {
-			Files.deleteIfExists(chestFile.toPath());
+			Files.deleteIfExists(containerFile.toPath());
 		} catch (IOException e) {
 			log.error("Exception: ", e);
 		}
 
-		try (JsArrayWriter jsWriter = new JsArrayWriter(chestFile, map.getJavascriptId() + "_chestData")) {
+		try (JsArrayWriter jsWriter = new JsArrayWriter(containerFile, map.getJavascriptId() + "_containerData")) {
 			WorldSubset worldSubset = map.getWorldSubset();
-			for (ContainerEntity entity : chestList) {
-                                if ("left".equals(entity.getType())) {
-                                        // Skip left part of large chests (we will merge them with right part and display them as one sigle large chest)
-                                        continue;
-                                }
-                            
+			Set<ContainerEntity> exported = new HashSet<>();
+			for (ContainerEntity entity : containerList) {
+				if (exported.contains(entity) || !worldSubset.containsBlock(entity.getX(), entity.getZ())) continue;
+				ContainerEntity partner = findContainerPartner(entity, containerList, exported, worldSubset);
+				if (partner != null && "left".equals(entity.getType())) continue;
+				exported.add(entity);
+				if (partner != null) exported.add(partner);
+
 				float worldX = entity.getX() + 0.5f;
 				float worldY = entity.getY();
 				float worldZ = entity.getZ() + 0.5f;
-				Map<String, String> chestArgs = new HashMap<>();
+				Map<String, String> containerArgs = new HashMap<>();
 
-                                String items = "[\r\n";
-                                for (var item : entity.getItems()) {
-                                        items += outputItem(item, false);
-                                }
-                                if ("right".equals(entity.getType())) {
-                                        // Find right part and add its items
-                                        int leftX = entity.getX();
-                                        int leftY = entity.getY();
-                                        int leftZ = entity.getZ();
-
-                                        switch (entity.getFacing()) {
-                                                case "east":
-                                                        leftZ -= 1;
-                                                        break;
-                                                case "north":
-                                                        leftX -= 1;
-                                                        break;
-                                                case "south":
-                                                        leftX += 1;
-                                                        break;
-                                                case "west":
-                                                        leftZ += 1;
-                                                        break;
-                                        }
-                                        
-                                        for (ContainerEntity left : chestList) {
-                                                if (left.getX()!=leftX || left.getY()!=leftY || left.getZ()!=leftZ || !"left".equals(left.getType())) {
-                                                     continue;
-                                                }
-                                                for (var item : left.getItems()) {
-                                                    items += outputItem(item, true);
-                                                }
-                                                break;
-                                        }
-                                }
-                                items += "\t\t]";
+				StringBuilder items = new StringBuilder("[\r\n");
+				for (var item : entity.getItems()) items.append(outputItem(item, false));
+				if (partner != null) {
+					for (var item : partner.getItems()) items.append(outputItem(item, true));
+				}
+				items.append("\t\t]");
                                 
-				chestArgs.put("worldPos", "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")");
+				containerArgs.put("worldPos", "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")");
+				containerArgs.put("containerType", "\"" + entity.getContainerKind().getId() + "\"");
+				if (entity.getShulkerColor() != null) containerArgs.put("shulkerColor", "\"" + entity.getShulkerColor() + "\"");
 				if (entity.isEnderChest()) {
-					chestArgs.put("enderChest", "true");
+					containerArgs.put("enderChest", "true");
 				}
-                                chestArgs.put("name", "\"" + entity.getCustomName() + "\"");
-                                chestArgs.put("items", items);
-                                if ("right".equals(entity.getType())) {
-                                        chestArgs.put("large", "true");
-                                }
-
-				if (worldSubset.containsBlock(entity.getX(), entity.getZ())) {
-					jsWriter.write(chestArgs);
+				String name = entity.getCustomName();
+				if (partner != null && name.equals(entity.getContainerKind().getDisplayName())) name = "Large " + name;
+				containerArgs.put("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(name));
+				containerArgs.put("items", items.toString());
+				if (partner != null) {
+					containerArgs.put("large", "true");
 				}
+				jsWriter.write(containerArgs);
 			}
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		}
 	}
 	
+	private static ContainerEntity findContainerPartner(ContainerEntity entity, Queue<ContainerEntity> entities,
+			Set<ContainerEntity> exported, WorldSubset subset) {
+		if (!entity.getContainerKind().isChest() || "single".equals(entity.getType()) || entity.getFacing() == null) return null;
+		int dx = switch (entity.getFacing()) { case "north" -> -1; case "south" -> 1; default -> 0; };
+		int dz = switch (entity.getFacing()) { case "east" -> -1; case "west" -> 1; default -> 0; };
+		if (dx == 0 && dz == 0) return null;
+		boolean legacy = entity.getType() == null;
+		if ("left".equals(entity.getType())) { dx = -dx; dz = -dz; }
+		for (ContainerEntity candidate : entities) {
+			if (candidate == entity || exported.contains(candidate) || candidate.getContainerKind() != entity.getContainerKind()
+					|| candidate.getY() != entity.getY() || !java.util.Objects.equals(candidate.getFacing(), entity.getFacing())
+					|| !subset.containsBlock(candidate.getX(), candidate.getZ())) continue;
+			boolean adjacent = candidate.getX() == entity.getX() + dx && candidate.getZ() == entity.getZ() + dz;
+			if (legacy) {
+				adjacent |= candidate.getX() == entity.getX() - dx && candidate.getZ() == entity.getZ() - dz;
+				if (adjacent && candidate.getType() == null) return candidate;
+			} else if (adjacent && ("left".equals(entity.getType()) ? "right" : "left").equals(candidate.getType())) return candidate;
+		}
+		return null;
+	}
+
 	public static void outputBeacons(File beaconFile, tectonicus.configuration.DimensionConfig map, Queue<BeaconEntity> beacons) {
 		log.info("Exporting beacons to {}", beaconFile.getAbsolutePath());
 		
@@ -617,7 +612,7 @@ public class OutputResourcesUtil {
 
 	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry) {
 		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
-			log.info("Skipping icon rendering. Chest items are supported for 1.13 and newer.");
+			log.info("Skipping icon rendering. Container items are supported for 1.13 and newer.");
 			return;
 		}
 		
@@ -865,6 +860,37 @@ public class OutputResourcesUtil {
 			itemRenderer.renderBlock(new File(imagesDir, "beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
 		} catch (Exception e) {
 			log.error("Exception: ", e);
+		}
+		outputContainerIcons(imagesDir, registryOld, registry, texturePack, rasteriser);
+	}
+
+	private static void outputContainerIcons(File imagesDir, BlockTypeRegistry registryOld, BlockRegistry registry, TexturePack texturePack, Rasteriser rasteriser) {
+		int version = texturePack.getVersion().getNumVersion();
+		Map<String, String> icons = new HashMap<>();
+		if (version >= Version.VERSION_5.getNumVersion()) icons.put("TrappedChest", "minecraft:trapped_chest");
+		if (version >= Version.VERSION_14.getNumVersion()) icons.put("Barrel", "minecraft:barrel");
+		if (version >= VERSION_13.getNumVersion() && texturePack.getPackTexture("shulker") != null) icons.put("ShulkerBox", "minecraft:shulker_box");
+		for (Colors color : Colors.values()) {
+			String textureColor = version < VERSION_13.getNumVersion() ? color.getName() : ContainerKind.colorName(color);
+			if (texturePack.getPackTexture(textureColor + "_shulker") != null) {
+				icons.put("ShulkerBox_" + ContainerKind.colorName(color), "minecraft:" + textureColor + "_shulker_box");
+			}
+		}
+		for (var icon : icons.entrySet()) {
+			try {
+				ItemRenderer renderer = new ItemRenderer(rasteriser);
+				File file = new File(imagesDir, icon.getKey() + ".png");
+				if (version < VERSION_13.getNumVersion()) {
+					int blockId = icon.getKey().equals("TrappedChest") ? BlockIds.TRAPPED_CHEST
+							: 219 + Colors.byName(icon.getValue().replace("minecraft:", "").replace("_shulker_box", "")).getId();
+					renderer.renderBlockOld(file, registryOld, texturePack, blockId, icon.getKey().equals("TrappedChest") ? 5 : 1);
+				} else {
+					var properties = new BlockProperties(Map.of("facing", icon.getKey().startsWith("ShulkerBox") ? "up" : "south", "open", "false", "type", "single"));
+					renderer.renderBlock(file, registryOld, registry, texturePack, icon.getValue(), properties);
+				}
+			} catch (Exception e) {
+				log.error("Unable to render container icon {}", icon.getKey(), e);
+			}
 		}
 	}
 
@@ -1158,8 +1184,8 @@ public class OutputResourcesUtil {
 								outLine.append(config.isSpawnInitiallyVisible());
 							} else if (first.value.equals("viewsInitiallyVisible")) {
 								outLine.append(config.areViewsInitiallyVisible());
-							} else if (first.value.equals("chestsInitiallyVisible")) {
-								outLine.append(config.isChestsInitiallyVisible());
+							} else if (first.value.equals("containersInitiallyVisible") || first.value.equals("chestsInitiallyVisible")) {
+								outLine.append(config.isContainersInitiallyVisible());
 							} else if (first.value.equals("beaconsInitiallyVisible")) {
 								outLine.append(config.isBeaconsInitiallyVisible());
 							}
@@ -1232,7 +1258,7 @@ public class OutputResourcesUtil {
 						+ ", playerControlChecked: " + visibility.isPlayers() + ", portalControlChecked: " + visibility.isPortals()
 						+ ", signControlChecked: " + visibility.isSigns() + ", bedControlChecked: " + visibility.isBeds()
 						+ ", respawnAnchorControlChecked: " + visibility.isRespawnAnchors() + ", viewControlChecked: " + visibility.isViews()
-						+ ", chestControlChecked: " + visibility.isChests() + ", beaconControlChecked: " + visibility.isBeacons() + "},");
+						+ ", containerControlChecked: " + visibility.isContainers() + ", beaconControlChecked: " + visibility.isBeacons() + "},");
 				writer.println("\t\tplayers: "+m.getJavascriptId()+"_playerData,");
 				writer.println("\t\tbeds: "+m.getJavascriptId()+"_bedData,");
 				writer.println("\t\trespawnAnchors: "+m.getJavascriptId()+"_respawnAnchorData,");
@@ -1240,7 +1266,7 @@ public class OutputResourcesUtil {
 				writer.println("\t\tsigns: "+m.getJavascriptId()+"_signData,");
 				writer.println("\t\tportals: "+m.getJavascriptId()+"_portalData,");
 				writer.println("\t\tviews: "+m.getJavascriptId()+"_viewData,");
-				writer.println("\t\tchests: "+m.getJavascriptId()+"_chestData,");
+				writer.println("\t\tcontainers: "+m.getJavascriptId()+"_containerData,");
 				writer.println("\t\tblockStats: "+m.getJavascriptId()+"_blockStats,");
 				writer.println("\t\tworldStats: "+m.getJavascriptId()+"_worldStats,");
 				writer.println("\t\tworldVectors: "+m.getJavascriptId()+"_worldVectors,");
@@ -1395,7 +1421,7 @@ public class OutputResourcesUtil {
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);
-								outLine.append("Scripts/").append(map.getId()).append("/chests.js");
+								outLine.append("Scripts/").append(map.getId()).append("/containers.js");
 								outLine.append(templateEnd);
 
 								outLine.append(templateStart);

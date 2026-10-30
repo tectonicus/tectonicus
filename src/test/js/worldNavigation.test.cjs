@@ -49,7 +49,7 @@ async function createViewer(contents, fragment = '') {
             this.mapToWorld = point => ({x: point.lat, z: point.lng});
         },
         controlState: {playerControlChecked: true},
-        ...Object.fromEntries(['views', 'signs', 'players', 'beds', 'respawnAnchors', 'beacons', 'portals', 'spawn', 'chests']
+        ...Object.fromEntries(['views', 'signs', 'players', 'beds', 'respawnAnchors', 'beacons', 'portals', 'spawn', 'containers']
             .map(name => [name + 'InitiallyVisible', true]))
     });
     function Control(definition = {}) { Object.assign(this, definition); }
@@ -114,7 +114,7 @@ function dimension(id, worldId, layerNames = ['Day', 'Night'], extra = {}) {
         id, worldId, name: 'Surface', worldName: worldId,
         worldVectors: {startView: {x: 10, y: 64, z: 20}},
         worldStats: {}, controlState: {playerControlChecked: true},
-        signs: [], players: [], chests: [], views: [], portals: [], beds: [], respawnAnchors: [], beacons: [],
+        signs: [], players: [], containers: [], views: [], portals: [], beds: [], respawnAnchors: [], beacons: [],
         layers: layerNames.map((name, index) => ({id: `${id}_${index}`, name})),
         ...extra
     };
@@ -166,6 +166,30 @@ test('one-world outputs omit the world selector and disambiguate duplicate names
     assert.equal(viewer.evaluate('worldControl'), null);
     assert.deepEqual(viewer.layerLabels(), ['Surface - Day', 'Surface - Day (2)', 'Surface - Day (3)']);
     assert.deepEqual(contents[0].layers.map(layer => layer.name), ['Day', 'Day', 'Day']);
+});
+
+test('old container data and visibility names are normalized while new names take precedence', async () => {
+    const legacy = dimension('legacy', 'Old world');
+    delete legacy.containers;
+    legacy.chests = [];
+    legacy.controlState = {chestControlChecked: false};
+    const modern = dimension('modern', 'New world', ['Day'], {
+        containers: [], chests: [{}], controlState: {containerControlChecked: false, chestControlChecked: true}
+    });
+    const {context, evaluate} = await createViewer([legacy, modern]);
+    assert.equal(evaluate("tileLayers.get('legacy_0').containers"), legacy.chests);
+    assert.equal(evaluate("tileLayers.get('legacy_0').chests"), undefined);
+    assert.equal(evaluate('controlState.containerControlChecked'), false);
+    assert.equal(evaluate('controlState.chestControlChecked'), undefined);
+    context.setMarkerVisibility('containerControlChecked', true);
+    evaluate("selectBaseLayer(tileLayers.get('legacy_1'))");
+    assert.equal(evaluate('controlState.containerControlChecked'), true);
+    context.switchWorld('New world');
+    assert.equal(evaluate("activeBaseLayer.containers"), modern.containers);
+    assert.equal(evaluate('controlState.containerControlChecked'), false);
+    assert.equal(evaluate('controlState.chestControlChecked'), undefined);
+    context.switchWorld('Old world');
+    assert.equal(evaluate('controlState.containerControlChecked'), true);
 });
 
 test('marker overrides survive lighting, dimension and world switches while other worlds keep their own defaults', async () => {
@@ -274,7 +298,7 @@ test('world switches update control images, font and enchanted glint without cha
         assert.equal(viewer.evaluate('activeBaseLayer.localizationsUrl'), `Scripts/${id}/localizations.json`);
         assert.equal(viewer.mapElement.style['--minecraft-font'], `url("${id}/Images/Font.png")`);
         assert.equal(viewer.mapElement.style['--enchanted-glint'], `url("${id}/Images/EnchantedGlint.png")`);
-        assert.equal(viewer.evaluate('CreateToggleControl("chests", "Chest.png", [], true).addTo(mymap).getContainer().src'),
+        assert.equal(viewer.evaluate('CreateToggleControl("containers", "Chest.png", [], true).addTo(mymap).getContainer().src'),
             `${id}/Images/Chest.png`);
     }
 });

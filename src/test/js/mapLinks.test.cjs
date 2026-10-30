@@ -155,7 +155,7 @@ test('editing fragment coordinates moves the map without adding another history 
 test('editing the layer switches base layers and uses the target map height', () => {
     const {context, map, layer, vectors, window} = createViewer();
     const control = {remove() {}, setChecked() {}};
-    for (const name of ['spawn', 'sign', 'view', 'player', 'portal', 'bed', 'respawnAnchor', 'beacon', 'chest']) {
+    for (const name of ['spawn', 'sign', 'view', 'player', 'portal', 'bed', 'respawnAnchor', 'beacon', 'container']) {
         context[name + 'ToggleControl'] = control;
     }
     context.compassControl = control;
@@ -171,7 +171,7 @@ test('editing the layer switches base layers and uses the target map height', ()
         projection: new context.MinecraftProjection(targetVectors),
         controlState: {},
         worldStats: {},
-        signs: [], players: [], chests: [], views: [], portals: [], beds: [], anchors: [], beacons: [],
+        signs: [], players: [], containers: [], views: [], portals: [], beds: [], anchors: [], beacons: [],
         addTo(map) {
             map.layers.add(this);
             // Leaflet's layer control fires baselayerchange when the new base layer is added.

@@ -50,18 +50,18 @@ html, body, #map {
     text-align: center;
 }
 
-.chest_container {
+.container_inventory {
     font-size: 0;
     line-height: 0;
     width: 528px; /* Do not rely on scale and set size explicitly so that leaflet popup can adjust its size properly */
-    height: 234px; /* These should therefore be set to scale*chest_image_size */
+    height: 234px; /* These should therefore be set to scale*container_image_size */
 }
 
-    .chest_container.large {
+    .container_inventory.large {
         height: 396px;
     }
 
-.chest_scaler {
+.container_inventory_scaler {
     image-rendering: pixelated; /* Use neirest neighbour to keep pixelated look */
     scale: 3; /* Use integer scale for best look */
     position: absolute;
@@ -69,17 +69,17 @@ html, body, #map {
     width: 0;
 }
 
-    .chest_scaler > div {
+    .container_inventory_scaler > div {
         position: absolute;
     }
 
-.chest_scaler .inventory_slot,
+.container_inventory_scaler .inventory_slot,
 .player_inventory_scaler .inventory_slot {
     background: transparent;
     box-shadow: none;
 }
 
-.chest_scaler .inventory_slot:hover,
+.container_inventory_scaler .inventory_slot:hover,
 .player_inventory_scaler .inventory_slot:hover {
     background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)) center / 16px 16px no-repeat;
 }
@@ -479,17 +479,17 @@ html, body, #map {
     font-size: 12px;
 }
 
-.chest_name {
+.container_name {
     top: 6px;
     left: 7px;
     width: 162px;
     height: 9px;
 }
 
-    .chest_name .mc_char {
+    .container_name .mc_char {
         filter: unset;
     }
 
-        .chest_name .mc_char::before {
+        .container_name .mc_char::before {
             background: #3f3f3f;
         }

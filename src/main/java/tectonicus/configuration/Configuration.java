@@ -133,8 +133,8 @@ public class Configuration implements Callable<Configuration> {
 	private boolean viewsInitiallyVisible;
 	@Option(names = {"--spawnInitiallyVisible", "spawnInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean spawnInitiallyVisible;
-	@Option(names = {"--chestsInitiallyVisible", "chestsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
-	private boolean chestsInitiallyVisible;
+	@Option(names = {"--containersInitiallyVisible", "containersInitiallyVisible", "--chestsInitiallyVisible", "chestsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
+	private boolean containersInitiallyVisible;
 	@Option(names = {"--beaconsInitiallyVisible", "beaconsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean beaconsInitiallyVisible;
 
@@ -242,8 +242,8 @@ public class Configuration implements Callable<Configuration> {
 				visibility.setRespawnAnchors(respawnAnchorsInitiallyVisible);
 			if (options.hasMatchedOption("--viewsInitiallyVisible"))
 				visibility.setViews(viewsInitiallyVisible);
-			if (options.hasMatchedOption("--chestsInitiallyVisible"))
-				visibility.setChests(chestsInitiallyVisible);
+			if (options.hasMatchedOption("--containersInitiallyVisible"))
+				visibility.setContainers(containersInitiallyVisible);
 			if (options.hasMatchedOption("--beaconsInitiallyVisible"))
 				visibility.setBeacons(beaconsInitiallyVisible);
 			if (options.hasMatchedOption("--useSmoothLighting")) {
@@ -278,7 +278,7 @@ public class Configuration implements Callable<Configuration> {
 		log.debug("\trespawnAnchorsInitiallyVisible:{}", areRespawnAnchorsInitiallyVisible());
 		log.debug("\tspawnInitiallyVisible:{}", isSpawnInitiallyVisible());
 		log.debug("\tviewsInitiallyVisible:{}", areViewsInitiallyVisible());
-		log.debug("\tchestsInitiallyVisible:{}", isChestsInitiallyVisible());
+		log.debug("\tcontainersInitiallyVisible:{}", isContainersInitiallyVisible());
 		log.debug("\tbeaconsInitiallyVisible:{}", isBeaconsInitiallyVisible());
 		log.debug("\teraseOutputDir:{}", eraseOutputDir());
 		log.debug("\tforceLoadAwt:{}", forceLoadAwt());

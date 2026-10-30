@@ -73,7 +73,7 @@ import static tectonicus.Version.VERSION_13;
 import static tectonicus.util.OutputResourcesUtil.outputBeacons;
 import static tectonicus.util.FindEntityUtil.findBeacons;
 import static tectonicus.util.OutputResourcesUtil.outputBeds;
-import static tectonicus.util.OutputResourcesUtil.outputChests;
+import static tectonicus.util.OutputResourcesUtil.outputContainers;
 import static tectonicus.util.OutputResourcesUtil.outputContents;
 import static tectonicus.util.OutputResourcesUtil.outputCompass;
 import static tectonicus.util.OutputResourcesUtil.outputHtml;
@@ -275,7 +275,7 @@ public class TileRenderer
 			List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
 			worldStats.setNumPortals(portals.size());
 			outputViews(new File(mapDir, "views.js"), viewsFile, map);
-			outputChests(new File(mapDir, "chests.js"), map, world.getChests());
+			outputContainers(new File(mapDir, "containers.js"), map, world.getContainers());
 			outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons());
 
 			// Render views
@@ -659,14 +659,14 @@ public class TileRenderer
 				}
 			}
 			
-			ConcurrentLinkedQueue<ContainerEntity> chests = world.getChests();
+			ConcurrentLinkedQueue<ContainerEntity> containers = world.getContainers();
 			Queue<BedEntity> beds = world.getBeds();
 			findBeacons(c.getRawChunk(), world.getBeacons(), map.getBeaconFilter(),
 					beacon -> world.getBeaconLevels(c.getRawChunk(), beacon));
 			
 			try {
 				// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
-				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, chests, beds);
+				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, containers, beds);
 			} catch (CloneNotSupportedException e) {
 				log.error("Exception: ", e);
 			}
