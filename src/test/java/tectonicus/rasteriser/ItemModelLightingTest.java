@@ -16,6 +16,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.BlockContext;
 import tectonicus.ItemRenderer.ItemContext;
 import tectonicus.Minecraft;
+import tectonicus.itemregistry.GuiGeometry;
+import tectonicus.itemregistry.GuiLighting;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BlockRegistry;
@@ -75,6 +77,33 @@ class ItemModelLightingTest {
 		assertEquals(4, colours.size());
 		for (org.joml.Vector4f colour : colours)
 			assertEquals(new org.joml.Vector4f(1, 1, 1, 1), colour);
+	}
+
+	@Test
+	void guiModelsSkipWorldLightingOcclusionAndCardinalShading() {
+		List<org.joml.Vector4f> colours = new ArrayList<>();
+		Mesh mesh = (Mesh) Proxy.newProxyInstance(Mesh.class.getClassLoader(), new Class<?>[]{Mesh.class},
+				(proxy, method, args) -> {
+					if (method.getName().equals("addVertex"))
+						colours.add(new org.joml.Vector4f((org.joml.Vector4f) args[1]));
+					return null;
+				});
+		Rasteriser rasteriser = (Rasteriser) Proxy.newProxyInstance(Rasteriser.class.getClassLoader(), new Class<?>[]{Rasteriser.class},
+				(proxy, method, args) -> method.getName().equals("createMesh") ? mesh : null);
+		BlockContext world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
+				(proxy, method, args) -> { throw new AssertionError("GUI models must not query the world: " + method.getName()); });
+		var model = new BakedBlockStateModel(LightingModelFixture.face("north", new Vector3f(0, 0, 0),
+				new Vector3f(16, 16, 16)).getModel(), 0, 0, 0, false);
+		var pose = new org.joml.Matrix4f().rotateXYZ((float) Math.toRadians(30), (float) Math.toRadians(225), 0);
+		model.createGeometry(0, 0, 0, world, new RawChunk(), new GuiGeometry(rasteriser, pose,
+				new GuiLighting(true, new org.joml.Matrix4f())));
+		assertEquals(4, colours.size());
+		for (var colour : colours) {
+			assertEquals(0.4f, colour.x, 0.00001f);
+			assertEquals(0.4f, colour.y, 0.00001f);
+			assertEquals(0.4f, colour.z, 0.00001f);
+			assertEquals(1, colour.w);
+		}
 	}
 
 	@Test

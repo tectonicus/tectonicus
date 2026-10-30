@@ -64,7 +64,9 @@ class InventoryItemIconsTest {
 		try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(jar))) {
 			json(out, "version.json", "{\"name\":\"1.21.11\",\"pack_version\":{\"resource\":75}}");
 			json(out, "assets/minecraft/models/item/conduit.json", modern
-					? "{\"textures\":{\"particle\":\"block/conduit\"}}" : "{\"parent\":\"builtin/entity\"}");
+					? "{\"textures\":{\"particle\":\"block/conduit\"},\"display\":{\"gui\":{\"translation\":[4,0,0]}}}"
+					: "{\"parent\":\"builtin/entity\",\"display\":{\"gui\":{\"translation\":[4,0,0]}}}");
+			json(out, "assets/minecraft/models/item/conduit_gui.json", "{\"display\":{\"gui\":{\"translation\":[-4,0,0]}}}");
 			json(out, "assets/minecraft/models/item/ender_chest.json", modern
 					? "{\"parent\":\"minecraft:item/template_chest\"}" : "{\"parent\":\"builtin/entity\"}");
 			json(out, "assets/minecraft/models/item/template_chest.json", "{}");
@@ -85,7 +87,7 @@ class InventoryItemIconsTest {
 					json(out, "assets/minecraft/items/" + item + ".json", "{\"model\":" + special + "}");
 				}
 				json(out, "assets/minecraft/items/conduit.json", """
-						{"model":{"type":"minecraft:special","base":"minecraft:item/conduit",
+						{"model":{"type":"minecraft:special","base":"minecraft:item/conduit_gui",
 						"model":{"type":"minecraft:conduit"}}}
 						""");
 				json(out, "assets/minecraft/items/ender_chest.json", """
@@ -107,6 +109,8 @@ class InventoryItemIconsTest {
 
 		AtomicInteger drawnVertices = new AtomicInteger();
 		AtomicInteger screenshots = new AtomicInteger();
+		AtomicInteger screenshotVertexStart = new AtomicInteger();
+		List<Vector3f> iconCenters = new ArrayList<>();
 		Rasteriser rasteriser = (Rasteriser) Proxy.newProxyInstance(Rasteriser.class.getClassLoader(), new Class<?>[]{Rasteriser.class},
 				(proxy, method, args) -> switch (method.getName()) {
 					case "getMaxTextureSize" -> 16384;
@@ -120,6 +124,10 @@ class InventoryItemIconsTest {
 					case "createMesh" -> mesh(drawnVertices);
 					case "takeScreenshot" -> {
 						assertTrue(drawnVertices.getAndSet(0) >= 24, "Icon must draw entity geometry");
+						var vertices = emittedPositions.subList(screenshotVertexStart.getAndSet(emittedPositions.size()), emittedPositions.size());
+						Vector3f center = new Vector3f();
+						vertices.forEach(center::add);
+						iconCenters.add(center.div(vertices.size()));
 						screenshots.incrementAndGet();
 						yield new BufferedImage((int) args[2], (int) args[3], BufferedImage.TYPE_INT_ARGB);
 					}
@@ -152,6 +160,10 @@ class InventoryItemIconsTest {
 					models, new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
 
 			assertEquals(2 + (modern ? DEFINITION_ONLY_ITEMS.size() + 1 : 0), screenshots.get());
+			// GUI X translation must move right on screen. Modern definitions must use their base,
+			// even when a same-named item model specifies a different pose.
+			float expected = 0.5f + (modern ? 1 : -1) * (float) Math.sqrt(0.5) / 4;
+			assertTrue(iconCenters.stream().anyMatch(center -> center.equals(new Vector3f(expected, 0.5f, expected), 0.00001f)));
 			if (modern) {
 				assertNotNull(textures.getPackTexture("banner_base_red"), "Entityless banners must retain their item color");
 				assertArrayEquals(Files.readAllBytes(directory.resolve("Items/canonical.png")), Files.readAllBytes(directory.resolve("Items/alias.png")));

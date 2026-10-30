@@ -63,10 +63,8 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static tectonicus.Version.VERSION_13;
@@ -224,7 +222,6 @@ public class TileRenderer
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
                 World world = null;
-		Set<String> exportedWorlds = new HashSet<>();
                 
 		for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
 		{
@@ -333,7 +330,8 @@ public class TileRenderer
 			}
 
 			outputCompass(exportDir, map, rasteriser);
-			if (exportedWorlds.add(map.getWorld().getId())) {
+			// Shared world resources are exported once, after its last configured dimension.
+			if (map == map.getWorld().getDimensions().getLast()) {
 				File imagesDir = DirUtils.getWorldImagesDir(exportDir, map.getWorld());
 				outputIcons(imagesDir, world, rasteriser);
 				ItemModelDefinitionRegistry itemModels = new ItemModelDefinitionRegistry(world.getTexturePack());

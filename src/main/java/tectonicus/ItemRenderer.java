@@ -12,11 +12,11 @@ package tectonicus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.Strings;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import tectonicus.itemregistry.ItemGuiTransform;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
-import tectonicus.blockTypes.Banner;
-import tectonicus.blockTypes.DecoratedPot;
 import tectonicus.blockTypes.ShulkerBox;
 import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BlockModel;
@@ -29,6 +29,7 @@ import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.NorthDirection;
+import tectonicus.itemregistry.ItemGuiTransform;
 import tectonicus.itemregistry.ShieldModel;
 import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.Rasteriser;
@@ -57,7 +58,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -195,7 +195,7 @@ public class ItemRenderer
                 renderInventoryBlockModel(outFile, registry, texturePack, model);
 	}
 
-	public void renderInventoryBlockState(File outFile, BlockRegistry registry, TexturePack texturePack, String blockName) {
+	public void renderInventoryBlockState(File outFile, BlockRegistry registry, TexturePack texturePack, String blockName, String baseModel) throws Exception {
 		BlockStateWrapper block = registry.getBlock(blockName);
 		BlockProperties properties = block.getPropertiesWithDefaults(null);
 		RawChunk rawChunk = new RawChunk();
@@ -204,29 +204,48 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
 		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		Geometry geometry = new Geometry(rasteriser);
-		float height = 1;
+		Geometry geometry = guiGeometry(texturePack, baseModel);
 		for (var model : block.getModels(properties, 0, 0, 0)) {
 			model.createGeometry(0, 0, 0, context, rawChunk, geometry);
-			for (var element : model.getBlockModel().getElements())
-				height = Math.max(height, element.getTo().y() / 16);
 		}
-		renderItem(new ItemGeometry(geometry, new BoundingBox(new Vector3f(), 1, height, 1)),
-				outFile, 48, 2, getAngleRad(315), getAngleRad(30));
+		renderGui(geometry, outFile);
 	}
 
-	public void renderShield(File outFile, BlockRegistry registry, TexturePack texturePack) throws Exception {
-		BlockModel model = ShieldModel.getModel(registry, texturePack);
-		renderBlock(outFile, null, new ItemContext(texturePack, null, registry), new RawChunk(), null, model,
-				48, getAngleRad(290), getAngleRad(15), new BoundingBox(new Vector3f(), 1, 1.5f, 1));
+	public void renderShield(File outFile, BlockRegistry registry, TexturePack texturePack, String baseModel) throws Exception {
+		Geometry geometry = guiGeometry(texturePack, baseModel);
+		ShieldModel.addGeometry(registry, texturePack, geometry,
+				new Matrix4f().scale(1, -1, -1).translate(-0.5f, 0.75f, -9 / 16f).scale(1, -1, 1),
+				new Vector4f(1));
+		renderGui(geometry, outFile);
 	}
         
-        public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, BlockModel model) throws Exception {
-                RawChunk rawChunk = new RawChunk();
-		ItemContext context = new ItemContext(texturePack, null, registry);
-                BoundingBox bounds = new BoundingBox(new Vector3f(0, 0, 0), 1, 1, 1);
-		renderBlock(outFile, null, context, rawChunk, null, model, 48, getAngleRad(270 + 45), getAngleRad(30), bounds);
-        }
+	public void renderInventoryBlockModel(File outFile, BlockRegistry registry, TexturePack texturePack, BlockModel model) throws Exception {
+		Geometry geometry = guiGeometry(texturePack, model.getName());
+		RawChunk rawChunk = new RawChunk();
+		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
+		registry.getBakedModel(model, 0, 0, 0, false).createGeometry(0, 0, 0,
+				new ItemContext(texturePack, null, registry), rawChunk, geometry);
+		renderGui(geometry, outFile);
+	}
+
+	private Geometry guiGeometry(TexturePack texturePack, String modelName) throws Exception {
+		OrthoCamera camera = new OrthoCamera(rasteriser, 48, 48);
+		camera.lookAt(0.5, 0.5, 0.5, 1, getAngleRad(315), getAngleRad(30));
+		Matrix4f basis = new Matrix4f()
+				.setColumn(0, new Vector4f(camera.getRight(), 0))
+				.setColumn(1, new Vector4f(camera.getUp(), 0))
+				.setColumn(2, new Vector4f(camera.getForward().negate(), 0));
+		Matrix4f transform = new Matrix4f().translation(0.5f, 0.5f, 0.5f)
+				.mul(basis).mul(ItemGuiTransform.load(texturePack.getZipStack(), modelName));
+		return new tectonicus.itemregistry.GuiGeometry(rasteriser, transform,
+				new tectonicus.itemregistry.GuiLighting(ItemGuiTransform.isSideLit(texturePack.getZipStack(), modelName), basis));
+	}
+
+	private void renderGui(Geometry geometry, File outFile) {
+		renderItem(new ItemGeometry(geometry, new BoundingBox(new Vector3f(), 1, 1, 1)),
+				outFile, 48, 2, getAngleRad(315), getAngleRad(30), true);
+	}
 
 	public void renderBlock(File outFile, BlockTypeRegistry registryOld, BlockRegistry registry, TexturePack texturePack, Block block, BlockProperties properties) throws Exception {
 		renderBlock(outFile, registryOld, registry, texturePack, block.getName(), properties);
@@ -391,71 +410,29 @@ public class ItemRenderer
 		renderItem(item, outFile, imageSize, 4, getAngleRad(65), getAngleRad(35));
 	}
         
-        public void renderItem(File outFile, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack, String blockName, List<java.util.Map<String, ArrayList<Float>>> transforms) throws Exception {
+	public void renderItem(File outFile, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack, String blockName, String baseModel) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
+		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
+		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		BlockType type = registry.find(blockName);
-		ItemContext context = new ItemContext(texturePack, registry, modelRegistry);
 		if (type instanceof ShulkerBox)
 			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("facing", "up")));
-                
-                BoundingBox bounds = new BoundingBox(new org.joml.Vector3f(), 1, 1, 1);
-		if (type instanceof Banner)
-			bounds = new BoundingBox(new Vector3f(), 1, 2, 1);
-		else if (type instanceof DecoratedPot)
-			bounds = new BoundingBox(new Vector3f(), 1, 1.25f, 1);
-                
-                float cameraAngle = getAngleRad(45 + 270);
-                float cameraElevationAngle = getAngleRad(30);
+		// The legacy chest renderer defaults to north, while the item model faces south.
+		if (type instanceof tectonicus.blockTypes.ChestNew || type instanceof tectonicus.blockTypes.Chest)
+			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("facing", "south")));
+		if (type instanceof tectonicus.blockTypes.Skull)
+			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("rotation", "8")));
+		Geometry geometry = guiGeometry(texturePack, baseModel);
+		type.addInteriorGeometry(0, 0, 0, new ItemContext(texturePack, registry, modelRegistry), registry, rawChunk, geometry);
+		renderGui(geometry, outFile);
+	}
 
-                /* TODO: Figure out transforms. Both scaling and translation are all over the place.
-                         Some items benefit from them, others are too small, or weirdly offset, dragon head is a total mess.
-                for (var transform : transforms) {
-                        float translateX = 0;
-                        float translateY = 0;
-                        float translateZ = 0;
-                        float scaleX = 1;
-                        float scaleY = 1;
-                        float scaleZ = 1;
+	private void renderItem(ItemGeometry item, File outFile, int imageSize, int numDownsamples, float cameraAngle, float cameraElevationAngle) {
+		renderItem(item, outFile, imageSize, numDownsamples, cameraAngle, cameraElevationAngle, false);
+	}
 
-                        if (transform != null && transform.containsKey("rotation")) {
-                                ArrayList<Float> rotation = transform.get("rotation");
-                                cameraAngle = getAngleRad(rotation.get(1) + 270);
-                                cameraElevationAngle = getAngleRad(rotation.get(0));
-                        }
-                        if (transform != null && transform.containsKey("scale")) {
-                                ArrayList<Float> scale = transform.get("scale");
-                                scaleX = scale.get(0);
-                                scaleY = scale.get(1);
-                                scaleZ = scale.get(2);
-                        }
-                        if (transform != null && transform.containsKey("translation")) {
-                                ArrayList<Float> translation = transform.get("translation");
-                                translateX = translation.get(0);
-                                translateY = translation.get(1);
-                                translateZ = translation.get(2);
-                        }
-
-                        // Do the scaling. Divide insted of multiply, since we are transforming bounding box instead of item
-                        final float centerX = bounds.getCenterX();
-                        final float centerY = bounds.getCenterY();
-                        final float centerZ = bounds.getCenterZ();
-                        final float scaledWidth = bounds.getWidth()/scaleX;
-                        final float scaledHeight = bounds.getHeight()/scaleY;
-                        final float scaledDepth = bounds.getDepth()/scaleZ;
-
-                        // Subtract insted of add during translation, since we are transforming bounding box instead of item
-                        bounds = new BoundingBox(
-                                new Vector3f(centerX-scaledWidth/2-translateX, centerY-scaledHeight/2-translateY, centerZ-scaledDepth/2-translateZ),
-                                scaledWidth, scaledHeight, scaledDepth
-                        );
-                }
-                */
-                
-                renderBlock(outFile, registry, context, rawChunk, type, null, 48, cameraAngle, cameraElevationAngle, bounds);
-        }
-	
-	private void renderItem(ItemGeometry item, File outFile, final int imageSize, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle)
+	private void renderItem(ItemGeometry item, File outFile, final int imageSize, final int numDownsamples, final float cameraAngle, final float cameraElevationAngle, boolean gui)
 	{
                 final int capturedImageSize = imageSize * (1 << numDownsamples);
                 
@@ -508,7 +485,7 @@ public class ItemRenderer
 		
 		final float xSize = topLeftWorld.sub(topRightWorld, new Vector3f()).length();
 		final float ySize = topLeftWorld.sub(bottomLeftWorld, new Vector3f()).length();
-		float longest = Math.max(xSize, ySize);
+		float longest = gui ? 1 : Math.max(xSize, ySize);
 		
 		camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
 		camera.apply();

@@ -644,11 +644,11 @@ public class OutputResourcesUtil {
 				if ("minecraft:special".equals(itemModelDefinition.getType()) || "special".equals(itemModelDefinition.getType())) {
 					String blockName = "minecraft:" + entryKey;
 					if (blockTypeRegistry != null && !(blockTypeRegistry.find(blockName) instanceof tectonicus.blockTypes.Air)) {
-						itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack, blockName, List.of());
+						itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack, blockName, itemModelDefinition.getBase());
 					} else if (blockRegistry.getBlock(blockName) != null) {
-						itemRenderer.renderInventoryBlockState(outFile, blockRegistry, texturePack, blockName);
+						itemRenderer.renderInventoryBlockState(outFile, blockRegistry, texturePack, blockName, itemModelDefinition.getBase());
 					} else if ("minecraft:shield".equals(itemModelDefinition.getInnerModel().getType())) {
-						itemRenderer.renderShield(outFile, blockRegistry, texturePack);
+						itemRenderer.renderShield(outFile, blockRegistry, texturePack, itemModelDefinition.getBase());
 					} else {
 						continue;
 					}
@@ -664,6 +664,7 @@ public class OutputResourcesUtil {
                                 
                                 if (modelName.startsWith("minecraft:block")) {
                                         itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
+                                        renderedEntityItems.add(entryKey);
                                 }
                                 else if (modelName.startsWith("minecraft:item")) {
 					// Definitions can reuse another item's model without having their own model file.
@@ -699,7 +700,7 @@ public class OutputResourcesUtil {
 				if (modelName == null && blockTypeRegistry != null
 						&& !(blockTypeRegistry.find("minecraft:" + entryKey) instanceof tectonicus.blockTypes.Air)) {
 					itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack,
-							"minecraft:" + entryKey, itemRegistry.getTransformsList(itemModel));
+							"minecraft:" + entryKey, "minecraft:item/" + entryKey);
 					continue;
 				}
 
@@ -713,8 +714,8 @@ public class OutputResourcesUtil {
 				// Some items need special handling (shulker boxes, mob heads, banners, etc.)
 				if (modelName.endsWith("builtin/entity")) {  //TODO: this doesn't appear to exist anymore with 1.21.4
 					modelName = "minecraft:" + entryKey;
-					List<Map<String, ArrayList<Float>>> transforms = itemRegistry.getTransformsList(itemModel);
-					itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack, modelName, transforms);
+					String baseModel = "minecraft:item/" + entryKey;
+					itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry, texturePack, modelName, baseModel);
 					continue;
 				}
                                 
@@ -789,15 +790,8 @@ public class OutputResourcesUtil {
                                                 continue;
                                 }
                                 
-                                // Inventory block models are not loaded in the registry because they do not have a block state. Let's load them manually
-                                if (modelName.contains("_inventory")) {
-                                        var model = blockRegistry.loadModel(modelName, "", new HashMap<>(), null);
-                                        itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, model);
-                                        continue;
-                                }
-                                
                                 // Rest of the items
-                                itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, modelName);
+                                itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, "minecraft:item/" + entryKey);
 				} catch (Exception e) {
 					log.error("Unable to render item icon for {}", entry.getKey(), e);
 				}

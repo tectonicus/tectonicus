@@ -23,6 +23,7 @@ import tectonicus.chunk.Chunk;
 import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.itemregistry.GuiGeometry;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -82,6 +83,23 @@ public class MeshUtil {
 		BlockModel model = bakedModel.getSourceModel();
 		if (model == null || bakedModel.getQuads().isEmpty())
 			return;
+
+		if (geometry instanceof GuiGeometry) {
+			// GUI meshes light the posed surface normals. World AO and cardinal shading
+			// must not be baked into the input colours as well.
+			for (BakedQuad quad : bakedModel.getQuads()) {
+				ElementFace face = quad.getFace();
+				Colour4f tint = face.isTinted() ? getTintColor(model.getName(), rawChunk, world, x, y, z)
+						: new Colour4f(1, 1, 1, 1);
+				MeshType type = face.isTranslucent() ? MeshType.Transparent
+						: face.isTransparent() ? MeshType.AlphaTest : MeshType.Solid;
+				Mesh mesh = geometry.getMesh(face.getTexture().texture, type);
+				for (int vertex = 0; vertex < 4; vertex++)
+					mesh.addVertex(new Vector3f(x + quad.getPosition(vertex, 0), y + quad.getPosition(vertex, 1), z + quad.getPosition(vertex, 2)),
+							new Vector4f(tint.r, tint.g, tint.b, 1), quad.getUv(vertex, 0), quad.getUv(vertex, 1));
+			}
+			return;
+		}
 
 		// Empty item-model chunks have neither a name nor an ID and need no legacy lookup.
 		boolean legacyBlock = rawChunk.getBlockName(x, y, z) == null && rawChunk.getBlockId(x, y, z) != 0;
