@@ -364,8 +364,8 @@ public class World implements BlockContext
 	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
 	//For Overworld we check for a player or bed closest to (0,64,0) and use that as the origin
 	//otherwise we just use (0,64,0) as the origin
-	//For the Nether we try to find a player or Respawn Anchor closest to world spawn and use that as the origin
-	//otherwise we just use the world spawn position as the origin
+	//For the Nether we convert Overworld spawn X/Z to Nether coordinates, then find the closest player or Respawn Anchor
+	//otherwise we use the converted spawn position as the origin
 	//For the End we set the spawn to (100, 49, 0) when we load the level.dat. That's the location of the obsidian platform that the player spawns on
 	private Vector3l getSubsetOrigin() {
 		Vector3l origin = levelDat.getSpawnPosition();
@@ -374,6 +374,10 @@ public class World implements BlockContext
 		if(dimension == Dimension.OVERWORLD && spawnDimension != Dimension.OVERWORLD) {
 			origin = getOriginFromPlayers(new Vector3l(0, 64, 0), dimensionInfo);
 		} else if (dimension == Dimension.NETHER && spawnDimension != Dimension.NETHER) {
+			if (spawnDimension == Dimension.OVERWORLD) {
+				origin.x = Math.floorDiv(origin.x, 8);
+				origin.z = Math.floorDiv(origin.z, 8);
+			}
 			origin = getOriginFromPlayers(origin, dimensionInfo);
 		}
 		return origin;
