@@ -497,6 +497,10 @@ public class World implements BlockContext
 		this.lightStyle = style;
 	}
 	
+	private boolean isNetherNightLighting() {
+		return dimension == Dimension.NETHER && lightStyle == LightStyle.Night;
+	}
+
 	@Override
 	public LightStyle getLightStyle()
 	{
@@ -1088,26 +1092,26 @@ public class World implements BlockContext
 		{
 			Chunk c = rawLoadedChunks.get(chunkCoord);
 			RawChunk raw = c != null ? c.getRawChunk() : null;
-			return Chunk.getLight(lightStyle, face, raw, x, y, z, nightLightAdjustment);
+			return Chunk.getLight(lightStyle, face, raw, x, y, z, nightLightAdjustment, isNetherNightLighting());
 		}
 
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
 		
-		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
+		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment, isNetherNightLighting());
 	}
 
 	@Override
 	public LightSample getLightSample(RawChunk rawChunk, int x, int y, int z, LightFace face, float nightLightAdjustment)
 	{
 		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
-			return Chunk.getLightSample(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment);
+			return Chunk.getLightSample(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment, isNetherNightLighting());
 
 		Location loc = resolve(rawChunk.getChunkCoord(), x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
-		return Chunk.getLightSample(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
+		return Chunk.getLightSample(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment, isNetherNightLighting());
 	}
 
 	@Override
@@ -1120,12 +1124,12 @@ public class World implements BlockContext
 	public float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face, float nightLightAdjustment)
 	{
 		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
-			return Chunk.getLight(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment);
+			return Chunk.getLight(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment, isNetherNightLighting());
 
 		Location loc = resolve(rawChunk.getChunkCoord(), x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
-		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment);
+		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment, isNetherNightLighting());
 	}
 
 	/*

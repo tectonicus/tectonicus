@@ -16,7 +16,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -97,7 +96,7 @@ public class BedNew implements BlockType
 		SubTexture footEdge = new SubTexture(texture.texture, texture.u0+texel*22.1f, texture.v0+texel*22, texture.u0+texel*37.9f, texture.v0+texel*27.9f);
 		SubTexture leg = new SubTexture(texture.texture, texture.u0+texel*50, texture.v0+texel*3.1f, texture.u0+texel*53, texture.v0+texel*6);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(rawChunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final float height = 1.0f / 16.0f * 9.0f;

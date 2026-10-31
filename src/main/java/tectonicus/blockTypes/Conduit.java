@@ -15,7 +15,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -68,7 +67,7 @@ public class Conduit implements BlockType
 	{
 		SubMesh subMesh = new SubMesh();
 
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(rawChunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		final Vector4f color = new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a);
 
 		final float offSet = 1.0f / 16.0f;

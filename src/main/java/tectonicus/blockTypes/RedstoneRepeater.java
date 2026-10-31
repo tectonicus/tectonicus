@@ -15,7 +15,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -106,7 +105,7 @@ public class RedstoneRepeater implements BlockType
 		
 		final float height = 1.0f / 16.0f * HEIGHT_IN_TEXELS;
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		SubMesh subMesh = new SubMesh();

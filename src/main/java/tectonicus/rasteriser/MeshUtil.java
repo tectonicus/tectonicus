@@ -187,7 +187,7 @@ public class MeshUtil {
 		LightFace lightFace = quad.isShaded() ? lightDirection.lightFace : LightFace.Top;
 		// Partial shaded models use their cell's light with the normal face factor.
 		if (!fullBlock && quad.isShaded())
-			return Chunk.getLight(world.getLightStyle(), lightFace, rawChunk, x, y, z, nightLightAdjustment);
+			return world.getLight(rawChunk, x, y, z, lightFace, nightLightAdjustment);
 
 		// shade=false keeps world light but uses no directional darkening.
 		boolean outside = fullBlock || isFaceOnBlockBoundary(quad, surface);

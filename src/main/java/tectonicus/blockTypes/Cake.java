@@ -16,7 +16,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
@@ -81,7 +80,7 @@ public class Cake implements BlockType
 		Mesh sideMesh = geometry.getMesh(side.texture, Geometry.MeshType.AlphaTest);
 		Mesh interiorMesh = geometry.getMesh(interior.texture, Geometry.MeshType.AlphaTest);
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		
 		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		

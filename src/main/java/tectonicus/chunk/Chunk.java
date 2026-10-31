@@ -471,6 +471,15 @@ public class Chunk
 	//TODO: is there any way to make this method faster?
 	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z, float nightLightAdjustment)
 	{
+		return getLight(lightStyle, face, c, x, y, z, nightLightAdjustment, false);
+	}
+
+	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z, float nightLightAdjustment, boolean netherNight)
+	{
+		if (netherNight && lightStyle == LightStyle.Night) {
+			int level = c == null || y < 0 || y >= Minecraft.getChunkHeight() ? 0 : c.getBlockLight(x, y, z);
+			return NetherLightmap.grayscale(NetherLightmap.colour(level)) * getFaceFactor(lightStyle, face);
+		}
 		float result = 0;
 
 		switch (lightStyle)
@@ -543,6 +552,16 @@ public class Chunk
 
 	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
 			final int x, final int y, final int z, float nightLightAdjustment) {
+		return getLightSample(lightStyle, face, c, x, y, z, nightLightAdjustment, false);
+	}
+
+	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
+			final int x, final int y, final int z, float nightLightAdjustment, boolean netherNight) {
+		if (netherNight && lightStyle == LightStyle.Night) {
+			int level = c == null || y < 0 || y >= Minecraft.getChunkHeight() ? 0 : c.getBlockLight(x, y, z);
+			return new LightSample(0, level * SMOOTH_NIGHT_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT, 0,
+					NetherLightmap.colour(level)).scale(getFaceFactor(lightStyle, face));
+		}
 		if ((lightStyle != LightStyle.Day && lightStyle != LightStyle.Night) || c == null || y >= Minecraft.getChunkHeight() || y < 0)
 			return LightSample.ambient(getLight(lightStyle, face, c, x, y, z, nightLightAdjustment));
 
@@ -571,7 +590,7 @@ public class Chunk
 
 		// An entirely unlit neighbor borrows both components; a neighbor with block
 		// light borrows only skylight. Ambient brightness remains independent.
-		return new LightSample(center.sky(), sample.block() == 0 ? center.block() : sample.block(), sample.ambient());
+		return new LightSample(center.sky(), sample.block() == 0 ? center.block() : sample.block(), sample.ambient(), sample.block() == 0 ? center.netherColour() : sample.netherColour());
 	}
 
 	public static float getFaceFactor(LightStyle lightStyle, LightFace face) {

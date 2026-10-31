@@ -94,7 +94,7 @@ public class Water extends Fluid {
 		// Minecraft fluids combine the strongest sky and block light in the cell
 		// and the cell above, then apply the directional face shading.
 		Colour4f light = new LightSample(Math.max(self.sky(), above.sky()), Math.max(self.block(), above.block()),
-				Math.max(self.ambient(), above.ambient())).toColour(world.getLightStyle(), world.useOldGrayscaleLighting());
+				Math.max(self.ambient(), above.ambient()), self.netherColour() == null ? null : new Colour4f(Math.max(self.netherColour().r, above.netherColour().r), Math.max(self.netherColour().g, above.netherColour().g), Math.max(self.netherColour().b, above.netherColour().b), 1)).toColour(world.getLightStyle(), world.useOldGrayscaleLighting());
 		float shade = shade(face);
 		return new Vector4f(tint.r * light.r * shade, tint.g * light.g * shade, tint.b * light.b * shade, internal ? 0.3f : 0.95f);
 	}

@@ -15,7 +15,6 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -122,7 +121,7 @@ public class Skull implements BlockType
 
 
 		final int data = rawChunk.getBlockData(x, y, z);
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(rawChunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		final Vector4f light = new Vector4f(colour.r * lightness, colour.g * lightness, colour.b * lightness, colour.a);
 		
 		final float offSet = 1.0f / 16.0f;

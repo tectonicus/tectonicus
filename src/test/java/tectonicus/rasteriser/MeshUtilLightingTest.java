@@ -318,7 +318,7 @@ class MeshUtilLightingTest {
 	void flatPartialFacesRetainCellLightAndDirectionalShading(String direction, LightFace face) {
 		BakedQuad quad = LightingModelFixture.face(direction, new Vector3f(4, 4, 4), new Vector3f(12, 12, 12));
 		for (LightStyle style : LightStyle.values()) {
-			float cellLight = style == LightStyle.Day || style == LightStyle.None ? 1 : 0.1f;
+			float cellLight = 0.6f;
 			assertEquals(cellLight * Chunk.getFaceFactor(style, face),
 					MeshUtil.getFlatLight(flatWorld(style), null, 0, 0, 0, quad, false, 0.1f), 0.000001f);
 		}

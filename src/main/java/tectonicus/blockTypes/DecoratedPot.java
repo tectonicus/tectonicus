@@ -14,7 +14,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.raw.BlockProperties;
@@ -108,7 +107,7 @@ public class DecoratedPot implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-            	final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+				final float lightness = world.getLight(rawChunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
                 
                 final float offSet = 1.0f / 16.0f;

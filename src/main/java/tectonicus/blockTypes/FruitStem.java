@@ -15,7 +15,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
@@ -111,7 +110,7 @@ public class FruitStem implements BlockType
 			isBent = false;
 		}
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		
 		BiomeData biomeData = biomeCache.loadBiomeData(chunk.getChunkCoord());
 		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);

@@ -14,7 +14,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.TextLayout;
 import tectonicus.Version;
 import tectonicus.configuration.LightFace;
@@ -199,7 +198,7 @@ public class Sign implements BlockType
         }
         
         protected static Vector4f getWhite(final int x, final int y, final int z, BlockContext world, RawChunk rawChunk) {
-                final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, rawChunk, x, y, z, world.getNightLightAdjustment());
+                final float lightness = world.getLight(rawChunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		return new Vector4f(lightness, lightness, lightness, 1);
         }
         

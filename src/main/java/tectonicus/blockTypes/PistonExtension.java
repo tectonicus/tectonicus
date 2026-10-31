@@ -16,7 +16,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
@@ -91,7 +90,7 @@ public class PistonExtension implements BlockType
 		
 		SubMesh subMesh = new SubMesh();
 		
-		final float lightness = Chunk.getLight(world.getLightStyle(), LightFace.Top, chunk, x, y, z, world.getNightLightAdjustment());
+		final float lightness = world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		Vector4f colour = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final float height = 1.0f / 16.0f * 12.0f;

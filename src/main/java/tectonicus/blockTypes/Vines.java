@@ -14,7 +14,6 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.chunk.Chunk;
 import tectonicus.cache.BiomeCache;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
@@ -88,12 +87,12 @@ public class Vines implements BlockType
 		Colour4f grassColour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );*/
 		Colour4f grassColour = world.getFoliageColor(chunk.getChunkCoord(), x, y, z);
 		
-		final float ewLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z, world.getNightLightAdjustment());
+		final float ewLightness = world.getLight(chunk, x, y, z, LightFace.EastWest, world.getNightLightAdjustment());
 		Vector4f eastWestLightness = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);
 		eastWestLightness.mul(ewLightness);
 		eastWestLightness.w = 1.0f;
 		
-		final float nsLightness = Chunk.getLight(world.getLightStyle(), LightFace.EastWest, chunk, x, y, z, world.getNightLightAdjustment());
+		final float nsLightness = world.getLight(chunk, x, y, z, LightFace.EastWest, world.getNightLightAdjustment());
 		Vector4f northSouthLightness = new Vector4f(grassColour.r, grassColour.g, grassColour.b, 1);
 		northSouthLightness.mul(nsLightness);
 		northSouthLightness.w = 1.0f;
