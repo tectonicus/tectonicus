@@ -111,6 +111,9 @@
 
 	<Beacon stringId="minecraft:beacon" name="Beacon" />
 
+	<EnchantmentTable stringId="minecraft:enchanting_table" name="Enchanting Table"
+					  book="assets/minecraft/textures/entity/enchanting_table_book.png" />
+
 	<Skull stringId="minecraft:skeleton_skull" name="Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/skeleton.png" />
 	<Skull stringId="minecraft:wither_skeleton_skull" name="Wither Skeleton Skull" texture="assets/minecraft/textures/entity/skeleton/wither_skeleton.png" />
 	<Skull stringId="minecraft:zombie_head" name="Zombie Head" texture="assets/minecraft/textures/entity/zombie/zombie.png" />

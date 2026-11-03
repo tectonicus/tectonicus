@@ -705,7 +705,17 @@ public class BlockRegistryParser
 			SubTexture side = parseTexture(element, "side", null);
 			SubTexture bottom = parseTexture(element, "bottom", null);
 			
-			blockType = new EnchantmentTable(name, top, side, bottom);
+			SubTexture book = hasTexture(element, "book") ? parseTexture(element, "book", null) : null;
+			if (book == null) {
+				for (String path : new String[]{"assets/minecraft/textures/entity/enchantment/enchanting_table_book.png",
+						"assets/minecraft/textures/entity/enchanting_table_book.png", "item/book.png"}) {
+					if (texturePack.fileExists(path)) {
+						book = texturePack.findTexture(path);
+						break;
+					}
+				}
+			}
+			blockType = new EnchantmentTable(name, stringId, top, side, bottom, book);
 		}
 		else if (nodeName.equals("brewingstand"))
 		{
