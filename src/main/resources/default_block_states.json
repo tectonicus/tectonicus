@@ -613,6 +613,27 @@
     "bites": "0"
   },
   "minecraft:calcite": {},
+  "minecraft:calcite_pillar": {
+    "axis": "y"
+  },
+  "minecraft:calcite_slab": {
+    "type": "bottom",
+    "waterlogged": "false"
+  },
+  "minecraft:calcite_stairs": {
+    "facing": "north",
+    "half": "bottom",
+    "shape": "straight",
+    "waterlogged": "false"
+  },
+  "minecraft:calcite_wall": {
+    "east": "none",
+    "north": "none",
+    "south": "none",
+    "up": "true",
+    "waterlogged": "false",
+    "west": "none"
+  },
   "minecraft:calibrated_sculk_sensor": {
     "facing": "north",
     "power": "0",
@@ -763,6 +784,7 @@
   "minecraft:chiseled_red_sandstone": {},
   "minecraft:chiseled_resin_bricks": {},
   "minecraft:chiseled_sandstone": {},
+  "minecraft:chiseled_soulshale": {},
   "minecraft:chiseled_stone_bricks": {},
   "minecraft:chiseled_sulfur": {},
   "minecraft:chiseled_tuff": {},
@@ -2865,6 +2887,44 @@
     "waterlogged": "false"
   },
   "minecraft:polished_blackstone_wall": {
+    "east": "none",
+    "north": "none",
+    "south": "none",
+    "up": "true",
+    "waterlogged": "false",
+    "west": "none"
+  },
+  "minecraft:polished_calcite": {},
+  "minecraft:polished_calcite_brick_slab": {
+    "type": "bottom",
+    "waterlogged": "false"
+  },
+  "minecraft:polished_calcite_brick_stairs": {
+    "facing": "north",
+    "half": "bottom",
+    "shape": "straight",
+    "waterlogged": "false"
+  },
+  "minecraft:polished_calcite_brick_wall": {
+    "east": "none",
+    "north": "none",
+    "south": "none",
+    "up": "true",
+    "waterlogged": "false",
+    "west": "none"
+  },
+  "minecraft:polished_calcite_bricks": {},
+  "minecraft:polished_calcite_slab": {
+    "type": "bottom",
+    "waterlogged": "false"
+  },
+  "minecraft:polished_calcite_stairs": {
+    "facing": "north",
+    "half": "bottom",
+    "shape": "straight",
+    "waterlogged": "false"
+  },
+  "minecraft:polished_calcite_wall": {
     "east": "none",
     "north": "none",
     "south": "none",
