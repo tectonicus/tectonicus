@@ -23,6 +23,7 @@ import java.util.Random;
 @Getter
 public class BlockStateWrapper {
 	private final String blockName;
+	private final PlantModelOffset modelOffset;
 	private final List<BlockState> states = new ArrayList<>();
 	private Map<String, String> defaultProperties = Collections.emptyMap();
 	@Setter
@@ -36,6 +37,7 @@ public class BlockStateWrapper {
 
 	public BlockStateWrapper(String blockName) {
 		this.blockName = blockName;
+		this.modelOffset = PlantModelOffset.forBlock(blockName);
 	}
 	
 	public float getShadeBrightness() {

@@ -47,7 +47,7 @@ public abstract class BlockState {
 		return createPositionRandom(x, y, z);
 	}
 
-	private static long getPositionSeed(int x, int y, int z) {
+	static long getPositionSeed(int x, int y, int z) {
 		long seed = (long)(x * 3129871) ^ z * 116129781L ^ y;
 		seed = seed * seed * 42317861L + seed * 11L;
 		return seed >> 16;

@@ -19,6 +19,7 @@ import tectonicus.blockregistry.BakedBlockStateModel.BakedQuad;
 import tectonicus.blockregistry.BlockModel;
 import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockregistry.BlockStateWrapper;
+import tectonicus.blockregistry.PlantModelOffset;
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
@@ -129,6 +130,16 @@ public class MeshUtil {
 		if (above && north && south && east && west)
 			return;
 
+		float modelX = x, modelY = y, modelZ = z;
+		if (selfBlock != null && selfBlock.getModelOffset() != PlantModelOffset.NONE) {
+			var coord = rawChunk.getChunkCoord();
+			var offset = selfBlock.getModelOffset().getOffset((int) (coord.x * RawChunk.WIDTH + x),
+					(int) (coord.z * RawChunk.DEPTH + z));
+			modelX += offset.x();
+			modelY += offset.y();
+			modelZ += offset.z();
+		}
+
 		boolean selfFull = model.isFullBlock() || selfBlock != null && selfBlock.isFullBlock();
 		LightStyle lightStyle = world.getLightStyle();
 		boolean smoothLit = world.isSmoothLit();
@@ -173,7 +184,7 @@ public class MeshUtil {
 						? getBakedAo(world, rawChunk, x, y, z, quad, vertex, selfFull) : 1.0f;
 				Vector4f vertexColour = new Vector4f(vertexLight.r * tint.r * ao, vertexLight.g * tint.g * ao,
 						vertexLight.b * tint.b * ao, 1);
-				mesh.addVertex(new Vector3f(x + quad.getPosition(vertex, 0), y + quad.getPosition(vertex, 1), z + quad.getPosition(vertex, 2)),
+				mesh.addVertex(new Vector3f(modelX + quad.getPosition(vertex, 0), modelY + quad.getPosition(vertex, 1), modelZ + quad.getPosition(vertex, 2)),
 						vertexColour, quad.getUv(vertex, 0), quad.getUv(vertex, 1));
 			}
 		}
