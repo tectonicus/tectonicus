@@ -25,12 +25,36 @@ public class LayerConfig extends RenderOptions {
 	private WorldConfig world;
 	private String name = "Unnamed layer";
 	private LightStyle lightStyle = LightStyle.Day;
+	@Setter(lombok.AccessLevel.NONE)
+	private boolean lightStyleConfigured;
 	private RenderStyle renderStyle = RenderStyle.NORMAL;
+	@Setter(lombok.AccessLevel.NONE)
+	private boolean renderStyleConfigured;
 	private ImageFormat imageFormat = ImageFormat.PNG;
 	private float imageCompressionLevel = 1.0f;
 	private String backgroundColor = "#e5e3df";
 	private String customBlockConfig;
 	private boolean useDefaultBlockConfig = true;
+
+	public void setRenderStyle(RenderStyle renderStyle) {
+		this.renderStyle = renderStyle;
+		renderStyleConfigured = true;
+	}
+
+	public void setLightStyle(LightStyle style) {
+		lightStyle = style;
+		lightStyleConfigured = true;
+	}
+
+	void setDefaultLightStyle(LightStyle style) {
+		if (!lightStyleConfigured)
+			lightStyle = style;
+	}
+
+	void setDefaultRenderStyle(RenderStyle renderStyle) {
+		if (!renderStyleConfigured)
+			this.renderStyle = renderStyle;
+	}
 
 	public String getWorldId() {
 		return world != null ? world.getId() : dimensionId;

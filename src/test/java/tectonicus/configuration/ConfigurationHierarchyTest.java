@@ -16,8 +16,121 @@ import java.util.HashSet;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigurationHierarchyTest {
+	@org.junit.jupiter.api.Test
+	void lightStyleAliasRespectsInheritanceAndTakesPrecedence() throws Exception {
+		Configuration config = parse("""
+				<world worldDir="save" lighting="day">
+				    <dimension id="nether" lightStyle="night">
+				        <layer/>
+				        <layer lightStyle="cave"/>
+				        <layer lighting="none" lightStyle="day"/>
+				        <layer lighting="day"/>
+				    </dimension>
+				</world>
+				<map worldDir="legacy" dimension="nether"><layer lightStyle="none"/></map>
+				""");
+		assertEquals(LightStyle.Night, config.getDimensionConfig(0).getLayer(0).getLightStyle());
+		assertEquals(LightStyle.Cave, config.getDimensionConfig(0).getLayer(1).getLightStyle());
+		assertEquals(LightStyle.Day, config.getDimensionConfig(0).getLayer(2).getLightStyle());
+		assertEquals(LightStyle.Day, config.getDimensionConfig(0).getLayer(3).getLightStyle());
+		assertEquals(LightStyle.None, config.getDimensionConfig(1).getLayer(0).getLightStyle());
+	}
+
+	@org.junit.jupiter.api.Test
+	void netherDefaultsToNightAndPreservesExplicitLighting() throws Exception {
+		Configuration config = parse("""
+				<world worldDir="save">
+				    <dimension id="nether"><layer/><layer lighting="day"/><layer lighting="none"/></dimension>
+				    <dimension id="overworld"><layer/></dimension>
+				</world>
+				<map worldDir="legacy" dimension="nether"><layer/></map>
+				""");
+		assertEquals(LightStyle.Night, config.getDimensionConfig(0).getLayer(0).getLightStyle());
+		assertEquals(LightStyle.Day, config.getDimensionConfig(0).getLayer(1).getLightStyle());
+		assertEquals(LightStyle.None, config.getDimensionConfig(0).getLayer(2).getLightStyle());
+		assertEquals(LightStyle.Day, config.getDimensionConfig(1).getLayer(0).getLightStyle());
+		assertEquals(LightStyle.Night, config.getDimensionConfig(2).getLayer(0).getLightStyle());
+	}
+
 	@TempDir
 	Path directory;
+
+	@Test
+	void defaultsRenderStylesByDimensionForNewAndLegacyConfigurations() throws Exception {
+		Configuration config = parse("""
+				<world worldDir="save">
+				    <dimension id="overworld"><layer/></dimension>
+				    <dimension id="end"><layer/></dimension>
+				    <dimension id="example:moon"><layer/></dimension>
+				    <dimension id="minecraft:the_nether"><layer/><layer renderStyle=""/></dimension>
+				</world>
+				<map worldDir="legacy" dimension="nether"><layer/></map>
+				""");
+		assertEquals(java.util.List.of(Configuration.RenderStyle.NORMAL, Configuration.RenderStyle.NORMAL,
+				Configuration.RenderStyle.NORMAL, Configuration.RenderStyle.NETHER,
+				Configuration.RenderStyle.NETHER, Configuration.RenderStyle.NETHER), config.getDimensions().stream()
+				.flatMap(dimension -> dimension.getLayers().stream()).map(LayerConfig::getRenderStyle).toList());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"config", "world", "dimension", "layer"})
+	void explicitNormalRenderStyleAtAnyScopePreservesNetherRoof(String scope) throws Exception {
+		String normal = "renderStyle='normal'";
+		Configuration config = parse("""
+				<config %s/>
+				<world worldDir="save" %s>
+				    <dimension id="nether" %s>
+				        <layer %s/>
+				        <layer renderStyle="cave"/>
+				        <layer renderStyle="nether"/>
+				    </dimension>
+				</world>
+				""".formatted(scope.equals("config") ? normal : "", scope.equals("world") ? normal : "",
+				scope.equals("dimension") ? normal : "", scope.equals("layer") ? normal : ""));
+		DimensionConfig nether = config.getDimensionConfig(0);
+		assertEquals(Configuration.RenderStyle.NORMAL, nether.getLayer(0).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.CAVE, nether.getLayer(1).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.NETHER, nether.getLayer(2).getRenderStyle());
+	}
+
+	@Test
+	void changingDimensionUpdatesDefaultStylesAndPreservesExplicitStyles() throws Exception {
+		DimensionConfig dimension = parse("""
+				<world worldDir="save"><dimension>
+				    <layer/>
+				    <layer renderStyle="normal"/>
+				    <layer renderStyle="exploredCaves"/>
+				    <layer renderStyle="nether"/>
+				</dimension></world>
+				""").getDimensionConfig(0);
+		// The command-line -d option changes the dimension after XML layers have been created.
+		dimension.setDimension(Dimension.NETHER);
+		assertEquals(Configuration.RenderStyle.NETHER, dimension.getLayer(0).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.NORMAL, dimension.getLayer(1).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.EXPLORED_CAVES, dimension.getLayer(2).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.NETHER, dimension.getLayer(3).getRenderStyle());
+
+		dimension.setDimension(Dimension.END);
+		assertEquals(Configuration.RenderStyle.NORMAL, dimension.getLayer(0).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.NETHER, dimension.getLayer(3).getRenderStyle());
+
+		dimension.setDimension(Dimension.NETHER);
+		assertEquals(Configuration.RenderStyle.NETHER, dimension.getLayer(0).getRenderStyle());
+	}
+
+	@Test
+	void programmaticLayersDefaultToNetherBeforeOrAfterDimensionSelection() {
+		DimensionConfig dimension = new DimensionConfig("Map0");
+		dimension.addLayer(new LayerConfig("LayerA", dimension.getId()));
+		dimension.setDimension(Dimension.NETHER);
+		dimension.addLayer(new LayerConfig("LayerB", dimension.getId()));
+		assertEquals(Configuration.RenderStyle.NETHER, dimension.getLayer(0).getRenderStyle());
+		assertEquals(Configuration.RenderStyle.NETHER, dimension.getLayer(1).getRenderStyle());
+
+		dimension.getLayer(0).setRenderStyle(Configuration.RenderStyle.NORMAL);
+		dimension.setDimension(Dimension.NETHER);
+		assertEquals(Configuration.RenderStyle.NORMAL, dimension.getLayer(0).getRenderStyle());
+	}
 
 	@Test
 	void inheritsPlayerInventoryVisibilityAndAllowsOverrides() throws Exception {

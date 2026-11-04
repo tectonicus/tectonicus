@@ -1,12 +1,3 @@
-<!--
-  ~ Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
-  ~
-  ~ This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
-  ~ the top-level directory of this distribution.  The full list of project contributors is contained
-  ~ in the AUTHORS file found in the same location.
-  ~
-  -->
-
 <tectonicus version="2">
 <!--
 	THIS IS NOT A VALID CONFIGURATION FILE.
@@ -122,9 +113,12 @@
 		<beacons filter="all / activated / none" />
 
 		<!-- A generated map layer (can be more than one per map) -->
+		<!-- lightStyle defaults to night in the Nether and day elsewhere. -->
+		<!-- renderStyle defaults to nether in the Nether and normal elsewhere.
+		     Set renderStyle="normal" explicitly to render the Nether roof. -->
 		<layer
 			name=""
-			lighting="day / night / cave / none"
+			lightStyle="day / night / cave / none"
 			renderStyle="normal / cave / nether / exploredcaves"
 			imageFormat="png / jpg / gif"
 			imageCompressionLevel="0.75 / 0.1 - 1.0"

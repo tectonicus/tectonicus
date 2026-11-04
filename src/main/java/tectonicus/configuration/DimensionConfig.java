@@ -11,6 +11,7 @@ package tectonicus.configuration;
 
 import lombok.Getter;
 import lombok.Setter;
+import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.filter.BeaconFilter;
 import tectonicus.configuration.filter.BeaconFilterType;
 import tectonicus.configuration.filter.ContainerFilter;
@@ -64,6 +65,14 @@ public class DimensionConfig extends RenderOptions {
 		this.id = id;
 	}
 
+	public void setDimension(Dimension dimension) {
+		this.dimension = dimension;
+		for (LayerConfig layer : layers) {
+			layer.setDefaultRenderStyle(dimension == Dimension.NETHER ? RenderStyle.NETHER : RenderStyle.NORMAL);
+			layer.setDefaultLightStyle(dimension == Dimension.NETHER ? LightStyle.Night : LightStyle.Day);
+		}
+	}
+
 	/** Script variable names are independent of filesystem IDs. Escape punctuation unambiguously. */
 	public String getJavascriptId() {
 		StringBuilder result = new StringBuilder("dimension_");
@@ -110,6 +119,8 @@ public class DimensionConfig extends RenderOptions {
 			throw new IllegalArgumentException("Duplicate layer ID: " + layer.getId());
 		layers.add(layer);
 		layer.setWorld(world);
+		layer.setDefaultLightStyle(dimension == Dimension.NETHER ? LightStyle.Night : LightStyle.Day);
+		layer.setDefaultRenderStyle(dimension == Dimension.NETHER ? RenderStyle.NETHER : RenderStyle.NORMAL);
 	}
 
 	public List<LayerConfig> getLayers() {

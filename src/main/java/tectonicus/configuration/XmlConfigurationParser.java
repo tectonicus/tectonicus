@@ -102,6 +102,7 @@ public class XmlConfigurationParser
 		if (version != VERSION)
 			throw new RuntimeException("Old or incompatible config file. Please update to the latest format");
 		normalizeContainerAliases(root);
+		normalizeLightingAliases(root);
 		
 		// Parse base config
 		Element configNode = getChild(root, "config");
@@ -321,14 +322,15 @@ public class XmlConfigurationParser
 				
 				
 				LightStyle style = parseLightStyle(getString(layerElement, "lighting") );
-				if (style == null)
-					style = LightStyle.Day;
-				layer.setLightStyle(style);
+				if (style != null)
+					layer.setLightStyle(style);
 				String layerName = getString(layerElement, "name");
 				layer.setName(layerName.isBlank()
 						? layerId.substring(layerId.lastIndexOf('.') + 1).toLowerCase(java.util.Locale.ROOT) : layerName);
 				
-				layer.setRenderStyle( parseRenderStyle(getString(layerElement, "renderStyle")));
+				String renderStyle = getString(layerElement, "renderStyle");
+				if (!renderStyle.isBlank())
+					layer.setRenderStyle(parseRenderStyle(renderStyle));
 				
 				layer.setImageFormat( parseImageFormat(getString(layerElement, "imageFormat")));
 				layer.setImageCompressionLevel( parseImageCompression(getString(layerElement, "imageCompressionLevel")));
@@ -363,6 +365,13 @@ public class XmlConfigurationParser
 		return config;
 	}
 	
+
+	private static void normalizeLightingAliases(Element element) {
+		if (element.hasAttribute("lightStyle"))
+			element.setAttribute("lighting", element.getAttribute("lightStyle"));
+		element.removeAttribute("lightStyle");
+		for (Element child : getChildren(element, null)) normalizeLightingAliases(child);
+	}
 
 	private static void normalizeContainerAliases(Element element) {
 		if (!element.hasAttribute("containersInitiallyVisible") && element.hasAttribute("chestsInitiallyVisible")) {
