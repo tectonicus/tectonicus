@@ -35,6 +35,11 @@ import java.util.ArrayList;
 
 @Slf4j
 public class InteractiveRenderer {
+	private static final float PAN_VIEWPORTS_PER_SECOND = 0.5f;
+	private static final float ZOOM_UNITS_PER_SECOND = 15.0f;
+	private static final float ROTATION_RADIANS_PER_SECOND = 1.5f;
+	private static final float MAX_INPUT_DELTA_SECONDS = 0.05f;
+
 	private enum ViewMode {
 		ORTHO_VIEW,
 		PERSPECTIVE_VIEW
@@ -77,31 +82,33 @@ public class InteractiveRenderer {
 		rasteriser.destroy();
 	}
 	
-	private void updateOrthoCamera() {
-		final float zoomInc = 0.5f;
+	private void updateOrthoCamera(float elapsedSeconds) {
+		final float panScale = PAN_VIEWPORTS_PER_SECOND * elapsedSeconds;
+		final float zoomInc = ZOOM_UNITS_PER_SECOND * elapsedSeconds;
+		final float angleInc = ROTATION_RADIANS_PER_SECOND * elapsedSeconds;
 		
 		if (rasteriser.isKeyDown(KeyEvent.VK_LEFT)) {
 			Vector3f right = orthoCamera.getRight();
-			orthoCamPosition.x -= right.x * orthoCamera.getVisibleWorldWidth() / 8;
-			orthoCamPosition.z -= right.z * orthoCamera.getVisibleWorldWidth() / 8;
+			orthoCamPosition.x -= right.x * orthoCamera.getVisibleWorldWidth() * panScale;
+			orthoCamPosition.z -= right.z * orthoCamera.getVisibleWorldWidth() * panScale;
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_RIGHT)) {
 			Vector3f right = orthoCamera.getRight();
-			orthoCamPosition.x += right.x * orthoCamera.getVisibleWorldWidth() / 8;
-			orthoCamPosition.z += right.z * orthoCamera.getVisibleWorldWidth() / 8;
+			orthoCamPosition.x += right.x * orthoCamera.getVisibleWorldWidth() * panScale;
+			orthoCamPosition.z += right.z * orthoCamera.getVisibleWorldWidth() * panScale;
 			
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_UP)) {
 			Vector3f up = orthoCamera.getUp();
-			orthoCamPosition.x += up.x * orthoCamera.getVisibleWorldHeight() / 8;
-			orthoCamPosition.y += up.y * orthoCamera.getVisibleWorldHeight() / 8;
-			orthoCamPosition.z += up.z * orthoCamera.getVisibleWorldHeight() / 8;
+			orthoCamPosition.x += up.x * orthoCamera.getVisibleWorldHeight() * panScale;
+			orthoCamPosition.y += up.y * orthoCamera.getVisibleWorldHeight() * panScale;
+			orthoCamPosition.z += up.z * orthoCamera.getVisibleWorldHeight() * panScale;
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_DOWN)) {
 			Vector3f up = orthoCamera.getUp();
-			orthoCamPosition.x -= up.x * orthoCamera.getVisibleWorldHeight() / 8;
-			orthoCamPosition.y -= up.y * orthoCamera.getVisibleWorldHeight() / 8;
-			orthoCamPosition.z -= up.z * orthoCamera.getVisibleWorldHeight() / 8;
+			orthoCamPosition.x -= up.x * orthoCamera.getVisibleWorldHeight() * panScale;
+			orthoCamPosition.y -= up.y * orthoCamera.getVisibleWorldHeight() * panScale;
+			orthoCamPosition.z -= up.z * orthoCamera.getVisibleWorldHeight() * panScale;
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_MINUS)) {
 			orthoZoom += zoomInc;
@@ -115,17 +122,17 @@ public class InteractiveRenderer {
 		}
 		
 		if (rasteriser.isKeyDown(KeyEvent.VK_Q)) {
-			orthoAngleOffset += 0.1f;
+			orthoAngleOffset += angleInc;
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_E)) {
-			orthoAngleOffset -= 0.1f;
+			orthoAngleOffset -= angleInc;
 		}
 		
 		if (rasteriser.isKeyDown(KeyEvent.VK_W)) {
-			cameraElevation += 0.1f;
+			cameraElevation += angleInc;
 		}
 		if (rasteriser.isKeyDown(KeyEvent.VK_S)) {
-			cameraElevation -= 0.1f;
+			cameraElevation -= angleInc;
 		}
 	}
 	
@@ -139,9 +146,9 @@ public class InteractiveRenderer {
 		}
 	}
 	
-	private void update(World world) {
+	private void update(World world, float elapsedSeconds) {
 		if (viewMode == ViewMode.ORTHO_VIEW) {
-			updateOrthoCamera();
+			updateOrthoCamera(elapsedSeconds);
 		} else if (viewMode == ViewMode.PERSPECTIVE_VIEW) {
 			updatePerspectiveCamera();
 		}
@@ -221,10 +228,15 @@ public class InteractiveRenderer {
 		orthoCamera.lookAt(orthoCamPosition.x, orthoCamPosition.y, orthoCamPosition.z,
 			orthoZoom, orthoAngleOffset, cameraElevation);
 		
+		long previousFrameTime = System.nanoTime();
 		while (!rasteriser.isCloseRequested()) {
 			rasteriser.beginFrame();
 			
-			update(world);
+			long frameTime = System.nanoTime();
+			// Don't turn time spent loading chunks or paused in a debugger into a large camera jump.
+			float elapsedSeconds = Math.min((frameTime - previousFrameTime) / 1_000_000_000.0f, MAX_INPUT_DELTA_SECONDS);
+			previousFrameTime = frameTime;
+			update(world, elapsedSeconds);
 			
 			rasteriser.resetState();
 			rasteriser.clear(new Color(100, 128, 255, 0));
