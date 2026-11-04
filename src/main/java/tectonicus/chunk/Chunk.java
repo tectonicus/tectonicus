@@ -17,6 +17,7 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.Minecraft;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.FlameParticles;
 import tectonicus.blockTypes.Water;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateModel;
@@ -189,6 +190,8 @@ public class Chunk
 								tectonicus.blockTypes.SulfurSpringParticles.addGeometry(x, y, z, effectiveProperties, world, rawChunk, geometry);
 							}
 
+							FlameParticles.addGeometry(x, y, z, blockName, effectiveProperties, world, rawChunk, geometry);
+
 							//Render a water block at this same location if waterlogged
 							if (Water.containsWater(blockName, effectiveProperties, stateWrapper)) {
 								registry.find("minecraft:water").addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
@@ -202,6 +205,10 @@ public class Chunk
 							final int data = rawChunk.getBlockData(x, y, z);
 
 							type = registry.find(blockId, data);
+							if (blockId == 50 || blockId == 76)
+								FlameParticles.addLegacyTorchGeometry(x, y, z, blockId, data, world, rawChunk, geometry);
+							if (blockId == 94)
+								FlameParticles.addLegacyCircuitGeometry(x, y, z, blockId, data, world, rawChunk, geometry);
 						}
 
 						if (type != null && !(type instanceof Air))

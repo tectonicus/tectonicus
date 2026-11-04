@@ -423,8 +423,11 @@ public class TexturePack
 	static List<SubTexture> loadParticleTextures(ZipStack stack, String particleId, Function<String, SubTexture> textureLoader) {
 		String[] id = splitId(particleId);
 		try (InputStream stream = stack.getStream("assets/" + id[0] + "/particles/" + id[1] + ".json")) {
-			if (stream == null)
+			if (stream == null) {
+				if (id[0].equals("minecraft") && (id[1].equals("flame") || id[1].equals("smoke") || id[1].equals("dust")))
+					return loadLegacyTorchTextures(stack, id[1], textureLoader);
 				return loadLegacyBubbleTexture(id, textureLoader);
+			}
 			JsonNode definition = JSON_MAPPER.readTree(stream);
 			JsonNode textures = definition == null ? null : definition.get("textures");
 			if (textures == null || !textures.isArray())
@@ -457,6 +460,30 @@ public class TexturePack
 		float v0 = atlas.v0 + 2 * tileV;
 		return List.of(new SubTexture(atlas.texture, atlas.u0, v0,
 				atlas.u0 + tileU * 0.999f, v0 + tileV * 0.999f, atlas.texturePackVersion));
+	}
+
+	private static List<SubTexture> loadLegacyTorchTextures(ZipStack stack, String particle, Function<String, SubTexture> textureLoader) {
+		for (String path : List.of("assets/minecraft/textures/particle/particles.png", "textures/particle/particles.png", "/particles.png")) {
+			if (!stack.hasFile(path))
+				continue;
+			SubTexture atlas = textureLoader.apply(path);
+			if (atlas == null || atlas.texture == null)
+				return List.of();
+			// Flame is particle 48; smoke and dust progress through particles 7 down to 0.
+			// The atlas grid doubled in 1.13, while particle indices retained a stride of 16.
+			int grid = atlas.texturePackVersion.getNumVersion() >= VERSION_13.getNumVersion() ? 32 : 16;
+			float tileU = (atlas.u1 - atlas.u0) / grid;
+			float tileV = (atlas.v1 - atlas.v0) / grid;
+			List<SubTexture> sprites = new ArrayList<>();
+			for (int index : particle.equals("flame") ? new int[]{48} : new int[]{7, 6, 5, 4, 3, 2, 1, 0}) {
+				float u0 = atlas.u0 + index % 16 * tileU;
+				float v0 = atlas.v0 + index / 16 * tileV;
+				sprites.add(new SubTexture(atlas.texture, u0, v0,
+						u0 + tileU * 0.999f, v0 + tileV * 0.999f, atlas.texturePackVersion));
+			}
+			return List.copyOf(sprites);
+		}
+		return List.of();
 	}
 	
 	public SubTexture findPalettedTexture(String texturePath, String palettePath, String keyPalettePath) {
