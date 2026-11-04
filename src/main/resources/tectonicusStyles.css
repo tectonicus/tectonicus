@@ -8,6 +8,13 @@ html, body, #map {
     width: 100%;
 }
 
+.leaflet-popup,
+.leaflet-tooltip,
+.tippy-box,
+.leaflet-container a.leaflet-popup-close-button {
+    font-family: Arial, sans-serif;
+}
+
 .compass.leaflet-control-custom {
     clear: none;
 }
