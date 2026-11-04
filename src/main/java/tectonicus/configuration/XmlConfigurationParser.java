@@ -172,6 +172,7 @@ public class XmlConfigurationParser
 			config.setViewsInitiallyVisible(getBoolean(configNode, "viewsInitiallyVisible", true));
 			config.setContainersInitiallyVisible(getBoolean(configNode, "containersInitiallyVisible", false));
 			config.setBeaconsInitiallyVisible(getBoolean(configNode, "beaconsInitiallyVisible", true));
+			config.setUseToggleMenu(getBoolean(configNode, "useToggleMenu", true));
 			
 			config.setCustomStyle(getString(configNode, "customStyle", null));
 			config.setCustomScript(getString(configNode, "customScript", null));

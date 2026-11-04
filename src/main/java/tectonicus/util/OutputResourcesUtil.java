@@ -1165,6 +1165,8 @@ public class OutputResourcesUtil {
 								outLine.append(".0"); // Append .0 so that it's treated as float in the javascript
 							} else if (first.value.equals("showSpawn")) {
 								outLine.append(config.showSpawn());
+							} else if (first.value.equals("useToggleMenu")) {
+								outLine.append(config.isUseToggleMenu());
 							} else if (first.value.equals("signsInitiallyVisible")) {
 								outLine.append(config.areSignsInitiallyVisible());
 							} else if (first.value.equals("playersInitiallyVisible")) {

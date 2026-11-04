@@ -66,6 +66,16 @@ html, body, #map {
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
 }
 
+.button.leaflet-control-custom {
+    clear: none;
+    width: 34px;
+    height: 34px;
+    padding: 5px;
+    margin-left: -2px;
+    cursor: pointer;
+    image-rendering: pixelated;
+}
+
 .toggle-menu-items .button.leaflet-control {
     direction: ltr;
     float: none;
@@ -78,8 +88,6 @@ html, body, #map {
     border: 2px solid rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     box-shadow: none;
-    cursor: pointer;
-    image-rendering: pixelated;
 }
 
 .leaflet-control-layers-expanded:hover {

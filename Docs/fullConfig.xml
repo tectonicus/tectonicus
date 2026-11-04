@@ -41,6 +41,7 @@
 		viewsInitiallyVisible="true / false"
 		containersInitiallyVisible="false / true" <!-- chestsInitiallyVisible is also accepted -->
 		beaconsInitiallyVisible="true / false"
+		useToggleMenu="true / false" <!-- false restores always-visible marker toggle buttons -->
 		customStyle="<your_css_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		customScript="<your_javascript_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		useCdn="unpkg / cdnjs / jsdelivr"

@@ -230,7 +230,9 @@ async function mainAsync()
             worldControl.addTo(mymap);
         }
         updateWorldLayerControl(startLayer);
-        toggleMenuControl = CreateToggleMenuControl().addTo(mymap);
+        if (typeof useToggleMenu === 'undefined' || useToggleMenu) {
+            toggleMenuControl = CreateToggleMenuControl().addTo(mymap);
+        }
         CreateResetViewButton(mymap);
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
         viewToggleControl = CreateToggleControl('views', 'Picture.png', viewMarkers, viewsInitiallyVisible, 'viewControlChecked');
@@ -295,7 +297,7 @@ function onBaseLayerChange(e) {
     mapStyle.setProperty('--minecraft-font', 'url("' + worldImageUrl('Font.png', e.layer) + '")');
     mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
 
-    toggleMenuControl.setToggles([
+    const toggles = [
         [spawnToggleControl, controlState.spawnControlChecked,
             e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER"],
         [signToggleControl, controlState.signControlChecked, e.layer.signs.length],
@@ -306,9 +308,20 @@ function onBaseLayerChange(e) {
         [respawnAnchorToggleControl, controlState.respawnAnchorControlChecked, e.layer.anchors.length],
         [beaconToggleControl, controlState.beaconControlChecked, e.layer.beacons.length],
         [containerToggleControl, controlState.containerControlChecked, e.layer.containers.length]
-    ].filter(([, , available]) => available));
+    ];
+    if (toggleMenuControl) {
+        toggleMenuControl.setToggles(toggles.filter(([, , available]) => available));
+    } else {
+        for (const [toggle, checked, available] of toggles) {
+            toggle.remove();
+            if (available) {
+                toggle.addTo(mymap);
+                toggle.setChecked(checked);
+            }
+        }
+    }
 
-    // Keep world and layer navigation below the marker menu.
+    // Keep world and layer navigation below the marker controls.
     for (const navigationControl of [worldControl, layerControl]) {
         if (navigationControl) {
             L.DomUtil.toFront(navigationControl.getContainer());

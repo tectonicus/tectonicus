@@ -137,6 +137,8 @@ public class Configuration implements Callable<Configuration> {
 	private boolean containersInitiallyVisible;
 	@Option(names = {"--beaconsInitiallyVisible", "beaconsInitiallyVisible"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean beaconsInitiallyVisible;
+	@Option(names = {"--useToggleMenu", "useToggleMenu"}, arity = "0..1", paramLabel = "<boolean>")
+	private boolean useToggleMenu;
 
 	@Option(names = {"--showSpawn", "showSpawn"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean showSpawn;
@@ -199,6 +201,7 @@ public class Configuration implements Callable<Configuration> {
 		viewsInitiallyVisible = true;
 		respawnAnchorsInitiallyVisible = true;
 		beaconsInitiallyVisible = true;
+		useToggleMenu = true;
 		loggingLevel = Level.DEBUG;
 		outputHtmlName = "map.html";
 		outputDir = new File(".");
@@ -280,6 +283,7 @@ public class Configuration implements Callable<Configuration> {
 		log.debug("\tviewsInitiallyVisible:{}", areViewsInitiallyVisible());
 		log.debug("\tcontainersInitiallyVisible:{}", isContainersInitiallyVisible());
 		log.debug("\tbeaconsInitiallyVisible:{}", isBeaconsInitiallyVisible());
+		log.debug("\tuseToggleMenu:{}", isUseToggleMenu());
 		log.debug("\teraseOutputDir:{}", eraseOutputDir());
 		log.debug("\tforceLoadAwt:{}", forceLoadAwt());
 		log.debug("\toutputHtmlName:{}", getOutputHtmlName());

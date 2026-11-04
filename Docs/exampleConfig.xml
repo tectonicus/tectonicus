@@ -39,6 +39,7 @@
 		signsInitiallyVisible="true"
 		portalsInitiallyVisible="true"
 		viewsInitiallyVisible="true"
+		useToggleMenu="true"
 	/>
 
 	<!-- Rasteriser config applies to all maps/layers -->

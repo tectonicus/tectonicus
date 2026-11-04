@@ -12,6 +12,7 @@ var spawnInitiallyVisible = {{spawnInitiallyVisible}};
 var viewsInitiallyVisible = {{viewsInitiallyVisible}};
 var containersInitiallyVisible = {{containersInitiallyVisible}};
 var beaconsInitiallyVisible = {{beaconsInitiallyVisible}};
+var useToggleMenu = {{useToggleMenu}};
 
 let controlState = {
 	spawnControlChecked: spawnInitiallyVisible,

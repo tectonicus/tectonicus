@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
-async function createViewer(contents, fragment = '') {
+async function createViewer(contents, fragment = '', options = {}) {
     let currentFragment = fragment;
     const handlers = {};
     const controls = new Set();
@@ -45,7 +45,7 @@ async function createViewer(contents, fragment = '') {
         addControl(control) { control.addTo(this); }
     };
     const context = vm.createContext({
-        contents, maxZoom: 8, showSpawn: false,
+        contents, maxZoom: 8, showSpawn: false, ...options,
         window: Object.assign(new EventTarget(), {history: {replaceState(state, title, url) { this.url = url; }}}),
         document: {querySelector: selector => selector === '#map' ? mapElement : null},
         MutationObserver: class { observe() {} },
@@ -136,6 +136,35 @@ function dimension(id, worldId, layerNames = ['Day', 'Night'], extra = {}) {
         ...extra
     };
 }
+
+test('legacy toggle mode exposes buttons without a menu and keeps visibility across layer and world changes', async () => {
+    const viewer = await createViewer([
+        dimension('a', 'Survival', ['Day', 'Night'], {
+            worldVectors: {startView: {x: 0, y: 64, z: 0}, spawnPosition: {x: 0, y: 64, z: 0}},
+            controlState: {spawnControlChecked: false}, images: 'World0/Images/'
+        }),
+        dimension('b', 'Creative')
+    ], '', {useToggleMenu: false});
+    const {evaluate, context, controls, mapElement} = viewer;
+    const spawn = evaluate('spawnToggleControl');
+    assert.equal(evaluate('toggleMenuControl'), null);
+    assert.equal(mapElement.clickListener, undefined);
+    assert.equal(controls.has(spawn), true);
+    assert.equal(spawn.getContainer().parentNode, undefined);
+    assert.equal(spawn.getContainer().checked, false);
+    spawn.getContainer().onclick();
+    assert.equal(evaluate('controlState.spawnControlChecked'), true);
+    evaluate("selectBaseLayer(tileLayers.get('a_1'))");
+    assert.equal(controls.has(spawn), true);
+    assert.equal(spawn.getContainer().checked, true);
+    assert.equal(spawn.getContainer().src, 'World0/Images/SpawnCompass.png');
+    context.switchWorld('Creative');
+    assert.equal(controls.has(spawn), false);
+    context.switchWorld('Survival');
+    assert.equal(controls.has(spawn), true);
+    assert.equal(spawn.getContainer().checked, true);
+    assert.equal(evaluate('toggleMenuControl'), null);
+});
 
 test('marker menu previews on mouse hover and stays pinned after click until an outside map click', async () => {
     const {evaluate, mapElement} = await createViewer([dimension('a', 'Survival')]);
