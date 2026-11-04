@@ -16,6 +16,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.itemregistry.ShieldModel;
+import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.configuration.LightFace;
@@ -38,6 +39,20 @@ public class ArmorStand implements BlockType
     
         private static final float UNIT = 1.0f / 16.0f;
         private static final float EPSILON = 0.005f / 16.0f; // So that different layer textures are not on the same plane
+	private static final float ELYTRA_FOLDED_ANGLE = (float) Math.PI / 12;
+	private static final int[][] ELYTRA_CORNERS = {
+			{-11, -1, -1}, {1, -1, -1}, {1, 21, -1}, {-11, 21, -1},
+			{-11, -1, 3}, {1, -1, 3}, {1, 21, 3}, {-11, 21, 3}
+	};
+	private static final int[][] ELYTRA_FACES = {
+			{5, 4, 0, 1}, {2, 3, 7, 6}, {0, 4, 7, 3},
+			{1, 0, 3, 2}, {5, 1, 2, 6}, {4, 5, 6, 7}
+	};
+	// UV rectangles on the 64 x 32 entity texture, starting at (22, 0).
+	private static final int[][] ELYTRA_UVS = {
+			{24, 0, 34, 2}, {34, 2, 44, 0}, {22, 2, 24, 22},
+			{24, 2, 34, 22}, {34, 2, 36, 22}, {36, 2, 46, 22}
+	};
     
 	private final String name;
         
@@ -143,9 +158,13 @@ public class ArmorStand implements BlockType
                         if (legsArmor != null) {
                                 buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, legsArmor, (byte)2, this::buildLegsArmorMesh);
                         }
-                        if (chestArmor != null) {
-                                buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, chestArmor, (byte)1, this::buildChestArmorMesh);
-                        }
+			if (chestArmor != null) {
+				if ("minecraft:elytra".equals(chestArmor.id)) {
+					buildElytraMesh(x, y, z, geometry, colour, entity.getYaw());
+				} else {
+					buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, chestArmor, (byte)1, this::buildChestArmorMesh);
+				}
+			}
                         if (headArmor != null) {
                                 buildArmorMesh(x, y, z, world, registry, rawChunk, geometry, entity, colour, headArmor, (byte)1, this::buildHeadArmorMesh);
                         }
@@ -158,6 +177,46 @@ public class ArmorStand implements BlockType
 			Vector4f colour, Item item, boolean leftHand) {
 		if (item != null && "minecraft:shield".equals(item.id))
 			ShieldModel.addGeometry(world.getModelRegistry(), texturePack, geometry, shieldTransform(x, y, z, stand, leftHand), colour);
+	}
+
+	private void buildElytraMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float yaw) {
+		String path = texturePack.fileExists("assets/minecraft/textures/entity/equipment/wings/elytra.png")
+				? "assets/minecraft/textures/entity/equipment/wings/elytra.png"
+				: "assets/minecraft/textures/entity/elytra.png";
+		SubTexture elytraTexture = texturePack.findTexture(path);
+		if (elytraTexture == null)
+			return;
+		// Convert Minecraft's Y-down model axes and move WingsLayer two pixels behind the torso.
+		Matrix4f transform = new Matrix4f().translate(x + 0.5f, y + 24 * UNIT, z + 0.5f)
+				.rotateY((float) Math.toRadians(-yaw)).scale(1, -1, -1).translate(0, 0, 2 * UNIT);
+		Mesh mesh = geometry.getMesh(elytraTexture.texture, Geometry.MeshType.AlphaTest);
+		for (boolean mirrored : new boolean[]{false, true}) {
+			Matrix4f wingTransform = new Matrix4f(transform);
+			if (mirrored)
+				wingTransform.scale(-1, 1, 1);
+			wingTransform.translate(5 * UNIT, 0, 0).rotateZ(-ELYTRA_FOLDED_ANGLE).rotateX(ELYTRA_FOLDED_ANGLE);
+			Vector3f[] corners = new Vector3f[ELYTRA_CORNERS.length];
+			for (int i = 0; i < corners.length; i++) {
+				int[] corner = ELYTRA_CORNERS[i];
+				corners[i] = wingTransform.transformPosition(new Vector3f(corner[0] * UNIT, corner[1] * UNIT, corner[2] * UNIT));
+			}
+			// Minecraft's cube faces are counterclockwise; Tectonicus uses clockwise front faces.
+			boolean reverseWinding = wingTransform.determinant3x3() > 0;
+			for (int face = 0; face < ELYTRA_FACES.length; face++) {
+				int[] uv = ELYTRA_UVS[face];
+				// Vanilla uses armorCutoutNoCull: preserve the texture on both sides of every face.
+				for (int side = 0; side < 2; side++) {
+					for (int i = 0; i < 4; i++) {
+						int vertex = reverseWinding ^ (side == 1) ? 3 - i : i;
+						float u = (vertex == 0 || vertex == 3 ? uv[2] : uv[0]) / 64f;
+						float v = (vertex < 2 ? uv[1] : uv[3]) / 32f;
+						mesh.addVertex(corners[ELYTRA_FACES[face][vertex]], colour,
+								elytraTexture.u0 + (elytraTexture.u1 - elytraTexture.u0) * u,
+								elytraTexture.v0 + (elytraTexture.v1 - elytraTexture.v0) * v);
+					}
+				}
+			}
+		}
 	}
 
 	static Matrix4f shieldTransform(int x, int y, int z, ArmorStandEntity stand, boolean leftHand) {
@@ -369,7 +428,6 @@ public class ArmorStand implements BlockType
 	}
         
         private void buildOtherItemMesh(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry, ArmorStandEntity armorStand, Vector4f colour, Item armor) {
-                //TODO: create elytra model
 				BlockType blockType = registry.find(armor.id);
                 if (blockType != null) {
                         if (blockType instanceof Skull) {
