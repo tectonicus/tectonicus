@@ -1,10 +1,6 @@
 /*
- * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
- *
- * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
- * the top-level directory of this distribution.  The full list of project contributors is contained
- * in the AUTHORS file found in the same location.
- *
+ * Copyright (c) 2026 Tectonicus contributors. All rights reserved.
+ * This file is subject to the license terms in the LICENSE file.
  */
 
 package tectonicus.util;
@@ -22,6 +18,7 @@ import tectonicus.Portal;
 import tectonicus.TileRenderer;
 import tectonicus.Version;
 import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.cache.ItemIconCache;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
@@ -611,6 +608,10 @@ public class OutputResourcesUtil {
         }
 
 	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry) {
+		outputInventoryItemIcons(imagesDir, rasteriser, texturePack, blockTypeRegistry, blockRegistry, itemRegistry, itemModelDefinitionRegistry, "");
+	}
+
+	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry, String renderOptions) {
 		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
 			log.info("Skipping icon rendering. Container items are supported for 1.13 and newer.");
 			return;
@@ -622,12 +623,23 @@ public class OutputResourcesUtil {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			File itemIconDir = new File(imagesDir, "Items");
 			Files.createDirectories(itemIconDir.toPath());
+			ItemIconCache cache = new ItemIconCache(itemIconDir.toPath(), texturePack.getZipStack(),
+					renderOptions == null ? null : rasteriser.getClass().getName() + "\n" + renderOptions);
+			Set<String> itemNames = new HashSet<>(itemRegistry.getModels().keySet());
+			itemNames.addAll(itemModelDefinitionRegistry.getModelDefinitions().keySet());
+			Set<String> reusedIcons = cache.prepare(itemNames);
+			Set<String> failedIcons = new HashSet<>();
+			log.info("Reusing {} cached inventory item icons", reusedIcons.size());
 			Set<String> renderedEntityItems = new HashSet<>();
 			Map<String, String> itemIconAliases = new HashMap<>();
 			
                         for (Map.Entry<String, ItemModelDefinition> entry : itemModelDefinitionRegistry.getModelDefinitions().entrySet()) {
                             try {
                                 final String entryKey = entry.getKey();
+				if (reusedIcons.contains(entryKey)) {
+					renderedEntityItems.add(entryKey);
+					continue;
+				}
 				final ItemModelDefinition itemModelDefinition = entry.getValue().getInventoryModel();
                                 File outFile = new File(itemIconDir, entryKey + ".png");
 
@@ -674,13 +686,14 @@ public class OutputResourcesUtil {
                                 }
                             } catch (Exception e) {
                                 log.error("Unable to render item icon for {}", entry.getKey(), e);
+				failedIcons.add(entry.getKey());
                             }
                         }
                         
 			for (Map.Entry<String, ItemModel> entry : itemRegistry.getModels().entrySet()) {
 				try {
 				final String entryKey = entry.getKey();
-				if (renderedEntityItems.contains(entryKey))
+				if (renderedEntityItems.contains(entryKey) || reusedIcons.contains(entryKey))
 					continue;
 				final ItemModel itemModel = entry.getValue();
 				final ItemModel ultimatePredecessorModel = itemRegistry.findUltimatePredecessor(itemModel);
@@ -794,15 +807,17 @@ public class OutputResourcesUtil {
                                 itemRenderer.renderInventoryBlockModel(outFile, blockRegistry, texturePack, "minecraft:item/" + entryKey);
 				} catch (Exception e) {
 					log.error("Unable to render item icon for {}", entry.getKey(), e);
+					failedIcons.add(entry.getKey());
 				}
 			}
 			for (var alias : itemIconAliases.entrySet()) {
 				for (String suffix : List.of(".png", "_overlay.png")) {
 					Path source = itemIconDir.toPath().resolve(alias.getValue() + suffix);
-					if (Files.exists(source))
+					if (itemNames.contains(alias.getValue()) && !failedIcons.contains(alias.getValue()) && Files.exists(source))
 						Files.copy(source, itemIconDir.toPath().resolve(alias.getKey() + suffix), StandardCopyOption.REPLACE_EXISTING);
 				}
 			}
+			cache.save(itemNames, failedIcons);
                         System.out.println();
 		} catch (Exception e) {
 			log.error("Exception: ", e);

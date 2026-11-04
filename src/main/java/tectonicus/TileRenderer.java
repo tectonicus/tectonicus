@@ -1,10 +1,6 @@
 /*
- * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
- *
- * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
- * the top-level directory of this distribution.  The full list of project contributors is contained
- * in the AUTHORS file found in the same location.
- *
+ * Copyright (c) 2026 Tectonicus contributors. All rights reserved.
+ * This file is subject to the license terms in the LICENSE file.
  */
 
 package tectonicus;
@@ -336,7 +332,15 @@ public class TileRenderer
 				outputIcons(imagesDir, world, rasteriser);
 				ItemModelDefinitionRegistry itemModels = new ItemModelDefinitionRegistry(world.getTexturePack());
 				ItemRegistry items = new ItemRegistry(world.getTexturePack());
-				outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels);
+				String iconOptions = config.getRasteriserType() + "\n" + config.getColourDepth() + "\n"
+						+ config.getAlphaBits() + "\n" + config.getNumSamples();
+				if (!map.getLayers().isEmpty()) {
+					LayerConfig lastLayer = map.getLayers().getLast();
+					iconOptions += "\n" + lastLayer.useDefaultBlockConfig() + "\n" + lastLayer.getCustomBlockConfig()
+							+ "\n" + FileTileCache.getCustomBlocksString(lastLayer);
+				}
+				outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels,
+						config.useCache() ? iconOptions : null);
 				outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld());
 			}
 			

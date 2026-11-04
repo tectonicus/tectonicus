@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2026 Tectonicus contributors. All rights reserved.
- *
- * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
- * the top-level directory of this distribution. The full list of project contributors is contained
- * in the AUTHORS file found in the same location.
+ * This file is subject to the license terms in the LICENSE file.
  */
 
 package tectonicus.util;
@@ -177,6 +174,24 @@ class InventoryItemIconsTest {
 				assertEquals(48, icon.getWidth());
 				assertEquals(48, icon.getHeight());
 			}
+			int renderedIcons = screenshots.get();
+			Path unchangedIcon = directory.resolve("Items/ender_chest.png");
+			var timestamp = java.nio.file.attribute.FileTime.fromMillis(1_000_000);
+			Files.setLastModifiedTime(unchangedIcon, timestamp);
+			OutputResourcesUtil.outputInventoryItemIcons(directory.toFile(), rasteriser, textures, blocks,
+					models, new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
+			assertEquals(renderedIcons, screenshots.get(), "Cached entity icons must not render again");
+			assertEquals(timestamp, Files.getLastModifiedTime(unchangedIcon));
+
+			Files.delete(directory.resolve("Items/conduit.png"));
+			if (modern)
+				Files.delete(directory.resolve("Items/alias.png"));
+			OutputResourcesUtil.outputInventoryItemIcons(directory.toFile(), rasteriser, textures, blocks,
+					models, new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
+			assertEquals(renderedIcons + 1, screenshots.get(), "Only the missing entity icon should render");
+			assertEquals(timestamp, Files.getLastModifiedTime(unchangedIcon));
+			if (modern)
+				assertArrayEquals(Files.readAllBytes(directory.resolve("Items/canonical.png")), Files.readAllBytes(directory.resolve("Items/alias.png")));
 
 			RawChunk chunk = new RawChunk();
 			ArmorStandEntity stand = new ArmorStandEntity(0, 0, 0, 0, 0, 0, 0, true, true, null, null, null, null);
