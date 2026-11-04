@@ -33,6 +33,7 @@ function createViewer(yOffset = 64) {
         zoomControl: {getContainer: () => zoomContainer},
         getCenter() { return this.center; },
         getZoom() { return this.zoom; },
+        getContainer() { return {querySelectorAll: () => []}; },
         addControl() {},
         setView(point, zoom) {
             this.center = {lat: point[0], lng: point[1]};
@@ -159,6 +160,7 @@ test('editing the layer switches base layers and uses the target map height', ()
         context[name + 'ToggleControl'] = control;
     }
     context.compassControl = control;
+    context.toggleMenuControl = {setToggles() {}};
     context.CreateCompassControl = () => control;
     context.tippy = () => {};
     context.stats = {peakMemoryBytes: 0};

@@ -78,6 +78,79 @@ function CreateResetViewButton(map) {
     return button;
 }
 
+function CreateToggleMenuControl() {
+	const ToggleMenu = L.Control.extend({
+		options: {position: 'topright'},
+
+		onAdd: function(map) {
+			const container = L.DomUtil.create('div', 'leaflet-control-layers toggle-menu');
+			const button = L.DomUtil.create('button', 'leaflet-control-layers-toggle toggle-menu-button', container);
+			button.type = 'button';
+			button.title = 'Marker toggles';
+			button.setAttribute('aria-label', 'Marker toggles');
+			button.setAttribute('aria-expanded', 'false');
+			const icon = L.DomUtil.create('span', 'toggle-menu-icon', button);
+			icon.setAttribute('aria-hidden', 'true');
+			const panel = L.DomUtil.create('div', 'toggle-menu-panel', container);
+			panel.hidden = true;
+			this._items = L.DomUtil.create('div', 'toggle-menu-items', panel);
+			this._toggles = [];
+			this._pinned = false;
+			this._setExpanded = expanded => {
+				panel.hidden = !expanded;
+				button.setAttribute('aria-expanded', String(expanded));
+			};
+			this._close = () => {
+				this._pinned = false;
+				this._setExpanded(false);
+			};
+			container.onpointerenter = event => {
+				if (event.pointerType === 'mouse') this._setExpanded(true);
+			};
+			container.onpointerleave = () => {
+				if (!this._pinned) this._setExpanded(false);
+			};
+			button.onclick = () => {
+				this._pinned = !this._pinned;
+				this._setExpanded(this._pinned);
+			};
+			container.onkeydown = event => {
+				if (event.key === 'Escape') {
+					this._close();
+					button.focus();
+				}
+			};
+			this._onMapClick = event => {
+				if (!container.contains(event.target)) this._close();
+			};
+			// Capture clicks on markers too, even when their handlers stop propagation.
+			map.getContainer().addEventListener('click', this._onMapClick, true);
+			L.DomEvent.disableClickPropagation(container);
+			L.DomEvent.disableScrollPropagation(container);
+			return container;
+		},
+
+		setToggles: function(toggles) {
+			for (const toggle of this._toggles) toggle.remove();
+			this._toggles = toggles.map(([toggle, checked]) => {
+				toggle.addTo(this._map);
+				toggle.setChecked(checked);
+				this._items.appendChild(toggle.getContainer());
+				return toggle;
+			});
+			this._items.style.setProperty('--toggle-columns', Math.max(1, Math.min(3, toggles.length)));
+			this._container.style.display = toggles.length ? '' : 'none';
+			if (!toggles.length) this._close();
+		},
+
+		onRemove: function(map) {
+			map.getContainer().removeEventListener('click', this._onMapClick, true);
+			for (const toggle of this._toggles) toggle.remove();
+		}
+	});
+	return new ToggleMenu();
+}
+
 // Creates a toggle box to turn on and off a set of markers
 function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 	let toggleControl = L.Control.extend({
@@ -90,9 +163,8 @@ function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 			container.type = "image";
 			container.src = worldImageUrl(image);
 			container.title = text;
-			container.style.padding = '5px';
-			container.style.width = '34px';
-			container.style.height = '34px';
+			container.alt = text;
+			container.setAttribute('aria-label', 'Toggle ' + text);
 			container.checked = startEnabled;
 
 			container.onclick = function () {
@@ -103,13 +175,11 @@ function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 
 				SetToggleBg(this);
 
-				for (i in markers) {
-					var marker = markers[i];
-
+				for (const marker of markers) {
 					if (!this.checked)
 						marker.remove();
 					else
-						marker.addTo(mymap);
+						marker.addTo(map);
 				}
 
 				if (this.checked) {
@@ -123,6 +193,9 @@ function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 
 			return container;
 		},
+		onRemove: function() {
+			if (this._container._tippy) this._container._tippy.destroy();
+		},
 		setChecked: function(checked) {
 			let container = this._container;
 			container.checked = checked;
@@ -134,6 +207,7 @@ function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 }
 
 function SetToggleBg(control) {
+	control.setAttribute('aria-pressed', String(control.checked));
 	if (control.checked)
 		control.style.backgroundColor = '#FFFFFF';
 	else

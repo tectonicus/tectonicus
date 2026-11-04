@@ -1120,6 +1120,7 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("tectonicusStyles.css", new File(scriptsDir, "tectonicusStyles.css"));
 		FileUtils.extractResource("Images/layers.png", new File(scriptImagesDir, "layers.png"));
 		FileUtils.extractResource("Images/layers-2x.png", new File(scriptImagesDir, "layers-2x.png"));
+		FileUtils.extractResource("Images/toggles.svg", new File(scriptImagesDir, "toggles.svg"));
 		FileUtils.extractResource("Images/marker-icon.png", new File(scriptImagesDir, "marker-icon.png"));
 		FileUtils.extractResource("Images/marker-icon-2x.png", new File(scriptImagesDir, "marker-icon-2x.png"));
 		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));

@@ -8,7 +8,16 @@ async function createViewer(contents, fragment = '') {
     let currentFragment = fragment;
     const handlers = {};
     const controls = new Set();
-    const element = () => ({style: {setProperty(name, value) { this[name] = value; }}, children: [], _tippy: {setContent() {}},
+    const element = () => ({style: {setProperty(name, value) { this[name] = value; }}, children: [], _tippy: {setContent() {}, destroy() {}},
+        addEventListener(name, listener) { this[name + 'Listener'] = listener; },
+        removeEventListener(name) { delete this[name + 'Listener']; },
+        querySelectorAll() { return []; },
+        contains(node) { return node === this || this.children.some(child => child.contains(node)); },
+        appendChild(node) {
+            node.parentNode?.children.splice(node.parentNode.children.indexOf(node), 1);
+            this.children.push(node);
+            node.parentNode = this;
+        },
         setAttribute(name, value) { this[name] = value; }});
     const mapElement = element();
     const map = {
@@ -18,6 +27,7 @@ async function createViewer(contents, fragment = '') {
         fireEvent(name, event) { handlers[name]?.(event); },
         getCenter() { return this.center; },
         getZoom() { return this.zoom; },
+        getContainer() { return mapElement; },
         setView(point, zoom) {
             this.center = {lat: point.lat ?? point[0], lng: point.lng ?? point[1]};
             this.zoom = Math.min(zoom, this.maxZoom);
@@ -54,11 +64,18 @@ async function createViewer(contents, fragment = '') {
     });
     function Control(definition = {}) { Object.assign(this, definition); }
     Control.prototype.addTo = function() {
+        this._map = map;
         this._container = this.onAdd ? this.onAdd(map) : element();
         controls.add(this);
         return this;
     };
-    Control.prototype.remove = function() { controls.delete(this); };
+    Control.prototype.remove = function() {
+        if (controls.delete(this)) {
+            this.onRemove?.(map);
+            const node = this._container;
+            node.parentNode?.children.splice(node.parentNode.children.indexOf(node), 1);
+        }
+    };
     Control.prototype.getContainer = function() { return this._container; };
     Control.extend = definition => function() {
         return Object.assign(new Control(), definition);
@@ -83,7 +100,7 @@ async function createViewer(contents, fragment = '') {
         setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },
         DomUtil: {toFront() {}, create(tag, className, parent) {
             const node = Object.assign(element(), {tag, className});
-            parent?.children.push(node);
+            parent?.appendChild(node);
             return node;
         }},
         DomEvent: {disableClickPropagation() {}, disableScrollPropagation() {}},
@@ -119,6 +136,112 @@ function dimension(id, worldId, layerNames = ['Day', 'Night'], extra = {}) {
         ...extra
     };
 }
+
+test('marker menu previews on mouse hover and stays pinned after click until an outside map click', async () => {
+    const {evaluate, mapElement} = await createViewer([dimension('a', 'Survival')]);
+    const menu = evaluate('toggleMenuControl');
+    const container = menu.getContainer();
+    const [button, panel] = container.children;
+    assert.equal(panel.hidden, true);
+    container.onpointerenter({pointerType: 'touch'});
+    assert.equal(panel.hidden, true);
+    container.onpointerenter({pointerType: 'mouse'});
+    assert.equal(panel.hidden, false);
+    container.onpointerleave();
+    assert.equal(panel.hidden, true);
+    container.onpointerenter({pointerType: 'mouse'});
+    button.onclick();
+    container.onpointerleave();
+    assert.equal(panel.hidden, false);
+    assert.equal(button['aria-expanded'], 'true');
+    mapElement.clickListener({target: button});
+    assert.equal(panel.hidden, false);
+    mapElement.clickListener({target: mapElement});
+    assert.equal(panel.hidden, true);
+    assert.equal(button['aria-expanded'], 'false');
+    button.onclick();
+    assert.equal(panel.hidden, false);
+    button.onclick();
+    assert.equal(panel.hidden, true);
+});
+
+test('marker menu rebuilds available toggles without losing their state or pinning', async () => {
+    const {context, evaluate, map, mapElement} = await createViewer([dimension('a', 'Survival')]);
+    const menu = evaluate('toggleMenuControl');
+    const [button, panel] = menu.getContainer().children;
+    let added = 0;
+    let removed = 0;
+    const toggle = context.CreateToggleControl('signs', 'Sign.png', [{
+        addTo(target) { assert.equal(target, map); added++; },
+        remove() { removed++; }
+    }], false, 'signControlChecked');
+    menu.setToggles([[toggle, true]]);
+    button.onclick();
+    assert.equal(menu.getContainer().style.display, '');
+    assert.equal(menu._items.children.length, 1);
+    const input = toggle.getContainer();
+    input.onclick();
+    assert.equal(removed, 1);
+    assert.equal(input['aria-pressed'], 'false');
+    assert.equal(evaluate('controlState.signControlChecked'), false);
+    assert.equal(panel.hidden, false);
+    input.onclick();
+    assert.equal(added, 1);
+    menu.setToggles([[toggle, false]]);
+    assert.equal(menu._items.children.length, 1);
+    assert.equal(toggle.getContainer().checked, false);
+    assert.equal(panel.hidden, false);
+    menu.setToggles([]);
+    assert.equal(menu._items.children.length, 0);
+    assert.equal(menu.getContainer().style.display, 'none');
+    assert.equal(panel.hidden, true);
+    menu.remove();
+    assert.equal(mapElement.clickListener, undefined);
+});
+
+test('control hover labels replace native titles, preserve accessibility and clean up across layer changes', async () => {
+    const {context, map, mapElement} = await createViewer([dimension('a', 'Survival')]);
+    const references = ['Zoom in', 'Layers'].map((title, index) => ({
+        isConnected: true,
+        attributes: {title, ...(index ? {'aria-label': 'Choose map layer'} : {})},
+        getAttribute(name) { return this.attributes[name]; },
+        hasAttribute(name) { return name in this.attributes; },
+        setAttribute(name, value) { this.attributes[name] = value; },
+        removeAttribute(name) { delete this.attributes[name]; },
+        closest() { return index === 0 ? {} : null; },
+        getClientRects() { return [{}]; }
+    }));
+    mapElement.querySelectorAll = () => references.filter(reference =>
+        reference.isConnected && reference.hasAttribute('title'));
+    const tooltips = [];
+    context.tippy = (reference, options) => {
+        const tooltip = {reference, options, destroyed: false, destroy() { this.destroyed = true; }};
+        tooltips.push(tooltip);
+        return tooltip;
+    };
+    context.bindControlTooltips();
+    assert.equal(tooltips.length, 2);
+    assert.equal(tooltips[0].options.content, 'Zoom in');
+    assert.equal(tooltips[0].options.delay, 0);
+    assert.deepEqual(Array.from(tooltips[0].options.duration), [100, 75]);
+    assert.equal(tooltips[0].options.placement, 'right');
+    assert.equal(tooltips[1].options.placement, 'left');
+    assert.equal(tooltips[0].options.touch, false);
+    assert.equal(references[0].hasAttribute('title'), false);
+    assert.equal(references[0].getAttribute('aria-label'), 'Zoom in');
+    assert.equal(references[1].getAttribute('aria-label'), 'Choose map layer');
+    assert.equal(tooltips[0].options.onShow(), true);
+    references[0].setAttribute('aria-expanded', 'true');
+    assert.equal(tooltips[0].options.onShow(), false);
+    context.bindControlTooltips();
+    assert.equal(tooltips.length, 2);
+    references[1].isConnected = false;
+    context.bindControlTooltips();
+    assert.equal(tooltips[1].destroyed, true);
+    assert.equal(tooltips[0].destroyed, false);
+    map.fireEvent('unload');
+    assert.equal(tooltips[0].destroyed, true);
+});
 
 test('tile URLs share a world folder while dimension resources remain separate', async () => {
     const viewer = await createViewer([

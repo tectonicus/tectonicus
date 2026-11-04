@@ -22,9 +22,64 @@ html, body, #map {
     image-rendering: pixelated;
 }
 
-.button.leaflet-control-custom {
-    margin-left: -2px;
+.toggle-menu .toggle-menu-button {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+}
+
+.toggle-menu .toggle-menu-button:hover {
+    background-color: #f4f4f4;
+}
+
+.toggle-menu-button:focus-visible {
+    outline: 2px solid #5265b5;
+    outline-offset: 2px;
+}
+
+.toggle-menu-icon {
+    width: 24px;
+    height: 24px;
+    background: url('images/toggles.svg') center / 24px 24px no-repeat;
+}
+
+.toggle-menu-panel {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    padding-right: 8px;
+}
+
+.toggle-menu-items {
+    display: grid;
+    direction: rtl;
+    width: max-content;
+    grid-template-columns: repeat(var(--toggle-columns, 3), 44px);
+    gap: 4px;
+    padding: 6px;
+    border-radius: 5px;
+    background: white;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.toggle-menu-items .button.leaflet-control {
+    direction: ltr;
+    float: none;
     clear: none;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 5px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    box-shadow: none;
+    cursor: pointer;
+    image-rendering: pixelated;
 }
 
 .leaflet-control-layers-expanded:hover {

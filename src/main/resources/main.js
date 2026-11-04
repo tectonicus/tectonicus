@@ -11,6 +11,36 @@ let layerControlWorldId = null;
 let changingBaseLayer = false;
 let mapInfoTippy = null;
 let mapInfoContent = '';
+let controlTooltips = [];
+
+function bindControlTooltips() {
+    controlTooltips = controlTooltips.filter(tooltip => {
+        if (tooltip.reference.isConnected) return true;
+        tooltip.destroy();
+        return false;
+    });
+
+    for (const reference of mymap.getContainer().querySelectorAll('.leaflet-control [title]')) {
+        const content = reference.getAttribute('title');
+        if (!content) continue;
+        reference.removeAttribute('title');
+        if (!reference.hasAttribute('aria-label')) {
+            reference.setAttribute('aria-label', content);
+        }
+        controlTooltips.push(tippy(reference, {
+            content,
+            delay: 0,
+            duration: [100, 75],
+            placement: reference.closest('.leaflet-left') ? 'right' : 'left',
+            theme: 'light',
+            touch: false,
+            onShow() {
+                return reference.getClientRects().length > 0
+                    && reference.getAttribute('aria-expanded') !== 'true';
+            }
+        }));
+    }
+}
 
 function bindMapInfoTippy() {
     let mapInfoLink = document.querySelector('.leaflet-control-attribution #mapInfo');
@@ -44,6 +74,7 @@ function size(obj) {
 }
 
 var layerControl = null;
+var toggleMenuControl = null;
 var compassControl = null;
 var viewToggleControl = null;
 var signToggleControl = null;
@@ -199,6 +230,7 @@ async function mainAsync()
             worldControl.addTo(mymap);
         }
         updateWorldLayerControl(startLayer);
+        toggleMenuControl = CreateToggleMenuControl().addTo(mymap);
         CreateResetViewButton(mymap);
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
         viewToggleControl = CreateToggleControl('views', 'Picture.png', viewMarkers, viewsInitiallyVisible, 'viewControlChecked');
@@ -222,6 +254,10 @@ async function mainAsync()
 	mymap.on('baselayerchange', onBaseLayerChange);
 	mymap.on('zoomend', onProjectionChanged);
     mymap.on('moveend', onProjectionChanged);
+    mymap.on('unload', () => {
+        for (const tooltip of controlTooltips) tooltip.destroy();
+        controlTooltips = [];
+    });
 
 	// Manually fire this event to set the initial state
     mymap.fireEvent('baselayerchange', {layer: startLayer});
@@ -259,61 +295,20 @@ function onBaseLayerChange(e) {
     mapStyle.setProperty('--minecraft-font', 'url("' + worldImageUrl('Font.png', e.layer) + '")');
     mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
 
-    spawnToggleControl.remove();
-    if (e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER") {
-        mymap.addControl(spawnToggleControl);
-        spawnToggleControl.setChecked(controlState.spawnControlChecked);
-    }
+    toggleMenuControl.setToggles([
+        [spawnToggleControl, controlState.spawnControlChecked,
+            e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER"],
+        [signToggleControl, controlState.signControlChecked, e.layer.signs.length],
+        [viewToggleControl, controlState.viewControlChecked, e.layer.views.length],
+        [playerToggleControl, controlState.playerControlChecked, e.layer.players.length],
+        [portalToggleControl, controlState.portalControlChecked, e.layer.portals.length],
+        [bedToggleControl, controlState.bedControlChecked, e.layer.beds.length],
+        [respawnAnchorToggleControl, controlState.respawnAnchorControlChecked, e.layer.anchors.length],
+        [beaconToggleControl, controlState.beaconControlChecked, e.layer.beacons.length],
+        [containerToggleControl, controlState.containerControlChecked, e.layer.containers.length]
+    ].filter(([, , available]) => available));
 
-    signToggleControl.remove();
-    if (e.layer.signs.length != 0) {
-        mymap.addControl(signToggleControl);
-        signToggleControl.setChecked(controlState.signControlChecked);
-    }
-
-    viewToggleControl.remove();
-    if (e.layer.views.length != 0) {
-        mymap.addControl(viewToggleControl);
-        viewToggleControl.setChecked(controlState.viewControlChecked);
-    }
-
-    playerToggleControl.remove();
-    if (e.layer.players.length != 0) {
-        mymap.addControl(playerToggleControl);
-        playerToggleControl.setChecked(controlState.playerControlChecked);
-    }
-
-    portalToggleControl.remove();
-    if (e.layer.portals.length != 0) {
-        mymap.addControl(portalToggleControl);
-        portalToggleControl.setChecked(controlState.portalControlChecked);
-    }
-
-    bedToggleControl.remove();
-    if (e.layer.beds.length != 0) {
-        mymap.addControl(bedToggleControl);
-        bedToggleControl.setChecked(controlState.bedControlChecked);
-    }
-
-    respawnAnchorToggleControl.remove();
-    if (e.layer.anchors.length != 0) {
-        mymap.addControl(respawnAnchorToggleControl);
-        respawnAnchorToggleControl.setChecked(controlState.respawnAnchorControlChecked);
-    }
-
-    beaconToggleControl.remove();
-    if (e.layer.beacons.length != 0) {
-        mymap.addControl(beaconToggleControl);
-        beaconToggleControl.setChecked(controlState.beaconControlChecked);
-    }
-
-    containerToggleControl.remove();
-    if (e.layer.containers.length != 0) {
-        mymap.addControl(containerToggleControl);
-        containerToggleControl.setChecked(controlState.containerControlChecked);
-    }
-
-    // Marker controls are rebuilt on layer changes; keep navigation below their row.
+    // Keep world and layer navigation below the marker menu.
     for (const navigationControl of [worldControl, layerControl]) {
         if (navigationControl) {
             L.DomUtil.toFront(navigationControl.getContainer());
@@ -333,7 +328,10 @@ function onBaseLayerChange(e) {
         },
         placement: 'left',
         theme: 'light',
+        delay: 0,
+        duration: [100, 75],
     });
+    bindControlTooltips();
 
 	if (e.layer.dimension === "NETHER") {
         destroyMarkers(spawnMarkers);
