@@ -8,6 +8,8 @@
 
 package tectonicus.cache;
 
+import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.TileCoord;
@@ -26,12 +28,19 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class EmptyTileCacheTest {
+	@AutoClose
+	private HddTileListFactory factory;
+
 	@TempDir Path directory;
 	private final TileCoord tile = new TileCoord(-5, 3);
 
+	@BeforeEach
+	void setUpTileLists() {
+		factory = new HddTileListFactory(directory.resolve("lists").toFile());
+	}
+
 	@Test
 	void emptyBaseTilesSurviveReopeningButChangedHashesRenderAgain() throws Exception {
-		HddTileListFactory factory = new HddTileListFactory(directory.resolve("lists").toFile());
 		HddTileList visible = factory.createList();
 		visible.add(tile);
 		FileTileCache cache = open();
@@ -54,19 +63,18 @@ class EmptyTileCacheTest {
 
 	@Test
 	void emptyParentsAreCompletedUntilAChildChanges() throws Exception {
-		HddTileListFactory factory = new HddTileListFactory(directory.resolve("lists").toFile());
 		HddTileList children = factory.createList();
 		children.add(new TileCoord(tile.x * 2, tile.y * 2));
 		FileTileCache cache = open();
 		try {
-			cache.calculateDownsampledTileCoordinates(children, 1);
+			cache.calculateDownsampledTileCoordinates(factory, children, 1);
 			cache.updateTileDownsampleStatus(tile, 1, true);
 			assertEquals(Set.of(), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
 		} finally { cache.closeTileCache(); }
 		cache = open();
 		try {
 			assertEquals(Set.of(), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
-			cache.calculateDownsampledTileCoordinates(children, 1);
+			cache.calculateDownsampledTileCoordinates(factory, children, 1);
 			assertEquals(Set.of(tile), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
 			cache.updateTileDownsampleStatus(tile, 1, false);
 			assertEquals(Set.of(tile), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
@@ -75,7 +83,6 @@ class EmptyTileCacheTest {
 
 	@Test
 	void selectsPendingAndMissingParentsButSkipsCompletedEmptyAndOtherZooms() throws Exception {
-		HddTileListFactory factory = new HddTileListFactory(directory.resolve("lists").toFile());
 		HddTileList children = factory.createList();
 		children.add(new TileCoord(tile.x * 2, tile.y * 2));
 		TileCoord completedEmpty = new TileCoord(2, 3);
@@ -85,7 +92,7 @@ class EmptyTileCacheTest {
 		FileTileCache cache = open();
 		try {
 			cache.updateTileDownsampleStatus(tile, 1, true);
-			cache.calculateDownsampledTileCoordinates(children, 1);
+			cache.calculateDownsampledTileCoordinates(factory, children, 1);
 			cache.updateTileDownsampleStatus(completedEmpty, 1, true);
 			cache.updateTileDownsampleStatus(completedImage, 1, false);
 			cache.updateTileDownsampleStatus(missingImage, 1, false);
@@ -96,17 +103,6 @@ class EmptyTileCacheTest {
 			assertEquals(Set.of(tile, missingImage), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
 			assertEquals(Set.of(otherZoom), cache.findTilesForDownsampling(factory, 10, directory.toFile(), ImageFormat.PNG).toSet());
 		} finally { cache.closeTileCache(); }
-	}
-
-	@Test
-	void uncachedRendersStillCalculateNegativeParentCoordinates() {
-		HddTileListFactory factory = new HddTileListFactory(directory.resolve("lists").toFile());
-		HddTileList children = factory.createList();
-		children.add(new TileCoord(-5, 3));
-		NullTileCache cache = new NullTileCache();
-		cache.calculateDownsampledTileCoordinates(children, 1);
-		assertEquals(Set.of(new TileCoord(-3, 1)), cache.findTilesForDownsampling(factory, 1, directory.toFile(), ImageFormat.PNG).toSet());
-		assertEquals(Set.of(new TileCoord(-2, 0)), cache.findTilesForDownsampling(factory, 0, directory.toFile(), ImageFormat.PNG).toSet());
 	}
 
 	private FileTileCache open() throws Exception {

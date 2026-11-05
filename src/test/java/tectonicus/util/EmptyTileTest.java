@@ -8,11 +8,14 @@
 
 package tectonicus.util;
 
+import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.TileCoord;
 import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;
+import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
 
 import java.awt.Transparency;
@@ -29,7 +32,15 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EmptyTileTest {
+	@AutoClose
+	private HddTileListFactory factory;
+
 	@TempDir Path directory;
+
+	@BeforeEach
+	void setUpTileLists() {
+		factory = new HddTileListFactory(directory.resolve("lists").toFile());
+	}
 
 	@Test
 	void transparencyRequiresEveryPixelToHaveExactlyZeroAlpha() {
@@ -94,9 +105,9 @@ class EmptyTileTest {
 		Files.createFile(kept);
 		Files.createFile(retired);
 		Path unrelated = Files.createFile(tiles.resolve("notes.txt"));
-		HddTileList visible = new HddTileList(directory.resolve("visible").toFile());
+		HddTileList visible = factory.createList();
 		visible.add(keep);
-		HddTileList removed = new HddTileList(directory.resolve("removed").toFile());
+		HddTileList removed = factory.createList();
 		TileOutput.removeObsolete(tiles, visible, ImageFormat.PNG, removed);
 		assertTrue(Files.exists(kept));
 		assertTrue(Files.exists(unrelated));

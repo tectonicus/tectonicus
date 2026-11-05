@@ -8,10 +8,13 @@
 
 package tectonicus;
 
+import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.cache.NullTileCache;
 import tectonicus.cache.swap.HddTileList;
+import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
 
@@ -24,9 +27,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DownsamplerEmptyTilesTest {
+	@AutoClose
+	private HddTileListFactory factory;
+
 	@TempDir Path directory;
 	private final TileCoord parent = new TileCoord(-2, 3);
 	private final AtomicReference<Boolean> emptyStatus = new AtomicReference<>();
+
+	@BeforeEach
+	void setUpTileLists() {
+		factory = new HddTileListFactory(directory.resolve("lists").toFile());
+	}
 
 	@Test
 	void missingChildrenRemoveAnOldParentAndFinishItsCacheEntry() throws Exception {
@@ -88,7 +99,7 @@ class DownsamplerEmptyTilesTest {
 	}
 
 	private void run() {
-		HddTileList tiles = new HddTileList(directory.resolve("tiles").toFile());
+		HddTileList tiles = factory.createList();
 		tiles.add(parent);
 		LayerConfig layer = new LayerConfig("day", "map");
 		layer.setBackgroundColor("#123456");

@@ -24,10 +24,13 @@ public interface TileCache {
 	
 	/** Takes a set of visible output tiles and strips it down to only the tiles
 	 *  that actually need rendering.
+	 *  The returned list can alias visibleTiles when caching is disabled.
 	 */
 	HddTileList findChangedTiles(HddTileListFactory factory, HddTileList visibleTiles, TileHashCache tileHashes, File layerDir);
 
-	void calculateDownsampledTileCoordinates(HddTileList baseTiles, int zoomLevel);
+	/** Borrows baseTiles and uses factory for disk-backed parent-coordinate sets. */
+	void calculateDownsampledTileCoordinates(HddTileListFactory factory, HddTileList baseTiles, int zoomLevel);
+	/** Returns an independent temporary list which the caller must close. */
 	HddTileList findTilesForDownsampling(HddTileListFactory factory, int zoomLevel, File baseDir, ImageFormat imageFormat);
 
 	void writeImageCache(TileCoord coord);

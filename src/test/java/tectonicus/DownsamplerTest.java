@@ -8,11 +8,14 @@
 
 package tectonicus;
 
+import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import tectonicus.cache.NullTileCache;
 import tectonicus.cache.swap.HddTileList;
+import tectonicus.cache.swap.HddTileListFactory;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
 
@@ -30,6 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DownsamplerTest {
+	@AutoClose
+	private HddTileListFactory factory;
+
 	@TempDir
 	Path directory;
 	private final TileCoord parent = new TileCoord(-2, 3);
@@ -38,6 +44,11 @@ class DownsamplerTest {
 		public void onTaskStarted(String taskName) {}
 		public void onTaskUpdate(int num, int total) {}
 	};
+
+	@BeforeEach
+	void setUpTileLists() {
+		factory = new HddTileListFactory(directory.resolve("lists").toFile());
+	}
 
 	@ParameterizedTest
 	@EnumSource(ImageFormat.class)
@@ -113,7 +124,7 @@ class DownsamplerTest {
 	}
 
 	private void run(LayerConfig layer) {
-		HddTileList tiles = new HddTileList(directory.resolve("tiles").toFile());
+		HddTileList tiles = factory.createList();
 		tiles.add(parent);
 		ChangeFile changes = new ChangeFile(directory.resolve("changes.txt").toFile());
 		try {

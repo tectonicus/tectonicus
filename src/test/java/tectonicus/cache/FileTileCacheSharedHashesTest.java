@@ -8,6 +8,7 @@
 
 package tectonicus.cache;
 
+import org.junit.jupiter.api.AutoClose;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -30,6 +31,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileTileCacheSharedHashesTest {
+	@AutoClose
+	private HddTileListFactory factory;
+
 	@TempDir
 	Path directory;
 	private final DimensionConfig map = new DimensionConfig("map");
@@ -37,7 +41,6 @@ class FileTileCacheSharedHashesTest {
 	private final LayerConfig night = new LayerConfig("night", map.getId());
 	private final TileCoord first = new TileCoord(1, -2);
 	private final TileCoord second = new TileCoord(-3, 4);
-	private HddTileListFactory factory;
 	private HddTileList visible;
 
 	@BeforeEach

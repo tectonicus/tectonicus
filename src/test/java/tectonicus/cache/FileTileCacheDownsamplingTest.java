@@ -8,6 +8,8 @@
 
 package tectonicus.cache;
 
+import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.TileCoord;
@@ -26,19 +28,27 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FileTileCacheDownsamplingTest {
+	@AutoClose
+	private HddTileListFactory factory;
+
 	@TempDir
 	Path directory;
+
+	@BeforeEach
+	void setUpTileLists() {
+		factory = new HddTileListFactory(directory.resolve("lists").toFile());
+	}
 
 	@Test
 	void propagatesChangesToSharedParentsAndPreservesUnchangedBranches() throws Exception {
 		FileTileCache cache = open();
 		try {
-			HddTileList tiles = new HddTileList(directory.resolve("base").toFile());
+			HddTileList tiles = factory.createList();
 			for (TileCoord coord : Set.of(new TileCoord(4, -4), new TileCoord(5, -4),
 					new TileCoord(4, -3), new TileCoord(5, -3), new TileCoord(8, 8))) {
 				tiles.add(coord);
 			}
-			cache.calculateDownsampledTileCoordinates(tiles, 2);
+			cache.calculateDownsampledTileCoordinates(factory, tiles, 2);
 			assertEquals(Set.of(new TileCoord(2, -2), new TileCoord(4, 4)), pending(cache, 2));
 			assertEquals(Set.of(new TileCoord(1, -1), new TileCoord(2, 2)), pending(cache, 1));
 			assertEquals(Set.of(new TileCoord(0, -1), new TileCoord(1, 1)), pending(cache, 0));
@@ -49,12 +59,33 @@ class FileTileCacheDownsamplingTest {
 				}
 				assertEquals(Set.of(), pending(cache, zoom));
 			}
-			HddTileList changed = new HddTileList(directory.resolve("changed").toFile());
+			HddTileList changed = factory.createList();
 			changed.add(new TileCoord(5, -3));
-			cache.calculateDownsampledTileCoordinates(changed, 2);
+			cache.calculateDownsampledTileCoordinates(factory, changed, 2);
 			assertEquals(Set.of(new TileCoord(2, -2)), pending(cache, 2));
 			assertEquals(Set.of(new TileCoord(1, -1)), pending(cache, 1));
 			assertEquals(Set.of(new TileCoord(0, -1)), pending(cache, 0));
+		} finally {
+			cache.closeTileCache();
+		}
+	}
+
+	@Test
+	void reopensWithOnlyUnfinishedParentsPendingAfterInterruption() throws Exception {
+		HddTileList children = factory.createList();
+		children.add(new TileCoord(4, 4));
+		children.add(new TileCoord(8, 8));
+		FileTileCache cache = open();
+		try {
+			cache.calculateDownsampledTileCoordinates(factory, children, 1);
+			cache.updateTileDownsampleStatus(new TileCoord(2, 2), 1, true);
+		} finally {
+			cache.closeTileCache();
+		}
+		cache = open();
+		try {
+			assertEquals(Set.of(new TileCoord(4, 4)), pending(cache, 1));
+			assertEquals(Set.of(new TileCoord(1, 1), new TileCoord(2, 2)), pending(cache, 0));
 		} finally {
 			cache.closeTileCache();
 		}
@@ -67,8 +98,9 @@ class FileTileCacheDownsamplingTest {
 	}
 
 	private Set<TileCoord> pending(FileTileCache cache, int zoom) {
-		HddTileListFactory factory = new HddTileListFactory(directory.resolve("lists").toFile());
-		return cache.findTilesForDownsampling(factory, zoom, directory.resolve("zoom" + zoom).toFile(), ImageFormat.PNG).toSet();
+		try (HddTileList pending = cache.findTilesForDownsampling(factory, zoom, directory.resolve("zoom" + zoom).toFile(), ImageFormat.PNG)) {
+			return pending.toSet();
+		}
 	}
 
 	private void createImage(TileCoord coord, int zoom) throws Exception {

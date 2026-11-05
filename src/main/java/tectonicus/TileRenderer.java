@@ -194,9 +194,11 @@ public class TileRenderer
 	{
 		log.info("Cleaning up...");
 		
-		rasteriser.destroy();
-		
-		playerSkinCache.destroy();
+		try {
+			rasteriser.destroy();
+		} finally {
+			playerSkinCache.destroy();
+		}
 	}
 	
 	public void abort()
@@ -204,7 +206,14 @@ public class TileRenderer
 		this.abort = true;
 	}
 	
-	public Result output() throws IOException
+	public Result output() throws IOException {
+		// The factory also releases unfinished stage lists if rendering fails.
+		try (hddTileListFactory) {
+			return outputInternal();
+		}
+	}
+
+	private Result outputInternal() throws IOException
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
 		
@@ -300,7 +309,10 @@ public class TileRenderer
 						HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, tileHashes, baseTilesDir);
 
 						// Trim changed tiles to size
-						changedTiles = trimTileList(changedTiles, config.getMaxTiles());
+						HddTileList untrimmed = changedTiles;
+						changedTiles = trimTileList(untrimmed, config.getMaxTiles());
+						if (untrimmed != changedTiles && untrimmed != visibleTiles)
+							untrimmed.close();
 
 						// Render base tiles
 						renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
@@ -319,12 +331,18 @@ public class TileRenderer
 
 						// Create downsampled layers
 						bounds = downsample(visibleTiles, downsampleChanges, exportDir, layer, baseTilesDir, tileCache);
+						if (downsampleChanges != changedTiles)
+							downsampleChanges.close();
+						removed.close();
+						if (changedTiles != visibleTiles)
+							changedTiles.close();
 					} finally {
 						tileCache.closeTileCache();
 					}
 				}
 			}
 
+			visibleTiles.close();
 			outputCompass(exportDir, map, rasteriser);
 			// Shared world resources are exported once, after its last configured dimension.
 			if (map == map.getWorld().getDimensions().getLast()) {
@@ -823,16 +841,13 @@ public class TileRenderer
 		int zoomLevel = numZoomLevels - 1;
 
 		if (!tileCache.hasCreatedDownsampleCache()) {
-			tileCache.calculateDownsampledTileCoordinates(baseTiles, zoomLevel);
-			// Removed tiles may have parents beyond the new candidate bounds.
-			tileCache.calculateDownsampledTileCoordinates(changedTiles, zoomLevel);
+			tileCache.calculateDownsampledTileCoordinates(hddTileListFactory, baseTiles, zoomLevel);
 		}
-                else {
-                        tileCache.calculateDownsampledTileCoordinates(changedTiles, zoomLevel);
-                }
+		// Removed tiles may have parents beyond the new candidate bounds.
+		tileCache.calculateDownsampledTileCoordinates(hddTileListFactory, changedTiles, zoomLevel);
 		
 		File prevDir = baseDir;
-		HddTileList prevTiles = baseTiles;
+		int previousTileCount = baseTiles.size();
 		while (zoomLevel >= 0)
 		{
 			if (abort)
@@ -841,28 +856,29 @@ public class TileRenderer
 			progressListener.onTaskStarted(Task.DOWNSAMPLING + " zoom level " + zoomLevel);
 			
 			File nextDir = DirUtils.getZoomDir(exportDir, layer, zoomLevel);
-			HddTileList nextTiles = tileCache.findTilesForDownsampling(hddTileListFactory, zoomLevel, nextDir, layer.getImageFormat());
-                        if (nextTiles.size() == 0) {
-				log.info("\tNo downsampling needed");
-			} else {
-				if (!tileCache.isUsingExistingCache()) {
-					FileUtils.deleteDirectory(nextDir);
-				}
-				if (!nextDir.exists()) {
-					final boolean mkOk = nextDir.mkdirs();
-					if (!mkOk)
-						throw new RuntimeException("Couldn't create dir:" + nextDir.getAbsolutePath());
-				}
+			try (HddTileList nextTiles = tileCache.findTilesForDownsampling(hddTileListFactory, zoomLevel, nextDir, layer.getImageFormat())) {
+				if (nextTiles.size() == 0) {
+					log.info("\tNo downsampling needed");
+				} else {
+					if (!tileCache.isUsingExistingCache()) {
+						FileUtils.deleteDirectory(nextDir);
+					}
+					if (!nextDir.exists()) {
+						final boolean mkOk = nextDir.mkdirs();
+						if (!mkOk)
+							throw new RuntimeException("Couldn't create dir:" + nextDir.getAbsolutePath());
+					}
 
-				log.debug("\tDownsampling {} tiles into {} tiles", prevTiles.size(), nextTiles.size());
+					log.debug("\tDownsampling {} tiles into {} tiles", previousTileCount, nextTiles.size());
 
-				Downsampler downsampler = new Downsampler(config.getNumDownsampleThreads(), changedFileList);
-				downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener, tileCache, zoomLevel);
-			}
+					Downsampler downsampler = new Downsampler(config.getNumDownsampleThreads(), changedFileList);
+					downsampler.downsample(prevDir, nextDir, nextTiles, layer, tileWidth, tileHeight, progressListener, tileCache, zoomLevel);
+				}
 			
-			zoomLevel--;
-			prevDir = nextDir;
-			prevTiles = nextTiles;
+				zoomLevel--;
+				prevDir = nextDir;
+				previousTileCount = nextTiles.size();
+			}
 		}
 		
 		final Date downsampleEnd = new Date();

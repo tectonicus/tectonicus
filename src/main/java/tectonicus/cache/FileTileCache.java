@@ -26,9 +26,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 public class FileTileCache implements TileCache
@@ -297,21 +295,29 @@ public class FileTileCache implements TileCache
 	}
 
 	@Override
-	public void calculateDownsampledTileCoordinates(HddTileList baseTiles, int zoomLevel) {
-		Set<TileCoord> prevTiles = baseTiles.toSet();
-
-		while (zoomLevel >= 0) {
-			Set<TileCoord> nextTiles = new HashSet<>();
-			for (TileCoord c : prevTiles) {
-				final int x = (int) Math.floor(c.x / 2.0f);
-				final int y = (int) Math.floor(c.y / 2.0f);
-				if (nextTiles.add(new TileCoord(x, y))) {
-					downsampleCache.put("tile_" + x + "_" + y + "_zoom" + zoomLevel, false);
+	public void calculateDownsampledTileCoordinates(HddTileListFactory factory, HddTileList baseTiles, int zoomLevel) {
+		HddTileList previous = baseTiles;
+		try {
+			while (zoomLevel >= 0) {
+				HddTileList parents = factory.createList();
+				try {
+					for (TileCoord tile : previous) {
+						TileCoord parent = new TileCoord(Math.floorDiv(tile.x, 2), Math.floorDiv(tile.y, 2));
+						if (parents.add(parent))
+							downsampleCache.put("tile_" + parent.x + "_" + parent.y + "_zoom" + zoomLevel, false);
+					}
+				} catch (RuntimeException | Error e) {
+					parents.close();
+					throw e;
 				}
+				if (previous != baseTiles)
+					previous.close();
+				previous = parents;
+				zoomLevel--;
 			}
-
-			zoomLevel--;
-			prevTiles = nextTiles;
+		} finally {
+			if (previous != baseTiles)
+				previous.close();
 		}
 	}
 
