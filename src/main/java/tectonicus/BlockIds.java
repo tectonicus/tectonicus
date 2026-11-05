@@ -110,6 +110,7 @@ public class BlockIds
 	public static final int END_STONE				= 121;
 	public static final int ENDER_CHEST				= 130;
 	public static final int COMMAND_BLOCK			= 137;
+	public static final int BEACON					= 138;
 	public static final int WOOD_BUTTON				= 143;
 	public static final int TRAPPED_CHEST			= 146;
 	public static final int LARGE_FLOWERS			= 175;

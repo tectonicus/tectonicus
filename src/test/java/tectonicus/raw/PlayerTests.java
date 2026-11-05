@@ -12,6 +12,7 @@ package tectonicus.raw;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
@@ -28,6 +29,22 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerTests
 {
+	@ParameterizedTest
+	@NullAndEmptySource
+	@ValueSource(strings = {" ", "\t"})
+	void unnamedLegacySinglePlayerHasADisplayLabelWithoutAFabricatedAccount(String name) {
+		Player player = new Player(name, new CompoundTag("", Map.of()));
+		assertEquals("Player", player.getName());
+		assertNull(player.getUuid());
+	}
+
+	@Test
+	void configuredSinglePlayerNameIsRetainedForProfileLookup() {
+		Player player = new Player("Explorer", new CompoundTag("", Map.of()));
+		assertEquals("Explorer", player.getName());
+		assertEquals("Explorer", player.getUuid());
+	}
+
 	@Test
 	void testLoadPlayerFromPlayerFile() throws Exception
 	{

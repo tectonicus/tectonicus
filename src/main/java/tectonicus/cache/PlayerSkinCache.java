@@ -159,6 +159,10 @@ public class PlayerSkinCache
 	
 	public BufferedImage fetchSkin(Player player)
 	{
+		if ((player.getUuid() == null || player.getUuid().isBlank())
+				&& (player.getSkinURL() == null || player.getSkinURL().isBlank()))
+			return null;
+
 		CacheEntry existing = null;
 		
 		if (skinCache.containsKey(player.getUuid()))

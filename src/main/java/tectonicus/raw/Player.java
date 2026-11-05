@@ -114,9 +114,11 @@ public class Player {
 	public Player(String playerName, CompoundTag tag) {
 		this();
 		
-		if (!playerName.isEmpty()) {
-			name = uuid = playerName;
-		}
+		// Old level.dat player tags contain no username. Keep a display label without
+		// treating that label as a real account for profile and skin lookups.
+		name = playerName == null || playerName.isBlank() ? "Player" : playerName;
+		if (playerName != null && !playerName.isBlank())
+			uuid = playerName;
 		
 		parse(tag);
 	}

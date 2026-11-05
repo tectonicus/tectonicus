@@ -1301,7 +1301,8 @@ public class World implements BlockContext
 					}
 				}
 			}
-		} else { //try to load single player
+		}
+		if (players.isEmpty() && singlePlayer != null) {
 			submitPlayerTask(singlePlayer, playerSkinCache, executor);
 			players.add(singlePlayer);
 		}
@@ -1319,6 +1320,10 @@ public class World implements BlockContext
 	}
 	
 	private static void submitPlayerTask(Player player, PlayerSkinCache playerSkinCache, ExecutorService executor) {
+		if (player.getUuid() == null || player.getUuid().isBlank()) {
+			log.warn("Player identity is missing from the save. Set singlePlayerName in <config> to use your Minecraft username and skin. Using the label 'Player'.");
+			return;
+		}
 		CacheEntry ce = playerSkinCache.getCacheEntry(player.getUuid());
 		if (ce != null) {
 			final long age = System.currentTimeMillis() - ce.fetchedTime;

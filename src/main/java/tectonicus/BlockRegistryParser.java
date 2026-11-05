@@ -391,9 +391,13 @@ public class BlockRegistryParser
 		}
 		else if (nodeName.equals("chest"))
 		{
+			// The texture atlas based config also covers releases before Ender Chests existed.
+			if (name.equals("Ender Chest") && !hasTexture(element, "ender"))
+				return;
+
 			SubTexture small = parseTexture(element, "small", null);
 			SubTexture large = parseTexture(element, "large", null);
-			SubTexture ender = parseTexture(element, "ender", null);
+			SubTexture ender = hasTexture(element, "ender") ? parseTexture(element, "ender", null) : null;
 			SubTexture trappedsmall = null;
 			SubTexture trappedlarge = null;
 			SubTexture xmassmall = null;

@@ -17,6 +17,7 @@ import tectonicus.PlayerIconAssembler;
 import tectonicus.Portal;
 import tectonicus.TileRenderer;
 import tectonicus.Version;
+import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.cache.ItemIconCache;
 import tectonicus.cache.swap.HddObjectListReader;
@@ -55,6 +56,7 @@ import tectonicus.world.World;
 import tectonicus.world.subset.WorldSubset;
 
 import javax.imageio.ImageIO;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -840,13 +842,13 @@ public class OutputResourcesUtil {
 		BlockTypeRegistry registryOld = world.getBlockTypeRegistry();
 		BlockRegistry registry = world.getModelRegistry();
 		TexturePack texturePack = world.getTexturePack();
-		Version version = world.getWorldInfo().version();
+		Version version = texturePack.getVersion();
 
 		try {
 			ItemRenderer itemRenderer = new ItemRenderer(rasteriser);
 			if (texturePack.getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
 				itemRenderer.renderBlockOld(new File(imagesDir, "Chest.png"), registryOld, texturePack, BlockIds.CHEST, 5);
-				if (texturePack.getVersion().getNumVersion() >= Version.VERSION_4.getNumVersion()) {
+				if (!(registryOld.find(BlockIds.ENDER_CHEST, 0) instanceof Air)) {
 					itemRenderer.renderBlockOld(new File(imagesDir, "EnderChest.png"), registryOld, texturePack, BlockIds.ENDER_CHEST, 5);
 				}
 			} else {
@@ -866,7 +868,13 @@ public class OutputResourcesUtil {
 			if (version.getNumVersion() >= VERSION_16.getNumVersion()) {
 				itemRenderer.renderBlockModel(new File(imagesDir, "RespawnAnchor.png"), registry, texturePack, Block.RESPAWN_ANCHOR, "_4");
 			}
-			itemRenderer.renderBlock(new File(imagesDir, "beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
+			if (version.getNumVersion() < VERSION_13.getNumVersion()) {
+				// Earlier jars share the legacy config but have no beacon textures.
+				if (version.getNumVersion() > Version.VERSION_4.getNumVersion() || texturePack.fileExists("misc/beam.png"))
+					itemRenderer.renderBlockOld(new File(imagesDir, "beacon.png"), registryOld, texturePack, BlockIds.BEACON, 0);
+			} else {
+				itemRenderer.renderBlock(new File(imagesDir, "beacon.png"), registryOld, registry, texturePack, Block.BEACON, new BlockProperties());
+			}
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		}
@@ -1058,7 +1066,7 @@ public class OutputResourcesUtil {
 		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, config, tileWidth, tileHeight);
 	}
 
-	private static void outputSpawnCompass(ZipStack zipStack, File file) {
+	static void outputSpawnCompass(ZipStack zipStack, File file) {
 		// Use vanilla textures: resource packs may split the compass into custom model layers.
 		String[] paths = {
 				"assets/minecraft/textures/item/compass_16.png",
@@ -1075,7 +1083,20 @@ public class OutputResourcesUtil {
 				if (path.equals("gui/items.png")) {
 					int width = image.getWidth() / 16;
 					int height = image.getHeight() / 16;
-					image = image.getSubimage(6 * width, 3 * height, width, height);
+					image = ImageUtils.copy(image.getSubimage(6 * width, 3 * height, width, height));
+					// Before 1.5 Minecraft drew the needle at runtime; the atlas has only
+					// the dial. Recreate its upward-pointing frame in 16x16 pixel units.
+					var graphics = image.createGraphics();
+					try {
+						graphics.scale(width / 16.0, height / 16.0);
+						graphics.setColor(new Color(100, 100, 100));
+						graphics.fillRect(7, 7, 3, 1);
+						graphics.fillRect(8, 8, 1, 1);
+						graphics.setColor(new Color(255, 20, 20));
+						graphics.fillRect(8, 5, 1, 3);
+					} finally {
+						graphics.dispose();
+					}
 				} else {
 					// Before 1.9 the frames are stored in a vertical animation strip.
 					int size = Math.min(image.getWidth(), image.getHeight());
