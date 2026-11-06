@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Built-in render defaults. Explicit configuration values override these settings. -->
+<renderProfiles>
+	<profile name="alpha"
+	         useBiomeColors="false"
+	         swampWaterTint="none"
+	         useProceduralFluidTextures="true"
+	         useOldGrayscaleLighting="true"
+	         useSmoothLighting="false"
+	         biomeBlendRadius="0" />
+
+	<profile name="alpha1.2-beta1.2_02"
+	         useBiomeColors="true"
+	         swampWaterTint="none"
+	         useProceduralFluidTextures="true"
+	         useOldGrayscaleLighting="true"
+	         useSmoothLighting="false"
+	         biomeBlendRadius="0" />
+
+	<profile name="beta1.3-beta1.7.3"
+	         useBiomeColors="true"
+	         swampWaterTint="none"
+	         useProceduralFluidTextures="true"
+	         useOldGrayscaleLighting="true"
+	         biomeBlendRadius="0" />
+	         
+	<profile name="beta1.8"
+             useBiomeColors="true"
+             swampWaterTint="none"
+             useProceduralFluidTextures="true"
+             biomeBlendRadius="0" />
+    
+	<profile name="minecraft1.0"
+	         swampWaterTint="minecraft10"
+	         minecraft10SwampColors="true"
+	         useProceduralFluidTextures="true"
+	         biomeBlendRadius="0" />
+
+	<profile name="minecraft1.1-1.4"
+	         swampWaterTint="legacy"
+	         useProceduralFluidTextures="true" />
+</renderProfiles>

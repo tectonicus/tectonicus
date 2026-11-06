@@ -166,9 +166,13 @@ public class FileTileCache implements TileCache
 		String layerStr = "";
 		
 		layerStr += layer.getId() + "\n";
+		layerStr += "useBiomeColours=" + layer.useBiomeColours() + "\n";
 		layerStr += "smoothLit=" + layer.isSmoothLit() + "\n";
 		layerStr += "oldGrayscaleLighting=" + layer.useOldGrayscaleLighting() + "\n";
 		layerStr += "sortTranslucentFaces=" + layer.isSortTranslucentFaces() + "\n";
+		layerStr += "useProceduralFluidTextures=" + layer.isProceduralFluidTextures() + "\n";
+		layerStr += "swampWaterTint=" + layer.getSwampWaterTint() + "\n";
+		layerStr += "minecraft10SwampColors=" + layer.isMinecraft10SwampColors() + "\n";
 		layerStr += "legacyWater=" + layer.isLegacyWater() + "\n";
 		layerStr += "biomeBlendRadius=" + layer.getBiomeBlendRadius() + "\n";
 		layerStr += "biomeBlendRadiusConfigured=" + layer.isBiomeBlendRadiusConfigured() + "\n";

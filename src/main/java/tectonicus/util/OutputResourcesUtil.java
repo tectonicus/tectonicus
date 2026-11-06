@@ -1028,6 +1028,8 @@ public class OutputResourcesUtil {
                 writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));
 
 		// Write default player icon
+		if (defaultSkinPath.equals("mob/char.png") && !texturePack.fileExists(defaultSkinPath))
+			defaultSkinPath = "char.png"; // Alpha skin location
 		BufferedImage defaultSkinIcon = texturePack.getItem(defaultSkinPath);
 		if (defaultSkinIcon == null) {
 			log.warn("Unable to find default skin!");

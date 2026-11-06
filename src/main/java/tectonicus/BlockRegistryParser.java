@@ -257,12 +257,27 @@ public class BlockRegistryParser
 			SubTexture tex = parseTexture(element, "texture", null);
 			SubTexture flow = parseTexture(element, "flow", tex);
 			SubTexture overlay = parseTexture(element, "overlay", null);
-			blockType = new Water(name, tex, flow, overlay, parseFrame(element));
+			int frame = parseFrame(element);
+			Water water = new Water(name, tex, flow, overlay, frame);
+			if (texturePack.canGenerateProceduralFluid(element.getAttribute("texture"), false)
+					&& (!element.hasAttribute("flow") || element.getAttribute("flow").equals(element.getAttribute("texture")))
+					&& !element.hasAttribute("overlay")) {
+				water.setProceduralTextures(() -> Water.procedural(name,
+						texturePack.getProceduralFluid(false, false, frame), texturePack.getProceduralFluid(false, true, frame)));
+			}
+			blockType = water;
 		}
 		else if (nodeName.equals("lava")) {
 			SubTexture still = parseTextureFrame(element, "texture", null);
 			SubTexture flow = parseTextureFrame(element, "flow", still);
-			blockType = new Lava(name, still, flow, parseFrame(element));
+			int frame = parseFrame(element);
+			Lava lava = new Lava(name, still, flow, frame);
+			if (texturePack.canGenerateProceduralFluid(element.getAttribute("texture"), true)
+					&& (!element.hasAttribute("flow") || element.getAttribute("flow").equals(element.getAttribute("texture")))) {
+				lava.setProceduralTextures(() -> new Lava(name, texturePack.getProceduralFluid(true, false, frame),
+						texturePack.getProceduralFluid(true, true, frame), 1));
+			}
+			blockType = lava;
 		}
 		else if (nodeName.equals("grass"))
 		{
@@ -637,7 +652,7 @@ public class BlockRegistryParser
 			String fruitIdStr = element.getAttribute("fruitId");
 			final int fruitId = Integer.parseInt(fruitIdStr);
 			
-			blockType = new FruitStem(name, fruitId, growingStem, bentStem, biomeCache, texturePack);
+			blockType = new FruitStem(name, fruitId, growingStem, bentStem);
 		}
 		else if (nodeName.equals("hugemushroom"))
 		{
@@ -663,7 +678,7 @@ public class BlockRegistryParser
 		{
 			SubTexture texture = parseTexture(element, "texture", null);
 			
-			blockType = new Lilly(name, texture, biomeCache, texturePack);
+			blockType = new Lilly(name, texture);
 		}
 		else if (nodeName.equals("dragonegg"))
 		{

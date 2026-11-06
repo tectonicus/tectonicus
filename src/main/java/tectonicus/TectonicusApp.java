@@ -13,8 +13,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
-import tectonicus.cache.BiomeCache;
-import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Dimension;
@@ -99,13 +97,13 @@ public class TectonicusApp
 				tectonicus.configuration.DimensionConfig map = config.getDimensionConfig(0);
 				LayerConfig layer = map.getLayer(0);
 				
-				BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
 				PlayerSkinCache skinCache = new PlayerSkinCache(config, hashAlgorithm);
 				
-				World world = new World(interactiveRenderer.getRasteriser(), map, biomeCache, skinCache, config);
-				TileRenderer.setupWorldForLayer(layer, world);
-				
-				interactiveRenderer.display(world);
+				try (World world = new World(interactiveRenderer.getRasteriser(), map, skinCache, config)) {
+					TileRenderer.setupWorldForLayer(layer, world);
+
+					interactiveRenderer.display(world);
+				}
 				
 				interactiveRenderer.destroy();
 			}

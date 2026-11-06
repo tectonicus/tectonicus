@@ -15,3 +15,11 @@ org.eclipse.jdt.core.prefs
 /out
 /.vscode
 tectonicus.xml
+
+# Keep local Minecraft integration inputs out of source control.
+/testdata/
+*.jar
+*.jar.new
+!/gradle/wrapper/gradle-wrapper.jar
+!/libs/BiomeExtractor.jar
+!/libs/jnbt.jar

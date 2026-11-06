@@ -76,6 +76,8 @@ public class ZipStack
 		}
 	}
 	
+	public boolean hasOverrideFile(String file) { return hasFile(file, override); }
+
 	public boolean hasFile(String file)
 	{
 		return hasFile(file, override) || hasFile(file, base);  //TODO: Maybe need to check mod jar files too?

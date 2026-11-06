@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,285 +9,95 @@
 
 package tectonicus.cache;
 
-import com.google.code.minecraftbiomeextractor.WorldProcessor;
-import lombok.extern.slf4j.Slf4j;
-import org.jnbt.ByteArrayTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.NBTOutputStream;
-import org.jnbt.Tag;
-import tectonicus.Minecraft;
+import biomeextractor.ByteCoord;
+import biomeextractor.WorldProcessor;
+import org.jnbt.*;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.NbtUtil;
 import tectonicus.raw.RawChunk;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
-public class BiomeData
-{
-	private static final int VERSION = 1;
-	
-	private ColourCoord[][] colourCoords;
-	
-	public BiomeData()
-	{
-		colourCoords = new ColourCoord[RawChunk.WIDTH][RawChunk.DEPTH];
-		
-		for (int x=0; x<RawChunk.WIDTH; x++)
-		{
-			for (int z=0; z<RawChunk.DEPTH; z++)
-			{
+/** Immutable color-map coordinates for one chunk, serialized independently of textures. */
+public class BiomeData {
+	private static final int VERSION = 3;
+	private static final int COORDINATE_BYTES = RawChunk.WIDTH * RawChunk.DEPTH * 2;
+	private final byte[] swamps = new byte[RawChunk.WIDTH * RawChunk.DEPTH];
+	private final ColourCoord[][] colourCoords = new ColourCoord[RawChunk.WIDTH][RawChunk.DEPTH];
+
+	public BiomeData() {
+		for (int x = 0; x < RawChunk.WIDTH; x++)
+			for (int z = 0; z < RawChunk.DEPTH; z++)
 				colourCoords[x][z] = new ColourCoord((byte)0, (byte)0);
+	}
+
+	public BiomeData(WorldProcessor processor, ChunkCoord chunk) {
+		int baseX = Math.toIntExact(Math.multiplyExact(chunk.x, RawChunk.WIDTH));
+		int baseZ = Math.toIntExact(Math.multiplyExact(chunk.z, RawChunk.DEPTH));
+		try {
+			boolean[] mask = processor.getSwampMaskAtBlocks(baseX, baseZ, RawChunk.WIDTH, RawChunk.DEPTH);
+			for (int i = 0; i < mask.length; i++) swamps[i] = (byte)(mask[i] ? 1 : 0);
+			ByteCoord[] batch = processor.getCoordsAtBlocks(null, null, null, baseX, baseZ, RawChunk.WIDTH, RawChunk.DEPTH);
+			for (int z = 0; z < RawChunk.DEPTH; z++) {
+				for (int x = 0; x < RawChunk.WIDTH; x++) {
+					ByteCoord coordinate = batch[x + z * RawChunk.WIDTH];
+					colourCoords[x][z] = new ColourCoord(coordinate.x, coordinate.y);
+				}
 			}
+		} catch (Exception e) {
+			throw new IllegalStateException("Could not extract biome colors for chunk " + chunk, e);
 		}
 	}
-	
-	public BiomeData(WorldProcessor worldProcessor, ChunkCoord coord)
-	{
-		colourCoords = new ColourCoord[RawChunk.WIDTH][RawChunk.DEPTH];
-		
-		final long baseX = coord.x * RawChunk.WIDTH;
-		final long baseZ = coord.z * Minecraft.getChunkHeight();
-		
-		for (int x=0; x<RawChunk.WIDTH; x++)
-		{
-			for (int z=0; z<RawChunk.DEPTH; z++)
-			{
-				try
-				{
-					// TODO: This should accept longs?
-					byte[] rawCoord = worldProcessor.getCoordsAtBlock( (int)(baseX + x), (int)(baseZ + z) );
-				//	final char colX = (char)( (int)rawCoord[0]&0xFF );
-				//	final char colY = (char)( (int)rawCoord[1]&0xFF );
-				//	ColourCoord colourCoord = new ColourCoord(colX, colY);
-					ColourCoord colourCoord = new ColourCoord(rawCoord[0], rawCoord[1]);
-					
-					colourCoords[x][z] = colourCoord;
-				}
-				catch (Exception e)
-				{
-					log.error("Exception: ", e);
-				}
-				
-			/*	// TODO: These should accept longs not ints?
-				Color grassColour = worldProcessor.getColorAtBlock((int)worldX, (int)worldZ, ColourType.GrassColour);
-				Color foliageColour = worldProcessor.getColorAtBlock((int)worldX, (int)worldZ, ColourType.FoliageColour);
-				
-				grassColours[x][z] = grassColour.getRGB();
-				foliageColours[x][z] = foliageColour.getRGB();
-				
-				grassColours[x][z] = new Color(11, 22, 33).getRGB();
-			*/
-			}
-		}
-	}
-	
-	public BiomeData(File file) throws Exception
-	{
-		FileInputStream fIn = null;
-		NBTInputStream nbtIn = null;
-		
-		colourCoords = new ColourCoord[RawChunk.WIDTH][RawChunk.DEPTH];
-		
-		try
-		{
-			fIn = new FileInputStream(file);
-			nbtIn = new NBTInputStream(fIn);
-			
-			Tag tag = nbtIn.readTag();
-			if (tag instanceof CompoundTag)
-			{
-				CompoundTag root = (CompoundTag)tag;
-				
-				final int version = NbtUtil.getInt(root, "version", 0);
-				if (version != VERSION)
-				{
-					throw new IOException("Biome cache file is wrong version");
-				}
-				
-				Tag rawCoordsTag = root.getValue().get("colourCoords");
-				if (rawCoordsTag instanceof ByteArrayTag)
-				{
-					ByteArrayTag coordsTag = (ByteArrayTag)rawCoordsTag;
-					
-					int pos = 0;
-					for (int x=0; x<colourCoords.length; x++)
-					{
-						for (int z=0; z<colourCoords[0].length; z++)
-						{
-						//	final char xCoord = (char)( (int)coordsTag.getValue()[pos] + 127);
-						//	final char zCoord = (char)( (int)coordsTag.getValue()[pos+1] + 127);
-						//	colourCoords[x][z] = new ColourCoord(xCoord, zCoord);
-							
-							colourCoords[x][z] = new ColourCoord(coordsTag.getValue()[pos], coordsTag.getValue()[pos+1]);
-							
-							pos += 2;
-						}
-					}
+
+	public BiomeData(File file) throws IOException {
+		try (NBTInputStream input = new NBTInputStream(Files.newInputStream(file.toPath()))) {
+			if (!(input.readTag() instanceof CompoundTag root) || NbtUtil.getInt(root, "version", 0) != VERSION)
+				throw new IOException("Wrong biome cache version: " + file);
+			if (!(root.getValue().get("colourCoords") instanceof ByteArrayTag tag) || tag.getValue().length != COORDINATE_BYTES)
+				throw new IOException("Invalid biome coordinate array: " + file);
+			if (!(root.getValue().get("swamps") instanceof ByteArrayTag mask) || mask.getValue().length != swamps.length)
+				throw new IOException("Invalid swamp mask: " + file);
+			System.arraycopy(mask.getValue(), 0, swamps, 0, swamps.length);
+			byte[] coordinates = tag.getValue();
+			int position = 0;
+			for (int x = 0; x < RawChunk.WIDTH; x++) {
+				for (int z = 0; z < RawChunk.DEPTH; z++) {
+					colourCoords[x][z] = new ColourCoord(coordinates[position++], coordinates[position++]);
 				}
 			}
 		}
-		catch (Exception e)
-		{
-			log.error("Exception: ", e);
-		}
-		finally
-		{
-			if (nbtIn != null)
-				nbtIn.close();
-			if (fIn != null)
-				fIn.close();
-		}
 	}
-	
-	public ColourCoord getColourCoord(final int x, final int z)
-	{
-		return new ColourCoord( colourCoords[x][z] );
+
+	public boolean isSwamp(int x, int z) { return swamps[x + z * RawChunk.WIDTH] != 0; }
+
+	public ColourCoord getColourCoord(int x, int z) {
+		return colourCoords[x][z];
 	}
-	
-	public void write(File file)
-	{
-		FileOutputStream fOut = null;
-		NBTOutputStream nbtOut = null;
-		
-		try
-		{
-			file.getParentFile().mkdirs();
-			
-			fOut = new FileOutputStream(file);
-			nbtOut = new NBTOutputStream(fOut);
-			
-			
-			IntTag versionTag = new IntTag("version", VERSION);
-			
-			int pos = 0;
-			byte[] coordBytes = new byte[colourCoords.length * colourCoords[0].length * 2];
-			for (int x=0; x<colourCoords.length; x++)
-			{
-				for (int z=0; z<colourCoords[0].length; z++)
-				{
-					ColourCoord coord = colourCoords[x][z];
-					
-				//	final byte byte1 = (byte)((int)coord.x - 127);
-				//	final byte byte2 = (byte)((int)coord.y - 127);
-				//	
-				//	coordBytes[pos] = byte1;
-				//	coordBytes[pos+1] = byte2;
-					
-					coordBytes[pos] = coord.x;
-					coordBytes[pos+1] = coord.y;
-					
-					pos += 2;
-				}
-			}
-			
-			ByteArrayTag colourCoordsTag = new ByteArrayTag("colourCoords", coordBytes);
-			
-			Map<String, Tag> dataTags = new HashMap<String, Tag>();
-			dataTags.put(versionTag.getName(), versionTag);
-			dataTags.put(colourCoordsTag.getName(), colourCoordsTag);
-			
-			CompoundTag data = new CompoundTag("data", dataTags);
-			
-			nbtOut.writeTag(data);
-		}
-		catch (Exception e)
-		{
-			log.error("Exception: ", e);
-		}
-		finally
-		{
-			try
-			{
-				if (nbtOut != null)
-					nbtOut.close();
-			}
-			catch (Exception e) {}
-			try
-			{
-				if (fOut != null)
-					fOut.close();
-			}
-			catch (Exception e) {}
-		}
-	}
-	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (!(obj instanceof BiomeData))
-			return false;
-		
-		BiomeData other = (BiomeData)obj;
-		
-		if (this.colourCoords.length != other.colourCoords.length)
-			return false;
-		
-		if (this.colourCoords[0].length != other.colourCoords[0].length)
-			return false;
-		
-		for (int x=0; x<colourCoords.length; x++)
-		{
-			for (int z=0; z<colourCoords[0].length; z++)
-			{
-				ColourCoord thisCoord = this.colourCoords[x][z];
-				ColourCoord otherCoord = other.colourCoords[x][z];
-				
-				if (!thisCoord.equals(otherCoord))
-				{
-					return false;
-				}
+
+	public void write(File file) throws IOException {
+		Files.createDirectories(file.toPath().toAbsolutePath().getParent());
+		byte[] coordinates = new byte[COORDINATE_BYTES];
+		int position = 0;
+		for (int x = 0; x < RawChunk.WIDTH; x++) {
+			for (int z = 0; z < RawChunk.DEPTH; z++) {
+				coordinates[position++] = colourCoords[x][z].x();
+				coordinates[position++] = colourCoords[x][z].y();
 			}
 		}
-		
-		return true;
+		Map<String, Tag> tags = new HashMap<>();
+		tags.put("swamps", new ByteArrayTag("swamps", swamps));
+		tags.put("version", new IntTag("version", VERSION));
+		tags.put("colourCoords", new ByteArrayTag("colourCoords", coordinates));
+		try (NBTOutputStream output = new NBTOutputStream(Files.newOutputStream(file.toPath()))) {
+			output.writeTag(new CompoundTag("data", tags));
+		}
 	}
-	
-	public static class ColourCoord
-	{
-		// Remember byte is [-128, +127]
-		
-		private byte x, y;
-		
-		public ColourCoord() {}
-		
-		public ColourCoord(final byte x, final byte y)
-		{
-			this.x = x;
-			this.y = y;
-		}
-		
-		public ColourCoord(ColourCoord other)
-		{
-			this.x = other.x;
-			this.y = other.y;
-		}
-		
-		public int getX()
-		{
-		//	return (x + 128);
-			return x;
-		}
-		
-		public int getY()
-		{
-		//	return (y + 128);
-			return y;
-		}
-		
-		@Override
-		public boolean equals(Object obj)
-		{
-			ColourCoord other = (ColourCoord)obj;
-			
-			return this.x == other.x && this.y == other.y;
-		}
+
+	public record ColourCoord(byte x, byte y) {
+		public int getX() { return x & 0xff; }
+		public int getY() { return y & 0xff; }
 	}
 }

@@ -117,8 +117,13 @@ public class FileViewCache
 		
 		hashAlgorithm.update(Integer.toString(VIEW_RENDERER_VERSION).getBytes());
 		hashAlgorithm.update(("useProgrammerArt=" + world.isUsingProgrammerArt() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		hashAlgorithm.update(("useBiomeColours=" + world.useBiomeColours() + "\n").getBytes());
+		hashAlgorithm.update(("useProceduralFluidTextures=" + world.useProceduralFluidTextures() + "\n").getBytes());
+		hashAlgorithm.update(("swampWaterTint=" + world.getSwampWaterTint() + "\n").getBytes());
+		hashAlgorithm.update(("minecraft10SwampColors=" + world.isMinecraft10SwampColors() + "\n").getBytes());
 		hashAlgorithm.update(("biomeBlendRadius=" + world.getBiomeBlendRadius() + "\n").getBytes());
 		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		hashAlgorithm.update(("biomeExtraction=" + world.getBiomeCache().getCacheKey() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		
 		hashAlgorithm.update(sign.getText(0).getBytes());
 		hashAlgorithm.update(sign.getText(1).getBytes());

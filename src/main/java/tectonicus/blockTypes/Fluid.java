@@ -23,11 +23,17 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 
+import java.util.function.Supplier;
+
 /** Shared static-map geometry for Minecraft's water and lava. */
 public abstract class Fluid implements BlockType {
 	private static final float SURFACE_OFFSET = 0.001f;
 	private static final int[][] DIRECTIONS = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 	private final String name;
+	private Supplier<? extends Fluid> proceduralFactory;
+	private Fluid proceduralFluid;
+
+	public void setProceduralTextures(Supplier<? extends Fluid> factory) { proceduralFactory = factory; }
 	protected final SubTexture stillTexture;
 	protected final SubTexture flowTexture;
 
@@ -60,6 +66,11 @@ public abstract class Fluid implements BlockType {
 
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
+		if (world.useProceduralFluidTextures() && proceduralFactory != null) {
+			if (proceduralFluid == null) proceduralFluid = proceduralFactory.get();
+			proceduralFluid.addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
+			return;
+		}
 		boolean above = containsFluid(world, rawChunk, x, y + 1, z);
 		boolean internalTop = above && renderInternalTop(world);
 		boolean bottom = isExposed(world, rawChunk, x, y - 1, z);

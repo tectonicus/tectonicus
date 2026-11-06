@@ -69,6 +69,32 @@ class BiomeBlendConfigurationTest {
 		assertThrows(IllegalArgumentException.class, () -> map.setBiomeBlendRadius(8));
 	}
 
+	@Test
+	void minecraft10SwampColorsAreExplicitAndDefaultOff() throws Exception {
+		assertFalse(parseMap("").isMinecraft10SwampColors());
+		assertTrue(parseMap("<render minecraft10SwampColors=\"true\" />").isMinecraft10SwampColors());
+	}
+
+	@Test
+	void proceduralFluidsAndSwampTintsAreIndependent() throws Exception {
+		assertFalse(parseMap("").isProceduralFluidTextures());
+		var textures = parseMap("<render useProceduralFluidTextures=\"true\" />");
+		assertTrue(textures.isProceduralFluidTextures());
+		assertFalse(textures.isMinecraft10SwampColors());
+		var tints = parseMap("<render minecraft10SwampColors=\"true\" />");
+		assertFalse(tints.isProceduralFluidTextures());
+	}
+
+	@ParameterizedTest
+	@CsvSource({"auto,AUTO", "none,NONE", "minecraft10,MINECRAFT10", "legacy,LEGACY", "' LeGaCy ',LEGACY", "invalid,AUTO", "'',AUTO"})
+	void parsesHistoricalSwampModes(String value, tectonicus.configuration.SwampWaterTint expected) throws Exception {
+		assertEquals(expected, parseMap("<render swampWaterTint=\"" + value + "\" />").getSwampWaterTint());
+	}
+
+	@Test void omittedSwampTintIsAuto() throws Exception {
+		assertEquals(tectonicus.configuration.SwampWaterTint.AUTO, parseMap("").getSwampWaterTint());
+	}
+
 	private DimensionConfig parseMap(String render) throws Exception {
 		Path file = directory.resolve("config.xml");
 		Files.writeString(file, "<tectonicus version=\"2\"><map name=\"Test\" worldDir=\".\">"

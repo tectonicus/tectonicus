@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,37 +15,28 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.cache.BiomeCache;
-import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
-import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 
 public class FruitStem implements BlockType
 {
 	private final String name;
 	
-	private BiomeCache biomeCache;
-	private TexturePack texturePack;
-	
 	private SubTexture growingStem;
 	private SubTexture bentStem;
 	
 	private int fruitBlockId;
 	
-	public FruitStem(String name, final int fruitBlockId, SubTexture growingStem, SubTexture bentStem, BiomeCache biomeCache, TexturePack texturePack)
+	public FruitStem(String name, final int fruitBlockId, SubTexture growingStem, SubTexture bentStem)
 	{
 		this.name = name;
 		this.growingStem = growingStem;
 		this.bentStem = bentStem;
-		
-		this.biomeCache = biomeCache;
-		this.texturePack = texturePack;
 		
 		this.fruitBlockId = fruitBlockId;
 	}
@@ -112,9 +103,7 @@ public class FruitStem implements BlockType
 		
 		final float lightness = world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		
-		BiomeData biomeData = biomeCache.loadBiomeData(chunk.getChunkCoord());
-		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
-		Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );
+		Colour4f colour = new Colour4f(world.getGrassColor(chunk.getChunkCoord(), x, y, z));
 		colour.r *= lightness;
 		colour.g *= lightness;
 		colour.b *= lightness;

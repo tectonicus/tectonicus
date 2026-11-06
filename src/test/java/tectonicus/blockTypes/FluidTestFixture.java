@@ -47,6 +47,8 @@ abstract class FluidTestFixture {
 	LightSample defaultLight = LightSample.ambient(0.75f);
 	LightStyle lightStyle = LightStyle.Day;
 	boolean legacyWater;
+	boolean minecraft10SwampColors;
+	boolean proceduralFluidTextures;
 	boolean grayscale;
 	float cameraAngle = (float) Math.PI / 4;
 	float cameraElevation = (float) Math.PI / 4;
@@ -62,6 +64,8 @@ abstract class FluidTestFixture {
 		world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
 				(proxy, method, args) -> {
 					switch (method.getName()) {
+						case "useProceduralFluidTextures": return proceduralFluidTextures;
+						case "isMinecraft10SwampColors": return minecraft10SwampColors;
 						case "isLegacyWater": return legacyWater;
 						case "getLightStyle": return lightStyle;
 						case "getNightLightAdjustment": return 0.1f;

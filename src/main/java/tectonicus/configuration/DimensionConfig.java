@@ -45,7 +45,6 @@ public class DimensionConfig extends RenderOptions {
 	private int closestZoomSize = 32;
 	private int cameraAngleDeg = 45;
 	private int cameraElevationDeg = 45;
-	private boolean useBiomeColours;
 	private PlayerFilter playerFilter = new PlayerFilter();
 	private boolean showPlayerInventories;
 	private SignFilter signFilter = new SignFilter(SignFilterType.ALL);
@@ -125,10 +124,6 @@ public class DimensionConfig extends RenderOptions {
 
 	public List<LayerConfig> getLayers() {
 		return List.copyOf(layers);
-	}
-
-	public boolean useBiomeColours() {
-		return useBiomeColours;
 	}
 
 	public File getCustomCompassRose() {

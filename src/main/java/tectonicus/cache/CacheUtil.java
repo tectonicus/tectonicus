@@ -188,29 +188,20 @@ public class CacheUtil
 		return true;
 	}
 	
-	public static BiomeCache createBiomeCache(Configuration config, DimensionConfig map, MessageDigest hashAlgorithm)
-	{
-		BiomeCache biomeCache = null;
-		if (map.useBiomeColours())
-		{
-			try
-			{
-				File actualDir = new File(config.getCacheDir(), map.getId());
-				File jar = map.getWorld() != null ? map.getWorld().getMinecraftJar() : config.getMinecraftJar();
-				biomeCache = new FileBiomeCache(actualDir, map.getWorldDir(), jar, hashAlgorithm);
-			}
-			catch (Exception e)
-			{
-				log.warn("Couldn't create biome cache - biome colours will be disabled", e);
+	public static BiomeCache createBiomeCache(Configuration config, DimensionConfig map, File minecraftJar,
+			tectonicus.SaveFormat format, Long worldSeed) {
+		// Perspective views use map options independently of tile-layer overrides.
+		boolean needsBiomeColours = map.useBiomeColours() && (map.getLayers().isEmpty() || map.getViewFilter().isEnabled())
+				|| map.getLayers().stream().anyMatch(tectonicus.configuration.RenderOptions::useBiomeColours);
+		if (needsBiomeColours && map.getDimension() == tectonicus.configuration.Dimension.OVERWORLD
+				&& format != tectonicus.SaveFormat.ANVIL && worldSeed != null) {
+			try {
+				return new FileBiomeCache(new File(config.getCacheDir(), map.getId()), map.getWorldDir(), minecraftJar, worldSeed);
+			} catch (Exception e) {
+				log.warn("Could not initialize legacy biome colors; using default colors", e);
 			}
 		}
-		
-		if (biomeCache == null)
-		{
-			biomeCache = new NullBiomeCache();
-		}
-		
-		return biomeCache;
+		return new NullBiomeCache();
 	}
 
 	public static TileCache createTileCache(final boolean useCache, String optionString, ImageFormat imageFormat, File rootCacheDir, tectonicus.configuration.DimensionConfig map, LayerConfig layer, MessageDigest hashAlgorithm) {

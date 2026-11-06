@@ -1585,6 +1585,20 @@ public class RawChunk {
 		return section != null && section.biomeIds.length == 64 && section.biomeIds[0] != null;
 	}
 
+	public boolean hasBiomeData() {
+		if (biomes != null || biomes3d != null)
+			return true;
+		for (Section section : sections) {
+			if (section != null) {
+				for (String biome : section.biomeIds) {
+					if (biome != null)
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	/** Quart lookup for resolving an old chunk beside a newer chunk with separate final biomes. */
 	public Biome getNoiseBiome(int x, int y, int z) {
 		int clampedY = Math.clamp(y, 0, sections.length * SECTION_HEIGHT - 1);

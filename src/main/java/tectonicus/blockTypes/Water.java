@@ -11,7 +11,6 @@ package tectonicus.blockTypes;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
-import tectonicus.Version;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
@@ -21,8 +20,9 @@ import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.util.Colour4f;
 
+
 public class Water extends Fluid {
-	private final Version texturePackVersion;
+	private boolean proceduralTexture;
 	private final SubTexture overlayTexture;
 
 	public Water(String name, SubTexture stillTexture, int frame) {
@@ -31,8 +31,13 @@ public class Water extends Fluid {
 
 	public Water(String name, SubTexture stillTexture, SubTexture flowTexture, SubTexture overlayTexture, int frame) {
 		super(name, stillTexture, flowTexture, frame);
-		this.texturePackVersion = stillTexture.texturePackVersion;
 		this.overlayTexture = overlayTexture == null ? null : animationFrame(overlayTexture, frame);
+	}
+
+	public static Water procedural(String name, SubTexture still, SubTexture flow) {
+		Water result = new Water(name, still, flow, null, 1);
+		result.proceduralTexture = true;
+		return result;
 	}
 
 	@Override
@@ -85,8 +90,7 @@ public class Water extends Fluid {
 
 	@Override
 	protected Vector4f colour(BlockContext world, RawChunk chunk, int x, int y, int z, LightFace face, boolean internal) {
-		Colour4f tint = texturePackVersion != null && texturePackVersion.getNumVersion() >= Version.VERSION_13.getNumVersion()
-				? world.getWaterColor(chunk, x, y, z) : new Colour4f();
+		Colour4f tint = world.getWaterColor(chunk, x, y, z);
 		int sampleY = face == LightFace.Bottom ? y - 1 : y;
 		float adjustment = world.getNightLightAdjustment();
 		LightSample self = world.getLightSample(chunk, x, sampleY, z, LightFace.Top, adjustment);
@@ -96,6 +100,6 @@ public class Water extends Fluid {
 		Colour4f light = new LightSample(Math.max(self.sky(), above.sky()), Math.max(self.block(), above.block()),
 				Math.max(self.ambient(), above.ambient()), self.netherColour() == null ? null : new Colour4f(Math.max(self.netherColour().r, above.netherColour().r), Math.max(self.netherColour().g, above.netherColour().g), Math.max(self.netherColour().b, above.netherColour().b), 1)).toColour(world.getLightStyle(), world.useOldGrayscaleLighting());
 		float shade = shade(face);
-		return new Vector4f(tint.r * light.r * shade, tint.g * light.g * shade, tint.b * light.b * shade, internal ? 0.3f : 0.95f);
+		return new Vector4f(tint.r * light.r * shade, tint.g * light.g * shade, tint.b * light.b * shade, internal ? 0.3f : proceduralTexture ? 1.0f : 0.95f);
 	}
 }

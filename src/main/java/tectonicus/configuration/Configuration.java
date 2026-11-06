@@ -306,6 +306,9 @@ public class Configuration implements Callable<Configuration> {
 			log.debug("\tuseSmoothLighting:{}", m.isSmoothLit());
 			log.debug("\tsortTranslucentFaces:{}", m.isSortTranslucentFaces());
 			log.debug("\tlegacyWater:{}", m.isLegacyWater());
+			log.debug("\tminecraft10SwampColors:{}", m.isMinecraft10SwampColors());
+			log.debug("\tswampWaterTint:{}", m.getSwampWaterTint());
+			log.debug("\tuseProceduralFluidTextures:{}", m.isProceduralFluidTextures());
 			log.debug("\tbiomeBlendRadius: {}", m.isBiomeBlendRadiusConfigured() ? m.getBiomeBlendRadius() : "automatic");
 			log.debug("\tuseBiomeColours: {}", m.useBiomeColours());
 

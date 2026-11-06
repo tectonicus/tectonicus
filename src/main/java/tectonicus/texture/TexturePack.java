@@ -326,6 +326,8 @@ public class TexturePack
 				InputStream imgStream = zipStack.getStream(path + "font/default.png");
 				if (imgStream == null)
 					imgStream = zipStack.getStream(path + "font/ascii.png");
+				if (imgStream == null)
+					imgStream = zipStack.getStream(path + "default.png"); // Alpha font location
 				InputStream textIn = this.getClass().getResourceAsStream("/font.txt");
 				BufferedImage fontSheet = ImageIO.read( imgStream );
 				font = new Font(rasteriser, fontSheet, textIn);
@@ -372,6 +374,20 @@ public class TexturePack
 		return result;
 	}
 	
+	/** Keep explicit pack atlases and custom block textures intact. */
+	public boolean canGenerateProceduralFluid(String texturePath, boolean lava) {
+		return (version == VERSION_ALPHA_BETA || version == VERSION_4)
+				&& !zipStack.hasOverrideFile("terrain.png")
+				&& texturePath.replace(" ", "").equals(lava ? "terrain[15,15]" : "terrain[15,12]");
+	}
+
+	public SubTexture getProceduralFluid(boolean lava, boolean flowing, int frame) {
+		String key = "generated/legacy-fluid-" + lava + "-" + flowing + "-" + frame;
+		PackTexture texture = loadedPackTextures.computeIfAbsent(key,
+				ignored -> createPackTexture(rasteriser, key, lava ? LegacyLavaTexture.frame(flowing, frame) : LegacyWaterTexture.frame(flowing, frame)));
+		return texture.find(new TextureRequest(key, ""), version);
+	}
+
 	public SubTexture findTexture(String texturePath) {
 		return findTextureOrDefault(texturePath, null);
 	}
@@ -1137,7 +1153,7 @@ public class TexturePack
 	public Color getFoliageColour(final int x, final int y) {
 		Color foliageColor = new Color(255, 255, 255);
 		if (foliageLookupImage != null) {
-			foliageColor = new Color(foliageLookupImage.getRGB(x, y));
+			foliageColor = new Color(foliageLookupImage.getRGB(x & 0xff, y & 0xff));
 		}
 		return foliageColor;
 	}

@@ -27,7 +27,7 @@ public class ViewFilter
 	
 	public boolean passesFilter(SignEntity sign)
 	{
-		if (type == ViewFilterType.All)
+		if (isEnabled())
 		{
 			String text1 = sign.getText1().trim();
 			String text2 = sign.getText2().trim();
@@ -38,6 +38,10 @@ public class ViewFilter
 		}
 		else
 			return false;
+	}
+
+	public boolean isEnabled() {
+		return type == ViewFilterType.All;
 	}
 	
 	@Override

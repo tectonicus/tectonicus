@@ -8,7 +8,6 @@ package tectonicus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector2d;
-import tectonicus.cache.BiomeCache;
 import tectonicus.cache.CacheUtil;
 import tectonicus.cache.FileTileCache;
 import tectonicus.cache.FileViewCache;
@@ -240,135 +239,135 @@ public class TileRenderer
 			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
 
-			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
-
 			// Create the world for this map
-			world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
-			
-			// Setup camera
-			setupInitialCamera(map);
-			
-			WorldVectors worldVectors = WorldVectors.calcWorldVectors(camera);
-			
-			// FIXME: These paths need to change per map
-			File portalsFile = tempArea.generateTempFile("portals", ".list");
-			File signsFile = tempArea.generateTempFile("signs", ".list");
-			File viewsFile = tempArea.generateTempFile("views", ".list");
+			try (World currentWorld = new World(rasteriser, map, playerSkinCache, config)) {
+				world = currentWorld;
 
-			discoveredTiles = hddTileListFactory.createList();
-			useFullHeightBounds = map.getLayers().stream().anyMatch(layer ->
-					(layer.getCustomBlockConfig() != null && !layer.getCustomBlockConfig().isBlank()) || !layer.useDefaultBlockConfig());
-			WorldStats worldStats = preProcess(world, map, portalsFile, signsFile, viewsFile);
+				// Setup camera
+				setupInitialCamera(map);
 			
-			// Find visible tiles
-			HddTileList visibleTiles = discoveredTiles;
-			discoveredTiles = null;
-			log.info("found {} total tiles to output using occupied chunk heights", visibleTiles.size());
+				WorldVectors worldVectors = WorldVectors.calcWorldVectors(camera);
+			
+				// FIXME: These paths need to change per map
+				File portalsFile = tempArea.generateTempFile("portals", ".list");
+				File signsFile = tempArea.generateTempFile("signs", ".list");
+				File viewsFile = tempArea.generateTempFile("views", ".list");
+
+				discoveredTiles = hddTileListFactory.createList();
+				useFullHeightBounds = map.getLayers().stream().anyMatch(layer ->
+						(layer.getCustomBlockConfig() != null && !layer.getCustomBlockConfig().isBlank()) || !layer.useDefaultBlockConfig());
+				WorldStats worldStats = preProcess(world, map, portalsFile, signsFile, viewsFile);
+			
+				// Find visible tiles
+				HddTileList visibleTiles = discoveredTiles;
+				discoveredTiles = null;
+				log.info("found {} total tiles to output using occupied chunk heights", visibleTiles.size());
 			
 			
-			// Figure out which tiles we need to render
-			progressListener.onTaskStarted(Task.FIND_CHANGED_TILES.toString());
+				// Figure out which tiles we need to render
+				progressListener.onTaskStarted(Task.FIND_CHANGED_TILES.toString());
 
-			// Output entity javascript for creating map markers
-			outputSigns(new File(mapDir, "signs.js"), signsFile, map);
-			outputPlayers(new File(mapDir, "players.js"), new File(DirUtils.getWorldImagesDir(exportDir, map.getWorld()), "PlayerIcons"), map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler);
-			outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
-			outputRespawnAnchors(mapDir, map, world.getAllPlayers());
-			List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
-			worldStats.setNumPortals(portals.size());
-			outputViews(new File(mapDir, "views.js"), viewsFile, map);
-			outputContainers(new File(mapDir, "containers.js"), map, world.getContainers());
-			outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons());
+				// Output entity javascript for creating map markers
+				outputSigns(new File(mapDir, "signs.js"), signsFile, map);
+				outputPlayers(new File(mapDir, "players.js"), new File(DirUtils.getWorldImagesDir(exportDir, map.getWorld()), "PlayerIcons"), map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler);
+				outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
+				outputRespawnAnchors(mapDir, map, world.getAllPlayers());
+				List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
+				worldStats.setNumPortals(portals.size());
+				outputViews(new File(mapDir, "views.js"), viewsFile, map);
+				outputContainers(new File(mapDir, "containers.js"), map, world.getContainers());
+				outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons());
 
-			// Render views
-			FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
-			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
-			viewRenderer.output(world, mapDir, viewsFile, changedFileList);
+				// Render views
+				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+				ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
+				viewRenderer.output(world, mapDir, viewsFile, changedFileList);
 			
-			TileCoordBounds bounds = null;
+				TileCoordBounds bounds = null;
 			
-			if (map.getLayers().isEmpty())
-				log.warn("No layers found!!!");
+				if (map.getLayers().isEmpty())
+					log.warn("No layers found!!!");
 			
-			File tileHashFile = config.useCache() && map.numLayers() > 1
-					? tempArea.generateTempFile("tileHashes", ".cache") : null;
-			try (TileHashCache tileHashes = new TileHashCache(tileHashFile, world, map, camera, regionHashStore,
-					tileWidth, tileHeight, hashAlgorithm)) {
-				for (LayerConfig layer : map.getLayers()) {
-					// Setup per-layer config
-					setupWorldForLayer(layer, world);
+				File tileHashFile = config.useCache() && map.numLayers() > 1
+						? tempArea.generateTempFile("tileHashes", ".cache") : null;
+				try (TileHashCache tileHashes = new TileHashCache(tileHashFile, world, map, camera, regionHashStore,
+						tileWidth, tileHeight, hashAlgorithm)) {
+					for (LayerConfig layer : map.getLayers()) {
+						// Setup per-layer config
+						setupWorldForLayer(layer, world);
 
-					// Set new tile cache for this layer
-					String optionString = FileTileCache.calcOptionsString(config, map);
-					TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
-					try {
-						File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
-						FileUtils.ensureExists(baseTilesDir);
+						// Set new tile cache for this layer
+						String optionString = FileTileCache.calcOptionsString(config, map) + "\nbiomeExtraction=" + world.getBiomeCache().getCacheKey();
+						TileCache tileCache = CacheUtil.createTileCache(config.useCache(), optionString, layer.getImageFormat(), config.getCacheDir(), map, layer, hashAlgorithm);
+						try {
+							File baseTilesDir = DirUtils.getZoomDir(exportDir, layer, numZoomLevels);
+							FileUtils.ensureExists(baseTilesDir);
 
-						// Share current hashes, but check each layer's saved cache and output independently.
-						HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, tileHashes, baseTilesDir);
+							// Share current hashes, but check each layer's saved cache and output independently.
+							HddTileList changedTiles = tileCache.findChangedTiles(hddTileListFactory, visibleTiles, tileHashes, baseTilesDir);
 
-						// Trim changed tiles to size
-						HddTileList untrimmed = changedTiles;
-						changedTiles = trimTileList(untrimmed, config.getMaxTiles());
-						if (untrimmed != changedTiles && untrimmed != visibleTiles)
-							untrimmed.close();
+							// Trim changed tiles to size
+							HddTileList untrimmed = changedTiles;
+							changedTiles = trimTileList(untrimmed, config.getMaxTiles());
+							if (untrimmed != changedTiles && untrimmed != visibleTiles)
+								untrimmed.close();
 
-						// Render base tiles
-						renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
+							// Render base tiles
+							renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
 
-						// Retire old candidates, including tiles vacated if terrain shrinks.
-						HddTileList removed = hddTileListFactory.createList();
-						TileOutput.removeObsolete(baseTilesDir.toPath(), visibleTiles, layer.getImageFormat(), removed);
-						HddTileList downsampleChanges = changedTiles;
-						if (removed.size() > 0) {
-							downsampleChanges = hddTileListFactory.createList();
-							for (TileCoord tile : changedTiles)
-								downsampleChanges.add(tile);
-							for (TileCoord tile : removed)
-								downsampleChanges.add(tile);
+							// Retire old candidates, including tiles vacated if terrain shrinks.
+							HddTileList removed = hddTileListFactory.createList();
+							TileOutput.removeObsolete(baseTilesDir.toPath(), visibleTiles, layer.getImageFormat(), removed);
+							HddTileList downsampleChanges = changedTiles;
+							if (removed.size() > 0) {
+								downsampleChanges = hddTileListFactory.createList();
+								for (TileCoord tile : changedTiles)
+									downsampleChanges.add(tile);
+								for (TileCoord tile : removed)
+									downsampleChanges.add(tile);
+							}
+
+							// Create downsampled layers
+							bounds = downsample(visibleTiles, downsampleChanges, exportDir, layer, baseTilesDir, tileCache);
+							if (downsampleChanges != changedTiles)
+								downsampleChanges.close();
+							removed.close();
+							if (changedTiles != visibleTiles)
+								changedTiles.close();
+						} finally {
+							tileCache.closeTileCache();
 						}
-
-						// Create downsampled layers
-						bounds = downsample(visibleTiles, downsampleChanges, exportDir, layer, baseTilesDir, tileCache);
-						if (downsampleChanges != changedTiles)
-							downsampleChanges.close();
-						removed.close();
-						if (changedTiles != visibleTiles)
-							changedTiles.close();
-					} finally {
-						tileCache.closeTileCache();
 					}
 				}
-			}
 
-			visibleTiles.close();
-			outputCompass(exportDir, map, rasteriser);
-			// Shared world resources are exported once, after its last configured dimension.
-			if (map == map.getWorld().getDimensions().getLast()) {
-				File imagesDir = DirUtils.getWorldImagesDir(exportDir, map.getWorld());
-				outputIcons(imagesDir, world, rasteriser);
-				ItemModelDefinitionRegistry itemModels = new ItemModelDefinitionRegistry(world.getTexturePack());
-				ItemRegistry items = new ItemRegistry(world.getTexturePack());
-				String iconOptions = config.getRasteriserType() + "\n" + config.getColourDepth() + "\n"
-						+ config.getAlphaBits() + "\n" + config.getNumSamples();
-				if (!map.getLayers().isEmpty()) {
-					LayerConfig lastLayer = map.getLayers().getLast();
-					iconOptions += "\n" + lastLayer.useDefaultBlockConfig() + "\n" + lastLayer.getCustomBlockConfig()
-							+ "\n" + FileTileCache.getCustomBlocksString(lastLayer);
+				visibleTiles.close();
+				outputCompass(exportDir, map, rasteriser);
+				// Shared world resources are exported once, after its last configured dimension.
+				if (map == map.getWorld().getDimensions().getLast()) {
+					File imagesDir = DirUtils.getWorldImagesDir(exportDir, map.getWorld());
+					outputIcons(imagesDir, world, rasteriser);
+					ItemModelDefinitionRegistry itemModels = new ItemModelDefinitionRegistry(world.getTexturePack());
+					ItemRegistry items = new ItemRegistry(world.getTexturePack());
+					String iconOptions = config.getRasteriserType() + "\n" + config.getColourDepth() + "\n"
+							+ config.getAlphaBits() + "\n" + config.getNumSamples();
+					if (!map.getLayers().isEmpty()) {
+						LayerConfig lastLayer = map.getLayers().getLast();
+						iconOptions += "\n" + lastLayer.useDefaultBlockConfig() + "\n" + lastLayer.getCustomBlockConfig()
+								+ "\n" + FileTileCache.getCustomBlocksString(lastLayer);
+					}
+					outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels,
+							config.useCache() ? iconOptions : null);
+					outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld());
 				}
-				outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels,
-						config.useCache() ? iconOptions : null);
-				outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld());
+			
+				// Output world stats
+				worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getJavascriptId(), world.getBlockTypeRegistry());
+				worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getJavascriptId(), world.getWorldInfo().version());
+			
+				// Output world vectors for this camera config
+				worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
+						worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight);
 			}
-			
-			// Output world stats
-			worldStats.outputBlockStats(new File(mapDir, "blockStats.js"), map.getJavascriptId(), world.getBlockTypeRegistry());
-			worldStats.outputWorldStats(new File(mapDir, "worldStats.js"), map.getJavascriptId(), world.getWorldInfo().version());
-			
-			// Output world vectors for this camera config
-			worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
-					worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight);
 		}
                 
                 if (world == null) {
@@ -423,27 +422,26 @@ public class TileRenderer
 			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
 
-			BiomeCache biomeCache = CacheUtil.createBiomeCache(config, map, hashAlgorithm);
-
 			// Create the world for this map
-			World world = new World(rasteriser, map, biomeCache, playerSkinCache, config);
+			try (World world = new World(rasteriser, map, playerSkinCache, config)) {
+
+				// TODO: Load custom blocks here
 			
-			// TODO: Load custom blocks here
+				// FIXME: These paths need to change per map
+				File portalsFile = tempArea.generateTempFile("portals", ".list");
+				File signsFile = tempArea.generateTempFile("signs", ".list");
+				File viewsFile = tempArea.generateTempFile("views", ".list");
 			
-			// FIXME: These paths need to change per map
-			File portalsFile = tempArea.generateTempFile("portals", ".list");
-			File signsFile = tempArea.generateTempFile("signs", ".list");
-			File viewsFile = tempArea.generateTempFile("views", ".list");
+				preProcess(world, map, portalsFile, signsFile, viewsFile);
 			
-			preProcess(world, map, portalsFile, signsFile, viewsFile);
+				// Output views
+				outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			
-			// Output views
-			outputViews(new File(mapDir, "views.js"), viewsFile, map);
-			
-			// Render views
-			FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
-			ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
-			viewRenderer.output(world, mapDir, viewsFile, changedFileList);
+				// Render views
+				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+				ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
+				viewRenderer.output(world, mapDir, viewsFile, changedFileList);
+			}
 		}
 		
 		Date endTime = new Date();

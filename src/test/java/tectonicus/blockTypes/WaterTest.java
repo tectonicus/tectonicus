@@ -262,13 +262,36 @@ class WaterTest extends FluidTestFixture {
 		assertEquals(new Vector4f(0, 0, 0, 0.95f), top(still).getFirst().colour());
 	}
 
-	@Test
-	void olderPrecoloredTexturesAreNotBiomeTinted() {
+	@ParameterizedTest
+	@ValueSource(ints = {174, 112})
+	void olderPrecoloredTexturesReceiveTheHistoricalSwampMultiplier(int blue) {
 		putWater(8, 8, 8, 0, true);
 		SubTexture texture = new SubTexture(still, 0, 0, 1, 1, Version.VERSION_12);
+		waterTint.r = 224 / 255f; waterTint.g = 1; waterTint.b = blue / 255f;
 		render(new Water("Water", texture, 0), 8, 8, 8);
-		assertEquals(new Vector4f(0.75f, 0.75f, 0.75f, 0.95f), top(still).getFirst().colour());
+		Vector4f color = top(still).getFirst().colour();
+		assertEquals(0.75f * 224 / 255, color.x, 0.00001f);
+		assertEquals(0.75f, color.y, 0.00001f);
+		assertEquals(0.75f * blue / 255, color.z, 0.00001f);
+		assertEquals(0.95f, color.w);
 		assertEquals(0, top(still).getFirst().v());
+	}
+
+	@Test
+	void proceduralWaterIsOptInAndUsesTheTextureAlphaWithoutExtraOpacity() {
+		Texture generated = texture(16, 16);
+		Water historical = Water.procedural("Water", sprite(generated), sprite(generated));
+		Water selectable = new Water("Water", sprite(still), 1);
+		selectable.setProceduralTextures(() -> historical);
+		putWater(8, 8, 8, 0, true);
+		render(selectable, 8, 8, 8);
+		assertFalse(vertices.containsKey(generated));
+		vertices.clear();
+		proceduralFluidTextures = true;
+		render(selectable, 8, 8, 8);
+		assertFalse(vertices.containsKey(still));
+		assertEquals(1.0f, top(generated).getFirst().colour().w);
+		assertEquals(0.75f * waterTint.r, top(generated).getFirst().colour().x, 0.00001f);
 	}
 
 	@Test

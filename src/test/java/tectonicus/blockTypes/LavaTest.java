@@ -33,6 +33,27 @@ class LavaTest extends FluidTestFixture {
 	}
 
 	@Test
+	void proceduralOptionSelectsLavaIndependentlyOfSwampColors() {
+		var generated = texture(16, 16);
+		lava.setProceduralTextures(() -> new Lava("Lava", sprite(generated), sprite(generated), 1));
+		putLava(8, 8, 8, 0, true);
+		minecraft10SwampColors = true;
+		render(8, 8, 8);
+		assertFalse(vertices.containsKey(generated));
+		vertices.clear();
+		minecraft10SwampColors = false;
+		proceduralFluidTextures = true;
+		render(8, 8, 8);
+		assertFalse(vertices.containsKey(still));
+		assertEquals(new Vector4f(1), top(generated).getFirst().colour());
+		vertices.clear();
+		proceduralFluidTextures = false;
+		render(8, 8, 8);
+		assertFalse(vertices.containsKey(generated));
+		assertTrue(vertices.containsKey(still));
+	}
+
+	@Test
 	void sourcePoolIsFlatAndUsesStillTexture() {
 		for (int x = 7; x <= 9; x++)
 			for (int z = 7; z <= 9; z++)

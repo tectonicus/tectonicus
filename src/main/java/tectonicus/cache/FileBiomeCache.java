@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -9,232 +9,140 @@
 
 package tectonicus.cache;
 
-import com.google.code.minecraftbiomeextractor.WorldProcessor;
+import biomeextractor.WorldProcessor;
 import lombok.extern.slf4j.Slf4j;
+import tectonicus.Minecraft;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.util.FileUtils;
 import tectonicus.util.Util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.util.HashSet;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Slf4j
-public class FileBiomeCache implements BiomeCache
-{
-	private static final int VERSION = 2;
-	
-	private final File cacheDir;
-	
-	private WorldProcessor worldProcessor;
-
-	private BiomeCacheMap biomeDataCache;
-	
-	public FileBiomeCache(File baseCacheDir, File worldDir, File minecraftJar, MessageDigest hashAlgo)
-	{
-		cacheDir = new File(baseCacheDir, "biomeCache");
-		
-		if (isCacheValid(cacheDir, hashAlgo))
-		{
-			log.info("Biome cache directory found and is valid. Using cache at {}", cacheDir.getAbsolutePath());
-		}
-		else
-		{
-			log.info("Biome cache not present or outdated. Deleting biome cache at {}", cacheDir.getAbsolutePath());
-			log.info("New biome cache will be created for this render");
-			
-			// Recreate the biome cache dir
-			FileUtils.deleteDirectory(cacheDir);
-			cacheDir.mkdirs();
-			
-			// Write cache index file
-			CacheUtil.writeCacheFile(findIndexFile(cacheDir), getCacheHashString().getBytes());
-		}
-		
-		biomeDataCache = new BiomeCacheMap(128);
-		
-		// Start up minecraft to extract biome data out of
-		File stubWorldDir = new File(cacheDir, "stubWorld");
-		FileUtils.deleteDirectory(stubWorldDir);
-		stubWorldDir.mkdirs();
-		
-		try
-		{
-			FileUtils.copyFiles(new File(worldDir, "level.dat"), new File(stubWorldDir, "level.dat"), new HashSet<String>());
-			FileUtils.copyFiles(new File(worldDir, "session.lock"), new File(stubWorldDir, "session.lock"), new HashSet<String>());
-		}
-		catch (IOException e) {}
-		
-		worldProcessor = new WorldProcessor();
-		worldProcessor.setJarLocation(minecraftJar);
-		worldProcessor.setWorldFolder(stubWorldDir);
-		
-		final boolean bindOk = worldProcessor.bindToMinecraft();
-		if (!bindOk)
-		{
-			throw new RuntimeException("Failed to bind to minecraft.jar");
-		}
-		
-		final boolean loadOk = worldProcessor.loadWorld();
-		if (!loadOk)
-		{
-			throw new RuntimeException("Failed to load world into biome extractor");
-		}
-	}
-	
-	public WorldProcessor getWorldProcessor()
-	{
-		return worldProcessor;
-	}
-	
-	private static boolean isCacheValid(File cacheDir, MessageDigest hashAlgo)
-	{
-		File indexFile = findIndexFile(cacheDir);
-		if (!indexFile.exists())
-			return false;
-		
-		String versionStr = getCacheHashString();
-		
-		final byte[] existingHash = CacheUtil.calcHash(indexFile, hashAlgo);
-		final byte[] expectedHash = CacheUtil.hash(versionStr, hashAlgo);
-		
-		return CacheUtil.equal(existingHash, expectedHash);
-	}
-	
-	private static String getCacheHashString()
-	{
-		return "" + VERSION;
-	}
-	
-	private static File findIndexFile(File cacheDir)
-	{
-		return new File(cacheDir, "biomes.cache");
-	}
-	
-	public BiomeData loadBiomeData(ChunkCoord coord)
-	{
-		BiomeData data;
-		
-		data = biomeDataCache.get(coord);
-		if (data != null)
-		{
-			// Touch cache
-			biomeDataCache.touch(coord);
-		}
-		else
-		{
-			// Try and find cache file
-			File cacheFile = findCacheFile(cacheDir, coord);
-			data = loadFromFile(cacheFile);
-			if (data != null)
-			{
-				// Loaded from file, add to cache
-				biomeDataCache.put(coord, data);	
-			}
-			else
-			{
-				log.debug("Creating biome cache for chunk @ "+coord.x+", "+coord.z);
-				
-				// Generate from world processor
-				data = new BiomeData(worldProcessor, coord);
-			
-				// Add to cache
-				biomeDataCache.put(coord, data);
-			
-				// Write to disk
-				data.write(cacheFile);
-				
-				// Test!
-				/*
-				try
-				{
-					BiomeData backAgain = new BiomeData(cacheFile);
-					if (data.equals(backAgain))
-					{
-						System.out.println("match!");
-					}
-					else
-					{
-						System.out.println("oh noes");
-					}
-				}
-				catch (Exception e)
-				{
-					log.error("Exception: ", e);
-				}
-				*/
-			}
-		}
-		
-		return data;
-	}
-	
-	private static BiomeData loadFromFile(File file)
-	{
-		if (!file.exists())
-			return null;
-		
-		BiomeData data = null;
-		
-		try
-		{
-			data = new BiomeData(file);
-		}
-		catch (Exception e)
-		{
-			log.error("Exception: ", e);
-		}
-		
-		return data;
-	}
-	
-	private static File findCacheFile(File baseDir, ChunkCoord coord)
-	{
-	//	String fileName = "biomeData_"+coord.x+"_"+coord.z+".dat";
-		
-		String first = Util.toBase36(coord.x);
-		String second = Util.toBase36(coord.z);
-		
-		File firstDir = new File(baseDir, first);
-		File secondDir = new File(firstDir, second);
-		File actual = new File(secondDir, "biomeData_"+first+"_"+second+".dat");
-		
-		return actual;
-	}
-	
-	private static class BiomeCacheMap extends LinkedHashMap<ChunkCoord, BiomeData>
-	{
-		private static final long serialVersionUID = 1L;
-
-		private int maxSize;
-		private int minSize;
-		
-		public BiomeCacheMap(int maxSize)
-		{
-			this.maxSize = maxSize;
-		}
-		
+public class FileBiomeCache implements BiomeCache {
+	private static final int VERSION = 3;
+	private final Path cacheDir;
+	private final WorldProcessor processor;
+	private final String cacheKey;
+	private boolean closed;
+	private final Map<ChunkCoord, BiomeData> memory = new LinkedHashMap<>(128, 0.75f, true) {
 		@Override
-		protected boolean removeEldestEntry(java.util.Map.Entry<ChunkCoord, BiomeData> eldest)
-		{
-			if (size() <= minSize)
-				return false;
-			
-			final boolean remove = size() > maxSize;
-			if (remove)
-			{
-				// nothing to do to unload it
+		protected boolean removeEldestEntry(Map.Entry<ChunkCoord, BiomeData> eldest) { return size() > 128; }
+	};
+
+	public FileBiomeCache(File baseCacheDir, File worldDir, File minecraftJar, long seed) throws IOException {
+		cacheDir = baseCacheDir.toPath().resolve("biomeCache");
+		processor = new WorldProcessor();
+		boolean ready = false;
+		try {
+			processor.setJarLocation(minecraftJar);
+			if (!processor.bindToMinecraft())
+				throw new IOException("No biome extractor profile matches " + minecraftJar);
+			Path implementation;
+			try {
+				implementation = Path.of(WorldProcessor.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			} catch (java.net.URISyntaxException e) {
+				throw new IOException("Could not locate biome extractor implementation", e);
 			}
-			return remove;
+			String identity = "version=" + VERSION + "\nseed=" + seed + "\nprofile=" + processor.getBindingProfileName()
+					+ "\nminecraft=" + hash(minecraftJar.toPath()) + "\nextractor=" + hash(implementation);
+			cacheKey = "extracted-biomes:" + HexFormat.of().formatHex(digest().digest(identity.getBytes(StandardCharsets.UTF_8)));
+			Path index = cacheDir.resolve("biomes.cache");
+			boolean valid = false;
+			try {
+				valid = Files.isRegularFile(index) && Files.readString(index).equals(cacheKey);
+			} catch (IOException e) {
+				log.debug("Regenerating unreadable biome cache index {}", index, e);
+			}
+			if (!valid) {
+				log.info("Creating biome color cache for {}", processor.getBindingProfileName());
+				FileUtils.deleteDirectory(cacheDir.toFile());
+			}
+			Path stub = cacheDir.resolve("stubWorld");
+			FileUtils.deleteDirectory(stub.toFile());
+			Files.createDirectories(stub);
+			Files.copy(Minecraft.findLevelDat(worldDir.toPath()), stub.resolve("level.dat"), StandardCopyOption.REPLACE_EXISTING);
+			if (!processor.setWorldFolder(stub.toFile()) || !processor.loadWorld())
+				throw new IOException("Could not load world into biome extractor");
+			Files.writeString(index, cacheKey);
+			log.info("Using {} biome extraction at {}", processor.getBindingProfileName(), cacheDir);
+			ready = true;
+		} finally {
+			if (!ready)
+				processor.close();
 		}
-		
-		public void touch(ChunkCoord coord)
-		{
-			BiomeData b = remove(coord);
-			if (b != null)
-				put(coord, b);
+	}
+
+	@Override
+	public String getCacheKey() { return cacheKey; }
+
+	@Override
+	public synchronized BiomeData loadBiomeData(ChunkCoord chunk) {
+		if (closed)
+			throw new IllegalStateException("Biome cache is closed");
+		BiomeData data = memory.get(chunk);
+		if (data != null)
+			return data;
+		Path file = cacheDir.resolve(Util.toBase36(chunk.x)).resolve(Util.toBase36(chunk.z))
+				.resolve("biomeData_" + Util.toBase36(chunk.x) + "_" + Util.toBase36(chunk.z) + ".dat");
+		if (Files.isRegularFile(file)) {
+			try {
+				data = new BiomeData(file.toFile());
+			} catch (IOException | RuntimeException e) {
+				log.debug("Regenerating unreadable biome cache {}", file, e);
+			}
 		}
+		if (data == null) {
+			data = new BiomeData(processor, chunk);
+			Path temporary = null;
+			try {
+				Files.createDirectories(file.getParent());
+				temporary = Files.createTempFile(file.getParent(), "biomes-", ".tmp");
+				data.write(temporary.toFile());
+				Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				log.warn("Could not persist biome cache {}", file, e);
+			} finally {
+				if (temporary != null) {
+					try { Files.deleteIfExists(temporary); } catch (IOException e) { log.debug("Could not remove {}", temporary, e); }
+				}
+			}
+		}
+		memory.put(new ChunkCoord(chunk), data);
+		return data;
+	}
+
+	@Override
+	public synchronized void close() {
+		closed = true;
+		memory.clear();
+		try { processor.close(); } catch (IOException e) { log.warn("Could not close biome extractor", e); }
+	}
+
+	private static MessageDigest digest() {
+		try { return MessageDigest.getInstance("SHA-256"); }
+		catch (NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
+	}
+
+	private static String hash(Path path) throws IOException {
+		MessageDigest hash = digest();
+		try (InputStream input = Files.newInputStream(path)) {
+			byte[] bytes = new byte[8192];
+			int read;
+			while ((read = input.read(bytes)) != -1)
+				hash.update(bytes, 0, read);
+		}
+		return HexFormat.of().formatHex(hash.digest());
 	}
 }

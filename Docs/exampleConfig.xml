@@ -58,9 +58,9 @@
 		dimension="overworld"
 		cameraAngle="45"
 		cameraElevation="45"
-		useBiomeColours="false"
 		north="-z"
 	>
+		<render useBiomeColours="true" />
 		<signs filter="special" />
 		<views filter="all" />
 		<players filter="all" />

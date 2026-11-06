@@ -196,7 +196,7 @@ class ConfigurationHierarchyTest {
 	void resolvesDefaultsAndOverridesWithoutLeakingIntoSiblings() throws Exception {
 		Configuration config = parse("""
 				<config numZoomLevels="5" imageFormat="webp" playersInitiallyVisible="false">
-				    <render useSmoothLighting="false" biomeBlendRadius="3" legacyWater="true"/>
+				    <render useSmoothLighting="false" biomeBlendRadius="3" legacyWater="true" minecraft10SwampColors="true" useProceduralFluidTextures="true" swampWaterTint="minecraft10"/>
 				</config>
 				<world name="Survival" worldDir="save" portalsInitiallyVisible="false">
 				    <render biomeBlendRadius="4"/>
@@ -204,7 +204,7 @@ class ConfigurationHierarchyTest {
 				        <render useSmoothLighting="true"/>
 				        <layer name="Day"/>
 				        <layer name="Night" lighting="night" imageFormat="png">
-				            <render biomeBlendRadius="0" useSmoothLighting="false"/>
+				            <render biomeBlendRadius="0" useSmoothLighting="false" minecraft10SwampColors="false" useProceduralFluidTextures="false" swampWaterTint="none"/>
 				        </layer>
 				    </dimension>
 				    <dimension id="minecraft:the_nether" name="Nether"><layer name="Day"/></dimension>
@@ -224,6 +224,12 @@ class ConfigurationHierarchyTest {
 		assertTrue(surface.getLayer(0).isSmoothLit());
 		assertEquals(ImageFormat.WEBP, surface.getLayer(0).getImageFormat());
 		assertTrue(surface.getLayer(0).isLegacyWater());
+		assertTrue(surface.getLayer(0).isMinecraft10SwampColors());
+		assertTrue(surface.getLayer(0).isProceduralFluidTextures());
+		assertEquals(SwampWaterTint.MINECRAFT10, surface.getLayer(0).getSwampWaterTint());
+		assertEquals(SwampWaterTint.NONE, surface.getLayer(1).getSwampWaterTint());
+		assertFalse(surface.getLayer(1).isProceduralFluidTextures());
+		assertFalse(surface.getLayer(1).isMinecraft10SwampColors());
 		assertEquals(0, surface.getLayer(1).getBiomeBlendRadius());
 		assertFalse(surface.getLayer(1).isSmoothLit());
 		assertEquals(ImageFormat.PNG, surface.getLayer(1).getImageFormat());

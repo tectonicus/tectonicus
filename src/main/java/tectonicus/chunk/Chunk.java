@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Chunk
-{	
+{
 	private static final float NIGHT_BLOCK_LIGHT_SCALE = 0.95f;
 	private static final float NIGHT_SKY_LIGHT_SCALE = 0.24f;
 	private static final float DAY_SKY_LIGHT_SCALE = 0.7f;
@@ -63,6 +63,7 @@ public class Chunk
 	
 	private RawChunk rawChunk;
 	private BiomeData biomeData;
+	private boolean biomeDataLoaded;
 	
 	private Geometry geometry;
 	
@@ -100,11 +101,6 @@ public class Chunk
 			rawChunk = new RawChunk(chunkData, worldStats, worldInfo);
 			filter.filter(rawChunk);
 		}
-		
-		if (biomeData == null)
-		{
-			biomeData = biomeCache.loadBiomeData(coord);
-		}
 	}
 
 	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
@@ -113,11 +109,22 @@ public class Chunk
 			rawChunk = new RawChunk(chunkData, entityChunkData, worldStats, worldInfo);
 			filter.filter(rawChunk);
 		}
+	}
 
-		if (biomeData == null)
-		{
-			biomeData = biomeCache.loadBiomeData(coord);
+	public boolean isExtractedSwamp(int x, int z) {
+		getBiomeColourCoord(x, z);
+		return biomeData != null && biomeData.isSwamp(x, z);
+	}
+
+	public BiomeData.ColourCoord getBiomeColourCoord(int x, int z) {
+		if (rawChunk == null)
+			return null;
+		if (!biomeDataLoaded) {
+			biomeDataLoaded = true;
+			if (!rawChunk.hasBiomeData())
+				biomeData = biomeCache.loadBiomeData(coord);
 		}
+		return biomeData != null ? biomeData.getColourCoord(x, z) : null;
 	}
 	
 	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack)
@@ -311,6 +318,8 @@ public class Chunk
 	public void unloadRaw()
 	{
 		rawChunk = null;
+		biomeData = null;
+		biomeDataLoaded = false;
 	}
 	
 	public void unloadGeometry()
@@ -469,7 +478,7 @@ public class Chunk
 						final int blockData = rawChunk.getBlockData(x, y, z);
 						
 						worldStats.incBlockId(blockId, blockData);
-					}		
+					}
 				}
 			}
 		}

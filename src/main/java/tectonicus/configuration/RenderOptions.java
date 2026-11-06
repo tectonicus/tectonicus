@@ -20,13 +20,21 @@ public class RenderOptions {
 	public static final int MAX_BIOME_BLEND_RADIUS = 7;
 
 	private boolean smoothLit = true;
+	private boolean useBiomeColours = true;
+
 	private boolean oldGrayscaleLighting;
 	private boolean sortTranslucentFaces = true;
 	private boolean legacyWater;
+	private boolean minecraft10SwampColors;
+	@lombok.NonNull
+	private SwampWaterTint swampWaterTint = SwampWaterTint.AUTO;
+	private boolean proceduralFluidTextures;
 	@Setter(lombok.AccessLevel.NONE)
 	private int biomeBlendRadius = DEFAULT_BIOME_BLEND_RADIUS;
 	@Setter(lombok.AccessLevel.NONE)
 	private boolean biomeBlendRadiusConfigured;
+
+	public boolean useBiomeColours() { return useBiomeColours; }
 
 	public void setBiomeBlendRadius(int radius) {
 		if (radius < 0 || radius > MAX_BIOME_BLEND_RADIUS)

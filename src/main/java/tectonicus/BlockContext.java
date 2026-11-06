@@ -27,6 +27,8 @@ import tectonicus.util.Colour4f;
 public interface BlockContext {
 	default int getBeaconLevels(RawChunk chunk, BeaconEntity beacon) { return beacon.getLevels(); }
 	default boolean shouldCullSameBlockFaces() { return true; }
+	default boolean useProceduralFluidTextures() { return false; }
+	default boolean isMinecraft10SwampColors() { return false; }
 	default boolean isLegacyWater() { return true; }
 
 	int getBlockId(ChunkCoord chunkCoord, int x, int y, int z);

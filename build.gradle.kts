@@ -143,4 +143,13 @@ distributions {
 
 tasks.test {
 	useJUnitPlatform()
+
+	// Historical game JARs are supplied locally; changes must invalidate test results.
+	listOf("MINECRAFT_ALPHA_120_JAR", "MINECRAFT_BETA_13_JAR", "MINECRAFT_BETA_181_JAR", "MINECRAFT_1_0_JAR").forEach { name ->
+		val jar = providers.environmentVariable(name).filter { it.isNotBlank() }
+		inputs.property(name, jar.orElse(""))
+		if (jar.isPresent) {
+			inputs.file(jar).withPropertyName("${name}_contents")
+		}
+	}
 }

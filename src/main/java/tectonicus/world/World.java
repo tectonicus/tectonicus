@@ -33,6 +33,8 @@ import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.BiomeCache;
+import tectonicus.cache.BiomeData;
+import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
 import tectonicus.chunk.Chunk;
@@ -44,6 +46,7 @@ import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionInfo;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.configuration.SwampWaterTint;
 import tectonicus.configuration.filter.SignFilter;
 import tectonicus.exceptions.IncompatibleVersionException;
 import tectonicus.paintingregistry.PaintingRegistry;
@@ -107,7 +110,7 @@ import static tectonicus.Version.VERSION_18;
 import static tectonicus.Version.VERSION_UNKNOWN;
 
 @Slf4j
-public class World implements BlockContext
+public class World implements BlockContext, AutoCloseable
 {
 	private static final int BATCH_SIZE = 128;
 	
@@ -119,6 +122,19 @@ public class World implements BlockContext
 	private boolean sortTranslucentFaces;
 	@Getter
 	private boolean legacyWater;
+	private boolean minecraft10SwampColors;
+	private boolean useBiomeColours;
+
+	public boolean useBiomeColours() { return useBiomeColours; }
+	@Getter
+	private SwampWaterTint swampWaterTint;
+	private boolean proceduralFluidTextures;
+
+	@Override
+	public boolean useProceduralFluidTextures() { return proceduralFluidTextures; }
+
+	@Override
+	public boolean isMinecraft10SwampColors() { return minecraft10SwampColors; }
 	@Getter
 	private int biomeBlendRadius;
 	private final BiomeSampler biomeSampler;
@@ -196,12 +212,20 @@ public class World implements BlockContext
 	private final float cameraElevationRad;
 
 	private final Map<Location, String> unknownBlocks;
-	
+
+	public World(Rasteriser rasteriser, tectonicus.configuration.DimensionConfig map, PlayerSkinCache playerSkinCache, Configuration config) {
+		this(rasteriser, map, null, playerSkinCache, config);
+	}
+
 	public World(Rasteriser rasteriser, tectonicus.configuration.DimensionConfig map, BiomeCache biomeCache, PlayerSkinCache playerSkinCache, Configuration config)
 	{
 		this.rasteriser = rasteriser;
 		this.sortTranslucentFaces = map.isSortTranslucentFaces();
 		this.legacyWater = map.isLegacyWater();
+		this.minecraft10SwampColors = map.isMinecraft10SwampColors();
+		this.useBiomeColours = map.useBiomeColours();
+		this.swampWaterTint = map.getSwampWaterTint();
+		this.proceduralFluidTextures = map.isProceduralFluidTextures();
 		this.signFilter = map.getSignFilter();
 		this.cameraAngleRad = map.getCameraAngleRad();
 		this.cameraElevationRad = map.getCameraElevationRad();
@@ -214,8 +238,7 @@ public class World implements BlockContext
 		this.dimensionInfo = map.getDimensionInfo();
 
 		log.info("Loading world from base dir {} with dimension {}", worldDir.getPath(), dimension);
-		
-		this.biomeCache = biomeCache;
+
 		this.playerSkinCache = playerSkinCache;
 		
 		// Check that this looks like a world dir
@@ -320,27 +343,30 @@ public class World implements BlockContext
 		if (regionCache.getFormat() == SaveFormat.MC_REGION || regionCache.getFormat() == SaveFormat.ALPHA) {
 			Minecraft.setChunkHeight(RawChunk.MC_REGION_HEIGHT);
 		}
-		chunkLocator = new ChunkLocator(biomeCache, regionCache, dimensionDir);
+		this.biomeCache = biomeCache != null ? biomeCache
+				: CacheUtil.createBiomeCache(config, map, minecraftJar, regionCache.getFormat(), levelDat.getWorldSeed());
+		try {
+			chunkLocator = new ChunkLocator(this.biomeCache, regionCache, dimensionDir);
+
+			log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		
-		log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
+			//Set subset origin if none was set in config file
+			WorldSubset subset = map.getWorldSubset();
+			if (!(subset instanceof FullWorldSubset) && subset.getOrigin() == null) {
+				subset.setOrigin(getSubsetOrigin());
+			}
+			this.worldSubset = subset;
 		
-		//Set subset origin if none was set in config file
-		WorldSubset subset = map.getWorldSubset();
-		if (!(subset instanceof FullWorldSubset) && subset.getOrigin() == null) {
-			subset.setOrigin(getSubsetOrigin());
-		}
-		this.worldSubset = subset;
-		
-		log.debug("worldSubset: {}", this.worldSubset);
+			log.debug("worldSubset: {}", this.worldSubset);
                 
-		rawLoadedChunks = new RawCache(2048, (coord) -> {
+			rawLoadedChunks = new RawCache(2048, (coord) -> {
                         CompositeBlockFilter composite = new CompositeBlockFilter();
                         composite.add(blockFilter);
                         composite.add(worldSubset.getBlockFilter(coord));
 
                         return chunkLocator.loadChunk(coord, composite, null, worldInfo);
                 });
-		geometryLoadedChunks = new GeometryCache(512, (coord) -> {
+			geometryLoadedChunks = new GeometryCache(512, (coord) -> {
                         Chunk chunk = rawLoadedChunks.get(coord);
 
                         final boolean ok = chunk.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
@@ -349,16 +375,25 @@ public class World implements BlockContext
                         return chunk;
                 });
 		
-		this.lightStyle = LightStyle.None;
+			this.lightStyle = LightStyle.None;
 		
-		this.daySkybox = SkyboxUtil.generateDaySkybox(rasteriser);
-		this.nightSkybox = SkyboxUtil.generateNightSkybox(rasteriser);
+			this.daySkybox = SkyboxUtil.generateDaySkybox(rasteriser);
+			this.nightSkybox = SkyboxUtil.generateNightSkybox(rasteriser);
 
-		this.unknownBlocks = new HashMap<>();
+			this.unknownBlocks = new HashMap<>();
 
-		this.smoothLit = map.isSmoothLit();
-		this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
-		this.nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
+			this.smoothLit = map.isSmoothLit();
+			this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
+			this.nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
+		} catch (RuntimeException | Error e) {
+			this.biomeCache.close();
+			throw e;
+		}
+	}
+
+	@Override
+	public void close() {
+		biomeCache.close();
 	}
 	
 	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
@@ -482,6 +517,10 @@ public class World implements BlockContext
 		oldGrayscaleLighting = options.useOldGrayscaleLighting();
 		sortTranslucentFaces = options.isSortTranslucentFaces();
 		legacyWater = options.isLegacyWater();
+		minecraft10SwampColors = options.isMinecraft10SwampColors();
+		useBiomeColours = options.useBiomeColours();
+		swampWaterTint = options.getSwampWaterTint();
+		proceduralFluidTextures = options.isProceduralFluidTextures();
 		biomeBlendRadius = options.isBiomeBlendRadiusConfigured() ? options.getBiomeBlendRadius() : defaultBiomeBlendRadius;
 		nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
 	}
@@ -915,7 +954,7 @@ public class World implements BlockContext
 	{
 		return levelDat.getSpawnDimension();
 	}
-	
+
 	@Override
 	public int getBlockId(ChunkCoord chunkCoord, int x, int y, int z)
 	{
@@ -931,7 +970,7 @@ public class World implements BlockContext
 		else
 			return c.getBlockId(loc.x, loc.y, loc.z, defaultBlockId);
 	}
-	
+
 	@Override
 	public int getBlockData(ChunkCoord chunkCoord, int x, int y, int z) {
 		if (y < 0 || y >= Minecraft.getChunkHeight())
@@ -1058,7 +1097,7 @@ public class World implements BlockContext
 			return c.getRawChunk().getBlockState(loc.x, loc.y, loc.z);
 		}
 	}
-	
+
 	@Override
 	public Biome getBiome(ChunkCoord chunkCoord, int x, int y, int z)
 	{
@@ -1081,7 +1120,7 @@ public class World implements BlockContext
 			return neighbor != null ? neighbor.getRawChunk() : null;
 		});
 	}
-	
+
 	@Override
 	public float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face)
 	{
@@ -1139,7 +1178,7 @@ public class World implements BlockContext
 			return 0;
 		if (y >= RawChunk.HEIGHT)
 			return 1.0f;
-		
+
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = chunks.get(loc.coord);
 		if (c == null)
@@ -1233,7 +1272,7 @@ public class World implements BlockContext
 		{
 			this.camera = camera;
 		}
-		
+
 		@Override
 		public int compare(ChunkCoord lhs, ChunkCoord rhs)
 		{
@@ -1367,7 +1406,7 @@ public class World implements BlockContext
 	public Colour4f getFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
 		return getPlantTintColor(chunkCoord, x, y, z, true, false);
 	}
-	
+
 	@Override
 	public Colour4f getDryFoliageColor(ChunkCoord chunkCoord, int x, int y, int z) {
 		return getPlantTintColor(chunkCoord, x, y, z, false, true);
@@ -1376,8 +1415,21 @@ public class World implements BlockContext
 	public Colour4f getPlantTintColor(ChunkCoord chunkCoord, int x, int y, int z, boolean isFoliage, boolean isDryFoliage) {
 		final int version = textureVersion.getNumVersion();
 		final int elevation = Math.max(y - 64, 0);
+		if (!useBiomeColours)
+			return version >= VERSION_15.getNumVersion()
+					? getTintColor(Biomes.PLAINS, isFoliage, isDryFoliage) : getTintColorOld(1, isFoliage);
 		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
+			Location location = resolve(chunkCoord, sampleX, y, sampleZ);
+			Chunk chunk = rawLoadedChunks.get(location.coord);
+			BiomeData.ColourCoord extracted = chunk != null ? chunk.getBiomeColourCoord(location.x, location.z) : null;
+			if (extracted != null) {
+				Colour4f color = getTintColorFromBiomeTextures(extracted.getX(), extracted.getY(), isFoliage);
+				return minecraft10SwampColors && chunk.isExtractedSwamp(location.x, location.z)
+						? Minecraft10SwampColors.plant(color) : color;
+			}
 			Biome biome = getBiome(chunkCoord, sampleX, y, sampleZ);
+			if (minecraft10SwampColors && Minecraft10SwampColors.applies(biome))
+				return Minecraft10SwampColors.plant(getTintColorOld(biome.getNumericId(), isFoliage));
 			// Preserve the tint calculation appropriate to the selected texture version.
 			if (version < VERSIONS_6_TO_8.getNumVersion())
 				return getTintColorOld(biome.getNumericId(), isFoliage);
@@ -1444,11 +1496,20 @@ public class World implements BlockContext
 
 	@Override
 	public Colour4f getWaterColor(RawChunk rawChunk, int x, int y, int z) {
+		if (!useBiomeColours)
+			return textureVersion.getNumVersion() < VERSION_13.getNumVersion() ? new Colour4f() : new Colour4f(ColorsWater.DEFAULT.getWaterColor());
 		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
 		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
 			Biome biome = sampleX >= 0 && sampleX < RawChunk.WIDTH && sampleZ >= 0 && sampleZ < RawChunk.DEPTH
 					? getBiome(rawChunk, sampleX, y, sampleZ)
 					: getBiome(chunkCoord, sampleX, y, sampleZ);
+			if (textureVersion.getNumVersion() < VERSION_13.getNumVersion()) {
+				Location loc = resolve(chunkCoord, sampleX, y, sampleZ);
+				Chunk chunk = rawLoadedChunks.get(loc.coord);
+				boolean swamp = chunk != null && chunk.getBiomeColourCoord(loc.x, loc.z) != null
+						? chunk.isExtractedSwamp(loc.x, loc.z) : Minecraft10SwampColors.applies(biome);
+				return swamp ? new Colour4f(new Color(swampWaterTint.getRgb())) : new Colour4f();
+			}
 			return biome.getWaterColor();
 		});
 	}

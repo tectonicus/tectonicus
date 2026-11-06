@@ -16,15 +16,12 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.blockregistry.BlockState;
-import tectonicus.cache.BiomeCache;
-import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
-import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 
 public class Lilly implements BlockType
@@ -32,16 +29,10 @@ public class Lilly implements BlockType
 	private final String name;
 	private final SubTexture texture;
 	
-	private final BiomeCache biomeCache;
-	private final TexturePack texturePack;
-	
-	public Lilly(String name, SubTexture texture, BiomeCache biomeCache, TexturePack texturePack)
+	public Lilly(String name, SubTexture texture)
 	{
 		this.name = name;
 		this.texture = texture;
-		
-		this.biomeCache = biomeCache;
-		this.texturePack = texturePack;
 	}
 	
 	@Override
@@ -73,9 +64,7 @@ public class Lilly implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
-		BiomeData.ColourCoord colourCoord = biomeData.getColourCoord(x, z);
-		Colour4f colour = new Colour4f( texturePack.getGrassColour(colourCoord.getX(), colourCoord.getY()) );
+		Colour4f colour = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
 		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		

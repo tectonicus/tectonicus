@@ -103,6 +103,8 @@ public class XmlConfigurationParser
 			throw new RuntimeException("Old or incompatible config file. Please update to the latest format");
 		normalizeContainerAliases(root);
 		normalizeLightingAliases(root);
+		normalizeBiomeColorAliases(root);
+		RenderProfiles.expand(root, RENDER_ATTRIBUTES);
 		
 		// Parse base config
 		Element configNode = getChild(root, "config");
@@ -222,8 +224,7 @@ public class XmlConfigurationParser
 			Element subsetNode = getChild(mapElement, "subset");
 			map.setWorldSubset(parseWorldSubset(subsetNode));
 			
-			final boolean useBiomeColours = getBoolean(mapElement, "useBiomeColours", false);
-			map.setUseBiomeColours(useBiomeColours);
+
 
 			parseRenderOptions(mapElement, map);
 			
@@ -366,6 +367,13 @@ public class XmlConfigurationParser
 	}
 	
 
+	private static void normalizeBiomeColorAliases(Element element) {
+		if (!element.hasAttribute("useBiomeColours") && element.hasAttribute("useBiomeColors"))
+			element.setAttribute("useBiomeColours", element.getAttribute("useBiomeColors"));
+		element.removeAttribute("useBiomeColors");
+		for (Element child : getChildren(element, null)) normalizeBiomeColorAliases(child);
+	}
+
 	private static void normalizeLightingAliases(Element element) {
 		if (element.hasAttribute("lightStyle"))
 			element.setAttribute("lighting", element.getAttribute("lightStyle"));
@@ -392,8 +400,8 @@ public class XmlConfigurationParser
 
 	private record DimensionEntry(Element element, WorldConfig world, String id, boolean legacy) {}
 
-	private static final List<String> RENDER_ATTRIBUTES = List.of("useSmoothLighting", "useOldGrayscaleLighting",
-			"sortTranslucentFaces", "legacyWater", "biomeBlendRadius");
+	private static final List<String> RENDER_ATTRIBUTES = List.of("useBiomeColours", "useSmoothLighting", "useOldGrayscaleLighting",
+			"sortTranslucentFaces", "legacyWater", "minecraft10SwampColors", "swampWaterTint", "useProceduralFluidTextures", "biomeBlendRadius");
 
 	private static List<DimensionEntry> normalizeDimensions(Element root, Element defaults, Configuration config) {
 		List<DimensionEntry> result = new ArrayList<>();
@@ -500,10 +508,21 @@ public class XmlConfigurationParser
 
 	private static void parseRenderOptions(Element element, RenderOptions options) {
 		Element render = getChild(element, "render");
+		options.setUseBiomeColours(getBoolean(render, "useBiomeColours", getBoolean(element, "useBiomeColours", true)));
 		options.setSmoothLit(getBoolean(render, "useSmoothLighting", getBoolean(element, "useSmoothLighting", true)));
 		options.setOldGrayscaleLighting(getBoolean(render, "useOldGrayscaleLighting", false));
 		options.setSortTranslucentFaces(getBoolean(render, "sortTranslucentFaces", true));
 		options.setLegacyWater(getBoolean(render, "legacyWater", false));
+		options.setMinecraft10SwampColors(getBoolean(render, "minecraft10SwampColors", false));
+		String swampTint = getString(render, "swampWaterTint");
+		if (StringUtils.isNotBlank(swampTint)) {
+			try {
+				options.setSwampWaterTint(SwampWaterTint.valueOf(swampTint.trim().toUpperCase(java.util.Locale.ROOT)));
+			} catch (IllegalArgumentException e) {
+				log.warn("Invalid swampWaterTint '{}'; using auto", swampTint);
+			}
+		}
+		options.setProceduralFluidTextures(getBoolean(render, "useProceduralFluidTextures", false));
 		String radius = getString(render, "biomeBlendRadius");
 		if (StringUtils.isNotBlank(radius))
 			options.setBiomeBlendRadius(parseBiomeBlendRadius(radius));
