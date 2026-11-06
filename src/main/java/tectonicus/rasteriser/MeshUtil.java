@@ -108,6 +108,8 @@ public class MeshUtil {
 		
 		boolean blockEmitsLight = selfBlock != null
 				&& selfBlock.getLightEmission(rawChunk.getBlockState(x, y, z)) > 0;
+		boolean emissiveRendering = selfBlock != null
+				&& selfBlock.isEmissiveRendering(rawChunk.getBlockState(x, y, z));
 		boolean above = legacyBlock
 				? world.getBlockType(rawChunk, x, y + 1, z).isSolid()
 				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y + 1, z));
@@ -145,7 +147,7 @@ public class MeshUtil {
 		boolean smoothLit = world.isSmoothLit();
 		float nightLightAdjustment = world.getNightLightAdjustment();
 		boolean grayscale = smoothLit && world.useOldGrayscaleLighting();
-		boolean useAo = !blockEmitsLight && smoothLit && model.isAmbientlyOccluded();
+		boolean useAo = !emissiveRendering && !blockEmitsLight && smoothLit && model.isAmbientlyOccluded();
 		for (BakedQuad quad : bakedModel.getQuads()) {
 			ElementFace face = quad.getFace();
 			FaceDirection direction = faceDirection(quad.getDirection());
@@ -157,7 +159,11 @@ public class MeshUtil {
 				continue;
 
 			Colour4f flatLight = null;
-			if (!smoothLit) {
+			if (emissiveRendering) {
+				// Full lightmap brightness still receives the model's cardinal face shading.
+				float shade = Chunk.getFaceFactor(lightStyle, quad.isShaded() ? lightDirection.lightFace : LightFace.Top);
+				flatLight = new Colour4f(shade, shade, shade, 1);
+			} else if (!smoothLit) {
 				float light = getFlatLight(world, rawChunk, x, y, z, quad, selfFull, nightLightAdjustment);
 				flatLight = new Colour4f(light, light, light, 1);
 			}
@@ -172,7 +178,7 @@ public class MeshUtil {
 			boolean faceAo = useAo && direction != FaceDirection.DOWN;
 			for (int vertex = 0; vertex < 4; vertex++) {
 				Colour4f vertexLight = flatLight;
-				if (smoothLit) {
+				if (smoothLit && !emissiveRendering) {
 					// Smooth lighting interpolates the light field around each quad corner.
 					// This is separate from model AO: models with ambientocclusion=false
 					// still receive smooth sky/block lighting, just without corner occlusion.

@@ -23,6 +23,10 @@ import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.blockregistry.LightingModelFixture;
+import tectonicus.blockregistry.EmissiveBlock;
+import tectonicus.chunk.Chunk;
+import tectonicus.configuration.LightFace;
+import tectonicus.configuration.LightStyle;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.util.Vector3f;
@@ -30,12 +34,54 @@ import tectonicus.util.Vector3f;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ItemModelLightingTest {
 	private int previousHeight;
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	void emissiveSurfacesIgnoreWorldLightButRetainFaceShading(boolean smoothLit) {
+		for (String name : List.of("minecraft:magma_block", "minecraft:sculk_sensor", "minecraft:calibrated_sculk_sensor")) {
+			BlockStateWrapper block = new BlockStateWrapper(name);
+			block.setDefaultProperties(Map.of("sculk_sensor_phase", "active"));
+			block.setEmissiveBlock(EmissiveBlock.forBlockName(name));
+			BlockStateWrapper air = new BlockStateWrapper("minecraft:air");
+			air.setFullBlock(false);
+			air.setFullOpaqueBlock(false);
+			for (LightStyle style : LightStyle.values()) {
+				List<org.joml.Vector4f> colours = new ArrayList<>();
+				Mesh mesh = (Mesh) Proxy.newProxyInstance(Mesh.class.getClassLoader(), new Class<?>[]{Mesh.class},
+						(proxy, method, args) -> {
+							if (method.getName().equals("addVertex"))
+								colours.add(new org.joml.Vector4f((org.joml.Vector4f) args[1]));
+							return null;
+						});
+				Rasteriser rasteriser = (Rasteriser) Proxy.newProxyInstance(Rasteriser.class.getClassLoader(), new Class<?>[]{Rasteriser.class},
+						(proxy, method, args) -> method.getName().equals("createMesh") ? mesh : null);
+				BlockContext world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
+						(proxy, method, args) -> switch (method.getName()) {
+							case "getBlock" -> (int) args[1] == 0 && (int) args[2] == 0 && (int) args[3] == 0 ? block : air;
+							case "getLightStyle" -> style;
+							case "isSmoothLit" -> smoothLit;
+							case "getNightLightAdjustment" -> 0.1f;
+							case "useOldGrayscaleLighting" -> false;
+							case "shouldCullSameBlockFaces" -> false;
+							default -> throw new AssertionError("Emissive surfaces must not sample world light: " + method.getName());
+						});
+				var model = new BakedBlockStateModel(LightingModelFixture.face("north", new Vector3f(0, 0, 0),
+						new Vector3f(16, 16, 16)).getModel(), 0, 0, 0, false);
+				model.createGeometry(0, 0, 0, world, new RawChunk(), new Geometry(rasteriser));
+				assertEquals(4, colours.size());
+				float shade = Chunk.getFaceFactor(style, LightFace.NorthSouth);
+				for (var colour : colours)
+					assertEquals(new org.joml.Vector4f(shade, shade, shade, 1), colour);
+			}
+		}
+	}
 
 	@BeforeEach
 	void setChunkHeight() {

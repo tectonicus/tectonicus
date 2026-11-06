@@ -72,6 +72,7 @@ import tectonicus.blockTypes.Leaves;
 import tectonicus.blockTypes.Lever;
 import tectonicus.blockTypes.Lilly;
 import tectonicus.blockTypes.Log;
+import tectonicus.blockTypes.Magma;
 import tectonicus.blockTypes.MinecartTracks;
 import tectonicus.blockTypes.NetherWart;
 import tectonicus.blockTypes.Observer;
@@ -204,6 +205,10 @@ public class BlockRegistryParser
 			final boolean alphaTest = (alphaTestStr != null && alphaTestStr.equalsIgnoreCase("true"));
 			
 			blockType = new SolidBlockType(name, side, top, alphaTest);
+		}
+		else if (nodeName.equals("magma"))
+		{
+			blockType = new Magma(name, parseTexture(element, "texture", null));
 		}
 		else if (nodeName.equals("datasolid"))
 		{

@@ -22,6 +22,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockRegistryAttributesTest {
 	@Test
+	void magmaSurfaceBrightnessIsIndependentOfItsLightEmission() {
+		BlockStateWrapper magma = new BlockStateWrapper("minecraft:magma_block");
+		magma.setEmissiveBlock(EmissiveBlock.forBlockName(magma.getBlockName()));
+		assertTrue(magma.isEmissiveRendering(null));
+		assertEquals(3, magma.getLightEmission(null));
+		assertFalse(new BlockStateWrapper("minecraft:glowstone").isEmissiveRendering(null));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"minecraft:sculk_sensor", "minecraft:calibrated_sculk_sensor"})
+	void sensorSurfaceIsEmissiveOnlyDuringTheActivePhase(String name) {
+		BlockStateWrapper sensor = new BlockStateWrapper(name);
+		assertFalse(sensor.isEmissiveRendering(null));
+		sensor.setDefaultProperties(Map.of("sculk_sensor_phase", "active"));
+		assertTrue(sensor.isEmissiveRendering(null));
+		assertTrue(sensor.isEmissiveRendering(new BlockProperties(Map.of("waterlogged", "true"))));
+		for (String phase : List.of("inactive", "cooldown"))
+			assertFalse(sensor.isEmissiveRendering(new BlockProperties(Map.of("sculk_sensor_phase", phase))));
+		sensor.setDefaultProperties(Map.of("sculk_sensor_phase", "inactive"));
+		assertTrue(sensor.isEmissiveRendering(new BlockProperties(Map.of("sculk_sensor_phase", "active"))));
+	}
+
+	@Test
 	void beaconKeepsFullCollisionShadeWithoutBecomingRenderOpaque() {
 		BlockStateWrapper block = new BlockStateWrapper("minecraft:beacon");
 		block.addState(new BlockVariant("", new BlockStateModelsWeight(List.of(model("beacon", false, false)))));

@@ -76,6 +76,18 @@ public class BlockStateWrapper {
 		return emissiveBlock.getLightEmission(effectiveProperties);
 	}
 
+	/** Vanilla's full-bright flag, independent of emitted block light. */
+	public boolean isEmissiveRendering(BlockProperties properties) {
+		if (blockName.equals("minecraft:magma_block"))
+			return true;
+		if (!blockName.equals("minecraft:sculk_sensor") && !blockName.equals("minecraft:calibrated_sculk_sensor"))
+			return false;
+		String phase = properties != null
+				? properties.getProperties().getOrDefault("sculk_sensor_phase", defaultProperties.get("sculk_sensor_phase"))
+				: defaultProperties.get("sculk_sensor_phase");
+		return "active".equals(phase);
+	}
+
 	public List<BlockStateModel> getModels(BlockProperties properties, int x, int y, int z) {
 		List<BlockStateModel> models = new ArrayList<>();
 		Random random = BlockState.createPositionRandom(blockName, properties, x, y, z);

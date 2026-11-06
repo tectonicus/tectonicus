@@ -647,7 +647,7 @@
 						side2="frosted_ice_2.png" top2="frosted_ice_2.png"
 						side3="frosted_ice_3.png" top3="frosted_ice_3.png" transparent="true" />
 						
-	<Solid id="213" stringId="minecraft:magma_block" name="Magma Block" texture="magma.png" />
+	<Magma id="213" stringId="minecraft:magma_block" name="Magma Block" texture="magma.png" />
 	
 	<Solid id="214" stringId="minecraft:nether_wart_block" name="Nether Wart Block" texture="nether_wart_block.png" />
 	
