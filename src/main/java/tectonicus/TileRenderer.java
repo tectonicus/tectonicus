@@ -32,6 +32,7 @@ import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
+import tectonicus.raw.LevelDat;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.DirUtils;
@@ -56,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -215,6 +217,7 @@ public class TileRenderer
 	private Result outputInternal() throws IOException
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
+		List<DimensionConfig> renderableDimensions = findRenderableDimensions(config);
 		
 		Date startTime = new Date();
 		
@@ -225,9 +228,7 @@ public class TileRenderer
 		
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
-                World world = null;
-                
-		for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
+		for (DimensionConfig map : renderableDimensions)
 		{
 			// Clear shared state?
 			// ..
@@ -241,7 +242,7 @@ public class TileRenderer
 
 			// Create the world for this map
 			try (World currentWorld = new World(rasteriser, map, playerSkinCache, config)) {
-				world = currentWorld;
+				World world = currentWorld;
 
 				// Setup camera
 				setupInitialCamera(map);
@@ -342,8 +343,8 @@ public class TileRenderer
 
 				visibleTiles.close();
 				outputCompass(exportDir, map, rasteriser);
-				// Shared world resources are exported once, after its last configured dimension.
-				if (map == map.getWorld().getDimensions().getLast()) {
+				// Export shared resources after the last dimension that can actually render.
+				if (map == renderableDimensions.stream().filter(d -> d.getWorld() == map.getWorld()).toList().getLast()) {
 					File imagesDir = DirUtils.getWorldImagesDir(exportDir, map.getWorld());
 					outputIcons(imagesDir, world, rasteriser);
 					ItemModelDefinitionRegistry itemModels = new ItemModelDefinitionRegistry(world.getTexturePack());
@@ -369,21 +370,17 @@ public class TileRenderer
 						worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight);
 			}
 		}
-                
-                if (world == null) {
-                        System.out.println("Unable to render. No map is defined in config.");
-                } else {
-                        outputHtmlResources(config, exportDir, config.getDimensions().stream().mapToInt(DimensionConfig::getNumZoomLevels).max().orElse(config.getNumZoomLevels()), tileWidth, tileHeight);
-                }
+
+		outputHtmlResources(config, exportDir, renderableDimensions.stream().mapToInt(DimensionConfig::getNumZoomLevels).max().orElse(config.getNumZoomLevels()), tileWidth, tileHeight);
 		
-		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), config);
+		outputContents(new File(new File(exportDir, "Scripts"), "contents.js"), config, renderableDimensions);
 		
 		
 		// Output html
 		File outputHtmlFile = null;
 		try {
 			progressListener.onTaskStarted(Task.OUTPUT_HTML.toString());
-			outputHtmlFile = outputHtml(exportDir, config);
+			outputHtmlFile = outputHtml(exportDir, config, renderableDimensions);
 		} catch (IOException e) {
 			log.error("Exception: ", e);
 		}
@@ -407,6 +404,7 @@ public class TileRenderer
 	{
 		progressListener.onTaskStarted(Task.STARTING_RENDERER.toString());
 		log.info("Starting view renderer");
+		List<DimensionConfig> renderableDimensions = findRenderableDimensions(config);
 		
 		Date startTime = new Date();
 		
@@ -417,7 +415,7 @@ public class TileRenderer
 		
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
 		
-		for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
+		for (DimensionConfig map : renderableDimensions)
 		{
 			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
@@ -454,6 +452,30 @@ public class TileRenderer
 		return new Result(abort, null);
 	}
 	
+	/** Skip ungenerated dimensions before rendering or building the viewer's map list. */
+	static List<DimensionConfig> findRenderableDimensions(Configuration config) {
+		List<DimensionConfig> dimensions = new ArrayList<>();
+		for (var world : config.getWorlds()) {
+			if (!Minecraft.isValidWorldDir(world.getWorldDir().toPath()))
+				throw new IllegalArgumentException("Invalid world dir! No level.dat found at "
+						+ Minecraft.findLevelDat(world.getWorldDir().toPath()));
+			LevelDat level = new LevelDat(Minecraft.findLevelDat(world.getWorldDir().toPath()), config.getSinglePlayerName());
+			for (DimensionConfig map : world.getDimensions()) {
+				File directory = DirUtils.getDimensionDir(world.getWorldDir().toPath(), map.getDimensionInfo()).toFile();
+				// Alpha saves store individual chunks rather than region files.
+				if (level.isAlpha() ? directory.isDirectory() : Minecraft.isValidDimensionDir(directory)) {
+					dimensions.add(map);
+				} else {
+					log.warn("Skipping dimension '{}' ({}): no terrain found in {}.",
+							map.getName(), map.getDimensionInfo().name(), directory.getAbsolutePath());
+				}
+			}
+		}
+		if (dimensions.isEmpty())
+			throw new IllegalStateException("Unable to render: no configured dimensions contain terrain.");
+		return List.copyOf(dimensions);
+	}
+
 	public static void setupWorldForLayer(LayerConfig layer, World world)
 	{
 		log.info("Creating block registry");

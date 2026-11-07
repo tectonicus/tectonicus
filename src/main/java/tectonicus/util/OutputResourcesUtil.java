@@ -1254,6 +1254,11 @@ public class OutputResourcesUtil {
 
 	public static void outputContents(File outputFile, Configuration config)
 	{
+		outputContents(outputFile, config, config.getDimensions());
+	}
+
+	public static void outputContents(File outputFile, Configuration config, List<tectonicus.configuration.DimensionConfig> maps)
+	{
 		try {
 			Files.deleteIfExists(outputFile.toPath());
 		} catch (IOException e) {
@@ -1265,13 +1270,12 @@ public class OutputResourcesUtil {
 		try (PrintWriter writer = new PrintWriter(outputFile))
 		{
 			writer.println("tileSize = "+config.getTileSize()+";");
-			writer.println("maxZoom = " + config.getDimensions().stream().mapToInt(tectonicus.configuration.DimensionConfig::getNumZoomLevels).max().orElse(config.getNumZoomLevels()) + ";");
+			writer.println("maxZoom = " + maps.stream().mapToInt(tectonicus.configuration.DimensionConfig::getNumZoomLevels).max().orElse(config.getNumZoomLevels()) + ";");
 			writer.println();
 
 			writer.println("var contents = ");
 			writer.println("[");
 
-			List<tectonicus.configuration.DimensionConfig> maps = config.getDimensions();
 			for (int i=0; i<maps.size(); i++)
 			{
 				tectonicus.configuration.DimensionConfig m = maps.get(i);
@@ -1347,6 +1351,10 @@ public class OutputResourcesUtil {
 	}
 
 	public static File outputHtml(File exportDir, Configuration config) throws IOException {
+		return outputHtml(exportDir, config, config.getDimensions());
+	}
+
+	public static File outputHtml(File exportDir, Configuration config, List<tectonicus.configuration.DimensionConfig> maps) throws IOException {
 		File outputHtmlFile = new File(exportDir, config.getOutputHtmlName());
 		log.info("Writing html to {}", outputHtmlFile.getAbsolutePath());
 
@@ -1425,7 +1433,7 @@ public class OutputResourcesUtil {
 							String templateStart = "		<script src=\"";
 							String templateEnd = "\"></script>\n";
                                                         
-							for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
+							for (tectonicus.configuration.DimensionConfig map : maps)
 							{
 								outLine.append(templateStart);
 								outLine.append("Scripts/").append(map.getId()).append("/players.js");
