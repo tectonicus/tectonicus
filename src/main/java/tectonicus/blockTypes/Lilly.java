@@ -64,7 +64,8 @@ public class Lilly implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Colour4f colour = world.getGrassColor(rawChunk.getChunkCoord(), x, y, z);
+		// Minecraft uses the same #208030 lily pad tint in every biome.
+		Colour4f colour = new Colour4f(32, 128, 48);
 		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		

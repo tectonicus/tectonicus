@@ -12,8 +12,26 @@ import tectonicus.configuration.LightStyle;
 import tectonicus.util.Colour4f;
 import tectonicus.util.Util;
 
-/** Separate sky and block contributions for smooth per-vertex lighting. */
-public record LightSample(float sky, float block, float ambient, Colour4f netherColour) {
+/**
+ * Separate sky and block contributions for smooth per-vertex lighting.
+ * Overworld lightmap samples carry raw 0..15 coordinates in sky/block,
+ * and directional shade in ambient. Interpolation precedes lightmap conversion.
+ * Other samples retain Tectonicus's scaled light and ambient contributions.
+ */
+public record LightSample(float sky, float block, float ambient, Colour4f netherColour, OverworldLightmap overworldLightmap) {
+	public LightSample(float sky, float block, float ambient, Colour4f netherColour) {
+		this(sky, block, ambient, netherColour, null);
+	}
+
+	/** Raw lightmap coordinates and independent directional shade. */
+	public static LightSample overworld(float sky, float block, float shade) {
+		return overworld(sky, block, shade, OverworldLightmap.forBrightness(0));
+	}
+
+	public static LightSample overworld(float sky, float block, float shade, OverworldLightmap lightmap) {
+		return new LightSample(sky, block, shade, null, java.util.Objects.requireNonNull(lightmap));
+	}
+
 	public LightSample(float sky, float block, float ambient) {
 		this(sky, block, ambient, null);
 	}
@@ -28,11 +46,14 @@ public record LightSample(float sky, float block, float ambient, Colour4f nether
 	}
 
 	public LightSample add(LightSample other) {
-		return new LightSample(sky + other.sky, block + other.block, ambient + other.ambient, addColour(netherColour, other.netherColour));
+		return new LightSample(sky + other.sky, block + other.block, ambient + other.ambient,
+				addColour(netherColour, other.netherColour), overworldLightmap != null ? overworldLightmap : other.overworldLightmap);
 	}
 
 	public LightSample scale(float factor) {
-		return new LightSample(sky * factor, block * factor, ambient * factor, netherColour == null ? null : new Colour4f(netherColour.r * factor, netherColour.g * factor, netherColour.b * factor, 1));
+		return new LightSample(sky * factor, block * factor, ambient * factor,
+				netherColour == null ? null : new Colour4f(netherColour.r * factor, netherColour.g * factor, netherColour.b * factor, 1),
+				overworldLightmap);
 	}
 
 	public Colour4f toColour(LightStyle style) {
@@ -40,6 +61,14 @@ public record LightSample(float sky, float block, float ambient, Colour4f nether
 	}
 
 	public Colour4f toColour(LightStyle style, boolean oldGrayscaleLighting) {
+		if (overworldLightmap != null) {
+			Colour4f colour = overworldLightmap.sample(style, sky, block);
+			if (oldGrayscaleLighting) {
+				float light = NetherLightmap.grayscale(colour) * ambient;
+				return new Colour4f(light, light, light, 1);
+			}
+			return new Colour4f(colour.r * ambient, colour.g * ambient, colour.b * ambient, 1);
+		}
 		if (netherColour != null) {
 			if (oldGrayscaleLighting) {
 				float light = NetherLightmap.grayscale(netherColour);
@@ -47,14 +76,6 @@ public record LightSample(float sky, float block, float ambient, Colour4f nether
 			}
 			return new Colour4f(netherColour.r, netherColour.g, netherColour.b, 1);
 		}
-		if (style == LightStyle.Night && !oldGrayscaleLighting) {
-			// Minecraft's overworld night sky is blue, while block light remains warm.
-			return new Colour4f(
-					Util.clamp(ambient + sky * 0.48f + block, 0, 1),
-					Util.clamp(ambient + sky * 0.48f + block * 0.847f, 0, 1),
-					Util.clamp(ambient + sky + block * 0.612f, 0, 1), 1);
-		}
-
 		float brightness = Util.clamp(sky + block + ambient, 0, 1);
 		return new Colour4f(brightness, brightness, brightness, 1);
 	}

@@ -8,23 +8,32 @@
 
 package tectonicus.rasteriser;
 
+import org.joml.Vector4f;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.BlockContext;
+import tectonicus.Minecraft;
+import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BakedBlockStateModel.BakedQuad;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.blockregistry.LightingModelFixture;
 import tectonicus.blockregistry.EmissiveBlock;
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.LightSample;
+import tectonicus.chunk.NetherLightmap;
+import tectonicus.chunk.OverworldLightmap;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.raw.RawChunk;
+import tectonicus.renderer.Geometry;
 import tectonicus.util.Vector3f;
 
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -189,8 +198,8 @@ class MeshUtilLightingTest {
 	})
 	void partialBoundaryFacesGetTheSameNightLightAsFullCubes(String direction, int x, int y, int z, LightFace face) {
 		BakedQuad quad = LightingModelFixture.face(direction, new Vector3f(0, 0, 0), new Vector3f(16, 16, 16));
-		LightSample lit = new LightSample(0.225f, 0.35f, 0.1f);
-		BlockContext world = lightingWorld(Map.of(), Map.of(new Cell(x, y, z), lit), new LightSample(0, 0, 0.1f));
+		LightSample lit = LightSample.overworld(15, 4, 1);
+		BlockContext world = lightingWorld(Map.of(), Map.of(new Cell(x, y, z), lit), LightSample.overworld(0, 0, 1));
 		for (int vertex = 0; vertex < 4; vertex++) {
 			LightSample full = smoothLight(world, quad, vertex, face, true);
 			LightSample partial = smoothLight(world, quad, vertex, face, false);
@@ -202,9 +211,9 @@ class MeshUtilLightingTest {
 	@Test
 	void insetFacesUseOpenNeighborLightAndReplaceMissingSamples() {
 		BakedQuad quad = top(0, 0, 16, 8, 16);
-		LightSample lit = new LightSample(0.225f, 0.35f, 0.1f);
+		LightSample lit = LightSample.overworld(15, 4, 1);
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 0, 0), SLAB),
-				Map.of(new Cell(0, 1, 0), lit), new LightSample(0, 0, 0.1f));
+				Map.of(new Cell(0, 1, 0), lit), LightSample.overworld(0, 0, 1));
 
 		assertLightEquals(lit, smoothLight(world, quad, 2, LightFace.Top, false));
 	}
@@ -212,9 +221,9 @@ class MeshUtilLightingTest {
 	@Test
 	void insetFacesDoNotBorrowCenterLightThroughSolidNeighbors() {
 		BakedQuad quad = top(0, 0, 16, 8, 16);
-		LightSample dark = new LightSample(0, 0, 0.1f);
+		LightSample dark = LightSample.overworld(0, 0, 1);
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 0, 0), SLAB, new Cell(0, 1, 0), SOLID),
-				Map.of(new Cell(0, 1, 0), new LightSample(0.225f, 0.35f, 0.1f)), dark);
+				Map.of(new Cell(0, 1, 0), LightSample.overworld(15, 4, 1)), dark);
 
 		assertLightEquals(dark, smoothLight(world, quad, 2, LightFace.Top, false));
 	}
@@ -224,12 +233,12 @@ class MeshUtilLightingTest {
 	void tintedGlassBlendsSideLightLikeOtherGlass(float ambient) {
 		BakedQuad quad = top(0, 0, 16, 16, 16);
 		BlockStateWrapper tintedGlass = transparentBlock("minecraft:tinted_glass");
-		LightSample dark = new LightSample(0, 0, ambient);
+		LightSample dark = LightSample.overworld(0, 0, ambient);
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 1, 0), tintedGlass),
-				Map.of(new Cell(0, 1, 0), dark), new LightSample(0.225f, 0.35f, ambient));
+				Map.of(new Cell(0, 1, 0), dark), LightSample.overworld(15, 4, ambient));
 
 		for (int vertex = 0; vertex < 4; vertex++) {
-			LightSample blended = new LightSample(0.225f * 0.75f, 0.35f * 0.75f, ambient);
+			LightSample blended = LightSample.overworld(11.25f, 3, ambient);
 			assertLightEquals(blended, smoothLight(world, quad, vertex, LightFace.Top, true));
 			assertLightEquals(blended, smoothLight(world, quad, vertex, LightFace.Top, false));
 		}
@@ -239,30 +248,30 @@ class MeshUtilLightingTest {
 	@ValueSource(strings = {"minecraft:glass", "minecraft:red_stained_glass"})
 	void regularAndStainedGlassStillAllowSmoothSideLighting(String name) {
 		BakedQuad quad = top(0, 0, 16, 16, 16);
-		LightSample dark = new LightSample(0, 0, 0.1f);
+		LightSample dark = LightSample.overworld(0, 0, 1);
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 1, 0), transparentBlock(name)),
-				Map.of(new Cell(0, 1, 0), dark), new LightSample(0.2f, 0.4f, 0.1f));
+				Map.of(new Cell(0, 1, 0), dark), LightSample.overworld(8, 4, 1));
 
-		assertLightEquals(new LightSample(0.15f, 0.3f, 0.1f), smoothLight(world, quad, 2, LightFace.Top, true));
+		assertLightEquals(LightSample.overworld(6, 3, 1), smoothLight(world, quad, 2, LightFace.Top, true));
 	}
 
 	@Test
 	void tintedGlassBlendsAvailableBlockAndSkyLight() {
 		BakedQuad quad = top(0, 0, 16, 16, 16);
-		LightSample interfaceLight = new LightSample(0, 0.2f, 0.1f);
+		LightSample interfaceLight = LightSample.overworld(0, 2, 1);
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 1, 0), transparentBlock("minecraft:tinted_glass")),
-				Map.of(new Cell(0, 1, 0), interfaceLight), new LightSample(0.225f, 0.5f, 0.1f));
+				Map.of(new Cell(0, 1, 0), interfaceLight), LightSample.overworld(15, 6, 1));
 
-		assertLightEquals(new LightSample(0.225f * 0.75f, 0.425f, 0.1f), smoothLight(world, quad, 2, LightFace.Top, true));
+		assertLightEquals(LightSample.overworld(11.25f, 5, 1), smoothLight(world, quad, 2, LightFace.Top, true));
 	}
 
 	@Test
 	void insetFacesUseTheSavedLightOfNonSolidRenderingTintedGlass() {
 		BakedQuad quad = top(0, 0, 16, 8, 16);
-		LightSample dark = new LightSample(0, 0, 0.1f);
+		LightSample dark = LightSample.overworld(0, 0, 1);
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 0, 0), SLAB,
 				new Cell(0, 1, 0), transparentBlock("minecraft:tinted_glass")),
-				Map.of(new Cell(0, 0, 0), new LightSample(0.225f, 0.35f, 0.1f), new Cell(0, 1, 0), dark), dark);
+				Map.of(new Cell(0, 0, 0), LightSample.overworld(15, 4, 1), new Cell(0, 1, 0), dark), dark);
 
 		assertLightEquals(dark, smoothLight(world, quad, 2, LightFace.Top, false));
 	}
@@ -272,9 +281,9 @@ class MeshUtilLightingTest {
 	void largerTintedGlassPatchesDarkenNeighborSamplesInBothDayAndNight(LightStyle style, int coveredNeighbors) {
 		BakedQuad quad = top(0, 0, 16, 16, 16);
 		BlockStateWrapper glass = transparentBlock("minecraft:tinted_glass");
-		float ambient = style == LightStyle.Day ? 0.3f : 0.1f;
-		float sky = style == LightStyle.Day ? 0.7f : 0.225f;
-		LightSample dark = new LightSample(0, 0, ambient);
+		float ambient = 1;
+		float sky = 15;
+		LightSample dark = LightSample.overworld(0, 0, ambient);
 		Map<Cell, BlockStateWrapper> blocks = new HashMap<>();
 		Map<Cell, LightSample> lights = new HashMap<>();
 		blocks.put(new Cell(0, 1, 0), glass);
@@ -284,8 +293,8 @@ class MeshUtilLightingTest {
 			blocks.put(neighbors[i], glass);
 			lights.put(neighbors[i], dark);
 		}
-		BlockContext world = lightingWorld(blocks, lights, new LightSample(sky, 0, ambient), style);
-		assertLightEquals(new LightSample(sky * (3 - coveredNeighbors) * 0.25f, 0, ambient),
+		BlockContext world = lightingWorld(blocks, lights, LightSample.overworld(sky, 0, ambient), style);
+		assertLightEquals(LightSample.overworld(sky * (3 - coveredNeighbors) * 0.25f, 0, ambient),
 				smoothLight(world, quad, 2, LightFace.Top, true));
 		assertEquals(1, ao(world, quad, 2, true), 0.000001f);
 	}
@@ -348,6 +357,72 @@ class MeshUtilLightingTest {
 		return (0.6f + x * 0.03f + y * 0.02f + z * 0.01f) * Chunk.getFaceFactor(style, face);
 	}
 
+	@Test
+	void nonlinearTerrainLightingInterpolatesRawLevelsAndThenAppliesShade() {
+		BakedQuad quad = top(0, 0, 16, 16, 16);
+		var world = lightingWorld(Map.of(), Map.of(new Cell(1, 1, 1), LightSample.overworld(15, 0, 1)),
+				LightSample.overworld(7, 0, 1), LightStyle.Day);
+		var sample = smoothLight(world, quad, 2, LightFace.Top, true);
+		assertEquals(9, sample.sky(), 0.000001f);
+		assertTrue(sample.overworldLightmap() != null);
+		var colour = MeshUtil.getShadedLightColour(sample, LightStyle.Day, LightFace.EastWest, false);
+		assertEquals(tectonicus.chunk.OverworldLightmap.forBrightness(0).sample(LightStyle.Day, 9, 0).r * 0.7f, colour.r, 0.000001f);
+	}
+
+	@ParameterizedTest
+	@CsvSource({"Day,true,false,0.7", "Day,false,true,0.7", "Night,true,true,0.9", "Night,false,false,0.9"})
+	void flatTerrainRendersConfiguredLightmapColours(LightStyle style, boolean fullBlock, boolean grayscale, float shade) {
+		var lightmap = OverworldLightmap.forBrightness(0.5f);
+		Cell origin = new Cell(0, 0, 0);
+		BlockStateWrapper block = fullBlock ? SOLID : SLAB;
+		BlockContext world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
+				(proxy, method, args) -> switch (method.getName()) {
+					case "getBlock" -> origin.equals(new Cell((int) args[1], (int) args[2], (int) args[3])) ? block : AIR;
+					case "getLightStyle" -> style;
+					case "isSmoothLit", "isNetherNightLighting", "shouldCullSameBlockFaces" -> false;
+					case "getNightLightAdjustment" -> 0f;
+					case "useOldGrayscaleLighting" -> grayscale;
+					case "getLightSample" -> Chunk.getLightSample(style, (LightFace) args[4], (RawChunk) args[0],
+							(int) args[1], (int) args[2], (int) args[3], lightmap, null);
+					default -> throw new AssertionError("Unexpected lighting query: " + method.getName());
+				});
+		List<Vector4f> colours = new ArrayList<>();
+		Mesh mesh = (Mesh) Proxy.newProxyInstance(Mesh.class.getClassLoader(), new Class<?>[]{Mesh.class},
+				(proxy, method, args) -> {
+					if (method.getName().equals("addVertex"))
+						colours.add(new Vector4f((Vector4f) args[1]));
+					return null;
+				});
+		Rasteriser rasteriser = (Rasteriser) Proxy.newProxyInstance(Rasteriser.class.getClassLoader(), new Class<?>[]{Rasteriser.class},
+				(proxy, method, args) -> method.getName().equals("createMesh") ? mesh : null);
+		var quad = LightingModelFixture.face("east", new Vector3f(0, 0, 0), new Vector3f(fullBlock ? 16 : 12, 16, 16));
+		quad.getModel().setFullBlock(fullBlock);
+		var model = new BakedBlockStateModel(quad.getModel(), 0, 0, 0, false);
+
+		int previousHeight = Minecraft.getChunkHeight();
+		Minecraft.setChunkHeight(16);
+		try {
+			RawChunk chunk = new RawChunk();
+			chunk.setSkyLight(0, 0, 0, (byte) 7);
+			chunk.setSkyLight(1, 0, 0, (byte) 7);
+			chunk.setBlockLight(0, 0, 0, (byte) 3);
+			chunk.setBlockLight(1, 0, 0, (byte) 7);
+			model.createGeometry(0, 0, 0, world, chunk, new Geometry(rasteriser));
+		} finally {
+			Minecraft.setChunkHeight(previousHeight);
+		}
+
+		var expected = lightmap.sample(style, 7, fullBlock ? 7 : 3);
+		float luminance = NetherLightmap.grayscale(expected);
+		assertEquals(4, colours.size());
+		for (Vector4f colour : colours) {
+			assertEquals((grayscale ? luminance : expected.r) * shade, colour.x, 0.000001f);
+			assertEquals((grayscale ? luminance : expected.g) * shade, colour.y, 0.000001f);
+			assertEquals((grayscale ? luminance : expected.b) * shade, colour.z, 0.000001f);
+			assertEquals(1, colour.w);
+		}
+	}
+
 	private BlockContext flatWorld(LightStyle style) {
 		return (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
 				(proxy, method, args) -> switch (method.getName()) {
@@ -363,13 +438,13 @@ class MeshUtilLightingTest {
 		Map<Cell, LightSample> lights = new HashMap<>();
 		for (int x = -1; x <= 1; x++) {
 			for (int z = -1; z <= 1; z++)
-				lights.put(new Cell(x, 0, z), new LightSample(0.2f + 0.1f * x, 0, 0.1f));
+				lights.put(new Cell(x, 0, z), LightSample.overworld(8 + 4 * x, 0, 1));
 		}
 		BlockContext world = lightingWorld(Map.of(new Cell(0, 0, 0), SLAB, new Cell(0, 1, 0), SOLID),
-				lights, new LightSample(0, 0, 0.1f));
+				lights, LightSample.overworld(0, 0, 1));
 
-		assertLightEquals(new LightSample(0.175f, 0, 0.1f), smoothLight(world, quad, 0, LightFace.Top, false));
-		assertLightEquals(new LightSample(0.225f, 0, 0.1f), smoothLight(world, quad, 1, LightFace.Top, false));
+		assertLightEquals(LightSample.overworld(7, 0, 1), smoothLight(world, quad, 0, LightFace.Top, false));
+		assertLightEquals(LightSample.overworld(9, 0, 1), smoothLight(world, quad, 1, LightFace.Top, false));
 	}
 
 	private LightSample smoothLight(BlockContext world, BakedQuad quad, int vertex, LightFace face, boolean fullBlock) {

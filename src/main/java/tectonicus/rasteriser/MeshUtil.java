@@ -164,8 +164,13 @@ public class MeshUtil {
 				float shade = Chunk.getFaceFactor(lightStyle, quad.isShaded() ? lightDirection.lightFace : LightFace.Top);
 				flatLight = new Colour4f(shade, shade, shade, 1);
 			} else if (!smoothLit) {
-				float light = getFlatLight(world, rawChunk, x, y, z, quad, selfFull, nightLightAdjustment);
-				flatLight = new Colour4f(light, light, light, 1);
+				if (lightStyle == LightStyle.Day || (lightStyle == LightStyle.Night && !world.isNetherNightLighting())) {
+					flatLight = getFlatLightSample(world, rawChunk, x, y, z, quad, selfFull, nightLightAdjustment)
+							.toColour(lightStyle, world.useOldGrayscaleLighting());
+				} else {
+					float light = getFlatLight(world, rawChunk, x, y, z, quad, selfFull, nightLightAdjustment);
+					flatLight = new Colour4f(light, light, light, 1);
+				}
 			}
 			Colour4f tint = face.isTinted()
 					? getTintColor(model.getName(), rawChunk, world, x, y, z)
@@ -211,6 +216,18 @@ public class MeshUtil {
 		FaceDirection sampleDirection = quad.isShaded() ? lightDirection : surface;
 		return world.getLight(rawChunk, x + (outside ? sampleDirection.dx : 0),
 				y + (outside ? sampleDirection.dy : 0), z + (outside ? sampleDirection.dz : 0), lightFace, nightLightAdjustment);
+	}
+
+	static LightSample getFlatLightSample(BlockContext world, RawChunk rawChunk, int x, int y, int z,
+			BakedQuad quad, boolean fullBlock, float nightLightAdjustment) {
+		FaceDirection surface = faceDirection(quad.getDirection());
+		FaceDirection lightDirection = quad.getShadeDirectionOverride() == null
+				? surface : faceDirection(quad.getShadeDirectionOverride());
+		LightFace lightFace = quad.isShaded() ? lightDirection.lightFace : LightFace.Top;
+		boolean outside = (fullBlock || !quad.isShaded()) && (fullBlock || isFaceOnBlockBoundary(quad, surface));
+		FaceDirection direction = quad.isShaded() ? lightDirection : surface;
+		return world.getLightSample(rawChunk, x + (outside ? direction.dx : 0), y + (outside ? direction.dy : 0),
+				z + (outside ? direction.dz : 0), lightFace, nightLightAdjustment);
 	}
 
 	static Colour4f getShadedLightColour(LightSample sample, LightStyle style, LightFace face, boolean grayscale) {

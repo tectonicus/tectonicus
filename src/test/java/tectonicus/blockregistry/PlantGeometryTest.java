@@ -123,7 +123,8 @@ class PlantGeometryTest {
 				(proxy, method, args) -> switch (method.getName()) {
 					case "getBlock" -> (int) args[1] == x && (int) args[2] == y && (int) args[3] == z ? plant : air;
 					case "getLightStyle" -> LightStyle.Day;
-					case "isSmoothLit", "shouldCullSameBlockFaces" -> false;
+					case "isSmoothLit", "shouldCullSameBlockFaces", "useOldGrayscaleLighting" -> false;
+					case "getLightSample" -> tectonicus.chunk.LightSample.ambient(1);
 					case "getNightLightAdjustment" -> 0.0f;
 					case "getLight" -> 1.0f;
 					default -> throw new AssertionError("Unexpected world call: " + method.getName());

@@ -17,9 +17,14 @@ import tectonicus.TileCoord;
 import tectonicus.TileRenderer;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.cache.swap.HddTileListFactory;
+import tectonicus.chunk.NetherLightmap;
+import tectonicus.chunk.OverworldLightmap;
 import tectonicus.configuration.Configuration;
+import tectonicus.configuration.Dimension;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
+import tectonicus.configuration.LightStyle;
 import tectonicus.util.FileUtils;
 
 import java.io.File;
@@ -55,7 +60,7 @@ public class FileTileCache implements TileCache
 		tileCacheDir.mkdirs();
 		
 		// Verify the cache
-		final String cacheString = optionString + getMapString(map) + getLayerString(layer);
+		final String cacheString = optionString + getMapString(map) + getLayerString(map, layer);
 		if (isCacheValid(tileCacheDir, CacheUtil.hash(cacheString, hashAlgorithm), hashAlgorithm))
 		{
 			// Ok!
@@ -161,7 +166,7 @@ public class FileTileCache implements TileCache
 		return mapStr;
 	}
 		
-	private static String getLayerString(LayerConfig layer)
+	private static String getLayerString(DimensionConfig map, LayerConfig layer)
 	{
 		String layerStr = "";
 		
@@ -169,6 +174,13 @@ public class FileTileCache implements TileCache
 		layerStr += "useBiomeColours=" + layer.useBiomeColours() + "\n";
 		layerStr += "smoothLit=" + layer.isSmoothLit() + "\n";
 		layerStr += "oldGrayscaleLighting=" + layer.useOldGrayscaleLighting() + "\n";
+		layerStr += "overworldLightmap=" + OverworldLightmap.REVISION + "\n";
+		if (map.getDimension() == Dimension.NETHER && layer.getLightStyle() == LightStyle.Night) {
+			layerStr += "netherLightmapBrightness=" + layer.getLightmapBrightness(NetherLightmap.DEFAULT_BRIGHTNESS) + "\n";
+		} else {
+			float brightness = layer.getLightStyle().usesOverworldLightmap(false) ? layer.getLightmapBrightness() : 0;
+			layerStr += "lightmapBrightness=" + brightness + "\n";
+		}
 		layerStr += "sortTranslucentFaces=" + layer.isSortTranslucentFaces() + "\n";
 		layerStr += "useProceduralFluidTextures=" + layer.isProceduralFluidTextures() + "\n";
 		layerStr += "swampWaterTint=" + layer.getSwampWaterTint() + "\n";

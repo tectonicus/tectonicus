@@ -48,7 +48,8 @@ public interface BlockContext {
 	}
 
 	LightStyle getLightStyle();
-	float getNightLightAdjustment();
+	default float getNightLightAdjustment() { return 0; }
+	default boolean isNetherNightLighting() { return false; }
 	boolean isSmoothLit();
 	boolean useOldGrayscaleLighting();
 

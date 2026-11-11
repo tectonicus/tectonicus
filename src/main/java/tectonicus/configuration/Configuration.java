@@ -318,6 +318,9 @@ public class Configuration implements Callable<Configuration> {
 
 				log.debug("\t\trenderStyle: {}", l.getRenderStyle());
 				log.debug("\t\tlightStyle: {}", l.getLightStyle());
+				float defaultBrightness = m.getDimension() == Dimension.NETHER && l.getLightStyle() == LightStyle.Night
+						? tectonicus.chunk.NetherLightmap.DEFAULT_BRIGHTNESS : 0;
+				log.debug("\t\tlightmapBrightness: {}", l.getLightmapBrightness(defaultBrightness));
 				log.debug("\t\timageFormat: {}", l.getImageFormat());
 
 				if (l.getImageFormat() == ImageFormat.JPG)

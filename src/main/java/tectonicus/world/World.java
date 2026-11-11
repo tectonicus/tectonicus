@@ -38,6 +38,8 @@ import tectonicus.cache.CacheUtil;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.cache.PlayerSkinCache.CacheEntry;
 import tectonicus.chunk.Chunk;
+import tectonicus.chunk.OverworldLightmap;
+import tectonicus.chunk.NetherLightmap;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.LightSample;
 import tectonicus.chunk.ChunkLocator;
@@ -190,7 +192,9 @@ public class World implements BlockContext, AutoCloseable
 	@Getter
 	private boolean oldGrayscaleLighting;
 	@Getter
-	private float nightLightAdjustment;
+	private float lightmapBrightness;
+	private OverworldLightmap overworldLightmap = OverworldLightmap.forBrightness(0);
+	private NetherLightmap netherLightmap = NetherLightmap.forBrightness(NetherLightmap.DEFAULT_BRIGHTNESS);
 
 	private int defaultBlockId;
 	private String defaultBlockName = Block.AIR.getName();
@@ -384,7 +388,7 @@ public class World implements BlockContext, AutoCloseable
 
 			this.smoothLit = map.isSmoothLit();
 			this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
-			this.nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
+			applyLightmapBrightness(map);
 		} catch (RuntimeException | Error e) {
 			this.biomeCache.close();
 			throw e;
@@ -515,6 +519,7 @@ public class World implements BlockContext, AutoCloseable
 		flushGeometryCache();
 		smoothLit = options.isSmoothLit();
 		oldGrayscaleLighting = options.useOldGrayscaleLighting();
+		applyLightmapBrightness(options);
 		sortTranslucentFaces = options.isSortTranslucentFaces();
 		legacyWater = options.isLegacyWater();
 		minecraft10SwampColors = options.isMinecraft10SwampColors();
@@ -522,7 +527,27 @@ public class World implements BlockContext, AutoCloseable
 		swampWaterTint = options.getSwampWaterTint();
 		proceduralFluidTextures = options.isProceduralFluidTextures();
 		biomeBlendRadius = options.isBiomeBlendRadiusConfigured() ? options.getBiomeBlendRadius() : defaultBiomeBlendRadius;
-		nightLightAdjustment = smoothLit ? 0.1f : 0.0f;
+	}
+
+	private void applyLightmapBrightness(tectonicus.configuration.RenderOptions options) {
+		float brightness = options.getLightmapBrightness();
+		if (lightmapBrightness != brightness) {
+			overworldLightmap = OverworldLightmap.forBrightness(brightness);
+			lightmapBrightness = brightness;
+		}
+		if (dimension == Dimension.NETHER) {
+			float netherBrightness = options.getLightmapBrightness(NetherLightmap.DEFAULT_BRIGHTNESS);
+			if (netherLightmap.brightness() != netherBrightness)
+				netherLightmap = NetherLightmap.forBrightness(netherBrightness);
+		}
+	}
+
+	public float getNetherLightmapBrightness() {
+		return netherLightmap.brightness();
+	}
+
+	private NetherLightmap getNetherNightLightmap() {
+		return isNetherNightLighting() ? netherLightmap : null;
 	}
 
 	public void setLightStyle(LightStyle style)
@@ -536,7 +561,8 @@ public class World implements BlockContext, AutoCloseable
 		this.lightStyle = style;
 	}
 	
-	private boolean isNetherNightLighting() {
+	@Override
+	public boolean isNetherNightLighting() {
 		return dimension == Dimension.NETHER && lightStyle == LightStyle.Night;
 	}
 
@@ -1131,44 +1157,44 @@ public class World implements BlockContext, AutoCloseable
 		{
 			Chunk c = rawLoadedChunks.get(chunkCoord);
 			RawChunk raw = c != null ? c.getRawChunk() : null;
-			return Chunk.getLight(lightStyle, face, raw, x, y, z, nightLightAdjustment, isNetherNightLighting());
+			return Chunk.getLight(lightStyle, face, raw, x, y, z, overworldLightmap, getNetherNightLightmap());
 		}
 
 		Location loc = resolve(chunkCoord, x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
 		
-		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment, isNetherNightLighting());
+		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, overworldLightmap, getNetherNightLightmap());
 	}
 
 	@Override
 	public LightSample getLightSample(RawChunk rawChunk, int x, int y, int z, LightFace face, float nightLightAdjustment)
 	{
 		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
-			return Chunk.getLightSample(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment, isNetherNightLighting());
+			return Chunk.getLightSample(lightStyle, face, rawChunk, x, y, z, overworldLightmap, getNetherNightLightmap());
 
 		Location loc = resolve(rawChunk.getChunkCoord(), x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
-		return Chunk.getLightSample(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment, isNetherNightLighting());
+		return Chunk.getLightSample(lightStyle, face, raw, loc.x, loc.y, loc.z, overworldLightmap, getNetherNightLightmap());
 	}
 
 	@Override
 	public float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face)
 	{
-		return getLight(rawChunk, x, y, z, face, nightLightAdjustment);
+		return getLight(rawChunk, x, y, z, face, getNightLightAdjustment());
 	}
 
 	@Override
 	public float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face, float nightLightAdjustment)
 	{
 		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
-			return Chunk.getLight(lightStyle, face, rawChunk, x, y, z, nightLightAdjustment, isNetherNightLighting());
+			return Chunk.getLight(lightStyle, face, rawChunk, x, y, z, overworldLightmap, getNetherNightLightmap());
 
 		Location loc = resolve(rawChunk.getChunkCoord(), x, y, z);
 		Chunk c = rawLoadedChunks.get(loc.coord);
 		RawChunk raw = c != null ? c.getRawChunk() : null;
-		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, nightLightAdjustment, isNetherNightLighting());
+		return Chunk.getLight(lightStyle, face, raw, loc.x, loc.y, loc.z, overworldLightmap, getNetherNightLightmap());
 	}
 
 	/*

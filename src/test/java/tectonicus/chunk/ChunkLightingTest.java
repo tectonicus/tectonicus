@@ -21,9 +21,35 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 class ChunkLightingTest {
 	@ParameterizedTest
-	@CsvSource({"Day,Top,1", "Day,Bottom,0.5", "Day,NorthSouth,0.85", "Day,EastWest,0.7",
+	@CsvSource({"0,0,14,14,14", "7,0,19,19,25", "15,0,41,41,71", "0,7,78,61,43", "0,15,252,252,252"})
+	void nightUsesTheSharedLightmapForScalarColourAndGrayscale(int sky, int block, int red, int green, int blue) {
+		int height = Minecraft.getChunkHeight();
+		Minecraft.setChunkHeight(16);
+		try {
+			var chunk = new RawChunk();
+			chunk.setSkyLight(0, 0, 0, (byte) sky);
+			chunk.setBlockLight(0, 0, 0, (byte) block);
+			var sample = Chunk.getLightSample(LightStyle.Night, LightFace.Top, chunk, 0, 0, 0, 0.1f);
+			assertEquals(sky, sample.sky());
+			assertEquals(block, sample.block());
+			var colour = sample.toColour(LightStyle.Night);
+			assertEquals(red / 255.0f, colour.r, 0.000001f);
+			assertEquals(green / 255.0f, colour.g, 0.000001f);
+			assertEquals(blue / 255.0f, colour.b, 0.000001f);
+			var gray = sample.toColour(LightStyle.Night, true);
+			float grayscale = (red * 0.2126f + green * 0.7152f + blue * 0.0722f) / 255;
+			assertEquals(grayscale, gray.r, 0.000001f);
+			assertEquals(grayscale, Chunk.getLight(LightStyle.Night, LightFace.Top, chunk, 0, 0, 0, 0), 0.000001f);
+			assertEquals(gray.r, gray.g);
+			assertEquals(gray.r, gray.b);
+		} finally {
+			Minecraft.setChunkHeight(height);
+		}
+	}
+
+	@ParameterizedTest
+	@CsvSource({"Day,Top,0.98039216", "Day,Bottom,0.49019608", "Day,NorthSouth,0.83333333", "Day,EastWest,0.68627451",
 			"None,Top,1", "None,Bottom,0.5", "None,NorthSouth,0.85", "None,EastWest,0.7",
-			"Night,Top,0.1", "Night,Bottom,0.05", "Night,NorthSouth,0.095", "Night,EastWest,0.09",
 			"Cave,Top,0.1", "Cave,Bottom,0.05", "Cave,NorthSouth,0.095", "Cave,EastWest,0.09"})
 	void flatLightingRetainsEveryStyleAndFaceFactor(LightStyle style, LightFace face, float expected) {
 		assertEquals(expected, Chunk.getLight(style, face, null, 0, 0, 0, 0.1f), 0.000001f);
@@ -42,14 +68,13 @@ class ChunkLightingTest {
 	}
 
 	@ParameterizedTest
-	@EnumSource(LightFace.class)
-	void neighborsWithBlockLightBorrowOnlyMissingSkylight(LightFace face) {
-		LightSample center = sample(15, 12, 0.15f, face);
-		LightSample neighbor = sample(0, 5, 0.15f, face);
-		LightSample blended = Chunk.applySmoothLightFallback(neighbor, center, face, LightStyle.Night);
+	@EnumSource(value = LightStyle.class, names = {"Day", "Night"})
+	void neighborsWithBlockLightBorrowOnlyMissingSkylight(LightStyle style) {
+		LightSample center = LightSample.overworld(15, 12, 1);
+		LightSample neighbor = LightSample.overworld(0, 5, 0.7f);
+		LightSample blended = Chunk.applySmoothLightFallback(neighbor, center, LightFace.EastWest, style);
 
-		assertEquals(center.sky(), blended.sky());
-		assertEquals(neighbor.block(), blended.block());
+		assertEquals(LightSample.overworld(15, 5, 0.7f), blended);
 	}
 
 	@ParameterizedTest
@@ -62,75 +87,24 @@ class ChunkLightingTest {
 	}
 
 	@ParameterizedTest
-	@EnumSource(LightFace.class)
-	void lightAtOrBelowLevelTwoDoesNotSpread(LightFace face) {
-		LightSample neighbor = sample(0, 0, 0.15f, face);
+	@EnumSource(value = LightStyle.class, names = {"Day", "Night"})
+	void lightAtOrBelowLevelTwoDoesNotSpread(LightStyle style) {
+		LightSample neighbor = LightSample.overworld(0, 0, 0.7f);
 		for (int level = 0; level <= 2; level++) {
-			LightSample center = sample(level, level, 0.15f, face);
-			assertSame(neighbor, Chunk.applySmoothLightFallback(neighbor, center, face, LightStyle.Night));
+			LightSample center = LightSample.overworld(level, level, 0.7f);
+			assertSame(neighbor, Chunk.applySmoothLightFallback(neighbor, center, LightFace.EastWest, style));
 		}
 	}
 
 	@ParameterizedTest
-	@EnumSource(LightFace.class)
-	void eitherLightComponentAboveLevelTwoEnablesFallback(LightFace face) {
-		LightSample neighbor = sample(0, 0, 0.15f, face);
-		LightSample skyCenter = sample(3, 0, 0.15f, face);
-		LightSample blockCenter = sample(0, 3, 0.15f, face);
+	@EnumSource(value = LightStyle.class, names = {"Day", "Night"})
+	void eitherLightComponentAboveLevelTwoEnablesFallback(LightStyle style) {
+		LightSample neighbor = LightSample.overworld(0, 0, 0.7f);
+		LightSample skyCenter = LightSample.overworld(3, 0, 0.7f);
+		LightSample blockCenter = LightSample.overworld(0, 3, 0.7f);
 
-		assertEquals(skyCenter, Chunk.applySmoothLightFallback(neighbor, skyCenter, face, LightStyle.Night));
-		assertEquals(blockCenter, Chunk.applySmoothLightFallback(neighbor, blockCenter, face, LightStyle.Night));
-	}
-
-	@ParameterizedTest
-	@EnumSource(LightFace.class)
-	void daySamplesSeparateLightComponentsAndPreserveDirectionalBrightness(LightFace face) {
-		int previousHeight = Minecraft.getChunkHeight();
-		Minecraft.setChunkHeight(16);
-		try {
-			RawChunk chunk = new RawChunk();
-			chunk.setSkyLight(0, 0, 0, (byte) 15);
-			chunk.setBlockLight(0, 0, 0, (byte) 0);
-			LightSample sample = Chunk.getLightSample(LightStyle.Day, face, chunk, 0, 0, 0, 0);
-			assertEquals(daySample(15, 0, face), sample);
-			assertEquals(sample, Chunk.getLightSample(LightStyle.Day, face, chunk, 0, 0, 0, 0.3f));
-			assertEquals(Chunk.getLight(LightStyle.Day, face, chunk, 0, 0, 0, 0), sample.toColour(LightStyle.Day).r, 0.000001f);
-		} finally {
-			Minecraft.setChunkHeight(previousHeight);
-		}
-	}
-
-	@ParameterizedTest
-	@EnumSource(LightFace.class)
-	void dayFallbackUsesTheSameRawLevelThresholdAsNight(LightFace face) {
-		LightSample dark = daySample(0, 0, face);
-		for (int level = 0; level <= 2; level++)
-			assertSame(dark, Chunk.applySmoothLightFallback(dark, daySample(level, level, face), face, LightStyle.Day));
-		LightSample skyCenter = daySample(3, 0, face);
-		LightSample blockCenter = daySample(0, 3, face);
-		assertEquals(skyCenter, Chunk.applySmoothLightFallback(dark, skyCenter, face, LightStyle.Day));
-		assertEquals(blockCenter, Chunk.applySmoothLightFallback(dark, blockCenter, face, LightStyle.Day));
-	}
-
-	@ParameterizedTest
-	@EnumSource(LightFace.class)
-	void dayFallbackPreservesExistingBlockLight(LightFace face) {
-		LightSample center = daySample(15, 12, face);
-		LightSample neighbor = daySample(0, 5, face);
-		LightSample result = Chunk.applySmoothLightFallback(neighbor, center, face, LightStyle.Day);
-		assertEquals(center.sky(), result.sky());
-		assertEquals(neighbor.block(), result.block());
-		assertEquals(neighbor.ambient(), result.ambient());
-	}
-
-	private LightSample daySample(int sky, int block, LightFace face) {
-		float faceFactor = switch (face) {
-			case Top -> 1.0f;
-			case Bottom -> 0.5f;
-			case NorthSouth -> 0.85f;
-			case EastWest -> 0.7f;
-		};
-		return new LightSample(sky * 0.7f / 15 * faceFactor, block / 15.0f * faceFactor, 0.3f * faceFactor);
+		assertEquals(skyCenter, Chunk.applySmoothLightFallback(neighbor, skyCenter, LightFace.EastWest, style));
+		assertEquals(blockCenter, Chunk.applySmoothLightFallback(neighbor, blockCenter, LightFace.EastWest, style));
 	}
 
 	private LightSample sample(int sky, int block, float ambient, LightFace face) {
@@ -140,6 +114,6 @@ class ChunkLightingTest {
 			case NorthSouth -> 0.95f;
 			case EastWest -> 0.9f;
 		};
-		return new LightSample(sky * 0.24f / 16 * faceFactor, block * 1.4f / 16 * faceFactor, ambient * faceFactor);
+		return LightSample.overworld(sky, block, ambient * faceFactor);
 	}
 }

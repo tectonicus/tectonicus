@@ -400,7 +400,7 @@ public class XmlConfigurationParser
 
 	private record DimensionEntry(Element element, WorldConfig world, String id, boolean legacy) {}
 
-	private static final List<String> RENDER_ATTRIBUTES = List.of("useBiomeColours", "useSmoothLighting", "useOldGrayscaleLighting",
+	private static final List<String> RENDER_ATTRIBUTES = List.of("useBiomeColours", "useSmoothLighting", "useOldGrayscaleLighting", "lightmapBrightness",
 			"sortTranslucentFaces", "legacyWater", "minecraft10SwampColors", "swampWaterTint", "useProceduralFluidTextures", "biomeBlendRadius");
 
 	private static List<DimensionEntry> normalizeDimensions(Element root, Element defaults, Configuration config) {
@@ -511,6 +511,14 @@ public class XmlConfigurationParser
 		options.setUseBiomeColours(getBoolean(render, "useBiomeColours", getBoolean(element, "useBiomeColours", true)));
 		options.setSmoothLit(getBoolean(render, "useSmoothLighting", getBoolean(element, "useSmoothLighting", true)));
 		options.setOldGrayscaleLighting(getBoolean(render, "useOldGrayscaleLighting", false));
+		String brightness = getString(render, "lightmapBrightness");
+		if (StringUtils.isNotBlank(brightness)) {
+			try {
+				options.setLightmapBrightness(Float.parseFloat(brightness.trim()));
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException("Invalid lightmapBrightness '" + brightness + "'; expected a number between 0 and 1", e);
+			}
+		}
 		options.setSortTranslucentFaces(getBoolean(render, "sortTranslucentFaces", true));
 		options.setLegacyWater(getBoolean(render, "legacyWater", false));
 		options.setMinecraft10SwampColors(getBoolean(render, "minecraft10SwampColors", false));

@@ -240,8 +240,12 @@ public final class FlameParticles {
 		float size = appearance.size() * (small ? 0.5f : 1);
 		LightSample sample = world.getLightSample(chunk, (int) Math.floor(position.x), (int) Math.floor(position.y),
 				(int) Math.floor(position.z), LightFace.Top, world.getNightLightAdjustment());
-		Colour4f light = new LightSample(sample.sky(), Math.min(1, sample.block() + appearance.emission()),
-				sample.ambient(), sample.netherColour()).toColour(world.getLightStyle(), world.useOldGrayscaleLighting());
+		Colour4f light = sample.overworldLightmap() != null
+				? LightSample.overworld(sample.sky(), Math.min(15, sample.block() + appearance.emission() * 15),
+						sample.ambient(), sample.overworldLightmap())
+						.toColour(world.getLightStyle(), world.useOldGrayscaleLighting())
+				: new LightSample(sample.sky(), Math.min(1, sample.block() + appearance.emission()),
+						sample.ambient(), sample.netherColour()).toColour(world.getLightStyle(), world.useOldGrayscaleLighting());
 		if (sample.netherColour() != null && appearance.emission() > 0)
 			light = new Colour4f(Math.min(1, light.r + appearance.emission()), Math.min(1, light.g + appearance.emission()),
 					Math.min(1, light.b + appearance.emission()), 1);

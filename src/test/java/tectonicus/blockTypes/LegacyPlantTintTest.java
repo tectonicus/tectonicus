@@ -42,13 +42,14 @@ class LegacyPlantTintTest {
 
 	@ParameterizedTest
 	@CsvSource({"lily,0,4", "stem,0,8", "stem,7,8"})
-	void rendersWithWorldTintWithoutAnExtractionCache(String plant, int growth, int vertexCount) {
+	void rendersWithPlantTintWithoutAnExtractionCache(String plant, int growth, int vertexCount) {
 		RawChunk chunk = new RawChunk();
 		chunk.setBlockData(8, 8, 8, (byte)growth);
 		Colour4f tint = new Colour4f(0.2f, 0.4f, 0.8f);
 		BlockContext world = (BlockContext)Proxy.newProxyInstance(BlockContext.class.getClassLoader(),
 				new Class<?>[]{BlockContext.class}, (proxy, method, args) -> switch (method.getName()) {
 					case "getGrassColor" -> {
+						assertEquals("stem", plant, "Lily pads must not request a biome tint");
 						assertEquals(chunk.getChunkCoord(), args[0]);
 						assertEquals(8, args[1]);
 						assertEquals(8, args[2]);
@@ -84,8 +85,11 @@ class LegacyPlantTintTest {
 		Geometry geometry = new Geometry(rasteriser);
 		type.addEdgeGeometry(8, 8, 8, world, null, chunk, geometry);
 		assertEquals(vertexCount, colors.size());
+		Vector4f expected = plant.equals("lily")
+				? new Vector4f(16 / 255.0f, 64 / 255.0f, 24 / 255.0f, 1)
+				: new Vector4f(0.1f, 0.2f, 0.4f, 1);
 		for (Vector4f color : colors)
-			assertEquals(new Vector4f(0.1f, 0.2f, 0.4f, 1), color);
+			assertEquals(expected, color);
 		assertEquals(0.2f, tint.r, "Lighting must not mutate the world's shared tint");
 		assertEquals(0.4f, tint.g);
 		assertEquals(0.8f, tint.b);
@@ -95,6 +99,6 @@ class LegacyPlantTintTest {
 		type.addEdgeGeometry(8, 8, 8, world, null, chunk, geometry);
 		assertEquals(vertexCount, colors.size());
 		for (Vector4f color : colors)
-			assertEquals(new Vector4f(0.5f, 0.5f, 0.5f, 1), color);
+			assertEquals(plant.equals("lily") ? expected : new Vector4f(0.5f, 0.5f, 0.5f, 1), color);
 	}
 }

@@ -35,6 +35,25 @@ class WaterTest extends FluidTestFixture {
 	private final Texture overlay = texture(16, 16);
 	private final Water water = new Water("Water", sprite(still), sprite(flowing), sprite(overlay), 0);
 
+	@ParameterizedTest
+	@CsvSource({"Day,0", "Day,0.5", "Day,1", "Night,0", "Night,0.5", "Night,1"})
+	void waterCombinesRawSkyAndBlockLevelsBeforeLookup(LightStyle style, float brightness) {
+		var lightmap = tectonicus.chunk.OverworldLightmap.forBrightness(brightness);
+		lightStyle = style;
+		putWater(8, 8, 8, 0, false);
+		basin(8, 8, 8);
+		light.put(new Position(8, 8, 8), LightSample.overworld(7, 5, 1, lightmap));
+		light.put(new Position(8, 9, 8), LightSample.overworld(11, 0, 1, lightmap));
+		render(8, 8, 8);
+		var expected = lightmap.sample(style, 11, 5);
+		for (var vertex : top(still)) {
+			assertEquals(waterTint.r * expected.r, vertex.colour().x, 0.000001f);
+			assertEquals(waterTint.g * expected.g, vertex.colour().y, 0.000001f);
+			assertEquals(waterTint.b * expected.b, vertex.colour().z, 0.000001f);
+			assertEquals(0.95f, vertex.colour().w);
+		}
+	}
+
 	@Test
 	void sourcePoolUsesStillTextureBiomeTintAndTransparentMesh() {
 		for (int x = 7; x <= 9; x++)
@@ -250,13 +269,14 @@ class WaterTest extends FluidTestFixture {
 		putWater(8, 8, 8, 0, false);
 		basin(8, 8, 8);
 		defaultLight = LightSample.ambient(0);
-		light.put(new Position(8, 9, 8), new LightSample(0.2f, 0.4f, 0.05f));
+		light.put(new Position(8, 9, 8), LightSample.overworld(7, 4, 1));
+		light.put(new Position(8, 8, 8), LightSample.overworld(0, 0, 1));
 		lightStyle = LightStyle.Night;
 		render(8, 8, 8);
 		Vector4f colour = top(still).getFirst().colour();
-		assertEquals(0.2f * (0.05f + 0.2f * 0.48f + 0.4f), colour.x, 0.00001f);
-		assertEquals(0.4f * (0.05f + 0.2f * 0.48f + 0.4f * 0.847f), colour.y, 0.00001f);
-		assertEquals(0.8f * (0.05f + 0.2f + 0.4f * 0.612f), colour.z, 0.00001f);
+		assertEquals(0.2f * 49 / 255, colour.x, 0.00001f);
+		assertEquals(0.4f * 39 / 255, colour.y, 0.00001f);
+		assertEquals(0.8f * 37 / 255, colour.z, 0.00001f);
 		light.clear();
 		render(8, 8, 8);
 		assertEquals(new Vector4f(0, 0, 0, 0.95f), top(still).getFirst().colour());

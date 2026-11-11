@@ -20,6 +20,7 @@ import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LightStyle;
 import tectonicus.configuration.LayerConfig;
 import tectonicus.configuration.DimensionConfig;
+import tectonicus.configuration.Dimension;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -104,6 +105,21 @@ class FileTileCacheSharedHashesTest {
 	}
 
 	@Test
+	void outdatedLightmapRevisionInvalidatesOnlyItsLayer() throws Exception {
+		prime(day, Set.of(first, second));
+		prime(night, Set.of(first, second));
+		Path settings = directory.resolve("saved").resolve(day.getId()).resolve("tiles.cache");
+		String current = Files.readString(settings);
+		String revision = "overworldLightmap=" + tectonicus.chunk.OverworldLightmap.REVISION + "\n";
+		assertTrue(current.contains(revision));
+		Files.writeString(settings, current.replace(revision, "overworldLightmap=0\n"));
+		try (TileHashCache hashes = currentHashes(new AtomicInteger(), (byte) 1)) {
+			assertEquals(Set.of(first, second), changed(day, hashes));
+			assertEquals(Set.of(), changed(night, hashes));
+		}
+	}
+
+	@Test
 	void aWorldChangeInvalidatesBothLayersOnTheNextRender() throws Exception {
 		prime(day, Set.of(first, second));
 		prime(night, Set.of(first, second));
@@ -112,6 +128,30 @@ class FileTileCacheSharedHashesTest {
 			assertEquals(Set.of(first, second), changed(day, hashes));
 			assertEquals(Set.of(first, second), changed(night, hashes));
 			assertEquals(2, calculations.get());
+		}
+	}
+
+	@Test
+	void brightnessChangesInvalidateDayAndNightTiles() throws Exception {
+		prime(day, Set.of(first, second));
+		prime(night, Set.of(first, second));
+		day.setLightmapBrightness(0.5f);
+		night.setLightmapBrightness(1);
+		try (TileHashCache hashes = currentHashes(new AtomicInteger(), (byte) 1)) {
+			assertEquals(Set.of(first, second), changed(day, hashes));
+			assertEquals(Set.of(first, second), changed(night, hashes));
+		}
+	}
+
+	@Test
+	void netherTilesReuseTheDefaultAtHalfBrightnessAndInvalidateAtZero() throws Exception {
+		map.setDimension(Dimension.NETHER);
+		prime(night, Set.of(first, second));
+		try (TileHashCache hashes = currentHashes(new AtomicInteger(), (byte) 1)) {
+			night.setLightmapBrightness(0.5f);
+			assertEquals(Set.of(), changed(night, hashes));
+			night.setLightmapBrightness(0);
+			assertEquals(Set.of(first, second), changed(night, hashes));
 		}
 	}
 

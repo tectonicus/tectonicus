@@ -111,7 +111,8 @@ class GrassOverlayTest {
 				(proxy, method, args) -> switch (method.getName()) {
 					case "getBlock" -> (int) args[1] == 0 && (int) args[2] == 0 && (int) args[3] == 0 ? grass : air;
 					case "getLightStyle" -> LightStyle.Day;
-					case "isSmoothLit", "shouldCullSameBlockFaces" -> false;
+					case "isSmoothLit", "shouldCullSameBlockFaces", "useOldGrayscaleLighting" -> false;
+					case "getLightSample" -> tectonicus.chunk.LightSample.ambient(1);
 					case "getNightLightAdjustment" -> 0.0f;
 					case "getLight" -> 1.0f;
 					case "getGrassColor" -> new Colour4f(0.4f, 0.8f, 0.2f, 1);

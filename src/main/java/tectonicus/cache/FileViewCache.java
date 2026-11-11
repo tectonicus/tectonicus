@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.ChunkCoord;
+import tectonicus.configuration.Dimension;
 import tectonicus.configuration.ViewConfig;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.renderer.PerspectiveCamera;
@@ -118,6 +119,12 @@ public class FileViewCache
 		hashAlgorithm.update(Integer.toString(VIEW_RENDERER_VERSION).getBytes());
 		hashAlgorithm.update(("useProgrammerArt=" + world.isUsingProgrammerArt() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		hashAlgorithm.update(("useBiomeColours=" + world.useBiomeColours() + "\n").getBytes());
+		hashAlgorithm.update(("smoothLit=" + world.isSmoothLit() + "\n").getBytes());
+		hashAlgorithm.update(("oldGrayscaleLighting=" + world.useOldGrayscaleLighting() + "\n").getBytes());
+		hashAlgorithm.update(("overworldLightmap=" + tectonicus.chunk.OverworldLightmap.REVISION + "\n").getBytes());
+		hashAlgorithm.update(("lightmapBrightness=" + world.getLightmapBrightness() + "\n").getBytes());
+		if (world.getDimension() == Dimension.NETHER)
+			hashAlgorithm.update(("netherLightmapBrightness=" + world.getNetherLightmapBrightness() + "\n").getBytes());
 		hashAlgorithm.update(("useProceduralFluidTextures=" + world.useProceduralFluidTextures() + "\n").getBytes());
 		hashAlgorithm.update(("swampWaterTint=" + world.getSwampWaterTint() + "\n").getBytes());
 		hashAlgorithm.update(("minecraft10SwampColors=" + world.isMinecraft10SwampColors() + "\n").getBytes());

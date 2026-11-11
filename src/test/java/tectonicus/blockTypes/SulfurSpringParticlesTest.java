@@ -125,16 +125,16 @@ class SulfurSpringParticlesTest extends FluidTestFixture {
 	@Test
 	void particlesUseLightingAndTheirCorrectRenderPasses() {
 		pool(8, 4, 8, 4);
-		defaultLight = new LightSample(0.2f, 0.4f, 0.05f);
+		defaultLight = LightSample.overworld(7, 4, 1);
 		lightStyle = LightStyle.Night;
 		renderSpring("wet");
 		assertEquals(Set.of(Geometry.MeshType.Transparent, Geometry.MeshType.AlphaTest), meshTypes);
 		for (Texture texture : List.of(gas, bubble)) {
 			assertFalse(centers(texture).isEmpty());
 			for (Vertex vertex : vertices.get(texture)) {
-				assertEquals(0.546f, vertex.colour().x, 0.00001f);
-				assertEquals(0.4848f, vertex.colour().y, 0.00001f);
-				assertEquals(0.4948f, vertex.colour().z, 0.00001f);
+				assertEquals(49 / 255.0f, vertex.colour().x, 0.00001f);
+				assertEquals(39 / 255.0f, vertex.colour().y, 0.00001f);
+				assertEquals(37 / 255.0f, vertex.colour().z, 0.00001f);
 				assertTrue(vertex.colour().w > 0.5f && vertex.colour().w <= 1);
 			}
 		}

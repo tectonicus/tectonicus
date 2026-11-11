@@ -139,7 +139,7 @@ class GeyserParticlesTest extends FluidTestFixture {
 		pool(8, 3);
 		cameraAngle = 2.3f;
 		cameraElevation = elevation;
-		defaultLight = new LightSample(0.2f, 0.4f, 0.05f);
+		defaultLight = LightSample.overworld(7, 4, 1);
 		lightStyle = LightStyle.Night;
 		renderGeyser("continuous");
 		Vector3f facing = new Vector3f((float) (Math.cos(cameraAngle) * Math.cos(elevation)),
@@ -150,9 +150,9 @@ class GeyserParticlesTest extends FluidTestFixture {
 				Vector3f edge1 = new Vector3f(rendered.get(i + 1).position()).sub(rendered.get(i).position());
 				Vector3f edge2 = new Vector3f(rendered.get(i + 2).position()).sub(rendered.get(i + 1).position());
 				assertEquals(-1, edge1.cross(edge2).normalize().dot(facing), 0.00001f);
-				assertEquals(0.546f, rendered.get(i).colour().x, 0.00001f);
-				assertEquals(0.4848f, rendered.get(i).colour().y, 0.00001f);
-				assertEquals(0.4948f, rendered.get(i).colour().z, 0.00001f);
+				assertEquals(49 / 255.0f, rendered.get(i).colour().x, 0.00001f);
+				assertEquals(39 / 255.0f, rendered.get(i).colour().y, 0.00001f);
+				assertEquals(37 / 255.0f, rendered.get(i).colour().z, 0.00001f);
 				assertEquals(1, rendered.get(i).colour().w);
 			}
 		}

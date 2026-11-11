@@ -23,6 +23,8 @@ public class RenderOptions {
 	private boolean useBiomeColours = true;
 
 	private boolean oldGrayscaleLighting;
+	@Setter(lombok.AccessLevel.NONE)
+	private Float lightmapBrightness;
 	private boolean sortTranslucentFaces = true;
 	private boolean legacyWater;
 	private boolean minecraft10SwampColors;
@@ -35,6 +37,20 @@ public class RenderOptions {
 	private boolean biomeBlendRadiusConfigured;
 
 	public boolean useBiomeColours() { return useBiomeColours; }
+
+	public float getLightmapBrightness() {
+		return getLightmapBrightness(0);
+	}
+
+	public float getLightmapBrightness(float defaultBrightness) {
+		return lightmapBrightness == null ? defaultBrightness : lightmapBrightness;
+	}
+
+	public void setLightmapBrightness(float brightness) {
+		if (!Float.isFinite(brightness) || brightness < 0 || brightness > 1)
+			throw new IllegalArgumentException("lightmapBrightness must be between 0 and 1");
+		lightmapBrightness = brightness;
+	}
 
 	public void setBiomeBlendRadius(int radius) {
 		if (radius < 0 || radius > MAX_BIOME_BLEND_RADIUS)

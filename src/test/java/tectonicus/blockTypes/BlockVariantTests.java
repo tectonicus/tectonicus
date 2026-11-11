@@ -11,7 +11,6 @@ package tectonicus.blockTypes;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateModel;
 import tectonicus.blockregistry.BlockVariant;
@@ -69,27 +68,35 @@ class BlockVariantTests
 		assertThat(states, is(equalTo(testStates)));
 	}
 
-	@EnabledIfSystemProperty(named = "os.name", matches = "Windows 10")
 	@Test
 	void testDeserializeVariantSingleModel() throws JacksonException {
-		System.out.println(System.getProperty("os.name") + " " + System.getProperty("os.version"));
 		JsonNode variant = mapper.readTree("{ \"model\": \"acacia_fence_n\", \"y\": 90, \"uvlock\": true }");
 		BlockRegistry registry = new BlockRegistry();
 		List<BlockStateModel> models = registry.deserializeBlockStateModels(variant);
 
 		assertThat(models.size(), is(equalTo(1)));
-		assertThat(models.get(0).getModel(), is("acacia_fence_n"));
+		BlockStateModel model = models.getFirst();
+		assertThat(model.getModel(), is("acacia_fence_n"));
+		assertThat(model.getYRotation(), is(90));
+		assertThat(model.isUvlock(), is(true));
 	}
 
-	@EnabledIfSystemProperty(named = "os.name", matches = "Windows 10")
 	@Test
 	void testDeserializeVariantMultipleModels() throws JacksonException {
-		JsonNode variant = mapper.readTree("[{ \"model\": \"grass_normal\" }, { \"model\": \"grass_normal\", \"y\": 90 },{ \"model\": \"grass_normal\", \"y\": 180 },{ \"model\": \"grass_normal\", \"y\": 270 }]");
+		JsonNode variant = mapper.readTree("""
+				[
+				  {"model": "grass_normal"},
+				  {"model": "grass_normal", "y": 90},
+				  {"model": "grass_normal", "y": 180},
+				  {"model": "grass_normal", "y": 270}
+				]
+				""");
 		BlockRegistry registry = new BlockRegistry();
 		List<BlockStateModel> models = registry.deserializeBlockStateModels(variant);
-		
-		assertThat(models.size(), is(equalTo(4)));
-		assertThat(models.get(2).getModel(), is("grass_normal"));
+
+		assertThat(models.stream().map(BlockStateModel::getYRotation).toList(), is(List.of(0, 90, 180, 270)));
+		for (BlockStateModel model : models)
+			assertThat(model.getModel(), is("grass_normal"));
 	}
 
 	//TODO: This test is very outdated

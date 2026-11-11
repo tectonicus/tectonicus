@@ -50,11 +50,7 @@ import java.util.Map;
 
 public class Chunk
 {
-	private static final float NIGHT_BLOCK_LIGHT_SCALE = 0.95f;
-	private static final float NIGHT_SKY_LIGHT_SCALE = 0.24f;
-	private static final float DAY_SKY_LIGHT_SCALE = 0.7f;
-	private static final float DAY_AMBIENT_LIGHT = 0.3f;
-	private static final float SMOOTH_NIGHT_BLOCK_LIGHT_SCALE = 1.4f;
+	private static final float NETHER_BLOCK_LIGHT_SCALE = 1.4f;
 	private final ChunkCoord coord;
 	
 	private final BiomeCache biomeCache;
@@ -492,48 +488,25 @@ public class Chunk
 
 	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z, float nightLightAdjustment, boolean netherNight)
 	{
-		if (netherNight && lightStyle == LightStyle.Night) {
+		return getLight(lightStyle, face, c, x, y, z, nightLightAdjustment, netherNight, OverworldLightmap.forBrightness(0));
+	}
+
+	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z, float nightLightAdjustment, boolean netherNight, OverworldLightmap overworldLightmap) {
+		return getLight(lightStyle, face, c, x, y, z, overworldLightmap, netherNight ? NetherLightmap.DEFAULT : null);
+	}
+
+	public static float getLight(LightStyle lightStyle, LightFace face, RawChunk c, final int x, final int y, final int z,
+			OverworldLightmap overworldLightmap, NetherLightmap netherLightmap) {
+		if (lightStyle.usesOverworldLightmap(netherLightmap != null))
+			return NetherLightmap.grayscale(getLightSample(lightStyle, face, c, x, y, z, overworldLightmap, netherLightmap).toColour(lightStyle));
+		if (netherLightmap != null && lightStyle == LightStyle.Night) {
 			int level = c == null || y < 0 || y >= Minecraft.getChunkHeight() ? 0 : c.getBlockLight(x, y, z);
-			return NetherLightmap.grayscale(NetherLightmap.colour(level)) * getFaceFactor(lightStyle, face);
+			return NetherLightmap.grayscale(netherLightmap.sample(level)) * getFaceFactor(lightStyle, face);
 		}
 		float result = 0;
 
 		switch (lightStyle)
 		{
-			case Day:
-			{
-				if (c == null || y >= Minecraft.getChunkHeight() || y < 0)
-				{
-					result = 1.0f;
-				}
-				else
-				{
-					final int skyLight = c.getSkyLight(x, y, z);
-					final int blockLight = c.getBlockLight(x, y, z);
-
-					// MAX_LIGHT is the number of possible levels (0..15), not the brightest level.
-					// Normalize against 15 so full skylight reaches full daylight without help from block light.
-					result = Util.clamp((skyLight * DAY_SKY_LIGHT_SCALE + blockLight) / (RawChunk.MAX_LIGHT - 1.0f) + DAY_AMBIENT_LIGHT, 0, 1);
-				}
-
-				break;
-			}
-			case Night:
-			{
-				if (c == null || y >= Minecraft.getChunkHeight() || y < 0)
-				{
-					result = 0.1f;
-				}
-				else
-				{
-					final float skyLight = getSkyLight(c, x, y, z);
-					final float blockLight = getBlockLight(c, x, y, z);
-					
-					result = Util.clamp((skyLight * NIGHT_SKY_LIGHT_SCALE + blockLight * NIGHT_BLOCK_LIGHT_SCALE) / RawChunk.MAX_LIGHT + nightLightAdjustment, 0, 1);
-				}
-
-				break;
-			}
 			case Cave:
 			{
 				if (c == null || y >= Minecraft.getChunkHeight() || y < 0)
@@ -573,40 +546,42 @@ public class Chunk
 
 	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
 			final int x, final int y, final int z, float nightLightAdjustment, boolean netherNight) {
-		if (netherNight && lightStyle == LightStyle.Night) {
-			int level = c == null || y < 0 || y >= Minecraft.getChunkHeight() ? 0 : c.getBlockLight(x, y, z);
-			return new LightSample(0, level * SMOOTH_NIGHT_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT, 0,
-					NetherLightmap.colour(level)).scale(getFaceFactor(lightStyle, face));
-		}
-		if ((lightStyle != LightStyle.Day && lightStyle != LightStyle.Night) || c == null || y >= Minecraft.getChunkHeight() || y < 0)
-			return LightSample.ambient(getLight(lightStyle, face, c, x, y, z, nightLightAdjustment));
+		return getLightSample(lightStyle, face, c, x, y, z, nightLightAdjustment, netherNight, OverworldLightmap.forBrightness(0));
+	}
 
-		float faceFactor = getFaceFactor(lightStyle, face);
-		if (lightStyle == LightStyle.Day) {
-			float sky = getSkyLight(c, x, y, z) * DAY_SKY_LIGHT_SCALE / (RawChunk.MAX_LIGHT - 1.0f);
-			float block = getBlockLight(c, x, y, z) / (RawChunk.MAX_LIGHT - 1.0f);
-			return new LightSample(sky * faceFactor, block * faceFactor, DAY_AMBIENT_LIGHT * faceFactor);
+	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
+			final int x, final int y, final int z, float nightLightAdjustment, boolean netherNight, OverworldLightmap overworldLightmap) {
+		return getLightSample(lightStyle, face, c, x, y, z, overworldLightmap, netherNight ? NetherLightmap.DEFAULT : null);
+	}
+
+	public static LightSample getLightSample(LightStyle lightStyle, LightFace face, RawChunk c,
+			final int x, final int y, final int z, OverworldLightmap overworldLightmap, NetherLightmap netherLightmap) {
+		if (lightStyle.usesOverworldLightmap(netherLightmap != null)) {
+			boolean outside = c == null || y < 0 || y >= Minecraft.getChunkHeight();
+			return LightSample.overworld(outside ? 15 : c.getSkyLight(x, y, z),
+					outside ? 0 : c.getBlockLight(x, y, z), getFaceFactor(lightStyle, face), overworldLightmap);
 		}
-		float sky = getSkyLight(c, x, y, z) * NIGHT_SKY_LIGHT_SCALE / RawChunk.MAX_LIGHT;
-		float block = getBlockLight(c, x, y, z) * SMOOTH_NIGHT_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT;
-		return new LightSample(sky * faceFactor, block * faceFactor, nightLightAdjustment * faceFactor);
+		if (netherLightmap != null && lightStyle == LightStyle.Night) {
+			int level = c == null || y < 0 || y >= Minecraft.getChunkHeight() ? 0 : c.getBlockLight(x, y, z);
+			return new LightSample(0, level * NETHER_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT, 0,
+					netherLightmap.sample(level)).scale(getFaceFactor(lightStyle, face));
+		}
+		return LightSample.ambient(getLight(lightStyle, face, c, x, y, z, overworldLightmap, netherLightmap));
 	}
 
 	public static LightSample applySmoothLightFallback(LightSample sample, LightSample center, LightFace face, LightStyle lightStyle) {
-		// Match Minecraft's smoothBlend rule in our scaled light units: only borrow
-		// light when the face center has sky or block light above level 2.
-		float faceFactor = getFaceFactor(lightStyle, face);
-		float maxLight = lightStyle == LightStyle.Day ? RawChunk.MAX_LIGHT - 1.0f : RawChunk.MAX_LIGHT;
-		float skyScale = lightStyle == LightStyle.Day ? DAY_SKY_LIGHT_SCALE : NIGHT_SKY_LIGHT_SCALE;
-		float blockScale = lightStyle == LightStyle.Day ? 1.0f : SMOOTH_NIGHT_BLOCK_LIGHT_SCALE;
-		float skyThreshold = 2 * skyScale / maxLight * faceFactor;
-		float blockThreshold = 2 * blockScale / maxLight * faceFactor;
-		if (center.sky() <= skyThreshold && center.block() <= blockThreshold || sample.sky() != 0)
-			return sample;
-
-		// An entirely unlit neighbor borrows both components; a neighbor with block
-		// light borrows only skylight. Ambient brightness remains independent.
-		return new LightSample(center.sky(), sample.block() == 0 ? center.block() : sample.block(), sample.ambient(), sample.block() == 0 ? center.netherColour() : sample.netherColour());
+		if (sample.overworldLightmap() != null) {
+			if ((center.sky() <= 2 && center.block() <= 2) || sample.sky() != 0)
+				return sample;
+			return LightSample.overworld(center.sky(), sample.block() == 0 ? center.block() : sample.block(),
+					sample.ambient(), sample.overworldLightmap());
+		}
+		if (sample.netherColour() != null && sample.block() == 0) {
+			float threshold = 2 * NETHER_BLOCK_LIGHT_SCALE / RawChunk.MAX_LIGHT * getFaceFactor(lightStyle, face);
+			if (center.block() > threshold)
+				return new LightSample(0, center.block(), sample.ambient(), center.netherColour());
+		}
+		return sample;
 	}
 
 	public static float getFaceFactor(LightStyle lightStyle, LightFace face) {
