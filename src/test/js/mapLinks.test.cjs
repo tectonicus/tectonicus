@@ -160,7 +160,6 @@ test('editing the layer switches base layers and uses the target map height', ()
         context[name + 'ToggleControl'] = control;
     }
     context.compassControl = control;
-    context.toggleMenuControl = {setToggles() {}};
     context.CreateCompassControl = () => control;
     context.tippy = () => {};
     context.stats = {peakMemoryBytes: 0};

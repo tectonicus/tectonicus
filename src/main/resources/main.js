@@ -12,6 +12,8 @@ let changingBaseLayer = false;
 let mapInfoTippy = null;
 let mapInfoContent = '';
 let controlTooltips = [];
+const useDesktopToggleMenu = typeof useToggleMenu === 'undefined' || useToggleMenu;
+const narrowToggleLayout = useDesktopToggleMenu ? null : window.matchMedia?.('(max-width: 767px)');
 
 function bindControlTooltips() {
     controlTooltips = controlTooltips.filter(tooltip => {
@@ -230,9 +232,6 @@ async function mainAsync()
             worldControl.addTo(mymap);
         }
         updateWorldLayerControl(startLayer);
-        if (typeof useToggleMenu === 'undefined' || useToggleMenu) {
-            toggleMenuControl = CreateToggleMenuControl().addTo(mymap);
-        }
         CreateResetViewButton(mymap);
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
         viewToggleControl = CreateToggleControl('views', 'Picture.png', viewMarkers, viewsInitiallyVisible, 'viewControlChecked');
@@ -256,7 +255,10 @@ async function mainAsync()
 	mymap.on('baselayerchange', onBaseLayerChange);
 	mymap.on('zoomend', onProjectionChanged);
     mymap.on('moveend', onProjectionChanged);
+    const updateToggleLayout = () => updateMarkerControls(activeBaseLayer);
+    narrowToggleLayout?.addEventListener('change', updateToggleLayout);
     mymap.on('unload', () => {
+        narrowToggleLayout?.removeEventListener('change', updateToggleLayout);
         for (const tooltip of controlTooltips) tooltip.destroy();
         controlTooltips = [];
     });
@@ -275,43 +277,25 @@ respawnAnchorMarkers = [];
 beaconMarkers = [];
 containerMarkers = [];
 
-function onBaseLayerChange(e) {
-    changingBaseLayer = true;
-    const targetView = {...e.layer.viewPosition};
-    activeBaseLayer = e.layer;
-    controlState = {...e.layer.controlState, ...markerVisibilityOverrides.get(e.layer.worldId)};
-    selectedWorldLayers.set(e.layer.worldId, e.layer.layerId);
-    if (mymap.setMaxZoom) {
-        mymap.setMaxZoom(e.layer.maxZoom ?? maxZoom);
-    }
-    updateWorldLayerControl(e.layer);
-    if (worldControl) {
-        worldControl.setWorld(e.layer.worldId);
-    }
-
-	mymap.setView(targetView.startPoint, targetView.zoom, {animate: false});
-    changingBaseLayer = false;
-
-	changeBackgroundColor(e.layer.backgroundColor);
-    const mapStyle = document.querySelector('#map').style;
-    mapStyle.setProperty('--minecraft-font', 'url("' + worldImageUrl('Font.png', e.layer) + '")');
-    mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
-
+function updateMarkerControls(layer) {
     const toggles = [
         [spawnToggleControl, controlState.spawnControlChecked,
-            e.layer.worldVectors.hasOwnProperty('spawnPosition') && e.layer.dimension !== "NETHER"],
-        [signToggleControl, controlState.signControlChecked, e.layer.signs.length],
-        [viewToggleControl, controlState.viewControlChecked, e.layer.views.length],
-        [playerToggleControl, controlState.playerControlChecked, e.layer.players.length],
-        [portalToggleControl, controlState.portalControlChecked, e.layer.portals.length],
-        [bedToggleControl, controlState.bedControlChecked, e.layer.beds.length],
-        [respawnAnchorToggleControl, controlState.respawnAnchorControlChecked, e.layer.anchors.length],
-        [beaconToggleControl, controlState.beaconControlChecked, e.layer.beacons.length],
-        [containerToggleControl, controlState.containerControlChecked, e.layer.containers.length]
+            layer.worldVectors.hasOwnProperty('spawnPosition') && layer.dimension !== "NETHER"],
+        [signToggleControl, controlState.signControlChecked, layer.signs.length],
+        [viewToggleControl, controlState.viewControlChecked, layer.views.length],
+        [playerToggleControl, controlState.playerControlChecked, layer.players.length],
+        [portalToggleControl, controlState.portalControlChecked, layer.portals.length],
+        [bedToggleControl, controlState.bedControlChecked, layer.beds.length],
+        [respawnAnchorToggleControl, controlState.respawnAnchorControlChecked, layer.anchors.length],
+        [beaconToggleControl, controlState.beaconControlChecked, layer.beacons.length],
+        [containerToggleControl, controlState.containerControlChecked, layer.containers.length]
     ];
-    if (toggleMenuControl) {
+    if (useDesktopToggleMenu || narrowToggleLayout?.matches) {
+        toggleMenuControl ??= CreateToggleMenuControl().addTo(mymap);
         toggleMenuControl.setToggles(toggles.filter(([, , available]) => available));
     } else {
+        toggleMenuControl?.remove();
+        toggleMenuControl = null;
         for (const [toggle, checked, available] of toggles) {
             toggle.remove();
             if (available) {
@@ -345,6 +329,31 @@ function onBaseLayerChange(e) {
         duration: [100, 75],
     });
     bindControlTooltips();
+}
+
+function onBaseLayerChange(e) {
+    changingBaseLayer = true;
+    const targetView = {...e.layer.viewPosition};
+    activeBaseLayer = e.layer;
+    controlState = {...e.layer.controlState, ...markerVisibilityOverrides.get(e.layer.worldId)};
+    selectedWorldLayers.set(e.layer.worldId, e.layer.layerId);
+    if (mymap.setMaxZoom) {
+        mymap.setMaxZoom(e.layer.maxZoom ?? maxZoom);
+    }
+    updateWorldLayerControl(e.layer);
+    if (worldControl) {
+        worldControl.setWorld(e.layer.worldId);
+    }
+
+	mymap.setView(targetView.startPoint, targetView.zoom, {animate: false});
+    changingBaseLayer = false;
+
+	changeBackgroundColor(e.layer.backgroundColor);
+    const mapStyle = document.querySelector('#map').style;
+    mapStyle.setProperty('--minecraft-font', 'url("' + worldImageUrl('Font.png', e.layer) + '")');
+    mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
+
+    updateMarkerControls(e.layer);
 
 	if (e.layer.dimension === "NETHER") {
         destroyMarkers(spawnMarkers);

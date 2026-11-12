@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
-async function createViewer(contents, fragment = '', options = {}) {
+async function createViewer(contents, fragment = '', {matchMedia, ...options} = {}) {
     let currentFragment = fragment;
     const handlers = {};
     const controls = new Set();
@@ -46,7 +46,7 @@ async function createViewer(contents, fragment = '', options = {}) {
     };
     const context = vm.createContext({
         contents, maxZoom: 8, showSpawn: false, ...options,
-        window: Object.assign(new EventTarget(), {history: {replaceState(state, title, url) { this.url = url; }}}),
+        window: Object.assign(new EventTarget(), {matchMedia, history: {replaceState(state, title, url) { this.url = url; }}}),
         document: {querySelector: selector => selector === '#map' ? mapElement : null},
         MutationObserver: class { observe() {} },
         tippy() {}, stats: {peakMemoryBytes: 0},
@@ -64,6 +64,7 @@ async function createViewer(contents, fragment = '', options = {}) {
     });
     function Control(definition = {}) { Object.assign(this, definition); }
     Control.prototype.addTo = function() {
+        this.remove();
         this._map = map;
         this._container = this.onAdd ? this.onAdd(map) : element();
         controls.add(this);
@@ -164,6 +165,45 @@ test('legacy toggle mode exposes buttons without a menu and keeps visibility acr
     assert.equal(controls.has(spawn), true);
     assert.equal(spawn.getContainer().checked, true);
     assert.equal(evaluate('toggleMenuControl'), null);
+});
+
+test('narrow viewports use the popout even when wide viewports use individual toggles', async () => {
+    const narrowLayout = Object.assign(new EventTarget(), {matches: true});
+    const {evaluate, controls, map, mapElement} = await createViewer([
+        dimension('a', 'Survival', ['Day'], {
+            worldVectors: {startView: {x: 0, y: 64, z: 0}, spawnPosition: {x: 0, y: 64, z: 0}},
+            controlState: {spawnControlChecked: false}
+        })
+    ], '', {useToggleMenu: false, matchMedia: () => narrowLayout});
+    const spawn = evaluate('spawnToggleControl');
+    const menu = evaluate('toggleMenuControl');
+    assert.equal(controls.has(menu), true);
+    assert.equal(spawn.getContainer().parentNode, menu._items);
+    spawn.getContainer().onclick();
+
+    map.setView([10, 20], 4);
+    const center = map.getCenter();
+    narrowLayout.matches = false;
+    narrowLayout.dispatchEvent(new Event('change'));
+    assert.equal(controls.has(menu), false);
+    assert.equal(mapElement.clickListener, undefined);
+    assert.equal(controls.has(spawn), true);
+    assert.equal(spawn.getContainer().parentNode, undefined);
+    assert.equal(spawn.getContainer().checked, true);
+    assert.equal(map.getCenter(), center);
+    assert.equal(map.getZoom(), 4);
+
+    narrowLayout.matches = true;
+    narrowLayout.dispatchEvent(new Event('change'));
+    const reopenedMenu = evaluate('toggleMenuControl');
+    assert.equal(controls.has(reopenedMenu), true);
+    assert.equal(spawn.getContainer().parentNode, reopenedMenu._items);
+    assert.equal(spawn.getContainer().checked, true);
+
+    map.fireEvent('unload');
+    narrowLayout.matches = false;
+    narrowLayout.dispatchEvent(new Event('change'));
+    assert.equal(evaluate('toggleMenuControl'), reopenedMenu);
 });
 
 test('marker menu previews on mouse hover and stays pinned after click until an outside map click', async () => {
