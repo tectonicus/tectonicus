@@ -603,7 +603,7 @@ public class TileRenderer
 					
 					currentRegion = regionCoord;
 					regionHashStore.startRegion(regionCoord);
-					regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
+					regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads(), world::getMapContentHash);
 				}
 				
 				Chunk c = null;
@@ -636,7 +636,7 @@ public class TileRenderer
 						// For every region...
 						regionHashStore.startRegion(region.getRegionCoord());
 						
-						RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads());
+						RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads(), world::getMapContentHash);
 						
 						for (ChunkCoord coord : region.getContainedChunkCoords()) {
 							// For every chunk coord...

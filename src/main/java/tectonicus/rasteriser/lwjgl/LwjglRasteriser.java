@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -117,6 +117,7 @@ import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.opengl.GL11.glColorMask;
 import static org.lwjgl.opengl.GL11.glCullFace;
+import static org.lwjgl.opengl.GL11.glDeleteTextures;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glEnable;
@@ -453,6 +454,11 @@ public class LwjglRasteriser implements Rasteriser {
 	public Texture createTexture(BufferedImage[] mips, TextureFilter filter) {
 		final int id = LwjglTextureUtils.createTexture(mips, filter);
 		return new LwjglTexture(id, mips[0].getWidth(), mips[0].getHeight());
+	}
+
+	@Override
+	public void destroyTexture(Texture texture) {
+		glDeleteTextures(((LwjglTexture) texture).getId());
 	}
 	
 	public Mesh createMesh(Texture texture) {

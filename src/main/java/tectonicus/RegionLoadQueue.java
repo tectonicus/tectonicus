@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntFunction;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static tectonicus.util.FindEntityUtil.findBeds;
@@ -39,12 +40,14 @@ import static tectonicus.util.FindEntityUtil.findViews;
 public class RegionLoadQueue
 {
 	private final ThreadPoolExecutor executor;
+	private final IntFunction<byte[]> mapContentHash;
         
         private final AtomicInteger numberOfRegionsStarted;
         public static final AtomicInteger numberOfHashesAdded = new AtomicInteger();
         
-	public RegionLoadQueue(final int numThreads)
+	public RegionLoadQueue(final int numThreads, IntFunction<byte[]> mapContentHash)
 	{
+		this.mapContentHash = mapContentHash;
                 numberOfRegionsStarted = new AtomicInteger();
             
 		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(16), new ResubmitHandler());
@@ -71,7 +74,7 @@ public class RegionLoadQueue
 		}
 	}
 	
-	private static class LoadTask implements Callable<Void> {
+	private class LoadTask implements Callable<Void> {
 		private final Chunk chunk;
 		private final RegionHashStore regionHashStore;
 		private final MessageDigest hashAlgorithm;
@@ -99,7 +102,7 @@ public class RegionLoadQueue
 		@Override
 		public Void call() {
 			try {
-				chunk.calculateHash(hashAlgorithm);
+				chunk.calculateHash(hashAlgorithm, mapContentHash);
 				regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
 				
 				numberOfHashesAdded.incrementAndGet();

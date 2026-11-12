@@ -21,7 +21,6 @@ import org.jnbt.ListTag;
 import org.jnbt.LongArrayTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.NBTInputStream.Compression;
-import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import tectonicus.BlockIds;
@@ -56,6 +55,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import static tectonicus.raw.ItemNbtParser.parseComponentsTag;
 import static tectonicus.raw.ItemNbtParser.parseTagTag;
@@ -107,7 +107,7 @@ public class RawChunk {
 	private Map<String, DecoratedPotEntity> decoratedPots;
 
 	private List<PaintingEntity> paintings;
-	private List<PaintingEntity> itemFrames;
+	private List<ItemFrameEntity> itemFrames;
 	private List<ContainerEntity> containers;
 	private List<ArmorStandEntity> armorStands;
 	private List<CushionEntity> cushions;
@@ -138,7 +138,7 @@ public class RawChunk {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag chunkTag) {
 				parseEntities(NbtUtil.getChild(chunkTag, "Entities", ListTag.class),
-						worldInfo.version().getNumVersion() >= VERSION_18.getNumVersion());
+						worldInfo.version().getNumVersion() >= VERSION_18.getNumVersion(), true);
 			}
 		}
 	}
@@ -203,7 +203,8 @@ public class RawChunk {
 
 					ListTag entitiesTag = NbtUtil.getChild(level, "Entities", ListTag.class);
 					if (entitiesTag != null && !entitiesTag.getValue().isEmpty()) {
-						parseEntities(entitiesTag, worldInfo.version().getNumVersion() >= VERSION_18.getNumVersion());
+						parseEntities(entitiesTag, worldInfo.version().getNumVersion() >= VERSION_18.getNumVersion(),
+								dataVersion >= VERSION_13.getDataVersion());
 					}
 
 					ListTag tileEntitiesTag = NbtUtil.getChild(level, "TileEntities", ListTag.class);
@@ -247,7 +248,7 @@ public class RawChunk {
 		chunkZ = NbtUtil.getInt(tag, "zPos", 0);
 	}
 
-	private void parseEntities(ListTag entitiesTag, boolean is118) {
+	private void parseEntities(ListTag entitiesTag, boolean is118, boolean usesSixWayFrameFacing) {
 		if (entitiesTag == null)
 			return;
 
@@ -267,7 +268,9 @@ public class RawChunk {
 					parseCushion(entity);
 				}
                                 
-				if (painting || itemFrame) {
+				if (itemFrame) {
+					parseItemFrame(entity, id, is118, usesSixWayFrameFacing);
+				} else if (painting) {
 					ByteTag oldDir = NbtUtil.getChild(entity, "Dir", ByteTag.class);
 					ByteTag dir = NbtUtil.getChild(entity, "Direction", ByteTag.class);
 
@@ -326,30 +329,11 @@ public class RawChunk {
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
-
-					if (painting) {
-						StringTag motiveTag = NbtUtil.getChild(entity, "variant", StringTag.class);
-						if (motiveTag == null) {
-							motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
-						}
-						paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, motiveTag.getValue(), direction));
-					} else if (itemFrame) {
-						String item = "";
-						Map<String, Tag> map = entity.getValue();
-						CompoundTag itemTag = (CompoundTag) map.get("Item");
-						if (itemTag != null) {
-							ShortTag itemIdTag = NbtUtil.getChild(itemTag, "id", ShortTag.class);
-							if (itemIdTag == null) {
-								StringTag stringItemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
-								item = stringItemIdTag.getValue();
-							} else {
-								if (itemIdTag.getValue() == 358)
-									item = "minecraft:filled_map";
-							}
-						}
-
-						itemFrames.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, item, direction));
+					StringTag motiveTag = NbtUtil.getChild(entity, "variant", StringTag.class);
+					if (motiveTag == null) {
+						motiveTag = NbtUtil.getChild(entity, "Motive", StringTag.class);
 					}
+					paintings.add(new PaintingEntity(x, y, z, localX, localY, localZ, id, motiveTag.getValue(), direction));
 				} else if (armorStand) {
 					ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
 					ListTag rotationTag = NbtUtil.getChild(entity, "Rotation", ListTag.class);
@@ -451,6 +435,66 @@ public class RawChunk {
 		return new org.joml.Vector3f(((Number) angles.getValue().get(0).getValue()).floatValue(),
 				((Number) angles.getValue().get(1).getValue()).floatValue(),
 				((Number) angles.getValue().get(2).getValue()).floatValue());
+	}
+
+	private void parseItemFrame(CompoundTag entity, String id, boolean is118, boolean usesSixWayFacing) {
+		ByteTag facing = NbtUtil.getChild(entity, "Facing", ByteTag.class);
+		int direction;
+		if (facing == null) {
+			direction = NbtUtil.getByte(entity, "Direction", (byte) -1);
+			if (direction == -1) {
+				int oldDirection = NbtUtil.getByte(entity, "Dir", (byte) -1);
+				direction = switch (oldDirection) {
+					case 0 -> 2;
+					case 2 -> 0;
+					default -> oldDirection;
+				};
+			}
+		} else {
+			direction = facing.getValue();
+		}
+		// Pre-1.13 Facing values index the four horizontal directions.
+		if (facing == null || !usesSixWayFacing) {
+			direction = switch (direction) {
+				case 0 -> 3;
+				case 1 -> 4;
+				case 2 -> 2;
+				case 3 -> 5;
+				default -> -1;
+			};
+		}
+		if (direction < 0 || direction > 5)
+			return;
+
+		int x, y, z;
+		IntArrayTag blockPos = NbtUtil.getChild(entity, "block_pos", IntArrayTag.class);
+		if (blockPos != null && blockPos.getValue().length == 3) {
+			int[] pos = blockPos.getValue();
+			x = pos[0];
+			y = pos[1];
+			z = pos[2];
+		} else {
+			IntTag tileX = NbtUtil.getChild(entity, "TileX", IntTag.class);
+			IntTag tileY = NbtUtil.getChild(entity, "TileY", IntTag.class);
+			IntTag tileZ = NbtUtil.getChild(entity, "TileZ", IntTag.class);
+			if (tileX == null || tileY == null || tileZ == null)
+				return;
+			x = tileX.getValue();
+			y = tileY.getValue();
+			z = tileZ.getValue();
+		}
+		if (facing == null) {
+			// Direction and Dir saves store the supporting block's position.
+			switch (direction) {
+				case 2 -> z--;
+				case 3 -> z++;
+				case 4 -> x--;
+				case 5 -> x++;
+			}
+		}
+
+		int localY = is118 ? y + Math.abs(minSectionY) * SECTION_HEIGHT : y;
+		itemFrames.add(new ItemFrameEntity(x, y, z, x - chunkX * WIDTH, localY, z - chunkZ * DEPTH, id, direction, entity));
 	}
 
 	private void parseCushion(CompoundTag entity) {
@@ -1494,7 +1538,7 @@ public class RawChunk {
 		return Collections.unmodifiableMap(banners);
 	}
 
-	public List<PaintingEntity> getItemFrames() {
+	public List<ItemFrameEntity> getItemFrames() {
 		return itemFrames;
 	}
 
@@ -1515,6 +1559,10 @@ public class RawChunk {
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm) {
+		return calculateHash(hashAlgorithm, id -> null);
+	}
+
+	public byte[] calculateHash(MessageDigest hashAlgorithm, IntFunction<byte[]> mapContentHash) {
 		hashAlgorithm.reset();
 
 		for (Section s : sections) {
@@ -1552,6 +1600,19 @@ public class RawChunk {
 			hashAlgorithm.update(sign.getText4().getBytes());
 		}
 
+		if (!itemFrames.isEmpty()) {
+			hashAlgorithm.update("itemFrames-v1".getBytes(StandardCharsets.UTF_8));
+			update(hashAlgorithm, new int[] {itemFrames.size()});
+			for (ItemFrameEntity frame : itemFrames) {
+				Integer mapId = frame.getMapId();
+				byte[] contentHash = mapId == null ? null : mapContentHash.apply(mapId);
+				update(hashAlgorithm, new int[] {frame.getX(), frame.getY(), frame.getZ(), frame.getDirection(),
+						frame.getRotation(), frame.isGlow() ? 1 : 0, frame.isFilledMap() ? 1 : 0,
+						mapId == null ? -1 : mapId, contentHash == null ? 0 : contentHash.length});
+				if (contentHash != null)
+					hashAlgorithm.update(contentHash);
+			}
+		}
 		return hashAlgorithm.digest();
 	}
 	

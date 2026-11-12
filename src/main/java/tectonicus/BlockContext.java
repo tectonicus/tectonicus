@@ -21,6 +21,7 @@ import tectonicus.raw.Biome;
 import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
+import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.Colour4f;
 
@@ -54,6 +55,7 @@ public interface BlockContext {
 	boolean useOldGrayscaleLighting();
 
 	TexturePack getTexturePack();
+	default SubTexture getMapTexture(int mapId) { return null; }
 	default float getCameraAngleRad() { return (float)Math.PI / 4.0f; }
 	default float getCameraElevationRad() { return (float)Math.PI / 4.0f; }
 

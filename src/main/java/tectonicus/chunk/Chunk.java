@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
 
 public class Chunk
 {
@@ -76,11 +77,11 @@ public class Chunk
 	
 	public ChunkCoord getCoord() { return coord; }
 	
-	public void calculateHash(MessageDigest hashAlgorithm)
+	public void calculateHash(MessageDigest hashAlgorithm, IntFunction<byte[]> mapContentHash)
 	{
 		if (rawChunk != null && hash == null)
 		{
-			hash = rawChunk.calculateHash(hashAlgorithm);
+			hash = rawChunk.calculateHash(hashAlgorithm, mapContentHash);
 		}
 	}
 	

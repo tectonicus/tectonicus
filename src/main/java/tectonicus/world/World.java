@@ -72,6 +72,7 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.Geometry;
+import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
@@ -105,6 +106,7 @@ import java.util.concurrent.TimeUnit;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
 import static tectonicus.Version.VERSIONS_9_TO_11;
+import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_15;
@@ -179,6 +181,7 @@ public class World implements BlockContext, AutoCloseable
 	
 	@Getter
 	private final TexturePack texturePack;
+	private final SavedMaps savedMaps;
 	
 	private final RegionCache regionCache;
 	private final ChunkLocator chunkLocator;
@@ -310,6 +313,10 @@ public class World implements BlockContext, AutoCloseable
 				usingProgrammerArt,
 				map.getModJars(), levelDat.getDataPacks());
 		this.textureVersion = texturePack.getVersion();
+		// Pre-1.9 saves have no version name in level.dat. Use the configured game's assets.
+		boolean legacyMapPalette = version == VERSION_UNKNOWN && (textureVersion.getNumVersion() <= VERSION_5.getNumVersion()
+				|| textureVersion == VERSIONS_6_TO_8 && !texturePack.getZipStack().hasFile("assets/minecraft/textures/blocks/ice_packed.png"));
+		savedMaps = new SavedMaps(worldDir.toPath(), rasteriser, legacyMapPalette);
 		this.defaultBiomeBlendRadius = BiomeColorBlender.resolveRadius(map, version, textureVersion);
 		this.biomeBlendRadius = defaultBiomeBlendRadius;
 		this.biomeSampler = new BiomeSampler(levelDat.getWorldSeed(), version, dimension);
@@ -397,7 +404,21 @@ public class World implements BlockContext, AutoCloseable
 
 	@Override
 	public void close() {
-		biomeCache.close();
+		try {
+			flushGeometryCache();
+			savedMaps.close();
+		} finally {
+			biomeCache.close();
+		}
+	}
+
+	@Override
+	public SubTexture getMapTexture(int mapId) {
+		return savedMaps.getTexture(mapId);
+	}
+
+	public byte[] getMapContentHash(int mapId) {
+		return savedMaps.getContentHash(mapId);
 	}
 	
 	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
