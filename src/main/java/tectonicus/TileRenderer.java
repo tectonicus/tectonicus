@@ -843,7 +843,7 @@ public class TileRenderer
 			{
 				trimmedTiles.add(c);
 				count++;
-				if (count > maxTiles)
+				if (count == maxTiles)
 					break;
 			}
 			return trimmedTiles;
