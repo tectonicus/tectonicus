@@ -3,11 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const layerGroup = require('./leafletLayerGroup.cjs');
 
 function viewer() {
     const context = vm.createContext({
         contents: [], window: new EventTarget(),
-        L: {map: () => ({}), CRS: {Simple: {}}}
+        L: {map: () => ({}), layerGroup, CRS: {Simple: {}}}
     });
     for (const file of ['containers.js', 'marker.js', 'main.js']) {
         const source = fs.readFileSync(path.join(__dirname, '../../main/resources', file), 'utf8')

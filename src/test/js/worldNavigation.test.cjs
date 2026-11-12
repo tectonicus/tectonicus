@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const layerGroup = require('./leafletLayerGroup.cjs');
 
 async function createViewer(contents, fragment = '', {matchMedia, ...options} = {}) {
     let currentFragment = fragment;
@@ -54,7 +55,8 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
         getQueryParams: () => ({}),
         getFragmentParams: () => Object.fromEntries(new URLSearchParams(currentFragment)),
         WorldCoord: function(x, y, z) { Object.assign(this, {x, y, z}); },
-        MinecraftProjection: function() {
+        MinecraftProjection: function(worldVectors) {
+            this.worldVectors = worldVectors;
             this.worldToMap = position => [position.x, position.z];
             this.mapToWorld = point => ({x: point.lat, z: point.lng});
         },
@@ -97,7 +99,9 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
         return Layer;
     };
     context.L = {
-        map: () => map, CRS: {Simple: {}}, TileLayer, Control,
+        map: () => map, layerGroup, CRS: {Simple: {}}, TileLayer, Control,
+        icon: options => options,
+        marker: (point, options) => ({point, options, bindTooltip() { return this; }}),
         setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },
         DomUtil: {toFront() {}, create(tag, className, parent) {
             const node = Object.assign(element(), {tag, className});
@@ -118,6 +122,7 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
     }
     context.CreateResetViewButton = () => {};
     context.CreateCompassControl = () => new Control();
+    context.bindMarkerPopup = (marker, html) => Object.assign(marker, {html});
     await context.mainAsync();
     return {
         context, map, controls, mapElement,
@@ -139,31 +144,57 @@ function dimension(id, worldId, layerNames = ['Day', 'Night'], extra = {}) {
 }
 
 test('legacy toggle mode exposes buttons without a menu and keeps visibility across layer and world changes', async () => {
+    const worldVectors = {startView: {x: 0, y: 64, z: 0}, spawnPosition: {x: 0, y: 64, z: 0}};
     const viewer = await createViewer([
         dimension('a', 'Survival', ['Day', 'Night'], {
-            worldVectors: {startView: {x: 0, y: 64, z: 0}, spawnPosition: {x: 0, y: 64, z: 0}},
-            controlState: {spawnControlChecked: false}, images: 'World0/Images/'
+            worldVectors, controlState: {spawnControlChecked: false}, images: 'World0/Images/'
+        }),
+        dimension('nether', 'Survival', ['Nether'], {
+            worldVectors, controlState: {spawnControlChecked: true},
+            layers: [{id: 'nether_0', name: 'Nether', dimension: 'NETHER'}]
         }),
         dimension('b', 'Creative')
-    ], '', {useToggleMenu: false});
-    const {evaluate, context, controls, mapElement} = viewer;
+    ], '', {useToggleMenu: false, showSpawn: true});
+    const {evaluate, context, controls, map, mapElement} = viewer;
     const spawn = evaluate('spawnToggleControl');
+    const group = evaluate('markerGroups.spawnControlChecked');
+    const [dayMarker] = group.getLayers();
+    assert.ok(dayMarker);
     assert.equal(evaluate('toggleMenuControl'), null);
     assert.equal(mapElement.clickListener, undefined);
     assert.equal(controls.has(spawn), true);
     assert.equal(spawn.getContainer().parentNode, undefined);
     assert.equal(spawn.getContainer().checked, false);
+    assert.equal(map.layers.has(dayMarker), false);
     spawn.getContainer().onclick();
     assert.equal(evaluate('controlState.spawnControlChecked'), true);
+    assert.equal(map.layers.has(dayMarker), true);
+    spawn.getContainer().onclick();
+    assert.equal(map.layers.has(dayMarker), false);
+    assert.deepEqual(group.getLayers(), [dayMarker]);
+    spawn.getContainer().onclick();
+    assert.equal(map.layers.has(dayMarker), true);
+
     evaluate("selectBaseLayer(tileLayers.get('a_1'))");
     assert.equal(controls.has(spawn), true);
     assert.equal(spawn.getContainer().checked, true);
     assert.equal(spawn.getContainer().src, 'World0/Images/SpawnCompass.png');
+    const [nightMarker] = group.getLayers();
+    assert.equal(map.layers.has(dayMarker), false);
+    assert.equal(map.layers.has(nightMarker), true);
+    evaluate("selectBaseLayer(tileLayers.get('nether_0'))");
+    assert.equal(controls.has(spawn), false);
+    assert.deepEqual(group.getLayers(), []);
+    assert.equal(map.layers.has(nightMarker), false);
+
+    evaluate("selectBaseLayer(tileLayers.get('a_1'))");
     context.switchWorld('Creative');
     assert.equal(controls.has(spawn), false);
+    assert.deepEqual(group.getLayers(), []);
     context.switchWorld('Survival');
     assert.equal(controls.has(spawn), true);
     assert.equal(spawn.getContainer().checked, true);
+    assert.equal(map.layers.has(group.getLayers()[0]), true);
     assert.equal(evaluate('toggleMenuControl'), null);
 });
 
@@ -238,27 +269,27 @@ test('marker menu rebuilds available toggles without losing their state or pinni
     const {context, evaluate, map, mapElement} = await createViewer([dimension('a', 'Survival')]);
     const menu = evaluate('toggleMenuControl');
     const [button, panel] = menu.getContainer().children;
-    let added = 0;
-    let removed = 0;
-    const toggle = context.CreateToggleControl('signs', 'Sign.png', [{
-        addTo(target) { assert.equal(target, map); added++; },
-        remove() { removed++; }
-    }], false, 'signControlChecked');
+    const group = evaluate('markerGroups.signControlChecked');
+    const marker = {};
+    group.addLayer(marker);
+    context.setMarkerVisibility('signControlChecked', true);
+    const toggle = context.CreateToggleControl('signs', 'Sign.png', false, 'signControlChecked');
     menu.setToggles([[toggle, true]]);
     button.onclick();
     assert.equal(menu.getContainer().style.display, '');
     assert.equal(menu._items.children.length, 1);
     const input = toggle.getContainer();
     input.onclick();
-    assert.equal(removed, 1);
+    assert.equal(map.layers.has(marker), false);
     assert.equal(input['aria-pressed'], 'false');
     assert.equal(evaluate('controlState.signControlChecked'), false);
     assert.equal(panel.hidden, false);
     input.onclick();
-    assert.equal(added, 1);
+    assert.equal(map.layers.has(marker), true);
     menu.setToggles([[toggle, false]]);
     assert.equal(menu._items.children.length, 1);
     assert.equal(toggle.getContainer().checked, false);
+    assert.equal(map.layers.has(marker), true);
     assert.equal(panel.hidden, false);
     menu.setToggles([]);
     assert.equal(menu._items.children.length, 0);
@@ -490,7 +521,7 @@ test('world switches update control images, font and enchanted glint without cha
         assert.equal(viewer.evaluate('activeBaseLayer.localizationsUrl'), `Scripts/${id}/localizations.json`);
         assert.equal(viewer.mapElement.style['--minecraft-font'], `url("${id}/Images/Font.png")`);
         assert.equal(viewer.mapElement.style['--enchanted-glint'], `url("${id}/Images/EnchantedGlint.png")`);
-        assert.equal(viewer.evaluate('CreateToggleControl("containers", "Chest.png", [], true).addTo(mymap).getContainer().src'),
+        assert.equal(viewer.evaluate('CreateToggleControl("containers", "Chest.png", true, "containerControlChecked").addTo(mymap).getContainer().src'),
             `${id}/Images/Chest.png`);
     }
 });

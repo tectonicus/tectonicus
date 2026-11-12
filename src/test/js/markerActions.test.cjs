@@ -3,16 +3,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const layerGroup = require('./leafletLayerGroup.cjs');
 
 function viewer() {
     const markers = [];
     const context = vm.createContext({
         window: Object.assign(new EventTarget(), {navigator: {}}),
         URL, URLSearchParams,
-        L: {map: () => ({}), CRS: {Simple: {}}, icon: options => options,
+        L: {map: () => ({}), layerGroup, CRS: {Simple: {}}, icon: options => options,
             marker: () => {
                 const marker = {bindPopup(html) { this.html = html; return this; },
-                    bindTooltip() { return this; }, remove() {}};
+                    bindTooltip() { return this; }};
                 markers.push(marker);
                 return marker;
             }}
@@ -55,7 +56,7 @@ test('every positioned marker gets the three copy actions outside its popup cont
     vm.runInContext('showSpawn = true;', context);
     for (const refresh of ['SpawnMarker', 'SignMarkers', 'ViewMarkers', 'BedMarkers',
         'RespawnAnchorMarkers', 'BeaconMarkers', 'PortalMarkers', 'ContainerMarkers']) {
-        context['refresh' + refresh](layer, false);
+        context['refresh' + refresh](layer);
     }
     context.createPlayerMarker({name: 'Alex', worldPos: pos, donation: ''}, [0, 0], layer);
     assert.equal(markers.length, 11);

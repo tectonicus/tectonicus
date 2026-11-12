@@ -152,13 +152,13 @@ function CreateToggleMenuControl() {
 }
 
 // Creates a toggle box to turn on and off a set of markers
-function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
+function CreateToggleControl(text, image, startEnabled, stateKey) {
 	let toggleControl = L.Control.extend({
 		options: {
 			position: 'topright'
 		},
 
-		onAdd: function (map) {
+		onAdd: function () {
 			let container = L.DomUtil.create('input', 'leaflet-bar leaflet-control leaflet-control-custom button');
 			container.type = "image";
 			container.src = worldImageUrl(image);
@@ -169,18 +169,9 @@ function CreateToggleControl(text, image, markers, startEnabled, stateKey) {
 
 			container.onclick = function () {
 				this.checked = !this.checked;
-                if (stateKey) {
-                    setMarkerVisibility(stateKey, this.checked);
-                }
+				setMarkerVisibility(stateKey, this.checked);
 
 				SetToggleBg(this);
-
-				for (const marker of markers) {
-					if (!this.checked)
-						marker.remove();
-					else
-						marker.addTo(map);
-				}
 
 				if (this.checked) {
                     this._tippy.setContent('Hide ' + text);

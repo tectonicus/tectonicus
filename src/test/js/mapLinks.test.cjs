@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const layerGroup = require('./leafletLayerGroup.cjs');
 
 function createViewer(yOffset = 64) {
     const corner = {children: []};
@@ -46,6 +47,7 @@ function createViewer(yOffset = 64) {
     const context = vm.createContext({
         L: {
             map: () => map,
+            layerGroup,
             CRS: {Simple: {}},
             Point: function(x, y) { this.x = x; this.y = y; },
             Control: {extend: definition => function() { Object.assign(this, definition); }},

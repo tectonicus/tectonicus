@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const layerGroup = require('./leafletLayerGroup.cjs');
 
 async function createLayer(tileIndex) {
     const stop = new Error('Stop before creating viewer controls');
@@ -22,7 +23,7 @@ async function createLayer(tileIndex) {
     };
     const map = {setView() { return this; }};
     const context = {
-        L: {map: () => map, CRS: {Simple: {}}, TileLayer,
+        L: {map: () => map, layerGroup, CRS: {Simple: {}}, TileLayer,
             setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },
             control: {attribution: () => ({setPrefix() { return this; }, addTo() { return this; }})}},
         maxZoom: 2,

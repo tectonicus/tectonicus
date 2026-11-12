@@ -3,10 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const layerGroup = require('./leafletLayerGroup.cjs');
 
 function createAssetsViewer(fetch) {
     const markers = [];
     const images = [];
+    const map = {layers: new Set()};
     const context = vm.createContext({
         fetch, console: {error() {}},
         contents: [
@@ -17,9 +19,9 @@ function createAssetsViewer(fetch) {
         window: new EventTarget(),
         Image: function() { images.push(this); },
         L: {
-            map: () => ({}), CRS: {Simple: {}}, icon: options => options,
+            map: () => map, layerGroup, CRS: {Simple: {}}, icon: options => options,
             marker(point, options) {
-                const marker = {point, options, addTo() { this.added = true; return this; }, remove() { this.removed = true; },
+                const marker = {point, options,
                     bindPopup(html) { this.html = html; return this; }, bindTooltip() { return this; }};
                 markers.push(marker);
                 return marker;
@@ -33,6 +35,7 @@ function createAssetsViewer(fetch) {
     }
     function selectWorld(index) {
         context.selectedLayer = {
+            worldId: `World${index}`,
             layerId: `World${index}.day`,
             images: `World${index}/Images/`, localizationsUrl: `Scripts/World${index}/localizations.json`,
             projection: {worldToMap: point => point},
@@ -41,7 +44,7 @@ function createAssetsViewer(fetch) {
         vm.runInContext('activeBaseLayer = selectedLayer;', context);
     }
     selectWorld(0);
-    return {context, markers, images, selectWorld, evaluate: code => vm.runInContext(code, context)};
+    return {context, map, markers, images, selectWorld, evaluate: code => vm.runInContext(code, context)};
 }
 
 test('translations are loaded once per world and remain distinct after switching worlds', async () => {
@@ -101,7 +104,7 @@ test('chest images, item masks, overlays, player status and markers use the sele
         assert.ok(viewer.context.getHealthHtml({health: 20}).includes(prefix + 'FullHeart.png'));
         assert.ok(viewer.context.getFoodHtml({food: 20}).includes(prefix + 'FullFood.png'));
         assert.ok(viewer.context.getAirHtml({air: 300}).includes(prefix + 'FullAir.png'));
-        viewer.context.refreshSignMarkers(viewer.context.selectedLayer, false);
+        viewer.context.refreshSignMarkers(viewer.context.selectedLayer);
         assert.equal(viewer.markers.at(-1).options.icon.iconUrl, prefix + 'Sign.png');
         assert.ok(!html.includes(`World${1 - index}/Images/`));
     }
@@ -123,7 +126,7 @@ test('all container kinds use world-specific icons and retain copy actions and i
         viewer.selectWorld(index);
         const layer = viewer.context.selectedLayer;
         layer.containers = containers.map(container => ({...container, name: 'Storage', items: [], worldPos: {x: 0.5, y: 64, z: 0.5}}));
-        viewer.context.refreshContainerMarkers(layer, false);
+        viewer.context.refreshContainerMarkers(layer);
         viewer.markers.slice(-containers.length).forEach((marker, i) => {
             assert.equal(marker.options.icon.iconUrl, `World${index}/Images/${containers[i].icon}.png`);
             assert.equal((marker.html.match(/<button /g) || []).length, 3);
@@ -137,6 +140,7 @@ test('all container kinds use world-specific icons and retain copy actions and i
 
 test('ender chest markers use world icons, show block coordinates and follow the container toggle', () => {
     const viewer = createAssetsViewer();
+    const group = viewer.evaluate('markerGroups.containerControlChecked');
     for (const index of [0, 1, 0]) {
         viewer.selectWorld(index);
         const layer = viewer.context.selectedLayer;
@@ -144,7 +148,8 @@ test('ender chest markers use world icons, show block coordinates and follow the
             {enderChest: true, worldPos: {x: -16.5, y: -36, z: -0.5}},
             {name: 'Chest', items: [], worldPos: {x: 8.5, y: 64, z: 8.5}}
         ];
-        viewer.context.refreshContainerMarkers(layer, false);
+        viewer.context.setMarkerVisibility('containerControlChecked', false);
+        viewer.context.refreshContainerMarkers(layer);
         const [enderChest, chest] = viewer.markers.slice(-2);
         assert.equal(enderChest.options.icon.iconUrl, `World${index}/Images/EnderChest.png`);
         assert.equal(chest.options.icon.iconUrl, `World${index}/Images/Chest.png`);
@@ -153,11 +158,10 @@ test('ender chest markers use world icons, show block coordinates and follow the
         assert.match(enderChest.html, /position \(-17, -36, -1\)/);
         assert.doesNotMatch(enderChest.html, /inventory_slot|SmallChest.png|undefined/);
         assert.match(chest.html, /SmallChest.png/);
-        assert.equal(viewer.evaluate('containerMarkers.length'), 2);
-        assert.ok(!enderChest.added && !chest.added);
-        viewer.context.refreshContainerMarkers(layer, true);
-        assert.ok(enderChest.removed && chest.removed);
-        assert.ok(viewer.markers.slice(-2).every(marker => marker.added));
+        assert.deepEqual(group.getLayers(), [enderChest, chest]);
+        assert.equal(viewer.map.layers.size, 0);
+        viewer.context.setMarkerVisibility('containerControlChecked', true);
+        assert.deepEqual(viewer.map.layers, new Set([group, enderChest, chest]));
     }
 });
 
@@ -225,16 +229,44 @@ test('item rendering retains shared Images paths for older map exports', () => {
     }
 });
 
-test('delayed player icons cannot leak across worlds and fallback icons use their own world', () => {
+test('only the latest player icon requests populate the group after switching away and back', () => {
     const viewer = createAssetsViewer();
-    const player = {name: 'Explorer', donation: ''};
-    const firstLayer = viewer.context.selectedLayer;
-    viewer.context.loadIcon('World0/Images/PlayerIcons/Explorer.png', player, [0, 0], false, firstLayer);
+    const {context, map, images, markers} = viewer;
+    const group = viewer.evaluate('markerGroups.playerControlChecked');
+    const firstLayer = context.selectedLayer;
+    firstLayer.players = [{name: 'Explorer', worldPos: {x: 0, y: 64, z: 0}},
+        {name: 'Builder', worldPos: {x: 10, y: 64, z: 10}}];
+    context.setMarkerVisibility('playerControlChecked', true);
+    context.refreshPlayerMarkers(firstLayer);
+    const [oldExplorer, oldBuilder] = images;
+
     viewer.selectWorld(1);
-    const secondLayer = viewer.context.selectedLayer;
-    viewer.context.loadIcon('World1/Images/PlayerIcons/Explorer.png', player, [0, 0], false, secondLayer);
-    viewer.images[0].onerror();
-    assert.equal(viewer.markers.length, 0);
-    viewer.images[1].onerror();
-    assert.equal(viewer.markers.at(-1).options.icon.iconUrl, 'World1/Images/PlayerIcons/Tectonicus_Default_Player_Icon.png');
+    context.selectedLayer.players = [{name: 'Other', worldPos: {x: 20, y: 64, z: 20}}];
+    context.refreshPlayerMarkers(context.selectedLayer);
+    const other = images[2];
+    other.onerror();
+    assert.equal(markers[0].options.icon.iconUrl, 'World1/Images/PlayerIcons/Tectonicus_Default_Player_Icon.png');
+    assert.equal(map.layers.has(markers[0]), true);
+
+    context.selectedLayer = firstLayer;
+    viewer.evaluate('activeBaseLayer = selectedLayer;');
+    context.refreshPlayerMarkers(firstLayer);
+    assert.equal(map.layers.has(markers[0]), false);
+    context.setMarkerVisibility('playerControlChecked', false);
+    oldExplorer.onload();
+    oldBuilder.onerror();
+    assert.equal(markers.length, 1);
+
+    const [explorer, builder] = images.slice(3);
+    explorer.onload();
+    builder.onerror();
+    const currentMarkers = markers.slice(1);
+    assert.deepEqual(group.getLayers(), currentMarkers);
+    assert.deepEqual(currentMarkers.map(marker => marker.options.icon.iconUrl), [
+        'World0/Images/PlayerIcons/Explorer.png',
+        'World0/Images/PlayerIcons/Tectonicus_Default_Player_Icon.png'
+    ]);
+    assert.equal(map.layers.size, 0);
+    context.setMarkerVisibility('playerControlChecked', true);
+    assert.deepEqual(map.layers, new Set([group, ...currentMarkers]));
 });

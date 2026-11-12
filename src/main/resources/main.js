@@ -234,15 +234,15 @@ async function mainAsync()
         updateWorldLayerControl(startLayer);
         CreateResetViewButton(mymap);
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
-        viewToggleControl = CreateToggleControl('views', 'Picture.png', viewMarkers, viewsInitiallyVisible, 'viewControlChecked');
-        signToggleControl = CreateToggleControl('signs', 'Sign.png', signMarkers, signsInitiallyVisible, 'signControlChecked');
-        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Icon.png', playerMarkers, playersInitiallyVisible, 'playerControlChecked');
-        bedToggleControl = CreateToggleControl('beds', 'Bed.png', bedMarkers, bedsInitiallyVisible, 'bedControlChecked');
-        respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'RespawnAnchor.png', respawnAnchorMarkers, respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
-        beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconMarkers, beaconsInitiallyVisible, 'beaconControlChecked');
-        portalToggleControl = CreateToggleControl('portals', 'Portal.png', portalMarkers, portalsInitiallyVisible, 'portalControlChecked');
-        spawnToggleControl = CreateToggleControl('spawn', 'SpawnCompass.png', spawnMarkers, spawnInitiallyVisible, 'spawnControlChecked');
-        containerToggleControl = CreateToggleControl('containers', 'Chest.png', containerMarkers, containersInitiallyVisible, 'containerControlChecked');
+        viewToggleControl = CreateToggleControl('views', 'Picture.png', viewsInitiallyVisible, 'viewControlChecked');
+        signToggleControl = CreateToggleControl('signs', 'Sign.png', signsInitiallyVisible, 'signControlChecked');
+        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Icon.png', playersInitiallyVisible, 'playerControlChecked');
+        bedToggleControl = CreateToggleControl('beds', 'Bed.png', bedsInitiallyVisible, 'bedControlChecked');
+        respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'RespawnAnchor.png', respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
+        beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconsInitiallyVisible, 'beaconControlChecked');
+        portalToggleControl = CreateToggleControl('portals', 'Portal.png', portalsInitiallyVisible, 'portalControlChecked');
+        spawnToggleControl = CreateToggleControl('spawn', 'SpawnCompass.png', spawnInitiallyVisible, 'spawnControlChecked');
+        containerToggleControl = CreateToggleControl('containers', 'Chest.png', containersInitiallyVisible, 'containerControlChecked');
 
         // Rebind the map information tooltip when attribution changes with the layer.
         let attributionContainer = mymap.attributionControl.getContainer();
@@ -267,15 +267,18 @@ async function mainAsync()
     mymap.fireEvent('baselayerchange', {layer: startLayer});
 }
 
-spawnMarkers = [];
-signMarkers = [];
-viewMarkers = [];
-playerMarkers = [];
-portalMarkers = [];
-bedMarkers = [];
-respawnAnchorMarkers = [];
-beaconMarkers = [];
-containerMarkers = [];
+const markerGroups = {
+    spawnControlChecked: L.layerGroup(),
+    signControlChecked: L.layerGroup(),
+    viewControlChecked: L.layerGroup(),
+    playerControlChecked: L.layerGroup(),
+    portalControlChecked: L.layerGroup(),
+    bedControlChecked: L.layerGroup(),
+    respawnAnchorControlChecked: L.layerGroup(),
+    beaconControlChecked: L.layerGroup(),
+    containerControlChecked: L.layerGroup()
+};
+let playerMarkerGeneration = 0;
 
 function updateMarkerControls(layer) {
     const toggles = [
@@ -355,20 +358,23 @@ function onBaseLayerChange(e) {
 
     updateMarkerControls(e.layer);
 
-	if (e.layer.dimension === "NETHER") {
-        destroyMarkers(spawnMarkers);
-    } else {
-        refreshSpawnMarker(e.layer, controlState.spawnControlChecked);
+    for (const group of Object.values(markerGroups)) {
+        group.remove();
     }
-    refreshSignMarkers(e.layer, controlState.signControlChecked);
-    refreshViewMarkers(e.layer, controlState.viewControlChecked);
-    refreshPlayerMarkers(e.layer, controlState.playerControlChecked);
-    refreshPortalMarkers(e.layer, controlState.portalControlChecked);
-    refreshBedMarkers(e.layer, controlState.bedControlChecked);
-    refreshRespawnAnchorMarkers(e.layer, controlState.respawnAnchorControlChecked);
-    refreshBeaconMarkers(e.layer, controlState.beaconControlChecked);
-    refreshContainerMarkers(e.layer, controlState.containerControlChecked);
-
+    refreshSpawnMarker(e.layer);
+    refreshSignMarkers(e.layer);
+    refreshViewMarkers(e.layer);
+    refreshPlayerMarkers(e.layer);
+    refreshPortalMarkers(e.layer);
+    refreshBedMarkers(e.layer);
+    refreshRespawnAnchorMarkers(e.layer);
+    refreshBeaconMarkers(e.layer);
+    refreshContainerMarkers(e.layer);
+    for (const [key, group] of Object.entries(markerGroups)) {
+        if (controlState[key]) {
+            group.addTo(mymap);
+        }
+    }
 	compassControl.remove();
 	compassControl = CreateCompassControl(e.layer.compassUrl);
 	mymap.addControl(compassControl);
@@ -421,6 +427,12 @@ function setMarkerVisibility(key, visible) {
         markerVisibilityOverrides.set(activeBaseLayer.worldId, {});
     }
     markerVisibilityOverrides.get(activeBaseLayer.worldId)[key] = visible;
+    const group = markerGroups[key];
+    if (visible) {
+        group.addTo(mymap);
+    } else {
+        group.remove();
+    }
 }
 
 function updateWorldLayerControl(layer) {
@@ -542,12 +554,12 @@ function onHashChange() {
     mymap.setView(startPoint, zoom, {animate: false});
 }
 
-//TODO: refactor these refresh marker methods to use Leaflet LayerGroups
-function refreshSpawnMarker(layer, markersVisible) {
-	destroyMarkers(spawnMarkers);
+function refreshSpawnMarker(layer) {
+	const group = markerGroups.spawnControlChecked;
+	group.clearLayers();
 
 	// Spawn marker
-	if (showSpawn && layer.worldVectors.hasOwnProperty('spawnPosition')) {
+	if (showSpawn && layer.dimension !== 'NETHER' && layer.worldVectors.hasOwnProperty('spawnPosition')) {
 		let spawn = layer.projection.worldVectors.spawnPosition;
 		let point = layer.projection.worldToMap(spawn);
 
@@ -563,17 +575,13 @@ function refreshSpawnMarker(layer, markersVisible) {
 
         let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }), '<p class="center">' + spawn.x + ', ' + spawn.y + ', ' + spawn.z + '</p>', spawn, layer).bindTooltip("Spawn Point");
 
-		// Add marker to map if spawn is initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		spawnMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function refreshSignMarkers(layer, markersVisible) {
-	destroyMarkers(signMarkers);
+function refreshSignMarkers(layer) {
+	const group = markerGroups.signControlChecked;
+	group.clearLayers();
 
 	// Sign markers
 	for (i in layer.signs) {
@@ -593,17 +601,13 @@ function refreshSignMarkers(layer, markersVisible) {
 		let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }),
 			'<pre><center>' + sign.text1 + '<br/>' + sign.text2 + '<br/>' + sign.text3 + '<br/>' + sign.text4 + '</center></pre>', sign.worldPos, layer);
 
-		// Add marker to map if signs are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		signMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function refreshViewMarkers(layer, markersVisible) {
-	destroyMarkers(viewMarkers);
+function refreshViewMarkers(layer) {
+	const group = markerGroups.viewControlChecked;
+	group.clearLayers();
 
 	// View markers
 	for (i in layer.views) {
@@ -635,61 +639,34 @@ function refreshViewMarkers(layer, markersVisible) {
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), html, view.worldPos, layer, {maxWidth: "auto"});
 
-		// Add marker to map if containers are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		viewMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function loadIcon(src, player, pos, markersVisible, layer) {
-	var icon = new Image();
-	icon.onload = function () {
-        if (layer !== activeBaseLayer) return;
-		player.icon = src;
-		var marker = createPlayerMarker(player, pos, layer);
-
-		// Add marker to map if players are initially visible
-		if (controlState.playerControlChecked) {
-			marker.addTo(mymap);
-		}
-
-		playerMarkers.push(marker);
-	};
-	icon.onerror = function () {
-        if (layer !== activeBaseLayer) return;
-		player.icon = worldImageUrl('PlayerIcons/Tectonicus_Default_Player_Icon.png', layer);
-		var marker = createPlayerMarker(player, pos, layer);
-
-		// Add marker to map if players are initially visible
-		if (controlState.playerControlChecked) {
-			marker.addTo(mymap);
-		}
-
-		playerMarkers.push(marker);
-	};
-	icon.src = src;
-}
-
-function refreshPlayerMarkers(layer, markersVisible) {
-	destroyMarkers(playerMarkers);
-
-	// Player markers
-	for (i in layer.players) {
-		let player = layer.players[i];
-
+function refreshPlayerMarkers(layer) {
+	const group = markerGroups.playerControlChecked;
+	const generation = ++playerMarkerGeneration;
+	group.clearLayers();
+	const fallbackIcon = worldImageUrl('PlayerIcons/Tectonicus_Default_Player_Icon.png', layer);
+	for (const player of layer.players) {
 		player.donation = '';
-
-		let point = layer.projection.worldToMap(player.worldPos);
-
-		loadIcon(worldImageUrl('PlayerIcons/' + player.name + '.png', layer), player, point, markersVisible, layer);
+		const point = layer.projection.worldToMap(player.worldPos);
+		const src = worldImageUrl('PlayerIcons/' + player.name + '.png', layer);
+		const icon = new Image();
+		const addMarker = iconUrl => {
+			if (generation !== playerMarkerGeneration || layer !== activeBaseLayer) return;
+			player.icon = iconUrl;
+			group.addLayer(createPlayerMarker(player, point, layer));
+		};
+		icon.onload = () => addMarker(src);
+		icon.onerror = () => addMarker(fallbackIcon);
+		icon.src = src;
 	}
 }
 
-function refreshBedMarkers(layer, markersVisible) {
-	destroyMarkers(bedMarkers);
+function refreshBedMarkers(layer) {
+	const group = markerGroups.bedControlChecked;
+	group.clearLayers();
 
 	// Bed markers
 	for (i in layer.beds) {
@@ -708,17 +685,13 @@ function refreshBedMarkers(layer, markersVisible) {
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + bed.playerName + "'s bed</p>", bed.worldPos, layer);
 
-		// Add marker to map if beds are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		bedMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function refreshRespawnAnchorMarkers(layer, markersVisible) {
-	destroyMarkers(respawnAnchorMarkers);
+function refreshRespawnAnchorMarkers(layer) {
+	const group = markerGroups.respawnAnchorControlChecked;
+	group.clearLayers();
 
 	// Respawn anchor markers
 	for (i in layer.anchors) {
@@ -737,17 +710,13 @@ function refreshRespawnAnchorMarkers(layer, markersVisible) {
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + anchor.playerName + "'s respawn anchor</p>", anchor.worldPos, layer);
 
-		// Add marker to map if beds are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		respawnAnchorMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function refreshBeaconMarkers(layer, markersVisible) {
-	destroyMarkers(beaconMarkers);
+function refreshBeaconMarkers(layer) {
+	const group = markerGroups.beaconControlChecked;
+	group.clearLayers();
 
 	// Beacon markers
 	for (i in layer.beacons) {
@@ -779,17 +748,13 @@ function refreshBeaconMarkers(layer, markersVisible) {
 //		let marker = L.marker(point, { icon: icon }).bindPopup('<p style="width:200px; height:64px"><img style=\"float:left; margin:4px;\" src=\"Images/beacon_level_1.png\" width=\"64\" height=\"64\" />Primary Power: <img src="Images/' + beacon.primaryEffect + '.png" alt="' + localize("effect.minecraft." + beacon.primaryEffect)
 //		    + '"><br /> Secondary Power: <img src="Images/' + "haste" + '.png" alt="' + localize("effect.minecraft." + beacon.secondaryEffect) + '"></p>');
 
-		// Add marker to map if beacons are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		beaconMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function refreshPortalMarkers(layer, markersVisible) {
-	destroyMarkers(portalMarkers);
+function refreshPortalMarkers(layer) {
+	const group = markerGroups.portalControlChecked;
+	group.clearLayers();
 
 	// Portal markers
 	for (i in layer.portals) {
@@ -810,17 +775,13 @@ function refreshPortalMarkers(layer, markersVisible) {
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
 			'<div style=\"text-align:center\">Portal</div><br/> position (' + portal.worldPos.x + ', ' + portal.worldPos.y + ', ' + portal.worldPos.z + ')', portal.worldPos, layer);
 
-		// Add marker to map if containers are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		portalMarkers.push(marker);
+		group.addLayer(marker);
 	}
 }
 
-function refreshContainerMarkers(layer, markersVisible) {
-	destroyMarkers(containerMarkers);
+function refreshContainerMarkers(layer) {
+	const group = markerGroups.containerControlChecked;
+	group.clearLayers();
         
 	// Container markers
 	for (i in layer.containers) {
@@ -843,22 +804,8 @@ function refreshContainerMarkers(layer, markersVisible) {
                         { maxWidth: "auto" } // Fix for incorrect sizing of the popup
                 );
 
-		// Add marker to map if containers are initially visible
-		if (markersVisible) {
-			marker.addTo(mymap);
-		}
-
-		containerMarkers.push(marker);
+		group.addLayer(marker);
 	}
-}
-
-function destroyMarkers(markers) {
-	for (i in markers) {
-		let marker = markers[i];
-		marker.remove();
-	}
-
-	markers.length = 0;
 }
 
 function ViewPos(layerId, worldPos, zoom, startPoint) {
