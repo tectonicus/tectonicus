@@ -51,7 +51,6 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
         document: {querySelector: selector => selector === '#map' ? mapElement : null},
         MutationObserver: class { observe() {} },
         tippy() {}, stats: {peakMemoryBytes: 0},
-        containersMainAsync: async () => {},
         getQueryParams: () => ({}),
         getFragmentParams: () => Object.fromEntries(new URLSearchParams(currentFragment)),
         WorldCoord: function(x, y, z) { Object.assign(this, {x, y, z}); },
@@ -117,9 +116,10 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
             })
         }
     };
-    for (const file of ['controls.js', 'main.js']) {
+    for (const file of ['controls.js', 'containers.js', 'main.js']) {
         vm.runInContext(fs.readFileSync(path.join(__dirname, '../../main/resources', file), 'utf8'), context);
     }
+    context.containersMainAsync = async () => {};
     context.CreateResetViewButton = () => {};
     context.CreateCompassControl = () => new Control();
     context.bindMarkerPopup = (marker, html) => Object.assign(marker, {html});

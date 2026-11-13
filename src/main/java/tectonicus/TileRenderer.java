@@ -25,6 +25,7 @@ import tectonicus.configuration.Configuration.RenderStyle;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
 import tectonicus.configuration.DimensionConfig;
+import tectonicus.configuration.WorldConfig;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
@@ -41,6 +42,7 @@ import tectonicus.util.ImageUtils;
 import tectonicus.util.TileOutput;
 import tectonicus.util.TempArea;
 import tectonicus.util.Util;
+import tectonicus.util.WorldViewerAssets;
 import tectonicus.view.ViewRenderer;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
@@ -60,7 +62,9 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -227,6 +231,7 @@ public class TileRenderer
 		TempArea tempArea = new TempArea( new File(config.getCacheDir(), "temp") );
 		
 		changedFileList = new ChangeFile(new File(config.getOutputDir(), "changed.txt"));
+		Map<WorldConfig, WorldViewerAssets> viewerAssetsByWorld = new HashMap<>();
 		
 		for (DimensionConfig map : renderableDimensions)
 		{
@@ -243,6 +248,7 @@ public class TileRenderer
 			// Create the world for this map
 			try (World currentWorld = new World(rasteriser, map, playerSkinCache, config)) {
 				World world = currentWorld;
+				WorldViewerAssets viewerAssets = viewerAssetsByWorld.computeIfAbsent(map.getWorld(), key -> new WorldViewerAssets());
 
 				// Setup camera
 				setupInitialCamera(map);
@@ -270,14 +276,15 @@ public class TileRenderer
 
 				// Output entity javascript for creating map markers
 				outputSigns(new File(mapDir, "signs.js"), signsFile, map);
-				outputPlayers(new File(mapDir, "players.js"), new File(DirUtils.getWorldImagesDir(exportDir, map.getWorld()), "PlayerIcons"), map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler);
+				outputPlayers(new File(mapDir, "players.js"), new File(DirUtils.getWorldImagesDir(exportDir, map.getWorld()), "PlayerIcons"),
+						map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler, viewerAssets);
 				outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
 				outputRespawnAnchors(mapDir, map, world.getAllPlayers());
 				List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
 				worldStats.setNumPortals(portals.size());
 				outputViews(new File(mapDir, "views.js"), viewsFile, map);
-				outputContainers(new File(mapDir, "containers.js"), map, world.getContainers());
-				outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons());
+				outputContainers(new File(mapDir, "containers.js"), map, world.getContainers(), viewerAssets);
+				outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons(), viewerAssets);
 
 				// Render views
 				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
@@ -358,7 +365,8 @@ public class TileRenderer
 					}
 					outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels,
 							config.useCache() ? iconOptions : null);
-					outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld());
+					outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld(), viewerAssets);
+					viewerAssetsByWorld.remove(map.getWorld());
 				}
 			
 				// Output world stats

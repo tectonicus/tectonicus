@@ -53,6 +53,10 @@ public class ZipStack
 		return getStream(path, true);
 	}
 
+	public InputStream getBaseStream(String path) throws IOException {
+		return hasFile(path, base) ? Files.newInputStream(base.getPath(path)) : null;
+	}
+
 	public InputStream getStream(String path, boolean minecraftJarLoaded) throws IOException
 	{
 		if (hasFile(path, override) && minecraftJarLoaded)

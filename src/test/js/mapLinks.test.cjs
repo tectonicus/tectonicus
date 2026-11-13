@@ -64,7 +64,7 @@ function createViewer(yOffset = 64) {
 		URL,
         URLSearchParams
     });
-    for (const file of ['math.js', 'minecraftProjection.js', 'controls.js', 'marker.js', 'main.js']) {
+    for (const file of ['math.js', 'minecraftProjection.js', 'controls.js', 'marker.js', 'containers.js', 'main.js']) {
         const source = fs.readFileSync(path.join(__dirname, '../../main/resources', file), 'utf8')
             .replace(/\{\{maxZoom\}\}/g, '8').replace(/\{\{[^}]+\}\}/g, 'false');
         vm.runInContext(source, context);

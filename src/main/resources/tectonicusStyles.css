@@ -468,6 +468,19 @@ html, body, #map {
     position: absolute;
 }
 
+.mc_text_fallback {
+    color: #fcfcfc;
+    font-size: 8px;
+    line-height: 1;
+    white-space: pre-wrap;
+    unicode-bidi: plaintext;
+}
+
+.inventory_label.mc_text_fallback,
+.container_name.mc_text_fallback {
+    color: #3f3f3f;
+}
+
 .mc_char {
     width: 6px;
     height: 8px;

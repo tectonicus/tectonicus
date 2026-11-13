@@ -5,18 +5,25 @@ const test = require('node:test');
 const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
 
-function createAssetsViewer(fetch) {
+function createAssetsViewer(fetch, {protocol, contents, loadScript} = {}) {
     const markers = [];
     const images = [];
     const map = {layers: new Set()};
     const context = vm.createContext({
         fetch, console: {error() {}},
-        contents: [
+        contents: contents ?? [
             {localizations: 'Scripts/World0/localizations.json'},
             {localizations: 'Scripts/World0/localizations.json'},
             {localizations: 'Scripts/World1/localizations.json'}
         ],
-        window: new EventTarget(),
+        window: Object.assign(new EventTarget(), {location: {protocol}}),
+        document: {
+            createElement: () => ({}),
+            head: {appendChild(script) {
+                if (loadScript(script.src, context)) script.onload();
+                else script.onerror();
+            }}
+        },
         Image: function() { images.push(this); },
         L: {
             map: () => map, layerGroup, CRS: {Simple: {}}, icon: options => options,
@@ -38,6 +45,7 @@ function createAssetsViewer(fetch) {
             worldId: `World${index}`,
             layerId: `World${index}.day`,
             images: `World${index}/Images/`, localizationsUrl: `Scripts/World${index}/localizations.json`,
+            localizationsScript: contents?.find(dimension => dimension.worldId === `World${index}`)?.localizationsScript,
             projection: {worldToMap: point => point},
             signs: [{worldPos: {x: 0, y: 64, z: 0}, text1: 'Sign'}]
         };
@@ -71,6 +79,65 @@ test('a missing translation file falls back without discarding another world tra
     assert.equal(viewer.context.localize('stone', 'Fallback'), 'Fallback');
     viewer.selectWorld(0);
     assert.equal(viewer.context.localize('stone'), 'Stone');
+});
+
+test('local maps load each world script once, keep masks isolated and skip legacy fetches', async () => {
+    const requested = [];
+    const first = {worldId: 'World0', localizationsScript: 'Scripts/World0/localizations.js', masksScript: 'Scripts/World0/masks.js'};
+    const second = {worldId: 'World1', localizationsScript: 'Scripts/World1/localizations.js', masksScript: 'Scripts/World1/masks.js'};
+    const mask = 'data:image/png;base64,AAAA';
+    const viewer = createAssetsViewer(() => assert.fail('Offline exports must not use fetch'), {
+        protocol: 'file:', contents: [first, first, second, {localizations: 'Scripts/localizations.json'}],
+        loadScript(url, context) {
+            requested.push(url);
+            if (url === first.localizationsScript) {
+                context.registerWorldLocalizations('World0', {translations: {'item.minecraft.leather_helmet': 'First Helmet'}, hasFont: true});
+            } else if (url === first.masksScript) {
+                context.registerWorldMasks('World0', {'Font.png': mask, 'Items/leather_helmet.png': mask});
+            } else if (url === second.localizationsScript) {
+                context.registerWorldLocalizations('World1', {translations: {'item.minecraft.leather_helmet': 'Casque é<&>'}, hasFont: false});
+            } else {
+                return false;
+            }
+            return true;
+        }
+    });
+    await viewer.context.containersMainAsync();
+    assert.deepEqual(requested, [first.localizationsScript, first.masksScript, second.localizationsScript, second.masksScript]);
+    const item = {id: 'minecraft:leather_helmet', count: 1, color: 0x123456, enchantments: []};
+    assert.equal(viewer.context.localize('item.minecraft.leather_helmet'), 'First Helmet');
+    const firstHtml = viewer.context.createItemHtml(item, 1, 1);
+    assert.match(firstHtml, /class="mc_char"/);
+    assert.ok(firstHtml.includes(`mask-image: url('${mask}')`));
+    assert.match(firstHtml, /class="enchanted_glint"/);
+    assert.match(viewer.context.renderMinecraftText('漢字<&>'), /漢字&lt;&amp;&gt;/);
+
+    viewer.selectWorld(1);
+    const secondHtml = viewer.context.createItemHtml(item, 1, 1);
+    assert.match(secondHtml, /Casque é&lt;&amp;&gt;/);
+    assert.match(secondHtml, /World1\/Images\/Items\/leather_helmet\.png/);
+    assert.doesNotMatch(secondHtml, /mask-image|data:image/);
+    assert.match(viewer.context.renderMinecraftText('ASCII'), /mc_text_fallback.*ASCII/);
+    viewer.selectWorld(0);
+    assert.equal(viewer.context.worldMaskUrl('Font.png'), mask);
+});
+
+test('HTTP maps load translations as scripts and use regular PNGs for masks', async () => {
+    const requested = [];
+    const contents = [{worldId: 'World0', localizationsScript: 'Scripts/World0/localizations.js', masksScript: 'Scripts/World0/masks.js'}];
+    const viewer = createAssetsViewer(() => assert.fail('New exports must not fetch JSON'), {
+        protocol: 'http:', contents,
+        loadScript(url, context) {
+            requested.push(url);
+            context.registerWorldLocalizations('World0', {translations: {stone: 'Stone'}, hasFont: false});
+            return true;
+        }
+    });
+    await viewer.context.containersMainAsync();
+    assert.deepEqual(requested, [contents[0].localizationsScript]);
+    assert.equal(viewer.context.localize('stone'), 'Stone');
+    assert.equal(viewer.context.worldMaskUrl('Items/stone.png'), 'World0/Images/Items/stone.png');
+    assert.match(viewer.context.renderMinecraftText('ASCII'), /mc_text_fallback.*ASCII/);
 });
 
 test('chest images, item masks, overlays, player status and markers use the selected world assets', () => {

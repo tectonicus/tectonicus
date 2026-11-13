@@ -478,8 +478,10 @@ class ConfigurationHierarchyTest {
 		assertTrue(output.contains("compass: \"Scripts/World0.Dimension1/Compass.png\""));
 		assertTrue(output.contains("images: \"World0/Images/\""));
 		assertTrue(output.contains("images: \"World1/Images/\""));
-		assertTrue(output.contains("localizations: \"Scripts/World0/localizations.json\""));
-		assertTrue(output.contains("localizations: \"Scripts/World1/localizations.json\""));
+		assertTrue(output.contains("localizationsScript: \"Scripts/World0/localizations.js\""));
+		assertTrue(output.contains("localizationsScript: \"Scripts/World1/localizations.js\""));
+		assertTrue(output.contains("masksScript: \"Scripts/World0/masks.js\""));
+		assertTrue(output.contains("masksScript: \"Scripts/World1/masks.js\""));
 	}
 
 	@Test

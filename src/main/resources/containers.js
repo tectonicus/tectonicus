@@ -1,4 +1,38 @@
 const localizationTables = new Map();
+const worldLocalizations = new Map();
+const worldMasks = new Map();
+
+function registerWorldLocalizations(worldId, assets) {
+    worldLocalizations.set(worldId, assets);
+}
+
+function registerWorldMasks(worldId, masks) {
+    worldMasks.set(worldId, masks);
+}
+
+function isLocalMap() {
+    return window.location?.protocol === 'file:';
+}
+
+function loadViewerScript(url) {
+    return new Promise(resolve => {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = url;
+        script.onload = resolve;
+        script.onerror = () => {
+            console.error('Unable to load viewer asset from ' + url);
+            resolve();
+        };
+        document.head.appendChild(script);
+    });
+}
+
+function worldMaskUrl(filename, layer = activeBaseLayer) {
+    if (isLocalMap()) return worldMasks.get(layer?.worldId)?.[filename];
+    if (filename === 'Font.png' && worldLocalizations.get(layer?.worldId)?.hasFont === false) return;
+    return worldImageUrl(filename, layer);
+}
 
 const hiddenEnchantmentLevels = [
         'aqua_affinity',
@@ -74,8 +108,15 @@ const potionColors = {
 };
 
 async function containersMainAsync() {
-        const urls = new Set(contents.map(dimension => dimension.localizations || 'Scripts/localizations.json'));
-        await Promise.all([...urls].map(async url => {
+        const scripts = new Set();
+        const legacyTables = new Set();
+        for (const dimension of contents) {
+                if (dimension.localizationsScript) scripts.add(dimension.localizationsScript);
+                else if (!isLocalMap()) legacyTables.add(dimension.localizations || 'Scripts/localizations.json');
+                if (isLocalMap() && dimension.masksScript) scripts.add(dimension.masksScript);
+        }
+
+        await Promise.all([...scripts].map(loadViewerScript).concat([...legacyTables].map(async url => {
                 try {
                         const response = await fetch(url);
                         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -84,7 +125,7 @@ async function containersMainAsync() {
                         localizationTables.set(url, {});
                         console.error('Unable to load localizations from ' + url + '. Please host the map on a web server.', error);
                 }
-        }));
+        })));
 }
 
 function updateContainerItemTooltipPosition(e) {
@@ -105,8 +146,10 @@ function updateContainerItemTooltipPosition(e) {
 }
 
 function localize(key, fallbackString) {
-        const localizations = localizationTables.get(activeBaseLayer?.localizationsUrl || 'Scripts/localizations.json');
-        if (localizations && localizations[key]) {
+        const localizations = activeBaseLayer?.localizationsScript
+                ? worldLocalizations.get(activeBaseLayer.worldId)?.translations
+                : localizationTables.get(activeBaseLayer?.localizationsUrl || 'Scripts/localizations.json');
+        if (localizations && Object.hasOwn(localizations, key) && localizations[key]) {
                 return localizations[key];
         }
         if (fallbackString === undefined) {
@@ -155,10 +198,6 @@ const charWidths = ['', '!\',.:;i|', '`l', '"()*I[]t()', '<>fk'];
 function findCharacterRowAndColumn(char) {
     const index = charMap.indexOf(char);
     
-    if (index === -1) {
-            return [15, 3]; // ? character
-    }
-    
     const col = index % 16;
     const row = Math.floor(index / 16 + 2); // +2 because 1st 2 lines are empty
     
@@ -176,6 +215,11 @@ function renderMinecraftText(text, className) {
     
     if (!className) {
             className = '';
+    }
+    className = escapeHtml(className);
+
+    if (!worldMaskUrl('Font.png') || Array.from(text).some(char => !charMap.includes(char))) {
+            return '<div class="mc_text_container mc_text_fallback ' + className + '">' + escapeHtml(text) + '</div>';
     }
 
     let html = '<div class="mc_text_container ' + className + '">';
@@ -359,7 +403,8 @@ function getEnchantmentsDescription(item) {
 function getEnchantmentGlint(item, itemId, pngName) {
         if (item.enchantments || itemId === 'enchanted_golden_apple')
         {
-                const url = worldImageUrl('Items/' + pngName + '.png');
+                const url = worldMaskUrl('Items/' + pngName + '.png');
+                if (!url) return '';
                 return '<div class="enchanted_glint" style="-webkit-mask-image: url(\'' + url + '\'); mask-image: url(\'' + url + '\');"></div>';
         }
         return '';
@@ -390,8 +435,10 @@ function getColorLayer(item, itemId) {
         }
         
         if (color || itemId.indexOf('leather_') >= 0) {
+                const url = worldMaskUrl('Items/' + itemId + '.png');
+                if (!url) return '';
                 color ??= 'rgb(106, 64, 41)';
-                return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'' + worldImageUrl('Items/' + itemId + '.png') + '\');"></div>';
+                return '<div class="color_layer" style="background-color: ' + color + '; mask-image: url(\'' + url + '\');"></div>';
         }
         
         return '';

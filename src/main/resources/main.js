@@ -183,6 +183,7 @@ async function mainAsync()
                 tileLayer.worldName = tecMap.worldName || 'World';
                 tileLayer.images = tecMap.images || 'Images/';
                 tileLayer.localizationsUrl = tecMap.localizations || 'Scripts/localizations.json';
+                tileLayer.localizationsScript = tecMap.localizationsScript;
                 tileLayer.maxZoom = tecMap.maxZoom ?? maxZoom;
                 L.setOptions(tileLayer, {maxZoom: tileLayer.maxZoom});
                 if (!dimensionStates.has(tecMap.id)) {
@@ -353,7 +354,8 @@ function onBaseLayerChange(e) {
 
 	changeBackgroundColor(e.layer.backgroundColor);
     const mapStyle = document.querySelector('#map').style;
-    mapStyle.setProperty('--minecraft-font', 'url("' + worldImageUrl('Font.png', e.layer) + '")');
+    const fontMask = worldMaskUrl('Font.png', e.layer);
+    mapStyle.setProperty('--minecraft-font', fontMask ? 'url("' + fontMask + '")' : 'none');
     mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
 
     updateMarkerControls(e.layer);
@@ -735,8 +737,8 @@ function refreshBeaconMarkers(layer) {
 
 		let marker;
 		if (beacon.levels > 0) {
-		    let primaryEffect = beacon.primaryEffect !== "none" ? localize("effect.minecraft." + beacon.primaryEffect) : "None";
-		    let secondaryEffect = beacon.secondaryEffect !== "none" ? localize("effect.minecraft." + beacon.secondaryEffect) : "None";
+		    let primaryEffect = beacon.primaryEffect !== "none" ? escapeHtml(localize("effect.minecraft." + beacon.primaryEffect)) : "None";
+		    let secondaryEffect = beacon.secondaryEffect !== "none" ? escapeHtml(localize("effect.minecraft." + beacon.secondaryEffect)) : "None";
 
 		    marker = bindMarkerPopup(L.marker(point, { icon: icon }), `<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="${worldImageUrl('beacon_level_' + parseInt(beacon.levels) + '.png', layer)}" width="64" height="64" />
 		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.primaryEffect + '.png', layer)}" />${primaryEffect}<br />

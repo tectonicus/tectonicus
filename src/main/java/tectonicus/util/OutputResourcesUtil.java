@@ -79,6 +79,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
@@ -154,6 +155,11 @@ public class OutputResourcesUtil {
 	}
 
 	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.DimensionConfig map, List<Player> players, PlayerIconAssembler playerIconAssembler) {
+		outputPlayers(playersFile, imagesDir, map, players, playerIconAssembler, null);
+	}
+
+	public static void outputPlayers(File playersFile, File imagesDir, tectonicus.configuration.DimensionConfig map, List<Player> players,
+			PlayerIconAssembler playerIconAssembler, WorldViewerAssets viewerAssets) {
 		try {
 			Files.deleteIfExists(playersFile.toPath());
 		} catch (IOException e) {
@@ -191,8 +197,8 @@ public class OutputResourcesUtil {
 						args.put("xpLevel", "" + player.getXpLevel());
 						args.put("xpTotal", "" + player.getXpTotal());
 						if (map.isShowPlayerInventories()) {
-							args.put("inventory", outputItems(player.getInventory()));
-							args.put("enderChestInventory", outputItems(player.getEnderChestInventory()));
+							args.put("inventory", outputItems(player.getInventory(), viewerAssets));
+							args.put("enderChestInventory", outputItems(player.getEnderChestInventory(), viewerAssets));
 						}
 
 						jsWriter.write(args);
@@ -447,6 +453,11 @@ public class OutputResourcesUtil {
 	}
 
 	public static void outputContainers(File containerFile, tectonicus.configuration.DimensionConfig map, ConcurrentLinkedQueue<ContainerEntity> containerList) {
+		outputContainers(containerFile, map, containerList, null);
+	}
+
+	public static void outputContainers(File containerFile, tectonicus.configuration.DimensionConfig map,
+			ConcurrentLinkedQueue<ContainerEntity> containerList, WorldViewerAssets viewerAssets) {
 		log.info("Exporting containers to {}", containerFile.getAbsolutePath());
 
 		try {
@@ -471,9 +482,10 @@ public class OutputResourcesUtil {
 				Map<String, String> containerArgs = new HashMap<>();
 
 				StringBuilder items = new StringBuilder("[\r\n");
-				for (var item : entity.getItems()) items.append(outputItem(item, false));
+				WorldViewerAssets inventoryAssets = entity.isEnderChest() ? null : viewerAssets;
+				for (var item : entity.getItems()) items.append(outputItem(item, false, inventoryAssets));
 				if (partner != null) {
-					for (var item : partner.getItems()) items.append(outputItem(item, true));
+					for (var item : partner.getItems()) items.append(outputItem(item, true, inventoryAssets));
 				}
 				items.append("\t\t]");
                                 
@@ -519,6 +531,11 @@ public class OutputResourcesUtil {
 	}
 
 	public static void outputBeacons(File beaconFile, tectonicus.configuration.DimensionConfig map, Queue<BeaconEntity> beacons) {
+		outputBeacons(beaconFile, map, beacons, null);
+	}
+
+	public static void outputBeacons(File beaconFile, tectonicus.configuration.DimensionConfig map, Queue<BeaconEntity> beacons,
+			WorldViewerAssets viewerAssets) {
 		log.info("Exporting beacons to {}", beaconFile.getAbsolutePath());
 		
 		try {
@@ -537,11 +554,17 @@ public class OutputResourcesUtil {
 				Map<String, String> beaconArgs = new HashMap<>();
 				beaconArgs.put("worldPos", "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")");
 				beaconArgs.put("levels", Integer.toString(beacon.getLevels()));
-				beaconArgs.put("primaryEffect", "\"" + beacon.getPrimaryEffect().name().toLowerCase() + "\"");
-				beaconArgs.put("secondaryEffect", "\"" + beacon.getSecondaryEffect().name().toLowerCase() + "\"");
+				String primaryEffect = beacon.getPrimaryEffect().name().toLowerCase(Locale.ROOT);
+				String secondaryEffect = beacon.getSecondaryEffect().name().toLowerCase(Locale.ROOT);
+				beaconArgs.put("primaryEffect", "\"" + primaryEffect + "\"");
+				beaconArgs.put("secondaryEffect", "\"" + secondaryEffect + "\"");
 				
 				if (worldSubset.containsBlock(beacon.getX(), beacon.getZ())) {
 					jsWriter.write(beaconArgs);
+					if (viewerAssets != null && beacon.getLevels() > 0) {
+						viewerAssets.addBeaconEffect(primaryEffect);
+						viewerAssets.addBeaconEffect(secondaryEffect);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -549,14 +572,14 @@ public class OutputResourcesUtil {
 		}
 	}
         
-	private static String outputItems(List<Item> items) {
+	private static String outputItems(List<Item> items, WorldViewerAssets viewerAssets) {
 		StringBuilder result = new StringBuilder("[");
 		for (Item item : items)
-			result.append(outputItem(item, false));
+			result.append(outputItem(item, false, viewerAssets));
 		return result.append("]").toString();
 	}
 
-        private static String outputItem(Item item, Boolean isLeft) {
+        private static String outputItem(Item item, boolean isLeft, WorldViewerAssets viewerAssets) {
                 String result = "\t\t\t{ id: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(item.id) + ", ";
 
                 CustomNameTag customNameTag = item.getComponent(CustomNameTag.class);
@@ -602,6 +625,12 @@ public class OutputResourcesUtil {
                                 result += "{ id: \"" + enchantment.id + "\", level: " + enchantment.level.toString() + " }, ";
                         }
                         result += "], ";
+                }
+
+                if (viewerAssets != null && item.count > 0 && !"minecraft:air".equals(item.id)) {
+                        viewerAssets.addItem(item.id, customNameTag == null ? null : customNameTag.name,
+                                dyedColorTag != null && dyedColorTag.color != 0,
+                                potionContents == null ? null : potionContents.potion, trimTag, enchantments);
                 }
 
                 result += "},\r\n";
@@ -912,6 +941,11 @@ public class OutputResourcesUtil {
 	}
 
 	public static void outputWorldResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config, File exportDir, WorldConfig world) {
+		outputWorldResources(texturePack, playerIconAssembler, config, exportDir, world, new WorldViewerAssets());
+	}
+
+	public static void outputWorldResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config,
+			File exportDir, WorldConfig world, WorldViewerAssets viewerAssets) {
 		log.info("Writing image resources for {}...", world.getName());
 		String defaultSkin = config.getDefaultSkin();
 
@@ -1024,8 +1058,8 @@ public class OutputResourcesUtil {
 		writeImage(playerInventoryWithEnderChest, playerInventoryWithEnderChest.getWidth(), playerInventoryWithEnderChest.getHeight(),
 				new File(imagesDir, "PlayerInventoryWithEnderChest.png"));
                 
-                // Write font texture
-                writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));
+		boolean hasFont = texturePack.getFont() != null;
+		if (hasFont) writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));
 
 		// Write default player icon
 		if (defaultSkinPath.equals("mob/char.png") && !texturePack.fileExists(defaultSkinPath))
@@ -1042,13 +1076,7 @@ public class OutputResourcesUtil {
 
 		File scriptsDir = new File(exportDir, "Scripts/" + world.getId());
 		FileUtils.ensureExists(scriptsDir);
-		File localizations = new File(scriptsDir, "localizations.json");
-		try {
-			Files.writeString(localizations.toPath(), "{}");
-		} catch (IOException e) {
-			log.error("Unable to initialize world localizations", e);
-		}
-		extractFile(texturePack, "assets/minecraft/lang/en_us.json", localizations, false);
+		viewerAssets.write(texturePack.getZipStack(), world.getId(), scriptsDir.toPath(), imagesDir.toPath(), hasFont);
 	}
 
 	public static void outputHtmlResources(Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
@@ -1288,7 +1316,8 @@ public class OutputResourcesUtil {
 				writer.println("\t\tname: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getName()) + ",");
 				writer.println("\t\tworldId: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getId()) + ",");
 				writer.println("\t\timages: \"" + m.getWorld().getId() + "/Images/\",");
-				writer.println("\t\tlocalizations: \"Scripts/" + m.getWorld().getId() + "/localizations.json\",");
+				writer.println("\t\tlocalizationsScript: \"Scripts/" + m.getWorld().getId() + "/localizations.js\",");
+				writer.println("\t\tmasksScript: \"Scripts/" + m.getWorld().getId() + "/masks.js\",");
 				writer.println("\t\tworldName: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getName()) + ",");
 				writer.println("\t\tdimensionId: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getDimensionInfo().name()) + ",");
 				writer.println("\t\tmaxZoom: " + m.getNumZoomLevels() + ",");

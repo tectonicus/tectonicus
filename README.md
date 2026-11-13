@@ -22,6 +22,8 @@ Tectonicus generates a large amount of images which can use a significant amount
 
 While the first Tectonicus run can be time-consuming, subsequent runs with the same options will be significantly quicker due to Tectonicus only rendering changed tiles.
 
+To view a newly exported map offline, leave `useCdn` unset and open the exported HTML file. With `useCdn` enabled, the browser needs a network connection to load the viewer libraries.
+
 ## Default config file
 If Tectonicus is run without any command line arguments it will search for either 'tectonicus.xml' or 'tectonicusConfig.xml' in the same directory and try to use one of those as it's configuration file.
 
