@@ -34,6 +34,12 @@ function worldMaskUrl(filename, layer = activeBaseLayer) {
     return worldImageUrl(filename, layer);
 }
 
+function fontMaskUrl(filename, layer = activeBaseLayer) {
+    const url = worldMaskUrl(filename, layer);
+    const base = globalThis.document?.baseURI;
+    return url && base ? new URL(url, base).href : url;
+}
+
 const hiddenEnchantmentLevels = [
         'aqua_affinity',
         'binding_curse',
@@ -145,10 +151,10 @@ function updateContainerItemTooltipPosition(e) {
             }
 }
 
-function localize(key, fallbackString) {
-        const localizations = activeBaseLayer?.localizationsScript
-                ? worldLocalizations.get(activeBaseLayer.worldId)?.translations
-                : localizationTables.get(activeBaseLayer?.localizationsUrl || 'Scripts/localizations.json');
+function localize(key, fallbackString, layer = activeBaseLayer) {
+        const localizations = layer?.localizationsScript
+                ? worldLocalizations.get(layer.worldId)?.translations
+                : localizationTables.get(layer?.localizationsUrl || 'Scripts/localizations.json');
         if (localizations && Object.hasOwn(localizations, key) && localizations[key]) {
                 return localizations[key];
         }
@@ -156,6 +162,46 @@ function localize(key, fallbackString) {
                 fallbackString = key;
         }
         return fallbackString;
+}
+
+function mapText(key, values = {}, layer = activeBaseLayer, fallback = mapEnglish[key]) {
+    return String(localize(key, fallback, layer)).replace(/\{(\w+)\}/g, (match, name) =>
+        Object.hasOwn(values, name) ? String(values[name]) : match);
+}
+
+function formatMapNumber(value, options) {
+    return Number.isFinite(value) ? new Intl.NumberFormat(mapLanguage(), options).format(value) : '—';
+}
+
+function formatMapDate(timestamp, options) {
+    return new Intl.DateTimeFormat(mapLanguage(), options).format(timestamp);
+}
+
+function mapLanguage() {
+    const language = globalThis.document?.documentElement?.lang;
+    if (!language) return 'en-US';
+    try {
+        return Intl.NumberFormat.supportedLocalesOf(language)[0] ?? 'en-US';
+    } catch (error) {
+        if (!(error instanceof RangeError)) throw error;
+        // Minecraft's language codes may be invalid locale tags for Intl.
+        return 'en-US';
+    }
+}
+
+function formatMapCoordinates(position, round = value => value) {
+    return Object.fromEntries(['x', 'y', 'z'].map(axis => [axis, formatMapNumber(round(position[axis]), {useGrouping: false, maximumFractionDigits: 20})]));
+}
+
+function formatMapDuration(milliseconds) {
+    let seconds = Math.max(0, Math.floor(milliseconds / 1000));
+    const parts = [];
+    for (const [unit, divisor] of [['day', 86400], ['hour', 3600], ['minute', 60], ['second', 1]]) {
+        const count = Math.floor(seconds / divisor);
+        if (count || unit === 'second') parts.push(formatMapNumber(count, {style: 'unit', unit, unitDisplay: 'long'}));
+        seconds %= divisor;
+    }
+    return new Intl.ListFormat(mapLanguage(), {type: 'unit'}).format(parts);
 }
 
 function intToRoman(num) {
@@ -191,7 +237,7 @@ const charMap = ' !"#$%&\'()*+,-./' +
                 '0123456789:;<=>?' +
                 '@ABCDEFGHIJKLMNO' +
                 'PQRSTUVWXYZ[\\]^_' +
-                '\'abcdefghijklmno' +
+                '`abcdefghijklmno' +
                 'pqrstuvwxyz{|}~';
 const charWidths = ['', '!\',.:;i|', '`l', '"()*I[]t()', '<>fk'];
 
@@ -210,30 +256,40 @@ function renderMinecraftText(text, className) {
             return null;
     }
     
-    const characterWidth = 8;
-    const characterHeight = 8;
-    
-    if (!className) {
-            className = '';
+    className = escapeHtml(className || '');
+    const normalized = text.normalize('NFC');
+    const characters = Array.from(normalized);
+    const label = escapeHtml(text);
+    const font = worldLocalizations.get(activeBaseLayer?.worldId)?.inventoryFont;
+    const atlas = font?.[0] && fontMaskUrl('InventoryFont.png');
+    // Let the browser shape combining, joining and right-to-left scripts as a complete string.
+    const needsShaping = !/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Number}\p{Punctuation}\p{Symbol}\p{Space_Separator}]*$/u.test(normalized);
+    if (atlas && !needsShaping && characters.every(char => Object.hasOwn(font, char.codePointAt(0)))) {
+            const [atlasWidth, atlasHeight] = font[0];
+            const glyphs = characters.map(char => {
+                    const [x, y, width, height, advance, top] = font[char.codePointAt(0)];
+                    if (width === 0) return `<span class="mc_space" style="width:${advance}px"></span>`;
+                    return `<span class="mc_char mc_atlas_char" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px"></span>`;
+            }).join('');
+            return `<div class="mc_text_container ${className}" aria-label="${label}" style="--minecraft-font:url('${atlas}');--minecraft-font-size:${atlasWidth}px ${atlasHeight}px"><span aria-hidden="true">${glyphs}</span></div>`;
     }
-    className = escapeHtml(className);
 
-    if (!worldMaskUrl('Font.png') || Array.from(text).some(char => !charMap.includes(char))) {
-            return '<div class="mc_text_container mc_text_fallback ' + className + '">' + escapeHtml(text) + '</div>';
+    if (!worldMaskUrl('Font.png') || characters.some(char => !charMap.includes(char))) {
+            return '<div class="mc_text_container mc_text_fallback ' + className + '">' + label + '</div>';
     }
 
-    let html = '<div class="mc_text_container ' + className + '">';
+    let html = '<div class="mc_text_container ' + className + '" aria-label="' + label + '">';
 
-    for (let i = 0; i < text.length; i++) {
-            const position = findCharacterRowAndColumn(text[i]);
+    for (const char of characters) {
+            const position = findCharacterRowAndColumn(char);
 
-            const left = position[0] * characterWidth;
-            const top = position[1] * characterHeight;
+            const left = position[0] * 8;
+            const top = position[1] * 8;
             
             let widthOverride = '';
             
             for (let j = 1; j <= 4; j++) {
-                    if (charWidths[j].indexOf(text[i])>=0) {
+                    if (charWidths[j].includes(char)) {
                             widthOverride = ` width: ${j+1}px;`;
                             break;
                     }
@@ -263,15 +319,18 @@ function containerMarkerIcon(container) {
 function createContainerPopup(container) {
 	if (container.enderChest || container.containerType === 'ender_chest') {
 		const pos = container.worldPos;
-		return '<div style="text-align:center">Ender Chest</div><br/> position ('
-			+ Math.floor(pos.x) + ', ' + Math.floor(pos.y) + ', ' + Math.floor(pos.z) + ')';
+		const coordinates = formatMapCoordinates(pos, Math.floor);
+		const name = container.nameKey === null ? container.name : mapText('container.enderchest');
+		return '<div style="text-align:center">' + escapeHtml(name)
+			+ '</div><br/> ' + escapeHtml(mapText('tectonicus.marker.coordinates', coordinates));
 	}
 
         let markerPopup = container.large
                 ? '<div class="container_inventory large"><div class="container_inventory_scaler"><img src="' + worldImageUrl('LargeChest.png') + '" />'
                 : '<div class="container_inventory"><div class="container_inventory_scaler"><img src="' + worldImageUrl('SmallChest.png') + '" />';
 
-        markerPopup += renderMinecraftText(container.name, 'container_name');
+        const name = container.nameKey ? mapText(container.nameKey, {}, activeBaseLayer, container.name) : container.name;
+        markerPopup += renderMinecraftText(name, 'container_name');
 
         const items = new Map(container.items.map(item => [item.slot, item]));
         const slotCount = container.large ? 54 : 27;
@@ -306,7 +365,7 @@ function createItemHtml(item, top, left) {
         html += getOverlay(item, itemId, pngName);
         html += getEnchantmentGlint(item, itemId, pngName);
         if (item.count > 1) {
-                html += renderMinecraftText(item.count.toString(), 'item_count');
+                html += renderMinecraftText(formatMapNumber(item.count), 'item_count');
         }
         return html + '<div class="item_description">' + description + '</div></div>';
 }

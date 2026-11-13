@@ -31,6 +31,7 @@ import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -49,8 +50,10 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 @Slf4j
 @Getter
 public class Player {
-	@Setter
 	private String name;
+	private boolean defaultPlayerName;
+	@Setter
+	private boolean profileResolved;
 	@Setter
 	private String uuid;
 	@Setter
@@ -116,8 +119,9 @@ public class Player {
 		
 		// Old level.dat player tags contain no username. Keep a display label without
 		// treating that label as a real account for profile and skin lookups.
-		name = playerName == null || playerName.isBlank() ? "Player" : playerName;
-		if (playerName != null && !playerName.isBlank())
+		defaultPlayerName = playerName == null || playerName.isBlank();
+		name = defaultPlayerName ? "Player" : playerName;
+		if (!defaultPlayerName)
 			uuid = playerName;
 		
 		parse(tag);
@@ -128,6 +132,19 @@ public class Player {
 		this.name = name;
 		this.uuid = uuid;
 		this.skinURL = skinURL;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+		defaultPlayerName = false;
+	}
+
+	public boolean isDefaultPlayerName() {
+		return defaultPlayerName || name == null || name.isBlank();
+	}
+
+	public String getDisplayName() {
+		return isDefaultPlayerName() ? "Player" : name;
 	}
 	
 	private void parse(CompoundTag root) {
@@ -236,53 +253,55 @@ public class Player {
 	}
 
 	public class RequestPlayerInfoTask implements Callable<Void> {
+		private static final Duration TIMEOUT = Duration.of(15, SECONDS);
+
 		@Override
-		public Void call() throws Exception {
-			HttpClient httpClient = HttpClient.newHttpClient();
-			if (Player.this.getUuid().equals(Player.this.getName())) { //no uuid just a username
-				//Get the uuid
-				HttpRequest request = HttpRequest.newBuilder(new URI("https://api.mojang.com/users/profiles/minecraft/" + Player.this.getName())).GET().build();
-				HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-				log.trace(response.body());
-				JsonNode usernameNode = OBJECT_READER.readTree(response.body());
-				Player.this.setUuid(usernameNode.get("id").asString());
-				
-				JsonNode profileNode = getProfile(httpClient);
-				getSkinUrl(profileNode);
-			} else {
-				JsonNode profileNode = getProfile(httpClient);
-				Player.this.setName(profileNode.get("name").asString());
-				getSkinUrl(profileNode);
+		public Void call() {
+			try (HttpClient httpClient = HttpClient.newBuilder().connectTimeout(TIMEOUT).build()) {
+				loadProfile(httpClient);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			} catch (IOException | tools.jackson.core.JacksonException | IllegalArgumentException e) {
+				log.warn("Unable to load Minecraft player profile for {}: {}", uuid, e.getMessage());
 			}
-			log.debug("Loaded {}", Player.this.getName());
 			return null;
 		}
+
+		private void loadProfile(HttpClient httpClient) throws IOException, InterruptedException {
+			boolean lookupByName = uuid.equals(name);
+			if (lookupByName) {
+				//Get the uuid
+				JsonNode account = requestProfile(httpClient, "https://api.mojang.com/users/profiles/minecraft/" + name);
+				if (account == null || !account.path("id").isString()) return;
+				uuid = account.path("id").asString();
+			}
+			JsonNode profile = requestProfile(httpClient, "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid);
+			if (profile == null) return;
+			if (!lookupByName && profile.path("name").isString()) setName(profile.path("name").asString());
+			getSkinUrl(profile);
+			profileResolved = !isDefaultPlayerName();
+			log.debug("Loaded {}", name);
+		}
 		
-		private JsonNode getProfile(HttpClient httpClient) throws Exception {
-			HttpRequest request = HttpRequest.newBuilder(new URI("https://sessionserver.mojang.com/session/minecraft/profile/" + Player.this.getUuid()))
-					.timeout(Duration.of(15, SECONDS)).GET().build();
+		private JsonNode requestProfile(HttpClient httpClient, String url) throws IOException, InterruptedException {
+			HttpRequest request = HttpRequest.newBuilder(URI.create(url)).timeout(TIMEOUT).GET().build();
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			log.trace(response.body());
-			int responseCode = response.statusCode();
-			if (responseCode == 204)
-				log.error("ERROR: Unrecognized UUID");
-			else if (responseCode == 429) //Is this error still necessary?  It doesn't seem to occur anymore
-				log.error("ERROR: Too many requests. You are only allowed to contact the Mojang session server once per minute per player.  Wait for a minute and try again.");
-			
+			if (response.statusCode() != 200) {
+				log.warn("Minecraft player profile lookup for {} returned HTTP {}", uuid, response.statusCode());
+				return null;
+			}
 			return OBJECT_READER.readTree(response.body());
 		}
 		
-		private void getSkinUrl(JsonNode node) throws Exception {
-			JsonNode properties = node.get("properties").get(0);
-			byte[] decoded = Base64.getDecoder().decode(properties.get("value").asString());
-			String textureValue = new String(decoded, StandardCharsets.UTF_8);
-			log.trace(textureValue);
-			node = OBJECT_READER.readTree(textureValue);
-			boolean hasSkin = node.get("textures").has("SKIN");
-			String textureUrl = null;
-			if (hasSkin)
-				textureUrl = node.get("textures").get("SKIN").get("url").asString();
-			Player.this.setSkinURL(textureUrl);
+		private void getSkinUrl(JsonNode node) {
+			skinURL = null;
+			for (JsonNode property : node.path("properties")) {
+				if (!"textures".equals(property.path("name").asString()) || !property.path("value").isString()) continue;
+				byte[] decoded = Base64.getDecoder().decode(property.path("value").asString());
+				var skin = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8)).path("textures").path("SKIN").path("url");
+				skinURL = skin.isString() ? skin.asString() : null;
+				break;
+			}
 		}
 	}
 }

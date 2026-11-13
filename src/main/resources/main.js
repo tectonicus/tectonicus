@@ -44,6 +44,25 @@ function bindControlTooltips() {
     }
 }
 
+function localizeMapControls() {
+    const selectors = {
+        '.leaflet-control-zoom-in': 'tectonicus.controls.zoomIn',
+        '.leaflet-control-zoom-out': 'tectonicus.controls.zoomOut',
+        '.leaflet-control-layers-toggle:not(.toggle-menu-button)': 'tectonicus.controls.layers'
+    };
+    const container = mymap.getContainer();
+    for (const [selector, key] of Object.entries(selectors)) {
+        for (const button of container.querySelectorAll(selector)) button.setAttribute('data-map-label', key);
+    }
+    for (const button of container.querySelectorAll('[data-map-label]')) {
+        const label = mapText(button.getAttribute('data-map-label'));
+        button.setAttribute('aria-label', label);
+        if (button._tippy) button._tippy.setContent(label);
+        else button.setAttribute('title', label);
+    }
+    bindControlTooltips();
+}
+
 function bindMapInfoTippy() {
     let mapInfoLink = document.querySelector('.leaflet-control-attribution #mapInfo');
     if (mapInfoLink === null) {
@@ -167,6 +186,7 @@ async function mainAsync()
             }
         });
 
+        await containersMainPromise;
         let dimensionStates = new Map();
         for (let i = 0; i < contents.length; i++) {
             let tecMap = contents[i];
@@ -184,13 +204,16 @@ async function mainAsync()
                 tileLayer.images = tecMap.images || 'Images/';
                 tileLayer.localizationsUrl = tecMap.localizations || 'Scripts/localizations.json';
                 tileLayer.localizationsScript = tecMap.localizationsScript;
+                tileLayer.worldLabel = tecMap.worldName || mapText('selectWorld.world', {}, tileLayer);
+                if (tecMap.nameKey) tileLayer.mapName = mapText(tecMap.nameKey, {}, tileLayer, tecMap.name);
                 tileLayer.maxZoom = tecMap.maxZoom ?? maxZoom;
                 L.setOptions(tileLayer, {maxZoom: tileLayer.maxZoom});
                 if (!dimensionStates.has(tecMap.id)) {
                     dimensionStates.set(tecMap.id, {...tileLayer.controlState});
                 }
                 tileLayer.controlState = dimensionStates.get(tecMap.id);
-                tileLayer.label = tecMap.name + " - " + layer.name;
+                const layerLabel = layer.nameKey ? mapText(layer.nameKey, {}, tileLayer, layer.name) : layer.name;
+                tileLayer.label = tileLayer.mapName + " - " + layerLabel;
                 tileLayer.layerName = layer.name;
                 tileLayer.directoryName = layer.directory || layer.id;
                 tileLayer.compassUrl = tecMap.compass || tecMap.id + '/Compass.png';
@@ -239,7 +262,7 @@ async function mainAsync()
         signToggleControl = CreateToggleControl('signs', 'Sign.png', signsInitiallyVisible, 'signControlChecked');
         playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Icon.png', playersInitiallyVisible, 'playerControlChecked');
         bedToggleControl = CreateToggleControl('beds', 'Bed.png', bedsInitiallyVisible, 'bedControlChecked');
-        respawnAnchorToggleControl = CreateToggleControl('respawn anchors', 'RespawnAnchor.png', respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
+        respawnAnchorToggleControl = CreateToggleControl('respawnAnchors', 'RespawnAnchor.png', respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
         beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconsInitiallyVisible, 'beaconControlChecked');
         portalToggleControl = CreateToggleControl('portals', 'Portal.png', portalsInitiallyVisible, 'portalControlChecked');
         spawnToggleControl = CreateToggleControl('spawn', 'SpawnCompass.png', spawnInitiallyVisible, 'spawnControlChecked');
@@ -249,11 +272,12 @@ async function mainAsync()
         let attributionContainer = mymap.attributionControl.getContainer();
         new MutationObserver(bindMapInfoTippy).observe(attributionContainer, {childList: true});
 
-        // We have done all we can. Now we have to await the containers initialization
-        await containersMainPromise;
-
 	// Register these last so that they don't get called while we're still initializing
 	mymap.on('baselayerchange', onBaseLayerChange);
+	mymap.on('popupopen', ({popup}) => {
+        const close = popup.getElement().querySelector('.leaflet-popup-close-button');
+        close?.setAttribute('aria-label', mapText('mco.selectServer.close'));
+    });
 	mymap.on('zoomend', onProjectionChanged);
     mymap.on('moveend', onProjectionChanged);
     const updateToggleLayout = () => updateMarkerControls(activeBaseLayer);
@@ -319,26 +343,23 @@ function updateMarkerControls(layer) {
 	// Add tooltips to the toggle buttons
 	tippy('.button', {
         content(reference) {
-          const title = reference.getAttribute('title');
           reference.removeAttribute('title');
-          if (reference.checked) {
-            return 'Hide ' + title;
-          } else {
-              return 'Show ' + title;
-          }
+          return reference.markerTooltip();
         },
         placement: 'left',
         theme: 'light',
         delay: 0,
         duration: [100, 75],
     });
-    bindControlTooltips();
+    localizeMapControls();
 }
 
 function onBaseLayerChange(e) {
     changingBaseLayer = true;
     const targetView = {...e.layer.viewPosition};
     activeBaseLayer = e.layer;
+    const title = document.querySelector('title[data-map-default]');
+    if (title) title.textContent = mapText('tectonicus.title');
     controlState = {...e.layer.controlState, ...markerVisibilityOverrides.get(e.layer.worldId)};
     selectedWorldLayers.set(e.layer.worldId, e.layer.layerId);
     if (mymap.setMaxZoom) {
@@ -354,7 +375,7 @@ function onBaseLayerChange(e) {
 
 	changeBackgroundColor(e.layer.backgroundColor);
     const mapStyle = document.querySelector('#map').style;
-    const fontMask = worldMaskUrl('Font.png', e.layer);
+    const fontMask = fontMaskUrl('Font.png', e.layer);
     mapStyle.setProperty('--minecraft-font', fontMask ? 'url("' + fontMask + '")' : 'none');
     mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
 
@@ -382,35 +403,34 @@ function onBaseLayerChange(e) {
 	mymap.addControl(compassControl);
 
 	// Add map info popup
-    let peakMemoryMb = stats.peakMemoryBytes / 1024 / 1024;
-    let statsHtml = '';
-    statsHtml += '<h4 class="center">Map Info</h4>';
-    statsHtml += '<div class="center">Render Stats</div>';
-    statsHtml += 'Tectonicus version: ' + stats.tectonicusVersion + '<br/>';
-    statsHtml += 'Render time: ' + stats.renderTime + '<br/>';
-    statsHtml += 'Peak memory usage: ' + peakMemoryMb.toFixed(1) + 'Mb<br/>';
-    statsHtml += 'Created on ' + stats.renderedOnDate + '<br/>';
-    statsHtml += 'Created at ' + stats.renderedOnTime + '<br/>';
-    statsHtml += '<br/>';
-
-    statsHtml += '<div class="center">World stats</div>';
-    statsHtml += 'Players: ' + e.layer.worldStats.numPlayers + '<br/>';
-    statsHtml += 'Chunks: ' + e.layer.worldStats.numChunks + '<br/>';
-    statsHtml += 'Portals: ' + e.layer.worldStats.numPortals + '<br/>';
-    statsHtml += 'Views: ' + e.layer.views.length + '<br/>';
-    statsHtml += 'Signs: ' + e.layer.signs.length + '<br/>';
-    statsHtml += 'Player Beds: ' + e.layer.beds.length + '<br/>';
-
-    //Do we care about the block counts anymore?
-//        statsHtml += '<div class="center">Blocks</div>';
-//        for (i in layer.blockStats) {
-//            let stat = layer.blockStats[i];
-//            statsHtml += stat.name + ' ' + stat.count + '<br/>';
-//        }
-
-    mapInfoContent = statsHtml;
+    mapInfoContent = renderMapInfo(e.layer);
     bindMapInfoTippy();
     onProjectionChanged();
+}
+
+function renderMapInfo(layer) {
+    const text = (key, values) => escapeHtml(mapText('tectonicus.stats.' + key, values));
+    const {renderedAt, renderDurationMs} = stats;
+    const date = Number.isFinite(renderedAt) ? formatMapDate(renderedAt, {dateStyle: 'medium'}) : stats.renderedOnDate;
+    const time = Number.isFinite(renderedAt) ? formatMapDate(renderedAt, {timeStyle: 'long'}) : stats.renderedOnTime;
+    const duration = Number.isFinite(renderDurationMs) ? formatMapDuration(renderDurationMs) : stats.renderTime;
+    const memory = formatMapNumber(stats.peakMemoryBytes / 1000000,
+        {style: 'unit', unit: 'megabyte', minimumFractionDigits: 1, maximumFractionDigits: 1});
+    const line = (key, values) => text(key, values) + '<br/>';
+    return '<h4 class="center">' + text('mapInfo') + '</h4>'
+        + '<div class="center">' + text('renderStats') + '</div>'
+        + line('version', {version: stats.tectonicusVersion})
+        + line('renderTime', {duration})
+        + line('peakMemory', {memory})
+        + line('createdOn', {date})
+        + line('createdAt', {time})
+        + '<br/><div class="center">' + text('worldStats') + '</div>'
+        + line('players', {label: mapText('mco.configure.world.buttons.players'), count: formatMapNumber(layer.worldStats.numPlayers)})
+        + line('chunks', {count: formatMapNumber(layer.worldStats.numChunks)})
+        + line('portals', {count: formatMapNumber(layer.worldStats.numPortals)})
+        + line('views', {count: formatMapNumber(layer.views.length)})
+        + line('signs', {count: formatMapNumber(layer.signs.length)})
+        + line('beds', {count: formatMapNumber(layer.beds.length)});
 }
 
 
@@ -575,7 +595,9 @@ function refreshSpawnMarker(layer) {
 			//shadowAnchor: [22, 94]
 		});
 
-        let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }), '<p class="center">' + spawn.x + ', ' + spawn.y + ', ' + spawn.z + '</p>', spawn, layer).bindTooltip("Spawn Point");
+        const coordinates = escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(spawn)));
+        let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }), '<p class="center">' + coordinates + '</p>', spawn, layer)
+            .bindTooltip(escapeHtml(mapText('tectonicus.marker.spawnPoint')));
 
 		group.addLayer(marker);
 	}
@@ -653,6 +675,11 @@ function refreshPlayerMarkers(layer) {
 	for (const player of layer.players) {
 		player.donation = '';
 		const point = layer.projection.worldToMap(player.worldPos);
+		if (player.defaultPlayerName || !player.name || player.name === 'null') {
+			player.icon = fallbackIcon;
+			group.addLayer(createPlayerMarker(player, point, layer));
+			continue;
+		}
 		const src = worldImageUrl('PlayerIcons/' + player.name + '.png', layer);
 		const icon = new Image();
 		const addMarker = iconUrl => {
@@ -685,7 +712,8 @@ function refreshBedMarkers(layer) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + bed.playerName + "'s bed</p>", bed.worldPos, layer);
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">'
+			+ escapeHtml(mapText('tectonicus.marker.bed', {player: playerDisplayName(bed)})) + '</p>', bed.worldPos, layer);
 
 		group.addLayer(marker);
 	}
@@ -710,7 +738,8 @@ function refreshRespawnAnchorMarkers(layer) {
 			//shadowAnchor: [22, 94]
 		});
 
-		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + anchor.playerName + "'s respawn anchor</p>", anchor.worldPos, layer);
+		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">'
+			+ escapeHtml(mapText('tectonicus.marker.respawnAnchor', {player: playerDisplayName(anchor)})) + '</p>', anchor.worldPos, layer);
 
 		group.addLayer(marker);
 	}
@@ -737,18 +766,15 @@ function refreshBeaconMarkers(layer) {
 
 		let marker;
 		if (beacon.levels > 0) {
-		    let primaryEffect = beacon.primaryEffect !== "none" ? escapeHtml(localize("effect.minecraft." + beacon.primaryEffect)) : "None";
-		    let secondaryEffect = beacon.secondaryEffect !== "none" ? escapeHtml(localize("effect.minecraft." + beacon.secondaryEffect)) : "None";
+		    let primaryEffect = escapeHtml(beacon.primaryEffect !== "none" ? localize("effect.minecraft." + beacon.primaryEffect) : mapText('gui.none'));
+		    let secondaryEffect = escapeHtml(beacon.secondaryEffect !== "none" ? localize("effect.minecraft." + beacon.secondaryEffect) : mapText('gui.none'));
 
 		    marker = bindMarkerPopup(L.marker(point, { icon: icon }), `<p style="width:230px; height:64px"><img style="float:left; margin:4px;" src="${worldImageUrl('beacon_level_' + parseInt(beacon.levels) + '.png', layer)}" width="64" height="64" />
-		        Primary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.primaryEffect + '.png', layer)}" />${primaryEffect}<br />
-		        Secondary Power:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.secondaryEffect + '.png', layer)}" />${secondaryEffect}</p>`, beacon.worldPos, layer);
+		        ${escapeHtml(mapText('block.minecraft.beacon.primary'))}:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.primaryEffect + '.png', layer)}" />${primaryEffect}<br />
+		        ${escapeHtml(mapText('block.minecraft.beacon.secondary'))}:<br /><img style="padding-right:4px; vertical-align:middle" src="${worldImageUrl('effects/' + beacon.secondaryEffect + '.png', layer)}" />${secondaryEffect}</p>`, beacon.worldPos, layer);
 		} else {
-		    marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">Not Activated</p>', beacon.worldPos, layer);
+		    marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">' + escapeHtml(mapText('tectonicus.marker.beaconInactive')) + '</p>', beacon.worldPos, layer);
 		}
-
-//		let marker = L.marker(point, { icon: icon }).bindPopup('<p style="width:200px; height:64px"><img style=\"float:left; margin:4px;\" src=\"Images/beacon_level_1.png\" width=\"64\" height=\"64\" />Primary Power: <img src="Images/' + beacon.primaryEffect + '.png" alt="' + localize("effect.minecraft." + beacon.primaryEffect)
-//		    + '"><br /> Secondary Power: <img src="Images/' + "haste" + '.png" alt="' + localize("effect.minecraft." + beacon.secondaryEffect) + '"></p>');
 
 		group.addLayer(marker);
 	}
@@ -775,7 +801,8 @@ function refreshPortalMarkers(layer) {
 		});
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
-			'<div style=\"text-align:center\">Portal</div><br/> position (' + portal.worldPos.x + ', ' + portal.worldPos.y + ', ' + portal.worldPos.z + ')', portal.worldPos, layer);
+			'<div style="text-align:center">' + escapeHtml(mapText('block.minecraft.nether_portal')) + '</div><br/> '
+			+ escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(portal.worldPos))), portal.worldPos, layer);
 
 		group.addLayer(marker);
 	}

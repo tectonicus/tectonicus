@@ -29,6 +29,7 @@ async function createLayer(tileIndex) {
         maxZoom: 2,
         window: new EventTarget(),
         containersMainAsync: async () => {},
+        mapText: key => require('../../main/resources/map_en_us.json')[key],
         getQueryParams: () => ({}),
         getFragmentParams: () => ({}),
         MinecraftProjection: function() { this.worldToMap = () => [0, 0]; },

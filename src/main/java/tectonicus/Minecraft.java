@@ -88,8 +88,8 @@ public class Minecraft
 			for(Path jar : jars) {
 				log.trace(jar.getFileName().toString());
 				String jarVersion = Strings.CI.removeEnd(jar.getFileName().toString(), ".jar");
-				try {
-					VersionJson versionJson = getVersionJson(new ZipStack(jar.toFile(), null, null));
+				try (var assets = new ZipStack(jar.toFile(), null, List.of())) {
+					VersionJson versionJson = getVersionJson(assets);
 					if (jarVersion.equals(worldVersion) || versionJson.getName().equals(worldVersion)) { //match exact version
 						log.info("Found exact match: {}", jarVersion);
 						minecraftJar = jar.toFile();
@@ -116,6 +116,12 @@ public class Minecraft
 		}
 		
 		return Optional.ofNullable(minecraftJar);
+	}
+
+	public static File selectMinecraftJar(File configuredJar, String worldVersion) {
+		if (configuredJar != null) return configuredJar;
+		return worldVersion == null || worldVersion.isBlank() ? findLatestMinecraftJar()
+				: findMatchingMinecraftJar(worldVersion).orElseGet(Minecraft::findLatestMinecraftJar);
 	}
 	
 	public static VersionJson getVersionJson(ZipStack zipStack) {

@@ -115,6 +115,15 @@ public class Configuration implements Callable<Configuration> {
 	@Option(names = {"--htmlTitle"}, paramLabel = "<string>")
 	private String htmlTitle;
 
+	@Option(names = {"--mapLocale"}, paramLabel = "<locale>")
+	private String mapLocale = "en_us";
+
+	@Option(names = {"--mapLocaleFile"}, paramLabel = "<file>")
+	private File mapLocaleFile;
+
+	@Option(names = {"--listLanguages"})
+	private boolean listLanguages;
+
 	@Option(names = {"--defaultSkin", "defaultSkin"}, paramLabel = "<string>")
 	private String defaultSkin;
 
@@ -179,7 +188,7 @@ public class Configuration implements Callable<Configuration> {
 	private String customScript;
 
 	@Option(names = {"--useCdn", "useCdn"}, paramLabel = "<String")
-	private String useCdn;
+	private String useCdn = "";
 
 	private final List<WorldConfig> worlds = new ArrayList<>();
 

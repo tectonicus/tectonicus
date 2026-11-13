@@ -4,10 +4,12 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
+const mapEnglish = require('../../main/resources/map_en_us.json');
 
 function viewer() {
     const markers = [];
     const context = vm.createContext({
+        mapEnglish,
         window: Object.assign(new EventTarget(), {navigator: {}}),
         URL, URLSearchParams,
         L: {map: () => ({}), layerGroup, CRS: {Simple: {}}, icon: options => options,
@@ -60,11 +62,12 @@ test('every positioned marker gets the three copy actions outside its popup cont
     }
     context.createPlayerMarker({name: 'Alex', worldPos: pos, donation: ''}, [0, 0], layer);
     assert.equal(markers.length, 11);
+    assert.ok(markers.some(marker => /Nether Portal<\/div><br\/> 8\.5, 64, -0\.5/.test(marker.html)));
     for (const marker of markers) {
         assert.equal((marker.html.match(/<button /g) || []).length, 3);
         assert.match(marker.html, /Copy coords/);
         assert.match(marker.html, /Copy teleport/);
-        assert.match(marker.html, /Copy map link/);
+        assert.match(marker.html, /Copy Link to Clipboard/);
 		assert.equal((marker.html.match(/<svg /g) || []).length, 3);
 		for (const button of marker.html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g)) {
 			assert.match(button, /title="Copy [^"]+"/);

@@ -24,6 +24,12 @@ public class LayerConfig extends RenderOptions {
 	private final String dimensionId;
 	private WorldConfig world;
 	private String name = "Unnamed layer";
+	private String nameTranslationKey = "tectonicus.layer.unnamed";
+
+	public void setName(String name) {
+		this.name = name;
+		nameTranslationKey = null;
+	}
 	private LightStyle lightStyle = LightStyle.Day;
 	@Setter(lombok.AccessLevel.NONE)
 	private boolean lightStyleConfigured;

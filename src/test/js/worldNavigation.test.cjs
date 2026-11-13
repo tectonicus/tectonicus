@@ -4,6 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
+const mapEnglish = require('../../main/resources/map_en_us.json');
 
 async function createViewer(contents, fragment = '', {matchMedia, ...options} = {}) {
     let currentFragment = fragment;
@@ -46,6 +47,7 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
         addControl(control) { control.addTo(this); }
     };
     const context = vm.createContext({
+        mapEnglish,
         contents, maxZoom: 8, showSpawn: false, ...options,
         window: Object.assign(new EventTarget(), {matchMedia, history: {replaceState(state, title, url) { this.url = url; }}}),
         document: {querySelector: selector => selector === '#map' ? mapElement : null},

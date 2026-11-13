@@ -155,7 +155,7 @@ public class Skull implements BlockType
 		{
 			BufferedImage skin = world.getPlayerSkinCache().fetchSkin(player);
 			if (skin != null)
-				currentTexture = world.getTexturePack().findTexture(skin, "ph/"+entity.getName());
+				currentTexture = world.getTexturePack().findTexture(skin, "ph/" + player.getSkinURL());
 			else
 				currentTexture = texture;
 		}

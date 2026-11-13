@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public class ZipStack
+public class ZipStack implements AutoCloseable
 {
 	@Getter
 	private final List<File> modJars;
@@ -55,6 +55,17 @@ public class ZipStack
 
 	public InputStream getBaseStream(String path) throws IOException {
 		return hasFile(path, base) ? Files.newInputStream(base.getPath(path)) : null;
+	}
+
+	public InputStream getOverrideStream(String path) throws IOException {
+		return hasFile(path, override) ? Files.newInputStream(override.getPath(path)) : null;
+	}
+
+	@Override
+	public void close() throws IOException {
+		try (base) {
+			if (override != null) override.close();
+		}
 	}
 
 	public InputStream getStream(String path, boolean minecraftJarLoaded) throws IOException

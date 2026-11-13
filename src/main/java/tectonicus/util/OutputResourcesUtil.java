@@ -73,6 +73,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -92,6 +93,7 @@ import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_16;
 import static tectonicus.Version.VERSION_26_2;
+import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 @Slf4j
 @UtilityClass
@@ -185,7 +187,8 @@ public class OutputResourcesUtil {
 						Map<String, String> args = new HashMap<>();
 
 						Vector3d pos = player.getPosition();
-						args.put("name", "\"" + player.getName() + "\"");
+						args.put("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(player.getDisplayName()));
+						if (player.isDefaultPlayerName()) args.put("defaultPlayerName", "true");
 
 						String posStr = "new WorldCoord(" + pos.x + ", " + pos.y + ", " + pos.z + ")";
 						args.put("worldPos", posStr);
@@ -203,9 +206,11 @@ public class OutputResourcesUtil {
 
 						jsWriter.write(args);
 
-						File iconFile = new File(imagesDir, player.getName() + ".png");
-						PlayerIconAssembler.WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
-						executor.submit(task);
+						if (!player.isDefaultPlayerName()) {
+							File iconFile = new File(imagesDir, player.getName() + ".png");
+							PlayerIconAssembler.WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
+							executor.submit(task);
+						}
 
 						numOutput++;
 					}
@@ -246,7 +251,8 @@ public class OutputResourcesUtil {
 						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
 							log.debug("\texporting {}'s bed", player.getName());
 
-							bedArgs.put("playerName", "\"" + player.getName() + "\"");
+							bedArgs.put("playerName", FileUtils.getOBJECT_MAPPER().writeValueAsString(player.getDisplayName()));
+							if (player.isDefaultPlayerName()) bedArgs.put("defaultPlayerName", "true");
 
 							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
 							bedArgs.put("worldPos", posStr);
@@ -301,7 +307,8 @@ public class OutputResourcesUtil {
 						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
 							log.debug("\texporting {}'s respawn anchor", player.getName());
 
-							anchorArgs.put("playerName", "\"" + player.getName() + "\"");
+							anchorArgs.put("playerName", FileUtils.getOBJECT_MAPPER().writeValueAsString(player.getDisplayName()));
+							if (player.isDefaultPlayerName()) anchorArgs.put("defaultPlayerName", "true");
 
 							String posStr = "new WorldCoord(" + spawn.x + ", " + spawn.y + ", " + spawn.z + ")";
 							anchorArgs.put("worldPos", posStr);
@@ -496,8 +503,23 @@ public class OutputResourcesUtil {
 					containerArgs.put("enderChest", "true");
 				}
 				String name = entity.getCustomName();
-				if (partner != null && name.equals(entity.getContainerKind().getDisplayName())) name = "Large " + name;
+				if (entity.isDefaultName()) {
+					ContainerKind kind = entity.getContainerKind();
+					boolean large = kind.isChest() && (partner != null || "left".equals(entity.getType()) || "right".equals(entity.getType()));
+					name = (large ? "Large " : "") + kind.getDisplayName();
+					String nameKey = switch (kind) {
+						case CHEST -> large ? "container.chestDouble" : "container.chest";
+						case TRAPPED_CHEST -> large ? "tectonicus.container.largeTrappedChest" : "block.minecraft.trapped_chest";
+						case ENDER_CHEST -> "container.enderchest";
+						case BARREL -> "container.barrel";
+						case SHULKER_BOX -> "container.shulkerBox";
+					};
+					containerArgs.put("nameKey", FileUtils.getOBJECT_MAPPER().writeValueAsString(nameKey));
+				} else if (entity.isEnderChest()) {
+					containerArgs.put("nameKey", "null");
+				}
 				containerArgs.put("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(name));
+				if (inventoryAssets != null) inventoryAssets.addInventoryText(name);
 				containerArgs.put("items", items.toString());
 				if (partner != null) {
 					containerArgs.put("large", "true");
@@ -941,11 +963,15 @@ public class OutputResourcesUtil {
 	}
 
 	public static void outputWorldResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config, File exportDir, WorldConfig world) {
-		outputWorldResources(texturePack, playerIconAssembler, config, exportDir, world, new WorldViewerAssets());
+		try {
+			outputWorldResources(texturePack, playerIconAssembler, config, exportDir, world, new WorldViewerAssets(), MapLocalization.load(config));
+		} catch (IOException e) {
+			throw new java.io.UncheckedIOException(e);
+		}
 	}
 
 	public static void outputWorldResources(TexturePack texturePack, PlayerIconAssembler playerIconAssembler, Configuration config,
-			File exportDir, WorldConfig world, WorldViewerAssets viewerAssets) {
+			File exportDir, WorldConfig world, WorldViewerAssets viewerAssets, MapLocalization localization) {
 		log.info("Writing image resources for {}...", world.getName());
 		String defaultSkin = config.getDefaultSkin();
 
@@ -1076,7 +1102,7 @@ public class OutputResourcesUtil {
 
 		File scriptsDir = new File(exportDir, "Scripts/" + world.getId());
 		FileUtils.ensureExists(scriptsDir);
-		viewerAssets.write(texturePack.getZipStack(), world.getId(), scriptsDir.toPath(), imagesDir.toPath(), hasFont);
+		viewerAssets.write(texturePack.getZipStack(), world.getTexturePack(), localization, world.getId(), scriptsDir.toPath(), imagesDir.toPath(), hasFont);
 	}
 
 	public static void outputHtmlResources(Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
@@ -1199,14 +1225,15 @@ public class OutputResourcesUtil {
 	{
 		InputStream in = null;
 		final int scale = (int)Math.pow(2, numZoomLevels);
-		try (PrintWriter writer = new PrintWriter(new FileOutputStream(outFile)))
+		try (PrintWriter writer = new PrintWriter(outFile, StandardCharsets.UTF_8))
 		{
+			writer.println("const mapEnglish = " + FileUtils.getOBJECT_MAPPER().writeValueAsString(MapLocalization.english()) + ";");
 			for (String res : inputResources)
 			{
 				in = TileRenderer.class.getClassLoader().getResourceAsStream(res);
 
 				assert in != null;
-				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
 				String line;
 				while ((line = reader.readLine()) != null)
@@ -1314,6 +1341,8 @@ public class OutputResourcesUtil {
 				writer.println("\t\toutputId: \"" + m.getWorld().getId() + "\",");
 				writer.println("\t\tcompass: \"Scripts/" + m.getId() + "/Compass.png\",");
 				writer.println("\t\tname: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getName()) + ",");
+				if (m.getNameTranslationKey() != null)
+					writer.println("\t\tnameKey: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getNameTranslationKey()) + ",");
 				writer.println("\t\tworldId: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getId()) + ",");
 				writer.println("\t\timages: \"" + m.getWorld().getId() + "/Images/\",");
 				writer.println("\t\tlocalizationsScript: \"Scripts/" + m.getWorld().getId() + "/localizations.js\",");
@@ -1350,6 +1379,8 @@ public class OutputResourcesUtil {
 					writer.println("\t\t\t\tid: \""+l.getId()+"\",");
 					writer.println("\t\t\t\tdirectory: \"" + l.getDirectoryName() + "\",");
 					writer.println("\t\t\t\tname: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(l.getName()) + ",");
+					if (l.getNameTranslationKey() != null)
+						writer.println("\t\t\t\tnameKey: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(l.getNameTranslationKey()) + ",");
 					writer.println("\t\t\t\tdimension: \"" + m.getDimension() + "\",");
 					writer.println("\t\t\t\tbackgroundColor: \""+l.getBackgroundColor()+"\",");
 					writer.println("\t\t\t\timageFormat: \""+l.getImageFormat().getExtension()+"\",");
@@ -1390,8 +1421,8 @@ public class OutputResourcesUtil {
 		URL url = OutputResourcesUtil.class.getClassLoader().getResource("mapWithSigns.html");
 		if (url == null)
 			throw new IOException("resource not found");
-		try (Scanner scanner = new Scanner(url.openStream());
-			 PrintWriter writer = new PrintWriter(new FileOutputStream(outputHtmlFile)))
+		try (Scanner scanner = new Scanner(url.openStream(), StandardCharsets.UTF_8);
+			 PrintWriter writer = new PrintWriter(outputHtmlFile, StandardCharsets.UTF_8))
 		{
 			while (scanner.hasNext())
 			{
@@ -1405,7 +1436,12 @@ public class OutputResourcesUtil {
 					Util.Token first = tokens.remove(0);
 					if (first.isReplaceable) {
 						if (first.value.equals("title")) {
-							outLine.append(config.getHtmlTitle());
+							outLine.append(escapeHtml4(config.getHtmlTitle() == null
+									? MapLocalization.english().get("tectonicus.title") : config.getHtmlTitle()));
+						} else if (first.value.equals("defaultTitle")) {
+							if (config.getHtmlTitle() == null) outLine.append(" data-map-default");
+						} else if (first.value.equals("mapLanguage")) {
+							outLine.append(MapLocalization.parseLocale(config.getMapLocale()).toLanguageTag());
 						} else if (first.value.equals("styleIncludes")) {
 							switch(config.getUseCdn()) {
 								case "unpkg":
@@ -1529,7 +1565,7 @@ public class OutputResourcesUtil {
 		return outputHtmlFile;
 	}
 
-	public static void outputRenderStats(File exportDir, MemoryMonitor memoryMonitor, final String timeTaken)
+	public static void outputRenderStats(File exportDir, MemoryMonitor memoryMonitor, String timeTaken, long renderedAt, long renderDurationMs)
 	{
 		File statsFile = new File(new File(exportDir, "Scripts"), "stats.js");
 		try {
@@ -1542,8 +1578,9 @@ public class OutputResourcesUtil {
 
 		SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy");
 		SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm z");
-		final String renderedDateStr = dateFormat.format( new Date() );
-		final String renderedTimeStr = timeFormat.format( new Date() );
+		Date renderDate = new Date(renderedAt);
+		final String renderedDateStr = dateFormat.format(renderDate);
+		final String renderedTimeStr = timeFormat.format(renderDate);
 
 		try (JsObjectWriter jsWriter = new JsObjectWriter(statsFile)) {
 
@@ -1554,6 +1591,8 @@ public class OutputResourcesUtil {
 			stats.put("renderTime", timeTaken);
 			stats.put("renderedOnDate", renderedDateStr);
 			stats.put("renderedOnTime", renderedTimeStr);
+			stats.put("renderedAt", renderedAt);
+			stats.put("renderDurationMs", renderDurationMs);
 			stats.put("peakMemoryBytes", memoryMonitor.getPeakMemory());
 
 			jsWriter.write("stats", stats);

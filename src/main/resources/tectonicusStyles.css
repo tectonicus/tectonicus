@@ -293,7 +293,8 @@ html, body, #map {
     animation: enchanted_glint 60s linear infinite;
 }
 
-.item .item_description {
+.item .item_description,
+.equipment_tooltip {
     position: absolute;
     left: 19px;
     top: -6px;
@@ -307,7 +308,8 @@ html, body, #map {
     outline-offset: -2px;
 }
 
-.item:hover .item_description {
+.item:hover .item_description,
+.inventory_slot:hover > .equipment_tooltip {
     visibility: visible;
 }
 
@@ -488,6 +490,27 @@ html, body, #map {
     filter: drop-shadow(1px 1px rgb(62, 62, 62));
 }
 
+.mc_atlas_char,
+.mc_space {
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
+}
+
+.mc_space {
+    height: 8px;
+}
+
+.equipment_tooltip {
+    pointer-events: none;
+    top: 18px;
+    left: 0;
+}
+
+.inventory_slot:has(> .item:hover) > .equipment_tooltip {
+    visibility: collapse;
+}
+
     .mc_char::before {
         content: '';
         position: relative;
@@ -495,6 +518,8 @@ html, body, #map {
         bottom: 0;
         background: #fcfcfc;
         mask: var(--minecraft-font, url('../Images/Font.png'));
+        mask-size: var(--minecraft-font-size, auto);
+        mask-repeat: no-repeat;
         mask-position: inherit;
         display: inherit;
         width: inherit;

@@ -66,9 +66,10 @@ function CreateResetViewButton(map) {
     container.style.top = (zoomContainer.offsetTop + zoomContainer.offsetHeight) + 'px';
     const button = L.DomUtil.create('a', 'leaflet-control-reset-view', container);
     button.href = '#';
-    button.title = 'Reset Map View';
+    button.title = mapText('tectonicus.controls.reset');
+    button.setAttribute('data-map-label', 'tectonicus.controls.reset');
     button.setAttribute('role', 'button');
-    button.setAttribute('aria-label', 'Reset Map View');
+    button.setAttribute('aria-label', button.title);
     button.onclick = function (event) {
         L.DomEvent.preventDefault(event);
         const layer = activeBaseLayer;
@@ -86,8 +87,9 @@ function CreateToggleMenuControl() {
 			const container = L.DomUtil.create('div', 'leaflet-control-layers toggle-menu');
 			const button = L.DomUtil.create('button', 'leaflet-control-layers-toggle toggle-menu-button', container);
 			button.type = 'button';
-			button.title = 'Marker toggles';
-			button.setAttribute('aria-label', 'Marker toggles');
+			button.title = mapText('tectonicus.controls.markers');
+			button.setAttribute('data-map-label', 'tectonicus.controls.markers');
+			button.setAttribute('aria-label', button.title);
 			button.setAttribute('aria-expanded', 'false');
 			const icon = L.DomUtil.create('span', 'toggle-menu-icon', button);
 			icon.setAttribute('aria-hidden', 'true');
@@ -152,7 +154,7 @@ function CreateToggleMenuControl() {
 }
 
 // Creates a toggle box to turn on and off a set of markers
-function CreateToggleControl(text, image, startEnabled, stateKey) {
+function CreateToggleControl(marker, image, startEnabled, stateKey) {
 	let toggleControl = L.Control.extend({
 		options: {
 			position: 'topright'
@@ -162,9 +164,11 @@ function CreateToggleControl(text, image, startEnabled, stateKey) {
 			let container = L.DomUtil.create('input', 'leaflet-bar leaflet-control leaflet-control-custom button');
 			container.type = "image";
 			container.src = worldImageUrl(image);
+			const text = mapText('tectonicus.toggle.' + marker);
 			container.title = text;
 			container.alt = text;
-			container.setAttribute('aria-label', 'Toggle ' + text);
+			container.setAttribute('aria-label', mapText('tectonicus.toggle.toggle', {marker: text}));
+			container.markerTooltip = () => mapText(container.checked ? 'tectonicus.toggle.hide' : 'tectonicus.toggle.show', {marker: text});
 			container.checked = startEnabled;
 
 			container.onclick = function () {
@@ -173,11 +177,7 @@ function CreateToggleControl(text, image, startEnabled, stateKey) {
 
 				SetToggleBg(this);
 
-				if (this.checked) {
-                    this._tippy.setContent('Hide ' + text);
-                } else {
-                    this._tippy.setContent('Show ' + text);
-                }
+				this._tippy?.setContent(this.markerTooltip());
 			}
 
 			L.DomEvent.disableClickPropagation(container);
@@ -224,22 +224,25 @@ function CreateWorldControl(worlds, selectedWorldId, onChange) {
         onAdd: function() {
             const container = L.DomUtil.create('div', 'leaflet-bar world-control');
             const label = L.DomUtil.create('label', '', container);
-            label.textContent = 'World ';
+            this.caption = L.DomUtil.create('span', '', label);
             const select = L.DomUtil.create('select', '', label);
-            select.setAttribute('aria-label', 'World');
             for (const [id, layers] of worlds) {
                 const option = L.DomUtil.create('option', '', select);
                 option.value = id;
-                option.textContent = layers[0].worldName;
+                option.textContent = layers[0].worldLabel;
             }
             select.value = selectedWorldId;
             select.onchange = () => onChange(select.value);
             this.select = select;
+            this.setWorld(selectedWorldId);
             L.DomEvent.disableClickPropagation(container);
             L.DomEvent.disableScrollPropagation(container);
             return container;
         },
         setWorld: function(id) {
+            const label = mapText('selectWorld.world');
+            this.caption.textContent = label + ' ';
+            this.select.setAttribute('aria-label', label);
             this.select.value = id;
         }
     });

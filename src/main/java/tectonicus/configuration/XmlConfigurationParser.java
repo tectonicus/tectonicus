@@ -141,7 +141,11 @@ public class XmlConfigurationParser
 			config.setOutputDir(outputDir);
 
 			config.setOutputHtmlName(getString(configNode, "outputHtmlName", "map.html"));
-			config.setHtmlTitle(getString(configNode, "htmlTitle", "Tectonicus Map"));
+			config.setHtmlTitle(getString(configNode, "htmlTitle", null));
+			config.setMapLocale(getString(configNode, "mapLocale", "en_us"));
+			String mapLocaleFile = getString(configNode, "mapLocaleFile");
+			if (!mapLocaleFile.isBlank())
+				config.setMapLocaleFile(file.toPath().toAbsolutePath().getParent().resolve(mapLocaleFile).toFile());
 			
 			String defaultSkin = parseDefaultSkin( getString(configNode, "defaultSkin") );
 			config.setDefaultSkin(defaultSkin);
@@ -212,6 +216,7 @@ public class XmlConfigurationParser
 			map.setDimensionInfo(dimensionInfo);
 			String name = getString(mapElement, "name");
 			map.setName(name.isBlank() ? dimensionInfo.dimension().getName() : name);
+			if (name.isBlank()) map.setNameTranslationKey(dimensionInfo.dimension().getNameTranslationKey());
 			
 			final int cameraAngle = parseCameraAngle( getString(mapElement, "cameraAngle") );
 			map.setCameraAngleDeg(cameraAngle);

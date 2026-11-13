@@ -9,6 +9,8 @@
 
 package tectonicus.cache;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -32,17 +34,20 @@ import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class PlayerSkinCache
 {
 	private static final int INDEX_VERSION = 1;
 	
-	private static final long MAX_AGE_BEFORE_REFRESH = 1000 * 60 * 60  * 60; // one hour in ms
+	public static final long MAX_AGE_BEFORE_REFRESH = 1000L * 60 * 60 * 60;
 	
 	private final File cacheDir;
 	
 	private final Map<String, CacheEntry> skinCache;
+	private final Cache<String, BufferedImage> skinsByUrl = Caffeine.newBuilder().maximumSize(256).build();
+	private final Map<String, PlayerProfile> refreshedProfiles = new ConcurrentHashMap<>();
 	
 	public PlayerSkinCache(Configuration config, MessageDigest hashAlgorithm)
 	{
@@ -154,30 +159,44 @@ public class PlayerSkinCache
 	
 	public CacheEntry getCacheEntry(String playerUUID)
 	{
-		return skinCache.get(playerUUID);
+		CacheEntry entry = skinCache.get(playerUUID);
+		return entry == null || entry.playerName == null || entry.playerName.isBlank() || entry.playerName.equals("null")
+				? null : entry;
+	}
+
+	public void refreshProfile(Player player) {
+		// A render loads the same player save in each dimension, including after a failed lookup.
+		PlayerProfile profile = refreshedProfiles.computeIfAbsent(player.getUuid(), uuid -> {
+			player.new RequestPlayerInfoTask().call();
+			return new PlayerProfile(player.getUuid(), player.getName(), player.getSkinURL(), player.isProfileResolved());
+		});
+		player.setUuid(profile.uuid());
+		player.setName(profile.name());
+		player.setSkinURL(profile.skinUrl());
+		player.setProfileResolved(profile.resolved());
 	}
 	
 	public BufferedImage fetchSkin(Player player)
 	{
-		if ((player.getUuid() == null || player.getUuid().isBlank())
-				&& (player.getSkinURL() == null || player.getSkinURL().isBlank()))
-			return null;
+		String skinUrl = player.getSkinURL();
+		boolean hasSkinUrl = skinUrl != null && !skinUrl.isBlank() && !skinUrl.equals("null");
+		if (player.getUuid() == null || player.getUuid().isBlank() || player.isDefaultPlayerName()) {
+			// Player heads can carry a texture without a complete account profile.
+			return hasSkinUrl ? ImageUtils.copy(skinsByUrl.get(skinUrl, this::fetchSkinFromNetwork)) : null;
+		}
+		if (!player.isProfileResolved() && !hasSkinUrl) return null;
 
-		CacheEntry existing = null;
+		CacheEntry existing = getCacheEntry(player.getUuid());
 		
-		if (skinCache.containsKey(player.getUuid()))
+		if (existing != null)
 		{
-			existing = skinCache.get(player.getUuid());
-			
-			if (existing.skinFile.equals("Tectonicus_Default_Player_Skin.png"))
-				return null;
-			
-			
 			/* TODO:  Player icons should be stored in the cache too.  We don't need to regenerate the icon every run if the skin refresh
 			 * time hasn't expired yet */
 			final long age = System.currentTimeMillis() - existing.fetchedTime;
 			if (age < MAX_AGE_BEFORE_REFRESH)
 			{
+				if (existing.skinFile.equals("Tectonicus_Default_Player_Skin.png"))
+					return null;
 				try
 				{
 					return ImageIO.read( new File(cacheDir, existing.playerName + ".png") );
@@ -268,4 +287,6 @@ public class PlayerSkinCache
 		public String skinURL;
 		public String skinFile;
 	}
+
+	private record PlayerProfile(String uuid, String name, String skinUrl, boolean resolved) {}
 }

@@ -67,7 +67,6 @@ import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
-import tectonicus.raw.Player.RequestPlayerInfoTask;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
@@ -294,9 +293,7 @@ public class World implements BlockContext, AutoCloseable
 		File minecraftJar = worldConfig != null ? worldConfig.getMinecraftJar() : config.getMinecraftJar();
 		if (minecraftJar == null) {
 			log.info("No Minecraft jar specified.");
-			minecraftJar = worldVersion != null && !worldVersion.isBlank()
-					? Minecraft.findMatchingMinecraftJar(worldVersion).orElseGet(Minecraft::findLatestMinecraftJar)
-					: Minecraft.findLatestMinecraftJar();
+			minecraftJar = Minecraft.selectMinecraftJar(null, worldVersion);
 		}
 		if (worldConfig != null)
 			worldConfig.setMinecraftJar(minecraftJar);
@@ -1412,19 +1409,13 @@ public class World implements BlockContext, AutoCloseable
 		}
 		CacheEntry ce = playerSkinCache.getCacheEntry(player.getUuid());
 		if (ce != null) {
+			player.setName(ce.playerName);
+			player.setSkinURL(ce.skinURL);
+			player.setProfileResolved(true);
 			final long age = System.currentTimeMillis() - ce.fetchedTime;
-			if (age < 1000 * 60 * 60 * 60) { // one hour in ms
-				player.setName(ce.playerName);
-				player.setSkinURL(ce.skinURL);
-			} else {
-				//refresh name and skin
-				RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
-				executor.submit(task);
-			}
-		} else {
-			RequestPlayerInfoTask task = player.new RequestPlayerInfoTask();
-			executor.submit(task);
+			if (age < PlayerSkinCache.MAX_AGE_BEFORE_REFRESH) return;
 		}
+		executor.submit(() -> playerSkinCache.refreshProfile(player));
 	}
 	
 	public BlockTypeRegistry getBlockTypeRegistry()

@@ -815,7 +815,8 @@ public class RawChunk {
 						}
 						
 						containers.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedContainer, facing, type, items,
-								containerKind, containerKind == ContainerKind.SHULKER_BOX ? ContainerKind.shulkerColor(containerBlock, containerBlockId) : null));
+								containerKind, containerKind == ContainerKind.SHULKER_BOX ? ContainerKind.shulkerColor(containerBlock, containerBlockId) : null,
+								customName == null));
 					} else if (id.equals("minecraft:bed")) {
 						final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
 						int colorVal = 0;

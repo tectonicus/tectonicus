@@ -39,6 +39,7 @@ import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.DirUtils;
 import tectonicus.util.FileUtils;
 import tectonicus.util.ImageUtils;
+import tectonicus.util.MapLocalization;
 import tectonicus.util.TileOutput;
 import tectonicus.util.TempArea;
 import tectonicus.util.Util;
@@ -142,6 +143,7 @@ public class TileRenderer
 	private final ProgressListener progressListener;
 	
 	private final MemoryMonitor memoryMonitor;
+	private final MapLocalization mapLocalization;
 	
 	private boolean abort;
 	private HddTileList discoveredTiles;
@@ -149,7 +151,13 @@ public class TileRenderer
 	
 	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
 	{
+		this(config, listener, hashAlgorithm, MapLocalization.load(config));
+	}
+
+	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm, MapLocalization mapLocalization) throws Exception
+	{
 		this.config = config;
+		this.mapLocalization = mapLocalization;
 		this.hashAlgorithm = hashAlgorithm;
 		
 		this.progressListener = listener;
@@ -365,7 +373,7 @@ public class TileRenderer
 					}
 					outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels,
 							config.useCache() ? iconOptions : null);
-					outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld(), viewerAssets);
+					outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld(), viewerAssets, mapLocalization);
 					viewerAssetsByWorld.remove(map.getWorld());
 				}
 			
@@ -398,7 +406,7 @@ public class TileRenderer
 		Date endTime = new Date();
 		String time = Util.getElapsedTime(startTime, endTime);
 		
-		outputRenderStats(exportDir, memoryMonitor, time);
+		outputRenderStats(exportDir, memoryMonitor, time, endTime.getTime(), endTime.getTime() - startTime.getTime());
 		
 		outputChangedFile();
 		

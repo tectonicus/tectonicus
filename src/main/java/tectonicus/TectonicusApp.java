@@ -13,6 +13,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
+import tectonicus.util.MapLocalization;
 import tectonicus.cache.PlayerSkinCache;
 import tectonicus.configuration.Configuration.Mode;
 import tectonicus.configuration.Dimension;
@@ -22,7 +23,9 @@ import tectonicus.configuration.LayerConfig;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.XmlConfigurationParser;
 import tectonicus.gui.Gui;
+import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
+import tectonicus.texture.ZipStack;
 import tectonicus.util.FileUtils;
 import tectonicus.util.DirUtils;
 import tectonicus.util.OutputResourcesUtil;
@@ -31,12 +34,15 @@ import tectonicus.world.World;
 
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class TectonicusApp
@@ -83,8 +89,9 @@ public class TectonicusApp
 		return result;
 	}
 
-	public Integer run()
+	public Integer run() throws java.io.IOException
 	{
+		var mapLocalization = config.getMode() == Mode.CMD ? MapLocalization.load(config) : null;
 		InteractiveRenderer interactiveRenderer = null;
 		TileRenderer tileRenderer = null;
 		try
@@ -117,7 +124,7 @@ public class TectonicusApp
 					FileUtils.deleteDirectory(config.getOutputDir());
 				}
 				
-				tileRenderer = new TileRenderer(config, new CommandLineOutput(), hashAlgorithm);
+				tileRenderer = new TileRenderer(config, new CommandLineOutput(), hashAlgorithm, mapLocalization);
 				
 				tileRenderer.output();
 			}
@@ -272,10 +279,17 @@ public class TectonicusApp
 		commandLine.registerConverter(Level.class, Level::toLevel);
 		commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 		commandLine.setExecutionStrategy(new CommandLine.RunFirst());
-		commandLine.execute(argArray);
+		int exitCode = commandLine.execute(argArray);
+		if (exitCode != 0) System.exit(exitCode);
 
 		if (commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested()) {
 			System.exit(commandLine.getCommandSpec().exitCodeOnUsageHelp());
+		}
+
+		if (config.isListLanguages()) {
+			config.applyCommandLineOverrides(commandLine.getParseResult());
+			if (!listLanguages(config, commandLine.getOut(), commandLine.getErr())) System.exit(1);
+			return;
 		}
 
 		if (config.numDimensions() == 0) { //If no maps were specified in xml config add a single map and layer
@@ -310,5 +324,42 @@ public class TectonicusApp
 		}
 
 		app.run();
+	}
+
+	private static boolean listLanguages(Configuration config, PrintWriter out, PrintWriter err) throws IOException {
+		var jars = new LinkedHashSet<File>();
+		for (var world : config.getWorlds()) {
+			String version = world.getMinecraftJar() == null ? worldVersion(world.getWorldDir()) : null;
+			jars.add(Minecraft.selectMinecraftJar(world.getMinecraftJar(), version));
+		}
+		if (jars.isEmpty()) {
+			String version = config.getMinecraftJar() == null ? worldVersion(config.getWorldDir()) : null;
+			jars.add(Minecraft.selectMinecraftJar(config.getMinecraftJar(), version));
+		}
+		var localization = MapLocalization.load(new Configuration());
+		boolean success = true;
+		for (File jar : jars) {
+			try (var assets = new ZipStack(jar, null, List.of())) {
+				var names = localization.languageNames(assets);
+				if (names.isEmpty()) {
+					err.println("No Minecraft language catalog available for " + jar);
+					success = false;
+					continue;
+				}
+				if (jars.size() > 1) out.println(jar.getName());
+				names.forEach((code, name) -> out.printf("%-10s %s%n", code, name));
+			} catch (IOException e) {
+				err.println("Unable to read Minecraft client " + jar + ": " + e.getMessage());
+				success = false;
+			}
+		}
+		out.flush();
+		err.flush();
+		return success;
+	}
+
+	private static String worldVersion(File worldDir) {
+		if (worldDir == null || !Minecraft.isValidWorldDir(worldDir.toPath())) return null;
+		return new LevelDat(Minecraft.findLevelDat(worldDir.toPath()), "").getVersion();
 	}
 }

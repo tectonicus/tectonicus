@@ -4,9 +4,11 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
+const mapEnglish = require('../../main/resources/map_en_us.json');
 
 function viewer() {
     const context = vm.createContext({
+        mapEnglish,
         contents: [], window: new EventTarget(),
         L: {map: () => ({}), layerGroup, CRS: {Simple: {}}}
     });

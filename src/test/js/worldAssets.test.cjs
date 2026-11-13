@@ -4,12 +4,14 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
+const mapEnglish = require('../../main/resources/map_en_us.json');
 
 function createAssetsViewer(fetch, {protocol, contents, loadScript} = {}) {
     const markers = [];
     const images = [];
     const map = {layers: new Set()};
     const context = vm.createContext({
+        mapEnglish, URL,
         fetch, console: {error() {}},
         contents: contents ?? [
             {localizations: 'Scripts/World0/localizations.json'},
@@ -140,6 +142,67 @@ test('HTTP maps load translations as scripts and use regular PNGs for masks', as
     assert.match(viewer.context.renderMinecraftText('ASCII'), /mc_text_fallback.*ASCII/);
 });
 
+test('partial map translations localize full phrases and keep custom names', () => {
+    const viewer = createAssetsViewer(undefined, {
+        contents: [{worldId: 'World0', localizationsScript: 'Scripts/World0/localizations.js'}]
+    });
+    const {context} = viewer;
+    context.document.documentElement = {lang: 'ja-JP'};
+    context.registerWorldLocalizations('World0', {translations: {
+        'tectonicus.marker.bed': '{player}のベッド',
+        'narration.slot.name.offhand': '利き手と反対の手',
+        'entity.minecraft.player': 'プレイヤー',
+        'container.chest': 'チェスト',
+        'gui.copy_link_to_clipboard': 'リンクをコピー'
+    }, hasFont: false});
+    assert.equal(context.mapText('tectonicus.marker.bed', {player: 'Alex'}), 'Alexのベッド');
+    assert.equal(context.mapText('tectonicus.controls.reset'), 'Reset Map View');
+    assert.equal(context.playerDisplayName({name: 'Player'}), 'Player');
+    assert.equal(context.playerDisplayName({name: 'Player', defaultPlayerName: true}), 'プレイヤー');
+    const inventory = context.getInventoryHtml({inventory: []});
+    assert.match(inventory, /offhand_label[^>]*>利き手と反対の手/);
+    assert.match(inventory, /data-slot="-106"[^>]*aria-label="利き手と反対の手"/);
+    assert.match(context.createContainerPopup({name: 'Chest', nameKey: 'container.chest', items: []}), /チェスト/);
+    assert.doesNotMatch(context.createContainerPopup({name: 'Chest', items: []}), /チェスト/);
+    assert.match(context.formatMapDuration(63000), /1 分.*3 秒/);
+});
+
+test('Minecraft language codes unsupported by Intl keep their text and use English formatting', () => {
+    const {context} = createAssetsViewer(undefined, {
+        contents: [{worldId: 'World0', localizationsScript: 'Scripts/World0/localizations.js'}]
+    });
+    context.registerWorldLocalizations('World0', {translations: {'tectonicus.title': 'Localized map'}});
+    const dateOptions = {dateStyle: 'medium', timeZone: 'UTC'};
+    for (const lang of ['enws', 'esan']) {
+        context.document.documentElement = {lang};
+        assert.equal(context.formatMapNumber(1234), '1,234');
+        assert.equal(context.formatMapDate(0, dateOptions), new Intl.DateTimeFormat('en-US', dateOptions).format(0));
+        assert.equal(context.formatMapDuration(63000), '1 minute, 3 seconds');
+        assert.equal(context.mapText('tectonicus.title'), 'Localized map');
+    }
+});
+
+test('inventory glyphs use world font assets offline and preserve shaping fallback', () => {
+    const {context} = createAssetsViewer(undefined, {protocol: 'file:'});
+    const font = {0: [64, 16], 32: [0, 0, 0, 0, 4, 0], 97: [0, 0, 5, 8, 6, 0],
+        227: [16, 0, 5, 8, 6, 0], 26085: [32, 0, 8, 8, 9, 0], 1575: [48, 0, 5, 8, 6, 0]};
+    context.registerWorldLocalizations('World0', {translations: {}, inventoryFont: font});
+    context.registerWorldMasks('World0', {'InventoryFont.png': 'data:image/png;base64,AAAA'});
+    const html = context.renderMinecraftText('a a\u0303日', 'name');
+    assert.match(html, /mask-position:-16px -0px/);
+    assert.match(html, /mask-position:-32px -0px/);
+    assert.match(html, /mc_space/);
+    assert.match(html, /data:image\/png;base64,AAAA/);
+    assert.doesNotMatch(html, /mc_text_fallback/);
+    assert.match(context.renderMinecraftText('ا'), /mc_text_fallback/);
+    assert.match(context.renderMinecraftText('ã<&>'), /ã&lt;&amp;&gt;/);
+    assert.match(context.getInventoryHtml({inventory: []}), /equipment_tooltip/);
+    assert.doesNotMatch(context.getInventoryHtml({inventory: []}), /title="Helmet"/);
+    context.window.location.protocol = 'http:';
+    context.document.baseURI = 'http://localhost/maps/map.html';
+    assert.match(context.renderMinecraftText('ã'), /http:\/\/localhost\/maps\/World0\/Images\/InventoryFont\.png/);
+});
+
 test('chest images, item masks, overlays, player status and markers use the selected world assets', () => {
     const viewer = createAssetsViewer();
     const item = {id: 'minecraft:leather_helmet', count: 2, slot: 0, color: 0x123456,
@@ -221,8 +284,7 @@ test('ender chest markers use world icons, show block coordinates and follow the
         assert.equal(enderChest.options.icon.iconUrl, `World${index}/Images/EnderChest.png`);
         assert.equal(chest.options.icon.iconUrl, `World${index}/Images/Chest.png`);
         assert.equal(enderChest.point, layer.containers[0].worldPos);
-        assert.match(enderChest.html, /Ender Chest/);
-        assert.match(enderChest.html, /position \(-17, -36, -1\)/);
+        assert.match(enderChest.html, /Ender Chest<\/div><br\/> -17, -36, -1/);
         assert.doesNotMatch(enderChest.html, /inventory_slot|SmallChest.png|undefined/);
         assert.match(chest.html, /SmallChest.png/);
         assert.deepEqual(group.getLayers(), [enderChest, chest]);
@@ -336,4 +398,22 @@ test('only the latest player icon requests populate the group after switching aw
     assert.equal(map.layers.size, 0);
     context.setMarkerVisibility('playerControlChecked', true);
     assert.deepEqual(map.layers, new Set([group, ...currentMarkers]));
+});
+
+test('players without a resolved profile appear immediately with a localized name and default icon', () => {
+    const viewer = createAssetsViewer(undefined, {
+        contents: [{worldId: 'World0', localizationsScript: 'Scripts/World0/localizations.js'}]
+    });
+    const {context, images, markers} = viewer;
+    context.registerWorldLocalizations('World0', {translations: {'entity.minecraft.player': 'Jogador'}});
+    const layer = context.selectedLayer;
+    layer.players = [{name: 'null', worldPos: {x: 0, y: 64, z: 0}},
+        {name: 'Player', defaultPlayerName: true, worldPos: {x: 1, y: 64, z: 0}}];
+    context.refreshPlayerMarkers(layer);
+    assert.equal(images.length, 0);
+    assert.equal(markers.length, 2);
+    for (const marker of markers) {
+        assert.match(marker.html, />Jogador</);
+        assert.match(marker.options.icon.iconUrl, /Tectonicus_Default_Player_Icon\.png$/);
+    }
 });

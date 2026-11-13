@@ -68,7 +68,7 @@ class WorldResourcesTest {
 				OutputResourcesUtil.outputInventoryItemIcons(directory.resolve(id + "/Images").toFile(), rasteriser(), textures,
 						null, new BlockRegistry(textures), new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
 				OutputResourcesUtil.outputWorldResources(textures, new PlayerIconAssembler(null), config,
-						directory.toFile(), world, viewerAssets);
+						directory.toFile(), world, viewerAssets, MapLocalization.load(config));
 			} finally {
 				var field = ZipStack.class.getDeclaredField("base");
 				field.setAccessible(true);

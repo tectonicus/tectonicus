@@ -38,10 +38,17 @@ function createPlayerMarker(player, pos, layer = activeBaseLayer) {
 		//shadowAnchor: [22, 94]
 	});
 
-	return bindMarkerPopup(L.marker(pos, { icon: icon }), getPlayerHtml(player), player.worldPos, layer, {maxWidth: 380}).bindTooltip(player.name);
+	return bindMarkerPopup(L.marker(pos, { icon: icon }), getPlayerHtml(player), player.worldPos, layer, {maxWidth: 380})
+		.bindTooltip(escapeHtml(playerDisplayName(player)));
+}
+
+function playerDisplayName(player) {
+	const name = player.name ?? player.playerName;
+	return player.defaultPlayerName || !name || name === 'null' ? mapText('entity.minecraft.player') : name;
 }
 
 function bindMarkerPopup(marker, html, worldPos, layer, options) {
+	if (marker.options) marker.options.alt = mapText('tectonicus.marker.label', {}, layer);
 	return marker.bindPopup(html + markerCopyControls(worldPos, layer), options);
 }
 
@@ -78,10 +85,13 @@ function markerCopyControls(worldPos, layer) {
 	const coordsIcon = icon('<circle cx="12" cy="12" r="7"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="1"/>');
 	const teleportIcon = icon('<path d="m5 7 5 5-5 5m8 0h6"/>');
 	const linkIcon = icon('<path d="m10 13 4-4m-6 1-2 2a4 4 0 0 0 6 6l2-2m2-2 2-2a4 4 0 0 0-6-6l-2 2"/>');
+	const label = key => escapeHtml(mapText(key, {}, layer));
+	const coordsLabel = label('tectonicus.copy.coordinates');
+	const linkLabel = label('gui.copy_link_to_clipboard');
 	return '<div class="marker_copy_controls">'
-		+ `<button type="button" data-copy-text="${escapeHtml(coords)}" title="Copy coords" aria-label="Copy coords" onclick="copyMarkerValue(this)">${coordsIcon}</button>`
-		+ `<button type="button" data-copy-text="${escapeHtml(command)}" title="Copy teleport command (above this position)" aria-label="Copy teleport command" onclick="copyMarkerValue(this)">${teleportIcon}</button>`
-		+ `<button type="button" data-copy-layer="${escapeHtml(layer.layerId)}" data-copy-position="${escapeHtml(JSON.stringify(worldPos))}" title="Copy map link" aria-label="Copy map link" onclick="copyMarkerValue(this)">${linkIcon}</button>`
+		+ `<button type="button" data-copy-text="${escapeHtml(coords)}" title="${coordsLabel}" aria-label="${coordsLabel}" onclick="copyMarkerValue(this)">${coordsIcon}</button>`
+		+ `<button type="button" data-copy-text="${escapeHtml(command)}" title="${label('tectonicus.copy.teleportHint')}" aria-label="${label('tectonicus.copy.teleport')}" onclick="copyMarkerValue(this)">${teleportIcon}</button>`
+		+ `<button type="button" data-copy-layer="${escapeHtml(layer.layerId)}" data-copy-position="${escapeHtml(JSON.stringify(worldPos))}" title="${linkLabel}" aria-label="${linkLabel}" onclick="copyMarkerValue(this)">${linkIcon}</button>`
 		+ '<span class="marker_copy_status" role="status" aria-live="polite"></span></div>';
 }
 
@@ -116,13 +126,13 @@ async function copyMarkerValue(button) {
 			}
 		}
 		if (!copied) {
-			window.prompt('Copy this text:', text);
-			status.textContent = 'Text ready to copy';
+			window.prompt(mapText('tectonicus.copy.prompt'), text);
+			status.textContent = mapText('tectonicus.copy.ready');
 		} else {
-			status.textContent = 'Copied!';
+			status.textContent = mapText('tectonicus.copy.success');
 		}
 	} catch (error) {
-		status.textContent = 'Could not copy';
+		status.textContent = mapText('tectonicus.copy.error');
 	}
 }
 
@@ -138,7 +148,7 @@ function getPlayerHtml(player) {
 		html += '</td>'
 
 		html += '<td>'
-		html += '<a href=\"http://www.justgiving.com/tectonicus\">Iron Supporter</a>'
+		html += '<a href="http://www.justgiving.com/tectonicus">' + escapeHtml(mapText('tectonicus.player.supporter')) + '</a>'
 		html += '</td>'
 
 		html += '</tr></table></center>'
@@ -148,7 +158,7 @@ function getPlayerHtml(player) {
 
 	let html = ''
 		+ '<div style=\"text-align:center\">'
-			+ '<div class=\"playerName\" style=\"text-align:center; font-size:110%\" >' + player.name + '</div>'
+			+ '<div class="playerName" style="text-align:center; font-size:110%" >' + escapeHtml(playerDisplayName(player)) + '</div>'
 			+ '<div style=\"width:300px; margin:4px auto;\" >'
 			+ 	'<img style=\"float:left; margin:4px;\" src=\"' + player.icon + '\" width=\"64\" height=\"64\" />'
 			+	'<div>'
@@ -159,7 +169,9 @@ function getPlayerHtml(player) {
 			+ '</div>'
 
 			+ '<div id=\"xpDiv\" style=\"clear:both; text-align:center\" >'
-			+   'Experience level '+player.xpLevel
+			+ escapeHtml(mapText('tectonicus.player.experience', {
+				label: mapText('argument.entity.options.level.description'), level: formatMapNumber(player.xpLevel)
+			}))
 			+ '</div>'
 
 			+ getInventoryHtml(player)
@@ -241,11 +253,13 @@ function getInventoryHtml(player) {
 	html += '<img class="player_inventory_background" src="' + worldImageUrl(background) + '" alt="" />';
 	html += getEnderChestHtml(player);
 	html += renderMinecraftText(localize('attribute.name.armor', localize('attribute.name.generic.armor', 'Armor')), 'inventory_label armor_label');
-	html += renderMinecraftText('Offhand', 'inventory_label armor_label offhand_label');
+	const offhand = mapText('narration.slot.name.offhand');
+	html += renderMinecraftText(offhand, 'inventory_label armor_label offhand_label');
 	[103, 102, 101, 100].forEach((slot, index) => {
-		html += createInventorySlotHtml(items, slot, equipmentTop, 7 + 18 * index, ['Helmet', 'Chestplate', 'Leggings', 'Boots'][index]);
+		const key = ['helmet', 'chestplate', 'leggings', 'boots'][index];
+		html += createInventorySlotHtml(items, slot, equipmentTop, 7 + 18 * index, mapText('tectonicus.equipment.' + key));
 	});
-	html += createInventorySlotHtml(items, -106, equipmentTop, 151, 'Offhand');
+	html += createInventorySlotHtml(items, -106, equipmentTop, 151, offhand);
 	html += '<div class="player_storage">';
 	html += renderMinecraftText(localize('container.inventory', 'Inventory'), 'inventory_label');
 	for (let slot = 9; slot < 36; slot++)
@@ -269,10 +283,13 @@ function getEnderChestHtml(player) {
 
 function createInventorySlotHtml(items, slot, top, left, label) {
 	let html = '<div class="inventory_slot" data-slot="' + slot + '" style="top: ' + top + 'px; left: ' + left + 'px;"';
-	html += label ? ' title="' + label + '">' : '>';
+	html += label ? ' aria-label="' + escapeHtml(label) + '">' : '>';
 	const item = items.get(slot);
-	if (item && item.count > 0 && item.id !== 'minecraft:air')
+	if (item && item.count > 0 && item.id !== 'minecraft:air') {
 		html += createItemHtml(item, 1, 1);
+	}
+	if (label)
+		html += '<div class="item_description equipment_tooltip" role="tooltip">' + renderMinecraftText(label, 'name') + '</div>';
 	return html + '</div>';
 }
 

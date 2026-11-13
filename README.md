@@ -24,6 +24,18 @@ While the first Tectonicus run can be time-consuming, subsequent runs with the s
 
 To view a newly exported map offline, leave `useCdn` unset and open the exported HTML file. With `useCdn` enabled, the browser needs a network connection to load the viewer libraries.
 
+### Map language
+
+Set `mapLocale="pt-br"` on the XML `<config>` element or pass `--mapLocale pt-br`. The default is `en_us` (English US). To supply a custom JSON translation table, add `mapLocaleFile="localization.json"` or pass `--mapLocaleFile localization.json`.
+
+Run `java -jar Tectonicus.jar --listLanguages` to print Minecraft locale(language) codes. Pass `--minecraftJar path/to/client.jar` or `-c myconfig.xml` to list the catalog for the client selected for your map.
+
+For languages other than `en_us`, Tectonicus checks the Minecraft Launcher asset cache for the client version used to render each world. If the language asset is not found, Tectonicus tries to download them from Mojang's asset servers. Keys missing from Minecraft's selected language fall back to `mapLocaleFile`, then the world's resource pack, the Minecraft JAR's US English table, and Tectonicus's built-in English labels. US English exports use the JAR directly and skip the launcher lookup. The exported map works offline with bundled viewer libraries.
+
+Tectonicus reads Minecraft's JSON tables and the UTF-8 `key=value` `.lang` tables used by clients such as 1.12.2. If the browser cannot format dates and numbers for a Minecraft language code, the viewer uses US English formatting and still displays the selected translations.
+
+Use [the built-in table](src/main/resources/map_en_us.json) as a reference for `tectonicus.*` keys and keep placeholders such as `{player}` and `{count}` in your translations. Set `compassRose` on a dimension to use custom compass artwork with localized directions.
+
 ## Default config file
 If Tectonicus is run without any command line arguments it will search for either 'tectonicus.xml' or 'tectonicusConfig.xml' in the same directory and try to use one of those as it's configuration file.
 

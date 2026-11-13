@@ -4,6 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
+const mapEnglish = require('../../main/resources/map_en_us.json');
 
 function createViewer(yOffset = 64) {
     const corner = {children: []};
@@ -45,6 +46,7 @@ function createViewer(yOffset = 64) {
     };
     const window = Object.assign(new EventTarget(), {location, history});
     const context = vm.createContext({
+        mapEnglish,
         L: {
             map: () => map,
             layerGroup,

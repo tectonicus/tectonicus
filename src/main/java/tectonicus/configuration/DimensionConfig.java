@@ -37,6 +37,12 @@ public class DimensionConfig extends RenderOptions {
 	private final String id;
 	private WorldConfig world;
 	private String name = "Unnamed dimension";
+	private String nameTranslationKey = "tectonicus.dimension.unnamed";
+
+	public void setName(String name) {
+		this.name = name;
+		nameTranslationKey = null;
+	}
 	private File worldDir = new File(".");
 	private Dimension dimension = Dimension.OVERWORLD;
 	private DimensionInfo dimensionInfo = new DimensionInfo(dimension, dimension.getId());

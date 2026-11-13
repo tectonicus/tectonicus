@@ -15,6 +15,8 @@ import java.util.List;
 
 public class ContainerEntity extends BlockEntity {
 	private final String customName;
+	@Getter
+	private final boolean defaultName;
 	private final String lock;
 	private final boolean unopenedContainer;
 	@Getter
@@ -35,8 +37,15 @@ public class ContainerEntity extends BlockEntity {
 	}
 
 	public ContainerEntity(int x, int y, int z, int localX, int localY, int localZ, String customName, String lock, boolean unopenedContainer, String facing, String type, List<Item> items, ContainerKind containerKind, String shulkerColor) {
+		this(x, y, z, localX, localY, localZ, customName, lock, unopenedContainer, facing, type, items, containerKind, shulkerColor,
+				containerKind.getDisplayName().equals(customName));
+	}
+
+	public ContainerEntity(int x, int y, int z, int localX, int localY, int localZ, String customName, String lock, boolean unopenedContainer,
+			String facing, String type, List<Item> items, ContainerKind containerKind, String shulkerColor, boolean defaultName) {
 		super(x, y, z, localX, localY, localZ);
 		this.customName = customName;
+		this.defaultName = defaultName;
 		this.lock = lock;
 		this.unopenedContainer = unopenedContainer;
 		this.containerKind = containerKind;
