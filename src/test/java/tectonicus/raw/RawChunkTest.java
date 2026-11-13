@@ -31,7 +31,9 @@ import tectonicus.chunk.ChunkData;
 import tectonicus.world.WorldInfo;
 
 import java.io.ByteArrayOutputStream;
+import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -83,6 +85,37 @@ class RawChunkTest {
 		RawChunk chunk = new RawChunk();
 		chunk.getPaintings().add(null);
 		assertArrayEquals(new int[] {0, 256}, chunk.getRenderHeightBounds());
+	}
+
+	@Test
+	void blockStatesAffectChunkHashByValueAndPosition() throws Exception {
+		RawChunk chunk = new RawChunk();
+		chunk.setBlockName(0, 0, 0, "minecraft:furnace");
+		chunk.setBlockName(1, 0, 0, "minecraft:furnace");
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		byte[] withoutStates = chunk.calculateHash(digest);
+		chunk.setBlockState(0, 0, 0, new BlockProperties(Map.of()));
+		assertArrayEquals(withoutStates, chunk.calculateHash(digest));
+
+		var properties = new LinkedHashMap<String, String>();
+		properties.put("lit", "false");
+		properties.put("facing", "north");
+		var unlit = new BlockProperties();
+		unlit.setProperties(properties);
+		chunk.setBlockState(0, 0, 0, unlit);
+		byte[] unlitHash = chunk.calculateHash(digest);
+		assertFalse(MessageDigest.isEqual(withoutStates, unlitHash));
+
+		var sameState = new BlockProperties(properties.reversed());
+		chunk.setBlockState(0, 0, 0, sameState);
+		assertArrayEquals(unlitHash, chunk.calculateHash(digest));
+
+		chunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("facing", "north", "lit", "true")));
+		assertFalse(MessageDigest.isEqual(unlitHash, chunk.calculateHash(digest)));
+
+		chunk.setBlockState(0, 0, 0, null);
+		chunk.setBlockState(1, 0, 0, sameState);
+		assertFalse(MessageDigest.isEqual(unlitHash, chunk.calculateHash(digest)));
 	}
 
 	@ParameterizedTest

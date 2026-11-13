@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -58,15 +59,16 @@ public class Stairs implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
-		final float topLight = world.getLight(chunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-		final float northLight = world.getLight(chunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
-		final float southLight = world.getLight(chunk.getChunkCoord(), x+1, y, z, LightFace.NorthSouth);
-		final float eastLight = world.getLight(chunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
-		final float westLight = world.getLight(chunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
+		final float topLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+		final float northLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x-1, y, z, LightFace.NorthSouth);
+		final float southLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x+1, y, z, LightFace.NorthSouth);
+		final float eastLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z-1, LightFace.EastWest);
+		final float westLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z+1, LightFace.EastWest);
 		
 		// This is a bit of a hack - the actual block light will be really dark since it's actually solid
 		final float ownLight = Math.max(topLight, Math.max(northLight, Math.max(southLight, Math.max(eastLight, westLight))));
@@ -82,57 +84,57 @@ public class Stairs implements BlockType
 		if (data < 0x4)
 		{
 			// Base block is always present
-			BlockUtil.addBlock(mesh, x, y, z, 0, 0, 0, 16, 8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, 0, 0, 16, 8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
 			if (data == 0x1)
 			{
 				// Ascending west
-				createWestStair(mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createWestStair(lighting, mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 			else if (data == 0x0)
 			{
 				// Ascending east
-				createEastStair(mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createEastStair(lighting, mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 			else if (data == 0x3)
 			{
 				// Ascending north
-				createNorthStair(mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createNorthStair(lighting, mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 			else if (data == 0x2)
 			{
 				// Ascending south
-				createSouthStair(mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createSouthStair(lighting, mesh, x, y, z, 8, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 		}
 		else
 		{
 			// Base block is always present
-			BlockUtil.addBlock(mesh, x, y, z,       0, 8, 0,   16,  8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z,       0, 8, 0,   16,  8, 16, colour, texture, ownLight, northLight, southLight, eastLight, westLight);
 			if (data == 0x5)
 			{
 				// Ascending west upside down
-				createWestStair(mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createWestStair(lighting, mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 			else if (data == 0x4)
 			{
 				// Ascending east upside down
-				createEastStair(mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createEastStair(lighting, mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 			else if (data == 0x7)
 			{
 				// Ascending north upside down
-				createNorthStair(mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);				
+				createNorthStair(lighting, mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 			else if (data == 0x6)
 			{
 				// Ascending south upside down
-				createSouthStair(mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
+				createSouthStair(lighting, mesh, x, y, z, 0, world, chunk, colour, topLight, northLight, southLight, eastLight, westLight);
 			}
 		}
 	}
 	
 	
-	private void createNorthStair(Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
+	private void createNorthStair(LegacyBlockLighting lighting, Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
 									Vector4f colour, final float topLight, final float northLight, final float southLight, final float eastLight, final float westLight)
 	{
 		final float ownLight = Math.max(topLight, Math.max(northLight, Math.max(southLight, Math.max(eastLight, westLight))));
@@ -147,30 +149,30 @@ public class Stairs implements BlockType
 		{
 			final int northData = chunk.getBlockData(x, y, z-1);
 			if(northData == 0x0 || northData == 0x4)
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			else if(northData == 0x1 || northData == 0x5)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			else
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 		}
 		else if(stairsToSouth)
 		{
 			final int southData = chunk.getBlockData(x, y, z+1);
-			BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			
 			if(southData == 0x0 || southData == 0x4)
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 8, 8, 8, 8, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 8, 8, 8, 8, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
 			else if(southData == 0x1 || southData == 0x5)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
 		}
 		else
 		{
-			BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 16, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 		}
 	}
 	
 	
-	private void createSouthStair(Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
+	private void createSouthStair(LegacyBlockLighting lighting, Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
 									Vector4f colour, final float topLight, final float northLight, final float southLight, final float eastLight, final float westLight)
 	{
 		final float ownLight = Math.max(topLight, Math.max(northLight, Math.max(southLight, Math.max(eastLight, westLight))));
@@ -186,31 +188,31 @@ public class Stairs implements BlockType
 			final int southData = chunk.getBlockData(x, y, z+1);
 			
 			if(southData == 0x0 || southData == 0x4)
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 8, 8, 8, 8, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 8, 8, 8, 8, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
 			else if(southData == 0x1 || southData == 0x5)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
 			else
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
 			
 		}
 		else if(stairsToNorth)
 		{
 			final int northData = chunk.getBlockData(x, y, z-1);
-			BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
 
 			if(northData == 0x0 || northData == 0x4)
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 0, 8, 8, 8, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 0, 8, 8, 8, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
 			else if(northData == 0x1 || northData == 0x5)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
 		}
 		else
 		{
-			BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 16, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
 		}
 	}
 	
 	
-	private void createWestStair(Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
+	private void createWestStair(LegacyBlockLighting lighting, Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
 			Vector4f colour, final float topLight, final float northLight, final float southLight, final float eastLight, final float westLight)
 	{
 		final float ownLight = Math.max(topLight, Math.max(northLight, Math.max(southLight, Math.max(eastLight, westLight))));
@@ -225,30 +227,30 @@ public class Stairs implements BlockType
 		{
 			final int westData = chunk.getBlockData(x-1, y, z);
 			if(westData == 0x2 || westData == 0x6)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			else if(westData == 0x3 || westData == 0x7)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			else
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
 		}
 		else if(stairsToEast)
 		{
 			final int eastData = chunk.getBlockData(x+1, y, z);
-			BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
 			
 			if(eastData == 0x2 || eastData == 0x6)
-				BlockUtil.addBlock(mesh, x, y, z, offSetY, 8, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, offSetY, 8, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
 			else if(eastData == 0x3 || eastData == 0x7)
-				BlockUtil.addBlock(mesh, x, y, z, offSetY, 8, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, offSetY, 8, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 		}
 		else
 		{
-			BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 16, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
 		}
 	}
 	
 	
-	private void createEastStair(Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
+	private void createEastStair(LegacyBlockLighting lighting, Mesh mesh, final int x, final int y, final int z, final int offSetY, BlockContext world, RawChunk chunk,
 			Vector4f colour, final float topLight, final float northLight, final float southLight, final float eastLight, final float westLight)
 	{
 		final float ownLight = Math.max(topLight, Math.max(northLight, Math.max(southLight, Math.max(eastLight, westLight))));
@@ -263,25 +265,25 @@ public class Stairs implements BlockType
 		{
 			final int eastData = chunk.getBlockData(x+1, y, z);
 			if(eastData == 0x2 || eastData == 0x6)
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			else if(eastData == 0x3 || eastData == 0x7)
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, southLight, eastLight, ownLight);
 			else
-				BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
 		}
 		else if(stairsToWest)
 		{
 			final int westData = chunk.getBlockData(x-1, y, z);
-			BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
 			
 			if(westData == 0x2 || westData == 0x6)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 8, 8, 8, 8, colour, texture, topLight, northLight, southLight, ownLight, westLight);
 			else if(westData == 0x3 || westData == 0x7)
-				BlockUtil.addBlock(mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
+				BlockUtil.addBlock(lighting, mesh, x, y, z, 0, offSetY, 0, 8, 8, 8, colour, texture, topLight, northLight, ownLight, eastLight, westLight);
 		}
 		else
 		{
-			BlockUtil.addBlock(mesh, x, y, z, 8, offSetY, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 8, offSetY, 0, 8, 8, 16, colour, texture, topLight, ownLight, southLight, eastLight, westLight);
 		}
 	}
 }

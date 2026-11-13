@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,6 +13,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
@@ -71,6 +72,7 @@ public class Dispenser implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh topBottomMesh = geometry.getMesh(topBottomTexture.texture, Geometry.MeshType.Solid);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
@@ -110,10 +112,10 @@ public class Dispenser implements BlockType
 		{
 			if (commandBlock)
 			{
-				BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+				BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, lighting);
 				northTex = southTex = eastTex = westTex = sideTexture;
 				northMesh = southMesh = eastMesh = westMesh = sideMesh;
-				BlockUtil.addBottom(world, chunk, frontMesh, x, y, z, colour, frontTexture, registry);
+				BlockUtil.addBottom(world, chunk, frontMesh, x, y, z, colour, frontTexture, lighting);
 				northRot = Rotation.Flip;
 				southRot = Rotation.Flip;
 				eastRot = Rotation.Flip;
@@ -121,27 +123,27 @@ public class Dispenser implements BlockType
 			}
 			else
 			{
-				BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+				BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, lighting);
 				northTex = southTex = eastTex = westTex = topTexture;
 				northMesh = southMesh = eastMesh = westMesh = topMesh;
-				BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+				BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, lighting);
 			}
 		}
 		else if(data == 1 || data == 9)
 		{			
 			if (commandBlock)
 			{
-				BlockUtil.addTop(world, chunk, frontMesh, x, y, z, colour, frontTexture, registry);
+				BlockUtil.addTop(world, chunk, frontMesh, x, y, z, colour, frontTexture, lighting);
 				northTex = southTex = eastTex = westTex = sideTexture;
 				northMesh = southMesh = eastMesh = westMesh = sideMesh;
-				BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+				BlockUtil.addBottom(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, lighting);
 			}
 			else
 			{
-				BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, registry);
+				BlockUtil.addTop(world, chunk, topBottomMesh, x, y, z, colour, topBottomTexture, lighting);
 				northTex = southTex = eastTex = westTex = topTexture;
 				northMesh = southMesh = eastMesh = westMesh = topMesh;
-				BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+				BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, lighting);
 			}
 			
 		}
@@ -159,8 +161,8 @@ public class Dispenser implements BlockType
 				eastRot = Rotation.Clockwise;
 				westRot = Rotation.AntiClockwise;
 			}
-			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
-			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting);
 		}
 		else if (data == 3 || data == 11)
 		{
@@ -176,8 +178,8 @@ public class Dispenser implements BlockType
 				eastRot = Rotation.AntiClockwise;
 				westRot = Rotation.Clockwise;
 			}
-			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
-			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry, Rotation.Flip);
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting, Rotation.Flip);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting, Rotation.Flip);
 		}
 		else if (data == 4 || data == 12)
 		{
@@ -193,8 +195,8 @@ public class Dispenser implements BlockType
 				northRot = Rotation.Clockwise;
 				southRot = Rotation.AntiClockwise;
 			}
-			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
-			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting, Rotation.AntiClockwise);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting, Rotation.Clockwise);
 		}
 		else //if (data == 5 || data == 13)
 		{
@@ -210,12 +212,12 @@ public class Dispenser implements BlockType
 				northRot = Rotation.AntiClockwise;
 				southRot = Rotation.Clockwise;
 			}
-			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
-			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
+			BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting, Rotation.Clockwise);
+			BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, sideTexture, lighting, Rotation.AntiClockwise);
 		}
-		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry, westRot);
-		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry, eastRot);
-		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry, northRot);
-		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry, southRot);
+		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, lighting, westRot);
+		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, lighting, eastRot);
+		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, lighting, northRot);
+		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, lighting, southRot);
 	}
 }

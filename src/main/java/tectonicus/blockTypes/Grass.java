@@ -14,6 +14,7 @@ import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.cache.BiomeCache;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -79,6 +80,7 @@ public class Grass implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, rawChunk, x, y, z);
 		//TODO: decide if we want to support backwards compatibility with McRegion worlds
 		/*
 		BiomeData biomeData = biomeCache.loadBiomeData(rawChunk.getChunkCoord());
@@ -125,37 +127,37 @@ public class Grass implements BlockType
 		Colour4f sideColour = betterGrass == BetterGrassMode.Fancy ? colour : white;
 		
 		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
-		BlockUtil.addTop(world, rawChunk, topMesh, x, y, z, colour, topTexture, registry);
+		BlockUtil.addTop(world, rawChunk, topMesh, x, y, z, colour, topTexture, lighting);
 		
 		Mesh bottomMesh = geometry.getMesh(bottomTexture.texture, Geometry.MeshType.Solid);
-		BlockUtil.addBottom(world, rawChunk, bottomMesh, x, y, z, white, bottomTexture, registry);
+		BlockUtil.addBottom(world, rawChunk, bottomMesh, x, y, z, white, bottomTexture, lighting);
 		
 		Mesh actualSideMesh = geometry.getMesh(actualSideTexture.texture, Geometry.MeshType.Solid);
-		BlockUtil.addNorth(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, registry);
-		BlockUtil.addSouth(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, registry);
-		BlockUtil.addEast(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, registry);
-		BlockUtil.addWest(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, registry);
+		BlockUtil.addNorth(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, lighting);
+		BlockUtil.addSouth(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, lighting);
+		BlockUtil.addEast(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, lighting);
+		BlockUtil.addWest(world, rawChunk, actualSideMesh, x, y, z, sideColour, actualSideTexture, lighting);
 		
 		if (!aboveIsSnow && betterGrass != BetterGrassMode.Fast)
 		{
 			Mesh alphaMesh = geometry.getMesh(grassSideTexture.texture, Geometry.MeshType.AlphaTest);
 			if (betterGrass != BetterGrassMode.Fancy)
 			{
-				BlockUtil.addNorth(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
-				BlockUtil.addSouth(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
-				BlockUtil.addEast(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
-				BlockUtil.addWest(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, registry);
+				BlockUtil.addNorth(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, lighting);
+				BlockUtil.addSouth(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, lighting);
+				BlockUtil.addEast(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, lighting);
+				BlockUtil.addWest(world, rawChunk, alphaMesh, x, y, z, colour, grassSideTexture, lighting);
 			}
 			else
 			{
 				boolean isNorthGrass = world.getBlockId(rawChunk.getChunkCoord(), x-1, y-1, z) == BlockIds.GRASS;
-				BlockUtil.addNorth(world, rawChunk, alphaMesh, x, y, z, colour, isNorthGrass ? topTexture : grassSideTexture, registry);
+				BlockUtil.addNorth(world, rawChunk, alphaMesh, x, y, z, colour, isNorthGrass ? topTexture : grassSideTexture, lighting);
 				boolean isSouthGrass = world.getBlockId(rawChunk.getChunkCoord(), x+1, y-1, z) == BlockIds.GRASS;
-				BlockUtil.addSouth(world, rawChunk, alphaMesh, x, y, z, colour, isSouthGrass ? topTexture : grassSideTexture, registry);
+				BlockUtil.addSouth(world, rawChunk, alphaMesh, x, y, z, colour, isSouthGrass ? topTexture : grassSideTexture, lighting);
 				boolean isEastGrass = world.getBlockId(rawChunk.getChunkCoord(), x, y-1, z-1) == BlockIds.GRASS;
-				BlockUtil.addEast(world, rawChunk, alphaMesh, x, y, z, colour, isEastGrass ? topTexture : grassSideTexture, registry);
+				BlockUtil.addEast(world, rawChunk, alphaMesh, x, y, z, colour, isEastGrass ? topTexture : grassSideTexture, lighting);
 				boolean isWestGrass = world.getBlockId(rawChunk.getChunkCoord(), x, y-1, z+1) == BlockIds.GRASS;
-				BlockUtil.addWest(world, rawChunk, alphaMesh, x, y, z, colour, isWestGrass ? topTexture : grassSideTexture, registry);
+				BlockUtil.addWest(world, rawChunk, alphaMesh, x, y, z, colour, isWestGrass ? topTexture : grassSideTexture, lighting);
 			}
 		}
 	}

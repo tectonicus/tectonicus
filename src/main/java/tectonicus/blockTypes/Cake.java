@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -11,14 +11,14 @@ package tectonicus.blockTypes;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
-import tectonicus.rasteriser.MeshUtil;
+import tectonicus.rasteriser.MeshUtil.FaceDirection;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -74,15 +74,15 @@ public class Cake implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		final int data = chunk.getBlockData(x, y, z);
 		
 		Mesh topMesh = geometry.getMesh(top.texture, Geometry.MeshType.AlphaTest);
 		Mesh sideMesh = geometry.getMesh(side.texture, Geometry.MeshType.AlphaTest);
 		Mesh interiorMesh = geometry.getMesh(interior.texture, Geometry.MeshType.AlphaTest);
 		
-		final float lightness = world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
+		final float lightness = lighting.isSmooth() ? 0 : world.getLight(chunk, x, y, z, LightFace.Top, world.getNightLightAdjustment());
 		
-		Vector4f white = new Vector4f(lightness, lightness, lightness, 1);
 		
 		final float texel = 1.0f / 16.0f;
 		final float offset = texel * 2 * data;
@@ -95,11 +95,11 @@ public class Cake implements BlockType
 		float uInc = uEdge + uSeg * data;
 		
 		// Top
-		MeshUtil.addQuad(topMesh,	new Vector3f(x + texel + offset,	actualY, z),
+		lighting.addQuad(topMesh, FaceDirection.UP, LightFace.Top,	new Vector3f(x + texel + offset,	actualY, z),
 									new Vector3f(x+1-texel,				actualY, z),
 									new Vector3f(x+1-texel,				actualY, z+1),
 									new Vector3f(x + texel + offset,	actualY, z+1),
-									white,
+									LegacyBlockLighting.WHITE, lightness,
 									new Vector2f(top.u0+uInc, top.v0),
 									new Vector2f(top.u1-uSeg, top.v0),
 									new Vector2f(top.u1-uSeg, top.v1),
@@ -107,11 +107,11 @@ public class Cake implements BlockType
 					);
 		
 		// South
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x + texel + offset,	actualY,	z+1-texel),
+		lighting.addQuad(sideMesh, FaceDirection.SOUTH, LightFace.EastWest,	new Vector3f(x + texel + offset,	actualY,	z+1-texel),
 									new Vector3f(x+1-texel,				actualY,	z+1-texel),
 									new Vector3f(x+1-texel,				y,			z+1-texel),
 									new Vector3f(x + texel + offset,	y,			z+1-texel),
-									white,
+									LegacyBlockLighting.WHITE, lightness,
 									new Vector2f(side.u0+uInc, side.v0),
 									new Vector2f(side.u1-uSeg, side.v0),
 									new Vector2f(side.u1-uSeg, side.v1),
@@ -119,11 +119,11 @@ public class Cake implements BlockType
 					);
 
 		// North
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x+1-texel,	actualY,	z+texel),
+		lighting.addQuad(sideMesh, FaceDirection.NORTH, LightFace.EastWest,	new Vector3f(x+1-texel,	actualY,	z+texel),
 									new Vector3f(x+texel+offset,	actualY,	z+texel),
 									new Vector3f(x+texel+offset,	y,			z+texel),
 									new Vector3f(x+1-texel,	y,			z+texel),
-									white,
+									LegacyBlockLighting.WHITE, lightness,
 									new Vector2f(side.u0+uInc, side.v0),
 									new Vector2f(side.u1-uSeg, side.v0),
 									new Vector2f(side.u1-uSeg, side.v1),
@@ -133,11 +133,11 @@ public class Cake implements BlockType
 		// West
 		SubTexture westTex = data == 0 ? side : interior;
 		Mesh westMesh = data == 0 ? sideMesh : interiorMesh;
-		MeshUtil.addQuad(westMesh,	new Vector3f(x+texel+offset,	actualY,	z+texel),
+		lighting.addQuad(westMesh, FaceDirection.WEST, LightFace.NorthSouth,	new Vector3f(x+texel+offset,	actualY,	z+texel),
 									new Vector3f(x+texel+offset,	actualY,	z+1-texel),
 									new Vector3f(x+texel+offset,	y,			z+1-texel),
 									new Vector3f(x+texel+offset,	y,			z+texel),
-									white,
+									LegacyBlockLighting.WHITE, lightness,
 									new Vector2f(westTex.u0+uSeg, westTex.v0),
 									new Vector2f(westTex.u1-uSeg, westTex.v0),
 									new Vector2f(westTex.u1-uSeg, westTex.v1),
@@ -145,11 +145,11 @@ public class Cake implements BlockType
 					);
 		
 		// East (always the same)
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x+1-texel, actualY,	z+1),
+		lighting.addQuad(sideMesh, FaceDirection.EAST, LightFace.NorthSouth,	new Vector3f(x+1-texel, actualY,	z+1),
 									new Vector3f(x+1-texel, actualY,	z),
 									new Vector3f(x+1-texel, y,			z),
 									new Vector3f(x+1-texel, y,			z+1),
-									white,
+									LegacyBlockLighting.WHITE, lightness,
 									side);
 	}
 	

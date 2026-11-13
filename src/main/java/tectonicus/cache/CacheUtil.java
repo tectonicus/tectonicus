@@ -11,6 +11,7 @@ package tectonicus.cache;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
@@ -22,12 +23,45 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
 
 @Slf4j
 @UtilityClass
 public class CacheUtil
 {
+	static final String SMOOTH_LIGHTING_REVISION = "legacySmoothLighting=2\n";
+
+	static void updateNeighborChunkHashes(MessageDigest digest, List<ChunkCoord> visible,
+			Function<ChunkCoord, byte[]> chunkHashes) {
+		Set<ChunkCoord> visibleSet = new HashSet<>(visible);
+		Set<ChunkCoord> neighbors = new TreeSet<>();
+		for (ChunkCoord chunk : visible) {
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					ChunkCoord neighbor = new ChunkCoord(chunk.x + dx, chunk.z + dz);
+					if (!visibleSet.contains(neighbor))
+						neighbors.add(neighbor);
+				}
+			}
+		}
+
+		ByteBuffer coordinates = ByteBuffer.allocate(2 * Long.BYTES);
+		for (ChunkCoord neighbor : neighbors) {
+			byte[] hash = chunkHashes.apply(neighbor);
+			if (hash != null) {
+				coordinates.clear();
+				coordinates.putLong(neighbor.x).putLong(neighbor.z);
+				digest.update(coordinates.array());
+				digest.update(hash);
+			}
+		}
+	}
 
 	public static void writeCacheFile(final File file, final byte[] hash)
 	{

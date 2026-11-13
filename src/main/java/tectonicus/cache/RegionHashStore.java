@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -144,6 +144,9 @@ public class RegionHashStore
 		
 		public void read(File baseDir) {
 			File inFile = getHashFile(baseDir, regionCoord);
+			if (!inFile.exists())
+				return;
+
 			try (FileInputStream fIn = new FileInputStream(inFile); DataInputStream in = new DataInputStream(fIn)) {
 				final int magic = in.readInt();
 				assert (magic == 0xCAFEBABE);

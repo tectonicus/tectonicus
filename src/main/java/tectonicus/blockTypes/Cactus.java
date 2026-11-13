@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -10,14 +10,14 @@
 package tectonicus.blockTypes;
 
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.Mesh;
-import tectonicus.rasteriser.MeshUtil;
+import tectonicus.rasteriser.MeshUtil.FaceDirection;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -64,12 +64,13 @@ public class Cactus implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, rawChunk, x, y, z);
 		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.AlphaTest);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.AlphaTest);
 		
-		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
-		final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.NorthSouth);
-		final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.EastWest);
+		final float topLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.Top);
+		final float northSouthLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.NorthSouth);
+		final float eastWestLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y+1, z, LightFace.EastWest);
 		
 		final float inset = 1.0f / 16.0f;
 		
@@ -78,40 +79,40 @@ public class Cactus implements BlockType
 		BlockType above = world.getBlockType(rawChunk.getChunkCoord(), x, y+1, z);
 		if (!above.isSolid())
 		{
-			MeshUtil.addQuad(topMesh, new Vector3f(x,		y+1,	z),
+			lighting.addQuad(topMesh, FaceDirection.UP, LightFace.Top, new Vector3f(x,		y+1,	z),
 										new Vector3f(x+1,	y+1,	z),
 										new Vector3f(x+1,	y+1,	z+1),
 										new Vector3f(x,		y+1,	z+1),
-										new Vector4f(topLight, topLight, topLight, 1.0f),
+										LegacyBlockLighting.WHITE, topLight,
 										topTexture);
 		}
 		
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x + inset,		y+1,	z),
+		lighting.addQuad(sideMesh, FaceDirection.WEST, LightFace.NorthSouth,	new Vector3f(x + inset,		y+1,	z),
 									new Vector3f(x + inset,		y+1,	z+1),
 									new Vector3f(x + inset,		y,		z+1),
 									new Vector3f(x + inset,		y,		z),
-									new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1.0f),
+									LegacyBlockLighting.WHITE, northSouthLight,
 									sideTexture);
 
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x+1 - inset,	y+1,	z+1),
+		lighting.addQuad(sideMesh, FaceDirection.EAST, LightFace.NorthSouth,	new Vector3f(x+1 - inset,	y+1,	z+1),
 									new Vector3f(x+1 - inset,	y+1,	z),
 									new Vector3f(x+1 - inset,	y,		z),
 									new Vector3f(x+1 - inset,	y,		z+1),
-									new Vector4f(northSouthLight, northSouthLight, northSouthLight, 1.0f),
+									LegacyBlockLighting.WHITE, northSouthLight,
 									sideTexture); 
 
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x+1,	y+1,	z + inset),
+		lighting.addQuad(sideMesh, FaceDirection.NORTH, LightFace.EastWest,	new Vector3f(x+1,	y+1,	z + inset),
 									new Vector3f(x,		y+1,	z + inset),
 									new Vector3f(x,		y,		z + inset),
 									new Vector3f(x+1,	y,		z + inset),
-									new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1.0f),
+									LegacyBlockLighting.WHITE, eastWestLight,
 									sideTexture); 
 
-		MeshUtil.addQuad(sideMesh,	new Vector3f(x,		y+1,	z+1 - inset),
+		lighting.addQuad(sideMesh, FaceDirection.SOUTH, LightFace.EastWest,	new Vector3f(x,		y+1,	z+1 - inset),
 									new Vector3f(x+1,	y+1,	z+1 - inset),
 									new Vector3f(x+1,	y,		z+1 - inset),
 									new Vector3f(x,		y,		z+1 - inset),
-									new Vector4f(eastWestLight, eastWestLight, eastWestLight, 1.0f),
+									LegacyBlockLighting.WHITE, eastWestLight,
 									sideTexture); 
 	}
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -60,16 +61,17 @@ public class Fence implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
-		final float topLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
-		final float northSouthLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-		final float eastWestLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+		final float topLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
+		final float northSouthLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
+		final float eastWestLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.EastWest);
 		
 		// Center collumn is always present
-		BlockUtil.addBlock(mesh, x, y, z, 6, 0, 6, 4, 16, 4, colour, texture, topLight, northSouthLight, eastWestLight);
+		BlockUtil.addBlock(lighting, mesh, x, y, z, 6, 0, 6, 4, 16, 4, colour, texture, topLight, northSouthLight, eastWestLight);
 		
 		// Auto-connect to adjacent fences
 		
@@ -83,11 +85,11 @@ public class Fence implements BlockType
 		if (northId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	0, 12, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	0, 12, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	0, 6, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	0, 6, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
@@ -97,11 +99,11 @@ public class Fence implements BlockType
 		if (southId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	8, 12, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	8, 12, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	8, 6, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	8, 6, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
@@ -111,11 +113,11 @@ public class Fence implements BlockType
 		if (eastId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 12, 0,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 12, 0,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 6, 0,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 6, 0,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
@@ -125,11 +127,11 @@ public class Fence implements BlockType
 		if (westId == blockId || type instanceof FenceGate)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 12, 8,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 12, 8,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 6, 8,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 6, 8,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 	}

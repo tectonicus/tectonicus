@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,6 +12,7 @@ package tectonicus.blockTypes;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
@@ -63,6 +64,7 @@ public class Log implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext context, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(context, rawChunk, x, y, z);
 		final int data = rawChunk.getBlockData(x, y, z);
 		final int type = rawChunk.getBlockId(x, y, z);
 		
@@ -78,30 +80,30 @@ public class Log implements BlockType
 
 		if (type != 155 && data >= 0x4 && data <= 0x7 || type == 155 && data == 3)  // side, top, and bottom textures for east/west facing sideways blocks have to be rotated
 		{
-			BlockUtil.addTop(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
-			BlockUtil.addBottom(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
-			BlockUtil.addNorth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);
-			BlockUtil.addSouth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
-			BlockUtil.addEast(context, rawChunk, topMesh, x, y, z, colour, topTexture, registry, Rotation.None);
-			BlockUtil.addWest(context, rawChunk, topMesh, x, y, z, colour, topTexture, registry, Rotation.None);
+			BlockUtil.addTop(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting, Rotation.Clockwise);
+			BlockUtil.addBottom(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting, Rotation.AntiClockwise);
+			BlockUtil.addNorth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting, Rotation.AntiClockwise);
+			BlockUtil.addSouth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting, Rotation.Clockwise);
+			BlockUtil.addEast(context, rawChunk, topMesh, x, y, z, colour, topTexture, lighting, Rotation.None);
+			BlockUtil.addWest(context, rawChunk, topMesh, x, y, z, colour, topTexture, lighting, Rotation.None);
 		}
 		else if (data >= 0x8 && data <= 0x11 || type == 155 && data == 4)  // side textures for north/south facing sideways blocks have to be rotated
 		{
-			BlockUtil.addTop(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
-			BlockUtil.addBottom(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
-			BlockUtil.addEast(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.Clockwise);
-			BlockUtil.addWest(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry, Rotation.AntiClockwise);			
-			BlockUtil.addNorth(context, rawChunk, topMesh, x, y, z, colour, topTexture, registry, Rotation.None);
-			BlockUtil.addSouth(context, rawChunk, topMesh, x, y, z, colour, topTexture, registry, Rotation.None);
+			BlockUtil.addTop(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting);
+			BlockUtil.addBottom(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting);
+			BlockUtil.addEast(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting, Rotation.Clockwise);
+			BlockUtil.addWest(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting, Rotation.AntiClockwise);
+			BlockUtil.addNorth(context, rawChunk, topMesh, x, y, z, colour, topTexture, lighting, Rotation.None);
+			BlockUtil.addSouth(context, rawChunk, topMesh, x, y, z, colour, topTexture, lighting, Rotation.None);
 		}
 		else
 		{
-			BlockUtil.addTop(context, rawChunk, topMesh, x, y, z, colour, topTexture, registry);
-			BlockUtil.addBottom(context, rawChunk, topMesh, x, y, z, colour, topTexture, registry);
-			BlockUtil.addEast(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
-			BlockUtil.addWest(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
-			BlockUtil.addNorth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
-			BlockUtil.addSouth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, registry);
+			BlockUtil.addTop(context, rawChunk, topMesh, x, y, z, colour, topTexture, lighting);
+			BlockUtil.addBottom(context, rawChunk, topMesh, x, y, z, colour, topTexture, lighting);
+			BlockUtil.addEast(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting);
+			BlockUtil.addWest(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting);
+			BlockUtil.addNorth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting);
+			BlockUtil.addSouth(context, rawChunk, sideMesh, x, y, z, colour, sideTexture, lighting);
 		}
 	}
 	

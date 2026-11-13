@@ -9,6 +9,7 @@
 
 package tectonicus.rasteriser;
 
+import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -242,18 +243,24 @@ public class MeshUtil {
 
 	static LightSample getSmoothVertexLight(BlockContext world, RawChunk rawChunk, int x, int y, int z,
 			BakedQuad quad, int vertex, LightFace lightFace, boolean fullBlock, float nightLightAdjustment) {
-		LightStyle lightStyle = world.getLightStyle();
 		FaceDirection surface = faceDirection(quad.getDirection());
 		boolean outside = fullBlock || isFaceOnBlockBoundary(quad, surface);
+		return getSmoothVertexLight(world, rawChunk, x, y, z, surface, outside,
+				getVertexWeight(quad, vertex, surface.tangentA, fullBlock), getVertexWeight(quad, vertex, surface.tangentB, fullBlock),
+				lightFace, nightLightAdjustment, false);
+	}
+
+	static LightSample getSmoothVertexLight(BlockContext world, RawChunk rawChunk, int x, int y, int z,
+			FaceDirection surface, boolean outside, float weightA, float weightB, LightFace lightFace,
+			float nightLightAdjustment, boolean legacy) {
+		LightStyle lightStyle = world.getLightStyle();
 		int baseX = x + (outside ? surface.dx : 0), baseY = y + (outside ? surface.dy : 0), baseZ = z + (outside ? surface.dz : 0);
 		// Minecraft uses the outward center light for inset faces too when that
 		// neighbor is not solid-rendering. Light blocking and render opacity differ:
 		// tinted glass uses its saved light value and still participates in blending.
-		boolean outwardCenter = outside || !world.getBlock(rawChunk, x + surface.dx, y + surface.dy, z + surface.dz).isFullOpaqueBlock();
+		boolean outwardCenter = outside || !isOpaque(world, rawChunk, x + surface.dx, y + surface.dy, z + surface.dz, legacy);
 		LightSample center = world.getLightSample(rawChunk, x + (outwardCenter ? surface.dx : 0),
 				y + (outwardCenter ? surface.dy : 0), z + (outwardCenter ? surface.dz : 0), lightFace, nightLightAdjustment);
-		float weightA = getVertexWeight(quad, vertex, surface.tangentA, fullBlock);
-		float weightB = getVertexWeight(quad, vertex, surface.tangentB, fullBlock);
 		LightSample total = LightSample.ambient(0);
 		for (int a = 0; a <= 1; a++) {
 			for (int b = 0; b <= 1; b++) {
@@ -286,10 +293,14 @@ public class MeshUtil {
 		FaceDirection face = faceDirection(quad.getDirection());
 		// Keep AO and light sampling on the same layer for partial faces.
 		boolean outside = fullBlock || isFaceOnBlockBoundary(quad, face);
-		float weightA = getVertexWeight(quad, vertex, face.tangentA, fullBlock);
-		float weightB = getVertexWeight(quad, vertex, face.tangentB, fullBlock);
+		return getAmbientOcclusion(world, rawChunk, x, y, z, face, outside,
+				getVertexWeight(quad, vertex, face.tangentA, fullBlock), getVertexWeight(quad, vertex, face.tangentB, fullBlock), false);
+	}
+
+	static float getAmbientOcclusion(BlockContext world, RawChunk rawChunk, int x, int y, int z,
+			FaceDirection face, boolean outside, float weightA, float weightB, boolean legacy) {
 		int baseX = x + (outside ? face.dx : 0), baseY = y + (outside ? face.dy : 0), baseZ = z + (outside ? face.dz : 0);
-		float centerShade = world.getBlock(rawChunk, baseX, baseY, baseZ).getShadeBrightness();
+		float centerShade = getShadeBrightness(world, rawChunk, baseX, baseY, baseZ, legacy);
 		float shade = 0;
 		// Partial vertices interpolate the four block-face corners instead of
 		// snapping every small rectangle to a whole-block corner.
@@ -303,12 +314,20 @@ public class MeshUtil {
 				int sideBX = baseX + face.offsetX(0, offsetB), sideBY = baseY + face.offsetY(0, offsetB), sideBZ = baseZ + face.offsetZ(0, offsetB);
 				int cornerX = baseX + face.offsetX(offsetA, offsetB), cornerY = baseY + face.offsetY(offsetA, offsetB), cornerZ = baseZ + face.offsetZ(offsetA, offsetB);
 				shade += weight * (centerShade
-						+ world.getBlock(rawChunk, sideAX, sideAY, sideAZ).getShadeBrightness()
-						+ world.getBlock(rawChunk, sideBX, sideBY, sideBZ).getShadeBrightness()
-						+ world.getBlock(rawChunk, cornerX, cornerY, cornerZ).getShadeBrightness()) * 0.25f;
+						+ getShadeBrightness(world, rawChunk, sideAX, sideAY, sideAZ, legacy)
+						+ getShadeBrightness(world, rawChunk, sideBX, sideBY, sideBZ, legacy)
+						+ getShadeBrightness(world, rawChunk, cornerX, cornerY, cornerZ, legacy)) * 0.25f;
 			}
 		}
 		return Util.clamp(shade, 0.2f, 1.0f);
+	}
+
+	private boolean isOpaque(BlockContext world, RawChunk chunk, int x, int y, int z, boolean legacy) {
+		return legacy ? world.getBlockOcclusion(chunk, x, y, z).isOpaque() : world.getBlock(chunk, x, y, z).isFullOpaqueBlock();
+	}
+
+	private float getShadeBrightness(BlockContext world, RawChunk chunk, int x, int y, int z, boolean legacy) {
+		return legacy ? world.getBlockOcclusion(chunk, x, y, z).getShadeBrightness() : world.getBlock(chunk, x, y, z).getShadeBrightness();
 	}
 
 	private boolean isFaceOnBlockBoundary(BakedQuad quad, FaceDirection face) {
@@ -377,7 +396,7 @@ public class MeshUtil {
 		};
 	}
 
-	private enum FaceDirection {
+	public enum FaceDirection {
 		UP(0, 1, 0, 0, 2, LightFace.Top),
 		DOWN(0, -1, 0, 0, 2, LightFace.Bottom),
 		NORTH(0, 0, -1, 0, 1, LightFace.NorthSouth),
@@ -385,8 +404,9 @@ public class MeshUtil {
 		EAST(1, 0, 0, 1, 2, LightFace.EastWest),
 		WEST(-1, 0, 0, 1, 2, LightFace.EastWest);
 
-		private final int dx, dy, dz;
-		private final int axis, tangentA, tangentB;
+		@Getter
+		final int dx, dy, dz;
+		final int axis, tangentA, tangentB;
 		private final LightFace lightFace;
 
 		FaceDirection(int dx, int dy, int dz, int tangentA, int tangentB, LightFace lightFace) {

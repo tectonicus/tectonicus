@@ -41,6 +41,10 @@ public interface BlockContext {
 	BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z);
 	BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z);
 
+	default BlockOcclusion getBlockOcclusion(RawChunk rawChunk, int x, int y, int z) {
+		return getBlockType(rawChunk, x, y, z).getOcclusion();
+	}
+
 	float getLight(ChunkCoord chunkCoord, final int x, final int y, final int z, LightFace face);
 	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face);
 	float getLight(RawChunk rawChunk, final int x, final int y, final int z, LightFace face, float nightLightAdjustment);
@@ -52,6 +56,7 @@ public interface BlockContext {
 	default float getNightLightAdjustment() { return 0; }
 	default boolean isNetherNightLighting() { return false; }
 	boolean isSmoothLit();
+	default boolean isLegacySmoothLit() { return isSmoothLit(); }
 	boolean useOldGrayscaleLighting();
 
 	TexturePack getTexturePack();

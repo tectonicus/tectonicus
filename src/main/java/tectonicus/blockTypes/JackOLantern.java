@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,6 +12,7 @@ package tectonicus.blockTypes;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -77,6 +78,7 @@ public class JackOLantern implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		Mesh mesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh frontMesh = geometry.getMesh(front.texture, Geometry.MeshType.Solid);
 		Mesh sideMesh = geometry.getMesh(sideTexture.texture, Geometry.MeshType.Solid);
@@ -98,12 +100,12 @@ public class JackOLantern implements BlockType
 		Mesh eastMesh = data == 0x2 ? frontMesh : sideMesh;
 		Mesh westMesh = data == 0x0 ? frontMesh : sideMesh; 
 		
-		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, topTexture, registry);
-		BlockUtil.addBottom(world, chunk, mesh, x, y, z, colour, topTexture, registry);
+		BlockUtil.addTop(world, chunk, mesh, x, y, z, colour, topTexture, lighting);
+		BlockUtil.addBottom(world, chunk, mesh, x, y, z, colour, topTexture, lighting);
 		
-		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, registry);
-		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, registry);
-		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, registry);
-		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, registry);
+		BlockUtil.addNorth(world, chunk, northMesh, x, y, z, colour, northTex, lighting);
+		BlockUtil.addSouth(world, chunk, southMesh, x, y, z, colour, southTex, lighting);
+		BlockUtil.addEast(world, chunk, eastMesh, x, y, z, colour, eastTex, lighting);
+		BlockUtil.addWest(world, chunk, westMesh, x, y, z, colour, westTex, lighting);
 	}
 }

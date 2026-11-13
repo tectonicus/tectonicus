@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,6 +12,7 @@ package tectonicus.blockTypes;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -66,16 +67,17 @@ public class Workbench implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		Mesh topMesh = geometry.getMesh(topTexture.texture, Geometry.MeshType.Solid);
 		Mesh side1Mesh = geometry.getMesh(side1Texture.texture, Geometry.MeshType.Solid);
 		Mesh side2Mesh = geometry.getMesh(side2Texture.texture, Geometry.MeshType.Solid);
 		
-		BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
-		BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, registry);
+		BlockUtil.addTop(world, chunk, topMesh, x, y, z, colour, topTexture, lighting);
+		BlockUtil.addBottom(world, chunk, topMesh, x, y, z, colour, topTexture, lighting);
 		
-		BlockUtil.addNorth(world, chunk, side2Mesh, x, y, z, colour, side2Texture, registry);
-		BlockUtil.addSouth(world, chunk, side1Mesh, x, y, z, colour, side1Texture, registry);
-		BlockUtil.addEast(world, chunk, side2Mesh, x, y, z, colour, side2Texture, registry);
-		BlockUtil.addWest(world, chunk, side1Mesh, x, y, z, colour, side1Texture, registry);
+		BlockUtil.addNorth(world, chunk, side2Mesh, x, y, z, colour, side2Texture, lighting);
+		BlockUtil.addSouth(world, chunk, side1Mesh, x, y, z, colour, side1Texture, lighting);
+		BlockUtil.addEast(world, chunk, side2Mesh, x, y, z, colour, side2Texture, lighting);
+		BlockUtil.addWest(world, chunk, side1Mesh, x, y, z, colour, side1Texture, lighting);
 	}
 }

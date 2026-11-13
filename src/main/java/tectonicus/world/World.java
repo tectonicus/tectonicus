@@ -19,6 +19,7 @@ import tectonicus.Block;
 import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockMaskFactory;
+import tectonicus.BlockOcclusion;
 import tectonicus.BlockRegistryParser;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
@@ -1065,6 +1066,43 @@ public class World implements BlockContext, AutoCloseable
 		final int id = rawChunk.getBlockId(x, y, z);
 		final int data = rawChunk.getBlockData(x, y, z);
 		return registry.find(id, data);
+	}
+
+	@Override
+	public BlockOcclusion getBlockOcclusion(RawChunk rawChunk, int x, int y, int z) {
+		if (y < 0 || y >= Minecraft.getChunkHeight())
+			return defaultBlockOcclusion();
+
+		if (x < 0 || x >= RawChunk.WIDTH || z < 0 || z >= RawChunk.DEPTH) {
+			Location location = resolve(rawChunk.getChunkCoord(), x, y, z);
+			Chunk neighbor = rawLoadedChunks.get(location.coord);
+			if (neighbor == null)
+				return defaultBlockOcclusion();
+			rawChunk = neighbor.getRawChunk();
+			x = location.x;
+			z = location.z;
+		}
+
+		return resolveBlockOcclusion(rawChunk, x, y, z, registry, modelRegistry);
+	}
+
+	static BlockOcclusion resolveBlockOcclusion(RawChunk rawChunk, int x, int y, int z,
+			BlockTypeRegistry registry, BlockRegistry modelRegistry) {
+		String name = rawChunk.getBlockName(x, y, z);
+		if (name == null)
+			return registry.find(rawChunk.getBlockId(x, y, z), rawChunk.getBlockData(x, y, z)).getOcclusion();
+
+		BlockType type = registry.find(name);
+		if (!(type instanceof Air))
+			return type.getOcclusion();
+
+		BlockStateWrapper model = modelRegistry.getBlock(name);
+		return model == null ? type.getOcclusion() : model.getOcclusion();
+	}
+
+	private BlockOcclusion defaultBlockOcclusion() {
+		BlockStateWrapper model = modelRegistry.getBlock(defaultBlockName);
+		return model != null && model.isFullOpaqueBlock() ? model.getOcclusion() : registry.find(defaultBlockId, 0).getOcclusion();
 	}
 
 	@Override

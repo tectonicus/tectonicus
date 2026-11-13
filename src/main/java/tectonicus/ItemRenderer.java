@@ -758,6 +758,9 @@ public class ItemRenderer
 		public boolean isSmoothLit() { return true; }
 
 		@Override
+		public boolean isLegacySmoothLit() { return false; }
+
+		@Override
 		public boolean useOldGrayscaleLighting() { return false; }
 
 		@Override

@@ -12,6 +12,7 @@ package tectonicus.blockTypes;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
+import tectonicus.BlockOcclusion;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.ItemRenderer;
@@ -92,6 +93,11 @@ public class Beacon implements BlockType {
 	public boolean isSolid()
 	{
 		return false;
+	}
+
+	@Override
+	public BlockOcclusion getOcclusion() {
+		return BlockOcclusion.TRANSLUCENT;
 	}
 	
 	@Override

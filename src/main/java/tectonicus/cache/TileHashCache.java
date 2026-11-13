@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /** Shares current tile hashes across layers of one map during one render. Not thread safe. */
@@ -32,20 +33,24 @@ public final class TileHashCache implements AutoCloseable {
 	private final File cacheFile;
 	private final MVStore store;
 	private final MVMap<String, byte[]> hashes;
-	private final Function<TileCoord, byte[]> calculator;
+	private final BiFunction<TileCoord, Boolean, byte[]> calculator;
 
 	/** A null cache file disables memoization for single-layer or uncached renders. */
 	public TileHashCache(File cacheFile, World world, DimensionConfig map, OrthoCamera camera, RegionHashStore regionHashes,
 			int tileWidth, int tileHeight, MessageDigest hashAlgorithm) {
-		this(cacheFile, tile -> {
+		this(cacheFile, (tile, smoothLighting) -> {
 			TileRenderer.setupCameraForTile(camera, tile, tileWidth, tileHeight,
 					map.getCameraAngleRad(), map.getCameraElevationRad(), map.getClosestZoomSize());
 			return hashChunks(world.findVisible(camera), regionHashes::getChunkHash,
-					world.getLevelDat().getWorldSeed(), hashAlgorithm);
+					world.getLevelDat().getWorldSeed(), hashAlgorithm, smoothLighting);
 		});
 	}
 
 	TileHashCache(File cacheFile, Function<TileCoord, byte[]> calculator) {
+		this(cacheFile, (tile, smoothLighting) -> calculator.apply(tile));
+	}
+
+	TileHashCache(File cacheFile, BiFunction<TileCoord, Boolean, byte[]> calculator) {
 		this.cacheFile = cacheFile;
 		this.calculator = calculator;
 		store = cacheFile == null ? null : new MVStore.Builder().fileName(cacheFile.getAbsolutePath()).open();
@@ -55,13 +60,17 @@ public final class TileHashCache implements AutoCloseable {
 	}
 
 	public byte[] getHash(TileCoord tile) {
-		if (hashes == null)
-			return calculator.apply(tile);
+		return getHash(tile, false);
+	}
 
-		String key = "tile_" + tile.x + "_" + tile.y;
+	public byte[] getHash(TileCoord tile, boolean smoothLighting) {
+		if (hashes == null)
+			return calculator.apply(tile, smoothLighting);
+
+		String key = (smoothLighting ? "smooth_" : "tile_") + tile.x + "_" + tile.y;
 		byte[] hash = hashes.get(key);
 		if (hash == null) {
-			hash = calculator.apply(tile);
+			hash = calculator.apply(tile, smoothLighting);
 			hashes.put(key, hash);
 		}
 		return hash;
@@ -69,6 +78,11 @@ public final class TileHashCache implements AutoCloseable {
 
 	static byte[] hashChunks(List<ChunkCoord> chunks, Function<ChunkCoord, byte[]> chunkHashes,
 			long worldSeed, MessageDigest hashAlgorithm) {
+		return hashChunks(chunks, chunkHashes, worldSeed, hashAlgorithm, false);
+	}
+
+	static byte[] hashChunks(List<ChunkCoord> chunks, Function<ChunkCoord, byte[]> chunkHashes,
+			long worldSeed, MessageDigest hashAlgorithm, boolean smoothLighting) {
 		if (chunks.isEmpty())
 			return new byte[0];
 
@@ -81,6 +95,8 @@ public final class TileHashCache implements AutoCloseable {
 			if (hash != null)
 				hashAlgorithm.update(hash);
 		}
+		if (smoothLighting)
+			CacheUtil.updateNeighborChunkHashes(hashAlgorithm, chunks, chunkHashes);
 		return hashAlgorithm.digest();
 	}
 

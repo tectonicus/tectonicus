@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -79,6 +80,7 @@ public class RawChunk {
 	public static final int MAX_LIGHT = 16;
 	// 26.4 Snapshot 1 stores final biomes per block, rather than per quart cell.
 	private static final int BLOCK_BIOMES_DATA_VERSION = 5119;
+	private static final byte[] BLOCK_STATES_HASH_MARKER = "blockStates-v1".getBytes(StandardCharsets.UTF_8);
 
 	private final int maxSections;
 
@@ -1571,6 +1573,7 @@ public class RawChunk {
 				update(hashAlgorithm, s.blockIds);
 				update(hashAlgorithm, s.blockData);
 				update(hashAlgorithm, s.blockNames);
+				updateBlockStates(hashAlgorithm, s.blockStates);
 				update(hashAlgorithm, s.biomeIds);
 				if (s.noiseBiomeIds != null)
 					update(hashAlgorithm, s.noiseBiomeIds);
@@ -1617,13 +1620,51 @@ public class RawChunk {
 		return hashAlgorithm.digest();
 	}
 	
-	private static void update(MessageDigest hashAlgorithm, int[] data) {
-		for (int val : data) {
-			hashAlgorithm.update((byte) ((val) & 0xFF));
-			hashAlgorithm.update((byte) ((val >> 8) & 0xFF));
-			hashAlgorithm.update((byte) ((val >> 16) & 0xFF));
-			hashAlgorithm.update((byte) ((val >> 24) & 0xFF));
+	private static void updateBlockStates(MessageDigest digest, BlockProperties[] states) {
+		Map<Map<String, String>, Integer> palette = null;
+		for (int index = 0; index < states.length; index++) {
+			BlockProperties state = states[index];
+			if (state == null || state.getProperties().isEmpty())
+				continue;
+			if (palette == null) {
+				digest.update(BLOCK_STATES_HASH_MARKER);
+				palette = new HashMap<>();
+			}
+
+			Map<String, String> properties = state.getProperties();
+			int nextId = palette.size();
+			Integer existingId = palette.putIfAbsent(properties, nextId);
+			update(digest, index);
+			update(digest, existingId == null ? nextId : existingId);
+			// Emit each distinct state on its first occurrence, in key order.
+			if (existingId == null) {
+				update(digest, properties.size());
+				new TreeMap<>(properties).forEach((key, value) -> {
+					updateBlockProperty(digest, key);
+					updateBlockProperty(digest, value);
+				});
+			}
 		}
+		if (palette != null)
+			update(digest, -1);
+	}
+
+	private static void updateBlockProperty(MessageDigest digest, String property) {
+		byte[] bytes = property.getBytes(StandardCharsets.UTF_8);
+		update(digest, bytes.length);
+		digest.update(bytes);
+	}
+
+	private static void update(MessageDigest hashAlgorithm, int[] data) {
+		for (int val : data)
+			update(hashAlgorithm, val);
+	}
+
+	private static void update(MessageDigest hashAlgorithm, int val) {
+		hashAlgorithm.update((byte) (val & 0xFF));
+		hashAlgorithm.update((byte) ((val >> 8) & 0xFF));
+		hashAlgorithm.update((byte) ((val >> 16) & 0xFF));
+		hashAlgorithm.update((byte) ((val >> 24) & 0xFF));
 	}
 	
 	private static void update(MessageDigest hashAlgorithm, String[] data) {

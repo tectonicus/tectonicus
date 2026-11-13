@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -12,9 +12,11 @@ package tectonicus.blockTypes;
 import java.awt.Color;
 
 import tectonicus.BlockContext;
+import tectonicus.BlockOcclusion;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.cache.BiomeCache;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -53,6 +55,11 @@ public class Leaves implements BlockType
 	{
 		return false;
 	}
+
+	@Override
+	public BlockOcclusion getOcclusion() {
+		return BlockOcclusion.TRANSLUCENT;
+	}
 	
 	@Override
 	public boolean isWater()
@@ -69,6 +76,7 @@ public class Leaves implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, rawChunk, x, y, z);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.AlphaTest);
 		
 		Colour4f colour = null;
@@ -83,13 +91,13 @@ public class Leaves implements BlockType
 		else		
 			colour = new Colour4f(rawColour);
 		
-		BlockUtil.addTop(world, rawChunk, mesh, x, y, z, colour, texture, registry);
-		BlockUtil.addBottom(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+		BlockUtil.addTop(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
+		BlockUtil.addBottom(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 		
-		BlockUtil.addNorth(world, rawChunk, mesh, x, y, z, colour, texture, registry);
-		BlockUtil.addSouth(world, rawChunk, mesh, x, y, z, colour, texture, registry);
-		BlockUtil.addEast(world, rawChunk, mesh, x, y, z, colour, texture, registry);
-		BlockUtil.addWest(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+		BlockUtil.addNorth(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
+		BlockUtil.addSouth(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
+		BlockUtil.addEast(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
+		BlockUtil.addWest(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 	}
 	
 }

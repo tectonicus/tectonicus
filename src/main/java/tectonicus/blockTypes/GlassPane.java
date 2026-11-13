@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,9 +14,9 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
-import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
@@ -61,13 +61,14 @@ public class GlassPane implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk chunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, chunk, x, y, z);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Transparent);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
-		final float topLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
-		final float northSouthLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-		final float eastWestLight = world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+		final float topLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.Top);
+		final float northSouthLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
+		final float eastWestLight = lighting.isSmooth() ? 0 : world.getLight(chunk.getChunkCoord(), x, y, z, LightFace.EastWest);
 		
 		BlockType north = world.getBlockType(chunk.getChunkCoord(), x, y, z-1);
 		BlockType south = world.getBlockType(chunk.getChunkCoord(), x, y, z+1);
@@ -86,20 +87,15 @@ public class GlassPane implements BlockType
 		{
 			if (texture.texturePackVersion.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion())
 			{
-				final float offSet = 1.0f / 16.0f;
-				SubMesh glassMesh = new SubMesh();
-				SubMesh.addBlock(glassMesh, offSet*8, 0, offSet*8, offSet*2, 1, offSet*2, new Vector4f(topLight, topLight, topLight, 1), texture, texture, texture);
-				glassMesh.pushTo(geometry.getMesh(texture.texture, Geometry.MeshType.Transparent), x, y, z, Rotation.None, 0);
+				SubMesh.addLitBlock(mesh, lighting, x, y, z, 8 / 16f, 0, 8 / 16f, 2 / 16f, 1, 2 / 16f, texture, topLight);
+				return;
 			}
-			else
-			{
-				hasNorth = hasSouth = hasEast = hasWest = true;
-			}
+			hasNorth = hasSouth = hasEast = hasWest = true;
 		}
 		
 		if (hasNorth || north.isSolid())
 		{
-			BlockUtil.addPartialBlock(mesh, x, y, z,	7, 0, 0,
+			BlockUtil.addPartialBlock(lighting, mesh, x, y, z,	7, 0, 0,
 														2, 16, 9,
 														colour, texture, topLight, northSouthLight, eastWestLight,
 														true, true, false, true, true, true);
@@ -107,7 +103,7 @@ public class GlassPane implements BlockType
 		
 		if (hasSouth || south.isSolid())
 		{
-			BlockUtil.addPartialBlock(mesh, x, y, z,	7, 0, 7,
+			BlockUtil.addPartialBlock(lighting, mesh, x, y, z,	7, 0, 7,
 														2, 16, 9,
 														colour, texture, topLight, northSouthLight, eastWestLight,
 														true, true, true, false, true, true);			
@@ -115,7 +111,7 @@ public class GlassPane implements BlockType
 		
 		if (hasEast || east.isSolid())
 		{
-			BlockUtil.addPartialBlock(mesh, x, y, z,	7, 0, 7,
+			BlockUtil.addPartialBlock(lighting, mesh, x, y, z,	7, 0, 7,
 														9, 16, 2,
 														colour, texture, topLight, northSouthLight, eastWestLight,
 														true, true, true, true, false, true);
@@ -123,7 +119,7 @@ public class GlassPane implements BlockType
 		
 		if (hasWest || west.isSolid())
 		{
-			BlockUtil.addPartialBlock(mesh, x, y, z,	0, 0, 7,
+			BlockUtil.addPartialBlock(lighting, mesh, x, y, z,	0, 0, 7,
 														9, 16, 2,
 														colour, texture, topLight, northSouthLight, eastWestLight,
 														true, true, true, true, true, false);

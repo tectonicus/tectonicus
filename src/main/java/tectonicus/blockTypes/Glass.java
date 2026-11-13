@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -13,6 +13,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockIds;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -57,33 +58,34 @@ public class Glass implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, rawChunk, x, y, z);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Transparent);
 		
 		Colour4f colour = new Colour4f(1, 1, 1, 1);
 		
 		final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
 		if (aboveId != BlockIds.GLASS)
-			BlockUtil.addTop(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+			BlockUtil.addTop(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 		
 		final int belowId = world.getBlockId(rawChunk.getChunkCoord(), x, y-1, z);
 		if (belowId != BlockIds.GLASS)
-			BlockUtil.addBottom(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+			BlockUtil.addBottom(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 		
 		final int northId = world.getBlockId(rawChunk.getChunkCoord(), x-1, y, z);
 		if (northId != BlockIds.GLASS)
-			BlockUtil.addNorth(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+			BlockUtil.addNorth(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 		
 		final int southId = world.getBlockId(rawChunk.getChunkCoord(), x+1, y, z);
 		if (southId != BlockIds.GLASS)
-			BlockUtil.addSouth(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+			BlockUtil.addSouth(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 		
 		final int eastId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
 		if (eastId != BlockIds.GLASS)
-			BlockUtil.addEast(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+			BlockUtil.addEast(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 		
 		final int westId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
 		if (westId != BlockIds.GLASS)
-			BlockUtil.addWest(world, rawChunk, mesh, x, y, z, colour, texture, registry);
+			BlockUtil.addWest(world, rawChunk, mesh, x, y, z, colour, texture, lighting);
 	}
 	
 }

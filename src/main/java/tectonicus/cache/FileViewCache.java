@@ -25,6 +25,7 @@ import tectonicus.world.Sign;
 import tectonicus.world.World;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 
@@ -117,9 +118,11 @@ public class FileViewCache
 		hashAlgorithm.reset();
 		
 		hashAlgorithm.update(Integer.toString(VIEW_RENDERER_VERSION).getBytes());
-		hashAlgorithm.update(("useProgrammerArt=" + world.isUsingProgrammerArt() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		hashAlgorithm.update(("useProgrammerArt=" + world.isUsingProgrammerArt() + "\n").getBytes(StandardCharsets.UTF_8));
 		hashAlgorithm.update(("useBiomeColours=" + world.useBiomeColours() + "\n").getBytes());
 		hashAlgorithm.update(("smoothLit=" + world.isSmoothLit() + "\n").getBytes());
+		if (world.isSmoothLit())
+			hashAlgorithm.update(CacheUtil.SMOOTH_LIGHTING_REVISION.getBytes(StandardCharsets.UTF_8));
 		hashAlgorithm.update(("oldGrayscaleLighting=" + world.useOldGrayscaleLighting() + "\n").getBytes());
 		hashAlgorithm.update(("overworldLightmap=" + tectonicus.chunk.OverworldLightmap.REVISION + "\n").getBytes());
 		hashAlgorithm.update(("lightmapBrightness=" + world.getLightmapBrightness() + "\n").getBytes());
@@ -152,8 +155,11 @@ public class FileViewCache
 		for (ChunkCoord chunkCoord : visibleCoords)
 		{
 			byte[] chunkHash = regionHashStore.getChunkHash(chunkCoord);
-			hashAlgorithm.update(chunkHash);
+			if (chunkHash != null)
+				hashAlgorithm.update(chunkHash);
 		}
+		if (world.isSmoothLit())
+			CacheUtil.updateNeighborChunkHashes(hashAlgorithm, visibleCoords, regionHashStore::getChunkHash);
 		
 		return hashAlgorithm.digest();
 	}

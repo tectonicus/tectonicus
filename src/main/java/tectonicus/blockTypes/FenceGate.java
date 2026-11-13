@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -58,15 +59,16 @@ public class FenceGate implements BlockType
 	@Override
 	public void addEdgeGeometry(final int x, final int y, final int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, rawChunk, x, y, z);
 		final int data = rawChunk.getBlockData(x, y, z);
 		
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
-		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-		final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-		final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+		final float topLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
+		final float northSouthLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
+		final float eastWestLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
 		
 		final int northId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
 		final int southId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z-1);
@@ -84,288 +86,288 @@ public class FenceGate implements BlockType
 		if ((direction == 1 || direction == 3) && (!(northType instanceof Wall) || !(southType instanceof Wall)) ) // south/north
 		{
 			// outside posts
-			BlockUtil.addBlock(mesh, x, y, z, 7, 5,  0, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
-			BlockUtil.addBlock(mesh, x, y, z, 7, 5, 14, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 7, 5,  0, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 7, 5, 14, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// gates
 			if (!open)
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 7, 12,  2,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 7, 12,  2,
 													 2,  3, 12, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 7,  6,  2,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 7,  6,  2,
 													 2,  3, 12, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 7,  9,  6,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 7,  9,  6,
 													 2,  3,  4, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else if (direction == 1) // open north
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1, 12,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1, 12,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  6,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  6,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  9,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  9,  0,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1, 12, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1, 12, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  6, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  6, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  9, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  9, 14,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else // open south
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9, 12,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9, 12,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9,  6,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9,  6,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	13,  9,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	13,  9,  0,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9, 12, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9, 12, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9,  6, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9,  6, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	13,  9, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	13,  9, 14,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}
 		else if ((direction == 0 || direction == 2) && (!(eastType instanceof Wall) || !(westType instanceof Wall)) )// east/west
 		{
 			// outside posts
-			BlockUtil.addBlock(mesh, x, y, z,  0, 5, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
-			BlockUtil.addBlock(mesh, x, y, z, 14, 5, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z,  0, 5, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 14, 5, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// gates
 			if (!open)
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 2, 12,  7,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 2, 12,  7,
 													12,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 2,  6,  7,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 2,  6,  7,
 													12,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 6,  9,  7,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 6,  9,  7,
 													 4,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else if (direction == 0) // open west
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0, 12,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0, 12,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  6,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  6,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  9, 13,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  9, 13,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	14, 12,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14, 12,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	14,  6,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  6,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	14,  9, 13,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  9, 13,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else // open east
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0, 12,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0, 12,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  6,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  6,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  9,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  9,  1,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	14, 12,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14, 12,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	14,  6,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  6,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	14,  9,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  9,  1,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}
 		else if ((direction == 1 || direction == 3) && (northType instanceof Wall || southType instanceof Wall) )  //south/north //If fence gate is connected to walls it needs to be lower
 		{
 			// outside posts
-			BlockUtil.addBlock(mesh, x, y, z, 7, 2,  0, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
-			BlockUtil.addBlock(mesh, x, y, z, 7, 2, 14, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 7, 2,  0, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 7, 2, 14, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// gates
 			if (!open)
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 7, 9,  2,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 7, 9,  2,
 													 2,  3, 12, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 7,  3,  2,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 7,  3,  2,
 													 2,  3, 12, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 7,  6,  6,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 7,  6,  6,
 													 2,  3,  4, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else if (direction == 1) // open north
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1, 9,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1, 9,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  3,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  3,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  6,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  6,  0,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1, 9, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1, 9, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  3, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  3, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 1,  6, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 1,  6, 14,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else // open south
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9, 9,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9, 9,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9,  3,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9,  3,  0,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	13,  6,  0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	13,  6,  0,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9, 9, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9, 9, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 9,  3, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 9,  3, 14,
 													 6,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	13,  6, 14,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	13,  6, 14,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}
 		else // east/west fence gate connected to walls
 		{
 			// outside posts
-			BlockUtil.addBlock(mesh, x, y, z,  0, 2, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
-			BlockUtil.addBlock(mesh, x, y, z, 14, 2, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z,  0, 2, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 14, 2, 7, 2, 11, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// gates
 			if (!open)
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 2, 9,  7,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 2, 9,  7,
 													12,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 2,  3,  7,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 2,  3,  7,
 													12,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 6,  6,  7,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 6,  6,  7,
 													 4,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else if (direction == 0) // open west
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0, 9,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0, 9,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  3,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  3,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  6, 13,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  6, 13,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	14, 9,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14, 9,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	14,  3,  9,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  3,  9,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	14,  6, 13,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  6, 13,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			else // open east
 			{
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0, 9,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0, 9,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  3,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  3,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	 0,  6,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	 0,  6,  1,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 				// Top bar
-				BlockUtil.addBlock(mesh, x, y, z,	14, 9,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14, 9,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 				
 				// Bottom bar
-				BlockUtil.addBlock(mesh, x, y, z,	14,  3,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  3,  1,
 													 2,  3,  6, colour, texture, topLight, northSouthLight, eastWestLight);
 
 				// Middle
-				BlockUtil.addBlock(mesh, x, y, z,	14,  6,  1,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	14,  6,  1,
 													 2,  3,  2, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}
@@ -380,11 +382,11 @@ public class FenceGate implements BlockType
 		if (northId == blockId)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	0, 10, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	0, 10, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	0, 4, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	0, 4, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
@@ -393,11 +395,11 @@ public class FenceGate implements BlockType
 		if (southId == blockId)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	8, 10, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	8, 10, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	8, 4, 7,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	8, 4, 7,
 												8, 3, 2, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
@@ -406,11 +408,11 @@ public class FenceGate implements BlockType
 		if (eastId == blockId)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 10, 0,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 10, 0,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 4, 0,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 4, 0,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		
@@ -419,11 +421,11 @@ public class FenceGate implements BlockType
 		if (westId == blockId)
 		{
 			// Top bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 10, 8,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 10, 8,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// Bottom bar
-			BlockUtil.addBlock(mesh, x, y, z,	7, 4, 8,
+			BlockUtil.addBlock(lighting, mesh, x, y, z,	7, 4, 8,
 												2, 3, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		*/

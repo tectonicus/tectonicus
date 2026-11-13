@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, John Campbell and other contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -15,6 +15,7 @@ import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.configuration.LightFace;
+import tectonicus.rasteriser.LegacyBlockLighting;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -60,13 +61,14 @@ public class Wall implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
+		LegacyBlockLighting lighting = LegacyBlockLighting.forBlock(world, rawChunk, x, y, z);
 		Mesh mesh = geometry.getMesh(texture.texture, Geometry.MeshType.Solid);
 		
 		Vector4f colour = new Vector4f(1, 1, 1, 1);
 		
-		final float topLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
-		final float northSouthLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
-		final float eastWestLight = world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
+		final float topLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.Top);
+		final float northSouthLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.NorthSouth);
+		final float eastWestLight = lighting.isSmooth() ? 0 : world.getLight(rawChunk.getChunkCoord(), x, y, z, LightFace.EastWest);
 		
 		final int aboveId = world.getBlockId(rawChunk.getChunkCoord(), x, y+1, z);
 		final int northId = world.getBlockId(rawChunk.getChunkCoord(), x, y, z+1);
@@ -78,24 +80,24 @@ public class Wall implements BlockType
 		
 		if ((northId == blockId && southId == blockId) && (eastId != blockId && westId != blockId && aboveId != blockId))
 		{
-			BlockUtil.addBlock(mesh, x, y, z, 	5, 0, 0, 
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 	5, 0, 0,
 												6, 13, 16, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		else if ((eastId == blockId && westId == blockId) && (northId != blockId && southId != blockId && aboveId != blockId))
 		{
-			BlockUtil.addBlock(mesh, x, y, z, 	0, 0, 5,
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 	0, 0, 5,
 												16, 13, 6, colour, texture, topLight, northSouthLight, eastWestLight);
 		}
 		else
 		{
 			// Center column
-			BlockUtil.addBlock(mesh, x, y, z, 4, 0, 4, 8, 16, 8, colour, texture, topLight, northSouthLight, eastWestLight);
+			BlockUtil.addBlock(lighting, mesh, x, y, z, 4, 0, 4, 8, 16, 8, colour, texture, topLight, northSouthLight, eastWestLight);
 			
 			// North
 			type = registry.find(northId, 0);
 			if (northId == blockId || type instanceof FenceGate)
 			{
-				BlockUtil.addBlock(mesh, x, y, z,	5, 0, 12,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	5, 0, 12,
 													6, 13, 4, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			
@@ -103,7 +105,7 @@ public class Wall implements BlockType
 			type = registry.find(southId, 0);
 			if (southId == blockId || type instanceof FenceGate)
 			{
-				BlockUtil.addBlock(mesh, x, y, z,	5, 0, 0,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	5, 0, 0,
 													6, 13, 4, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			
@@ -111,7 +113,7 @@ public class Wall implements BlockType
 			type = registry.find(eastId, 0);
 			if (eastId == blockId || type instanceof FenceGate)
 			{
-				BlockUtil.addBlock(mesh, x, y, z,	12, 0, 5,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	12, 0, 5,
 													4, 13, 6, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 			
@@ -119,7 +121,7 @@ public class Wall implements BlockType
 			type = registry.find(westId, 0);
 			if (westId == blockId || type instanceof FenceGate)
 			{
-				BlockUtil.addBlock(mesh, x, y, z,	0, 0, 5,
+				BlockUtil.addBlock(lighting, mesh, x, y, z,	0, 0, 5,
 													4, 13, 6, colour, texture, topLight, northSouthLight, eastWestLight);
 			}
 		}

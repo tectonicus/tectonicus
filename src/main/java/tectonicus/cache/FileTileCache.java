@@ -42,6 +42,7 @@ public class FileTileCache implements TileCache
 	private final File tileCacheDir;
 	
 	private final ImageFormat imageFormat;
+	private final boolean smoothLighting;
 	
 	private final Map<TileCoord, byte[]> tileHashes;
 	
@@ -55,6 +56,7 @@ public class FileTileCache implements TileCache
 	public FileTileCache(File tileCacheDir, ImageFormat imageFormat, tectonicus.configuration.DimensionConfig map, LayerConfig layer, String optionString, MessageDigest hashAlgorithm)
 	{
 		this.imageFormat = imageFormat;
+		this.smoothLighting = layer.isSmoothLit();
 		
 		this.tileCacheDir = tileCacheDir;
 		tileCacheDir.mkdirs();
@@ -173,6 +175,8 @@ public class FileTileCache implements TileCache
 		layerStr += layer.getId() + "\n";
 		layerStr += "useBiomeColours=" + layer.useBiomeColours() + "\n";
 		layerStr += "smoothLit=" + layer.isSmoothLit() + "\n";
+		if (layer.isSmoothLit())
+			layerStr += CacheUtil.SMOOTH_LIGHTING_REVISION;
 		layerStr += "oldGrayscaleLighting=" + layer.useOldGrayscaleLighting() + "\n";
 		layerStr += "overworldLightmap=" + OverworldLightmap.REVISION + "\n";
 		if (map.getDimension() == Dimension.NETHER && layer.getLightStyle() == LightStyle.Night) {
@@ -274,7 +278,7 @@ public class FileTileCache implements TileCache
 			
 			boolean cacheOk = false;
 			
-			final byte[] newHash = currentTileHashes.getHash(coord);
+			final byte[] newHash = currentTileHashes.getHash(coord, smoothLighting);
 			
 			String key = "tile_" + coord.x + "_" + coord.y;
 			if (Boolean.TRUE.equals(emptyTiles.get(key)) || TileRenderer.getImageFile(layerDir, coord.x, coord.y, imageFormat).exists()) {

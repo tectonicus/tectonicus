@@ -96,4 +96,43 @@ class TileHashCacheTest {
 		byte[] second = TileHashCache.hashChunks(new ArrayList<>(List.of(new ChunkCoord(1, 2))), chunk -> null, 43, digest);
 		assertFalse(java.util.Arrays.equals(first, second));
 	}
+
+	@Test
+	void neighboringChunkEditsAffectOnlyTheSmoothLightingHash() throws Exception {
+		ChunkCoord visible = new ChunkCoord(0, 0);
+		ChunkCoord diagonal = new ChunkCoord(1, -1);
+		ChunkCoord adjacent = new ChunkCoord(-1, 0);
+		var chunkHashes = new java.util.HashMap<ChunkCoord, byte[]>();
+		chunkHashes.put(visible, new byte[]{1});
+		chunkHashes.put(adjacent, new byte[]{2});
+		chunkHashes.put(diagonal, new byte[]{3});
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		var visibleChunks = new ArrayList<>(List.of(visible));
+		byte[] flat = TileHashCache.hashChunks(visibleChunks, chunkHashes::get, 42, digest, false);
+		byte[] smooth = TileHashCache.hashChunks(visibleChunks, chunkHashes::get, 42, digest, true);
+
+		chunkHashes.put(diagonal, new byte[]{4});
+		byte[] updated = TileHashCache.hashChunks(visibleChunks, chunkHashes::get, 42, digest, true);
+		assertFalse(MessageDigest.isEqual(smooth, updated));
+		chunkHashes.remove(adjacent);
+		assertFalse(MessageDigest.isEqual(updated, TileHashCache.hashChunks(visibleChunks, chunkHashes::get, 42, digest, true)));
+		assertArrayEquals(flat, TileHashCache.hashChunks(visibleChunks, chunkHashes::get, 42, digest, false));
+	}
+
+	@Test
+	void memoizesSmoothAndFlatLayersIndependently() {
+		Path file = directory.resolve("hashes.cache");
+		AtomicInteger calculations = new AtomicInteger();
+		try (TileHashCache hashes = new TileHashCache(file.toFile(), (tile, smooth) -> {
+			calculations.incrementAndGet();
+			return new byte[]{(byte) (smooth ? 2 : 1)};
+		})) {
+			TileCoord tile = new TileCoord(1, 2);
+			assertArrayEquals(new byte[]{1}, hashes.getHash(tile, false));
+			assertArrayEquals(new byte[]{2}, hashes.getHash(tile, true));
+			assertArrayEquals(new byte[]{1}, hashes.getHash(tile, false));
+			assertArrayEquals(new byte[]{2}, hashes.getHash(tile, true));
+			assertEquals(2, calculations.get());
+		}
+	}
 }

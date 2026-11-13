@@ -11,6 +11,7 @@ package tectonicus.blockregistry;
 
 import lombok.Getter;
 import lombok.Setter;
+import tectonicus.BlockOcclusion;
 import tectonicus.raw.BlockProperties;
 
 import java.util.ArrayList;
@@ -49,6 +50,12 @@ public class BlockStateWrapper {
 				|| blockName.startsWith("minecraft:") && blockName.endsWith("_stained_glass"))
 			return 1.0f;
 		return fullBlock || fullOpaqueBlock ? 0.2f : 1.0f;
+	}
+
+	public BlockOcclusion getOcclusion() {
+		if (getShadeBrightness() == 1.0f)
+			return BlockOcclusion.OPEN;
+		return fullOpaqueBlock ? BlockOcclusion.OPAQUE : BlockOcclusion.TRANSLUCENT;
 	}
 
 	public void addState(BlockState state) {
