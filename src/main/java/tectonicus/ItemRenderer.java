@@ -204,7 +204,11 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
 		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		Geometry geometry = guiGeometry(texturePack, baseModel);
+		// The statue's GUI pose expects the special item renderer's coordinates.
+		// Convert the north-facing, floor-aligned block model before applying that pose.
+		Matrix4f modelTransform = blockName.endsWith("copper_golem_statue")
+				? new Matrix4f().translation(0, 1.5f, 1).scale(1, -1, -1) : null;
+		Geometry geometry = guiGeometry(texturePack, baseModel, modelTransform);
 		for (var model : block.getModels(properties, 0, 0, 0)) {
 			model.createGeometry(0, 0, 0, context, rawChunk, geometry);
 		}
@@ -230,6 +234,10 @@ public class ItemRenderer
 	}
 
 	private Geometry guiGeometry(TexturePack texturePack, String modelName) throws Exception {
+		return guiGeometry(texturePack, modelName, null);
+	}
+
+	private Geometry guiGeometry(TexturePack texturePack, String modelName, Matrix4f modelTransform) throws Exception {
 		OrthoCamera camera = new OrthoCamera(rasteriser, 48, 48);
 		camera.lookAt(0.5, 0.5, 0.5, 1, getAngleRad(315), getAngleRad(30));
 		Matrix4f basis = new Matrix4f()
@@ -238,6 +246,8 @@ public class ItemRenderer
 				.setColumn(2, new Vector4f(camera.getForward().negate(), 0));
 		Matrix4f transform = new Matrix4f().translation(0.5f, 0.5f, 0.5f)
 				.mul(basis).mul(ItemGuiTransform.load(texturePack.getZipStack(), modelName));
+		if (modelTransform != null)
+			transform.mul(modelTransform);
 		return new tectonicus.itemregistry.GuiGeometry(rasteriser, transform,
 				new tectonicus.itemregistry.GuiLighting(ItemGuiTransform.isSideLit(texturePack.getZipStack(), modelName), basis));
 	}
