@@ -30,6 +30,14 @@ public class ArrayBlockFilter implements BlockFilter
 	{
 		columns[x][z] = allow;
 	}
+
+	public void include(ArrayBlockFilter other) {
+		for (int x = 0; x < columns.length; x++) {
+			for (int z = 0; z < columns[x].length; z++) {
+				columns[x][z] |= other.columns[x][z];
+			}
+		}
+	}
 	
 	@Override
 	public void filter(RawChunk rawChunk)

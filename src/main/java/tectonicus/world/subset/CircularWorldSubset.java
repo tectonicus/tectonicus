@@ -16,13 +16,12 @@ import tectonicus.SaveFormat;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
 import tectonicus.world.filter.ArrayBlockFilter;
-import tectonicus.world.filter.BlockFilter;
 
 import java.io.File;
 
 @Data
 @AllArgsConstructor
-public class CircularWorldSubset implements WorldSubset
+public class CircularWorldSubset implements BoundedWorldSubset
 {
 	private static final long CHUNK_BUFFER = RawChunk.WIDTH + RawChunk.DEPTH + RawChunk.WIDTH;
 
@@ -40,8 +39,7 @@ public class CircularWorldSubset implements WorldSubset
 	@Override
 	public boolean contains(ChunkCoord coord)
 	{
-		Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + RawChunk.WIDTH/2, 0, coord.z * RawChunk.DEPTH + RawChunk.DEPTH/2);
-		final long dist = pos.separation(origin);
+		final long dist = distance(coord, RawChunk.WIDTH / 2, RawChunk.DEPTH / 2, origin);
 		
 		final long bufferedRadius = radius + CHUNK_BUFFER;
 		
@@ -54,7 +52,12 @@ public class CircularWorldSubset implements WorldSubset
 	}
 	
 	@Override
-	public BlockFilter getBlockFilter(ChunkCoord coord)
+	public Bounds getBounds() {
+		return new Bounds(origin.x - radius, origin.z - radius, origin.x + radius, origin.z + radius);
+	}
+
+	@Override
+	public ArrayBlockFilter getBlockFilter(ChunkCoord coord)
 	{
 		ArrayBlockFilter filter = new ArrayBlockFilter();
 		

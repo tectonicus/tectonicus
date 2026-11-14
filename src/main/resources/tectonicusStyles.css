@@ -101,13 +101,15 @@ html, body, #map {
     border-color: rgb(137, 132, 209);
 }
 
-.world-control {
+.world-control,
+.subset-control {
     padding: 6px 8px;
     background: white;
     font: 13px/1.5 Arial, sans-serif;
 }
 
-.world-control select {
+.world-control select,
+.subset-control select {
     max-width: 220px;
     font: inherit;
 }

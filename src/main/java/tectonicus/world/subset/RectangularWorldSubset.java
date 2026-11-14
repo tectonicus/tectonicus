@@ -16,13 +16,12 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
 import tectonicus.world.filter.ArrayBlockFilter;
-import tectonicus.world.filter.BlockFilter;
 
 import java.io.File;
 
 @Data
 @AllArgsConstructor
-public class RectangularWorldSubset implements WorldSubset
+public class RectangularWorldSubset implements BoundedWorldSubset
 {
 	private Vector3l origin;
 	private final long width;
@@ -80,7 +79,12 @@ public class RectangularWorldSubset implements WorldSubset
 	}
 	
 	@Override
-	public BlockFilter getBlockFilter(ChunkCoord coord)
+	public Bounds getBounds() {
+		return new Bounds(minX, minZ, maxX, maxZ);
+	}
+
+	@Override
+	public ArrayBlockFilter getBlockFilter(ChunkCoord coord)
 	{
 		ArrayBlockFilter filter = new ArrayBlockFilter();
 		

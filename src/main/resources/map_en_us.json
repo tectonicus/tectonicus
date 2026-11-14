@@ -4,6 +4,8 @@
   "tectonicus.dimension.unnamed": "Unnamed dimension",
   "tectonicus.layer.unnamed": "Unnamed layer",
   "tectonicus.controls.reset": "Reset Map View",
+  "tectonicus.controls.goTo": "Go to",
+  "tectonicus.controls.area": "Area {number}",
   "tectonicus.controls.markers": "Marker toggles",
   "tectonicus.controls.layers": "Layers",
   "tectonicus.controls.zoomIn": "Zoom in",

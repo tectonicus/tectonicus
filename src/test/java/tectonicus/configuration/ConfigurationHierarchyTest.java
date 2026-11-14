@@ -8,6 +8,8 @@ import picocli.CommandLine;
 import ch.qos.logback.classic.Level;
 import tectonicus.util.DirUtils;
 import tectonicus.util.OutputResourcesUtil;
+import tectonicus.world.subset.CircularWorldSubset;
+import tectonicus.world.subset.UnionWorldSubset;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +18,52 @@ import java.util.HashSet;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigurationHierarchyTest {
+	@Test
+	void inheritsAndReplacesSubsetUnionsAsWholeBlocks() throws Exception {
+		Configuration config = parse("""
+				<config>
+				    <subset mode="union">
+				        <RectangularSubset name="Far Outpost" origin="250000, -180000" width="800" depth="600"/>
+				        <CircularSubset radius="500"/>
+				    </subset>
+				</config>
+				<world worldDir="save">
+				    <dimension><layer/></dimension>
+				    <dimension>
+				        <subset><RectangularSubset width="8" depth="8"/><CircularSubset radius="5"/></subset>
+				        <layer/>
+				    </dimension>
+				</world>
+				""");
+		var union = assertInstanceOf(UnionWorldSubset.class, config.getDimensionConfig(0).getWorldSubset());
+		assertEquals(2, union.getMembers().size());
+		assertEquals("Far Outpost", union.getMembers().getFirst().name());
+		assertEquals(250_000, union.getOrigin().x);
+		assertNull(union.getMembers().get(1).shape().getOrigin());
+		assertInstanceOf(CircularWorldSubset.class, config.getDimensionConfig(1).getWorldSubset());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"<CircularSubset name='Bad' radius='-1'/>",
+			"<CircularSubset name='Bad' radius='2' origin='bad'/>",
+			"<RectangularSubset name='Bad' width='2'/>", "<Unknown name='Bad'/>"})
+	void identifiesInvalidUnionEntries(String invalid) {
+		var error = assertThrows(IllegalArgumentException.class, () -> parse("""
+				<map worldDir="save">
+				    <subset mode="union"><CircularSubset radius="5"/>%s</subset>
+				    <layer/>
+				</map>
+				""".formatted(invalid)));
+		assertTrue(error.getMessage().contains("Subset union entry 2 (Bad)"));
+	}
+
+	@Test
+	void rejectsEmptySubsetUnion() {
+		assertThrows(IllegalArgumentException.class, () -> parse("""
+				<map worldDir="save"><subset mode="union"/><layer/></map>
+				"""));
+	}
+
 	@org.junit.jupiter.api.Test
 	void lightStyleAliasRespectsInheritanceAndTakesPrecedence() throws Exception {
 		Configuration config = parse("""

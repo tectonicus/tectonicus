@@ -26,6 +26,10 @@ public interface WorldSubset {
 	BlockFilter getBlockFilter(ChunkCoord coord);
 	
 	Vector3l getOrigin();
+
+	default boolean needsOrigin() {
+		return getOrigin() == null;
+	}
 	
 	void setOrigin(Vector3l origin);
 }

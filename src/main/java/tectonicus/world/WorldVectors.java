@@ -22,10 +22,12 @@ import tectonicus.raw.LevelDat;
 import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
+import tectonicus.util.FileUtils;
 import tectonicus.util.JsonWriter;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.UnionWorldSubset;
 import tectonicus.world.subset.WorldSubset;
 
 import java.io.File;
@@ -116,6 +118,20 @@ public class WorldVectors {
 			}
 			
 			json.writeWorldCoord("startView", getStartView(map, world, portals));
+			if (map.getWorldSubset() instanceof UnionWorldSubset union) {
+				json.startArray("subsets");
+				for (UnionWorldSubset.Member member : union.getMembers()) {
+					var subsetBounds = member.shape().getBounds();
+					json.startArrayObject();
+					json.writeRawVariable("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(member.name()));
+					json.writeVariable("minX", subsetBounds.minX());
+					json.writeVariable("minZ", subsetBounds.minZ());
+					json.writeVariable("maxX", subsetBounds.maxX());
+					json.writeVariable("maxZ", subsetBounds.maxZ());
+					json.endArrayObject();
+				}
+				json.endArray();
+			}
 
 			Vector2f scaledOrigin = new Vector2f();
 			scaledOrigin.x = (this.origin.x / scale);

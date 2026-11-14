@@ -7,6 +7,7 @@ let worldLayers = new Map();
 let selectedWorldLayers = new Map();
 let markerVisibilityOverrides = new Map();
 let worldControl = null;
+let subsetControl = null;
 let layerControlWorldId = null;
 let changingBaseLayer = false;
 let mapInfoTippy = null;
@@ -193,8 +194,8 @@ async function mainAsync()
             for (let j = 0; j < tecMap.layers.length; j++) {
                 let layer = tecMap.layers[j];
                 let projection = new MinecraftProjection(tecMap.worldVectors);
-                            // 'startPosition' stores view pos for a given layer, so we remember where we were when switching layers
-                            let startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView, 0, projection.worldToMap(tecMap.worldVectors.startView));
+                const startPosition = new ViewPos(layer.id, tecMap.worldVectors.startView,
+                    mymap.getMinZoom(), projection.worldToMap(tecMap.worldVectors.startView));
 
                 let tileLayer = new L.TileLayer.Tectonicus(tecMap.outputId || tecMap.id, layer.id, layer.dimension, layer.imageFormat, tecMap.name, layer.backgroundColor, tecMap.signs, tecMap.players,
                     tecMap.containers ?? tecMap.chests ?? [], tecMap.views, tecMap.portals, tecMap.beds, tecMap.respawnAnchors, tecMap.beacons, tecMap.worldVectors, projection, tecMap.blockStats, tecMap.worldStats, startPosition, tecMap.controlState || controlState, layer.tileIndex);
@@ -246,7 +247,8 @@ async function mainAsync()
         activeBaseLayer = startLayer;
         // Register attribution before layers so Leaflet also observes removal of the first layer.
         L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
-        mymap.setView(startView.startPoint, startView.zoom);
+        mymap.setMaxZoom(startLayer.maxZoom);
+        mymap.setView(startView.startPoint, startView.zoom, {animate: false});
         startLayer.addTo(mymap);
         // Store the updated start point in the layer
         startLayer.viewPosition = startView;
@@ -257,6 +259,8 @@ async function mainAsync()
             worldControl.addTo(mymap);
         }
         updateWorldLayerControl(startLayer);
+        subsetControl = CreateSubsetControl();
+        subsetControl.addTo(mymap);
         CreateResetViewButton(mymap);
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
         viewToggleControl = CreateToggleControl('views', 'Picture.png', viewsInitiallyVisible, 'viewControlChecked');
@@ -334,8 +338,8 @@ function updateMarkerControls(layer) {
         }
     }
 
-    // Keep world and layer navigation below the marker controls.
-    for (const navigationControl of [worldControl, layerControl]) {
+    // Put the subset selector directly below the marker controls.
+    for (const navigationControl of [subsetControl, worldControl, layerControl]) {
         if (navigationControl) {
             L.DomUtil.toFront(navigationControl.getContainer());
         }
@@ -357,7 +361,10 @@ function updateMarkerControls(layer) {
 
 function onBaseLayerChange(e) {
     changingBaseLayer = true;
-    const targetView = {...e.layer.viewPosition};
+    const sameSubsetMap = activeBaseLayer !== e.layer
+        && activeBaseLayer?.worldVectors === e.layer.worldVectors
+        && e.layer.worldVectors.subsets?.length > 1;
+    const targetView = sameSubsetMap ? activeBaseLayer.viewPosition : e.layer.viewPosition;
     activeBaseLayer = e.layer;
     const title = document.querySelector('title[data-map-default]');
     if (title) title.textContent = mapText('tectonicus.title');
@@ -370,8 +377,9 @@ function onBaseLayerChange(e) {
     if (worldControl) {
         worldControl.setWorld(e.layer.worldId);
     }
+    subsetControl.setSubsets(e.layer.worldVectors.subsets ?? []);
 
-	mymap.setView(targetView.startPoint, targetView.zoom, {animate: false});
+    mymap.setView(targetView.startPoint, targetView.zoom, {animate: false});
     changingBaseLayer = false;
 
 	changeBackgroundColor(e.layer.backgroundColor);
@@ -548,6 +556,19 @@ function worldImageUrl(filename, layer = activeBaseLayer) {
     return (layer?.images || 'Images/') + filename;
 }
 
+function showSubset(layer, subset) {
+    // Project all corners for rotated isometric cameras. Use the same Y as share links.
+    const {minX, minZ, maxX, maxZ} = subset;
+    const y = layer.worldVectors.startView.y;
+    const bounds = L.latLngBounds([
+        {x: minX, y, z: minZ},
+        {x: minX, y, z: maxZ},
+        {x: maxX, y, z: minZ},
+        {x: maxX, y, z: maxZ}
+    ].map(point => layer.projection.worldToMap(point)));
+    mymap.fitBounds(bounds, {animate: false, padding: [24, 24]});
+}
+
 function onProjectionChanged(e) {
     if (changingBaseLayer || activeBaseLayer === null) return;
 	// Store the previous coords in the layer
@@ -569,12 +590,11 @@ function onHashChange() {
     }
 
     const view = findStartView(params, layer.layerId);
-    const {startPoint, zoom} = view;
     layer.viewPosition = view;
     if (layer !== activeBaseLayer) {
         selectBaseLayer(layer);
     }
-    mymap.setView(startPoint, zoom, {animate: false});
+    mymap.setView(view.startPoint, view.zoom, {animate: false});
 }
 
 function refreshSpawnMarker(layer) {
@@ -783,13 +803,14 @@ function ViewPos(layerId, worldPos, zoom, startPoint) {
 
 function findStartView(params, defaultLayerId) {
 	let queryLayerId = defaultLayerId;
-	let queryZoom = 0;
+	const minZoom = mymap.getMinZoom();
+	let queryZoom = minZoom;
 
 	if (params.hasOwnProperty('layer') && urlLayers.get(params.layer)) {
 		queryLayerId = urlLayers.get(params.layer).layerId;
 	}
-	let layer = tileLayers.get(queryLayerId);
-	let queryPos = new WorldCoord(layer.worldVectors.startView.x, layer.worldVectors.startView.y, layer.worldVectors.startView.z);
+	const layer = tileLayers.get(queryLayerId);
+	const queryPos = new WorldCoord(layer.worldVectors.startView.x, layer.worldVectors.startView.y, layer.worldVectors.startView.z);
 
 	if (params.hasOwnProperty('x')
 		&& params.hasOwnProperty('z')) {
@@ -797,11 +818,11 @@ function findStartView(params, defaultLayerId) {
 		queryPos.z = Number.isFinite(parseInt(params.z)) ? parseInt(params.z) : queryPos.z;
 	}
 	if (params.hasOwnProperty('zoom')) {
-		queryZoom = Number.isFinite(parseInt(params.zoom)) ? parseInt(params.zoom) : 0;
+		queryZoom = Number.isFinite(parseInt(params.zoom)) ? parseInt(params.zoom) : minZoom;
 	}
 
-	if (queryZoom < 0)
-		queryZoom = 0;
+	if (queryZoom < minZoom)
+		queryZoom = minZoom;
 	if (queryZoom > (layer.maxZoom ?? maxZoom))
 		queryZoom = layer.maxZoom ?? maxZoom;
 

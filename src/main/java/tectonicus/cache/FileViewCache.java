@@ -23,6 +23,7 @@ import tectonicus.view.ViewUtil;
 import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
+import tectonicus.world.subset.UnionWorldSubset;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -134,6 +135,10 @@ public class FileViewCache
 		hashAlgorithm.update(("biomeBlendRadius=" + world.getBiomeBlendRadius() + "\n").getBytes());
 		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		hashAlgorithm.update(("biomeExtraction=" + world.getBiomeCache().getCacheKey() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		if (world.getWorldSubset() instanceof UnionWorldSubset union) {
+			// A changed mask can change the image while the same chunks remain visible.
+			hashAlgorithm.update(("worldSubset=" + union + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		}
 		
 		hashAlgorithm.update(sign.getText(0).getBytes());
 		hashAlgorithm.update(sign.getText(1).getBytes());

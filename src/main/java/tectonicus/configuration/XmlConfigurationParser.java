@@ -31,9 +31,11 @@ import tectonicus.configuration.filter.PortalFilterType;
 import tectonicus.configuration.filter.ViewFilter;
 import tectonicus.configuration.filter.ViewFilterType;
 import tectonicus.util.Vector3l;
+import tectonicus.world.subset.BoundedWorldSubset;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.RectangularWorldSubset;
+import tectonicus.world.subset.UnionWorldSubset;
 import tectonicus.world.subset.WorldSubset;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -640,6 +642,14 @@ public class XmlConfigurationParser
 
 	private static WorldSubset parseWorldSubset(Element subsetNode) {
 		if (subsetNode != null) {
+			String mode = subsetNode.getAttribute("mode").strip();
+			if (mode.equals("union")) {
+				return parseSubsetUnion(subsetNode);
+			}
+			if (!mode.isEmpty()) {
+				throw new IllegalArgumentException("Unknown subset mode: " + mode);
+			}
+
 			Element circularNode = getChild(subsetNode, "CircularSubset");
 			if (circularNode != null) {
 				long radius = 0;
@@ -683,5 +693,47 @@ public class XmlConfigurationParser
 		}
 
 		return new FullWorldSubset();
+	}
+
+	private static UnionWorldSubset parseSubsetUnion(Element subsetNode) {
+		List<UnionWorldSubset.Member> members = new ArrayList<>();
+		for (Element child : getChildren(subsetNode, null)) {
+			String name = child.getAttribute("name").strip();
+			try {
+				Vector3l origin = null;
+				if (child.hasAttribute("origin")) {
+					origin = parseOrigin(child.getAttribute("origin"));
+					if (origin == null) {
+						throw new IllegalArgumentException("origin must be a pair of block coordinates (x, z)");
+					}
+				}
+
+				BoundedWorldSubset shape = switch (child.getTagName()) {
+					case "CircularSubset" -> new CircularWorldSubset(origin, parseSubsetSize(child, "radius"));
+					case "RectangularSubset" -> new RectangularWorldSubset(origin, parseSubsetSize(child, "width"),
+							parseSubsetSize(child, "depth"));
+					default -> throw new IllegalArgumentException("expected CircularSubset or RectangularSubset");
+				};
+				members.add(new UnionWorldSubset.Member(name, shape));
+			} catch (IllegalArgumentException e) {
+				String label = name.isEmpty() ? "" : " (" + name + ")";
+				throw new IllegalArgumentException("Subset union entry " + (members.size() + 1) + label
+						+ ", <" + child.getTagName() + ">: " + e.getMessage(), e);
+			}
+		}
+		return new UnionWorldSubset(members);
+	}
+
+	private static long parseSubsetSize(Element shape, String attribute) {
+		long size;
+		try {
+			size = Long.parseLong(shape.getAttribute(attribute).strip());
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException(attribute + " must be a positive integer", e);
+		}
+		if (size <= 0) {
+			throw new IllegalArgumentException(attribute + " must be a positive integer");
+		}
+		return size;
 	}
 }

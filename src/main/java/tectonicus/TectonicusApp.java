@@ -143,7 +143,9 @@ public class TectonicusApp
 				
 				for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
 				{
-					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache, null);
+					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), config.getSinglePlayerName());
+					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache, levelDat.getSinglePlayer());
+					World.resolveSubsetOrigins(map.getWorldSubset(), levelDat, map.getDimensionInfo(), players);
 									
 					File mapDir = new File(config.getOutputDir(), "Scripts/" + map.getId());
 					File playerDir = new File(mapDir, "players.js");

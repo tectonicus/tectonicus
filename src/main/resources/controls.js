@@ -73,7 +73,7 @@ function CreateResetViewButton(map) {
     button.onclick = function (event) {
         L.DomEvent.preventDefault(event);
         const layer = activeBaseLayer;
-        map.setView(layer.projection.worldToMap(layer.worldVectors.startView), 0, {animate: false});
+        map.setView(layer.projection.worldToMap(layer.worldVectors.startView), map.getMinZoom(), {animate: false});
     };
     L.DomEvent.disableClickPropagation(button);
     return button;
@@ -247,4 +247,39 @@ function CreateWorldControl(worlds, selectedWorldId, onChange) {
         }
     });
     return new WorldControl();
+}
+
+function CreateSubsetControl() {
+    const SubsetControl = L.Control.extend({
+        options: {position: 'topright'},
+
+        onAdd() {
+            const container = L.DomUtil.create('div', 'leaflet-bar subset-control');
+            this.select = L.DomUtil.create('select', '', container);
+            container.hidden = true;
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.disableScrollPropagation(container);
+            return container;
+        },
+
+        setSubsets(subsets) {
+            const visible = subsets.length > 1;
+            this.getContainer().hidden = !visible;
+            if (!visible) return;
+
+            const label = mapText('tectonicus.controls.goTo');
+            this.select.setAttribute('aria-label', label);
+            this.select.replaceChildren(new Option(label, ''));
+            subsets.forEach((subset, index) => {
+                this.select.add(new Option(subset.name || mapText('tectonicus.controls.area', {number: index + 1}), index));
+            });
+            this.select.onchange = () => {
+                const value = this.select.value;
+                if (value === '') return;
+                showSubset(activeBaseLayer, subsets[Number(value)]);
+                this.select.value = '';
+            };
+        }
+    });
+    return new SubsetControl();
 }

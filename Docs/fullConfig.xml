@@ -86,9 +86,11 @@
 		</mods>
 		
 		<subset>
-			<!-- Radius, width and height are in world units (blocks). Remove 'origin' to center around the spawn point -->
-			<CircularSubset radius="200" origin="0, 0" />
-			<RectangularSubset width="400" height="400" origin="0, 0" />
+			<!-- Radius, width and depth are in blocks. Omit origin to use the dimension's default center. -->
+			<!-- Use one shape here, or set mode="union" to render every shape in this block. -->
+			<!-- The optional name labels the area in the viewer's Go to menu. -->
+			<CircularSubset name="Spawn" radius="200" origin="0, 0" />
+			<!-- <RectangularSubset name="Far Outpost" width="400" depth="400" origin="250000, -180000" /> -->
 		</subset>
 
 		<!-- Markers to display on this layer -->

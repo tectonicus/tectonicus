@@ -83,7 +83,6 @@ import tectonicus.util.Vector3l;
 import tectonicus.world.filter.BlockFilter;
 import tectonicus.world.filter.CompositeBlockFilter;
 import tectonicus.world.filter.NullBlockFilter;
-import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.WorldSubset;
 
@@ -359,12 +358,8 @@ public class World implements BlockContext, AutoCloseable
 
 			log.debug("Current world max chunk height: {}", Minecraft.getChunkHeight());
 		
-			//Set subset origin if none was set in config file
-			WorldSubset subset = map.getWorldSubset();
-			if (!(subset instanceof FullWorldSubset) && subset.getOrigin() == null) {
-				subset.setOrigin(getSubsetOrigin());
-			}
-			this.worldSubset = subset;
+			this.worldSubset = map.getWorldSubset();
+			resolveSubsetOrigins(worldSubset, levelDat, dimensionInfo, players);
 		
 			log.debug("worldSubset: {}", this.worldSubset);
                 
@@ -419,29 +414,34 @@ public class World implements BlockContext, AutoCloseable
 		return savedMaps.getContentHash(mapId);
 	}
 	
-	//If world spawn is set in a dimension other than the dimension we're rendering then we need to find a reasonable default origin for the subset
-	//For Overworld we check for a player or bed closest to (0,64,0) and use that as the origin
-	//otherwise we just use (0,64,0) as the origin
-	//For the Nether we convert Overworld spawn X/Z to Nether coordinates, then find the closest player or Respawn Anchor
-	//otherwise we use the converted spawn position as the origin
-	//For the End we set the spawn to (100, 49, 0) when we load the level.dat. That's the location of the obsidian platform that the player spawns on
-	private Vector3l getSubsetOrigin() {
+	public static void resolveSubsetOrigins(WorldSubset subset, LevelDat levelDat, DimensionInfo dimensionInfo, List<Player> players) {
+		if (!subset.needsOrigin()) {
+			return;
+		}
+
 		Vector3l origin = levelDat.getSpawnPosition();
 		Dimension spawnDimension = levelDat.getSpawnDimension();
-		
-		if(dimension == Dimension.OVERWORLD && spawnDimension != Dimension.OVERWORLD) {
-			origin = getOriginFromPlayers(new Vector3l(0, 64, 0), dimensionInfo);
+		Dimension dimension = dimensionInfo.dimension();
+
+		if (dimension == Dimension.OVERWORLD && spawnDimension != Dimension.OVERWORLD) {
+			origin = getOriginFromPlayers(new Vector3l(0, 64, 0), dimensionInfo, players);
 		} else if (dimension == Dimension.NETHER && spawnDimension != Dimension.NETHER) {
 			if (spawnDimension == Dimension.OVERWORLD) {
 				origin.x = Math.floorDiv(origin.x, 8);
 				origin.z = Math.floorDiv(origin.z, 8);
 			}
-			origin = getOriginFromPlayers(origin, dimensionInfo);
+			origin = getOriginFromPlayers(origin, dimensionInfo, players);
+		} else if (dimension == Dimension.END && spawnDimension != Dimension.END) {
+			origin = new Vector3l(100, 49, 0); // The End's obsidian arrival platform.
 		}
-		return origin;
+		subset.setOrigin(origin);
 	}
 	
 	public Vector3l getOriginFromPlayers(Vector3l startPoint, DimensionInfo dimension) {
+		return getOriginFromPlayers(startPoint, dimension, players);
+	}
+
+	private static Vector3l getOriginFromPlayers(Vector3l startPoint, DimensionInfo dimension, List<Player> players) {
 		Vector3l origin = startPoint;
 		double prevDistance = 99999999999d;
 		

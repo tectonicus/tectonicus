@@ -42,6 +42,11 @@ public class FullWorldSubset implements WorldSubset {
 	public Vector3l getOrigin() {
 		return null;
 	}
+
+	@Override
+	public boolean needsOrigin() {
+		return false;
+	}
 	
 	@Override
 	public void setOrigin(Vector3l origin) {
