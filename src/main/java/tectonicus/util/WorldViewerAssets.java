@@ -6,18 +6,26 @@
 package tectonicus.util;
 
 import lombok.extern.slf4j.Slf4j;
+import tectonicus.blockTypes.Banner;
 import tectonicus.raw.ArmorTrimTag;
+import tectonicus.raw.BannerPatternsTag;
 import tectonicus.raw.EnchantmentTag;
+import tectonicus.raw.Item;
 import tectonicus.texture.ZipStack;
+import tectonicus.world.Colors;
 import tools.jackson.core.JacksonException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +47,37 @@ public final class WorldViewerAssets {
 			"container.inventory", "container.enderchest", "item.dyed", "item.minecraft.smithing_template.upgrade"));
 	private final Set<String> itemMasks = new TreeSet<>();
 	private final Set<Integer> inventoryCharacters = new TreeSet<>();
+	private final Map<BannerIcon, String> bannerIcons = new LinkedHashMap<>();
+
+	record BannerIcon(String itemId, List<Banner.Pattern> patterns) {
+		String filename() {
+			try {
+				MessageDigest digest = MessageDigest.getInstance("SHA-256");
+				byte[] design = FileUtils.getOBJECT_MAPPER().writeValueAsBytes(List.of(itemId, patterns));
+				return "banner_" + HexFormat.of().formatHex(digest.digest(design));
+			} catch (NoSuchAlgorithmException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+	}
+
+	String addBannerIcon(Item item) {
+		String prefix = "minecraft:";
+		String suffix = "_banner";
+		if (!item.id.startsWith(prefix) || !item.id.endsWith(suffix)
+				|| Colors.byName(item.id.substring(prefix.length(), item.id.length() - suffix.length())) == null)
+			return null;
+
+		BannerPatternsTag patterns = item.getComponent(BannerPatternsTag.class);
+		if (patterns == null || patterns.patterns().isEmpty())
+			return null;
+
+		return bannerIcons.computeIfAbsent(new BannerIcon(item.id, patterns.patterns()), BannerIcon::filename);
+	}
+
+	Map<BannerIcon, String> bannerIcons() {
+		return bannerIcons;
+	}
 
 	void addItem(String id, String customName, boolean dyed, String potion, ArmorTrimTag trim, List<EnchantmentTag> enchantments) {
 		String[] item = id.split(":", -1);

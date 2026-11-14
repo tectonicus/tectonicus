@@ -54,6 +54,18 @@ test('old exports omit inventory, empty inventories show all empty slots', () =>
     assert.doesNotMatch(html, /class="item"/);
 });
 
+test('patterned banners use their own icon and fall back to the base color', () => {
+    const context = viewer();
+    const bannerIcon = 'banner_' + 'ab'.repeat(32);
+    const item = {id: 'minecraft:red_banner', slot: 0, count: 1, bannerIcon};
+    const html = context.getInventoryHtml({inventory: [item, {id: item.id, slot: 1, count: 1}]});
+    assert.match(slotHtml(html, 0), new RegExp('src="Images/Items/' + bannerIcon + '\\.png"'));
+    assert.match(slotHtml(html, 0), /data-fallback="Images\/Items\/red_banner\.png"/);
+    assert.match(slotHtml(html, 1), /src="Images\/Items\/red_banner\.png"/);
+    assert.match(context.createContainerPopup({name: 'Chest', items: [item]}), new RegExp(bannerIcon));
+    assert.match(context.getEnderChestHtml({enderChestInventory: [item]}), new RegExp(bannerIcon));
+});
+
 test('player popup and chest share item details, colors, trims and enchantments', () => {
     const context = viewer();
     const item = {id: 'minecraft:leather_chestplate', count: 1, slot: 102,

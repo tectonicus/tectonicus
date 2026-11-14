@@ -28,18 +28,17 @@ final class ItemNbtParser {
 		if (id.isEmpty() || id.equals("minecraft:air") || count <= 0)
 			return null;
 
-		List<Object> components = parseComponentsTag(NbtUtil.getChild(itemTag, "components", CompoundTag.class));
-		if (components == null)
-			components = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
-		return new Item(id, NbtUtil.getShort(itemTag, "Damage", (short) 0), count, slot, components);
+		return new Item(id, NbtUtil.getShort(itemTag, "Damage", (short) 0), count, slot, parseItemComponents(itemTag));
+	}
+
+	static List<Object> parseItemComponents(CompoundTag itemTag) {
+		CompoundTag components = NbtUtil.getChild(itemTag, "components", CompoundTag.class);
+		return components != null ? parseComponentsTag(components)
+				: parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
 	}
 
 	// 1.20.5 and later
-	static List<Object> parseComponentsTag(CompoundTag componentsTag) {
-		if (componentsTag == null) {
-			return null;
-		}
-		
+	private static List<Object> parseComponentsTag(CompoundTag componentsTag) {
 		List<Object> components = new ArrayList<>();
 		
 		final CompoundTag potionContentsTag = NbtUtil.getChild(componentsTag, "minecraft:potion_contents", CompoundTag.class);
@@ -105,11 +104,12 @@ final class ItemNbtParser {
 			}
 		}
 		
+		addBannerPatterns(components, NbtUtil.getChild(componentsTag, "minecraft:banner_patterns", ListTag.class), false);
 		return components;
 	}
 	
 	// 1.20.4 and older
-	static List<Object> parseTagTag(CompoundTag tagTag) {
+	private static List<Object> parseTagTag(CompoundTag tagTag) {
 		if (tagTag == null) {
 			return null;
 		}
@@ -169,7 +169,17 @@ final class ItemNbtParser {
 			}
 		}
 		
+		CompoundTag blockEntity = NbtUtil.getChild(tagTag, "BlockEntityTag", CompoundTag.class);
+		if (blockEntity != null) {
+			addBannerPatterns(tag, NbtUtil.getChild(blockEntity, "Patterns", ListTag.class),
+					NbtUtil.getChild(blockEntity, "Base", IntTag.class) != null);
+		}
 		return tag;
 	}
 
+	private static void addBannerPatterns(List<Object> components, ListTag layers, boolean legacyColors) {
+		var patterns = BannerEntity.parsePatterns(layers, legacyColors);
+		if (!patterns.isEmpty())
+			components.add(new BannerPatternsTag(patterns));
+	}
 }

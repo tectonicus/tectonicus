@@ -10,8 +10,13 @@
 package tectonicus.raw;
 
 import lombok.Getter;
+import org.jnbt.CompoundTag;
+import org.jnbt.IntTag;
+import org.jnbt.ListTag;
 import tectonicus.blockTypes.Banner.Pattern;
+import tectonicus.world.Colors;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,5 +33,30 @@ public class BannerEntity extends BlockEntity {
 	
 	public List<Pattern> getPatterns() {
 		return Collections.unmodifiableList(patterns);
+	}
+
+	static List<Pattern> parsePatterns(ListTag layers, boolean legacyColors) {
+		if (layers == null)
+			return List.of();
+
+		List<Pattern> patterns = new ArrayList<>();
+		for (var layer : layers.getValue()) {
+			if (!(layer instanceof CompoundTag tag))
+				continue;
+
+			String pattern = NbtUtil.getString(tag, "Pattern", "");
+			String colorName = NbtUtil.getString(tag, "color", "");
+			IntTag colorTag = NbtUtil.getChild(tag, "Color", IntTag.class);
+			Colors color = Colors.WHITE;
+			if (!colorName.isEmpty()) {
+				color = Colors.byName(colorName);
+			} else if (colorTag != null) {
+				int colorId = colorTag.getValue();
+				color = colorId >= 0 && colorId <= 15 ? Colors.byId(legacyColors ? 15 - colorId : colorId) : null;
+			}
+			if (!pattern.isEmpty() && color != null)
+				patterns.add(new Pattern(pattern, color));
+		}
+		return patterns;
 	}
 }

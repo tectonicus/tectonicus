@@ -17,6 +17,7 @@ import org.joml.Vector3f;
 import tectonicus.itemregistry.ItemGuiTransform;
 import org.joml.Vector4f;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.Banner;
 import tectonicus.blockTypes.ShulkerBox;
 import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BlockModel;
@@ -35,6 +36,7 @@ import tectonicus.paintingregistry.PaintingRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
+import tectonicus.raw.BannerEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.Biome;
 import tectonicus.raw.BiomesOld;
@@ -58,6 +60,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -421,11 +424,18 @@ public class ItemRenderer
 	}
         
 	public void renderItem(File outFile, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack, String blockName, String baseModel) throws Exception {
+		renderItem(outFile, registry, modelRegistry, texturePack, blockName, baseModel, List.of());
+	}
+
+	public void renderItem(File outFile, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack,
+			String blockName, String baseModel, List<Banner.Pattern> bannerPatterns) throws Exception {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
 		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		BlockType type = registry.find(blockName);
+		if (!bannerPatterns.isEmpty() && type instanceof Banner)
+			rawChunk.setBanner(new BannerEntity(0, 0, 0, 0, 0, 0, null, bannerPatterns));
 		if (type instanceof ShulkerBox)
 			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("facing", "up")));
 		// The legacy chest renderer defaults to north, while the item model faces south.

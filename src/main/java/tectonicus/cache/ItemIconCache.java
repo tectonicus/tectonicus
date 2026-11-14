@@ -25,7 +25,7 @@ import java.util.Set;
 @Slf4j
 public class ItemIconCache {
 	// Increment when icon rendering changes require cached icons to be regenerated.
-	private static final int RENDERER_VERSION = 1;
+	private static final int RENDERER_VERSION = 2;
 	private final Path directory;
 	private final Properties previous = new Properties();
 	private String inputs;

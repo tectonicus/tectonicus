@@ -16,6 +16,10 @@ import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import tectonicus.blockTypes.Banner.Pattern;
+import tectonicus.world.Colors;
 
 import java.util.List;
 import java.util.Map;
@@ -61,6 +65,31 @@ class PlayerInventoryTest {
 		assertEquals(2, parsed.count);
 		assertEquals(0x123456, parsed.getComponent(DyedColorTag.class).color);
 		assertEquals("minecraft:protection", parsed.getComponent(EnchantmentsTag.class).enchantments.getFirst().id);
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	void readsOrderedBannerPatternsInPlayerAndEnderChestInventories(boolean modern) {
+		String patternTag = modern ? "pattern" : "Pattern";
+		String first = modern ? "minecraft:stripe_top" : "ts";
+		String second = modern ? "minecraft:cross" : "cr";
+		String listName = modern ? "minecraft:banner_patterns" : "Patterns";
+		ListTag layers = new ListTag(listName, CompoundTag.class, List.of(
+				new CompoundTag("", Map.of(patternTag, new StringTag(patternTag, first),
+						"color", modern ? new StringTag("color", "blue") : new IntTag("Color", 11))),
+				new CompoundTag("", Map.of(patternTag, new StringTag(patternTag, second),
+						"color", modern ? new StringTag("color", "white") : new IntTag("Color", 0)))));
+		String metadataName = modern ? "components" : "tag";
+		CompoundTag metadata = new CompoundTag(metadataName, modern ? Map.of(listName, layers)
+				: Map.of("BlockEntityTag", new CompoundTag("BlockEntityTag", Map.of(listName, layers))));
+		CompoundTag item = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:red_banner"),
+				"Slot", new ByteTag("Slot", (byte) 0), metadataName, metadata));
+		Player player = new Player("Alex", new CompoundTag("", Map.of(
+				"Inventory", new ListTag("Inventory", CompoundTag.class, List.of(item)),
+				"EnderItems", new ListTag("EnderItems", CompoundTag.class, List.of(item)))));
+		List<Pattern> expected = List.of(new Pattern(first, Colors.BLUE), new Pattern(second, Colors.WHITE));
+		assertEquals(expected, player.getInventory().getFirst().getComponent(BannerPatternsTag.class).patterns());
+		assertEquals(expected, player.getEnderChestInventory().getFirst().getComponent(BannerPatternsTag.class).patterns());
 	}
 
 	@Test

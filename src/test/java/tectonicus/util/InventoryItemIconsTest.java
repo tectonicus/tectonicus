@@ -17,10 +17,13 @@ import tectonicus.blockTypes.ArmorStand;
 import tectonicus.blockTypes.Conduit;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.configuration.Configuration;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.itemregistry.ShieldModel;
 import tectonicus.raw.ArmorStandEntity;
+import tectonicus.raw.BannerPatternsTag;
+import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.Item;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -31,6 +34,7 @@ import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
+import tectonicus.world.Colors;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -41,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -67,6 +72,8 @@ class InventoryItemIconsTest {
 			json(out, "assets/minecraft/models/item/ender_chest.json", modern
 					? "{\"parent\":\"minecraft:item/template_chest\"}" : "{\"parent\":\"builtin/entity\"}");
 			json(out, "assets/minecraft/models/item/template_chest.json", "{}");
+			if (!modern)
+				json(out, "assets/minecraft/models/item/red_banner.json", "{\"parent\":\"builtin/entity\"}");
 			if (modern) {
 				json(out, "assets/minecraft/models/item/canonical.json", """
 						{"parent":"builtin/generated","textures":{"layer0":"minecraft:entity/conduit/base"}}
@@ -142,7 +149,15 @@ class InventoryItemIconsTest {
 				blocks.register("minecraft:" + item, new Conduit(item, "minecraft:" + item,
 						textures.findTexture("entity/conduit/base.png")));
 			textures.getBannerPatternImages().put("bannerBase", new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB));
-			textures.getBannerPatternImages().put("base", new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB));
+			BufferedImage base = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+			base.setRGB(2, 2, 0xffffffff);
+			textures.getBannerPatternImages().put("base", base);
+			BufferedImage stripe = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+			stripe.setRGB(2, 2, 0xffffffff);
+			String pattern = modern ? "minecraft:stripe_top" : "ts";
+			String cross = modern ? "minecraft:cross" : "cr";
+			textures.getBannerPatternImages().put(modern ? "stripe_top" : "ts", stripe);
+			textures.getBannerPatternImages().put(modern ? "cross" : "cr", stripe);
 			blocks.register("minecraft:red_banner", new Banner("minecraft:red_banner", "Red Banner", textures, true));
 			blocks.register("minecraft:conduit", new Conduit("Conduit", "minecraft:conduit",
 					textures.findTexture("entity/conduit/base.png")));
@@ -153,10 +168,38 @@ class InventoryItemIconsTest {
 			var air = new tectonicus.blockregistry.BlockStateWrapper("minecraft:air");
 			air.setFullOpaqueBlock(false);
 			models.getBlockStates().put("minecraft:air", air);
+			var layers = List.of(new Banner.Pattern(pattern, Colors.BLUE), new Banner.Pattern(cross, Colors.WHITE));
+			var design = new BannerPatternsTag(layers);
+			var reversedDesign = new BannerPatternsTag(layers.reversed());
+			var containers = new ConcurrentLinkedQueue<ContainerEntity>();
+			containers.add(new ContainerEntity(0, 64, 0, 0, 64, 0, "Chest", "", false, "south", "single", List.of(
+					new Item("minecraft:red_banner", 0, 1, 0, List.of(design)),
+					new Item("minecraft:red_banner", 0, 2, 1, List.of(new BannerPatternsTag(List.of(
+							new Banner.Pattern(pattern, Colors.BLUE), new Banner.Pattern(cross, Colors.WHITE))))),
+					new Item("minecraft:red_banner", 0, 1, 2, List.of(reversedDesign)),
+					new Item("minecraft:red_banner", 0, 1, 3, List.of()))));
+			Path script = directory.resolve("containers.js");
+			WorldViewerAssets assets = new WorldViewerAssets();
+			OutputResourcesUtil.outputContainers(script.toFile(), new DimensionConfig("Overworld"), containers, assets);
+			String javascript = Files.readString(script);
+			assertEquals(3, javascript.split("bannerIcon:", -1).length - 1);
+			assertEquals(2, assets.bannerIcons().size(), "Identical banners should share an icon");
+			ItemRegistry itemRegistry = new ItemRegistry(textures);
+			ItemModelDefinitionRegistry definitions = new ItemModelDefinitionRegistry(textures);
 			OutputResourcesUtil.outputInventoryItemIcons(directory.toFile(), rasteriser, textures, blocks,
-					models, new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
+					models, itemRegistry, definitions, "", assets);
+			for (var entry : assets.bannerIcons().entrySet()) {
+				String key = entry.getValue();
+				assertTrue(javascript.contains("bannerIcon: \"" + key + "\""));
+				assertTrue(Files.exists(directory.resolve("Items/" + key + ".png")));
+			}
+			assertEquals(Colors.RED.getColor().getRGB(), textures.getPackTexture("banner_base_red").getImage().getRGB(2, 2));
+			assertEquals(Colors.BLUE.getColor().getRGB(),
+					textures.getPackTexture("banner_base_red/" + cross + "=white/" + pattern + "=blue").getImage().getRGB(2, 2));
+			assertEquals(Colors.WHITE.getColor().getRGB(),
+					textures.getPackTexture("banner_base_red/" + pattern + "=blue/" + cross + "=white").getImage().getRGB(2, 2));
 
-			assertEquals(2 + (modern ? DEFINITION_ONLY_ITEMS.size() + 1 : 0), screenshots.get());
+			assertEquals(4 + (modern ? DEFINITION_ONLY_ITEMS.size() + 1 : 1), screenshots.get());
 			// GUI X translation must move right on screen. Modern definitions must use their base,
 			// even when a same-named item model specifies a different pose.
 			float expected = 0.5f + (modern ? 1 : -1) * (float) Math.sqrt(0.5) / 4;
@@ -179,7 +222,7 @@ class InventoryItemIconsTest {
 			var timestamp = java.nio.file.attribute.FileTime.fromMillis(1_000_000);
 			Files.setLastModifiedTime(unchangedIcon, timestamp);
 			OutputResourcesUtil.outputInventoryItemIcons(directory.toFile(), rasteriser, textures, blocks,
-					models, new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
+					models, itemRegistry, definitions, "", assets);
 			assertEquals(renderedIcons, screenshots.get(), "Cached entity icons must not render again");
 			assertEquals(timestamp, Files.getLastModifiedTime(unchangedIcon));
 
@@ -187,7 +230,7 @@ class InventoryItemIconsTest {
 			if (modern)
 				Files.delete(directory.resolve("Items/alias.png"));
 			OutputResourcesUtil.outputInventoryItemIcons(directory.toFile(), rasteriser, textures, blocks,
-					models, new ItemRegistry(textures), new ItemModelDefinitionRegistry(textures));
+					models, itemRegistry, definitions, "", assets);
 			assertEquals(renderedIcons + 1, screenshots.get(), "Only the missing entity icon should render");
 			assertEquals(timestamp, Files.getLastModifiedTime(unchangedIcon));
 			if (modern)

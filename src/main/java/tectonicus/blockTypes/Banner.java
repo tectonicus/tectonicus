@@ -9,7 +9,7 @@
 
 package tectonicus.blockTypes;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.joml.Vector3f;
@@ -33,7 +33,6 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -119,8 +118,8 @@ public class Banner implements BlockType
 		String xyz = "x" + x + "y" + y + "z" + z;
 		BannerEntity entity = rawChunk.getBanners().get(xyz);
 		if (entity == null) {
-			// There is no entity when rendering item icons. Use default values...
-			entity = new BannerEntity(0, 0, 0, 0, 0, 0, StringUtils.isEmpty(id) ? 0 : null, new ArrayList<>());
+			// Plain item icons have no banner entity.
+			entity = new BannerEntity(0, 0, 0, 0, 0, 0, StringUtils.isEmpty(id) ? 0 : null, List.of());
 		}
 		
 		int data = rawChunk.getBlockData(x, y, z);
@@ -184,7 +183,7 @@ public class Banner implements BlockType
 				} else { //1.8 - 1.14
 					addPattern(base, patternImage, pattern.color.getColor(), g);
 				}
-				identifier.append(pattern);
+				identifier.append('/').append(pattern.pattern).append('=').append(pattern.color.getName());
 			}
 		}
 		
@@ -352,15 +351,10 @@ public class Banner implements BlockType
 		g.drawImage(maskedImage, 0, 0, null);
 	}
 	
-	@RequiredArgsConstructor
+	@Value
 	public static class Pattern {
 		final String pattern;
 		final Colors color;
-		
-		@Override
-		public String toString() {
-			return this.pattern + this.color;
-		}
 	}
 }
 

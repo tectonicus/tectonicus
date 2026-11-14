@@ -375,7 +375,7 @@ public class TileRenderer
 								+ "\n" + FileTileCache.getCustomBlocksString(lastLayer);
 					}
 					outputInventoryItemIcons(imagesDir, rasteriser, world.getTexturePack(), world.getBlockTypeRegistry(), world.getModelRegistry(), items, itemModels,
-							config.useCache() ? iconOptions : null);
+							config.useCache() ? iconOptions : null, viewerAssets);
 					outputWorldResources(world.getTexturePack(), playerIconAssembler, config, exportDir, map.getWorld(), viewerAssets, mapLocalization);
 					viewerAssetsByWorld.remove(map.getWorld());
 				}

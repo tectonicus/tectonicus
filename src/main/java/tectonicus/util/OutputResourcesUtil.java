@@ -13,11 +13,13 @@ import tectonicus.BlockTypeRegistry;
 import tectonicus.BuildInfo;
 import tectonicus.ItemRenderer;
 import tectonicus.MemoryMonitor;
+import tectonicus.Minecraft;
 import tectonicus.PlayerIconAssembler;
 import tectonicus.Portal;
 import tectonicus.TileRenderer;
 import tectonicus.Version;
 import tectonicus.blockTypes.Air;
+import tectonicus.blockTypes.Banner;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.cache.ItemIconCache;
 import tectonicus.cache.swap.HddObjectListReader;
@@ -653,6 +655,9 @@ public class OutputResourcesUtil {
                         viewerAssets.addItem(item.id, customNameTag == null ? null : customNameTag.name,
                                 dyedColorTag != null && dyedColorTag.color != 0,
                                 potionContents == null ? null : potionContents.potion, trimTag, enchantments);
+                        String bannerIcon = viewerAssets.addBannerIcon(item);
+                        if (bannerIcon != null)
+                                result += "bannerIcon: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(bannerIcon) + ", ";
                 }
 
                 result += "},\r\n";
@@ -665,6 +670,13 @@ public class OutputResourcesUtil {
 	}
 
 	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack, BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry, ItemModelDefinitionRegistry itemModelDefinitionRegistry, String renderOptions) {
+		outputInventoryItemIcons(imagesDir, rasteriser, texturePack, blockTypeRegistry, blockRegistry, itemRegistry,
+				itemModelDefinitionRegistry, renderOptions, new WorldViewerAssets());
+	}
+
+	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack,
+			BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry,
+			ItemModelDefinitionRegistry itemModelDefinitionRegistry, String renderOptions, WorldViewerAssets viewerAssets) {
 		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
 			log.info("Skipping icon rendering. Container items are supported for 1.13 and newer.");
 			return;
@@ -677,9 +689,11 @@ public class OutputResourcesUtil {
 			File itemIconDir = new File(imagesDir, "Items");
 			Files.createDirectories(itemIconDir.toPath());
 			ItemIconCache cache = new ItemIconCache(itemIconDir.toPath(), texturePack.getZipStack(),
-					renderOptions == null ? null : rasteriser.getClass().getName() + "\n" + renderOptions);
+					renderOptions == null ? null : rasteriser.getClass().getName() + "\n" + renderOptions
+							+ "\noldColorPalette=" + Minecraft.useOldColorPalette());
 			Set<String> itemNames = new HashSet<>(itemRegistry.getModels().keySet());
 			itemNames.addAll(itemModelDefinitionRegistry.getModelDefinitions().keySet());
+			itemNames.addAll(viewerAssets.bannerIcons().values());
 			Set<String> reusedIcons = cache.prepare(itemNames);
 			Set<String> failedIcons = new HashSet<>();
 			log.info("Reusing {} cached inventory item icons", reusedIcons.size());
@@ -868,6 +882,26 @@ public class OutputResourcesUtil {
 					Path source = itemIconDir.toPath().resolve(alias.getValue() + suffix);
 					if (itemNames.contains(alias.getValue()) && !failedIcons.contains(alias.getValue()) && Files.exists(source))
 						Files.copy(source, itemIconDir.toPath().resolve(alias.getKey() + suffix), StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
+			for (var entry : viewerAssets.bannerIcons().entrySet()) {
+				String icon = entry.getValue();
+				if (reusedIcons.contains(icon))
+					continue;
+				var banner = entry.getKey();
+				if (blockTypeRegistry == null || !(blockTypeRegistry.find(banner.itemId()) instanceof Banner))
+					continue;
+				try {
+					String itemName = banner.itemId().substring("minecraft:".length());
+					ItemModelDefinition definition = itemModelDefinitionRegistry.getModelDefinitions().get(itemName);
+					String baseModel = definition == null ? null : definition.getInventoryModel().getBase();
+					if (baseModel == null)
+						baseModel = "minecraft:item/" + itemName;
+					itemRenderer.renderItem(new File(itemIconDir, icon + ".png"), blockTypeRegistry, blockRegistry,
+							texturePack, banner.itemId(), baseModel, banner.patterns());
+				} catch (Exception e) {
+					log.error("Unable to render patterned banner icon for {}", banner.itemId(), e);
+					failedIcons.add(icon);
 				}
 			}
 			cache.save(itemNames, failedIcons);

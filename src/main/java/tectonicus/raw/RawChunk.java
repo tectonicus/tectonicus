@@ -27,11 +27,9 @@ import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
 import tectonicus.WorldStats;
-import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.ChunkData;
 import tectonicus.util.FileUtils;
-import tectonicus.world.Colors;
 import tectonicus.world.Effect;
 import tectonicus.world.WorldInfo;
 import tools.jackson.core.JacksonException;
@@ -61,8 +59,7 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 
-import static tectonicus.raw.ItemNbtParser.parseComponentsTag;
-import static tectonicus.raw.ItemNbtParser.parseTagTag;
+import static tectonicus.raw.ItemNbtParser.parseItemComponents;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_18;
@@ -380,12 +377,7 @@ public class RawChunk {
 								StringTag armorIdTag = NbtUtil.getChild(armorItemTag, "id", StringTag.class);
 								
 								if (armorIdTag != null) {
-									List<Object> components = parseComponentsTag(NbtUtil.getChild(armorItemTag, "components", CompoundTag.class));
-									if (components == null) {
-										// Maybe the item uses pre 1.20.5 format? Try parsing the "tag" tag
-										components = parseTagTag(NbtUtil.getChild(armorItemTag, "tag", CompoundTag.class));
-									}
-									return new Item(armorIdTag.getValue(), components);
+									return new Item(armorIdTag.getValue(), parseItemComponents(armorItemTag));
 								}
 							}
 							
@@ -729,34 +721,8 @@ public class RawChunk {
 						if (base != null)
 							baseVal = 15 - base.getValue();
 
-						ListTag patternList = NbtUtil.getChild(entity, "Patterns", ListTag.class);
-
-						List<Pattern> patterns = new ArrayList<>();
-
-						int numPatterns = 0;
-						if (patternList != null)
-							numPatterns = patternList.getValue().size();
-						if (numPatterns > 0) {
-							for (int i = 0; i < numPatterns; i++) {
-								CompoundTag p = NbtUtil.getChild(patternList, i, CompoundTag.class);
-								StringTag pattern = NbtUtil.getChild(p, "Pattern", StringTag.class);
-								IntTag colorInt = NbtUtil.getChild(p, "Color", IntTag.class);
-								StringTag colorStr = NbtUtil.getChild(p, "color", StringTag.class); //1.20.5 switched color to String tag
-								Colors color = Colors.WHITE;
-								if (colorStr != null) { //1.20.5+
-									color = Colors.byName(colorStr.getValue());
-								} else if (colorInt != null) {
-									if (baseVal == null) { //1.13 - 1.20.4
-										color = Colors.byId(colorInt.getValue());
-									} else { //1.8 - 1.12
-										color = Colors.byId(15-colorInt.getValue());
-									}
-								}
-								
-								patterns.add(new Pattern(pattern.getValue(), color));
-							}
-						}
-						banners.put(createKey(localX, localY, localZ), new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
+						var patterns = BannerEntity.parsePatterns(NbtUtil.getChild(entity, "Patterns", ListTag.class), base != null);
+						setBanner(new BannerEntity(x, y, z, localX, localY, localZ, baseVal, patterns));
 					} else if (containerKind != null) {
 						BlockProperties blockState = getBlockState(localX, localY, localZ);
 						String facing = null;
@@ -808,13 +774,7 @@ public class RawChunk {
 											itemCount = itemCountByteTag.getValue();
 										}
 										
-										List<Object> components = parseComponentsTag(NbtUtil.getChild(itemTag, "components", CompoundTag.class));
-										if (components == null) {
-											// Maybe the item uses pre 1.20.5 format? Try parsing the "tag" tag
-											components = parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
-										}
-										
-										items.add(new Item(itemIdTag.getValue(), 0, itemCount, itemSlotTag.getValue(), components));
+										items.add(new Item(itemIdTag.getValue(), 0, itemCount, itemSlotTag.getValue(), parseItemComponents(itemTag)));
 									}
 								}
 								
@@ -1668,6 +1628,10 @@ public class RawChunk {
 
 	public Map<String, BannerEntity> getBanners() {
 		return Collections.unmodifiableMap(banners);
+	}
+
+	public void setBanner(BannerEntity banner) {
+		banners.put(createKey(banner.getLocalX(), banner.getLocalY(), banner.getLocalZ()), banner);
 	}
 
 	public List<ItemFrameEntity> getItemFrames() {

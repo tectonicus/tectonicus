@@ -359,8 +359,14 @@ function createItemHtml(item, top, left) {
         description += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
 
         const pngName = getPngName(item, itemId);
+        const itemImage = worldImageUrl('Items/' + pngName + '.png');
+        const bannerIcon = typeof item.bannerIcon === 'string' && /^banner_[0-9a-f]{64}$/.test(item.bannerIcon)
+                ? worldImageUrl('Items/' + item.bannerIcon + '.png') : null;
         let html = '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
-        html += '<img src="' + worldImageUrl('Items/' + pngName + '.png') + '" onload="checkImageSize(this)" />';
+        html += '<img src="' + (bannerIcon || itemImage) + '" onload="checkImageSize(this)"';
+        if (bannerIcon)
+                html += ' data-fallback="' + itemImage + '" onerror="this.onerror = null; this.src = this.dataset.fallback"';
+        html += ' />';
         html += getColorLayer(item, itemId);
         html += getOverlay(item, itemId, pngName);
         html += getEnchantmentGlint(item, itemId, pngName);
