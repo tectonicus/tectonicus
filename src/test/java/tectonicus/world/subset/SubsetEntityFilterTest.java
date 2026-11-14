@@ -78,6 +78,18 @@ class SubsetEntityFilterTest {
 		assertEquals(List.of(-1), chunk.getItemFrames().stream().map(BlockEntity::getX).toList());
 	}
 
+	@Test
+	void removesHangingEntitiesAnchoredInAnExclusionAcrossAChunkBoundary() throws IOException {
+		var exclusion = new RectangularWorldSubset(new Vector3l(-2, 64, Z), 1, 1);
+		var subset = new UnionWorldSubset(List.of(), List.of(exclusion));
+		RawChunk chunk = load(subset, new ChunkCoord(0, 0),
+				hanging("painting", -1), hanging("painting", -2),
+				hanging("item_frame", -1), hanging("item_frame", -2));
+
+		assertEquals(List.of(-1), chunk.getPaintings().stream().map(BlockEntity::getX).toList());
+		assertEquals(List.of(-1), chunk.getItemFrames().stream().map(BlockEntity::getX).toList());
+	}
+
 	private static RawChunk load(WorldSubset subset, ChunkCoord coord, CompoundTag... entities) throws IOException {
 		ChunkData blocks = data(Map.of("sections", new ListTag("sections", CompoundTag.class, List.of()),
 				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of()),

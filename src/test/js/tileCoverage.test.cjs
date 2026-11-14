@@ -21,7 +21,7 @@ async function createLayer(tileIndex) {
         });
         return Tectonicus;
     };
-    const map = {setView() { return this; }};
+    const map = {getMinZoom() { return 0; }, setMaxZoom() {}, setView() { return this; }};
     const context = {
         L: {map: () => map, layerGroup, CRS: {Simple: {}}, TileLayer,
             setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },

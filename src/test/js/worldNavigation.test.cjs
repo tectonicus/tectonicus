@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const layerGroup = require('./leafletLayerGroup.cjs');
 const mapEnglish = require('../../main/resources/map_en_us.json');
 
-async function createViewer(contents, fragment = '', {matchMedia, ...options} = {}) {
+async function createViewer(contents, fragment = '', {matchMedia, useRealProjection = false, ...options} = {}) {
     let currentFragment = fragment;
     const handlers = {};
     const controls = new Set();
@@ -29,6 +29,7 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
         fireEvent(name, event) { handlers[name]?.(event); },
         getCenter() { return this.center; },
         getZoom() { return this.zoom; },
+        getMinZoom() { return 0; },
         getContainer() { return mapElement; },
         setView(point, zoom) {
             this.center = {lat: point.lat ?? point[0], lng: point.lng ?? point[1]};
@@ -43,6 +44,7 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
                 handlers.zoomend?.();
             }
         },
+        fitBounds(bounds, options) { this.lastFit = {bounds, options}; },
         removeLayer(layer) { this.layers.delete(layer); },
         addControl(control) { control.addTo(this); }
     };
@@ -51,6 +53,7 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
         contents, maxZoom: 8, showSpawn: false, useToggleMenu: true, ...options,
         window: Object.assign(new EventTarget(), {matchMedia, history: {replaceState(state, title, url) { this.url = url; }}}),
         document: {querySelector: selector => selector === '#map' ? mapElement : null},
+        Option: function(text, value) { Object.assign(this, {text, value: String(value)}); },
         MutationObserver: class { observe() {} },
         tippy() {}, stats: {peakMemoryBytes: 0},
         getQueryParams: () => ({}),
@@ -101,11 +104,20 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
     };
     context.L = {
         map: () => map, layerGroup, CRS: {Simple: {}}, TileLayer, Control,
+        Point: function(x, y) { Object.assign(this, {x, y}); },
+        latLngBounds: points => points,
         icon: options => options,
         marker: (point, options) => ({point, options, bindTooltip() { return this; }}),
         setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },
         DomUtil: {toFront() {}, create(tag, className, parent) {
             const node = Object.assign(element(), {tag, className});
+            if (tag === 'select') {
+                node.replaceChildren = (...children) => {
+                    node.children = children;
+                    node.value = children[0]?.value ?? '';
+                };
+                node.add = option => node.children.push(option);
+            }
             parent?.appendChild(node);
             return node;
         }},
@@ -125,6 +137,9 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
     vm.runInContext(markerSource, context);
     context.getQueryParams = readQuery;
     context.getFragmentParams = readFragment;
+    if (useRealProjection) {
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '../../main/resources/minecraftProjection.js'), 'utf8'), context);
+    }
     for (const file of ['controls.js', 'containers.js', 'main.js']) {
         vm.runInContext(fs.readFileSync(path.join(__dirname, '../../main/resources', file), 'utf8'), context);
     }
@@ -416,6 +431,35 @@ test('one-world outputs omit the world selector and disambiguate duplicate names
     assert.equal(viewer.evaluate('worldControl'), null);
     assert.deepEqual(viewer.layerLabels(), ['Surface - Day', 'Surface - Day (2)', 'Surface - Day (3)']);
     assert.deepEqual(contents[0].layers.map(layer => layer.name), ['Day', 'Day', 'Day']);
+});
+
+test('Go to projects the full elevation range and supports earlier subset exports', async () => {
+    const worldVectors = {
+        origin: {x: 0, y: 0}, xAxis: {x: 1, y: 2}, yAxis: {x: 0, y: -4}, zAxis: {x: -1, y: 2},
+        startView: {x: 0, y: 64, z: 0}, yOffset: 64,
+        subsets: [
+            {name: 'Summit', minX: 10, minZ: 20, maxX: 11, maxZ: 21, minY: 180, maxY: 190},
+            {name: 'Cave', minX: 10, minZ: 20, maxX: 11, maxZ: 21, minY: -52, maxY: -44},
+            {minX: 10, minZ: 20, maxX: 11, maxZ: 21}
+        ]
+    };
+    const viewer = await createViewer([dimension('a', 'Survival', ['Day', 'Night'], {worldVectors})],
+        '', {useRealProjection: true});
+    const control = viewer.evaluate('subsetControl');
+    assert.equal(control.getContainer().hidden, false);
+    assert.deepEqual(control.select.children.map(option => option.text), ['Go to', 'Summit', 'Cave', 'Area 3']);
+
+    for (const [index, minLat, maxLat] of [[0, 454, 478], [1, -10, 10], [2, 222, 226]]) {
+        control.select.value = String(index);
+        control.select.onchange();
+        const lats = viewer.map.lastFit.bounds.map(point => point[0]);
+        assert.equal(Math.min(...lats), minLat);
+        assert.equal(Math.max(...lats), maxLat);
+        const lngs = viewer.map.lastFit.bounds.map(point => point[1]);
+        assert.equal(Math.min(...lngs), -6);
+        assert.equal(Math.max(...lngs), -4);
+        assert.equal(control.select.value, '');
+    }
 });
 
 test('old container data and visibility names are normalized while new names take precedence', async () => {

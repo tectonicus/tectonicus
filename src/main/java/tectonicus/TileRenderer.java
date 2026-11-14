@@ -53,6 +53,7 @@ import tectonicus.world.filter.ExploredCaveFilter113;
 import tectonicus.world.filter.NetherBlockFilter;
 import tectonicus.world.filter.NetherBlockFilter113;
 import tectonicus.world.subset.RegionIterator;
+import tectonicus.world.subset.UnionWorldSubset;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -148,6 +149,7 @@ public class TileRenderer
 	private boolean abort;
 	private HddTileList discoveredTiles;
 	private boolean useFullHeightBounds;
+	private final Map<UnionWorldSubset.Member, WorldVectors.HeightBounds> subsetHeights = new HashMap<>();
 	
 	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
 	{
@@ -269,6 +271,7 @@ public class TileRenderer
 				File viewsFile = tempArea.generateTempFile("views", ".list");
 
 				discoveredTiles = hddTileListFactory.createList();
+				subsetHeights.clear();
 				useFullHeightBounds = map.getLayers().stream().anyMatch(layer ->
 						(layer.getCustomBlockConfig() != null && !layer.getCustomBlockConfig().isBlank()) || !layer.useDefaultBlockConfig());
 				WorldStats worldStats = preProcess(world, map, portalsFile, signsFile, viewsFile);
@@ -383,7 +386,7 @@ public class TileRenderer
 			
 				// Output world vectors for this camera config
 				worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
-						worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight);
+						worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight, subsetHeights);
 			}
 		}
 
@@ -712,6 +715,9 @@ public class TileRenderer
 					for (int x = tileBounds.min.x; x <= tileBounds.max.x; x++)
 						for (int y = tileBounds.min.y; y <= tileBounds.max.y; y++)
 							discoveredTiles.add(new TileCoord(x, y));
+					if (map.getWorldSubset() instanceof UnionWorldSubset union && union.getMembers().size() > 1) {
+						collectSubsetHeights(union, c);
+					}
 				}
 			}
 			
@@ -725,6 +731,22 @@ public class TileRenderer
 				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, containers, beds);
 			} catch (CloneNotSupportedException e) {
 				log.error("Exception: ", e);
+			}
+		}
+	}
+
+	private void collectSubsetHeights(UnionWorldSubset union, Chunk chunk) {
+		ChunkCoord coord = chunk.getCoord();
+		for (UnionWorldSubset.Member member : union.getMembers()) {
+			if (!member.shape().contains(coord)) {
+				continue;
+			}
+			var filter = union.getBlockFilter(member, coord);
+			int[] height = chunk.getRawChunk().getRenderHeightBounds(filter::containsColumn);
+			if (height != null) {
+				var bounds = useFullHeightBounds ? new WorldVectors.HeightBounds(0, Minecraft.getChunkHeight())
+						: new WorldVectors.HeightBounds(height[0], height[1]);
+				subsetHeights.merge(member, bounds, WorldVectors.HeightBounds::union);
 			}
 		}
 	}

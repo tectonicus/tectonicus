@@ -14,6 +14,7 @@ import tectonicus.Minecraft;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.RawChunk;
 
+import java.util.Arrays;
 import java.util.function.Function;
 
 public class ArrayBlockFilter implements BlockFilter
@@ -41,6 +42,20 @@ public class ArrayBlockFilter implements BlockFilter
 			}
 		}
 	}
+
+	public void includeAll() {
+		for (boolean[] row : columns) {
+			Arrays.fill(row, true);
+		}
+	}
+
+	public void exclude(ArrayBlockFilter other) {
+		for (int x = 0; x < columns.length; x++) {
+			for (int z = 0; z < columns[x].length; z++) {
+				columns[x][z] &= !other.columns[x][z];
+			}
+		}
+	}
 	
 	@Override
 	public void filter(RawChunk rawChunk)
@@ -63,7 +78,7 @@ public class ArrayBlockFilter implements BlockFilter
 		rawChunk.filterEntities(this::containsColumn);
 	}
 
-	private boolean containsColumn(int x, int z) {
+	public boolean containsColumn(int x, int z) {
 		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
 			return columns[x][z];
 

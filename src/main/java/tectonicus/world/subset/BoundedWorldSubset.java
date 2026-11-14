@@ -16,6 +16,10 @@ public interface BoundedWorldSubset extends WorldSubset {
 
 	Bounds getBounds();
 
+	default boolean containsColumn(long x, long z) {
+		return containsBlock(x, z);
+	}
+
 	@Override
 	ArrayBlockFilter getBlockFilter(ChunkCoord coord);
 }

@@ -48,7 +48,13 @@ public class CircularWorldSubset implements BoundedWorldSubset
 
 	@Override
 	public boolean containsBlock(double x, double z) {
-		return Math.pow((x - origin.x), 2) + Math.pow((z - origin.z), 2) < Math.pow(radius,2);
+		return Double.isFinite(x) && Double.isFinite(z)
+				&& containsColumn((long) Math.floor(x), (long) Math.floor(z));
+	}
+
+	@Override
+	public boolean containsColumn(long x, long z) {
+		return distance(x, z, origin) <= radius;
 	}
 	
 	@Override
@@ -65,9 +71,7 @@ public class CircularWorldSubset implements BoundedWorldSubset
 		{
 			for (int z=0; z<RawChunk.DEPTH; z++)
 			{
-				final long dist = distance(coord, x, z, origin);
-				final boolean allow = dist <= radius;
-				filter.set(x, z, allow);
+				filter.set(x, z, containsColumn(coord.x * RawChunk.WIDTH + x, coord.z * RawChunk.DEPTH + z));
 			}
 		}
 		
@@ -83,7 +87,10 @@ public class CircularWorldSubset implements BoundedWorldSubset
 	{
 		final long x = coord.x * RawChunk.WIDTH + offsetX;
 		final long z = coord.z * RawChunk.DEPTH + offsetZ;
-		
+		return distance(x, z, origin);
+	}
+
+	private static long distance(long x, long z, Vector3l origin) {
 		final long dx = x - origin.x;
 		final long dz = z - origin.z;
 		

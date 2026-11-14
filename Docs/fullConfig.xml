@@ -87,10 +87,13 @@
 		
 		<subset>
 			<!-- Radius, width and depth are in blocks. Omit origin to use the dimension's default center. -->
-			<!-- Use one shape here, or set mode="union" to render every shape in this block. -->
+			<!-- Add more shapes here to render them together in this dimension. -->
 			<!-- The optional name labels the area in the viewer's Go to menu. -->
 			<CircularSubset name="Spawn" radius="200" origin="0, 0" />
 			<!-- <RectangularSubset name="Far Outpost" width="400" depth="400" origin="250000, -180000" /> -->
+			<!-- Set exclude="true" on a subset to remove its blocks and markers from the included areas. -->
+			<!-- Exclusions apply regardless of order. With only exclusions, the rest of the dimension is rendered. -->
+			<!-- <RectangularSubset exclude="true" width="40" depth="30" origin="60, -20" /> -->
 		</subset>
 
 		<!-- Markers to display on this layer -->

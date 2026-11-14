@@ -9,6 +9,7 @@ import ch.qos.logback.classic.Level;
 import tectonicus.util.DirUtils;
 import tectonicus.util.OutputResourcesUtil;
 import tectonicus.world.subset.CircularWorldSubset;
+import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
 
 import java.nio.file.Files;
@@ -22,7 +23,7 @@ class ConfigurationHierarchyTest {
 	void inheritsAndReplacesSubsetUnionsAsWholeBlocks() throws Exception {
 		Configuration config = parse("""
 				<config>
-				    <subset mode="union">
+				    <subset>
 				        <RectangularSubset name="Far Outpost" origin="250000, -180000" width="800" depth="600"/>
 				        <CircularSubset radius="500"/>
 				    </subset>
@@ -30,7 +31,7 @@ class ConfigurationHierarchyTest {
 				<world worldDir="save">
 				    <dimension><layer/></dimension>
 				    <dimension>
-				        <subset><RectangularSubset width="8" depth="8"/><CircularSubset radius="5"/></subset>
+				        <subset><CircularSubset radius="5"/></subset>
 				        <layer/>
 				    </dimension>
 				</world>
@@ -50,7 +51,7 @@ class ConfigurationHierarchyTest {
 	void identifiesInvalidUnionEntries(String invalid) {
 		var error = assertThrows(IllegalArgumentException.class, () -> parse("""
 				<map worldDir="save">
-				    <subset mode="union"><CircularSubset radius="5"/>%s</subset>
+				    <subset><CircularSubset radius="5"/>%s</subset>
 				    <layer/>
 				</map>
 				""".formatted(invalid)));
@@ -58,10 +59,42 @@ class ConfigurationHierarchyTest {
 	}
 
 	@Test
-	void rejectsEmptySubsetUnion() {
-		assertThrows(IllegalArgumentException.class, () -> parse("""
-				<map worldDir="save"><subset mode="union"/><layer/></map>
-				"""));
+	void emptySubsetRendersTheFullDimension() throws Exception {
+		Configuration config = parse("""
+				<map worldDir="save"><subset/><layer/></map>
+				""");
+		assertInstanceOf(FullWorldSubset.class, config.getDimensionConfig(0).getWorldSubset());
+	}
+
+	@Test
+	void parsesExclusionsBeforeIncludesAndInAnExclusionOnlyBlock() throws Exception {
+		Configuration config = parse("""
+				<world worldDir="save">
+				    <dimension>
+				        <subset>
+				            <CircularSubset origin="10, 0" radius="2" exclude="true"/>
+				            <RectangularSubset name="Base" origin="0, 0" width="40" depth="40"/>
+				        </subset>
+				        <layer/>
+				    </dimension>
+				    <dimension>
+				        <subset><RectangularSubset origin="0, 0" width="4" depth="4" exclude="true"/></subset>
+				        <layer/>
+				    </dimension>
+				</world>
+				""");
+		var mixed = assertInstanceOf(UnionWorldSubset.class, config.getDimensionConfig(0).getWorldSubset());
+		assertEquals(1, mixed.getMembers().size());
+		assertEquals("Base", mixed.getMembers().getFirst().name());
+		assertFalse(mixed.containsBlock(10, 0));
+		assertTrue(mixed.containsBlock(0, 0));
+		assertFalse(mixed.containsBlock(50, 50));
+
+		var exclusionOnly = assertInstanceOf(UnionWorldSubset.class, config.getDimensionConfig(1).getWorldSubset());
+		assertTrue(exclusionOnly.getMembers().isEmpty());
+		assertNull(exclusionOnly.getOrigin());
+		assertFalse(exclusionOnly.containsBlock(0, 0));
+		assertTrue(exclusionOnly.containsBlock(50, 50));
 	}
 
 	@org.junit.jupiter.api.Test

@@ -642,12 +642,9 @@ public class XmlConfigurationParser
 
 	private static WorldSubset parseWorldSubset(Element subsetNode) {
 		if (subsetNode != null) {
-			String mode = subsetNode.getAttribute("mode").strip();
-			if (mode.equals("union")) {
-				return parseSubsetUnion(subsetNode);
-			}
-			if (!mode.isEmpty()) {
-				throw new IllegalArgumentException("Unknown subset mode: " + mode);
+			Element[] shapes = getChildren(subsetNode, null);
+			if (shapes.length > 1 || (shapes.length == 1 && shapes[0].hasAttribute("exclude"))) {
+				return parseSubsetUnion(shapes);
 			}
 
 			Element circularNode = getChild(subsetNode, "CircularSubset");
@@ -695,9 +692,11 @@ public class XmlConfigurationParser
 		return new FullWorldSubset();
 	}
 
-	private static UnionWorldSubset parseSubsetUnion(Element subsetNode) {
+	private static WorldSubset parseSubsetUnion(Element[] shapes) {
 		List<UnionWorldSubset.Member> members = new ArrayList<>();
-		for (Element child : getChildren(subsetNode, null)) {
+		List<BoundedWorldSubset> exclusions = new ArrayList<>();
+		for (int i = 0; i < shapes.length; i++) {
+			Element child = shapes[i];
 			String name = child.getAttribute("name").strip();
 			try {
 				Vector3l origin = null;
@@ -714,14 +713,21 @@ public class XmlConfigurationParser
 							parseSubsetSize(child, "depth"));
 					default -> throw new IllegalArgumentException("expected CircularSubset or RectangularSubset");
 				};
-				members.add(new UnionWorldSubset.Member(name, shape));
+				switch (child.getAttribute("exclude").strip()) {
+					case "true" -> exclusions.add(shape);
+					case "", "false" -> members.add(new UnionWorldSubset.Member(name, shape));
+					default -> throw new IllegalArgumentException("exclude must be true or false");
+				}
 			} catch (IllegalArgumentException e) {
 				String label = name.isEmpty() ? "" : " (" + name + ")";
-				throw new IllegalArgumentException("Subset union entry " + (members.size() + 1) + label
+				throw new IllegalArgumentException("Subset union entry " + (i + 1) + label
 						+ ", <" + child.getTagName() + ">: " + e.getMessage(), e);
 			}
 		}
-		return new UnionWorldSubset(members);
+		if (members.size() == 1 && exclusions.isEmpty()) {
+			return members.getFirst().shape();
+		}
+		return new UnionWorldSubset(members, exclusions);
 	}
 
 	private static long parseSubsetSize(Element shape, String attribute) {

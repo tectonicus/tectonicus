@@ -35,10 +35,11 @@ function createViewer(yOffset = 64) {
         zoomControl: {getContainer: () => zoomContainer},
         getCenter() { return this.center; },
         getZoom() { return this.zoom; },
+        getMinZoom() { return 0; },
         getContainer() { return {querySelectorAll: () => []}; },
         addControl() {},
         setView(point, zoom) {
-            this.center = {lat: point[0], lng: point[1]};
+            this.center = {lat: point.lat ?? point[0], lng: point.lng ?? point[1]};
             this.zoom = zoom;
             context.onProjectionChanged();
         },
@@ -53,7 +54,7 @@ function createViewer(yOffset = 64) {
             CRS: {Simple: {}},
             Point: function(x, y) { this.x = x; this.y = y; },
             Control: {extend: definition => function() { Object.assign(this, definition); }},
-            DomUtil: {create(tag, className, parent) {
+            DomUtil: {toFront() {}, create(tag, className, parent) {
                 const element = {style: {}, tag, className, children: [], parentNode: parent,
                     setAttribute(name, value) { this[name] = value; }};
                 if (parent) parent.children.push(element);
@@ -87,8 +88,14 @@ function createViewer(yOffset = 64) {
         viewPosition: {}
     };
     context.layer = layer;
+    context.testSubsetControl = {setSubsets() {}, getContainer() { return {}; }};
     map.layers.add(layer);
-    vm.runInContext('tileLayers.set(layer.layerId, layer); urlLayers.set(layer.urlId, layer); activeBaseLayer = layer;', context);
+    vm.runInContext(`
+        tileLayers.set(layer.layerId, layer);
+        urlLayers.set(layer.urlId, layer);
+        activeBaseLayer = layer;
+        subsetControl = testSubsetControl;
+    `, context);
     return {context, map, layer, vectors, entries, history, state, window};
 }
 

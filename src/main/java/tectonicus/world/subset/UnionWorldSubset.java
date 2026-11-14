@@ -23,12 +23,18 @@ public class UnionWorldSubset implements WorldSubset {
 	public record Member(String name, BoundedWorldSubset shape) {}
 
 	private final List<Member> members;
+	private final List<BoundedWorldSubset> exclusions;
 
 	public UnionWorldSubset(List<Member> members) {
-		if (members.isEmpty()) {
-			throw new IllegalArgumentException("A subset union requires at least one shape");
+		this(members, List.of());
+	}
+
+	public UnionWorldSubset(List<Member> members, List<BoundedWorldSubset> exclusions) {
+		if (members.isEmpty() && exclusions.isEmpty()) {
+			throw new IllegalArgumentException("A combined subset requires at least one shape");
 		}
 		this.members = List.copyOf(members);
+		this.exclusions = List.copyOf(exclusions);
 	}
 
 	public List<Member> getMembers() {
@@ -37,6 +43,9 @@ public class UnionWorldSubset implements WorldSubset {
 
 	@Override
 	public RegionIterator createRegionIterator(SaveFormat format, File dimensionDir) {
+		if (members.isEmpty()) {
+			return new AllRegionsIterator(dimensionDir, format);
+		}
 		return new RegionIterator() {
 			private final Iterator<Member> remaining = members.iterator();
 			private final Set<File> visited = new HashSet<>();
@@ -79,6 +88,10 @@ public class UnionWorldSubset implements WorldSubset {
 
 	@Override
 	public boolean contains(ChunkCoord coord) {
+		// Keep candidate chunks for hashing, neighboring geometry and entities anchored across chunk boundaries.
+		if (members.isEmpty()) {
+			return true;
+		}
 		for (Member member : members) {
 			if (member.shape().contains(coord)) {
 				return true;
@@ -89,28 +102,57 @@ public class UnionWorldSubset implements WorldSubset {
 
 	@Override
 	public boolean containsBlock(double x, double z) {
-		return members.stream().anyMatch(member -> member.shape().containsBlock(x, z));
+		if (!Double.isFinite(x) || !Double.isFinite(z)) {
+			return false;
+		}
+		long columnX = (long) Math.floor(x);
+		long columnZ = (long) Math.floor(z);
+		return (members.isEmpty() || members.stream().anyMatch(member -> member.shape().containsBlock(x, z)))
+				&& exclusions.stream().noneMatch(shape -> shape.containsColumn(columnX, columnZ));
 	}
 
 	@Override
 	public ArrayBlockFilter getBlockFilter(ChunkCoord coord) {
 		ArrayBlockFilter filter = new ArrayBlockFilter(coord, this::getBlockFilter);
+		if (members.isEmpty()) {
+			filter.includeAll();
+		}
 		for (Member member : members) {
 			if (member.shape().contains(coord)) {
 				filter.include(member.shape().getBlockFilter(coord));
 			}
 		}
+		applyExclusions(coord, filter);
 		return filter;
+	}
+
+	public ArrayBlockFilter getBlockFilter(Member member, ChunkCoord coord) {
+		// Cross-chunk anchors need this member's mask with the same exclusions.
+		ArrayBlockFilter filter = new ArrayBlockFilter(coord, anchor -> getBlockFilter(member, anchor));
+		if (member.shape().contains(coord)) {
+			filter.include(member.shape().getBlockFilter(coord));
+		}
+		applyExclusions(coord, filter);
+		return filter;
+	}
+
+	private void applyExclusions(ChunkCoord coord, ArrayBlockFilter filter) {
+		for (BoundedWorldSubset shape : exclusions) {
+			if (shape.contains(coord)) {
+				filter.exclude(shape.getBlockFilter(coord));
+			}
+		}
 	}
 
 	@Override
 	public Vector3l getOrigin() {
-		return members.getFirst().shape().getOrigin();
+		return members.isEmpty() ? null : members.getFirst().shape().getOrigin();
 	}
 
 	@Override
 	public boolean needsOrigin() {
-		return members.stream().anyMatch(member -> member.shape().needsOrigin());
+		return members.stream().anyMatch(member -> member.shape().needsOrigin())
+				|| exclusions.stream().anyMatch(WorldSubset::needsOrigin);
 	}
 
 	@Override
@@ -120,11 +162,18 @@ public class UnionWorldSubset implements WorldSubset {
 				member.shape().setOrigin(origin);
 			}
 		}
+		for (BoundedWorldSubset shape : exclusions) {
+			if (shape.needsOrigin()) {
+				shape.setOrigin(origin);
+			}
+		}
 	}
 
 	@Override
 	public String toString() {
 		// The tile and view caches depend on geometry. Presentation order and labels do not affect it.
-		return "UnionWorldSubset" + members.stream().map(member -> member.shape().toString()).distinct().sorted().toList();
+		String included = "UnionWorldSubset" + members.stream().map(member -> member.shape().toString()).distinct().sorted().toList();
+		return exclusions.isEmpty() ? included : included + " excluding "
+				+ exclusions.stream().map(Object::toString).distinct().sorted().toList();
 	}
 }

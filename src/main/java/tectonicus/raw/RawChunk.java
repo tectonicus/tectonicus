@@ -58,6 +58,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import static tectonicus.raw.ItemNbtParser.parseComponentsTag;
 import static tectonicus.raw.ItemNbtParser.parseTagTag;
@@ -1351,9 +1352,12 @@ public class RawChunk {
 
 	/** Internal render coordinates, including padding for models and particle columns. */
 	public int[] getRenderHeightBounds() {
+		return getRenderHeightBounds(null);
+	}
+
+	public int[] getRenderHeightBounds(BiPredicate<Integer, Integer> containsColumn) {
 		// These renderers can place geometry independently of the occupied block sections.
-		if (!beacons.isEmpty() || !paintings.isEmpty() || !itemFrames.isEmpty()
-				|| !armorStands.isEmpty() || !cushions.isEmpty())
+		if (hasRenderedEntities(containsColumn))
 			return new int[] {0, Minecraft.getChunkHeight()};
 		int min = Minecraft.getChunkHeight();
 		int max = 0;
@@ -1365,7 +1369,8 @@ public class RawChunk {
 				String name = section.blockNames[i];
 				boolean occupied = name == null ? section.blockIds[i] != BlockIds.AIR
 						: !name.equals("minecraft:air") && !name.equals("minecraft:cave_air") && !name.equals("minecraft:void_air");
-				if (occupied) {
+				if (occupied && (containsColumn == null || containsColumn.test(
+						i / (SECTION_HEIGHT * SECTION_DEPTH), i % SECTION_DEPTH))) {
 					min = Math.min(min, sectionY * SECTION_HEIGHT);
 					max = (sectionY + 1) * SECTION_HEIGHT;
 					break;
@@ -1376,6 +1381,18 @@ public class RawChunk {
 			return null;
 		// Signal campfire smoke rises 24 blocks. Two sections also cover model overhangs.
 		return new int[] {Math.max(0, min - 32), Math.min(Minecraft.getChunkHeight(), max + 32)};
+	}
+
+	private boolean hasRenderedEntities(BiPredicate<Integer, Integer> containsColumn) {
+		if (containsColumn == null) {
+			return !beacons.isEmpty() || !paintings.isEmpty() || !itemFrames.isEmpty()
+					|| !armorStands.isEmpty() || !cushions.isEmpty();
+		}
+		Predicate<BlockEntity> visible = entity -> containsColumn.test(entity.getLocalX(), entity.getLocalZ());
+		return beacons.values().stream().anyMatch(visible) || paintings.stream().anyMatch(visible)
+				|| itemFrames.stream().anyMatch(visible) || armorStands.stream().anyMatch(visible)
+				|| cushions.stream().anyMatch(entity -> containsColumn.test(
+						(int) Math.floor(entity.localX()), (int) Math.floor(entity.localZ())));
 	}
 
 	static int toWorldY(final int y, final int minSectionY) {

@@ -26,20 +26,25 @@ import tectonicus.util.FileUtils;
 import tectonicus.util.JsonWriter;
 import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3l;
-import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
-import tectonicus.world.subset.WorldSubset;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Builder
 @Getter
 public class WorldVectors {
+	public record HeightBounds(int minY, int maxY) {
+		public HeightBounds union(HeightBounds other) {
+			return new HeightBounds(Math.min(minY, other.minY), Math.max(maxY, other.maxY));
+		}
+	}
+
 	private Vector2f origin;
 	private Vector2f xAxis;
 	private Vector2f yAxis;
@@ -79,7 +84,8 @@ public class WorldVectors {
 	}
 
 	public void outputWorldVectors(File vectorsFile, tectonicus.configuration.DimensionConfig map, TileRenderer.TileCoordBounds bounds, World world,
-								   final int numChunks, List<Portal> portals, int numZoomLevels, int tileWidth, int tileHeight) {
+								   final int numChunks, List<Portal> portals, int numZoomLevels, int tileWidth, int tileHeight,
+								   Map<UnionWorldSubset.Member, HeightBounds> subsetHeights) {
 		String varNamePrefix = map.getJavascriptId();
 		LevelDat levelDat = world.getLevelDat();
 		List<Player> players = world.getAllPlayers();
@@ -118,7 +124,7 @@ public class WorldVectors {
 			}
 			
 			json.writeWorldCoord("startView", getStartView(map, world, portals));
-			if (map.getWorldSubset() instanceof UnionWorldSubset union) {
+			if (map.getWorldSubset() instanceof UnionWorldSubset union && !union.getMembers().isEmpty()) {
 				json.startArray("subsets");
 				for (UnionWorldSubset.Member member : union.getMembers()) {
 					var subsetBounds = member.shape().getBounds();
@@ -128,6 +134,12 @@ public class WorldVectors {
 					json.writeVariable("minZ", subsetBounds.minZ());
 					json.writeVariable("maxX", subsetBounds.maxX());
 					json.writeVariable("maxZ", subsetBounds.maxZ());
+					HeightBounds height = subsetHeights.get(member);
+					if (height != null) {
+						// Convert internal render heights to the world Y expected by the viewer.
+						json.writeVariable("minY", height.minY() - yOffset);
+						json.writeVariable("maxY", height.maxY() - yOffset);
+					}
 					json.endArrayObject();
 				}
 				json.endArray();
@@ -181,9 +193,9 @@ public class WorldVectors {
 		LevelDat levelDat = world.getLevelDat();
 
 		Vector3l startView;
-		if (!(map.getWorldSubset() instanceof FullWorldSubset)) {
-			WorldSubset subset = map.getWorldSubset();
-			startView = new Vector3l(subset.getOrigin().x, 64, subset.getOrigin().z);
+		Vector3l subsetOrigin = map.getWorldSubset().getOrigin();
+		if (subsetOrigin != null) {
+			startView = new Vector3l(subsetOrigin.x, 64, subsetOrigin.z);
 		} else if (map.getOrigin() != null) {
 			startView = map.getOrigin();
 		} else { //Full world render without a specified map origin

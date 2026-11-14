@@ -557,15 +557,16 @@ function worldImageUrl(filename, layer = activeBaseLayer) {
 }
 
 function showSubset(layer, subset) {
-    // Project all corners for rotated isometric cameras. Use the same Y as share links.
     const {minX, minZ, maxX, maxZ} = subset;
-    const y = layer.worldVectors.startView.y;
-    const bounds = L.latLngBounds([
+    const {minY = layer.worldVectors.startView.y, maxY = minY} = subset;
+    // Project both elevations at each corner for rotated isometric cameras.
+    const points = [minY, maxY].flatMap(y => [
         {x: minX, y, z: minZ},
-        {x: minX, y, z: maxZ},
-        {x: maxX, y, z: minZ},
-        {x: maxX, y, z: maxZ}
-    ].map(point => layer.projection.worldToMap(point)));
+        {x: minX, y, z: maxZ + 1},
+        {x: maxX + 1, y, z: minZ},
+        {x: maxX + 1, y, z: maxZ + 1}
+    ]);
+    const bounds = L.latLngBounds(points.map(point => layer.projection.worldToMap(point)));
     mymap.fitBounds(bounds, {animate: false, padding: [24, 24]});
 }
 
