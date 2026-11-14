@@ -11,18 +11,21 @@ package tectonicus.world.filter;
 
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
-import tectonicus.raw.PaintingEntity;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.RawChunk;
 
-import java.util.List;
+import java.util.function.Function;
 
 public class ArrayBlockFilter implements BlockFilter
 {
 
 	private final boolean[][] columns;
+	private final ChunkCoord coord;
+	private final Function<ChunkCoord, ArrayBlockFilter> filterForChunk;
 	
-	public ArrayBlockFilter()
-	{
+	public ArrayBlockFilter(ChunkCoord coord, Function<ChunkCoord, ArrayBlockFilter> filterForChunk) {
+		this.coord = coord;
+		this.filterForChunk = filterForChunk;
 		columns = new boolean[RawChunk.WIDTH][RawChunk.DEPTH];
 	}
 	
@@ -57,10 +60,17 @@ public class ArrayBlockFilter implements BlockFilter
 			}
 		}
 
-		List<PaintingEntity> paintings = rawChunk.getPaintings();
-		paintings.removeIf(p -> !columns[p.getLocalX()][p.getLocalZ()]);
-		rawChunk.getItemFrames().removeIf(i -> !columns[Math.clamp(i.getLocalX(), 0, RawChunk.WIDTH - 1)]
-				[Math.clamp(i.getLocalZ(), 0, RawChunk.DEPTH - 1)]);
+		rawChunk.filterEntities(this::containsColumn);
+	}
+
+	private boolean containsColumn(int x, int z) {
+		if (x >= 0 && x < RawChunk.WIDTH && z >= 0 && z < RawChunk.DEPTH)
+			return columns[x][z];
+
+		// Hanging entities can be stored in a different chunk from their anchor block.
+		ChunkCoord anchorChunk = new ChunkCoord(coord.x + Math.floorDiv(x, RawChunk.WIDTH),
+				coord.z + Math.floorDiv(z, RawChunk.DEPTH));
+		return filterForChunk.apply(anchorChunk).columns[Math.floorMod(x, RawChunk.WIDTH)][Math.floorMod(z, RawChunk.DEPTH)];
 	}
 	
 	@Override

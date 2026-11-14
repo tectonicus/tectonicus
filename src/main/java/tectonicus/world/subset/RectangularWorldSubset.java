@@ -86,7 +86,7 @@ public class RectangularWorldSubset implements BoundedWorldSubset
 	@Override
 	public ArrayBlockFilter getBlockFilter(ChunkCoord coord)
 	{
-		ArrayBlockFilter filter = new ArrayBlockFilter();
+		ArrayBlockFilter filter = new ArrayBlockFilter(coord, this::getBlockFilter);
 		
 		// Calculate world coordinates for each block in the chunk
 		for (int x = 0; x < RawChunk.WIDTH; x++)

@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -513,9 +514,9 @@ public class RawChunk {
 			return;
 		
 		int yOffset = Math.abs(minSectionY) * SECTION_HEIGHT;
-		float localX = ((Number)xValue).floatValue() - chunkX * WIDTH;
+		float localX = (float) (((Number)xValue).doubleValue() - chunkX * WIDTH);
 		float localY = ((Number)yValue).floatValue() + yOffset;
-		float localZ = ((Number)zValue).floatValue() - chunkZ * DEPTH;
+		float localZ = (float) (((Number)zValue).doubleValue() - chunkZ * DEPTH);
 		
 		String color = NbtUtil.getString(entity, "color", "white").toLowerCase(Locale.ROOT);
 
@@ -1523,6 +1524,13 @@ public class RawChunk {
 
 	public List<CushionEntity> getCushions() {
 		return Collections.unmodifiableList(cushions);
+	}
+
+	public void filterEntities(BiPredicate<Integer, Integer> containsColumn) {
+		paintings.removeIf(entity -> !containsColumn.test(entity.getLocalX(), entity.getLocalZ()));
+		itemFrames.removeIf(entity -> !containsColumn.test(entity.getLocalX(), entity.getLocalZ()));
+		armorStands.removeIf(entity -> !containsColumn.test(entity.getLocalX(), entity.getLocalZ()));
+		cushions.removeIf(entity -> !containsColumn.test((int) Math.floor(entity.localX()), (int) Math.floor(entity.localZ())));
 	}
 
 	public Map<String, SkullEntity> getSkulls() {

@@ -94,7 +94,7 @@ public class UnionWorldSubset implements WorldSubset {
 
 	@Override
 	public ArrayBlockFilter getBlockFilter(ChunkCoord coord) {
-		ArrayBlockFilter filter = new ArrayBlockFilter();
+		ArrayBlockFilter filter = new ArrayBlockFilter(coord, this::getBlockFilter);
 		for (Member member : members) {
 			if (member.shape().contains(coord)) {
 				filter.include(member.shape().getBlockFilter(coord));
