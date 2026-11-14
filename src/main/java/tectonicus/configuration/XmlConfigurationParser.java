@@ -34,6 +34,7 @@ import tectonicus.util.Vector3l;
 import tectonicus.world.subset.BoundedWorldSubset;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.HeightRange;
 import tectonicus.world.subset.RectangularWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
 import tectonicus.world.subset.WorldSubset;
@@ -642,9 +643,13 @@ public class XmlConfigurationParser
 
 	private static WorldSubset parseWorldSubset(Element subsetNode) {
 		if (subsetNode != null) {
+			HeightRange parentRange = parseHeightRange(subsetNode);
 			Element[] shapes = getChildren(subsetNode, null);
-			if (shapes.length > 1 || (shapes.length == 1 && shapes[0].hasAttribute("exclude"))) {
-				return parseSubsetUnion(shapes);
+			if (shapes.length == 0)
+				return new FullWorldSubset(parentRange);
+			if (shapes.length > 1 || shapes[0].hasAttribute("exclude") || parentRange.isBounded()
+					|| shapes[0].hasAttribute("minY") || shapes[0].hasAttribute("maxY")) {
+				return parseSubsetUnion(shapes, parentRange);
 			}
 
 			Element circularNode = getChild(subsetNode, "CircularSubset");
@@ -692,7 +697,7 @@ public class XmlConfigurationParser
 		return new FullWorldSubset();
 	}
 
-	private static WorldSubset parseSubsetUnion(Element[] shapes) {
+	private static WorldSubset parseSubsetUnion(Element[] shapes, HeightRange parentRange) {
 		List<UnionWorldSubset.Member> members = new ArrayList<>();
 		List<BoundedWorldSubset> exclusions = new ArrayList<>();
 		for (int i = 0; i < shapes.length; i++) {
@@ -707,10 +712,11 @@ public class XmlConfigurationParser
 					}
 				}
 
+				HeightRange range = parseHeightRange(child);
 				BoundedWorldSubset shape = switch (child.getTagName()) {
-					case "CircularSubset" -> new CircularWorldSubset(origin, parseSubsetSize(child, "radius"));
+					case "CircularSubset" -> new CircularWorldSubset(origin, parseSubsetSize(child, "radius"), range);
 					case "RectangularSubset" -> new RectangularWorldSubset(origin, parseSubsetSize(child, "width"),
-							parseSubsetSize(child, "depth"));
+							parseSubsetSize(child, "depth"), range);
 					default -> throw new IllegalArgumentException("expected CircularSubset or RectangularSubset");
 				};
 				switch (child.getAttribute("exclude").strip()) {
@@ -724,10 +730,28 @@ public class XmlConfigurationParser
 						+ ", <" + child.getTagName() + ">: " + e.getMessage(), e);
 			}
 		}
-		if (members.size() == 1 && exclusions.isEmpty()) {
+		if (members.size() == 1 && exclusions.isEmpty() && !parentRange.isBounded()) {
 			return members.getFirst().shape();
 		}
-		return new UnionWorldSubset(members, exclusions);
+		return new UnionWorldSubset(members, exclusions, parentRange);
+	}
+
+	private static HeightRange parseHeightRange(Element element) {
+		try {
+			return new HeightRange(parseHeightBound(element, "minY"), parseHeightBound(element, "maxY"));
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("<" + element.getTagName() + "> " + e.getMessage(), e);
+		}
+	}
+
+	private static Integer parseHeightBound(Element element, String attribute) {
+		if (!element.hasAttribute(attribute))
+			return null;
+		try {
+			return Integer.valueOf(element.getAttribute(attribute).strip());
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException(attribute + " must be an integer", e);
+		}
 	}
 
 	private static long parseSubsetSize(Element shape, String attribute) {

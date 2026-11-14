@@ -29,6 +29,8 @@ import tectonicus.Minecraft;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.ChunkData;
 import tectonicus.world.WorldInfo;
+import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.HeightRange;
 
 import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
@@ -141,6 +143,40 @@ class RawChunkTest {
 	}
 
 	@ParameterizedTest
+	@CsvSource({"false, 0", "true, 64"})
+	void slicesLegacyAnvilAtTheSameWorldYInAnUpgradedSave(boolean upgraded, int offset) throws Exception {
+		Minecraft.setChunkHeight(upgraded ? 384 : 256);
+		RawChunk chunk = readLegacyChunk("full", new WorldInfo(upgraded ? Version.VERSION_21 : Version.VERSION_13, upgraded));
+		var subset = new FullWorldSubset(new HeightRange(2, 2));
+		subset.getRenderBlockFilter(chunk.getChunkCoord()).filter(chunk);
+		assertEquals(2, chunk.getWorldY(offset + 2));
+		assertEquals("minecraft:stone", chunk.getBlockName(3, offset + 2, 7));
+		assertEquals("minecraft:air", chunk.getBlockName(3, offset + 1, 7));
+		assertEquals("minecraft:air", chunk.getBlockName(3, offset + 3, 7));
+	}
+
+	@Test
+	void negativeSliceUsesExactOccupiedHeightsAndLeavesSourceIntactDuringDiscovery() throws Exception {
+		Minecraft.setChunkHeight(384);
+		CompoundTag root = new CompoundTag("", Map.of("yPos", new IntTag("yPos", -4),
+				"sections", new ListTag("sections", CompoundTag.class, List.of()),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of())));
+		RawChunk chunk = readChunk(root, Version.VERSION_21);
+		chunk.setBlockName(3, 44, 9, "minecraft:stone");
+		chunk.setBlockId(3, 45, 9, 1);
+		chunk.setBlockName(3, 200, 9, "minecraft:stone");
+		var slice = new FullWorldSubset(new HeightRange(-20, -19));
+		assertArrayEquals(new int[] {12, 78}, chunk.getVisibleRenderHeightBounds(slice.visibility(chunk.getChunkCoord())));
+		var empty = new FullWorldSubset(new HeightRange(null, -21));
+		assertNull(chunk.getVisibleRenderHeightBounds(empty.visibility(chunk.getChunkCoord())));
+		assertEquals("minecraft:stone", chunk.getBlockName(3, 200, 9));
+		slice.getRenderBlockFilter(chunk.getChunkCoord()).filter(chunk);
+		assertEquals("minecraft:stone", chunk.getBlockName(3, 44, 9));
+		assertEquals(1, chunk.getBlockId(3, 45, 9));
+		assertEquals("minecraft:air", chunk.getBlockName(3, 200, 9));
+	}
+
+	@ParameterizedTest
 	@ValueSource(strings = {"full", "minecraft:full"})
 	void modernRootLevelStatusesStillLoad(String status) throws Exception {
 		CompoundTag root = new CompoundTag("", Map.of(
@@ -156,6 +192,10 @@ class RawChunkTest {
 	}
 
 	private RawChunk readLegacyChunk(String status) throws Exception {
+		return readLegacyChunk(status, new WorldInfo(Version.VERSION_13, false));
+	}
+
+	private RawChunk readLegacyChunk(String status, WorldInfo worldInfo) throws Exception {
 		CompoundTag paletteEntry = new CompoundTag("", Map.of("Name", new StringTag("Name", "minecraft:stone")));
 		CompoundTag section = new CompoundTag("", Map.of(
 				"Y", new ByteTag("Y", (byte) 0),
@@ -168,7 +208,7 @@ class RawChunkTest {
 		if (status != null)
 			level.put("Status", new StringTag("Status", status));
 		return readChunk(new CompoundTag("", Map.of(
-				"DataVersion", new IntTag("DataVersion", 1631), "Level", new CompoundTag("Level", level))), Version.VERSION_13);
+				"DataVersion", new IntTag("DataVersion", 1631), "Level", new CompoundTag("Level", level))), worldInfo);
 	}
 
 	@Test
@@ -279,10 +319,14 @@ class RawChunkTest {
 	}
 
 	private RawChunk readChunk(CompoundTag root, Version version) throws Exception {
+		return readChunk(root, new WorldInfo(version, false));
+	}
+
+	private RawChunk readChunk(CompoundTag root, WorldInfo worldInfo) throws Exception {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {
 			out.writeTag(root);
 		}
-		return new RawChunk(new ChunkData(bytes.toByteArray(), Compression.Gzip), null, new WorldInfo(version, false));
+		return new RawChunk(new ChunkData(bytes.toByteArray(), Compression.Gzip), null, worldInfo);
 	}
 }

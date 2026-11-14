@@ -85,12 +85,16 @@
 			<mod name="" path="" />  <!-- path to mod jar file, used for loading mod textures -->
 		</mods>
 		
+		<!-- A childless <subset minY="-64" maxY="20" /> slices the full dimension. -->
+		<!-- minY and maxY are inclusive Minecraft block heights. Omit either bound to leave that side open. -->
+		<!-- Bounds on <subset> cap every shape. Shape bounds apply to its blocks, entities and map markers. -->
+		<!-- Models and effects are selected by anchor block height. Saved view images still render at full height. -->
 		<subset>
 			<!-- Radius, width and depth are in blocks. Omit origin to use the dimension's default center. -->
 			<!-- Add more shapes here to render them together in this dimension. -->
 			<!-- The optional name labels the area in the viewer's Go to menu. -->
 			<CircularSubset name="Spawn" radius="200" origin="0, 0" />
-			<!-- <RectangularSubset name="Far Outpost" width="400" depth="400" origin="250000, -180000" /> -->
+			<!-- <RectangularSubset name="Far Outpost" width="400" depth="400" origin="250000, -180000" minY="50" maxY="100" /> -->
 			<!-- Set exclude="true" on a subset to remove its blocks and markers from the included areas. -->
 			<!-- Exclusions apply regardless of order. With only exclusions, the rest of the dimension is rendered. -->
 			<!-- <RectangularSubset exclude="true" width="40" depth="30" origin="60, -20" /> -->

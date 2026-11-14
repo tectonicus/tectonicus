@@ -9,6 +9,8 @@
 
 package tectonicus.world.subset;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import tectonicus.SaveFormat;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.util.Vector3l;
@@ -17,7 +19,15 @@ import tectonicus.world.filter.NullBlockFilter;
 
 import java.io.File;
 
+@RequiredArgsConstructor
 public class FullWorldSubset implements WorldSubset {
+	@Getter
+	private final HeightRange heightRange;
+
+	public FullWorldSubset() {
+		this(HeightRange.UNBOUNDED);
+	}
+
 	@Override
 	public RegionIterator createRegionIterator(SaveFormat saveFormat, File dimensionDir) {
 		return new AllRegionsIterator(dimensionDir, saveFormat);
@@ -55,6 +65,6 @@ public class FullWorldSubset implements WorldSubset {
 	
 	@Override
 	public String toString() {
-		return "FullWorldSubset";
+		return "FullWorldSubset" + heightRange.cacheSuffix();
 	}
 }

@@ -26,6 +26,7 @@ public class RectangularWorldSubset implements BoundedWorldSubset
 	private Vector3l origin;
 	private final long width;
 	private final long depth;
+	private final HeightRange heightRange;
 
 	// Calculated bounds (in blocks)
 	private long minX;
@@ -44,9 +45,15 @@ public class RectangularWorldSubset implements BoundedWorldSubset
 	 */
 	public RectangularWorldSubset(Vector3l origin, long width, long depth)
 	{
+		this(origin, width, depth, HeightRange.UNBOUNDED);
+	}
+
+	public RectangularWorldSubset(Vector3l origin, long width, long depth, HeightRange heightRange)
+	{
 		this.origin = origin;
 		this.width = width;
 		this.depth = depth;
+		this.heightRange = heightRange;
 
 		if (origin != null) {
 			calculateMinMaxCoords(origin, width, depth);
@@ -107,10 +114,15 @@ public class RectangularWorldSubset implements BoundedWorldSubset
 	}
 
 	@Override
-	public String toString()
+	public String horizontalCacheKey()
 	{
 		return String.format("RectangularWorldSubset@[%d,%d],w%d,d%d",
 			origin.x, origin.z, width, depth);
+	}
+
+	@Override
+	public String toString() {
+		return horizontalCacheKey() + heightRange.cacheSuffix();
 	}
 	
 	@Override

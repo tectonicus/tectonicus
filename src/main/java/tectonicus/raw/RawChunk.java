@@ -23,6 +23,7 @@ import org.jnbt.NBTInputStream;
 import org.jnbt.NBTInputStream.Compression;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
+import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
 import tectonicus.WorldStats;
@@ -198,6 +199,8 @@ public class RawChunk {
 
 					ListTag sectionsTag = NbtUtil.getChild(level, "Sections", ListTag.class);
 					if (sectionsTag != null) {
+						if (worldInfo.sectionArrayOffset())
+							minSectionY = -4;
 						// Parse as anvil format
 						parseAnvilData(level, sectionsTag, worldStats, worldInfo);
 					} else {
@@ -1350,6 +1353,45 @@ public class RawChunk {
 		return toWorldY(y, minSectionY);
 	}
 
+	@FunctionalInterface
+	public interface BlockVisibility {
+		boolean contains(int localX, int worldY, int localZ);
+	}
+
+	public void filterBlocks(BlockVisibility visibility) {
+		for (int sectionY = 0; sectionY < sections.length; sectionY++) {
+			Section section = sections[sectionY];
+			if (section == null)
+				continue;
+			int baseY = getWorldY(sectionY * SECTION_HEIGHT);
+			for (int i = 0; i < SECTION_SIZE; i++) {
+				if (!visibility.contains(sectionX(i), baseY + sectionLocalY(i), i % SECTION_DEPTH)) {
+					section.blockIds[i] = BlockIds.AIR;
+					section.blockNames[i] = Block.AIR.getName();
+					section.blockData[i] = 0;
+					section.blockStates[i] = null;
+					section.skylight[i] = MAX_LIGHT - 1;
+					section.blocklight[i] = 0;
+				}
+			}
+		}
+		filterRenderedEntities(entity -> containsEntity(visibility, entity), entity -> containsCushion(visibility, entity));
+		beacons.values().removeIf(entity -> !containsEntity(visibility, entity));
+	}
+
+	private static int sectionX(int index) {
+		return index / (SECTION_HEIGHT * SECTION_DEPTH);
+	}
+
+	private static int sectionLocalY(int index) {
+		return index / SECTION_DEPTH % SECTION_HEIGHT;
+	}
+
+	private boolean containsCushion(BlockVisibility visibility, CushionEntity entity) {
+		return visibility.contains((int) Math.floor(entity.localX()), getWorldY((int) Math.floor(entity.localY())),
+				(int) Math.floor(entity.localZ()));
+	}
+
 	/** Internal render coordinates, including padding for models and particle columns. */
 	public int[] getRenderHeightBounds() {
 		return getRenderHeightBounds(null);
@@ -1359,28 +1401,81 @@ public class RawChunk {
 		// These renderers can place geometry independently of the occupied block sections.
 		if (hasRenderedEntities(containsColumn))
 			return new int[] {0, Minecraft.getChunkHeight()};
+		BlockVisibility visibility = containsColumn == null ? null : (x, y, z) -> containsColumn.test(x, z);
+		return getOccupiedHeightBounds(visibility, false);
+	}
+
+	public int[] getVisibleRenderHeightBounds(BlockVisibility visibility) {
+		int[] bounds = getOccupiedHeightBounds(visibility, true);
+		for (BeaconEntity beacon : beacons.values()) {
+			if (containsEntity(visibility, beacon))
+				bounds = includeRenderHeight(bounds, beacon.getLocalY(), Minecraft.getChunkHeight());
+		}
+		bounds = includeEntityHeights(bounds, visibility, paintings);
+		bounds = includeEntityHeights(bounds, visibility, itemFrames);
+		bounds = includeEntityHeights(bounds, visibility, armorStands);
+		for (CushionEntity cushion : cushions) {
+			if (containsCushion(visibility, cushion)) {
+				int y = (int) Math.floor(cushion.localY());
+				bounds = includeRenderHeight(bounds, y, y + 1);
+			}
+		}
+		return bounds;
+	}
+
+	private static int[] includeEntityHeights(int[] bounds, BlockVisibility visibility, List<? extends BlockEntity> entities) {
+		for (BlockEntity entity : entities) {
+			if (containsEntity(visibility, entity))
+				bounds = includeRenderHeight(bounds, entity.getLocalY(), entity.getLocalY() + 1);
+		}
+		return bounds;
+	}
+
+	private static boolean containsEntity(BlockVisibility visibility, BlockEntity entity) {
+		return visibility.contains(entity.getLocalX(), entity.getY(), entity.getLocalZ());
+	}
+
+	private static int[] includeRenderHeight(int[] bounds, int min, int max) {
+		// Signal campfire smoke rises 24 blocks. Two sections also cover model overhangs.
+		int paddedMin = Math.max(0, min - 32);
+		int paddedMax = Math.min(Minecraft.getChunkHeight(), max + 32);
+		if (bounds == null)
+			return new int[] {paddedMin, paddedMax};
+		bounds[0] = Math.min(bounds[0], paddedMin);
+		bounds[1] = Math.max(bounds[1], paddedMax);
+		return bounds;
+	}
+
+	private int[] getOccupiedHeightBounds(BlockVisibility visibility, boolean exact) {
 		int min = Minecraft.getChunkHeight();
 		int max = 0;
 		for (int sectionY = 0; sectionY < sections.length; sectionY++) {
 			Section section = sections[sectionY];
 			if (section == null)
 				continue;
+			int sectionBase = sectionY * SECTION_HEIGHT;
+			int baseWorldY = getWorldY(sectionBase);
 			for (int i = 0; i < SECTION_SIZE; i++) {
 				String name = section.blockNames[i];
 				boolean occupied = name == null ? section.blockIds[i] != BlockIds.AIR
 						: !name.equals("minecraft:air") && !name.equals("minecraft:cave_air") && !name.equals("minecraft:void_air");
-				if (occupied && (containsColumn == null || containsColumn.test(
-						i / (SECTION_HEIGHT * SECTION_DEPTH), i % SECTION_DEPTH))) {
-					min = Math.min(min, sectionY * SECTION_HEIGHT);
-					max = (sectionY + 1) * SECTION_HEIGHT;
+				if (!occupied)
+					continue;
+				int localY = sectionLocalY(i);
+				if (visibility != null && !visibility.contains(sectionX(i), baseWorldY + localY, i % SECTION_DEPTH))
+					continue;
+				if (!exact) {
+					min = Math.min(min, sectionBase);
+					max = sectionBase + SECTION_HEIGHT;
 					break;
 				}
+				min = Math.min(min, sectionBase + localY);
+				max = Math.max(max, sectionBase + localY + 1);
 			}
 		}
 		if (max == 0)
 			return null;
-		// Signal campfire smoke rises 24 blocks. Two sections also cover model overhangs.
-		return new int[] {Math.max(0, min - 32), Math.min(Minecraft.getChunkHeight(), max + 32)};
+		return includeRenderHeight(null, min, max);
 	}
 
 	private boolean hasRenderedEntities(BiPredicate<Integer, Integer> containsColumn) {
@@ -1389,10 +1484,14 @@ public class RawChunk {
 					|| !armorStands.isEmpty() || !cushions.isEmpty();
 		}
 		Predicate<BlockEntity> visible = entity -> containsColumn.test(entity.getLocalX(), entity.getLocalZ());
+		return hasRenderedEntities(visible, entity -> containsColumn.test(
+				(int) Math.floor(entity.localX()), (int) Math.floor(entity.localZ())));
+	}
+
+	private boolean hasRenderedEntities(Predicate<BlockEntity> visible, Predicate<CushionEntity> cushionVisible) {
 		return beacons.values().stream().anyMatch(visible) || paintings.stream().anyMatch(visible)
 				|| itemFrames.stream().anyMatch(visible) || armorStands.stream().anyMatch(visible)
-				|| cushions.stream().anyMatch(entity -> containsColumn.test(
-						(int) Math.floor(entity.localX()), (int) Math.floor(entity.localZ())));
+				|| cushions.stream().anyMatch(cushionVisible);
 	}
 
 	static int toWorldY(final int y, final int minSectionY) {
@@ -1544,10 +1643,15 @@ public class RawChunk {
 	}
 
 	public void filterEntities(BiPredicate<Integer, Integer> containsColumn) {
-		paintings.removeIf(entity -> !containsColumn.test(entity.getLocalX(), entity.getLocalZ()));
-		itemFrames.removeIf(entity -> !containsColumn.test(entity.getLocalX(), entity.getLocalZ()));
-		armorStands.removeIf(entity -> !containsColumn.test(entity.getLocalX(), entity.getLocalZ()));
-		cushions.removeIf(entity -> !containsColumn.test((int) Math.floor(entity.localX()), (int) Math.floor(entity.localZ())));
+		filterRenderedEntities(entity -> containsColumn.test(entity.getLocalX(), entity.getLocalZ()),
+				entity -> containsColumn.test((int) Math.floor(entity.localX()), (int) Math.floor(entity.localZ())));
+	}
+
+	private void filterRenderedEntities(Predicate<BlockEntity> visible, Predicate<CushionEntity> cushionVisible) {
+		paintings.removeIf(visible.negate());
+		itemFrames.removeIf(visible.negate());
+		armorStands.removeIf(visible.negate());
+		cushions.removeIf(cushionVisible.negate());
 	}
 
 	public Map<String, SkullEntity> getSkulls() {

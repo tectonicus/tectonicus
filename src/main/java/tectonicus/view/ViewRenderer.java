@@ -53,6 +53,16 @@ public class ViewRenderer
 
 	public void output(World world, File mapDir, File viewsFile, ChangeFile changedFiles)
 	{
+		world.setUseSubsetHeightBounds(false);
+		try {
+			outputViews(world, mapDir, viewsFile, changedFiles);
+		} finally {
+			world.setUseSubsetHeightBounds(true);
+		}
+	}
+
+	private void outputViews(World world, File mapDir, File viewsFile, ChangeFile changedFiles)
+	{
 		File viewsDir = new File(mapDir, "Views");
 		viewsDir.mkdirs();
 		

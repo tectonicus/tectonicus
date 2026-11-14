@@ -118,7 +118,7 @@ public class WorldVectors {
 
 			json.writeVariable("spawnDimension", levelDat.getSpawnDimension().toString());
 			Vector3l spawnPos = levelDat.getSpawnPosition();
-			if (map.getWorldSubset().containsBlock(spawnPos.x, spawnPos.z)) {
+			if (map.getWorldSubset().containsBlock(spawnPos.x, spawnPos.y, spawnPos.z)) {
 				// Spawn point
 				json.writeWorldCoord("spawnPosition", levelDat.getSpawnPosition());
 			}
@@ -127,6 +127,9 @@ public class WorldVectors {
 			if (map.getWorldSubset() instanceof UnionWorldSubset union && !union.getMembers().isEmpty()) {
 				json.startArray("subsets");
 				for (UnionWorldSubset.Member member : union.getMembers()) {
+					HeightBounds height = subsetHeights.get(member);
+					if (union.hasHeightBounds() && height == null)
+						continue;
 					var subsetBounds = member.shape().getBounds();
 					json.startArrayObject();
 					json.writeRawVariable("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(member.name()));
@@ -134,7 +137,6 @@ public class WorldVectors {
 					json.writeVariable("minZ", subsetBounds.minZ());
 					json.writeVariable("maxX", subsetBounds.maxX());
 					json.writeVariable("maxZ", subsetBounds.maxZ());
-					HeightBounds height = subsetHeights.get(member);
 					if (height != null) {
 						// Convert internal render heights to the world Y expected by the viewer.
 						json.writeVariable("minY", height.minY() - yOffset);

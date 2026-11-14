@@ -6,10 +6,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 import ch.qos.logback.classic.Level;
+import tectonicus.cache.swap.HddObjectListWriter;
+import tectonicus.raw.SignEntity;
 import tectonicus.util.DirUtils;
 import tectonicus.util.OutputResourcesUtil;
+import tectonicus.world.Sign;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.HeightRange;
 import tectonicus.world.subset.UnionWorldSubset;
 
 import java.nio.file.Files;
@@ -63,7 +67,78 @@ class ConfigurationHierarchyTest {
 		Configuration config = parse("""
 				<map worldDir="save"><subset/><layer/></map>
 				""");
-		assertInstanceOf(FullWorldSubset.class, config.getDimensionConfig(0).getWorldSubset());
+		var subset = assertInstanceOf(FullWorldSubset.class, config.getDimensionConfig(0).getWorldSubset());
+		assertFalse(subset.hasHeightBounds());
+	}
+
+	@Test
+	void parsesFullDimensionSlicesAndReplacesInheritedBounds() throws Exception {
+		Configuration config = parse("""
+				<config><subset minY=" -64 " maxY="20"/></config>
+				<world worldDir="save">
+				    <dimension><layer/></dimension>
+				    <dimension><subset minY="30"/><layer/></dimension>
+				</world>
+				<map worldDir="legacy"><subset maxY="-5"/><layer/></map>
+				""");
+		assertEquals(new HeightRange(-64, 20), config.getDimensionConfig(0).getWorldSubset().getHeightRange());
+		assertEquals(new HeightRange(30, null), config.getDimensionConfig(1).getWorldSubset().getHeightRange());
+		assertEquals(new HeightRange(null, -5), config.getDimensionConfig(2).getWorldSubset().getHeightRange());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"<subset minY='1.5'/>", "<subset maxY='2147483648'/>", "<subset minY=''/>",
+			"<subset minY='4' maxY='3'/>", "<subset><CircularSubset radius='2' maxY='bad'/></subset>",
+			"<subset><RectangularSubset width='4' depth='4' minY='2' maxY='1'/></subset>"})
+	void rejectsInvalidHeightBounds(String subset) {
+		var error = assertThrows(IllegalArgumentException.class,
+				() -> parse("<map worldDir='save'>" + subset + "<layer/></map>"));
+		assertTrue(error.getMessage().contains("minY") || error.getMessage().contains("maxY"));
+	}
+
+	@Test
+	void combinesParentAndPerShapeHeights() throws Exception {
+		var subset = parse("""
+				<map worldDir="save">
+				    <subset minY="-8" maxY="20">
+				        <CircularSubset radius="6" origin="0, 0" maxY="0"/>
+				        <RectangularSubset width="8" depth="8" origin="4, 0" minY="-2"/>
+				        <CircularSubset radius="1" origin="4, 0" exclude="true" minY="-1" maxY="1"/>
+				        <CircularSubset radius="2" origin="20, 0" minY="40"/>
+				    </subset>
+				    <layer/>
+				</map>
+				""").getDimensionConfig(0).getWorldSubset();
+		assertTrue(subset.containsBlock(0, -8, 0));
+		assertTrue(subset.containsBlock(4, -2, 0));
+		assertTrue(subset.containsBlock(4, 20.99, 0));
+		assertFalse(subset.containsBlock(0, -8.01, 0));
+		assertFalse(subset.containsBlock(4, -0.01, 0));
+		assertFalse(subset.containsBlock(4, 21, 0));
+		assertFalse(subset.containsBlock(20, 20, 0));
+		assertFalse(subset.containsBlock(20, 40, 0));
+		assertTrue(subset.containsBlock(20, 0));
+	}
+
+	@Test
+	void exportsViewMarkersOnlyAtIncludedBlockHeights(@TempDir Path directory) throws Exception {
+		var map = parse("<map worldDir='save'><subset minY='-5' maxY='-3'/><layer/></map>").getDimensionConfig(0);
+		var list = directory.resolve("views.list").toFile();
+		var writer = new HddObjectListWriter<Sign>(list, true);
+		try {
+			for (int y = -6; y <= -2; y++) {
+				writer.add(new Sign(new SignEntity(4, y, 8, 4, y, 8, "#view", "", "", "", 0, null, "black")));
+			}
+		} finally {
+			writer.close();
+		}
+		Path markers = directory.resolve("views.js");
+		OutputResourcesUtil.outputViews(markers.toFile(), list, map);
+		String exported = Files.readString(markers);
+		assertTrue(exported.contains("View_4_-5_8.png"));
+		assertTrue(exported.contains("View_4_-3_8.png"));
+		assertFalse(exported.contains("View_4_-6_8.png"));
+		assertFalse(exported.contains("View_4_-2_8.png"));
 	}
 
 	@Test

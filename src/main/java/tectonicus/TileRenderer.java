@@ -708,14 +708,21 @@ public class TileRenderer
 		if (c != null && c.getRawChunk().isFullChunk()) {
 			worldStats.incNumChunks();
 			if (discoveredTiles != null && world.contains(c.getCoord())) {
-				int[] height = useFullHeightBounds ? new int[] {0, Minecraft.getChunkHeight()}
-						: c.getRawChunk().getRenderHeightBounds();
+				var subset = map.getWorldSubset();
+				int[] height;
+				if (subset.hasHeightBounds()) {
+					height = c.getRawChunk().getVisibleRenderHeightBounds(subset.visibility(c.getCoord()));
+				} else {
+					height = useFullHeightBounds ? new int[] {0, Minecraft.getChunkHeight()} : c.getRawChunk().getRenderHeightBounds();
+				}
 				if (height != null) {
+					if (useFullHeightBounds)
+						height = new int[] {0, Minecraft.getChunkHeight()};
 					TileCoordBounds tileBounds = getTileBoundsForChunk(camera, c.getCoord(), tileWidth, tileHeight, height[0], height[1]);
 					for (int x = tileBounds.min.x; x <= tileBounds.max.x; x++)
 						for (int y = tileBounds.min.y; y <= tileBounds.max.y; y++)
 							discoveredTiles.add(new TileCoord(x, y));
-					if (map.getWorldSubset() instanceof UnionWorldSubset union && union.getMembers().size() > 1) {
+					if (subset instanceof UnionWorldSubset union && (union.hasHeightBounds() || union.getMembers().size() > 1)) {
 						collectSubsetHeights(union, c);
 					}
 				}
@@ -741,8 +748,8 @@ public class TileRenderer
 			if (!member.shape().contains(coord)) {
 				continue;
 			}
-			var filter = union.getBlockFilter(member, coord);
-			int[] height = chunk.getRawChunk().getRenderHeightBounds(filter::containsColumn);
+			int[] height = union.hasHeightBounds() ? chunk.getRawChunk().getVisibleRenderHeightBounds(union.visibility(coord, member))
+					: chunk.getRawChunk().getRenderHeightBounds(union.getBlockFilter(member, coord)::containsColumn);
 			if (height != null) {
 				var bounds = useFullHeightBounds ? new WorldVectors.HeightBounds(0, Minecraft.getChunkHeight())
 						: new WorldVectors.HeightBounds(height[0], height[1]);

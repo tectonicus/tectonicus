@@ -90,6 +90,17 @@ class SubsetEntityFilterTest {
 		assertEquals(List.of(-1), chunk.getItemFrames().stream().map(BlockEntity::getX).toList());
 	}
 
+	@Test
+	void filtersCrossChunkAnchorsByBothColumnAndHeight() throws IOException {
+		var slice = new RectangularWorldSubset(new Vector3l(-1, 0, Z), 1, 1, new HeightRange(-12, -12));
+		RawChunk chunk = load(slice, new ChunkCoord(0, 0),
+				hanging("painting", -1, -12), hanging("painting", -1, -11),
+				hanging("item_frame", -1, -12), hanging("item_frame", -2, -12));
+
+		assertEquals(List.of(-12), chunk.getPaintings().stream().map(BlockEntity::getY).toList());
+		assertEquals(List.of(-1), chunk.getItemFrames().stream().map(BlockEntity::getX).toList());
+	}
+
 	private static RawChunk load(WorldSubset subset, ChunkCoord coord, CompoundTag... entities) throws IOException {
 		ChunkData blocks = data(Map.of("sections", new ListTag("sections", CompoundTag.class, List.of()),
 				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of()),
@@ -100,7 +111,7 @@ class SubsetEntityFilterTest {
 		Minecraft.setChunkHeight(384);
 		try {
 			var chunk = new Chunk(coord, null);
-			chunk.loadRaw(blocks, entityData, subset.getBlockFilter(coord), null, new WorldInfo(Version.VERSION_26_3, false));
+			chunk.loadRaw(blocks, entityData, subset.getRenderBlockFilter(coord), null, new WorldInfo(Version.VERSION_26_3, false));
 			return chunk.getRawChunk();
 		} finally {
 			Minecraft.setChunkHeight(previousHeight);
@@ -118,9 +129,13 @@ class SubsetEntityFilterTest {
 	}
 
 	private static CompoundTag hanging(String id, int x) {
+		return hanging(id, x, 64);
+	}
+
+	private static CompoundTag hanging(String id, int x, int y) {
 		return new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:" + id),
 				"Direction", new ByteTag("Direction", (byte) 0), "Facing", new ByteTag("Facing", (byte) 3),
-				"block_pos", new IntArrayTag("block_pos", new int[] {x, 64, Z}),
+				"block_pos", new IntArrayTag("block_pos", new int[] {x, y, Z}),
 				"variant", new StringTag("variant", "minecraft:kebab")));
 	}
 

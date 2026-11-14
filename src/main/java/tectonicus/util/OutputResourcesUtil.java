@@ -147,7 +147,7 @@ public class OutputResourcesUtil {
 					signArgs.put("text4", "\"" + sign.getText(3) + "\"");
 				}
 
-				if (worldSubset.containsBlock(sign.getX(), sign.getZ())) {
+				if (worldSubset.containsBlock(sign.getX(), sign.getY(), sign.getZ())) {
 					jsWriter.write(signArgs);
 				}
 			}
@@ -181,7 +181,7 @@ public class OutputResourcesUtil {
 			for (Player player : players) {
 				if (player.isInDimension(map.getDimensionInfo()) && playerFilter.passesFilter(player)) {
 					Vector3d position = player.getPosition();
-					if (worldSubset.containsBlock(position.x, position.z)) {
+					if (worldSubset.containsBlock(position.x, position.y, position.z)) {
 						log.debug("\texporting {}", player.getName());
 
 						Map<String, String> args = new HashMap<>();
@@ -248,7 +248,7 @@ public class OutputResourcesUtil {
 
 						Vector3l spawn = player.getSpawnPosition();
 
-						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
+						if (worldSubset.containsBlock(spawn.x, spawn.y, spawn.z)) {
 							log.debug("\texporting {}'s bed", player.getName());
 
 							bedArgs.put("playerName", FileUtils.getOBJECT_MAPPER().writeValueAsString(player.getDisplayName()));
@@ -304,7 +304,7 @@ public class OutputResourcesUtil {
 
 						Vector3l spawn = player.getSpawnPosition();
 
-						if (worldSubset.containsBlock(spawn.x, spawn.z)) {
+						if (worldSubset.containsBlock(spawn.x, spawn.y, spawn.z)) {
 							log.debug("\texporting {}'s respawn anchor", player.getName());
 
 							anchorArgs.put("playerName", FileUtils.getOBJECT_MAPPER().writeValueAsString(player.getDisplayName()));
@@ -392,7 +392,7 @@ public class OutputResourcesUtil {
 					String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 					portalArgs.put("worldPos", posStr);
 
-					if (worldSubset.containsBlock(p.getX(), p.getZ())) {
+					if (worldSubset.containsBlock(p.getX(), p.getY(), p.getZ())) {
 						jsWriter.write(portalArgs);
 					}
 				}
@@ -450,7 +450,7 @@ public class OutputResourcesUtil {
 				String filename = "Scripts/" + map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
 				viewArgs.put("imageFile", "\"" + filename + "\"");
 
-				if (map.getWorldSubset().containsBlock(sign.getX(), sign.getZ())) {
+				if (map.getWorldSubset().containsBlock(sign.getX(), sign.getY(), sign.getZ())) {
 					jsWriter.write(viewArgs);
 				}
 			}
@@ -477,7 +477,7 @@ public class OutputResourcesUtil {
 			WorldSubset worldSubset = map.getWorldSubset();
 			Set<ContainerEntity> exported = new HashSet<>();
 			for (ContainerEntity entity : containerList) {
-				if (exported.contains(entity) || !worldSubset.containsBlock(entity.getX(), entity.getZ())) continue;
+				if (exported.contains(entity) || !worldSubset.containsBlock(entity.getX(), entity.getY(), entity.getZ())) continue;
 				ContainerEntity partner = findContainerPartner(entity, containerList, exported, worldSubset);
 				if (partner != null && "left".equals(entity.getType())) continue;
 				exported.add(entity);
@@ -542,7 +542,7 @@ public class OutputResourcesUtil {
 		for (ContainerEntity candidate : entities) {
 			if (candidate == entity || exported.contains(candidate) || candidate.getContainerKind() != entity.getContainerKind()
 					|| candidate.getY() != entity.getY() || !java.util.Objects.equals(candidate.getFacing(), entity.getFacing())
-					|| !subset.containsBlock(candidate.getX(), candidate.getZ())) continue;
+				|| !subset.containsBlock(candidate.getX(), candidate.getY(), candidate.getZ())) continue;
 			boolean adjacent = candidate.getX() == entity.getX() + dx && candidate.getZ() == entity.getZ() + dz;
 			if (legacy) {
 				adjacent |= candidate.getX() == entity.getX() - dx && candidate.getZ() == entity.getZ() - dz;
@@ -581,7 +581,7 @@ public class OutputResourcesUtil {
 				beaconArgs.put("primaryEffect", "\"" + primaryEffect + "\"");
 				beaconArgs.put("secondaryEffect", "\"" + secondaryEffect + "\"");
 				
-				if (worldSubset.containsBlock(beacon.getX(), beacon.getZ())) {
+				if (worldSubset.containsBlock(beacon.getX(), beacon.getY(), beacon.getZ())) {
 					jsWriter.write(beaconArgs);
 					if (viewerAssets != null && beacon.getLevels() > 0) {
 						viewerAssets.addBeaconEffect(primaryEffect);

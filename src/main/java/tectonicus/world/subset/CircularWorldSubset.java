@@ -27,6 +27,11 @@ public class CircularWorldSubset implements BoundedWorldSubset
 
 	private Vector3l origin;
 	private final long radius;
+	private final HeightRange heightRange;
+
+	public CircularWorldSubset(Vector3l origin, long radius) {
+		this(origin, radius, HeightRange.UNBOUNDED);
+	}
 
 	@Override
 	public RegionIterator createRegionIterator(SaveFormat saveFormat, File dimensionDir)
@@ -78,10 +83,15 @@ public class CircularWorldSubset implements BoundedWorldSubset
 		return filter;
 	}
         
-        @Override
-        public String toString() {
-                return String.format("CircularWorldSubset@[%d,%d,%d],r%d", origin.x, origin.y, origin.z, radius);
-        }
+	@Override
+	public String horizontalCacheKey() {
+		return String.format("CircularWorldSubset@[%d,%d,%d],r%d", origin.x, origin.y, origin.z, radius);
+	}
+
+	@Override
+	public String toString() {
+		return horizontalCacheKey() + heightRange.cacheSuffix();
+	}
 	
 	public static long distance(ChunkCoord coord, final long offsetX, final long offsetZ, Vector3l origin)
 	{

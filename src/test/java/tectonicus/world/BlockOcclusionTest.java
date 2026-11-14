@@ -22,6 +22,8 @@ import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.raw.RawChunk;
 import tectonicus.texture.SubTexture;
+import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.subset.HeightRange;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -85,5 +87,26 @@ class BlockOcclusionTest {
 		chunk.setBlockName(0, 0, 0, name);
 
 		assertEquals(BlockOcclusion.OPEN, World.resolveBlockOcclusion(chunk, 0, 0, 0, legacy, models));
+	}
+
+	@Test
+	void slicedNeighborsExposeBothFacesOfTheRetainedBlock() {
+		var legacy = new BlockTypeRegistry();
+		legacy.register(1, new SolidBlockType("Stone", new SubTexture(null, 0, 0, 1, 1, Version.VERSION_4)));
+		var models = new BlockRegistry();
+		models.getBlockStates().put("minecraft:stone", new BlockStateWrapper("minecraft:stone"));
+		var chunk = new RawChunk();
+		chunk.setBlockId(3, 4, 3, 1);
+		chunk.setBlockName(3, 5, 3, "minecraft:stone");
+		chunk.setBlockName(3, 6, 3, "minecraft:stone");
+		assertEquals(BlockOcclusion.OPAQUE, World.resolveBlockOcclusion(chunk, 3, 4, 3, legacy, models));
+		assertEquals(BlockOcclusion.OPAQUE, World.resolveBlockOcclusion(chunk, 3, 6, 3, legacy, models));
+
+		var slice = new FullWorldSubset(new HeightRange(5, 5));
+		slice.getRenderBlockFilter(chunk.getChunkCoord()).filter(chunk);
+
+		assertEquals(BlockOcclusion.OPEN, World.resolveBlockOcclusion(chunk, 3, 4, 3, legacy, models));
+		assertEquals(BlockOcclusion.OPAQUE, World.resolveBlockOcclusion(chunk, 3, 5, 3, legacy, models));
+		assertEquals(BlockOcclusion.OPEN, World.resolveBlockOcclusion(chunk, 3, 6, 3, legacy, models));
 	}
 }

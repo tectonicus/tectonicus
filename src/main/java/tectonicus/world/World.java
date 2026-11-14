@@ -176,7 +176,7 @@ public class World implements BlockContext, AutoCloseable
 	private record BeaconPosition(int x, int y, int z) {}
 	private final Map<BeaconPosition, Integer> beaconLevels = new ConcurrentHashMap<>();
 	// Render filters and map cropping must not remove blocks from a beacon's pyramid.
-	private final Cache<ChunkCoord, RawChunk> beaconChunks = Caffeine.newBuilder().maximumSize(32).build();
+	private final Cache<ChunkCoord, RawChunk> unfilteredChunks = Caffeine.newBuilder().maximumSize(32).build();
 	
 	@Getter
 	private final TexturePack texturePack;
@@ -208,6 +208,7 @@ public class World implements BlockContext, AutoCloseable
 
 	@Getter
 	private final WorldSubset worldSubset;
+	private boolean useSubsetHeightBounds = true;
 	
 	private final Geometry daySkybox, nightSkybox;
 	
@@ -366,14 +367,20 @@ public class World implements BlockContext, AutoCloseable
 			rawLoadedChunks = new RawCache(2048, (coord) -> {
                         CompositeBlockFilter composite = new CompositeBlockFilter();
                         composite.add(blockFilter);
-                        composite.add(worldSubset.getBlockFilter(coord));
+                        composite.add(useSubsetHeightBounds ? worldSubset.getRenderBlockFilter(coord) : worldSubset.getBlockFilter(coord));
 
                         return chunkLocator.loadChunk(coord, composite, null, worldInfo);
                 });
 			geometryLoadedChunks = new GeometryCache(512, (coord) -> {
                         Chunk chunk = rawLoadedChunks.get(coord);
-
-                        final boolean ok = chunk.createGeometry(rasteriser, this, registry, modelRegistry, blockMaskFactory, texturePack);
+						BlockMaskFactory maskFactory = blockMaskFactory;
+						if (useSubsetHeightBounds && worldSubset.hasHeightBounds() && !(blockMaskFactory instanceof NullBlockMaskFactory)) {
+							// Determine the cave surface from the terrain before the Y cut.
+							RawChunk original = loadUnfilteredChunk(coord);
+							if (original != null)
+								maskFactory = (chunkCoord, raw) -> blockMaskFactory.createMask(chunkCoord, original);
+						}
+                        final boolean ok = chunk.createGeometry(rasteriser, this, registry, modelRegistry, maskFactory, texturePack);
                         assert ok;
 
                         return chunk;
@@ -661,19 +668,26 @@ public class World implements BlockContext, AutoCloseable
 	public Chunk loadChunk(ChunkCoord coord, WorldStats worldStats) {
 		CompositeBlockFilter composite = new CompositeBlockFilter();
 		composite.add(blockFilter);
-		composite.add(worldSubset.getBlockFilter(coord));
+		// Discovery evaluates the 3D subset against the original terrain and entities.
+		if (!worldSubset.hasHeightBounds())
+			composite.add(worldSubset.getBlockFilter(coord));
 		
 		return chunkLocator.loadChunk(coord, composite, worldStats, worldInfo);
+	}
+
+	public void setUseSubsetHeightBounds(boolean useSubsetHeightBounds) {
+		if (this.useSubsetHeightBounds != useSubsetHeightBounds && worldSubset.hasHeightBounds())
+			flushChunkCache();
+		this.useSubsetHeightBounds = useSubsetHeightBounds;
 	}
 
 	@Override
 	public int getBeaconLevels(RawChunk chunk, BeaconEntity beacon) {
 		return beaconLevels.computeIfAbsent(new BeaconPosition(beacon.getX(), beacon.getY(), beacon.getZ()), key -> {
-			return BeaconActivation.resolve(chunk, beacon, coord ->
-				beaconChunks.get(coord, neighborCoord -> {
-					Chunk neighbor = chunkLocator.loadChunk(neighborCoord, new NullBlockFilter(), null, worldInfo);
-					return neighbor != null ? neighbor.getRawChunk() : null;
-				}), (raw, x, y, z) -> {
+			RawChunk original = worldSubset.hasHeightBounds() ? loadUnfilteredChunk(chunk.getChunkCoord()) : chunk;
+			if (original == null)
+				return 0;
+			return BeaconActivation.resolve(original, beacon, this::loadUnfilteredChunk, (raw, x, y, z) -> {
 				String name = raw.getBlockName(x, y, z);
 				if ("minecraft:air".equals(name) || "minecraft:cave_air".equals(name) || "minecraft:void_air".equals(name)
 						|| name == null && raw.getBlockId(x, y, z) == 0)
@@ -694,6 +708,13 @@ public class World implements BlockContext, AutoCloseable
 						x, raw.getWorldY(y), z).stream().anyMatch(model -> model.getBlockModel() != null
 						&& model.getBlockModel().isFullBlock() && model.getBlockModel().isSolid());
 			});
+		});
+	}
+
+	private RawChunk loadUnfilteredChunk(ChunkCoord coord) {
+		return unfilteredChunks.get(coord, key -> {
+			Chunk chunk = chunkLocator.loadChunk(key, new NullBlockFilter(), null, worldInfo);
+			return chunk != null ? chunk.getRawChunk() : null;
 		});
 	}
 	

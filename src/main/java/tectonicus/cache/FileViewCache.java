@@ -135,9 +135,10 @@ public class FileViewCache
 		hashAlgorithm.update(("biomeBlendRadius=" + world.getBiomeBlendRadius() + "\n").getBytes());
 		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		hashAlgorithm.update(("biomeExtraction=" + world.getBiomeCache().getCacheKey() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-		if (world.getWorldSubset() instanceof UnionWorldSubset union) {
+		if (world.getWorldSubset() instanceof UnionWorldSubset union
+				&& (union.getMembers().size() != 1 || union.hasExclusions())) {
 			// A changed mask can change the image while the same chunks remain visible.
-			hashAlgorithm.update(("worldSubset=" + union + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			hashAlgorithm.update(("worldSubset=" + union.horizontalCacheKey() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		}
 		
 		hashAlgorithm.update(sign.getText(0).getBytes());

@@ -16,6 +16,8 @@ public interface BoundedWorldSubset extends WorldSubset {
 
 	Bounds getBounds();
 
+	String horizontalCacheKey();
+
 	default boolean containsColumn(long x, long z) {
 		return containsBlock(x, z);
 	}

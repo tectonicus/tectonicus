@@ -88,12 +88,7 @@ public class FindEntityUtil {
 						ChunkCoord coord = chunk.getChunkCoord();
 
 						// Calculate Y position
-						long finalY = (y + tempY + 1) / 2L;
-
-						// For 1.18 and higher we need to subtract 64 from the y value to get the actual y value
-						if (Minecraft.getChunkHeight() > 256) {
-							finalY -= 64L;
-						}
+						long finalY = chunk.getWorldY((y + tempY + 1) / 2);
 
 						Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
 							finalY,
@@ -134,7 +129,7 @@ public class FindEntityUtil {
 						final BlockProperties blockProperties = chunk.getBlockState(x, y, z);
 						if (blockProperties.containsKey("part") && blockProperties.get("part").equals("head")) {
 							ChunkCoord coord = chunk.getChunkCoord();
-							beds.add(new BedEntity((int) (coord.x * RawChunk.WIDTH + x), (y - 64), (int) (coord.z * RawChunk.DEPTH + z), x, y, z,
+							beds.add(new BedEntity((int) (coord.x * RawChunk.WIDTH + x), chunk.getWorldY(y), (int) (coord.z * RawChunk.DEPTH + z), x, y, z,
 									Colors.byName(blockName.replace("minecraft:", "").replace("_bed", "")).getId()));
 						}
 					}

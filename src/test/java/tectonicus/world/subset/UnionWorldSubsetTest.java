@@ -9,6 +9,8 @@
 package tectonicus.world.subset;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
@@ -28,6 +30,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class UnionWorldSubsetTest {
 	@TempDir
 	Path directory;
+	private int previousHeight;
+
+	@BeforeEach
+	void setDefaultChunkHeight() {
+		previousHeight = Minecraft.getChunkHeight();
+		Minecraft.setChunkHeight(256);
+	}
+
+	@AfterEach
+	void restoreChunkHeight() {
+		Minecraft.setChunkHeight(previousHeight);
+	}
 
 	@Test
 	void visitsSharedRegionOnceAndSkipsTheGap() throws Exception {
@@ -139,6 +153,34 @@ class UnionWorldSubsetTest {
 		} finally {
 			Minecraft.setChunkHeight(previousHeight);
 		}
+	}
+
+	@Test
+	void subtractsOnlyTheExcludedHeightAndProjectsEachIncludedMember() {
+		var origin = new Vector3l(8, 0, 8);
+		var lower = new UnionWorldSubset.Member("Lower", new CircularWorldSubset(origin, 4, new HeightRange(null, 80)));
+		var upper = new UnionWorldSubset.Member("Upper", new RectangularWorldSubset(origin, 8, 8, new HeightRange(80, null)));
+		var exclusion = new CircularWorldSubset(origin, 2, new HeightRange(80, 80));
+		var subset = new UnionWorldSubset(List.of(lower, upper), List.of(exclusion), new HeightRange(79, 81));
+		var coord = new ChunkCoord(0, 0);
+		var chunk = new RawChunk();
+		for (int y = 78; y <= 82; y++) {
+			chunk.setBlockId(8, y, 8, BlockIds.STONE);
+			chunk.setBlockId(12, y, 8, BlockIds.STONE);
+		}
+		assertArrayEquals(new int[] {47, 113}, chunk.getVisibleRenderHeightBounds(subset.visibility(coord, lower)));
+		assertArrayEquals(new int[] {48, 114}, chunk.getVisibleRenderHeightBounds(subset.visibility(coord, upper)));
+		subset.getRenderBlockFilter(coord).filter(chunk);
+		assertEquals(BlockIds.AIR, chunk.getBlockId(8, 78, 8));
+		assertEquals(BlockIds.STONE, chunk.getBlockId(8, 79, 8));
+		assertEquals(BlockIds.AIR, chunk.getBlockId(8, 80, 8));
+		assertEquals(BlockIds.STONE, chunk.getBlockId(12, 80, 8));
+		assertEquals(BlockIds.STONE, chunk.getBlockId(8, 81, 8));
+		assertEquals(BlockIds.AIR, chunk.getBlockId(8, 82, 8));
+		var exclusionOnly = new UnionWorldSubset(List.of(), List.of(exclusion), new HeightRange(79, 81));
+		assertTrue(exclusionOnly.containsBlock(100, 80, 100));
+		assertFalse(exclusionOnly.containsBlock(8, 80, 8));
+		assertFalse(exclusionOnly.containsBlock(100, 82, 100));
 	}
 
 	@Test
