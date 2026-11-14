@@ -202,6 +202,7 @@ async function mainAsync()
 				tileLayer.dimensionId = tecMap.dimensionId;
                 tileLayer.worldName = tecMap.worldName || 'World';
                 tileLayer.images = tecMap.images || 'Images/';
+                tileLayer.markerShadows = tecMap.markerShadows;
                 tileLayer.localizationsUrl = tecMap.localizations || 'Scripts/localizations.json';
                 tileLayer.localizationsScript = tecMap.localizationsScript;
                 tileLayer.worldLabel = tecMap.worldName || mapText('selectWorld.world', {}, tileLayer);
@@ -585,15 +586,7 @@ function refreshSpawnMarker(layer) {
 		let spawn = layer.projection.worldVectors.spawnPosition;
 		let point = layer.projection.worldToMap(spawn);
 
-		let myIcon = L.icon({
-			iconUrl: worldImageUrl('SpawnCompass.png', layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const myIcon = createWorldMarkerIcon('SpawnCompass.png', [17, 20], layer);
 
         const coordinates = escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(spawn)));
         let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }), '<p class="center">' + coordinates + '</p>', spawn, layer)
@@ -612,15 +605,7 @@ function refreshSignMarkers(layer) {
 		let sign = layer.signs[i];
 		let point = layer.projection.worldToMap(sign.worldPos);
 
-		let myIcon = L.icon({
-			iconUrl: worldImageUrl('Sign.png', layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const myIcon = createWorldMarkerIcon('Sign.png', [17, 20], layer);
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }),
 			'<pre><center>' + sign.text1 + '<br/>' + sign.text2 + '<br/>' + sign.text3 + '<br/>' + sign.text4 + '</center></pre>', sign.worldPos, layer);
@@ -639,15 +624,7 @@ function refreshViewMarkers(layer) {
 
 		let point = layer.projection.worldToMap(view.worldPos);
 
-		let icon = L.icon({
-			iconUrl: worldImageUrl('Picture.png', layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const icon = createWorldMarkerIcon('Picture.png', [17, 20], layer);
 
 		let html = '';
 		html += '<div>';
@@ -702,15 +679,7 @@ function refreshBedMarkers(layer) {
 		let bed = layer.beds[i];
 		let point = layer.projection.worldToMap(bed.worldPos);
 
-		let icon = L.icon({
-			iconUrl: worldImageUrl('Items/' + bed.color + '_bed.png', layer),
-			iconSize: [38, 38],
-			iconAnchor: [20, 24],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const icon = createWorldMarkerIcon('Items/' + bed.color + '_bed.png', [20, 24], layer, [38, 38]);
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">'
 			+ escapeHtml(mapText('tectonicus.marker.bed', {player: playerDisplayName(bed)})) + '</p>', bed.worldPos, layer);
@@ -728,15 +697,7 @@ function refreshRespawnAnchorMarkers(layer) {
 		let anchor = layer.anchors[i];
 		let point = layer.projection.worldToMap(anchor.worldPos);
 
-		let icon = L.icon({
-			iconUrl: worldImageUrl('RespawnAnchor.png', layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const icon = createWorldMarkerIcon('RespawnAnchor.png', [17, 20], layer);
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }), '<p class="center">'
 			+ escapeHtml(mapText('tectonicus.marker.respawnAnchor', {player: playerDisplayName(anchor)})) + '</p>', anchor.worldPos, layer);
@@ -754,15 +715,7 @@ function refreshBeaconMarkers(layer) {
 		let beacon = layer.beacons[i];
 		let point = layer.projection.worldToMap(beacon.worldPos);
 
-		let icon = L.icon({
-			iconUrl: worldImageUrl('beacon.png', layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const icon = createWorldMarkerIcon('beacon.png', [17, 20], layer);
 
 		let marker;
 		if (beacon.levels > 0) {
@@ -790,15 +743,7 @@ function refreshPortalMarkers(layer) {
 
 		let point = layer.projection.worldToMap(portal.worldPos);
 
-		let icon = L.icon({
-			iconUrl: worldImageUrl('Portal.png', layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const icon = createWorldMarkerIcon('Portal.png', [17, 20], layer);
 
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
 			'<div style="text-align:center">' + escapeHtml(mapText('block.minecraft.nether_portal')) + '</div><br/> '
@@ -816,15 +761,7 @@ function refreshContainerMarkers(layer) {
 	for (i in layer.containers) {
 		let point = layer.projection.worldToMap(layer.containers[i].worldPos);
 
-		let icon = L.icon({
-			iconUrl: worldImageUrl(containerMarkerIcon(layer.containers[i]), layer),
-			// iconSize: [30, 30],
-			iconAnchor: [17, 20],
-			popupAnchor: [0, -10],
-			//shadowUrl: 'my-icon-shadow.png',
-			//shadowSize: [68, 95],
-			//shadowAnchor: [22, 94]
-		});
+		const icon = createWorldMarkerIcon(containerMarkerIcon(layer.containers[i]), [17, 20], layer);
                 
                 let markerPopup = createContainerPopup(layer.containers[i]);
 		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),

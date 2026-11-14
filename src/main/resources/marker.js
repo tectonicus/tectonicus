@@ -27,16 +27,25 @@ let controlState = {
 
 }
 
+function createMapIcon(iconUrl, shadowKey, iconAnchor, layer, iconSize) {
+	const options = {iconUrl, iconAnchor, popupAnchor: [0, -10]};
+	if (iconSize) options.iconSize = iconSize;
+	const shadowUrl = layer?.markerShadows?.[shadowKey];
+	if (shadowUrl) {
+		options.shadowUrl = shadowUrl;
+		// Shadow images start 10 px left and 12 px above the icon.
+		options.shadowSize = [80, 54];
+		options.shadowAnchor = [iconAnchor[0] + 10, iconAnchor[1] + 12];
+	}
+	return L.icon(options);
+}
+
+function createWorldMarkerIcon(filename, iconAnchor, layer, iconSize) {
+	return createMapIcon(worldImageUrl(filename, layer), filename, iconAnchor, layer, iconSize);
+}
+
 function createPlayerMarker(player, pos, layer = activeBaseLayer) {
-	let icon = L.icon({
-		iconUrl: player.icon,
-		iconSize: [40, 40],
-		iconAnchor: [21, 25],
-		popupAnchor: [0, -10],
-		//shadowUrl: 'my-icon-shadow.png',
-		//shadowSize: [68, 95],
-		//shadowAnchor: [22, 94]
-	});
+	const icon = createMapIcon(player.icon, 'player', [21, 25], layer, [40, 40]);
 
 	return bindMarkerPopup(L.marker(pos, { icon: icon }), getPlayerHtml(player), player.worldPos, layer, {maxWidth: 380})
 		.bindTooltip(escapeHtml(playerDisplayName(player)));

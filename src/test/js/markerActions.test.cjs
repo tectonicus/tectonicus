@@ -13,8 +13,8 @@ function viewer() {
         window: Object.assign(new EventTarget(), {navigator: {}}),
         URL, URLSearchParams,
         L: {map: () => ({}), layerGroup, CRS: {Simple: {}}, icon: options => options,
-            marker: () => {
-                const marker = {bindPopup(html) { this.html = html; return this; },
+            marker: (point, options) => {
+                const marker = {point, options, bindPopup(html) { this.html = html; return this; },
                     bindTooltip() { return this; }};
                 markers.push(marker);
                 return marker;
@@ -78,6 +78,34 @@ test('every positioned marker gets the three copy actions outside its popup cont
         assert.match(marker.html, /data-copy-text="8 64 -1"/);
         assert.match(marker.html, /execute in minecraft:the_end run tp @s 8.5 65 -0.5/);
     }
+});
+
+test('all marker types attach the corresponding exported shadow without moving their anchors', () => {
+    const {context, markers} = viewer();
+    const pos = {x: 0, y: 64, z: 0};
+    const worldVectors = {spawnPosition: pos};
+    const files = ['SpawnCompass.png', 'Sign.png', 'Picture.png', 'Items/red_bed.png',
+        'RespawnAnchor.png', 'beacon.png', 'Portal.png', 'ShulkerBox_blue.png', 'player'];
+    const layer = {images: 'World1/Images/', worldVectors, projection: {worldVectors, worldToMap: () => [1, 2]},
+        markerShadows: Object.fromEntries(files.map(file => [file, 'World1/Shadows/' + file])),
+        signs: [{worldPos: pos}], views: [{worldPos: pos}], beds: [{worldPos: pos, color: 'red'}],
+        anchors: [{worldPos: pos}], beacons: [{worldPos: pos}], portals: [{worldPos: pos}],
+        containers: [{worldPos: pos, containerType: 'shulker_box', shulkerColor: 'blue', items: []}]};
+    vm.runInContext('showSpawn = true;', context);
+    for (const refresh of ['SpawnMarker', 'SignMarkers', 'ViewMarkers', 'BedMarkers',
+        'RespawnAnchorMarkers', 'BeaconMarkers', 'PortalMarkers', 'ContainerMarkers']) {
+        context['refresh' + refresh](layer);
+    }
+    context.createPlayerMarker({name: 'Alex', icon: 'Alex.png', worldPos: pos}, [1, 2], layer);
+    assert.deepEqual(markers.map(marker => marker.options.icon.shadowUrl), files.map(file => layer.markerShadows[file]));
+    for (const [index, marker] of markers.entries()) {
+        const expected = index === 3 ? [20, 24, 30, 36] : index === 8 ? [21, 25, 31, 37] : [17, 20, 27, 32];
+        assert.deepEqual([...marker.options.icon.iconAnchor, ...marker.options.icon.shadowAnchor], expected);
+        assert.deepEqual(marker.point, [1, 2]);
+    }
+    delete layer.markerShadows;
+    context.refreshSignMarkers(layer);
+    assert.equal(markers.at(-1).options.icon.shadowUrl, undefined);
 });
 
 for (const mode of ['clipboard', 'rejected', 'legacy', 'manual', 'legacyDenied']) {

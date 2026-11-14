@@ -48,7 +48,7 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
     };
     const context = vm.createContext({
         mapEnglish,
-        contents, maxZoom: 8, showSpawn: false, ...options,
+        contents, maxZoom: 8, showSpawn: false, useToggleMenu: true, ...options,
         window: Object.assign(new EventTarget(), {matchMedia, history: {replaceState(state, title, url) { this.url = url; }}}),
         document: {querySelector: selector => selector === '#map' ? mapElement : null},
         MutationObserver: class { observe() {} },
@@ -118,6 +118,13 @@ async function createViewer(contents, fragment = '', {matchMedia, ...options} = 
             })
         }
     };
+    const readQuery = context.getQueryParams;
+    const readFragment = context.getFragmentParams;
+    const markerSource = fs.readFileSync(path.join(__dirname, '../../main/resources/marker.js'), 'utf8')
+        .replace(/\{\{([^}]+)\}\}/g, (_, name) => JSON.stringify(context[name] ?? null));
+    vm.runInContext(markerSource, context);
+    context.getQueryParams = readQuery;
+    context.getFragmentParams = readFragment;
     for (const file of ['controls.js', 'containers.js', 'main.js']) {
         vm.runInContext(fs.readFileSync(path.join(__dirname, '../../main/resources', file), 'utf8'), context);
     }
@@ -238,6 +245,24 @@ test('narrow viewports use the popout even when wide viewports use individual to
     narrowLayout.dispatchEvent(new Event('change'));
     assert.equal(evaluate('toggleMenuControl'), reopenedMenu);
 });
+
+for (const useToggleMenu of [true, false]) {
+    test(`marker shadows display with the toggle hidden in ${useToggleMenu ? 'the menu' : 'the toolbar'}`, async () => {
+        const worldVectors = {startView: {x: 0, y: 64, z: 0}, spawnPosition: {x: 0, y: 64, z: 0}};
+        const shadowUrl = 'World0/Images/MarkerShadows/SpawnCompass.png';
+        const {evaluate, map, controls} = await createViewer([
+            dimension('a', 'Survival', ['Day'], {
+                worldVectors, controlState: {spawnControlChecked: true},
+                markerShadows: {'SpawnCompass.png': shadowUrl}
+            })
+        ], '', {useToggleMenu, showSpawn: true});
+        const [spawn] = evaluate('markerGroups.spawnControlChecked').getLayers();
+        assert.equal(map.layers.has(spawn), true);
+        assert.equal(spawn.options.icon.shadowUrl, shadowUrl);
+        const buttons = [...controls].map(control => control.getContainer()).filter(node => node?.type === 'image');
+        assert.deepEqual(buttons, [evaluate('spawnToggleControl').getContainer()]);
+    });
+}
 
 test('marker menu previews on mouse hover and stays pinned after click until an outside map click', async () => {
     const {evaluate, mapElement} = await createViewer([dimension('a', 'Survival')]);

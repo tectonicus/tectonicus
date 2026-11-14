@@ -1102,6 +1102,7 @@ public class OutputResourcesUtil {
 
 		File scriptsDir = new File(exportDir, "Scripts/" + world.getId());
 		FileUtils.ensureExists(scriptsDir);
+		MarkerShadows.write(imagesDir.toPath());
 		viewerAssets.write(texturePack.getZipStack(), world.getTexturePack(), localization, world.getId(), scriptsDir.toPath(), imagesDir.toPath(), hasFont);
 	}
 
@@ -1111,6 +1112,7 @@ public class OutputResourcesUtil {
 		FileUtils.ensureExists(imagesDir);
 		for (String image : List.of("Spawn.png", "Logo.png", "Spacer.png"))
 			FileUtils.extractResource("Images/" + image, new File(imagesDir, image));
+		FileUtils.extractResource(MarkerShadows.PLAYER_SHADOW, new File(exportDir, MarkerShadows.PLAYER_SHADOW));
 		extractMapResources(new File(exportDir, "Scripts"));
 
 		List<String> scriptResources = new ArrayList<>();
@@ -1321,6 +1323,7 @@ public class OutputResourcesUtil {
 		}
 
 		log.info("Writing master contents to {}", outputFile.getAbsolutePath());
+		var markerShadowsByWorld = new HashMap<String, Map<String, String>>();
 
 		try (PrintWriter writer = new PrintWriter(outputFile))
 		{
@@ -1345,6 +1348,9 @@ public class OutputResourcesUtil {
 					writer.println("\t\tnameKey: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getNameTranslationKey()) + ",");
 				writer.println("\t\tworldId: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getId()) + ",");
 				writer.println("\t\timages: \"" + m.getWorld().getId() + "/Images/\",");
+				writer.println("\t\tmarkerShadows: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(
+						markerShadowsByWorld.computeIfAbsent(m.getWorld().getId(),
+								id -> MarkerShadows.urls(config.getOutputDir().toPath(), id))) + ",");
 				writer.println("\t\tlocalizationsScript: \"Scripts/" + m.getWorld().getId() + "/localizations.js\",");
 				writer.println("\t\tmasksScript: \"Scripts/" + m.getWorld().getId() + "/masks.js\",");
 				writer.println("\t\tworldName: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(m.getWorld().getName()) + ",");
