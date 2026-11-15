@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 import ch.qos.logback.classic.Level;
 import tectonicus.cache.swap.HddObjectListWriter;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.SignEntity;
 import tectonicus.util.DirUtils;
 import tectonicus.util.OutputResourcesUtil;
@@ -14,6 +15,7 @@ import tectonicus.world.Sign;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.HeightRange;
+import tectonicus.world.subset.PolygonalWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
 
 import java.nio.file.Files;
@@ -23,6 +25,100 @@ import java.util.HashSet;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigurationHierarchyTest {
+	@Test
+	void inheritsAStandalonePolygonAndUsesTheSameColumnsForViewMarkers(@TempDir Path output) throws Exception {
+		Configuration config = parse("""
+				<config><subset>
+				    <PolygonalSubset name="Triangle">
+				        <Point x=" -8 " z="0"/><Point x="0" z="0"/><Point x="-8" z="8"/><Point x="-8" z="0"/>
+				    </PolygonalSubset>
+				</subset></config>
+				<world worldDir="save">
+				    <dimension><layer/></dimension>
+				    <dimension><subset/><layer/></dimension>
+				</world>
+				""");
+		var map = config.getDimensionConfig(0);
+		var polygon = assertInstanceOf(PolygonalWorldSubset.class, map.getWorldSubset());
+		assertInstanceOf(FullWorldSubset.class, config.getDimensionConfig(1).getWorldSubset());
+		assertTrue(polygon.containsBlock(-4, 4));
+		assertFalse(polygon.containsBlock(-4, 5));
+		assertEquals(-4, polygon.getOrigin().x);
+		assertEquals(4, polygon.getOrigin().z);
+
+		var list = output.resolve("views.list").toFile();
+		var writer = new HddObjectListWriter<Sign>(list, true);
+		try {
+			for (int z = 4; z <= 5; z++) {
+				writer.add(new Sign(new SignEntity(-4, 64, z, 12, 64, z, "#view", "", "", "", 0, null, "black")));
+			}
+		} finally {
+			writer.close();
+		}
+		var markers = output.resolve("views.js");
+		OutputResourcesUtil.outputViews(markers.toFile(), list, map);
+		String exported = Files.readString(markers);
+		assertTrue(exported.contains("View_-4_64_4.png"));
+		assertFalse(exported.contains("View_-4_64_5.png"));
+	}
+
+	@Test
+	void mixesPolygonInclusionsAndExclusionsWithParentAndShapeHeights() throws Exception {
+		var subset = assertInstanceOf(UnionWorldSubset.class, parse("""
+				<map worldDir="save"><subset minY="-5" maxY="10">
+				    <PolygonalSubset name="Triangle" minY="-2">
+				        <Point x="0" z="0"/><Point x="12" z="0"/><Point x="0" z="12"/>
+				    </PolygonalSubset>
+				    <RectangularSubset origin="24,0" width="6" depth="6"/>
+				    <PolygonalSubset exclude="true" maxY="4">
+				        <Point x="2" z="2"/><Point x="6" z="2"/><Point x="2" z="6"/>
+				    </PolygonalSubset>
+				</subset><layer/></map>
+				""").getDimensionConfig(0).getWorldSubset());
+		var coord = new ChunkCoord(0, 0);
+		var visibility = subset.visibility(coord);
+		assertEquals("Triangle", subset.getMembers().getFirst().name());
+		assertTrue(subset.containsBlock(24, -5, 0));
+		assertFalse(subset.containsBlock(24, -6, 0));
+		assertTrue(visibility.contains(1, -2, 2));
+		assertFalse(visibility.contains(1, -3, 2));
+		assertFalse(visibility.contains(4, 4, 4));
+		assertTrue(visibility.contains(4, 5, 4));
+		assertFalse(visibility.contains(4, 11, 4));
+		assertEquals(visibility.contains(4, 4, 4), subset.containsBlock(4.75, 4.75, 4.75));
+		assertEquals(visibility.contains(4, 5, 4), subset.containsBlock(4.75, 5.75, 4.75));
+		assertFalse(subset.getBlockFilter(coord).containsColumn(4, 4));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"<Point x='0' z='0'/><Point x='3' z='0'/>",
+			"<Point x='0' z='0'/><Point x='1' z='1'/><Point x='2' z='2'/>",
+			"<Point x='0' z='0'/><Point x='0' z='4'/><Point x='0' z='0'/><Point x='4' z='4'/>",
+			"<Point x='0' z='0'/><Point x='4' z='4'/><Point x='0' z='4'/><Point x='4' z='0'/>",
+			"<Point x='0' z='0'/><Point x='4' z='0'/><Point x='4' z='4'/><Point x='2' z='0'/><Point x='0' z='4'/>",
+			"<Point x='0' z='0'/><Point x='4' z='0'/><Point x='2' z='0'/><Point x='2' z='4'/>"})
+	void rejectsInvalidStandaloneGeometry(String points) {
+		var error = invalidPolygon(points);
+		assertTrue(error.getMessage().contains("Subset union entry 1 (Bad), <PolygonalSubset>"));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"<Point x='0' z='0'/><Point x='1.5' z='0'/><Point x='0' z='4'/>",
+			"<Point x='0' z='0'/><Point x='9223372036854775808' z='0'/><Point x='0' z='4'/>",
+			"<Point x='0' z='0'/><Point x='4'/><Point x='0' z='4'/>",
+			"<Point x='0' z='0'/><Vertex x='4' z='0'/><Point x='0' z='4'/>"})
+	void identifiesTheMalformedPointInStandalonePolygons(String points) {
+		assertTrue(invalidPolygon(points).getMessage().contains("<PolygonalSubset>: point 2:"));
+	}
+
+	private IllegalArgumentException invalidPolygon(String points) {
+		return assertThrows(IllegalArgumentException.class, () -> parse("""
+				<map worldDir="save"><subset><PolygonalSubset name="Bad">%s</PolygonalSubset></subset><layer/></map>
+				""".formatted(points)));
+	}
+
 	@Test
 	void inheritsAndReplacesSubsetUnionsAsWholeBlocks() throws Exception {
 		Configuration config = parse("""

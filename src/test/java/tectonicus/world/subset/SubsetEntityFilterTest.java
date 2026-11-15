@@ -33,6 +33,7 @@ import tectonicus.raw.CushionEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.util.Vector3l;
 import tectonicus.world.WorldInfo;
+import tectonicus.world.subset.PolygonalWorldSubset.Point;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,7 +51,9 @@ class SubsetEntityFilterTest {
 		var rectangle = new RectangularWorldSubset(new Vector3l(-5, 64, Z), 6, 6);
 		var union = new UnionWorldSubset(List.of(new UnionWorldSubset.Member("Near", rectangle),
 				new UnionWorldSubset.Member("Far", new RectangularWorldSubset(new Vector3l(8, 64, Z), 4, 4))));
-		return Stream.of(circle, rectangle, union);
+		var polygon = new PolygonalWorldSubset(List.of(new Point(-8, Z - 3), new Point(-2, Z), new Point(-8, Z + 3)),
+				HeightRange.UNBOUNDED);
+		return Stream.of(circle, rectangle, union, polygon);
 	}
 
 	@ParameterizedTest
@@ -99,6 +102,21 @@ class SubsetEntityFilterTest {
 
 		assertEquals(List.of(-12), chunk.getPaintings().stream().map(BlockEntity::getY).toList());
 		assertEquals(List.of(-1), chunk.getItemFrames().stream().map(BlockEntity::getX).toList());
+	}
+
+	@Test
+	void appliesPolygonHeightAndExclusionToCrossChunkAnchors() throws IOException {
+		var slice = new PolygonalWorldSubset(List.of(new Point(-2, Z - 2), new Point(2, Z), new Point(-2, Z + 2)),
+				new HeightRange(-12, -11));
+		var hole = new PolygonalWorldSubset(List.of(new Point(-2, Z), new Point(-1, Z), new Point(-2, Z + 1)),
+				new HeightRange(-11, -11));
+		var subset = new UnionWorldSubset(List.of(new UnionWorldSubset.Member("Slice", slice)), List.of(hole));
+		RawChunk chunk = load(subset, new ChunkCoord(0, 0),
+				hanging("painting", -1, -12), hanging("painting", -1, -11), hanging("painting", -1, -10),
+				hanging("item_frame", -2, -12), hanging("item_frame", -3, -12));
+
+		assertEquals(List.of(-12), chunk.getPaintings().stream().map(BlockEntity::getY).toList());
+		assertEquals(List.of(-2), chunk.getItemFrames().stream().map(BlockEntity::getX).toList());
 	}
 
 	private static RawChunk load(WorldSubset subset, ChunkCoord coord, CompoundTag... entities) throws IOException {

@@ -23,7 +23,9 @@ import tectonicus.view.ViewUtil;
 import tectonicus.view.ViewUtil.Viewpoint;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
+import tectonicus.world.subset.PolygonalWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
+import tectonicus.world.subset.WorldSubset;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -52,6 +54,17 @@ public class FileViewCache
 		// ..
 		
 		cacheDir.mkdirs();
+	}
+
+	static String subsetCacheKey(WorldSubset subset) {
+		if (subset instanceof PolygonalWorldSubset polygon) {
+			return polygon.horizontalCacheKey();
+		}
+		if (subset instanceof UnionWorldSubset union && (union.getMembers().size() != 1 || union.hasExclusions()
+				|| union.getMembers().getFirst().shape() instanceof PolygonalWorldSubset)) {
+			return union.horizontalCacheKey();
+		}
+		return null;
 	}
 	
 	public ChangedViews findChangedViews(Rasteriser rasteriser, World world, File viewsFile, File viewsDir, ViewConfig viewConfig)
@@ -135,10 +148,10 @@ public class FileViewCache
 		hashAlgorithm.update(("biomeBlendRadius=" + world.getBiomeBlendRadius() + "\n").getBytes());
 		hashAlgorithm.update(("biomeSeed=" + world.getLevelDat().getWorldSeed() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		hashAlgorithm.update(("biomeExtraction=" + world.getBiomeCache().getCacheKey() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-		if (world.getWorldSubset() instanceof UnionWorldSubset union
-				&& (union.getMembers().size() != 1 || union.hasExclusions())) {
+		String subsetKey = subsetCacheKey(world.getWorldSubset());
+		if (subsetKey != null) {
 			// A changed mask can change the image while the same chunks remain visible.
-			hashAlgorithm.update(("worldSubset=" + union.horizontalCacheKey() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			hashAlgorithm.update(("worldSubset=" + subsetKey + "\n").getBytes(StandardCharsets.UTF_8));
 		}
 		
 		hashAlgorithm.update(sign.getText(0).getBytes());

@@ -35,6 +35,7 @@ import tectonicus.world.subset.BoundedWorldSubset;
 import tectonicus.world.subset.CircularWorldSubset;
 import tectonicus.world.subset.FullWorldSubset;
 import tectonicus.world.subset.HeightRange;
+import tectonicus.world.subset.PolygonalWorldSubset;
 import tectonicus.world.subset.RectangularWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
 import tectonicus.world.subset.WorldSubset;
@@ -647,7 +648,8 @@ public class XmlConfigurationParser
 			Element[] shapes = getChildren(subsetNode, null);
 			if (shapes.length == 0)
 				return new FullWorldSubset(parentRange);
-			if (shapes.length > 1 || shapes[0].hasAttribute("exclude") || parentRange.isBounded()
+			if (shapes.length > 1 || shapes[0].getTagName().equals("PolygonalSubset")
+					|| shapes[0].hasAttribute("exclude") || parentRange.isBounded()
 					|| shapes[0].hasAttribute("minY") || shapes[0].hasAttribute("maxY")) {
 				return parseSubsetUnion(shapes, parentRange);
 			}
@@ -704,20 +706,13 @@ public class XmlConfigurationParser
 			Element child = shapes[i];
 			String name = child.getAttribute("name").strip();
 			try {
-				Vector3l origin = null;
-				if (child.hasAttribute("origin")) {
-					origin = parseOrigin(child.getAttribute("origin"));
-					if (origin == null) {
-						throw new IllegalArgumentException("origin must be a pair of block coordinates (x, z)");
-					}
-				}
-
 				HeightRange range = parseHeightRange(child);
 				BoundedWorldSubset shape = switch (child.getTagName()) {
-					case "CircularSubset" -> new CircularWorldSubset(origin, parseSubsetSize(child, "radius"), range);
-					case "RectangularSubset" -> new RectangularWorldSubset(origin, parseSubsetSize(child, "width"),
+					case "CircularSubset" -> new CircularWorldSubset(parseSubsetOrigin(child), parseSubsetSize(child, "radius"), range);
+					case "RectangularSubset" -> new RectangularWorldSubset(parseSubsetOrigin(child), parseSubsetSize(child, "width"),
 							parseSubsetSize(child, "depth"), range);
-					default -> throw new IllegalArgumentException("expected CircularSubset or RectangularSubset");
+					case "PolygonalSubset" -> parsePolygonalSubset(child, range);
+					default -> throw new IllegalArgumentException("expected CircularSubset, RectangularSubset, or PolygonalSubset");
 				};
 				switch (child.getAttribute("exclude").strip()) {
 					case "true" -> exclusions.add(shape);
@@ -734,6 +729,45 @@ public class XmlConfigurationParser
 			return members.getFirst().shape();
 		}
 		return new UnionWorldSubset(members, exclusions, parentRange);
+	}
+
+	private static Vector3l parseSubsetOrigin(Element shape) {
+		if (!shape.hasAttribute("origin")) {
+			return null;
+		}
+		Vector3l origin = parseOrigin(shape.getAttribute("origin"));
+		if (origin == null) {
+			throw new IllegalArgumentException("origin must be a pair of block coordinates (x, z)");
+		}
+		return origin;
+	}
+
+	private static PolygonalWorldSubset parsePolygonalSubset(Element shape, HeightRange range) {
+		if (shape.hasAttribute("origin")) {
+			throw new IllegalArgumentException("omit origin for a polygon with absolute point coordinates");
+		}
+		Element[] children = getChildren(shape, null);
+		List<PolygonalWorldSubset.Point> points = new ArrayList<>(children.length);
+		for (int i = 0; i < children.length; i++) {
+			Element point = children[i];
+			try {
+				if (!point.getTagName().equals("Point") || getChildren(point, null).length > 0 || !point.getTextContent().isBlank()) {
+					throw new IllegalArgumentException("expected an empty <Point x=\"…\" z=\"…\"/> element");
+				}
+				points.add(new PolygonalWorldSubset.Point(parsePointCoordinate(point, "x"), parsePointCoordinate(point, "z")));
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException("point " + (i + 1) + ": " + e.getMessage(), e);
+			}
+		}
+		return new PolygonalWorldSubset(points, range);
+	}
+
+	private static long parsePointCoordinate(Element point, String attribute) {
+		try {
+			return Long.parseLong(point.getAttribute(attribute).strip());
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException(attribute + " must be a signed 64-bit block coordinate", e);
+		}
 	}
 
 	private static HeightRange parseHeightRange(Element element) {

@@ -25,10 +25,16 @@ public class AllRegionsIterator implements RegionIterator
 	
 	public AllRegionsIterator(File worldDir, SaveFormat saveFormat)
 	{
+		this(worldDir, saveFormat, file -> true);
+	}
+
+	AllRegionsIterator(File worldDir, SaveFormat saveFormat, FileFilter candidateFilter)
+	{
 		this.worldDir = worldDir;
 		
 		File regionDir = new File(worldDir, "region");
-		regionFiles = regionDir.listFiles(saveFormat == SaveFormat.MC_REGION ? new RegionFileFilter() : new AnvilFileFilter());
+		FileFilter saveFormatFilter = saveFormat == SaveFormat.MC_REGION ? new RegionFileFilter() : new AnvilFileFilter();
+		regionFiles = regionDir.listFiles(file -> saveFormatFilter.accept(file) && candidateFilter.accept(file));
 		if (regionFiles == null)
 			regionFiles = new File[0];
 		

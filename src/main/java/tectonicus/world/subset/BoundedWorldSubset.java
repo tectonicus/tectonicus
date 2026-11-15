@@ -9,6 +9,7 @@
 package tectonicus.world.subset;
 
 import tectonicus.chunk.ChunkCoord;
+import tectonicus.raw.RawChunk;
 import tectonicus.world.filter.ArrayBlockFilter;
 
 public interface BoundedWorldSubset extends WorldSubset {
@@ -20,6 +21,14 @@ public interface BoundedWorldSubset extends WorldSubset {
 
 	default boolean containsColumn(long x, long z) {
 		return containsBlock(x, z);
+	}
+
+	@Override
+	default RawChunk.BlockVisibility visibility(ChunkCoord coord) {
+		long originX = coord.x * RawChunk.WIDTH;
+		long originZ = coord.z * RawChunk.DEPTH;
+		HeightRange range = getHeightRange();
+		return (x, y, z) -> range.contains(y) && containsColumn(originX + x, originZ + z);
 	}
 
 	@Override

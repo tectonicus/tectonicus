@@ -24,6 +24,11 @@ public interface WorldSubset {
 
 	boolean containsBlock(double x, double z);
 
+	static boolean isBlockCoordinate(double coordinate) {
+		// Long.MAX_VALUE rounds up to 2^63 as a double, so the upper endpoint is exclusive.
+		return coordinate >= -0x1p63 && coordinate < 0x1p63;
+	}
+
 	default HeightRange getHeightRange() {
 		return HeightRange.UNBOUNDED;
 	}

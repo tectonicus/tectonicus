@@ -117,7 +117,7 @@ public class UnionWorldSubset implements WorldSubset {
 
 	@Override
 	public boolean containsBlock(double x, double z) {
-		if (!Double.isFinite(x) || !Double.isFinite(z)) {
+		if (!WorldSubset.isBlockCoordinate(x) || !WorldSubset.isBlockCoordinate(z)) {
 			return false;
 		}
 		long columnX = (long) Math.floor(x);
@@ -140,20 +140,16 @@ public class UnionWorldSubset implements WorldSubset {
 	public boolean containsBlock(double x, double y, double z) {
 		if (!hasHeightBounds)
 			return containsBlock(x, z);
-		if (!heightRange.contains(Math.floor(y)) || !Double.isFinite(x) || !Double.isFinite(z))
+		double blockY = Math.floor(y);
+		if (!heightRange.contains(blockY) || !WorldSubset.isBlockCoordinate(x) || !WorldSubset.isBlockCoordinate(z))
 			return false;
-		return containsBlock((long) Math.floor(x), Math.floor(y), (long) Math.floor(z), null);
-	}
-
-	private boolean containsBlock(long x, double blockY, long z, Member member) {
-		if (member != null) {
-			if (!contains(member.shape(), x, blockY, z))
-				return false;
-		} else if (!members.isEmpty() && !included(x, blockY, z)) {
+		long columnX = (long) Math.floor(x);
+		long columnZ = (long) Math.floor(z);
+		if (!members.isEmpty() && !included(columnX, blockY, columnZ)) {
 			return false;
 		}
 		for (BoundedWorldSubset shape : exclusions) {
-			if (contains(shape, x, blockY, z))
+			if (contains(shape, columnX, blockY, columnZ))
 				return false;
 		}
 		return true;
@@ -177,9 +173,20 @@ public class UnionWorldSubset implements WorldSubset {
 	}
 
 	public RawChunk.BlockVisibility visibility(ChunkCoord coord, Member member) {
-		long originX = coord.x * RawChunk.WIDTH;
-		long originZ = coord.z * RawChunk.DEPTH;
-		return (x, y, z) -> heightRange.contains(y) && containsBlock(originX + x, y, originZ + z, member);
+		List<RawChunk.BlockVisibility> included = member == null
+				? members.stream().map(entry -> entry.shape().visibility(coord)).toList()
+				: List.of(member.shape().visibility(coord));
+		List<RawChunk.BlockVisibility> excluded = exclusions.stream().map(shape -> shape.visibility(coord)).toList();
+		return (x, y, z) -> heightRange.contains(y)
+				&& (included.isEmpty() || anyVisible(included, x, y, z)) && !anyVisible(excluded, x, y, z);
+	}
+
+	private static boolean anyVisible(List<RawChunk.BlockVisibility> shapes, int x, int y, int z) {
+		for (int i = 0; i < shapes.size(); i++) {
+			if (shapes.get(i).contains(x, y, z))
+				return true;
+		}
+		return false;
 	}
 
 	@Override
