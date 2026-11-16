@@ -58,7 +58,8 @@ function playerDisplayName(player) {
 
 function bindMarkerPopup(marker, html, worldPos, layer, options) {
 	if (marker.options) marker.options.alt = mapText('tectonicus.marker.label', {}, layer);
-	return marker.bindPopup(html + markerCopyControls(worldPos, layer), options);
+	const controls = markerCopyControls(worldPos, layer);
+	return marker.bindPopup(typeof html === 'function' ? () => html() + controls : html + controls, options);
 }
 
 function markerTeleportCommand(worldPos, layer) {

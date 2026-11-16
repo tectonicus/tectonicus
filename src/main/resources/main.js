@@ -622,17 +622,36 @@ function refreshSignMarkers(layer) {
 	group.clearLayers();
 
 	// Sign markers
-	for (i in layer.signs) {
-		let sign = layer.signs[i];
-		let point = layer.projection.worldToMap(sign.worldPos);
-
+	for (const sign of layer.signs ?? []) {
+		const point = layer.projection.worldToMap(sign.worldPos);
 		const myIcon = createWorldMarkerIcon('Sign.png', [17, 20], layer);
+		const popup = () => renderSignPopup(sign, layer);
 
-		let marker = bindMarkerPopup(L.marker(point, { icon: myIcon }),
-			'<pre><center>' + sign.text1 + '<br/>' + sign.text2 + '<br/>' + sign.text3 + '<br/>' + sign.text4 + '</center></pre>', sign.worldPos, layer);
-
-		group.addLayer(marker);
+		group.addLayer(bindMarkerPopup(L.marker(point, {icon: myIcon}), popup, sign.worldPos, layer));
 	}
+}
+
+function renderSignPopup(sign, layer) {
+	const color = minecraftTextColor(sign.color);
+	const outline = minecraftTextColor(sign.outlineColor);
+	const classes = ['sign_text'];
+	const styles = [];
+	if (color) styles.push(`color:${color};`);
+	if (outline) {
+		classes.push('sign_text_glowing');
+		styles.push(`--sign-outline:${outline};`);
+	}
+	const backgrounds = worldLocalizations.get(layer?.worldId)?.signBackgrounds;
+	if (backgrounds?.includes(sign.background)) {
+		classes.push('sign_text_board');
+		if (sign.background.includes('/hanging/')) classes.push('sign_text_hanging_board');
+		const url = encodeURI(worldImageUrl(sign.background, layer)).replaceAll("'", '%27');
+		styles.push(`background-image:url('${url}');`);
+	}
+	const lines = [sign.text1, sign.text2, sign.text3, sign.text4].map((line, index) =>
+		renderMinecraftText(line, 'sign_text_line', layer, sign.textColors?.[index]) || '<div class="sign_text_line"></div>');
+	const style = styles.length ? ` style="${escapeHtml(styles.join(''))}"` : '';
+	return `<div class="${classes.join(' ')}"${style}>${lines.join('')}</div>`;
 }
 
 function refreshViewMarkers(layer) {

@@ -14,7 +14,7 @@ function viewer() {
         URL, URLSearchParams,
         L: {map: () => ({}), layerGroup, CRS: {Simple: {}}, icon: options => options,
             marker: (point, options) => {
-                const marker = {point, options, bindPopup(html) { this.html = html; return this; },
+                const marker = {point, options, bindPopup(html) { this.html = typeof html === 'function' ? html(this) : html; return this; },
                     bindTooltip() { return this; }};
                 markers.push(marker);
                 return marker;

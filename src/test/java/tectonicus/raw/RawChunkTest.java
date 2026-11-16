@@ -322,6 +322,70 @@ class RawChunkTest {
 		return readChunk(root, new WorldInfo(version, false));
 	}
 
+	@Test
+	void readsSignMessagesFromLegacyJsonAndModernNbtAsLiteralText() throws Exception {
+		var legacy = readSign(Version.VERSION_19, Map.of(
+				"Text1", new StringTag("Text1", "{\"text\": \"A \\\"quote\\\" \\\\ path\", \"extra\": [{\"text\":\" 日\",\"color\":\"dark_aqua\"}]}"),
+				"Text2", new StringTag("Text2", "\"Use <&>\""),
+				"Color", new StringTag("Color", "red"), "GlowingText", new ByteTag("GlowingText", (byte) 1)));
+		assertEquals("A \"quote\" \\ path 日", legacy.getText1());
+		assertEquals("Use <&>", legacy.getText2());
+		assertEquals("", legacy.getText3());
+		assertEquals("red", legacy.getColor());
+		assertTrue(legacy.isGlowing());
+		assertEquals(List.of(new SignTextColor(16, 18, 0x00aaaa)), legacy.getTextColors().getFirst());
+
+		var messages = new ListTag("messages", CompoundTag.class, List.of(
+				new CompoundTag("", Map.of("", new StringTag("", "\"literal quotes\""))),
+				new CompoundTag("", Map.of("text", new StringTag("text", "Café"),
+						"color", new StringTag("color", "#123abc"),
+						"extra", new ListTag("extra", StringTag.class, List.of(new StringTag("", " 日")))))));
+		var modern = readSign(Version.VERSION_26_3, Map.of("front_text", new CompoundTag("front_text", Map.of(
+				"messages", messages, "color", new StringTag("color", "light_gray"),
+				"has_glowing_text", new ByteTag("has_glowing_text", (byte) 1))),
+				"back_text", new CompoundTag("back_text", Map.of("color", new StringTag("color", "yellow"),
+						"messages", new ListTag("messages", StringTag.class, List.of(new StringTag("", "裏面")))))));
+		assertEquals("\"literal quotes\"", modern.getText1());
+		assertEquals("Café 日", modern.getText2());
+		assertEquals("", modern.getText4());
+		assertEquals("light_gray", modern.getColor());
+		assertTrue(modern.isGlowing());
+		assertEquals(List.of(new SignTextColor(0, 4, 0x123abc), new SignTextColor(4, 6, 0x123abc)),
+				modern.getTextColors().get(1));
+		assertEquals("裏面", modern.getBack().lines().getFirst());
+		assertEquals("yellow", modern.getBack().color());
+		assertFalse(modern.getBack().glowing());
+	}
+
+	@Test
+	void signStyleAndBackTextChangesInvalidateChunkGeometry() throws Exception {
+		var chunk = new RawChunk();
+		var digest = MessageDigest.getInstance("SHA-256");
+		var front = new SignEntity.Face(List.of("Hello", "", "", ""), "red", false, List.of());
+		chunk.setSigns(Map.of("sign", new SignEntity(1, 64, 1, 1, 64, 1, front, null, 0, null, "")));
+		byte[] plainHash = chunk.calculateHash(digest);
+		var glowing = new SignEntity.Face(front.lines(), front.color(), true, front.textColors());
+		chunk.setSigns(Map.of("sign", new SignEntity(1, 64, 1, 1, 64, 1, glowing, null, 0, null, "")));
+		byte[] glowingHash = chunk.calculateHash(digest);
+		assertFalse(java.util.Arrays.equals(plainHash, glowingHash));
+		chunk.setSigns(Map.of("sign", new SignEntity(1, 64, 1, 1, 64, 1, glowing, front, 0, null, "")));
+		assertFalse(java.util.Arrays.equals(glowingHash, chunk.calculateHash(digest)));
+	}
+
+	private SignEntity readSign(Version version, Map<String, Tag> text) throws Exception {
+		var fields = new HashMap<>(text);
+		fields.put("id", new StringTag("id", "minecraft:sign"));
+		fields.put("x", new IntTag("x", 8));
+		fields.put("y", new IntTag("y", 4));
+		fields.put("z", new IntTag("z", 8));
+		var sign = new CompoundTag("", fields);
+		var root = new CompoundTag("", Map.of("DataVersion", new IntTag("DataVersion", version.getDataVersion()),
+				"Status", new StringTag("Status", "full"),
+				"sections", new ListTag("sections", CompoundTag.class, List.of()),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of(sign))));
+		return readChunk(root, version).getSigns().values().iterator().next();
+	}
+
 	private RawChunk readChunk(CompoundTag root, WorldInfo worldInfo) throws Exception {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {

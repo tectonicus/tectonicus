@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -36,14 +36,13 @@ public class HangingSign extends Sign
         
 	public HangingSign(String name, SubTexture texture, final boolean isWall, final boolean obey)
 	{
-		super(name, texture.texturePackVersion, isWall, obey);
+		super(name, isWall, obey);
                 
                 signBottom = 0;
 		signDepth = 1.0f / 16.0f * 7;
 		width = 1.0f / 16.0f * WIDTH;
 		height = 1.0f / 16.0f * HEIGHT;
 		thickness = 1.0f / 16.0f * THICKNESS;
-                lineHeight = 1.0f / 16.0f * 2.25f;
 		
 		final float widthTexel = 1.0f / 64.0f;
 		final float heightTexel = 1.0f / 32.0f;
@@ -121,7 +120,7 @@ public class HangingSign extends Sign
                         subMesh.addDoubleSidedQuad(new Vector3f(11.8f * unit, 16 * unit, signDepth), new Vector3f(14.2f * unit, 16 * unit, signDepth+thickness), new Vector3f(14.2f * unit, 10 * unit, signDepth+thickness), new Vector3f(11.8f * unit, 10 * unit, signDepth), white, chainTexture2);
                 }
                 
-                addText(x, y, z, world, rawChunk, geometry, xOffset, yOffset, zOffset, angle);
+                addText(x, y, z, world, rawChunk, geometry, yOffset, angle);
                 
                 subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.AlphaTest), xOffset, yOffset, zOffset, ROTATION, angle);
 	}

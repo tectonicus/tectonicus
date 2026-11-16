@@ -250,37 +250,61 @@ function findCharacterRowAndColumn(char) {
     return [col, row];
 }
 
-function renderMinecraftText(text, className) {
+function minecraftTextColor(rgb) {
+    if (!Number.isInteger(rgb) || rgb < 0 || rgb > 0xffffff) return null;
+    return '#' + rgb.toString(16).padStart(6, '0');
+}
+
+function minecraftTextRuns(text, colors) {
+    const runs = [];
+    let offset = 0;
+    for (const {start, end, rgb} of colors) {
+        const color = minecraftTextColor(rgb);
+        if (!color || start < offset || end <= start || end > text.length) continue;
+        if (start > offset) runs.push({text: text.slice(offset, start)});
+        runs.push({text: text.slice(start, end), color});
+        offset = end;
+    }
+    if (offset < text.length) runs.push({text: text.slice(offset)});
+    return runs;
+}
+
+function renderMinecraftText(text, className, layer = activeBaseLayer, colors = []) {
     if (!text)
     {
             return null;
     }
     
     className = escapeHtml(className || '');
-    const normalized = text.normalize('NFC');
-    const characters = Array.from(normalized);
+    const runs = minecraftTextRuns(text, colors);
+    const characters = runs.flatMap(run =>
+        Array.from(run.text.normalize('NFC'), char => ({char, color: run.color})));
+    const normalized = characters.map(({char}) => char).join('');
     const label = escapeHtml(text);
-    const font = worldLocalizations.get(activeBaseLayer?.worldId)?.inventoryFont;
-    const atlas = font?.[0] && fontMaskUrl('InventoryFont.png');
+    const font = worldLocalizations.get(layer?.worldId)?.inventoryFont;
+    const atlas = font?.[0] && fontMaskUrl('InventoryFont.png', layer);
     // Let the browser shape combining, joining and right-to-left scripts as a complete string.
     const needsShaping = !/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Number}\p{Punctuation}\p{Symbol}\p{Space_Separator}]*$/u.test(normalized);
-    if (atlas && !needsShaping && characters.every(char => Object.hasOwn(font, char.codePointAt(0)))) {
+    if (atlas && !needsShaping && characters.every(({char}) => Object.hasOwn(font, char.codePointAt(0)))) {
             const [atlasWidth, atlasHeight] = font[0];
-            const glyphs = characters.map(char => {
+            const glyphs = characters.map(({char, color}) => {
                     const [x, y, width, height, advance, top] = font[char.codePointAt(0)];
                     if (width === 0) return `<span class="mc_space" style="width:${advance}px"></span>`;
-                    return `<span class="mc_char mc_atlas_char" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px"></span>`;
+                    const tint = color ? `;color:${color}` : '';
+                    return `<span class="mc_char mc_atlas_char" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px${tint}"></span>`;
             }).join('');
             return `<div class="mc_text_container ${className}" aria-label="${label}" style="--minecraft-font:url('${atlas}');--minecraft-font-size:${atlasWidth}px ${atlasHeight}px"><span aria-hidden="true">${glyphs}</span></div>`;
     }
 
-    if (!worldMaskUrl('Font.png') || characters.some(char => !charMap.includes(char))) {
-            return '<div class="mc_text_container mc_text_fallback ' + className + '">' + label + '</div>';
+    if (!worldMaskUrl('Font.png', layer) || characters.some(({char}) => !charMap.includes(char))) {
+            const content = runs.map(run => run.color
+                ? `<span style="color:${run.color}">${escapeHtml(run.text)}</span>` : escapeHtml(run.text)).join('');
+            return '<div class="mc_text_container mc_text_fallback ' + className + '">' + content + '</div>';
     }
 
     let html = '<div class="mc_text_container ' + className + '" aria-label="' + label + '">';
 
-    for (const char of characters) {
+    for (const {char, color} of characters) {
             const position = findCharacterRowAndColumn(char);
 
             const left = position[0] * 8;
@@ -295,7 +319,8 @@ function renderMinecraftText(text, className) {
                     }
             }
 
-            html += `<div class="mc_char" style="mask-position: -${left}px -${top}px;${widthOverride}"></div>`;
+            const tint = color ? ` color:${color};` : '';
+            html += `<div class="mc_char" style="mask-position: -${left}px -${top}px;${widthOverride}${tint}"></div>`;
     }
 
     html += '</div>';

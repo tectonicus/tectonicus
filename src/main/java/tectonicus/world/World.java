@@ -77,6 +77,7 @@ import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
 import tectonicus.util.DirUtils;
+import tectonicus.util.MapLocalization;
 import tectonicus.util.Util;
 import tectonicus.util.Vector3d;
 import tectonicus.util.Vector3l;
@@ -212,6 +213,7 @@ public class World implements BlockContext, AutoCloseable
 	
 	private final Geometry daySkybox, nightSkybox;
 	
+	@Getter
 	private final SignFilter signFilter;
 	@Getter
 	private final float cameraAngleRad;
@@ -309,7 +311,7 @@ public class World implements BlockContext, AutoCloseable
 		texturePack = new TexturePack(rasteriser, minecraftJar,
 				worldConfig != null ? worldConfig.getTexturePack() : config.getTexturePack(),
 				usingProgrammerArt,
-				map.getModJars(), levelDat.getDataPacks());
+				map.getModJars(), levelDat.getDataPacks(), MapLocalization.parseLocale(config.getMapLocale()));
 		this.textureVersion = texturePack.getVersion();
 		// Pre-1.9 saves have no version name in level.dat. Use the configured game's assets.
 		boolean legacyMapPalette = version == VERSION_UNKNOWN && (textureVersion.getNumVersion() <= VERSION_5.getNumVersion()
@@ -406,6 +408,7 @@ public class World implements BlockContext, AutoCloseable
 	public void close() {
 		try {
 			flushGeometryCache();
+			texturePack.getSignFont().close();
 			savedMaps.close();
 		} finally {
 			biomeCache.close();

@@ -137,6 +137,7 @@ public class FileTileCache implements TileCache
 		boolean programmerArt = dimension != null && dimension.getWorld() != null
 				? dimension.getWorld().isUsingProgrammerArt() : args.isUsingProgrammerArt();
 		buffer.append("useProgrammerArt=").append(programmerArt).append('\n');
+		buffer.append("signFontLocale=").append(args.getMapLocale()).append('\n');
 		
 		// Paths
 		buffer.append(args.getOutputDir().getAbsolutePath());

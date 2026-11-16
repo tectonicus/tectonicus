@@ -133,6 +133,8 @@ public class FileViewCache
 		
 		hashAlgorithm.update(Integer.toString(VIEW_RENDERER_VERSION).getBytes());
 		hashAlgorithm.update(("useProgrammerArt=" + world.isUsingProgrammerArt() + "\n").getBytes(StandardCharsets.UTF_8));
+		hashAlgorithm.update(("signFontLocale=" + world.getTexturePack().getSignFont().getLocale().toLanguageTag() + "\n")
+				.getBytes(StandardCharsets.UTF_8));
 		hashAlgorithm.update(("useBiomeColours=" + world.useBiomeColours() + "\n").getBytes());
 		hashAlgorithm.update(("smoothLit=" + world.isSmoothLit() + "\n").getBytes());
 		if (world.isSmoothLit())

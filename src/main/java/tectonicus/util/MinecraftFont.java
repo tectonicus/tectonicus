@@ -18,41 +18,66 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.zip.ZipInputStream;
 
-/** Builds a subset of the client's inventory font at twice the viewer's pixel scale. */
+/** Loads and packs Minecraft glyphs at twice their logical pixel scale. */
 @Slf4j
-final class InventoryFont {
+public final class MinecraftFont {
 	static final String IMAGE = "InventoryFont.png";
 	private static final int CELL_SIZE = 32;
 	private static final int COLUMNS = 32;
 
 	private final ZipStack assets;
-	private final MapLocalization localization;
+	private final Locale locale;
+	private final Function<String, byte[]> launcherAsset;
 	private final Set<Integer> remaining;
 	private final Map<Integer, Glyph> glyphs = new TreeMap<>();
 	private final Set<String> loaded = new HashSet<>();
 
-	private InventoryFont(ZipStack assets, MapLocalization localization, Set<Integer> characters) {
+	private MinecraftFont(ZipStack assets, Locale locale, Function<String, byte[]> launcherAsset, Set<Integer> characters) {
 		this.assets = assets;
-		this.localization = localization;
+		this.locale = locale;
+		this.launcherAsset = launcherAsset;
 		this.remaining = new HashSet<>(characters);
 	}
 
 	static Map<Integer, double[]> write(ZipStack assets, MapLocalization localization, Set<Integer> characters, Path output) {
-		InventoryFont font = new InventoryFont(assets, localization, characters);
+		MinecraftFont font = new MinecraftFont(assets, localization.locale(), key -> localization.minecraftFontAsset(assets, key), characters);
 		font.loadDefinition("minecraft:default");
-		if (font.glyphs.isEmpty()) return Map.of();
+		Atlas atlas = pack(font.glyphs);
+		if (atlas.image() == null) return Map.of();
 		try {
-			return font.writeAtlas(output);
+			ImageIO.write(atlas.image(), "png", output.toFile());
+			atlas.metrics().put(0, new double[] {atlas.image().getWidth() / 2.0, atlas.image().getHeight() / 2.0});
+			return atlas.metrics();
 		} catch (IOException e) {
 			log.warn("Unable to write the inventory font to {}", output, e);
 			return Map.of();
 		}
+	}
+
+	/** Keeps launcher font data cached when the renderer requests more glyphs. */
+	public static Function<Set<Integer>, Map<Integer, Glyph>> loader(ZipStack assets, Locale locale) {
+		var launcherAssets = new MinecraftLanguageAssets();
+		return characters -> {
+			MinecraftFont font = new MinecraftFont(assets, locale, key -> launcherAssets.readAsset(assets, key), characters);
+			font.loadGlyphs();
+			return font.glyphs;
+		};
+	}
+
+	private void loadGlyphs() {
+		loadDefinition("minecraft:default");
+		if (assets.hasFile("assets/minecraft/font/default.json")) return;
+		loadLegacyBitmap();
+		loadLegacyUnicode("minecraft:font/glyph_sizes.bin", "minecraft:font/unicode_page_%s.png");
 	}
 
 	private void loadDefinition(String id) {
@@ -65,7 +90,7 @@ final class InventoryFont {
 			JsonNode providers = base == null ? null : FileUtils.getOBJECT_MAPPER().readTree(base).path("providers");
 			if ((providers == null || providers.isEmpty()) && path.equals("minecraft/font/include/unifont.json")) {
 				// Modern clients ship an empty placeholder for this launcher asset.
-				byte[] data = localization.minecraftFontAsset(assets, path);
+				byte[] data = launcherAsset.apply(path);
 				if (data.length > 0) providers = FileUtils.getOBJECT_MAPPER().readTree(data).path("providers");
 			}
 			if (providers != null) loadProviders(providers, path);
@@ -79,13 +104,14 @@ final class InventoryFont {
 			if (remaining.isEmpty()) break;
 			JsonNode filter = provider.path("filter");
 			if (filter.path("uniform").asBoolean() || (filter.has("jp")
-					&& filter.path("jp").asBoolean() != localization.locale().getLanguage().equals("ja"))) continue;
+					&& filter.path("jp").asBoolean() != locale.getLanguage().equals("ja"))) continue;
 			try {
 				switch (provider.path("type").asString()) {
 					case "reference" -> loadDefinition(provider.path("id").asString());
 					case "space" -> loadSpaces(provider.path("advances"));
 					case "bitmap" -> loadBitmap(provider);
 					case "unihex" -> loadUnihex(provider);
+					case "legacy_unicode" -> loadLegacyUnicode(provider.path("sizes").asString(), provider.path("template").asString());
 				}
 			} catch (IOException | JacksonException e) {
 				log.debug("Unable to read a font provider from {}", path, e);
@@ -135,11 +161,86 @@ final class InventoryFont {
 		}
 	}
 
+	private void loadLegacyBitmap() {
+		if (remaining.isEmpty()) return;
+		try (var lookup = MinecraftFont.class.getResourceAsStream("/font.txt")) {
+			BufferedImage sheet = readFirst("assets/minecraft/textures/font/ascii.png", "font/default.png", "default.png");
+			if (sheet == null || lookup == null || sheet.getWidth() % 16 != 0 || sheet.getHeight() % 16 != 0) return;
+			int width = sheet.getWidth() / 16;
+			int height = sheet.getHeight() / 16;
+			float scale = 8f / height;
+			try (var reader = new BufferedReader(new InputStreamReader(lookup, StandardCharsets.UTF_8))) {
+				int row = 2;
+				for (String line; row < 16 && (line = reader.readLine()) != null; ) {
+					if (line.isEmpty() || line.startsWith("#")) continue;
+					for (int column = 0; column < Math.min(line.length(), 16); column++) {
+						int code = row == 6 && column == 0 ? '`' : line.charAt(column);
+						if (!remaining.contains(code)) continue;
+						setLegacyBitmapGlyph(code, sheet.getSubimage(column * width, row * height, width, height), scale);
+					}
+					row++;
+				}
+			}
+		} catch (IOException e) {
+			log.debug("Unable to read the legacy font bitmap", e);
+		}
+	}
+
+	private void setLegacyBitmapGlyph(int code, BufferedImage cell, float scale) {
+		if (code == ' ') {
+			add(code, new Glyph(null, 4, 0));
+			return;
+		}
+		int width = rightEdge(cell) + 1;
+		if (width > 0 && width * scale <= CELL_SIZE / 2f) {
+			BufferedImage image = scale(cell.getSubimage(0, 0, width, cell.getHeight()), (int) Math.ceil(width * scale * 2), 16);
+			add(code, new Glyph(image, Math.round(width * scale) + 1, 0));
+		}
+	}
+
+	private void loadLegacyUnicode(String sizesId, String template) {
+		String sizes = resource(sizesId, "", "");
+		if (sizes == null || remaining.isEmpty() || !template.contains("%s")) return;
+		try (var stream = assets.getStream(assets.hasFile("assets/" + sizes) ? "assets/" + sizes
+				: sizes.substring(sizes.indexOf('/') + 1))) {
+			if (stream == null) return;
+			byte[] widths = stream.readNBytes(65536);
+			Map<Integer, BufferedImage> pages = new HashMap<>();
+			for (int code : Set.copyOf(remaining)) {
+				if (code >= widths.length || widths[code] == 0) continue;
+				int page = code >> 8;
+				if (!pages.containsKey(page)) {
+					String path = resource(template.replace("%s", String.format(Locale.ROOT, "%02x", page)), "textures/", "");
+					if (path == null) continue;
+					pages.put(page, readFirst("assets/" + path, path.substring(path.indexOf("textures/") + "textures/".length())));
+				}
+				BufferedImage image = pages.get(page);
+				if (image == null || image.getWidth() != 256 || image.getHeight() != 256) continue;
+				int left = (widths[code] & 0xff) >> 4;
+				int right = widths[code] & 0xf;
+				if (right < left) continue;
+				BufferedImage glyph = image.getSubimage((code & 0xf) * 16 + left, ((code >> 4) & 0xf) * 16, right - left + 1, 16);
+				add(code, new Glyph(glyph, glyph.getWidth() / 2.0 + 1, 0));
+			}
+		} catch (IOException e) {
+			log.debug("Unable to read legacy Unicode font {}", sizes, e);
+		}
+	}
+
+	private BufferedImage readFirst(String... paths) throws IOException {
+		for (String path : paths) {
+			try (var stream = assets.getStream(path)) {
+				if (stream != null) return ImageIO.read(stream);
+			}
+		}
+		return null;
+	}
+
 	private void loadUnihex(JsonNode provider) throws IOException {
 		String path = resource(provider.path("hex_file").asString(), "", "");
 		if (path == null || remaining.isEmpty()) return;
 		try (var stream = open(path)) {
-			byte[] asset = stream == null ? localization.minecraftFontAsset(assets, path) : null;
+			byte[] asset = stream == null ? launcherAsset.apply(path) : null;
 			if (asset != null && asset.length == 0) return;
 			try (var zip = new ZipInputStream(stream == null ? new ByteArrayInputStream(asset) : stream)) {
 				for (var entry = zip.getNextEntry(); entry != null && !remaining.isEmpty(); entry = zip.getNextEntry()) {
@@ -196,9 +297,13 @@ final class InventoryFont {
 		glyphs.put(code, glyph);
 	}
 
-	private Map<Integer, double[]> writeAtlas(Path output) throws IOException {
+	public static Atlas pack(Map<Integer, Glyph> glyphs) {
 		long images = glyphs.values().stream().filter(glyph -> glyph.image() != null).count();
-		if (images == 0) return Map.of();
+		if (images == 0) {
+			Map<Integer, double[]> spaces = new TreeMap<>();
+			glyphs.forEach((code, glyph) -> spaces.put(code, new double[] {0, 0, 0, 0, glyph.advance(), 0}));
+			return new Atlas(null, spaces);
+		}
 		int width = (int) Math.min(images, COLUMNS) * CELL_SIZE;
 		int height = (int) ((images + COLUMNS - 1) / COLUMNS) * CELL_SIZE;
 		BufferedImage atlas = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -223,9 +328,7 @@ final class InventoryFont {
 		} finally {
 			graphics.dispose();
 		}
-		ImageIO.write(atlas, "png", output.toFile());
-		metrics.put(0, new double[] {width / 2.0, height / 2.0});
-		return metrics;
+		return new Atlas(atlas, metrics);
 	}
 
 	private static BufferedImage scale(BufferedImage image, int width, int height) {
@@ -261,5 +364,6 @@ final class InventoryFont {
 		return namespace + "/" + prefix + name + suffix;
 	}
 
-	private record Glyph(BufferedImage image, double advance, int top) {}
+	public record Atlas(BufferedImage image, Map<Integer, double[]> metrics) {}
+	public record Glyph(BufferedImage image, double advance, int top) {}
 }

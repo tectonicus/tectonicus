@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
@@ -14,22 +14,14 @@ import org.joml.Vector4f;
 import tectonicus.BlockContext;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
-import tectonicus.TextLayout;
-import tectonicus.Version;
 import tectonicus.configuration.LightFace;
-import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
-import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Geometry;
+import tectonicus.renderer.SignTextRenderer;
 import tectonicus.texture.SubTexture;
-import tectonicus.util.Colour4f;
-import tectonicus.world.Colors;
-
-import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
-import static tectonicus.Version.VERSION_RV;
 
 public class Sign implements BlockType
 {
@@ -45,7 +37,6 @@ public class Sign implements BlockType
 	protected float width;
 	protected float height;
 	protected float thickness;
-        protected float lineHeight;
 	
 	protected final String name;
         
@@ -59,25 +50,21 @@ public class Sign implements BlockType
 	protected final boolean isWall;
 	protected final boolean obey;
 	
-	private Version texturePackVersion;
-	
-        protected Sign(String name, Version texturePackVersion, final boolean isWall, final boolean obey) {
+        protected Sign(String name, final boolean isWall, final boolean obey) {
 		this.name = name;
 		this.isWall = isWall;
 		this.obey = obey;
-		this.texturePackVersion = texturePackVersion;
                 
                 signBottom = isWall ? 0 : 1.0f / 16.0f * POST_HEIGHT;
                 signDepth = isWall ? 0 : 1.0f / 16.0f * 7;
                 width = 1.0f / 16.0f * WIDTH;
                 height = 1.0f / 16.0f * HEIGHT;
                 thickness = 1.0f / 16.0f * THICKNESS;
-                lineHeight = 1.0f / 16.0f * 2.6f;
         }
         
 	public Sign(String name, SubTexture texture, final boolean isWall, final boolean obey)
 	{
-                this(name, texture.texturePackVersion, isWall, obey);
+                this(name, isWall, obey);
             
 		final float widthTexel = 1.0f / 64.0f;
 		final float heightTexel = 1.0f / 32.0f;
@@ -163,7 +150,7 @@ public class Sign implements BlockType
                         angle = getRotationAngle(data);
                 }
 		
-                addText(x, y, z, world, rawChunk, geometry, xOffset, yOffset, zOffset, angle);
+                addText(x, y, z, world, rawChunk, geometry, yOffset, angle);
 		
 		subMesh.pushTo(geometry.getMesh(frontTexture.texture, Geometry.MeshType.Solid), xOffset, yOffset, zOffset, ROTATION, angle);
 	}
@@ -220,43 +207,13 @@ public class Sign implements BlockType
             }                
         }
         
-        protected void addText(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry, float xOffset, float yOffset, float zOffset, float angle) {
-		// Add the text
-		if (!obey)
-		{
-                        String xyz = "x" + x + "y" + y + "z" + z;
-                        SignEntity sign = rawChunk.getSigns().get(xyz);
-
-                        Mesh textMesh = geometry.getMesh(world.getTexturePack().getFont().getTexture(), Geometry.MeshType.AlphaTest);
-			
-			final float epsilon = 0.001f;
-						
-			final Vector4f color;
-			if (texturePackVersion == VERSION_RV) {
-				color = new Vector4f(50/255f, 183/255f, 50/255f, 1);
-			}
-			else {
-				Colour4f signColor = Colors.byName(sign.getColor()).getColorNormalized();
-				color = new Vector4f(signColor.getR(), signColor.getG(), signColor.getB(), 1);
-			}
-			
-			TextLayout text1 = new TextLayout(world.getTexturePack().getFont());
-			text1.setText(unescapeJava(sign.getText1()), width/2f, signBottom+height - lineHeight * 1, signDepth+thickness+epsilon, true, color);
-			
-			TextLayout text2 = new TextLayout(world.getTexturePack().getFont());
-			text2.setText(unescapeJava(sign.getText2()), width/2f, signBottom+height - lineHeight * 2, signDepth+thickness+epsilon, true, color);
-			
-			TextLayout text3 = new TextLayout(world.getTexturePack().getFont());
-			text3.setText(unescapeJava(sign.getText3()), width/2f, signBottom+height - lineHeight * 3, signDepth+thickness+epsilon, true, color);
-			
-			TextLayout text4 = new TextLayout(world.getTexturePack().getFont());
-			text4.setText(unescapeJava(sign.getText4()), width/2f, signBottom+height - lineHeight * 4, signDepth+thickness+epsilon, true, color);
-			
-			text1.pushTo(textMesh, xOffset, yOffset, zOffset, ROTATION, angle);
-			text2.pushTo(textMesh, xOffset, yOffset, zOffset, ROTATION, angle);
-			text3.pushTo(textMesh, xOffset, yOffset, zOffset, ROTATION, angle);
-			text4.pushTo(textMesh, xOffset, yOffset, zOffset, ROTATION, angle);
-		}
-        }
+	protected void addText(int x, int y, int z, BlockContext world, RawChunk chunk, Geometry geometry, float yOffset, float angle) {
+		if (obey) return;
+		boolean hanging = this instanceof HangingSign;
+		float centerX = (width + (hanging ? 1f / 16f : 0)) / 2;
+		float centerY = yOffset - y + signBottom + height / 2;
+		SignTextRenderer.addText(chunk.getSign(x, y, z), world, chunk, geometry, hanging, centerX, centerY,
+				signDepth + thickness + 0.002f, signDepth - 0.002f, angle);
+	}
         
 }

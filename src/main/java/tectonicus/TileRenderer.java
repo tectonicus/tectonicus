@@ -286,7 +286,7 @@ public class TileRenderer
 				progressListener.onTaskStarted(Task.FIND_CHANGED_TILES.toString());
 
 				// Output entity javascript for creating map markers
-				outputSigns(new File(mapDir, "signs.js"), signsFile, map);
+				outputSigns(new File(mapDir, "signs.js"), signsFile, map, viewerAssets);
 				outputPlayers(new File(mapDir, "players.js"), new File(DirUtils.getWorldImagesDir(exportDir, map.getWorld()), "PlayerIcons"),
 						map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler, viewerAssets);
 				outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
@@ -707,6 +707,7 @@ public class TileRenderer
 	private void chunkSearch(World world, DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
 		if (c != null && c.getRawChunk().isFullChunk()) {
 			worldStats.incNumChunks();
+			c.getRawChunk().getSigns().values().forEach(world.getTexturePack().getSignFont()::collect);
 			if (discoveredTiles != null && world.contains(c.getCoord())) {
 				var subset = map.getWorldSubset();
 				int[] height;

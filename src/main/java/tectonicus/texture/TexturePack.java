@@ -27,6 +27,8 @@ import tectonicus.raw.Biome;
 import tectonicus.raw.Biomes;
 import tectonicus.raw.BiomesOld;
 import tectonicus.renderer.Font;
+import tectonicus.renderer.SignFont;
+import tectonicus.util.MapLocalization;
 import tectonicus.util.Colour4f;
 import tectonicus.util.FileUtils;
 import tectonicus.util.ImageUtils;
@@ -57,6 +59,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -106,6 +109,8 @@ public class TexturePack
 	private final Map<BiomesOld, Colour4f> foliageColorsOld = new EnumMap<>(BiomesOld.class);
 	
 	private Font font = null;
+	@Getter
+	private final SignFont signFont;
 	
 	@Getter
 	private final ZipStack zipStack;
@@ -119,11 +124,17 @@ public class TexturePack
 
 	public TexturePack(Rasteriser rasteriser, Configuration config, List<File> modJars, List<String> dataPacks)
 	{
-		this(rasteriser, config.getMinecraftJar(), config.getTexturePack(), config.isUsingProgrammerArt(), modJars, dataPacks);
+		this(rasteriser, config.getMinecraftJar(), config.getTexturePack(), config.isUsingProgrammerArt(), modJars, dataPacks,
+				MapLocalization.parseLocale(config.getMapLocale()));
 	}
 
 	public TexturePack(Rasteriser rasteriser, File minecraftJar, File resourcePack, boolean usingProgrammerArt,
 			List<File> modJars, List<String> dataPacks) {
+		this(rasteriser, minecraftJar, resourcePack, usingProgrammerArt, modJars, dataPacks, Locale.ENGLISH);
+	}
+
+	public TexturePack(Rasteriser rasteriser, File minecraftJar, File resourcePack, boolean usingProgrammerArt,
+			List<File> modJars, List<String> dataPacks, Locale locale) {
 		
 		if (!minecraftJar.exists())
 			throw new MissingMinecraftJarException("Couldn't find minecraft.jar at " + minecraftJar.getAbsolutePath());
@@ -147,6 +158,7 @@ public class TexturePack
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
+		signFont = new SignFont(rasteriser, zipStack, locale);
 
 		// pack.mcmeta gives us the resource pack information (some older versions of Minecraft also have pack.mcmeta 1.13-1.16)
 		PackMcmeta packMcMeta = new PackMcmeta();

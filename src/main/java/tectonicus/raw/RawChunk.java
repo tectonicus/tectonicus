@@ -11,7 +11,6 @@ package tectonicus.raw;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.jnbt.ByteArrayTag;
 import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
@@ -35,7 +34,6 @@ import tectonicus.world.WorldInfo;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectReader;
-import tools.jackson.databind.ObjectWriter;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -54,7 +52,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -85,8 +82,7 @@ public class RawChunk {
 	private final int maxSections;
 
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
-	private static final ObjectWriter OBJECT_WRITER = FileUtils.getOBJECT_MAPPER().writer();
-	private static final java.util.regex.Pattern SIGN_TEXT_QUOTES_PATTERN = java.util.regex.Pattern.compile("^\"|\"$");
+	private static final int NBT_TEXT_COMPONENTS_DATA_VERSION = 4325; // 1.21.5
 
 	private int[][] biomes;
 	private int[][][] biomes3d;
@@ -547,60 +543,10 @@ public class RawChunk {
 					final int containerBlockId = getBlockId(localX, localY, localZ);
 					final ContainerKind containerKind = ContainerKind.fromBlock(id, containerBlock, containerBlockId);
 					if (id.equals("Sign") || id.equals("minecraft:sign") || id.equals("minecraft:hanging_sign")) {
-						List<String> textLines = new ArrayList<>();
-						String color = "black";
-						
 						CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
 						CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
-						
-						Consumer<Function<Integer, String>> parseSignText = getText -> {
-							for (int i = 0; i < 4; i++) {
-								String text = getText.apply(i);
-								
-								if (!StringUtils.isEmpty(text) && FileUtils.isJSONValid(text))  // 1.9 sign text
-								{
-									textLines.add(textFromJSON(text));
-								} else if (!StringUtils.isBlank(text)) // 1.8 or older sign text
-								{
-									text = SIGN_TEXT_QUOTES_PATTERN.matcher(text).replaceAll(""); //This removes begin and end double quotes
-									try {
-										textLines.add(SIGN_TEXT_QUOTES_PATTERN.matcher(OBJECT_WRITER.writeValueAsString(text)).replaceAll(""));
-									} catch (JacksonException e) {
-										throw new RuntimeException(e);
-									}
-								} else {
-									textLines.add("");
-								}
-							}
-						};
-						
-						if (frontText == null) {
-							// Front and back text not found. This is a pre 1.20 sign. Fall back to old processing.
-							parseSignText.accept(i -> NbtUtil.getChild(entity, "Text" + (i + 1), StringTag.class).getValue());
-							
-							StringTag colorTag = NbtUtil.getChild(entity, "Color", StringTag.class);
-							if (colorTag != null) {
-								color = colorTag.getValue();
-							}
-						} else {
-							// Process 1.20 or newer sign
-							ListTag frontMessages = NbtUtil.getChild(frontText, "messages", ListTag.class);
-							ListTag backMessages = NbtUtil.getChild(backText, "messages", ListTag.class);
-							
-							parseSignText.accept(i -> {
-								if (NbtUtil.getChild(frontMessages, i, StringTag.class) == null) {
-									return null;
-								} else {
-									return NbtUtil.getChild(frontMessages, i, StringTag.class).getValue();
-								}
-							});
-							parseSignText.accept(i -> NbtUtil.getChild(backMessages, i, StringTag.class).getValue());
-							
-							StringTag colorTag = NbtUtil.getChild(frontText, "color", StringTag.class);
-							if (colorTag != null) {
-								color = colorTag.getValue();
-							}
-						}
+						var front = readSignFace(frontText == null ? entity : frontText, frontText == null);
+						var back = backText == null ? null : readSignFace(backText, false);
 						
 						Integer data = null;
 						BlockProperties properties = null;
@@ -610,8 +556,9 @@ public class RawChunk {
 							data = getBlockData(localX, localY, localZ);
 						}
                                                 
+						String signBlock = containerBlock != null ? containerBlock : id;
 						signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
-								textLines.get(0), textLines.get(1), textLines.get(2), textLines.get(3), data, properties, color));
+								front, back, data, properties, signBlock));
 					} else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot")) {
 						IntTag dataTag = NbtUtil.getChild(entity, "Data", IntTag.class);
 						IntTag itemTag = NbtUtil.getChild(entity, "Item", IntTag.class);
@@ -1582,6 +1529,10 @@ public class RawChunk {
 		return Collections.unmodifiableMap(signs);
 	}
 
+	public SignEntity getSign(int x, int y, int z) {
+		return signs.get(createKey(x, y, z));
+	}
+
 	public void setSigns(Map<String, SignEntity> signs) {
 		this.signs = signs;
 	}
@@ -1687,14 +1638,14 @@ public class RawChunk {
 				for (int[] column : plane)
 					update(hashAlgorithm, column);
 
-		for (SignEntity sign : signs.values()) {
-			hashAlgorithm.update(Integer.toString(sign.getX()).getBytes());
-			hashAlgorithm.update(Integer.toString(sign.getY()).getBytes());
-			hashAlgorithm.update(Integer.toString(sign.getZ()).getBytes());
-			hashAlgorithm.update(sign.getText1().getBytes());
-			hashAlgorithm.update(sign.getText2().getBytes());
-			hashAlgorithm.update(sign.getText3().getBytes());
-			hashAlgorithm.update(sign.getText4().getBytes());
+		if (!signs.isEmpty()) {
+			hashAlgorithm.update("signText-v2".getBytes(StandardCharsets.UTF_8));
+			for (SignEntity sign : signs.values()) {
+				update(hashAlgorithm, new int[] {sign.getX(), sign.getY(), sign.getZ()});
+				hashSignFace(hashAlgorithm, sign.getFront());
+				hashAlgorithm.update((byte) (sign.getBack() == null ? 0 : 1));
+				if (sign.getBack() != null) hashSignFace(hashAlgorithm, sign.getBack());
+			}
 		}
 
 		if (!itemFrames.isEmpty()) {
@@ -1895,34 +1846,110 @@ public class RawChunk {
 		private final BlockProperties properties;
 	}
 
-	private static String textFromJSON(String rawMessage) {
-		StringBuilder result = new StringBuilder();
-		String searchString = "\"text\":\"";
-		int pos = 0;
-		int left;
-		int right = 0;
-		while (pos != -1) {
-			pos = rawMessage.indexOf(searchString, pos);
-			left = pos + 8;
-			if (pos != -1) {
-				int nBackslash = 0;
-				// Find right delimiting ". Problem: \\\" is escaped, \\\\" is not.
-				for (int i = left; i < rawMessage.length(); i++) {
-					if (rawMessage.charAt(i) == '\\') {
-						nBackslash++;
-					} else if (rawMessage.charAt(i) == '"' && nBackslash % 2 == 0) {
-						right = i;
-						break;
-					} else {
-						nBackslash = 0;
-					}
+	private SignEntity.Face readSignFace(CompoundTag tag, boolean legacy) {
+		ListTag messages = legacy ? null : NbtUtil.getChild(tag, "messages", ListTag.class);
+		String color = NbtUtil.getString(tag, legacy ? "Color" : "color", "black");
+		boolean glowing = NbtUtil.getByte(tag, legacy ? "GlowingText" : "has_glowing_text", (byte) 0) != 0;
+		List<String> lines = new ArrayList<>(4);
+		List<List<SignTextColor>> textColors = new ArrayList<>(4);
+		for (int i = 0; i < 4; i++) {
+			var line = new SignLine();
+			if (legacy) {
+				readLegacySignText(NbtUtil.getString(tag, "Text" + (i + 1), ""), line);
+			} else {
+				Tag message = messages == null ? null : NbtUtil.getChild(messages, i, Tag.class);
+				if (dataVersion < NBT_TEXT_COMPONENTS_DATA_VERSION && message instanceof StringTag string) {
+					readLegacySignText(string.getValue(), line);
+				} else {
+					appendSignText(message, line, -1);
 				}
+			}
+			lines.add(line.text.toString());
+			textColors.add(List.copyOf(line.colors));
+		}
+		return new SignEntity.Face(List.copyOf(lines), color, glowing, List.copyOf(textColors));
+	}
 
-				result.append(rawMessage.substring(left, right));
-				pos = left;
+	private static void hashSignFace(MessageDigest digest, SignEntity.Face face) {
+		byte[] dye = face.color().getBytes(StandardCharsets.UTF_8);
+		update(digest, new int[] {dye.length});
+		digest.update(dye);
+		digest.update((byte) (face.glowing() ? 1 : 0));
+		for (int i = 0; i < face.lines().size(); i++) {
+			byte[] line = face.lines().get(i).getBytes(StandardCharsets.UTF_8);
+			update(digest, new int[] {line.length});
+			digest.update(line);
+			if (i < face.textColors().size()) {
+				var colors = face.textColors().get(i);
+				update(digest, new int[] {colors.size()});
+				for (SignTextColor color : colors) update(digest, new int[] {color.start(), color.end(), color.rgb()});
+			} else {
+				update(digest, new int[] {0});
 			}
 		}
+	}
 
-		return result.toString();
+	private static void readLegacySignText(String message, SignLine line) {
+		String trimmed = message.stripLeading();
+		if (trimmed.startsWith("\"") || trimmed.startsWith("{") || trimmed.startsWith("[")) {
+			try {
+				JsonNode component = OBJECT_READER.readTree(message);
+				appendSignText(component, line, -1);
+				return;
+			} catch (JacksonException e) {
+				// Older worlds can store literal text that starts with a JSON delimiter.
+			}
+		}
+		line.append(message, -1);
+	}
+
+	private static int appendSignText(JsonNode component, SignLine line, int color) {
+		if (component.isString()) {
+			line.append(component.asString(), color);
+		} else if (component.isArray()) {
+			if (!component.isEmpty()) {
+				// Later elements are siblings of the first component and inherit its style.
+				color = appendSignText(component.get(0), line, color);
+				for (int i = 1; i < component.size(); i++) appendSignText(component.get(i), line, color);
+			}
+		} else if (component.isObject()) {
+			color = SignTextColor.parse(component.path("color").asString(""), color);
+			line.append(component.path("text").asString(component.path("fallback").asString("")), color);
+			for (JsonNode child : component.path("extra")) appendSignText(child, line, color);
+		}
+		return color;
+	}
+
+	private static int appendSignText(Tag component, SignLine line, int color) {
+		if (component instanceof StringTag string) {
+			line.append(string.getValue(), color);
+		} else if (component instanceof ListTag list && !list.getValue().isEmpty()) {
+			color = appendSignText(list.getValue().getFirst(), line, color);
+			for (int i = 1; i < list.getValue().size(); i++) appendSignText(list.getValue().get(i), line, color);
+		} else if (component instanceof CompoundTag compound) {
+			// NBT wraps non-compound elements of mixed lists under an empty key.
+			if (compound.getValue().size() == 1 && compound.getValue().containsKey("")) {
+				return appendSignText(compound.getValue().get(""), line, color);
+			}
+			color = SignTextColor.parse(NbtUtil.getString(compound, "color", ""), color);
+			line.append(NbtUtil.getString(compound, "text", NbtUtil.getString(compound, "fallback", "")), color);
+			ListTag extra = NbtUtil.getChild(compound, "extra", ListTag.class);
+			if (extra != null) {
+				for (Tag child : extra.getValue()) appendSignText(child, line, color);
+			}
+		}
+		return color;
+	}
+
+	private static class SignLine {
+		private final StringBuilder text = new StringBuilder();
+		private final List<SignTextColor> colors = new ArrayList<>();
+
+		private void append(String value, int color) {
+			if (color >= 0 && !value.isEmpty()) {
+				colors.add(new SignTextColor(text.length(), text.length() + value.length(), color));
+			}
+			text.append(value);
+		}
 	}
 }

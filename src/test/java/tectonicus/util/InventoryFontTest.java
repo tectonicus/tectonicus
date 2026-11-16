@@ -63,8 +63,8 @@ class InventoryFontTest {
 		config.setMapLocale("ja_jp");
 		try {
 			var localization = MapLocalization.load(config, new MinecraftLanguageAssets(directory, uri -> fail("Unexpected download: " + uri)));
-			Path output = directory.resolve(InventoryFont.IMAGE);
-			var metrics = InventoryFont.write(assets, localization, Set.of(32, (int) 'ã', (int) '日'), output);
+			Path output = directory.resolve(MinecraftFont.IMAGE);
+			var metrics = MinecraftFont.write(assets, localization, Set.of(32, (int) 'ã', (int) '日'), output);
 			assertEquals(Set.of(0, 32, (int) 'ã', (int) '日'), metrics.keySet());
 			assertArrayEquals(new double[] {0, 0, 5, 8, 6, 0}, metrics.get((int) 'ã'));
 			assertArrayEquals(new double[] {16, 0, 8, 8, 9, 0}, metrics.get((int) '日'));

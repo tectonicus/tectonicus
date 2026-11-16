@@ -92,7 +92,7 @@ class MapLocalizationTest {
 			var assets = new WorldViewerAssets();
 			assets.addItem("minecraft:apple", null, false, null, null, null);
 			var cached = new MinecraftLanguageAssets(directory, uri -> fail("Unexpected network request: " + uri));
-			assets.write(zip, pack.toFile(), MapLocalization.load(config, cached), "World0", directory, directory, false);
+			assets.write(zip, pack.toFile(), MapLocalization.load(config, cached), "World0", directory, directory, false, false);
 			String script = Files.readString(directory.resolve("localizations.js"));
 			assertTrue(script.contains("リンゴ"));
 			assertFalse(script.contains("青リンゴ"));
@@ -110,13 +110,13 @@ class MapLocalizationTest {
 				return uri.toString().equals(indexUrl) ? index.getBytes(StandardCharsets.UTF_8) : language;
 			});
 			var localization = MapLocalization.load(config, remote);
-			assets.write(zip, pack.toFile(), localization, "World0", directory, directory, false);
+			assets.write(zip, pack.toFile(), localization, "World0", directory, directory, false, false);
 			assertTrue(Files.readString(directory.resolve("localizations.js")).contains("リンゴ"));
-			assets.write(zip, pack.toFile(), localization, "World1", directory, directory, false);
+			assets.write(zip, pack.toFile(), localization, "World1", directory, directory, false, false);
 			assertEquals(List.of(indexUrl, "https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash), requests);
 
 			var offline = new MinecraftLanguageAssets(directory, uri -> { throw new IOException("Offline"); });
-			assets.write(zip, pack.toFile(), MapLocalization.load(config, offline), "World0", directory, directory, false);
+			assets.write(zip, pack.toFile(), MapLocalization.load(config, offline), "World0", directory, directory, false, false);
 			assertTrue(Files.readString(directory.resolve("localizations.js")).contains("青リンゴ"));
 
 			Files.delete(directory.resolve("client.json"));
@@ -171,7 +171,7 @@ class MapLocalizationTest {
 		try (var assets = new ZipStack(jar.toFile(), pack.toFile(), List.of())) {
 			var localization = MapLocalization.load(config, new MinecraftLanguageAssets(directory, uri -> fail("Unexpected download " + uri)));
 			assertEquals(Map.of("container.chest", "Coffre spécial=1"), localization.minecraftTranslations(assets));
-			new WorldViewerAssets().write(assets, pack.toFile(), localization, "World0", directory, directory, false);
+			new WorldViewerAssets().write(assets, pack.toFile(), localization, "World0", directory, directory, false, false);
 			String script = Files.readString(directory.resolve("localizations.js"));
 			assertTrue(script.contains("Coffre spécial=1"));
 			assertTrue(script.contains("Grand coffre"));

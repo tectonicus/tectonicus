@@ -13,6 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.PlayerIconAssembler;
+import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.raw.CustomNameTag;
 import tectonicus.raw.ContainerEntity;
@@ -21,6 +22,9 @@ import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.EnchantmentsTag;
 import tectonicus.raw.Item;
 import tectonicus.raw.Player;
+import tectonicus.raw.SignEntity;
+import tectonicus.raw.SignTextColor;
+import tectonicus.world.Sign;
 
 import javax.imageio.ImageIO;
 import java.awt.Transparency;
@@ -38,6 +42,32 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class OutputResourcesUtilTest {
 	@TempDir Path directory;
+
+	@Test
+	void exportsVanillaSignColorsAndGlowingOutlinesFromSwapRecords() throws Exception {
+		var list = directory.resolve("signs.list").toFile();
+		var writer = new HddObjectListWriter<Sign>(list, true);
+		try {
+			writer.add(new Sign(new SignEntity(0, 64, 0, 0, 64, 0, "Ordinary", "", "", "", 0, null, "orange")));
+			writer.add(new Sign(new SignEntity(1, 64, 0, 1, 64, 0, "Glowing", "", "", "", 0, null, "orange", true,
+					List.of(List.of(new SignTextColor(0, 7, 0x123456))))));
+			writer.add(new Sign(new SignEntity(2, 64, 0, 2, 64, 0, "Black glow", "", "", "", 0, null, "black", true, List.of())));
+		} finally {
+			writer.close();
+		}
+		Path output = directory.resolve("signs.js");
+		OutputResourcesUtil.outputSigns(output.toFile(), list, new DimensionConfig("Map"));
+		String[] markers = Files.readString(output).split("\t\\{");
+		assertEquals(4, markers.length);
+		assertTrue(markers[1].contains("color: " + 0x66290c));
+		assertFalse(markers[1].contains("outlineColor"));
+		assertTrue(markers[2].contains("color: " + 0xff681f));
+		assertTrue(markers[2].contains("outlineColor: " + 0x66290c));
+		assertTrue(markers[2].contains("textColors: [[{\"start\":0,\"end\":7,\"rgb\":1193046}]]"));
+		assertTrue(markers[3].contains("color: 0"));
+		assertTrue(markers[3].contains("outlineColor: " + 0xf0ebcc));
+		assertFalse(markers[3].contains("textColors"));
+	}
 
 	@Test
 	void exportsDistinctKindsColorsAndEscapedNames() throws Exception {

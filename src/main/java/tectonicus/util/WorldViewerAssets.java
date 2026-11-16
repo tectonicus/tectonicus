@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,7 +47,8 @@ public final class WorldViewerAssets {
 	private final Set<String> translationKeys = new TreeSet<>(Set.of("attribute.name.armor", "attribute.name.generic.armor",
 			"container.inventory", "container.enderchest", "item.dyed", "item.minecraft.smithing_template.upgrade"));
 	private final Set<String> itemMasks = new TreeSet<>();
-	private final Set<Integer> inventoryCharacters = new TreeSet<>();
+	private final Set<Integer> fontCharacters = new TreeSet<>();
+	private final Set<SignBackground> signBackgrounds = new HashSet<>();
 	private final Map<BannerIcon, String> bannerIcons = new LinkedHashMap<>();
 
 	record BannerIcon(String itemId, List<Banner.Pattern> patterns) {
@@ -83,7 +85,7 @@ public final class WorldViewerAssets {
 		String[] item = id.split(":", -1);
 		if (item.length < 2) return;
 		String name = item[1];
-		addInventoryText(name);
+		addText(name);
 		String itemKey = "item." + item[0] + "." + name;
 		translationKeys.add(itemKey + ".desc");
 		translationKeys.add("block." + item[0] + "." + name);
@@ -95,7 +97,7 @@ public final class WorldViewerAssets {
 				translationKeys.add(itemKey + ".effect." + POTION_DURATION.matcher(potionId[1]).replaceFirst(""));
 		}
 		if (customName != null) {
-			addInventoryText(customName);
+			addText(customName);
 			var match = CUSTOM_NAME.matcher(customName);
 			if (match.find()) {
 				String key = match.group("key");
@@ -126,14 +128,20 @@ public final class WorldViewerAssets {
 		String[] parts = id.split(":", -1);
 		if (parts.length > 1) {
 			translationKeys.add(category + "." + parts[0] + "." + parts[1]);
-			addInventoryText(parts[1]);
+			addText(parts[1]);
 		}
 	}
 
-	void addInventoryText(String text) {
+	void addText(String text) {
 		if (text != null) Normalizer.normalize(text, Normalizer.Form.NFC).codePoints()
 				.filter(code -> !Character.isISOControl(code) && Character.getType(code) != Character.FORMAT)
-				.forEach(inventoryCharacters::add);
+				.forEach(fontCharacters::add);
+	}
+
+	String addSignBackground(String blockName) {
+		SignBackground background = SignBackground.forBlock(blockName);
+		signBackgrounds.add(background);
+		return background.filename();
 	}
 
 	private void addItemMask(String name) {
@@ -147,22 +155,28 @@ public final class WorldViewerAssets {
 		if (!effect.equals("none")) translationKeys.add("effect.minecraft." + effect);
 	}
 
-	void write(ZipStack assets, File resourcePack, MapLocalization localization, String worldId, Path scriptsDir, Path imagesDir, boolean hasFont) {
+	void write(ZipStack assets, File resourcePack, MapLocalization localization, String worldId, Path scriptsDir, Path imagesDir,
+			boolean hasFont, boolean usesBlockSignTextures) {
 		Map<String, String> translations = readTranslations(assets, resourcePack, localization, worldId);
-		for (int code = 32; code <= 126; code++) inventoryCharacters.add(code);
+		for (int code = 32; code <= 126; code++) fontCharacters.add(code);
 		// Counts can use the map locale's numbering system.
-		addInventoryText(java.text.NumberFormat.getIntegerInstance(localization.locale()).format(1023456789));
-		MapLocalization.english().values().forEach(this::addInventoryText);
-		translations.values().forEach(this::addInventoryText);
-		Map<Integer, double[]> inventoryFont = InventoryFont.write(assets, localization, inventoryCharacters, imagesDir.resolve(InventoryFont.IMAGE));
+		addText(java.text.NumberFormat.getIntegerInstance(localization.locale()).format(1023456789));
+		MapLocalization.english().values().forEach(this::addText);
+		translations.values().forEach(this::addText);
+		Map<Integer, double[]> inventoryFont = MinecraftFont.write(assets, localization, fontCharacters, imagesDir.resolve(MinecraftFont.IMAGE));
 		Map<String, String> masks = new TreeMap<>();
 		boolean fontAvailable = hasFont && Files.isRegularFile(imagesDir.resolve("Font.png"));
 		if (fontAvailable) addMask(masks, imagesDir, "Font.png");
-		if (!inventoryFont.isEmpty()) addMask(masks, imagesDir, InventoryFont.IMAGE);
+		if (!inventoryFont.isEmpty()) addMask(masks, imagesDir, MinecraftFont.IMAGE);
 		for (String filename : itemMasks) addMask(masks, imagesDir, filename);
 		writeScript(scriptsDir.resolve("masks.js"), "registerWorldMasks", worldId, masks);
+		Set<String> exportedSignBackgrounds = new TreeSet<>();
+		for (SignBackground background : signBackgrounds) {
+			if (background.write(assets, imagesDir, usesBlockSignTextures)) exportedSignBackgrounds.add(background.filename());
+		}
 		writeScript(scriptsDir.resolve("localizations.js"), "registerWorldLocalizations", worldId,
-				Map.of("translations", translations, "hasFont", fontAvailable, "inventoryFont", inventoryFont));
+				Map.of("translations", translations, "hasFont", fontAvailable, "inventoryFont", inventoryFont,
+						"signBackgrounds", exportedSignBackgrounds));
 	}
 
 	private Map<String, String> readTranslations(ZipStack assets, File resourcePack, MapLocalization localization, String worldId) {

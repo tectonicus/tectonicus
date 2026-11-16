@@ -26,6 +26,7 @@ import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
+import tectonicus.configuration.filter.SignFilterType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.Biome;
 import tectonicus.raw.BlockProperties;
@@ -34,6 +35,7 @@ import tectonicus.raw.SignEntity;
 import tectonicus.renderer.Camera;
 import tectonicus.renderer.Geometry;
 import tectonicus.renderer.OrthoCamera;
+import tectonicus.renderer.SignTextRenderer;
 import tectonicus.texture.TexturePack;
 import tectonicus.util.BoundingBox;
 import tectonicus.util.Util;
@@ -227,6 +229,17 @@ public class Chunk
 							}
 						}
 					}
+				}
+			}
+		}
+
+		if (world.getSignFilter().getType() != SignFilterType.OBEY) {
+			for (SignEntity sign : rawChunk.getSigns().values()) {
+				int x = sign.getLocalX(), y = sign.getLocalY(), z = sign.getLocalZ();
+				String block = rawChunk.getBlockName(x, y, z);
+				if (block != null && block.equals(sign.getBlockName()) && mask.isVisible(x, y, z)
+						&& registry.find(block) instanceof Air && modelRegistry.getBlock(block) != null) {
+					SignTextRenderer.addModelText(sign, rawChunk.getBlockState(x, y, z), world, rawChunk, geometry);
 				}
 			}
 		}

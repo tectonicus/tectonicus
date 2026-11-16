@@ -101,32 +101,34 @@ import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 @UtilityClass
 public class OutputResourcesUtil {
 	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.DimensionConfig map) {
-		HddObjectListReader<Sign> signsIn = null;
+		outputSigns(outputFile, signListFile, map, null);
+	}
+
+	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.DimensionConfig map, WorldViewerAssets viewerAssets) {
+		HddObjectListReader<Sign> signs = null;
 		try {
-			signsIn = new HddObjectListReader<>(signListFile);
-			outputSigns(outputFile, signsIn, map);
+			signs = new HddObjectListReader<>(signListFile);
+			outputSigns(outputFile, signs, map, viewerAssets);
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		} finally {
-			if (signsIn != null)
-				signsIn.close();
+			if (signs != null) signs.close();
 		}
 	}
 
-	private static void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.DimensionConfig map) throws IOException {
+	private static void outputSigns(File signFile, HddObjectListReader<Sign> signs, tectonicus.configuration.DimensionConfig map, WorldViewerAssets viewerAssets) throws Exception {
 		log.info("Exporting signs to {}", signFile.getAbsolutePath());
 
-		Files.deleteIfExists(signFile.toPath());
-
 		try (JsArrayWriter jsWriter = new JsArrayWriter(signFile, map.getJavascriptId() + "_signData")) {
-
 			WorldSubset worldSubset = map.getWorldSubset();
+			var json = FileUtils.getOBJECT_MAPPER();
 			Sign sign = new Sign();
 			while (signs.hasNext()) {
 				signs.read(sign);
-				String message = "\"" + sign.getText(0) + "/n" + sign.getText(1) + "/n" + sign.getText(2) + "/n" + sign.getText(3) + "\"";
-				if (map.getSignFilter().getType() == SignFilterType.OBEY)
-					message = "\"/nOBEY/n/n\"";
+				if (!worldSubset.containsBlock(sign.getX(), sign.getY(), sign.getZ())) continue;
+				boolean obey = map.getSignFilter().getType() == SignFilterType.OBEY;
+				List<String> lines = obey
+						? List.of("", "OBEY", "", "") : List.of(sign.getText(0), sign.getText(1), sign.getText(2), sign.getText(3));
 
 				Map<String, String> signArgs = new HashMap<>();
 
@@ -136,25 +138,28 @@ public class OutputResourcesUtil {
 
 				String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
 				signArgs.put("worldPos", posStr);
-				signArgs.put("message", message);
-				if (map.getSignFilter().getType() == SignFilterType.OBEY) {
-					signArgs.put("text1", "\"\"");
-					signArgs.put("text2", "\"OBEY\"");
-					signArgs.put("text3", "\"\"");
-					signArgs.put("text4", "\"\"");
-				} else {
-					signArgs.put("text1", "\"" + sign.getText(0) + "\"");
-					signArgs.put("text2", "\"" + sign.getText(1) + "\"");
-					signArgs.put("text3", "\"" + sign.getText(2) + "\"");
-					signArgs.put("text4", "\"" + sign.getText(3) + "\"");
+				signArgs.put("message", json.writeValueAsString(String.join("/n", lines)));
+				if (viewerAssets != null) {
+					signArgs.put("background", json.writeValueAsString(viewerAssets.addSignBackground(sign.getBlockName())));
 				}
-
-				if (worldSubset.containsBlock(sign.getX(), sign.getY(), sign.getZ())) {
-					jsWriter.write(signArgs);
+				if (!obey) {
+					Colors dye = sign.getDye();
+					int darkColor = dye.getDarkTextColor();
+					signArgs.put("color", Integer.toString(sign.isGlowing() ? dye.getTextColor() : darkColor));
+					if (sign.isGlowing()) {
+						signArgs.put("outlineColor", Integer.toString(dye.getGlowingTextOutline()));
+					}
+					if (sign.getTextColors().stream().anyMatch(line -> !line.isEmpty())) {
+						signArgs.put("textColors", json.writeValueAsString(sign.getTextColors()));
+					}
 				}
+				for (int i = 0; i < lines.size(); i++) {
+					String line = lines.get(i);
+					signArgs.put("text" + (i + 1), json.writeValueAsString(line));
+					if (viewerAssets != null) viewerAssets.addText(line);
+				}
+				jsWriter.write(signArgs);
 			}
-		} catch (Exception e) {
-			log.error("Exception: ", e);
 		}
 	}
 
@@ -446,7 +451,7 @@ public class OutputResourcesUtil {
 					}
 				}
 
-				viewArgs.put("text", "\"" + text.toString().trim() + "\"");
+				viewArgs.put("text", FileUtils.getOBJECT_MAPPER().writeValueAsString(text.toString().trim()));
 
 				ImageFormat imageFormat = map.getViewConfig().getImageFormat();
 				String filename = "Scripts/" + map.getId() + "/Views/View_" + sign.getX() + "_" + sign.getY() + "_" + sign.getZ() + "." + imageFormat.getExtension();
@@ -521,7 +526,7 @@ public class OutputResourcesUtil {
 					containerArgs.put("nameKey", "null");
 				}
 				containerArgs.put("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(name));
-				if (inventoryAssets != null) inventoryAssets.addInventoryText(name);
+				if (inventoryAssets != null) inventoryAssets.addText(name);
 				containerArgs.put("items", items.toString());
 				if (partner != null) {
 					containerArgs.put("large", "true");
@@ -1137,7 +1142,8 @@ public class OutputResourcesUtil {
 		File scriptsDir = new File(exportDir, "Scripts/" + world.getId());
 		FileUtils.ensureExists(scriptsDir);
 		MarkerShadows.write(imagesDir.toPath());
-		viewerAssets.write(texturePack.getZipStack(), world.getTexturePack(), localization, world.getId(), scriptsDir.toPath(), imagesDir.toPath(), hasFont);
+		viewerAssets.write(texturePack.getZipStack(), world.getTexturePack(), localization, world.getId(), scriptsDir.toPath(),
+				imagesDir.toPath(), hasFont, texturePackVersion.getNumVersion() >= VERSION_26_2.getNumVersion());
 	}
 
 	public static void outputHtmlResources(Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {

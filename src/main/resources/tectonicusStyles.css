@@ -472,6 +472,55 @@ html, body, #map {
     position: absolute;
 }
 
+.sign_text {
+    color: #222;
+    text-align: center;
+    zoom: 2;
+}
+
+.sign_text_board {
+    box-sizing: border-box;
+    min-width: 108px;
+    padding: 7px 9px;
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+.sign_text_hanging_board {
+    min-width: 76px;
+    padding-inline: 8px;
+}
+
+.sign_text_line {
+    position: static;
+    min-height: 10px;
+    font-size: 8px;
+    line-height: 10px;
+    overflow-wrap: anywhere;
+}
+
+.sign_text_line.mc_text_fallback {
+    color: inherit;
+    line-height: 10px;
+}
+
+.sign_text_line .mc_char {
+    filter: none;
+    vertical-align: top;
+}
+
+.sign_text_line .mc_char::before {
+    background: currentColor;
+}
+
+.sign_text_glowing .sign_text_line {
+    /* Offset the whole line in both axes to outline its glyphs before their fill. */
+    filter: drop-shadow(-1px 0 var(--sign-outline)) drop-shadow(1px 0 var(--sign-outline))
+        drop-shadow(0 -1px var(--sign-outline)) drop-shadow(0 1px var(--sign-outline));
+}
+
 .mc_text_fallback {
     color: #fcfcfc;
     font-size: 8px;

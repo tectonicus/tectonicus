@@ -71,6 +71,36 @@ test('translations are loaded once per world and remain distinct after switching
     }
 });
 
+test('sign popups use their world glyphs and preserve blank lines and literal fallback text', () => {
+    const {context, markers} = createAssetsViewer(undefined, {protocol: 'file:'});
+    const layer = {...context.selectedLayer, worldId: 'World1'};
+    layer.signs = [{...layer.signs[0], text1: '日', text3: '<&>', color: 0, outlineColor: 0xf0ebcc,
+        textColors: [[{start: 0, end: 1, rgb: 0xffaa00}], [], [{start: 1, end: 2, rgb: 0xaa0000}]]}];
+    context.registerWorldLocalizations('World1', {inventoryFont: {0: [16, 16], 26085: [0, 0, 8, 8, 9, 0]}});
+    context.registerWorldMasks('World1', {'InventoryFont.png': 'data:image/png;base64,BBBB'});
+    context.refreshSignMarkers(layer);
+
+    const html = markers.at(-1).html();
+    assert.match(html, /aria-label="日"[^>]+data:image\/png;base64,BBBB/);
+    assert.match(html, /sign_text_glowing" style="color:#000000;--sign-outline:#f0ebcc;/);
+    assert.match(html, /mc_atlas_char" style="[^"]+color:#ffaa00/);
+    assert.match(html, /mc_text_fallback sign_text_line">&lt;<span style="color:#aa0000">&amp;<\/span>&gt;/);
+    assert.equal((html.match(/<div class="sign_text_line"><\/div>/g) || []).length, 2);
+});
+
+test('sign boards use the exported texture for the marker world and preserve the older popup fallback', () => {
+    const {context} = createAssetsViewer(undefined, {protocol: 'file:'});
+    const layer = {...context.selectedLayer, worldId: 'World1', images: 'World1/Images/'};
+    const background = 'Signs/minecraft/hanging/warped.png';
+    context.registerWorldLocalizations('World1', {signBackgrounds: [background]});
+
+    const html = context.renderSignPopup({text1: 'Portal', background}, layer);
+    assert.match(html, /sign_text_board sign_text_hanging_board/);
+    assert.match(html, /background-image:url\(&#39;World1\/Images\/Signs\/minecraft\/hanging\/warped\.png&#39;\)/);
+    assert.doesNotMatch(context.renderSignPopup({text1: 'Portal', background}, context.selectedLayer), /sign_text_board/);
+    assert.doesNotMatch(context.renderSignPopup({text1: 'Portal'}, layer), /sign_text_board/);
+});
+
 test('a missing translation file falls back without discarding another world translations', async () => {
     const viewer = createAssetsViewer(async url => {
         if (url.includes('World1')) throw new Error('Missing file');
