@@ -172,7 +172,9 @@ public class Banner implements BlockType
 		
 		if (!patterns.isEmpty()) {
 			for (Pattern pattern : patterns) {
-				BufferedImage patternImage = patternImages.get(pattern.pattern.replace("minecraft:", ""));
+				// Field uses the base texture and was saved as "b" before 1.20.5.
+				String patternId = pattern.pattern.equals("b") ? "base" : pattern.pattern.replace("minecraft:", "");
+				BufferedImage patternImage = patternImages.get(patternId);
 				if (patternImage == null) {
 					log.warn("Missing banner pattern: {}", pattern.pattern);
 					continue;

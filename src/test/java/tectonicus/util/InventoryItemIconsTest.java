@@ -151,13 +151,13 @@ class InventoryItemIconsTest {
 			textures.getBannerPatternImages().put("bannerBase", new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB));
 			BufferedImage base = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
 			base.setRGB(2, 2, 0xffffffff);
+			base.setRGB(3, 3, 0xffffffff);
 			textures.getBannerPatternImages().put("base", base);
 			BufferedImage stripe = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
 			stripe.setRGB(2, 2, 0xffffffff);
 			String pattern = modern ? "minecraft:stripe_top" : "ts";
-			String cross = modern ? "minecraft:cross" : "cr";
+			String field = modern ? "minecraft:base" : "b";
 			textures.getBannerPatternImages().put(modern ? "stripe_top" : "ts", stripe);
-			textures.getBannerPatternImages().put(modern ? "cross" : "cr", stripe);
 			blocks.register("minecraft:red_banner", new Banner("minecraft:red_banner", "Red Banner", textures, true));
 			blocks.register("minecraft:conduit", new Conduit("Conduit", "minecraft:conduit",
 					textures.findTexture("entity/conduit/base.png")));
@@ -168,14 +168,14 @@ class InventoryItemIconsTest {
 			var air = new tectonicus.blockregistry.BlockStateWrapper("minecraft:air");
 			air.setFullOpaqueBlock(false);
 			models.getBlockStates().put("minecraft:air", air);
-			var layers = List.of(new Banner.Pattern(pattern, Colors.BLUE), new Banner.Pattern(cross, Colors.WHITE));
+			var layers = List.of(new Banner.Pattern(pattern, Colors.BLUE), new Banner.Pattern(field, Colors.WHITE));
 			var design = new BannerPatternsTag(layers);
 			var reversedDesign = new BannerPatternsTag(layers.reversed());
 			var containers = new ConcurrentLinkedQueue<ContainerEntity>();
 			containers.add(new ContainerEntity(0, 64, 0, 0, 64, 0, "Chest", "", false, "south", "single", List.of(
 					new Item("minecraft:red_banner", 0, 1, 0, List.of(design)),
 					new Item("minecraft:red_banner", 0, 2, 1, List.of(new BannerPatternsTag(List.of(
-							new Banner.Pattern(pattern, Colors.BLUE), new Banner.Pattern(cross, Colors.WHITE))))),
+							new Banner.Pattern(pattern, Colors.BLUE), new Banner.Pattern(field, Colors.WHITE))))),
 					new Item("minecraft:red_banner", 0, 1, 2, List.of(reversedDesign)),
 					new Item("minecraft:red_banner", 0, 1, 3, List.of()))));
 			Path script = directory.resolve("containers.js");
@@ -194,10 +194,13 @@ class InventoryItemIconsTest {
 				assertTrue(Files.exists(directory.resolve("Items/" + key + ".png")));
 			}
 			assertEquals(Colors.RED.getColor().getRGB(), textures.getPackTexture("banner_base_red").getImage().getRGB(2, 2));
-			assertEquals(Colors.BLUE.getColor().getRGB(),
-					textures.getPackTexture("banner_base_red/" + cross + "=white/" + pattern + "=blue").getImage().getRGB(2, 2));
+			var fieldTexture = textures.getPackTexture("banner_base_red/" + field + "=white/" + pattern + "=blue");
+			assertNotNull(fieldTexture, "The Field pattern must be included in the rendered texture");
+			BufferedImage fieldUnderStripe = fieldTexture.getImage();
+			assertEquals(Colors.BLUE.getColor().getRGB(), fieldUnderStripe.getRGB(2, 2));
+			assertEquals(Colors.WHITE.getColor().getRGB(), fieldUnderStripe.getRGB(3, 3));
 			assertEquals(Colors.WHITE.getColor().getRGB(),
-					textures.getPackTexture("banner_base_red/" + pattern + "=blue/" + cross + "=white").getImage().getRGB(2, 2));
+					textures.getPackTexture("banner_base_red/" + pattern + "=blue/" + field + "=white").getImage().getRGB(2, 2));
 
 			assertEquals(4 + (modern ? DEFINITION_ONLY_ITEMS.size() + 1 : 1), screenshots.get());
 			// GUI X translation must move right on screen. Modern definitions must use their base,
