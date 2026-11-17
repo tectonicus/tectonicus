@@ -293,6 +293,7 @@ public class TileRenderer
 				outputRespawnAnchors(mapDir, map, world.getAllPlayers());
 				List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
 				worldStats.setNumPortals(portals.size());
+				worldStats.setPortalSearch(world.getPortalSearch());
 				outputViews(new File(mapDir, "views.js"), viewsFile, map);
 				outputContainers(new File(mapDir, "containers.js"), map, world.getContainers(), viewerAssets);
 				outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons(), viewerAssets);
@@ -534,7 +535,7 @@ public class TileRenderer
 	{
 		WorldStats stats = null;
 		
-		HddObjectListWriter<Portal> portals = null;
+		HddObjectListWriter<PortalColumn> portals = null;
 		HddObjectListWriter<Sign> signs = null;
 		HddObjectListWriter<Sign> views = null;
 		
@@ -567,7 +568,7 @@ public class TileRenderer
 		return stats;
 	}
 	
-	private WorldStats preProcess(World world, tectonicus.configuration.DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
+	private WorldStats preProcess(World world, tectonicus.configuration.DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views)
 	{
 		// Pre-render pass - calc chunk hashes and project signs
 		if (progressListener != null)
@@ -704,7 +705,7 @@ public class TileRenderer
 		return worldStats;
 	}
 	
-	private void chunkSearch(World world, DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
+	private void chunkSearch(World world, DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
 		if (c != null && c.getRawChunk().isFullChunk()) {
 			worldStats.incNumChunks();
 			c.getRawChunk().getSigns().values().forEach(world.getTexturePack().getSignFont()::collect);
@@ -759,7 +760,7 @@ public class TileRenderer
 		}
 	}
 	
-	private void endRegion(HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, RegionLoadQueue regionLoadQueue, WorldStats worldStats) {
+	private void endRegion(HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, RegionLoadQueue regionLoadQueue, WorldStats worldStats) {
 		regionLoadQueue.waitUntilFinished();
 		
 		System.out.print("\tfound " + worldStats.numChunks() + " chunks so far\r"); //prints a carriage return after line

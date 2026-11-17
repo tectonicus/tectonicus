@@ -13,7 +13,8 @@ import lombok.experimental.UtilityClass;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
-import tectonicus.Portal;
+import tectonicus.PortalColumn;
+import tectonicus.PortalColumn.Axis;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.filter.BeaconFilter;
@@ -29,6 +30,7 @@ import tectonicus.raw.RawChunk;
 import tectonicus.raw.SignEntity;
 import tectonicus.world.Colors;
 import tectonicus.world.Sign;
+import tectonicus.world.subset.WorldSubset;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -45,62 +47,58 @@ public class FindEntityUtil {
                 }
 	}
 
-	public static void findPortals(RawChunk chunk, HddObjectListWriter<Portal> portals, PortalFilter filter) {
+	public static void findPortals(RawChunk chunk, HddObjectListWriter<PortalColumn> portals, PortalFilter filter, WorldSubset subset) {
+		if (!filter.passesFilter())
+			return;
+		ChunkCoord coord = chunk.getChunkCoord();
+		var visibility = subset.visibility(coord);
+		int height = Minecraft.getChunkHeight();
+		int worldMinY = chunk.getWorldY(0);
 		for (int x = 0; x < RawChunk.WIDTH; x++) {
-			for (int y = 1; y < Minecraft.getChunkHeight() - 1; y++) {
-				for (int z = 0; z < RawChunk.DEPTH; z++) {
-					boolean isPortal;
-					boolean aboveIsPortal;
-					int tempY = y;
-
-					// Try using block name first (MC >= 1.13)
-					String id = chunk.getBlockName(x, y, z);
-					if (id != null) {
-						String netherPortalName = Block.NETHER_PORTAL.getName();
-						String above = chunk.getBlockName(x, y + 1, z);
-						isPortal = id.equals(netherPortalName);
-						aboveIsPortal = (above != null && above.equals(netherPortalName));
-
-						if (isPortal && !aboveIsPortal) {
-							String below = chunk.getBlockName(x, tempY - 1, z);
-							while (below != null && below.equals(netherPortalName)) {
-								tempY -= 1;
-								below = chunk.getBlockName(x, tempY - 1, z);
-							}
+			for (int z = 0; z < RawChunk.DEPTH; z++) {
+				Axis runAxis = null;
+				int runStart = 0;
+				for (int y = 0; y <= height; y++) {
+					int worldY = worldMinY + y;
+					Axis axis = y < height ? portalAxis(chunk, x, y, z) : null;
+					if (axis != null && !visibility.contains(x, worldY, z))
+						axis = null;
+					if (axis == Axis.UNKNOWN && runAxis != null)
+						axis = runAxis;
+					if (runAxis == Axis.UNKNOWN && axis != null)
+						runAxis = axis;
+					if (axis != runAxis) {
+						if (runAxis != null) {
+							portals.add(new PortalColumn(coord.x * RawChunk.WIDTH + x,
+									coord.z * RawChunk.DEPTH + z, runStart, worldY - 1, runAxis));
 						}
-					} else {
-						// Fall back to block ID (MC < 1.13)
-						final int idInt = chunk.getBlockId(x, y, z);
-						final int above = chunk.getBlockId(x, y + 1, z);
-						isPortal = (idInt == BlockIds.PORTAL);
-						aboveIsPortal = (above == BlockIds.PORTAL);
-
-						if (isPortal && !aboveIsPortal) {
-							int below = chunk.getBlockId(x, tempY - 1, z);
-							while (below == BlockIds.PORTAL) {
-								tempY -= 1;
-								below = chunk.getBlockId(x, tempY - 1, z);
-							}
-						}
-					}
-
-					if (isPortal && !aboveIsPortal) { //Find vertical center portal blocks
-						ChunkCoord coord = chunk.getChunkCoord();
-
-						// Calculate Y position
-						long finalY = chunk.getWorldY((y + tempY + 1) / 2);
-
-						Vector3l pos = new Vector3l(coord.x * RawChunk.WIDTH + x,
-							finalY,
-							coord.z * RawChunk.DEPTH + z);
-
-						if (filter.passesFilter()) {
-							portals.add(new Portal(pos.x, pos.y, pos.z));
-						}
+						runStart = worldY;
+						runAxis = axis;
 					}
 				}
 			}
 		}
+	}
+
+	private static Axis portalAxis(RawChunk chunk, int x, int y, int z) {
+		String name = chunk.getBlockName(x, y, z);
+		if (Block.NETHER_PORTAL.getName().equals(name)) {
+			BlockProperties state = chunk.getBlockState(x, y, z);
+			String axis = state == null ? null : state.get("axis");
+			if ("x".equals(axis))
+				return Axis.X;
+			if ("z".equals(axis))
+				return Axis.Z;
+			return Axis.UNKNOWN;
+		}
+		if (name == null && chunk.getBlockId(x, y, z) == BlockIds.PORTAL) {
+			return switch (chunk.getBlockData(x, y, z)) {
+				case 1 -> Axis.X;
+				case 2 -> Axis.Z;
+				default -> Axis.UNKNOWN;
+			};
+		}
+		return null;
 	}
 
 	public static void findViews(RawChunk chunk, HddObjectListWriter<Sign> views, ViewFilter filter) {

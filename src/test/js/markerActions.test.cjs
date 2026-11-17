@@ -62,7 +62,7 @@ test('every positioned marker gets the three copy actions outside its popup cont
     }
     context.createPlayerMarker({name: 'Alex', worldPos: pos, donation: ''}, [0, 0], layer);
     assert.equal(markers.length, 11);
-    assert.ok(markers.some(marker => /Nether Portal<\/div><br\/> 8\.5, 64, -0\.5/.test(marker.html)));
+    assert.ok(markers.some(marker => /Nether Portal<\/div><br\/><div class="center">8\.5, 64, -0\.5<\/div>/.test(marker.html)));
     for (const marker of markers) {
         assert.equal((marker.html.match(/<button /g) || []).length, 3);
         assert.match(marker.html, /Copy coords/);

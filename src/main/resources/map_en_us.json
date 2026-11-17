@@ -17,6 +17,7 @@
   "tectonicus.marker.respawnAnchor": "{player}'s respawn anchor",
   "tectonicus.marker.coordinates": "{x}, {y}, {z}",
   "tectonicus.marker.beaconInactive": "Not Activated",
+  "tectonicus.marker.portalExit": "Jump to connected portal",
   "tectonicus.container.largeTrappedChest": "Large Trapped Chest",
   "tectonicus.toggle.views": "views",
   "tectonicus.toggle.signs": "signs",

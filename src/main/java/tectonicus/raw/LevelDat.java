@@ -43,6 +43,7 @@ public class LevelDat {
 	private long sizeOnDisk;
 	private Player singlePlayer;
 	private String version;
+	private int dataVersion;
 	private boolean snapshot;
 	private Long worldSeed;
 	private List<String> dataPacks = Collections.emptyList();
@@ -106,7 +107,10 @@ public class LevelDat {
 					singlePlayer = new Player(singlePlayerName, playerTag);
 				}
 				
+				dataVersion = NbtUtil.getInt(data, "DataVersion", UNKNOWN_VERSION);
 				Optional.ofNullable(NbtUtil.getChild(data, "Version", CompoundTag.class)).ifPresent(versionTag -> {
+					if (dataVersion <= UNKNOWN_VERSION)
+						dataVersion = NbtUtil.getInt(versionTag, "Id", UNKNOWN_VERSION);
 					version = NbtUtil.getString(versionTag, "Name", "");
 					snapshot = NbtUtil.getByte(versionTag, "Snapshot", (byte) 0) == 1;
 				});

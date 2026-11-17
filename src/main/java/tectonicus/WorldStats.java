@@ -9,10 +9,13 @@
 
 package tectonicus;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.mutable.MutableLong;
+import tectonicus.util.FileUtils;
 import tectonicus.util.JsArrayWriter;
 import tectonicus.util.JsonWriter;
+import tectonicus.world.PortalSearch;
 
 import java.io.File;
 import java.text.NumberFormat;
@@ -28,6 +31,8 @@ public class WorldStats
 	private int numChunks;
 	private int numPortals;
 	private int numPlayers;
+	@Setter
+	private PortalSearch portalSearch;
 	
 	private final Map<IdDataPair, MutableLong> blockIdCounts;
 	
@@ -158,6 +163,8 @@ public class WorldStats
 			jsWriter.writeVariable("numPortals", "" + numPortals);
 			jsWriter.writeVariable("numPlayers", "" + numPlayers);
 			jsWriter.writeVariable("minecraftVersion", version == Version.VERSION_UNKNOWN ? 0 : version.getNumVersion());
+			if (portalSearch != null)
+				jsWriter.writeRawVariable("portalSearch", FileUtils.getOBJECT_MAPPER().writeValueAsString(portalSearch));
 
 			jsWriter.endObject();
 		} catch (Exception e) {

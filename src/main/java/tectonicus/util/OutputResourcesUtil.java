@@ -16,6 +16,7 @@ import tectonicus.MemoryMonitor;
 import tectonicus.Minecraft;
 import tectonicus.PlayerIconAssembler;
 import tectonicus.Portal;
+import tectonicus.PortalColumn;
 import tectonicus.TileRenderer;
 import tectonicus.Version;
 import tectonicus.blockTypes.Air;
@@ -25,6 +26,7 @@ import tectonicus.cache.ItemIconCache;
 import tectonicus.cache.swap.HddObjectListReader;
 import tectonicus.configuration.Configuration;
 import tectonicus.configuration.Dimension;
+import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
 import tectonicus.configuration.WorldConfig;
@@ -81,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -334,82 +337,38 @@ public class OutputResourcesUtil {
 		log.debug("Exported {} respawn anchors", numOutput);
 	}
 
-	public static List<Portal> outputPortals(File outFile, File portalListFile, tectonicus.configuration.DimensionConfig map) {
-		List<Portal> portals = new ArrayList<>();
-
-		try {
-			HddObjectListReader<Portal> portalsIn = new HddObjectListReader<>(portalListFile);
-			portals = outputPortals(outFile, portalsIn, map);
-			portalsIn.close();
-		} catch (Exception e) {
-			log.error("Exception: ", e);
-		}
-
-		return portals;
-	}
-
-	private static List<Portal> outputPortals(File portalFile, HddObjectListReader<Portal> portalPositions, tectonicus.configuration.DimensionConfig map) throws IOException {
+	public static List<Portal> outputPortals(File outFile, File portalListFile, DimensionConfig map) {
 		log.info("Exporting portals...");
-
-		Files.deleteIfExists(portalFile.toPath());
-
-		List<Portal> portals = new ArrayList<>();
-		try (JsArrayWriter jsWriter = new JsArrayWriter(portalFile, map.getJavascriptId() + "_portalData")) {
-			if (portalPositions.hasNext()) {
-				long prevX;
-				long prevY;
-				long prevZ;
-				long firstX;
-				long firstZ;
-
-				Portal portal = new Portal();
-				portalPositions.read(portal);
-				firstX = portal.getX();
-				firstZ = portal.getZ();
-				prevX = portal.getX();
-				prevY = portal.getY();
-				prevZ = portal.getZ();
-
-				while (portalPositions.hasNext()) {
-					portalPositions.read(portal);
-
-					//Find the horizontal center portal block location
-					if ((portal.getX() == prevX && portal.getZ() == prevZ + 1) || (portal.getX() == prevX + 1 && portal.getZ() == prevZ)) {
-						prevX = portal.getX();
-						prevY = portal.getY();
-						prevZ = portal.getZ();
-					} else {
-						portals.add(new Portal(prevX + (firstX - prevX) / 2, prevY, prevZ + (firstZ - prevZ) / 2));
-						prevX = portal.getX();
-						prevY = portal.getY();
-						prevZ = portal.getZ();
-						firstX = portal.getX();
-						firstZ = portal.getZ();
-					}
-				}
-				portals.add(new Portal(portal.getX() + ((firstX - prevX) / 2), portal.getY(), portal.getZ() + (firstZ - prevZ) / 2));
-
-				WorldSubset worldSubset = map.getWorldSubset();
-				for (Portal p : portals) {
-					final float worldX = p.getX();
-					final float worldY = p.getY();
-					final float worldZ = p.getZ();
-
-					Map<String, String> portalArgs = new HashMap<>();
-					String posStr = "new WorldCoord(" + worldX + ", " + worldY + ", " + worldZ + ")";
-					portalArgs.put("worldPos", posStr);
-
-					if (worldSubset.containsBlock(p.getX(), p.getY(), p.getZ())) {
-						jsWriter.write(portalArgs);
-					}
-				}
+		HddObjectListReader<PortalColumn> portalsIn = null;
+		try (JsArrayWriter jsWriter = new JsArrayWriter(outFile, map.getJavascriptId() + "_portalData")) {
+			portalsIn = new HddObjectListReader<>(portalListFile);
+			List<PortalColumn> columns = new ArrayList<>();
+			while (portalsIn.hasNext()) {
+				var column = new PortalColumn();
+				portalsIn.read(column);
+				columns.add(column);
 			}
-		} catch (Exception e) {
-			log.error("Exception: ", e);
-		}
 
-		log.debug("Exported {} portals", portals.size());
-		return portals;
+			List<Portal> portals = Portal.groupColumns(columns);
+			var mapper = FileUtils.getOBJECT_MAPPER();
+			for (Portal portal : portals) {
+				Vector3l position = portal.position();
+				String worldPos = "new WorldCoord(" + position.x + ", " + position.y + ", " + position.z + ")";
+				Map<String, String> args = new LinkedHashMap<>();
+				args.put("worldPos", worldPos);
+				args.put("entryPos", mapper.writeValueAsString(portal.entryPos()));
+				args.put("columns", mapper.writeValueAsString(portal.columns()));
+				jsWriter.write(args);
+			}
+			log.debug("Exported {} portals", portals.size());
+			return portals;
+		} catch (Exception e) {
+			log.error("Could not export portals", e);
+			return List.of();
+		} finally {
+			if (portalsIn != null)
+				portalsIn.close();
+		}
 	}
 
 	public static void outputViews(File outputFile, File viewsListFile, tectonicus.configuration.DimensionConfig map) {

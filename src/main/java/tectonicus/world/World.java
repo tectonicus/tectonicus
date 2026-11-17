@@ -643,6 +643,10 @@ public class World implements BlockContext, AutoCloseable
 	{
 		return blockFilter;
 	}
+
+	public PortalSearch getPortalSearch() {
+		return PortalSearch.forSave(levelDat.getDataVersion(), levelDat.getVersion(), regionCache.getFormat(), dimension);
+	}
 	
 	public PlayerSkinCache getPlayerSkinCache()
 	{

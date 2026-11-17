@@ -370,16 +370,18 @@ function onBaseLayerChange(e) {
     if (title) title.textContent = mapText('tectonicus.title');
     controlState = {...e.layer.controlState, ...markerVisibilityOverrides.get(e.layer.worldId)};
     selectedWorldLayers.set(e.layer.worldId, e.layer.layerId);
-    if (mymap.setMaxZoom) {
-        mymap.setMaxZoom(e.layer.maxZoom ?? maxZoom);
-    }
+    const layerMaxZoom = e.layer.maxZoom ?? maxZoom;
+    // Leaflet animates a zoom clamp at the old center. Move to the destination before lowering the limit.
+    const clampZoom = mymap.getZoom() > layerMaxZoom;
+    if (!clampZoom) mymap.setMaxZoom?.(layerMaxZoom);
     updateWorldLayerControl(e.layer);
     if (worldControl) {
         worldControl.setWorld(e.layer.worldId);
     }
     subsetControl.setSubsets(e.layer.worldVectors.subsets ?? []);
 
-    mymap.setView(targetView.startPoint, targetView.zoom, {animate: false});
+    mymap.setView(targetView.startPoint, Math.min(targetView.zoom, layerMaxZoom), {animate: false});
+    if (clampZoom) mymap.setMaxZoom?.(layerMaxZoom);
     changingBaseLayer = false;
 
 	changeBackgroundColor(e.layer.backgroundColor);
@@ -777,19 +779,119 @@ function refreshPortalMarkers(layer) {
 	const group = markerGroups.portalControlChecked;
 	group.clearLayers();
 
-	// Portal markers
-	for (i in layer.portals) {
-		let portal = layer.portals[i];
-
-		let point = layer.projection.worldToMap(portal.worldPos);
-
+	for (const portal of layer.portals) {
+		const point = layer.projection.worldToMap(portal.worldPos);
 		const icon = createWorldMarkerIcon('Portal.png', [17, 20], layer);
-
-		let marker = bindMarkerPopup(L.marker(point, { icon: icon }),
-			'<div style="text-align:center">' + escapeHtml(mapText('block.minecraft.nether_portal')) + '</div><br/> '
-			+ escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(portal.worldPos))), portal.worldPos, layer);
-
+		const marker = bindMarkerPopup(L.marker(point, {icon}), () =>
+			'<div style="text-align:center">' + escapeHtml(mapText('block.minecraft.nether_portal', {}, layer)) + '</div><br/>'
+			+ '<div class="center">' + escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(portal.worldPos), layer)) + '</div>'
+			+ portalJumpButton(layer, portal), portal.worldPos, layer);
 		group.addLayer(marker);
+	}
+}
+
+function findPortalExit(layer, portal) {
+	const overworld = 'minecraft:overworld';
+	const nether = 'minecraft:the_nether';
+	const entry = portal.entryPos;
+	if (!entry || ![entry.x, entry.y, entry.z].every(Number.isFinite)
+			|| (layer.dimensionId !== overworld && layer.dimensionId !== nether)) return;
+
+	const toNether = layer.dimensionId === overworld;
+	const scale = toNether ? 1 / 8 : 8;
+	const exit = {x: entry.x * scale, y: entry.y, z: entry.z * scale};
+	const searched = new Set();
+	let best;
+	let tied = false;
+	for (const target of worldLayers.get(layer.worldId) ?? []) {
+		const rules = target.worldStats?.portalSearch;
+		if (target.dimensionId !== (toNether ? nether : overworld) || !rules || searched.has(target.portals)) continue;
+		// Lighting layers share the same markers. Search each rendered view once.
+		searched.add(target.portals);
+		for (const [index, candidate] of target.portals.entries()) {
+			const block = closestPortalBlock(candidate.columns, rules, exit);
+			if (!block) continue;
+			const difference = best ? comparePortalBlocks(block, best.block, rules) : -1;
+			if (difference < 0) {
+				best = {layer: target, index, block};
+				tied = false;
+			} else if (difference === 0 && (block.x !== best.block.x || block.y !== best.block.y || block.z !== best.block.z)) {
+				// Overlapping render subsets can export the same destination block.
+				tied = true;
+			}
+		}
+	}
+	return tied ? undefined : best;
+}
+
+function closestPortalBlock(columns, rules, exit) {
+	if (!Array.isArray(columns)) return;
+	const centers = rules.mode === 'COLUMN_CENTERS';
+	const chunks = rules.mode === 'CHUNKS';
+	const bottomOnly = centers || rules.mode === 'COLUMN_BLOCKS';
+	const roundXZ = rules.mode === 'COLUMN_BLOCKS' ? Math.trunc : Math.floor;
+	const x = roundXZ(exit.x);
+	const y = Math.floor(exit.y);
+	const z = roundXZ(exit.z);
+	const gridCoord = value => chunks ? Math.floor(value / 16) : value;
+	const gridX = gridCoord(x);
+	const gridZ = gridCoord(z);
+	let best;
+	for (const column of columns) {
+		if (Math.abs(gridCoord(column.x) - gridX) > rules.radius
+				|| Math.abs(gridCoord(column.z) - gridZ) > rules.radius) continue;
+		if (bottomOnly && (column.minY < 0 || column.minY > rules.maxY)) continue;
+		const blockY = bottomOnly ? column.minY : Math.max(column.minY, Math.min(y, column.maxY));
+		const dx = centers ? column.x + 0.5 - exit.x : column.x - x;
+		const dy = centers ? blockY + 0.5 - exit.y : blockY - y;
+		const dz = centers ? column.z + 0.5 - exit.z : column.z - z;
+		const block = {x: column.x, y: blockY, z: column.z, distance: dx * dx + dy * dy + dz * dz};
+		if (!best || comparePortalBlocks(block, best, rules) < 0) best = block;
+	}
+	return best;
+}
+
+function comparePortalBlocks(a, b, rules) {
+	return a.distance - b.distance || (rules.mode === 'BLOCKS' || rules.mode === 'CHUNKS' ? a.y - b.y : 0);
+}
+
+function portalJumpButton(layer, portal) {
+	const exit = findPortalExit(layer, portal);
+	if (!exit) return '';
+	const label = escapeHtml(mapText('tectonicus.marker.portalExit', {}, layer));
+	const arrow = 'M2 12H16.5 M12.2 7.7L16.5 12 12.2 16.3';
+	const icon = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+		<rect x="11" y="3" width="10" height="18" fill="#8b43cf" stroke="#000" stroke-width="2.5"/>
+		<path d="M13.1 5.5h1.4V8h-1.4z M17.4 8h1.3v1.3h-1.3z" fill="#ac70ec"/>
+		<rect x="17.4" y="16.6" width="1.3" height="2" fill="#6632a2"/>
+		<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+			<path d="${arrow}" stroke="#f5f5f5" stroke-width="4.3"/>
+			<path d="${arrow}" stroke="currentColor" stroke-width="2.3"/>
+		</g>
+	</svg>`;
+	return `<div class="portal_jump_control"><button type="button" data-portal-layer="${escapeHtml(exit.layer.layerId)}" data-portal-index="${exit.index}"
+		title="${label}" aria-label="${label}" onclick="jumpToPortal(this)">${icon}</button></div>`;
+}
+
+function jumpToPortal(button) {
+	const layer = tileLayers.get(button.dataset.portalLayer);
+	const index = Number(button.dataset.portalIndex);
+	const portal = layer?.portals[index];
+	if (!portal || layer.worldId !== activeBaseLayer?.worldId || layer === activeBaseLayer) return;
+
+	const zoom = Math.max(mymap.getMinZoom(), Math.min(mymap.getZoom(), layer.maxZoom ?? maxZoom));
+	layer.viewPosition = new ViewPos(layer.layerId, portal.worldPos, zoom, layer.projection.worldToMap(portal.worldPos));
+	selectBaseLayer(layer);
+	if (controlState.portalControlChecked) {
+		const marker = markerGroups.portalControlChecked.getLayers()[index];
+		const popup = marker.getPopup();
+		const autoPan = popup.options.autoPan;
+		popup.options.autoPan = false;
+		try {
+			marker.openPopup();
+		} finally {
+			popup.options.autoPan = autoPan;
+		}
 	}
 }
 

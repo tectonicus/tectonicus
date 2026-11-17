@@ -314,7 +314,7 @@ test('ender chest markers use world icons, show block coordinates and follow the
         assert.equal(enderChest.options.icon.iconUrl, `World${index}/Images/EnderChest.png`);
         assert.equal(chest.options.icon.iconUrl, `World${index}/Images/Chest.png`);
         assert.equal(enderChest.point, layer.containers[0].worldPos);
-        assert.match(enderChest.html, /Ender Chest<\/div><br\/> -17, -36, -1/);
+        assert.match(enderChest.html, /Ender Chest<\/div><br\/><div class="center">-17, -36, -1<\/div>/);
         assert.doesNotMatch(enderChest.html, /inventory_slot|SmallChest.png|undefined/);
         assert.match(chest.html, /SmallChest.png/);
         assert.deepEqual(group.getLayers(), [enderChest, chest]);

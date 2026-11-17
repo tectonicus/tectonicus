@@ -23,7 +23,7 @@ async function createViewer(contents, fragment = '', {matchMedia, useRealProject
         setAttribute(name, value) { this[name] = value; }});
     const mapElement = element();
     const map = {
-        center: {lat: 0, lng: 0}, zoom: 0, maxZoom: 8,
+        center: {lat: 0, lng: 0}, zoom: 0, maxZoom: 8, animatedZoomClamps: 0,
         layers: new Set(),
         on(name, listener) { handlers[name] = listener; },
         fireEvent(name, event) { handlers[name]?.(event); },
@@ -40,6 +40,7 @@ async function createViewer(contents, fragment = '', {matchMedia, useRealProject
         setMaxZoom(zoom) {
             this.maxZoom = zoom;
             if (this.zoom > zoom) {
+                this.animatedZoomClamps++;
                 this.zoom = zoom;
                 handlers.zoomend?.();
             }
@@ -107,7 +108,14 @@ async function createViewer(contents, fragment = '', {matchMedia, useRealProject
         Point: function(x, y) { Object.assign(this, {x, y}); },
         latLngBounds: points => points,
         icon: options => options,
-        marker: (point, options) => ({point, options, bindTooltip() { return this; }}),
+        marker: (point, options) => ({point, options, bindTooltip() { return this; },
+            bindPopup(content) { this.popup = {content, options: {autoPan: true}}; return this; },
+            getPopup() { return this.popup; },
+            openPopup() {
+                this.popup.html = typeof this.popup.content === 'function' ? this.popup.content() : this.popup.content;
+                this.popup.panned = this.popup.options.autoPan;
+                return this;
+            }}),
         setOptions(layer, options) { layer.options = Object.assign(Object.create(layer.options || null), options); },
         DomUtil: {toFront() {}, create(tag, className, parent) {
             const node = Object.assign(element(), {tag, className});
@@ -146,7 +154,6 @@ async function createViewer(contents, fragment = '', {matchMedia, useRealProject
     context.containersMainAsync = async () => {};
     context.CreateResetViewButton = () => {};
     context.CreateCompassControl = () => new Control();
-    context.bindMarkerPopup = (marker, html) => Object.assign(marker, {html});
     await context.mainAsync();
     return {
         context, map, controls, mapElement,
@@ -166,6 +173,84 @@ function dimension(id, worldId, layerNames = ['Day', 'Night'], extra = {}) {
         ...extra
     };
 }
+
+function portal(x, minY, z, maxY = minY) {
+    return {
+        worldPos: {x, y: Math.ceil((minY + maxY) / 2), z},
+        entryPos: {x: x + 0.5, y: minY, z: z + 0.5},
+        columns: [{x, z, minY, maxY}]
+    };
+}
+
+test('portal jumps stay in the same world, use the destination projection, and resolve the return independently', async () => {
+    const source = portal(-9, 90, 0);
+    const returnPortal = portal(-140, 80, 4);
+    const netherPortal = portal(-18, 80, 0, 90);
+    const visible = {portalControlChecked: true};
+    const viewer = await createViewer([
+        dimension('surface', 'Survival', ['Day', 'Night'], {dimensionId: 'minecraft:overworld',
+            portals: [source, returnPortal], controlState: visible, worldStats: {portalSearch: {mode: 'BLOCKS', radius: 128}}}),
+        dimension('nether', 'Survival', ['Nether', 'Nether night'], {dimensionId: 'minecraft:the_nether', maxZoom: 4,
+            portals: [portal(15, 90, 0), netherPortal, portal(-2, 60, 0, 66)], controlState: visible,
+            worldStats: {portalSearch: {mode: 'BLOCKS', radius: 16}}}),
+        dimension('different_save', 'Creative', ['Nether'], {dimensionId: 'minecraft:the_nether', portals: [portal(-2, 90, 0)],
+            worldStats: {portalSearch: {mode: 'BLOCKS', radius: 16}}})
+    ], 'layer=survival.night&zoom=8');
+    const {evaluate, context, map} = viewer;
+    const group = evaluate('markerGroups.portalControlChecked');
+    const sourcePopup = group.getLayers()[0].openPopup().getPopup();
+    assert.match(sourcePopup.html, /<div class="center">-9, 90, 0<\/div><div class="portal_jump_control">[\s\S]*?<\/button><\/div><div class="marker_copy_controls">/);
+    assert.match(sourcePopup.html, /<button type="button" data-portal-layer="nether_0" data-portal-index="1"\s+title="Jump to connected portal" aria-label="Jump to connected portal"[^>]*><svg viewBox="0 0 24 24" aria-hidden="true"/);
+    context.jumpToPortal({dataset: {portalLayer: 'nether_0', portalIndex: '1'}});
+    assert.equal(evaluate('activeBaseLayer.layerId'), 'nether_0');
+    assert.deepEqual(map.center, {lat: -18, lng: 0});
+    assert.equal(map.zoom, 4);
+    assert.equal(map.animatedZoomClamps, 0);
+    assert.equal(context.window.history.url, '#layer=survival.nether&x=-18&z=0&zoom=4');
+    const destinationPopup = group.getLayers()[1].getPopup();
+    assert.equal(destinationPopup.panned, false);
+    assert.equal(destinationPopup.options.autoPan, true);
+    assert.match(destinationPopup.html, /data-portal-layer="surface_0" data-portal-index="1"/);
+});
+
+test('legacy portal jumps center on an exit with hidden markers and omit the action on a tie', async () => {
+    const source = portal(0, 64, 0);
+    const visible = {portalControlChecked: true};
+    const searchRules = {mode: 'COLUMN_CENTERS', radius: 32, maxY: 127};
+    const exits = [portal(4, 64, 0), portal(0, 64, 4)];
+    const {evaluate, context, map} = await createViewer([
+        dimension('surface', 'Alpha', ['Day'], {dimensionId: 'minecraft:overworld', portals: [source], controlState: visible}),
+        dimension('nether', 'Alpha', ['Nether'], {dimensionId: 'minecraft:the_nether', portals: exits,
+            worldStats: {portalSearch: searchRules}, controlState: {portalControlChecked: false}})
+    ]);
+    const group = evaluate('markerGroups.portalControlChecked');
+    assert.doesNotMatch(group.getLayers()[0].openPopup().getPopup().html, /data-portal-layer/);
+    exits.pop();
+    assert.match(group.getLayers()[0].openPopup().getPopup().html, /data-portal-layer="nether_0"/);
+    context.jumpToPortal({dataset: {portalLayer: 'nether_0', portalIndex: '0'}});
+    assert.deepEqual(map.center, {lat: 4, lng: 0});
+    assert.equal(map.layers.has(group), false);
+    assert.equal(group.getLayers()[0].getPopup().html, undefined);
+});
+
+test('portal searches distinguish column bottoms, height limits, and historical chunk windows', async () => {
+    const {context} = await createViewer([dimension('surface', 'World')]);
+    const blocks = (mode, radius, maxY) => ({mode, radius, maxY});
+    const closest = (rules, entry, ...targets) => context.closestPortalBlock(targets.flatMap(target => target.columns), rules, entry);
+    const entry = {x: -0.25, y: 130, z: 0.5};
+    const roof = portal(-1, 129, 0, 132);
+    const lower = portal(-2, 115, 0, 126);
+    assert.equal(closest(blocks('COLUMN_BLOCKS', 128, 127), entry, roof, lower).y, 115);
+    assert.equal(closest(blocks('BLOCKS', 16), entry, roof, lower).y, 130);
+    assert.equal(closest(blocks('BLOCKS', 16), entry, portal(-17, 130, 16)).x, -17);
+    assert.equal(closest(blocks('BLOCKS', 16), entry, portal(16, 130, 0)), undefined);
+    assert.equal(closest(blocks('COLUMN_BLOCKS', 128, 127), entry, portal(128, 120, 0)).x, 128);
+    assert.equal(closest(blocks('COLUMN_CENTERS', 32, 127), entry, portal(32, 120, 0)), undefined);
+    assert.equal(closest(blocks('CHUNKS', 8), entry, portal(-144, 130, 0)).x, -144);
+    assert.equal(closest(blocks('CHUNKS', 8), entry, portal(-145, 130, 0)), undefined);
+    assert.equal(closest(blocks('CHUNKS', 9), entry, portal(-145, 130, 0)).x, -145);
+    assert.equal(closest(blocks('BLOCKS', 16), entry, portal(-1, 131, 0), portal(-1, 129, 0)).y, 129);
+});
 
 test('legacy toggle mode exposes buttons without a menu and keeps visibility across layer and world changes', async () => {
     const worldVectors = {startView: {x: 0, y: 64, z: 0}, spawnPosition: {x: 0, y: 64, z: 0}};

@@ -14,7 +14,6 @@ import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.Chunk;
 import tectonicus.configuration.DimensionConfig;
-import tectonicus.configuration.filter.PortalFilter;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.world.Sign;
@@ -54,7 +53,7 @@ public class RegionLoadQueue
 	}
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
-					 DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
+					 DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
 		numberOfRegionsStarted.incrementAndGet();
 		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, containers, beds);
@@ -79,14 +78,14 @@ public class RegionLoadQueue
 		private final RegionHashStore regionHashStore;
 		private final MessageDigest hashAlgorithm;
 		private final DimensionConfig map;
-		private final HddObjectListWriter<Portal> portals;
+		private final HddObjectListWriter<PortalColumn> portals;
 		private final HddObjectListWriter<Sign> signs;
 		private final HddObjectListWriter<Sign> views;
 		private final ConcurrentLinkedQueue<ContainerEntity> containers;
 		private final Queue<BedEntity> beds;
 		
 		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
-						DimensionConfig map, HddObjectListWriter<Portal> portals, HddObjectListWriter<Sign> signs,
+						DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
 			this.chunk = chunk;
 			this.regionHashStore = regionHashStore;
@@ -109,8 +108,7 @@ public class RegionLoadQueue
 				
 				findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
 				
-				PortalFilter portalFilter = map.getPortalFilter();
-				findPortals(chunk.getRawChunk(), portals, portalFilter);
+				findPortals(chunk.getRawChunk(), portals, map.getPortalFilter(), map.getWorldSubset());
 				findBeds(chunk.getRawChunk(), beds);
 				
 				findViews(chunk.getRawChunk(), views, map.getViewFilter());

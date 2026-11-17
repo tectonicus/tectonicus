@@ -602,7 +602,13 @@ html, body, #map {
     padding-top: 8px;
 }
 
-.marker_copy_controls button {
+.portal_jump_control {
+    margin-top: 8px;
+    text-align: center;
+}
+
+.marker_copy_controls button,
+.portal_jump_control button {
     box-sizing: border-box;
     cursor: pointer;
     display: inline-flex;
@@ -617,17 +623,20 @@ html, body, #map {
     border-radius: 4px;
 }
 
-.marker_copy_controls button:hover {
+.marker_copy_controls button:hover,
+.portal_jump_control button:hover {
     background: #e5e5e5;
     border-color: #888;
 }
 
-.marker_copy_controls button:focus-visible {
+.marker_copy_controls button:focus-visible,
+.portal_jump_control button:focus-visible {
     outline: 2px solid #5265b5;
     outline-offset: 2px;
 }
 
-.marker_copy_controls svg {
+.marker_copy_controls svg,
+.portal_jump_control svg {
     width: 18px;
     height: 18px;
 }

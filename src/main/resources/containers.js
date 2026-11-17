@@ -347,7 +347,7 @@ function createContainerPopup(container) {
 		const coordinates = formatMapCoordinates(pos, Math.floor);
 		const name = container.nameKey === null ? container.name : mapText('container.enderchest');
 		return '<div style="text-align:center">' + escapeHtml(name)
-			+ '</div><br/> ' + escapeHtml(mapText('tectonicus.marker.coordinates', coordinates));
+			+ '</div><br/><div class="center">' + escapeHtml(mapText('tectonicus.marker.coordinates', coordinates)) + '</div>';
 	}
 
         let markerPopup = container.large

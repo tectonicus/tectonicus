@@ -17,6 +17,7 @@ import java.util.Map;
 import org.jnbt.CompoundTag;
 import org.jnbt.LongTag;
 import org.jnbt.IntArrayTag;
+import org.jnbt.IntTag;
 import org.jnbt.StringTag;
 import org.jnbt.NBTOutputStream;
 import org.jnbt.Tag;
@@ -36,6 +37,19 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class LevelDatTests {
 	@TempDir
 	Path directory;
+
+	@Test
+	void readsDataVersionBeforeLegacyVersionId() throws Exception {
+		Path level = directory.resolve("level.dat");
+		var version = new CompoundTag("Version", Map.of("Id", new IntTag("Id", 2203),
+				"Name", new StringTag("Name", "19w36a")));
+		writeNbt(level, new CompoundTag("", Map.of("Data", new CompoundTag("Data", Map.of("Version", version)))));
+		assertEquals(2203, new LevelDat(level, "").getDataVersion());
+
+		writeNbt(level, new CompoundTag("", Map.of("Data", new CompoundTag("Data", Map.of("Version", version,
+				"DataVersion", new IntTag("DataVersion", 2570))))));
+		assertEquals(2570, new LevelDat(level, "").getDataVersion());
+	}
 
 	@ParameterizedTest
 	@ValueSource(longs = {0, -1, 268372865167095444L, Long.MIN_VALUE, Long.MAX_VALUE})
