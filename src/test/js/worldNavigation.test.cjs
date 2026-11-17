@@ -176,6 +176,7 @@ function dimension(id, worldId, layerNames = ['Day', 'Night'], extra = {}) {
 
 function portal(x, minY, z, maxY = minY) {
     return {
+        id: `${x},${minY},${z}`,
         worldPos: {x, y: Math.ceil((minY + maxY) / 2), z},
         entryPos: {x: x + 0.5, y: minY, z: z + 0.5},
         columns: [{x, z, minY, maxY}]
@@ -186,6 +187,8 @@ test('portal jumps stay in the same world, use the destination projection, and r
     const source = portal(-9, 90, 0);
     const returnPortal = portal(-140, 80, 4);
     const netherPortal = portal(-18, 80, 0, 90);
+    source.destinationId = netherPortal.id;
+    netherPortal.destinationId = returnPortal.id;
     const visible = {portalControlChecked: true};
     const viewer = await createViewer([
         dimension('surface', 'Survival', ['Day', 'Night'], {dimensionId: 'minecraft:overworld',
@@ -213,7 +216,7 @@ test('portal jumps stay in the same world, use the destination projection, and r
     assert.match(destinationPopup.html, /data-portal-layer="surface_0" data-portal-index="1"/);
 });
 
-test('legacy portal jumps center on an exit with hidden markers and omit the action on a tie', async () => {
+test('unresolved portal jumps omit the action and resolved exits work with hidden markers', async () => {
     const source = portal(0, 64, 0);
     const visible = {portalControlChecked: true};
     const searchRules = {mode: 'COLUMN_CENTERS', radius: 32, maxY: 127};
@@ -225,7 +228,7 @@ test('legacy portal jumps center on an exit with hidden markers and omit the act
     ]);
     const group = evaluate('markerGroups.portalControlChecked');
     assert.doesNotMatch(group.getLayers()[0].openPopup().getPopup().html, /data-portal-layer/);
-    exits.pop();
+    source.destinationId = exits[0].id;
     assert.match(group.getLayers()[0].openPopup().getPopup().html, /data-portal-layer="nether_0"/);
     context.jumpToPortal({dataset: {portalLayer: 'nether_0', portalIndex: '0'}});
     assert.deepEqual(map.center, {lat: 4, lng: 0});
@@ -233,23 +236,43 @@ test('legacy portal jumps center on an exit with hidden markers and omit the act
     assert.equal(group.getLayers()[0].getPopup().html, undefined);
 });
 
-test('portal searches distinguish column bottoms, height limits, and historical chunk windows', async () => {
-    const {context} = await createViewer([dimension('surface', 'World')]);
-    const blocks = (mode, radius, maxY) => ({mode, radius, maxY});
-    const closest = (rules, entry, ...targets) => context.closestPortalBlock(targets.flatMap(target => target.columns), rules, entry);
-    const entry = {x: -0.25, y: 130, z: 0.5};
-    const roof = portal(-1, 129, 0, 132);
-    const lower = portal(-2, 115, 0, 126);
-    assert.equal(closest(blocks('COLUMN_BLOCKS', 128, 127), entry, roof, lower).y, 115);
-    assert.equal(closest(blocks('BLOCKS', 16), entry, roof, lower).y, 130);
-    assert.equal(closest(blocks('BLOCKS', 16), entry, portal(-17, 130, 16)).x, -17);
-    assert.equal(closest(blocks('BLOCKS', 16), entry, portal(16, 130, 0)), undefined);
-    assert.equal(closest(blocks('COLUMN_BLOCKS', 128, 127), entry, portal(128, 120, 0)).x, 128);
-    assert.equal(closest(blocks('COLUMN_CENTERS', 32, 127), entry, portal(32, 120, 0)), undefined);
-    assert.equal(closest(blocks('CHUNKS', 8), entry, portal(-144, 130, 0)).x, -144);
-    assert.equal(closest(blocks('CHUNKS', 8), entry, portal(-145, 130, 0)), undefined);
-    assert.equal(closest(blocks('CHUNKS', 9), entry, portal(-145, 130, 0)).x, -145);
-    assert.equal(closest(blocks('BLOCKS', 16), entry, portal(-1, 131, 0), portal(-1, 129, 0)).y, 129);
+test('excluded winning portals never reroute to visible alternatives or another world', async () => {
+    const source = portal(0, 64, 0);
+    const winner = portal(1, 64, 0);
+    const alternative = portal(12, 64, 0);
+    source.destinationId = winner.id;
+    const targets = [alternative];
+    const includedSubset = [];
+    const {context, evaluate} = await createViewer([
+        dimension('surface', 'World', ['Day'], {dimensionId: 'minecraft:overworld', portals: [source],
+            controlState: {portalControlChecked: true}}),
+        dimension('nether', 'World', ['Nether'], {dimensionId: 'minecraft:the_nether', portals: targets}),
+        dimension('nether_subset', 'World', ['Nether included'], {dimensionId: 'minecraft:the_nether', portals: includedSubset}),
+        dimension('other_world', 'Other', ['Nether'], {dimensionId: 'minecraft:the_nether', portals: [winner]})
+    ]);
+    const popup = () => evaluate('markerGroups.portalControlChecked.getLayers()[0].openPopup().getPopup().html');
+    assert.doesNotMatch(popup(), /data-portal-layer/);
+    includedSubset.push(winner);
+    assert.match(popup(), /data-portal-layer="nether_subset_0" data-portal-index="0"/);
+    includedSubset.pop();
+    assert.doesNotMatch(popup(), /data-portal-layer/);
+    targets.push(winner);
+    assert.match(popup(), /data-portal-layer="nether_0" data-portal-index="1"/);
+    delete source.destinationId; // Older exports must be regenerated, even if a destination happens to be visible.
+    assert.doesNotMatch(popup(), /data-portal-layer/);
+    source.destinationId = winner.id;
+    context.jumpToPortal({dataset: {portalLayer: 'nether_0', portalIndex: '1'}});
+    assert.equal(evaluate('activeBaseLayer.layerId'), 'nether_0');
+});
+
+test('portal jumps require an exported opposite dimension in the same world', async () => {
+    const source = portal(0, 64, 0);
+    source.destinationId = '1,64,0';
+    const {evaluate} = await createViewer([
+        dimension('surface', 'World', ['Day'], {dimensionId: 'minecraft:overworld', portals: [source],
+            controlState: {portalControlChecked: true}})
+    ]);
+    assert.doesNotMatch(evaluate('markerGroups.portalControlChecked.getLayers()[0].openPopup().getPopup().html'), /data-portal-layer/);
 });
 
 test('legacy toggle mode exposes buttons without a menu and keeps visibility across layer and world changes', async () => {

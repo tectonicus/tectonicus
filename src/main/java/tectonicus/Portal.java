@@ -22,10 +22,24 @@ import java.util.Set;
 public record Portal(Vector3l position, EntryPosition entryPos, List<PortalColumn> columns) {
 	public record EntryPosition(double x, int y, double z) {}
 	private record ColumnPosition(long x, long z) {}
+	private static final Comparator<PortalColumn> COLUMN_ORDER = Comparator.comparingLong(PortalColumn::getX)
+			.thenComparingLong(PortalColumn::getZ).thenComparingInt(PortalColumn::getMinY);
+
+	public String id() {
+		PortalColumn first = columns.stream().min(COLUMN_ORDER).orElseThrow();
+		return first.getX() + "," + first.getMinY() + "," + first.getZ();
+	}
+
+	public static boolean connects(PortalColumn a, PortalColumn b) {
+		boolean alongX = Math.abs(a.getX() - b.getX()) == 1 && a.getZ() == b.getZ()
+				&& a.getAxis() != Axis.Z && b.getAxis() != Axis.Z;
+		boolean alongZ = Math.abs(a.getZ() - b.getZ()) == 1 && a.getX() == b.getX()
+				&& a.getAxis() != Axis.X && b.getAxis() != Axis.X;
+		return (alongX || alongZ) && a.getMinY() <= b.getMaxY() && a.getMaxY() >= b.getMinY();
+	}
 
 	public static List<Portal> groupColumns(List<PortalColumn> columns) {
-		var ordered = columns.stream().sorted(Comparator.comparingLong(PortalColumn::getX)
-				.thenComparingLong(PortalColumn::getZ).thenComparingInt(PortalColumn::getMinY)).toList();
+		var ordered = columns.stream().sorted(COLUMN_ORDER).toList();
 		Map<ColumnPosition, List<PortalColumn>> byPosition = new HashMap<>();
 		for (PortalColumn column : ordered) {
 			var position = new ColumnPosition(column.getX(), column.getZ());
@@ -44,12 +58,12 @@ public record Portal(Vector3l position, EntryPosition entryPos, List<PortalColum
 				long x = column.getX();
 				long z = column.getZ();
 				if (column.getAxis() != Axis.Z) {
-					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x - 1, z)), Axis.X);
-					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x + 1, z)), Axis.X);
+					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x - 1, z)));
+					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x + 1, z)));
 				}
 				if (column.getAxis() != Axis.X) {
-					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x, z - 1)), Axis.Z);
-					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x, z + 1)), Axis.Z);
+					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x, z - 1)));
+					connectColumns(connected, remaining, column, byPosition.get(new ColumnPosition(x, z + 1)));
 				}
 			}
 			portals.add(fromColumns(connected));
@@ -58,12 +72,11 @@ public record Portal(Vector3l position, EntryPosition entryPos, List<PortalColum
 	}
 
 	private static void connectColumns(List<PortalColumn> connected, Set<PortalColumn> remaining,
-			PortalColumn column, List<PortalColumn> neighbors, Axis axis) {
+			PortalColumn column, List<PortalColumn> neighbors) {
 		if (neighbors == null)
 			return;
 		for (PortalColumn neighbor : neighbors) {
-			if ((neighbor.getAxis() == axis || neighbor.getAxis() == Axis.UNKNOWN)
-					&& neighbor.getMinY() <= column.getMaxY() && neighbor.getMaxY() >= column.getMinY()
+			if (connects(column, neighbor)
 					&& remaining.remove(neighbor)) {
 				connected.add(neighbor);
 			}

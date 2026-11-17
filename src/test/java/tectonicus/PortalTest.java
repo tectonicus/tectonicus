@@ -19,6 +19,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static tectonicus.PortalColumn.Axis.*;
 import static tectonicus.util.FindEntityUtil.findPortals;
+import static tectonicus.util.FindEntityUtil.findPortalColumns;
 import static tectonicus.util.OutputResourcesUtil.outputPortals;
 
 class PortalTest {
@@ -51,6 +52,11 @@ class PortalTest {
 			}
 			chunk.setBlockName(10, 15, 10, Block.NETHER_PORTAL.getName());
 			chunk.setBlockState(10, 15, 10, new BlockProperties(Map.of("axis", "z")));
+			var complete = findPortalColumns(chunk);
+			assertEquals(3, complete.size());
+			assertEquals(0, complete.getFirst().getMinY());
+			assertEquals(3, complete.getFirst().getMaxY());
+			assertEquals(Z, complete.getLast().getAxis());
 			var swap = directory.resolve("portals.list").toFile();
 			var exported = directory.resolve("portals.js");
 			var map = new DimensionConfig("Map0");

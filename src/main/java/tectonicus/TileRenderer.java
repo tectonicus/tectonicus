@@ -291,7 +291,7 @@ public class TileRenderer
 						map, world.getPlayers(map.getDimensionInfo()), playerIconAssembler, viewerAssets);
 				outputBeds(mapDir, map, world.getAllPlayers(), world.getBeds());
 				outputRespawnAnchors(mapDir, map, world.getAllPlayers());
-				List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map);
+				List<Portal> portals = outputPortals(new File(mapDir, "portals.js"), portalsFile, map, world);
 				worldStats.setNumPortals(portals.size());
 				worldStats.setPortalSearch(world.getPortalSearch());
 				outputViews(new File(mapDir, "views.js"), viewsFile, map);

@@ -32,8 +32,11 @@ import tectonicus.world.Colors;
 import tectonicus.world.Sign;
 import tectonicus.world.subset.WorldSubset;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
 @UtilityClass
@@ -50,8 +53,18 @@ public class FindEntityUtil {
 	public static void findPortals(RawChunk chunk, HddObjectListWriter<PortalColumn> portals, PortalFilter filter, WorldSubset subset) {
 		if (!filter.passesFilter())
 			return;
+		scanPortalColumns(chunk, subset.visibility(chunk.getChunkCoord()), portals::add);
+	}
+
+	/** Complete portal columns, independent of render filters and subsets. */
+	public static List<PortalColumn> findPortalColumns(RawChunk chunk) {
+		List<PortalColumn> columns = new ArrayList<>();
+		scanPortalColumns(chunk, (x, y, z) -> true, columns::add);
+		return columns;
+	}
+
+	private static void scanPortalColumns(RawChunk chunk, RawChunk.BlockVisibility visibility, Consumer<PortalColumn> columns) {
 		ChunkCoord coord = chunk.getChunkCoord();
-		var visibility = subset.visibility(coord);
 		int height = Minecraft.getChunkHeight();
 		int worldMinY = chunk.getWorldY(0);
 		for (int x = 0; x < RawChunk.WIDTH; x++) {
@@ -69,7 +82,7 @@ public class FindEntityUtil {
 						runAxis = axis;
 					if (axis != runAxis) {
 						if (runAxis != null) {
-							portals.add(new PortalColumn(coord.x * RawChunk.WIDTH + x,
+							columns.accept(new PortalColumn(coord.x * RawChunk.WIDTH + x,
 									coord.z * RawChunk.DEPTH + z, runStart, worldY - 1, runAxis));
 						}
 						runStart = worldY;

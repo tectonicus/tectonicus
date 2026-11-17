@@ -55,6 +55,7 @@ import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
 import tectonicus.world.Colors;
+import tectonicus.world.PortalLinker;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
 import tectonicus.world.subset.WorldSubset;
@@ -338,6 +339,10 @@ public class OutputResourcesUtil {
 	}
 
 	public static List<Portal> outputPortals(File outFile, File portalListFile, DimensionConfig map) {
+		return outputPortals(outFile, portalListFile, map, null);
+	}
+
+	public static List<Portal> outputPortals(File outFile, File portalListFile, DimensionConfig map, World world) {
 		log.info("Exporting portals...");
 		HddObjectListReader<PortalColumn> portalsIn = null;
 		try (JsArrayWriter jsWriter = new JsArrayWriter(outFile, map.getJavascriptId() + "_portalData")) {
@@ -349,15 +354,32 @@ public class OutputResourcesUtil {
 				columns.add(column);
 			}
 
-			List<Portal> portals = Portal.groupColumns(columns);
+			List<Portal> visiblePortals = Portal.groupColumns(columns);
+			PortalLinker linker = null;
+			if (world != null && !visiblePortals.isEmpty()) {
+				try {
+					linker = PortalLinker.forWorld(world);
+				} catch (RuntimeException e) {
+					log.warn("Could not open portal search terrain. Exporting markers without jump links.", e);
+				}
+			}
+			List<Portal> portals = new ArrayList<>();
+			Set<String> exportedIds = new HashSet<>();
 			var mapper = FileUtils.getOBJECT_MAPPER();
-			for (Portal portal : portals) {
+			for (Portal visible : visiblePortals) {
+				var link = linker == null ? new PortalLinker.Link(visible, null, null) : linker.resolve(visible);
+				if (link.id() != null && !exportedIds.add(link.id()))
+					continue;
+				Portal portal = link.portal();
+				portals.add(portal);
 				Vector3l position = portal.position();
 				String worldPos = "new WorldCoord(" + position.x + ", " + position.y + ", " + position.z + ")";
 				Map<String, String> args = new LinkedHashMap<>();
 				args.put("worldPos", worldPos);
 				args.put("entryPos", mapper.writeValueAsString(portal.entryPos()));
 				args.put("columns", mapper.writeValueAsString(portal.columns()));
+				args.put("id", mapper.writeValueAsString(link.id()));
+				args.put("destinationId", mapper.writeValueAsString(link.destinationId()));
 				jsWriter.write(args);
 			}
 			log.debug("Exported {} portals", portals.size());

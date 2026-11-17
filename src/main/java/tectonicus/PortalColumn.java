@@ -11,6 +11,7 @@ package tectonicus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import tectonicus.cache.swap.Swappable;
 
@@ -19,6 +20,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 @Getter
+@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 public class PortalColumn implements Swappable {

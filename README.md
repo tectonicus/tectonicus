@@ -14,6 +14,8 @@ Usage
 2. [Create an XML configuration file](https://github.com/tectonicus/tectonicus/wiki/Home)
 3. Run Tectonicus from the command line: `java -jar Tectonicus-2.31.jar -c myconfig.xml`
 
+See [worldconfig.xml](Docs/worldconfig.xml) for the new multi-world configuration format. The old single-world <map> format is still supported.
+
 If you experience out of memory errors you may need to increase the memory available to the Java VM:
 `java -Xmx6G -jar Tectonicus-2.31.jar config=myconfig.xml`
 6G = 6 gigabytes of RAM (or however much RAM you can afford to use)
@@ -35,6 +37,12 @@ For languages other than `en_us`, Tectonicus checks the Minecraft Launcher asset
 Tectonicus reads Minecraft's JSON tables and the UTF-8 `key=value` `.lang` tables used by clients such as 1.12.2. If the browser cannot format dates and numbers for a Minecraft language code, the viewer uses US English formatting and still displays the selected translations.
 
 Use [the built-in table](src/main/resources/map_en_us.json) as a reference for `tectonicus.*` keys and keep placeholders such as `{player}` and `{count}` in your translations. Set `compassRose` on a dimension to use custom compass artwork with localized directions.
+
+## Portal links
+
+Portal links let you click a button to switch between the Overworld and Nether maps and center on the destination portal. To enable portal links, render both Overworld and Nether dimensions under the same `<world>` and export their portal markers with `<portals filter="all" />`. The portal link button appears only when the opposite dimension has a rendered map containing the predicted destination's portal marker. The destination's marker toggle can be hidden and the jump will still center the map on its location.
+
+Minecraft has changed the portal search rules over the years so Tectonicus uses rules based on the world version but it's possible that the resulting link differs from actual in-game portal linking.
 
 ## Default config file
 If Tectonicus is run without any command line arguments it will search for either 'tectonicus.xml' or 'tectonicusConfig.xml' in the same directory and try to use one of those as it's configuration file.

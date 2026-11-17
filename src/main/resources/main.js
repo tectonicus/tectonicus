@@ -793,66 +793,14 @@ function refreshPortalMarkers(layer) {
 function findPortalExit(layer, portal) {
 	const overworld = 'minecraft:overworld';
 	const nether = 'minecraft:the_nether';
-	const entry = portal.entryPos;
-	if (!entry || ![entry.x, entry.y, entry.z].every(Number.isFinite)
-			|| (layer.dimensionId !== overworld && layer.dimensionId !== nether)) return;
-
-	const toNether = layer.dimensionId === overworld;
-	const scale = toNether ? 1 / 8 : 8;
-	const exit = {x: entry.x * scale, y: entry.y, z: entry.z * scale};
-	const searched = new Set();
-	let best;
-	let tied = false;
+	if (!portal.destinationId || (layer.dimensionId !== overworld && layer.dimensionId !== nether)) return;
+	const destinationDimension = layer.dimensionId === overworld ? nether : overworld;
 	for (const target of worldLayers.get(layer.worldId) ?? []) {
-		const rules = target.worldStats?.portalSearch;
-		if (target.dimensionId !== (toNether ? nether : overworld) || !rules || searched.has(target.portals)) continue;
-		// Lighting layers share the same markers. Search each rendered view once.
-		searched.add(target.portals);
-		for (const [index, candidate] of target.portals.entries()) {
-			const block = closestPortalBlock(candidate.columns, rules, exit);
-			if (!block) continue;
-			const difference = best ? comparePortalBlocks(block, best.block, rules) : -1;
-			if (difference < 0) {
-				best = {layer: target, index, block};
-				tied = false;
-			} else if (difference === 0 && (block.x !== best.block.x || block.y !== best.block.y || block.z !== best.block.z)) {
-				// Overlapping render subsets can export the same destination block.
-				tied = true;
-			}
-		}
+		if (target.dimensionId !== destinationDimension) continue;
+		// The renderer resolves the exit against saved terrain, including portals outside all map subsets.
+		const index = target.portals.findIndex(candidate => candidate.id === portal.destinationId);
+		if (index >= 0) return {layer: target, index};
 	}
-	return tied ? undefined : best;
-}
-
-function closestPortalBlock(columns, rules, exit) {
-	if (!Array.isArray(columns)) return;
-	const centers = rules.mode === 'COLUMN_CENTERS';
-	const chunks = rules.mode === 'CHUNKS';
-	const bottomOnly = centers || rules.mode === 'COLUMN_BLOCKS';
-	const roundXZ = rules.mode === 'COLUMN_BLOCKS' ? Math.trunc : Math.floor;
-	const x = roundXZ(exit.x);
-	const y = Math.floor(exit.y);
-	const z = roundXZ(exit.z);
-	const gridCoord = value => chunks ? Math.floor(value / 16) : value;
-	const gridX = gridCoord(x);
-	const gridZ = gridCoord(z);
-	let best;
-	for (const column of columns) {
-		if (Math.abs(gridCoord(column.x) - gridX) > rules.radius
-				|| Math.abs(gridCoord(column.z) - gridZ) > rules.radius) continue;
-		if (bottomOnly && (column.minY < 0 || column.minY > rules.maxY)) continue;
-		const blockY = bottomOnly ? column.minY : Math.max(column.minY, Math.min(y, column.maxY));
-		const dx = centers ? column.x + 0.5 - exit.x : column.x - x;
-		const dy = centers ? blockY + 0.5 - exit.y : blockY - y;
-		const dz = centers ? column.z + 0.5 - exit.z : column.z - z;
-		const block = {x: column.x, y: blockY, z: column.z, distance: dx * dx + dy * dy + dz * dz};
-		if (!best || comparePortalBlocks(block, best, rules) < 0) best = block;
-	}
-	return best;
-}
-
-function comparePortalBlocks(a, b, rules) {
-	return a.distance - b.distance || (rules.mode === 'BLOCKS' || rules.mode === 'CHUNKS' ? a.y - b.y : 0);
 }
 
 function portalJumpButton(layer, portal) {
