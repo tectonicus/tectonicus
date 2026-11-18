@@ -200,6 +200,7 @@ public class XmlConfigurationParser
 			config.setNumSamples(parseNumSamples(getString(rasteriserNode, "numSamples")));
 			config.setTileSize(parseTileSize(getString(rasteriserNode, "tileSize")));
 			config.setUseEGL(getBoolean(rasteriserNode, "useEGL", false));
+			config.setUseOSMesa(getBoolean(rasteriserNode, "useOSMesa", false));
 		}
 		
 		int legacyLayerNumber = 0;

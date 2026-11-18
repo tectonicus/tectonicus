@@ -19,7 +19,8 @@ public class RasteriserFactory {
 	public enum DisplayType {
 		WINDOW,
 		OFFSCREEN,
-		OFFSCREEN_EGL
+		OFFSCREEN_EGL,
+		OFFSCREEN_OSMESA
 	}
 	
 	public static Rasteriser createRasteriser(RasteriserType type, DisplayType displayType, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples) {

@@ -50,6 +50,7 @@
 		numSamples="4"
 		tileSize="512"
 		useEGL="false"
+		useOSMesa="false"
 	/>
 
 	<map

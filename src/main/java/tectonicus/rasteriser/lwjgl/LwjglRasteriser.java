@@ -17,10 +17,14 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWNativeOSMesa;
+import org.lwjgl.egl.EGL;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.system.Configuration;
+import org.lwjgl.system.FunctionProvider;
+import org.lwjgl.system.JNI;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
@@ -48,6 +52,7 @@ import java.util.Map;
 
 import static org.lwjgl.egl.EGL10.EGL_NONE;
 import static org.lwjgl.egl.EGL10.EGL_NO_CONTEXT;
+import static org.lwjgl.egl.EGL10.EGL_NO_DISPLAY;
 import static org.lwjgl.egl.EGL10.EGL_NO_SURFACE;
 import static org.lwjgl.egl.EGL10.EGL_VENDOR;
 import static org.lwjgl.egl.EGL10.EGL_VERSION;
@@ -68,17 +73,9 @@ import static org.lwjgl.egl.EGL15.EGL_CONTEXT_MAJOR_VERSION;
 import static org.lwjgl.egl.EGL15.EGL_CONTEXT_MINOR_VERSION;
 import static org.lwjgl.egl.EGL15.EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
 import static org.lwjgl.egl.EGL15.EGL_CONTEXT_OPENGL_PROFILE_MASK;
-import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API;
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
-import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
-import static org.lwjgl.glfw.GLFW.GLFW_OSMESA_CONTEXT_API;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
 import static org.lwjgl.glfw.GLFW.glfwGetKey;
 import static org.lwjgl.glfw.GLFW.glfwGetVersionString;
-import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
@@ -138,6 +135,8 @@ import static org.lwjgl.opengl.GL30.glRenderbufferStorage;
 
 @Slf4j
 public class LwjglRasteriser implements Rasteriser {
+	private static final int EGL_PLATFORM_SURFACELESS_MESA = 0x31DD;
+	
 	private final DisplayType type;
 	
 	private long window = 0;
@@ -230,10 +229,11 @@ public class LwjglRasteriser implements Rasteriser {
 		// Ugh. Anything with a depth buffer.
 		pixelFormats.add(new LwjglPixelFormat(0, 0, 1, 0, 0));
 
-//		checkOpenGLCompatability(3, 1);
 		boolean isMac = OsDetect.isMac();
 		
-		if (type == DisplayType.WINDOW || type == DisplayType.OFFSCREEN) {
+		boolean isOSMesa = type == DisplayType.OFFSCREEN_OSMESA;
+		
+		if (type == DisplayType.WINDOW || type == DisplayType.OFFSCREEN || isOSMesa) {
 			if (isMac) {
 				Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
 			}
@@ -242,11 +242,15 @@ public class LwjglRasteriser implements Rasteriser {
 			glfwSetErrorCallback((error, description) ->
 					log.error("GLFW error [{}]: {}", String.format("0x%08X", error), GLFWErrorCallback.getDescription(description)));
 			
+			if (isOSMesa) {
+				configureOSMesa();
+			}
+			
 			if (!glfwInit()) {
 				throw new RuntimeException("Failed to init GLFW");
 			}
 			
-			if (isMac) {
+			if (isMac && !isOSMesa) {
 				glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 2);
 				glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
 			} else {
@@ -256,8 +260,11 @@ public class LwjglRasteriser implements Rasteriser {
 			}
 		}
 		
-		if (type == DisplayType.OFFSCREEN) {
+		if (type == DisplayType.OFFSCREEN || isOSMesa) {
 			glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+			if (isOSMesa) {
+				glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_OSMESA_CONTEXT_API);
+			}
 			window = glfwCreateWindow(displayWidth, displayHeight, "", 0, 0);
 		} else if (type == DisplayType.WINDOW) {
 			glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_TRUE);
@@ -276,10 +283,18 @@ public class LwjglRasteriser implements Rasteriser {
 				}
 			}
 		} else if (type == DisplayType.OFFSCREEN_EGL) {
-			eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 			IntBuffer major = BufferUtils.createIntBuffer(1);
 			IntBuffer minor = BufferUtils.createIntBuffer(1);
-			eglInitialize(eglDisplay, major, minor);
+			eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+			if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
+				// No window system available (e.g. no X11 or Wayland display). Mesa can still render
+				// offscreen through its surfaceless platform, which is what EGL_PLATFORM=surfaceless selects.
+				log.debug("Default EGL display unavailable, trying the Mesa surfaceless platform.");
+				eglDisplay = getSurfacelessDisplay();
+				if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
+					throw new RuntimeException("Failed to initialize EGL. EGL error: " + String.format("0x%04X", eglGetError()));
+				}
+			}
 			log.debug("Using EGL for context creation.");
 			
 			int[] configCount = new int[1];
@@ -324,7 +339,7 @@ public class LwjglRasteriser implements Rasteriser {
 		
 		GL.createCapabilities();
 		
-		if (!isMac && (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL)) {
+		if ((!isMac && (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL)) || isOSMesa) {
 			int fbo = glGenFramebuffers();
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			int rbo = glGenRenderbuffers();
@@ -684,50 +699,58 @@ public class LwjglRasteriser implements Rasteriser {
 		}
 	}
 	
-	private void checkOpenGLCompatability(int major, int minor) {
-		log.debug("Attempting to create window for OpenGL {}.{}", major, minor);
-		
-		glfwSetErrorCallback((arg0, arg1) -> log.error("GLFW error: {}", String.format("0x%08X", arg0)));
-		
-		if (!glfwInit()) {
-			throw new RuntimeException("Failed to init GLFW");
+	/**
+	 * Points LWJGL and GLFW at the OSMesa library and selects GLFW's null platform, so that a context can be
+	 * created without any window system. Must run before anything else touches {@link GL}, because LWJGL loads
+	 * the OpenGL library named by {@link Configuration#OPENGL_LIBRARY_NAME} when that class is first used.
+	 */
+	private static void configureOSMesa() {
+		if (Configuration.OPENGL_LIBRARY_NAME.get() == null) {
+			Configuration.OPENGL_LIBRARY_NAME.set(defaultOSMesaLibraryName());
 		}
-
-//		glfwWindowHint(GLFW_SAMPLES, 4);
-//		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
-//		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
-		//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-		glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
-//		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+		String libraryName = Configuration.OPENGL_LIBRARY_NAME.get();
+		log.debug("Using OSMesa library: {}", libraryName);
 		
-		long windowId = glfwCreateWindow(640, 480, "Test", 0, 0);
-		
-		if (windowId == 0) {
-			destroy();
-			throw new RuntimeException("Failed to create window!");
-		} else {
-			glfwMakeContextCurrent(windowId);
-			glfwMakeContextCurrent(0);
-			long context = glfwGetCurrentContext();
-			if (context == windowId) {
-				log.debug("Found current context after make current.");
-			}
-			
-			int client = glfwGetWindowAttrib(windowId, GLFW_CLIENT_API);
-			int majorV = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MAJOR);
-			int minorV = glfwGetWindowAttrib(windowId, GLFW_CONTEXT_VERSION_MINOR);
-			if (client == GLFW_OPENGL_API) {
-				log.debug("client = OpenGL {}.{}", majorV, minorV);
-			}
-			if (GLFW_OSMESA_CONTEXT_API == glfwGetWindowAttrib(windowId, GLFW_CONTEXT_CREATION_API)) {
-				log.debug("OSMesa context creation api is set");
-			}
-			GL.createCapabilities();
+		FunctionProvider provider;
+		try {
+			provider = GL.getFunctionProvider();
+		} catch (Throwable t) {
+			throw new RuntimeException(osMesaMissingMessage(libraryName), t);
+		}
+		if (provider == null || provider.getFunctionAddress("OSMesaGetProcAddress") == 0) {
+			// LWJGL falls back to the system OpenGL library when the named one can't be loaded
+			throw new RuntimeException(osMesaMissingMessage(libraryName));
 		}
 		
-		printInfo();
-		
-		destroy();
+		// Make GLFW use the same OSMesa library as LWJGL, otherwise function pointers come from different libraries
+		GLFWNativeOSMesa.setPath(provider);
+		GLFW.glfwInitHint(GLFW.GLFW_PLATFORM, GLFW.GLFW_PLATFORM_NULL);
+	}
+	
+	private static String defaultOSMesaLibraryName() {
+		if (OsDetect.isWindows()) {
+			return "osmesa.dll";
+		} else if (OsDetect.isMac()) {
+			return "libOSMesa.8.dylib";
+		}
+		return "libOSMesa.so.8";
+	}
+	
+	private static String osMesaMissingMessage(String libraryName) {
+		return "Unable to load the OSMesa library '" + libraryName + "'. Install it (for example libosmesa6 on Debian/Ubuntu"
+				+ " or mesa-compat-libOSMesa on Fedora) or point Tectonicus at it with -Dorg.lwjgl.opengl.libname=<path>."
+				+ " Mesa 25.1 and later no longer build OSMesa; useEGL is the alternative for headless software rendering.";
+	}
+	
+	/**
+	 * Gets an EGL display on Mesa's surfaceless platform. LWJGL's eglGetPlatformDisplay binding rejects a null native
+	 * display, but EGL_MESA_platform_surfaceless requires EGL_DEFAULT_DISPLAY, so the function is called directly.
+	 */
+	private static long getSurfacelessDisplay() {
+		long eglGetPlatformDisplay = EGL.getCapabilities().eglGetPlatformDisplay;
+		if (eglGetPlatformDisplay == 0) {
+			return EGL_NO_DISPLAY;
+		}
+		return JNI.callPPP(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, 0L, eglGetPlatformDisplay);
 	}
 }

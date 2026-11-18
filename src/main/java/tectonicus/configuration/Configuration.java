@@ -76,6 +76,9 @@ public class Configuration implements Callable<Configuration> {
 	@Option(names = {"--useEGL"}, paramLabel = "<boolean>")
 	private boolean useEGL;
 
+	@Option(names = {"--useOSMesa"}, paramLabel = "<boolean>")
+	private boolean useOSMesa;
+
 	@Option(names = {"-e", "--eraseOutputDir", "eraseOutputDir"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean eraseOutputDir;
 
@@ -272,6 +275,7 @@ public class Configuration implements Callable<Configuration> {
 		log.debug("\tmode:{}", getMode().getName());
 		log.debug("\trasteriser:{}", getRasteriserType());
 		log.debug("\tuseEGL: {}", isUseEGL());
+		log.debug("\tuseOSMesa: {}", isUseOSMesa());
 		log.debug("\toutputDir:{}", outputDir.getAbsolutePath());
 		log.debug("\tuseCache:{}", useCache());
 		log.debug("\tcacheDir:{}", cacheDir.getAbsolutePath());

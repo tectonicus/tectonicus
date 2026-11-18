@@ -45,7 +45,8 @@
 		alphaBits="8"
 		numSamples="4"
 		tileSize="512 / 64 - 2048"
-		useEGL="false / true"
+		useEGL="false / true" <!-- headless rendering through EGL, falls back to the Mesa surfaceless platform when there is no display -->
+		useOSMesa="false / true" <!-- headless software rendering through OSMesa, needs the OSMesa library installed (e.g. libosmesa6) -->
 	/>
 
 	<!-- Maps to process (must have at least one map) -->
