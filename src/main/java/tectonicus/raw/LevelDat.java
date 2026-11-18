@@ -102,11 +102,6 @@ public class LevelDat {
 				
 				worldName = NbtUtil.getString(data, "LevelName", "");
 				
-				CompoundTag playerTag = NbtUtil.getChild(data, "Player", CompoundTag.class);
-				if (playerTag != null) {
-					singlePlayer = new Player(singlePlayerName, playerTag);
-				}
-				
 				dataVersion = NbtUtil.getInt(data, "DataVersion", UNKNOWN_VERSION);
 				Optional.ofNullable(NbtUtil.getChild(data, "Version", CompoundTag.class)).ifPresent(versionTag -> {
 					if (dataVersion <= UNKNOWN_VERSION)
@@ -114,6 +109,11 @@ public class LevelDat {
 					version = NbtUtil.getString(versionTag, "Name", "");
 					snapshot = NbtUtil.getByte(versionTag, "Snapshot", (byte) 0) == 1;
 				});
+				
+				CompoundTag playerTag = NbtUtil.getChild(data, "Player", CompoundTag.class);
+				if (playerTag != null) {
+					singlePlayer = new Player(singlePlayerName, playerTag, dataVersion);
+				}
 				loadWorldSeed(data, datFile.toAbsolutePath().getParent());
 			}
 		} catch (IOException e) {

@@ -109,12 +109,19 @@ public class Player {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag) {
 				CompoundTag root = (CompoundTag) tag;
-				parse(root);
+				parse(root, NbtUtil.getInt(root, "DataVersion", 0));
 			}
 		}
 	}
 	
 	public Player(String playerName, CompoundTag tag) {
+		this(playerName, tag, NbtUtil.getInt(tag, "DataVersion", LegacyItems.FLATTENING_DATA_VERSION));
+	}
+	
+	/**
+	 * @param dataVersion the data version of the save holding this player, used to tell how its items were saved
+	 */
+	public Player(String playerName, CompoundTag tag, int dataVersion) {
 		this();
 		
 		// Old level.dat player tags contain no username. Keep a display label without
@@ -124,7 +131,7 @@ public class Player {
 		if (!defaultPlayerName)
 			uuid = playerName;
 		
-		parse(tag);
+		parse(tag, dataVersion);
 	}
 	
 	public Player(String name, String uuid, String skinURL) {
@@ -147,7 +154,7 @@ public class Player {
 		return isDefaultPlayerName() ? "Player" : name;
 	}
 	
-	private void parse(CompoundTag root) {
+	private void parse(CompoundTag root, int dataVersion) {
 		ShortTag healthTag = NbtUtil.getChild(root, "Health", ShortTag.class);
 		if (healthTag != null) {
 			health = healthTag.getValue();
@@ -212,8 +219,9 @@ public class Player {
 		xpTotal = NbtUtil.getInt(root, "XpTotal", 0);
 		
 		// Parse inventory items (both inventory items and worn items)
-		parseInventory(root, "Inventory", inventory);
-		parseInventory(root, "EnderItems", enderChestInventory);
+		boolean legacyItems = LegacyItems.isLegacy(dataVersion);
+		parseInventory(root, "Inventory", inventory, legacyItems);
+		parseInventory(root, "EnderItems", enderChestInventory, legacyItems);
 
 		// Since 1.21.5 armor and offhand stacks are saved separately from Inventory.
 		CompoundTag equipment = NbtUtil.getChild(root, "equipment", CompoundTag.class);
@@ -222,12 +230,12 @@ public class Player {
 			for (int i = 0; i < slots.length; i++) {
 				CompoundTag itemTag = NbtUtil.getChild(equipment, slots[i], CompoundTag.class);
 				if (itemTag != null)
-					addInventoryItem(itemTag, i == 4 ? -106 : 100 + i, inventory);
+					addInventoryItem(itemTag, i == 4 ? -106 : 100 + i, inventory, false);
 			}
 		}
 	}
 
-	private static void parseInventory(CompoundTag root, String tagName, List<Item> items) {
+	private static void parseInventory(CompoundTag root, String tagName, List<Item> items, boolean legacyItems) {
 		ListTag inventoryList = NbtUtil.getChild(root, tagName, ListTag.class);
 		if (inventoryList == null)
 			return;
@@ -235,13 +243,13 @@ public class Player {
 			if (tag instanceof CompoundTag itemTag) {
 				ByteTag slotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
 				if (slotTag != null)
-					addInventoryItem(itemTag, slotTag.getValue(), items);
+					addInventoryItem(itemTag, slotTag.getValue(), items, legacyItems);
 			}
 		}
 	}
 
-	private static void addInventoryItem(CompoundTag itemTag, int slot, List<Item> items) {
-		Item item = ItemNbtParser.parse(itemTag, slot);
+	private static void addInventoryItem(CompoundTag itemTag, int slot, List<Item> items, boolean legacyItems) {
+		Item item = ItemNbtParser.parse(itemTag, slot, legacyItems);
 		items.removeIf(existing -> existing.slot == slot);
 		if (item != null)
 			items.add(item);

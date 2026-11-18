@@ -663,8 +663,16 @@ public class OutputResourcesUtil {
 	public static void outputInventoryItemIcons(File imagesDir, Rasteriser rasteriser, TexturePack texturePack,
 			BlockTypeRegistry blockTypeRegistry, BlockRegistry blockRegistry, ItemRegistry itemRegistry,
 			ItemModelDefinitionRegistry itemModelDefinitionRegistry, String renderOptions, WorldViewerAssets viewerAssets) {
-		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) { //A hack to skip rendering icons if the resource pack is for 1.12 or older
-			log.info("Skipping icon rendering. Container items are supported for 1.13 and newer.");
+		if (texturePack.getVersion().getNumVersion() <= VERSION_12.getNumVersion()) {
+			// Old jars use different item names and model formats. Render only the items found in this world.
+			log.info("Rendering icons for inventory items with a pre-1.13 jar");
+			try {
+				File itemIconDir = new File(imagesDir, "Items");
+				Files.createDirectories(itemIconDir.toPath());
+				new LegacyItemIcons(texturePack, blockTypeRegistry, new ItemRenderer(rasteriser), itemIconDir).render(viewerAssets.itemIds());
+			} catch (Exception e) {
+				log.error("Unable to render legacy inventory item icons", e);
+			}
 			return;
 		}
 		
