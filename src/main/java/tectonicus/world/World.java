@@ -375,6 +375,11 @@ public class World implements BlockContext, AutoCloseable
                 });
 			geometryLoadedChunks = new GeometryCache(512, (coord) -> {
                         Chunk chunk = rawLoadedChunks.get(coord);
+						if (chunk == null) {
+							// The region header listed this chunk but it could not be read. Draw nothing for it
+							// rather than failing the whole render; the load error has already been logged.
+							return new Chunk(coord, this.biomeCache);
+						}
 						BlockMaskFactory maskFactory = blockMaskFactory;
 						if (useSubsetHeightBounds && worldSubset.hasHeightBounds() && !(blockMaskFactory instanceof NullBlockMaskFactory)) {
 							// Determine the cave surface from the terrain before the Y cut.
@@ -382,8 +387,12 @@ public class World implements BlockContext, AutoCloseable
 							if (original != null)
 								maskFactory = (chunkCoord, raw) -> blockMaskFactory.createMask(chunkCoord, original);
 						}
-                        final boolean ok = chunk.createGeometry(rasteriser, this, registry, modelRegistry, maskFactory, texturePack);
-                        assert ok;
+						try {
+							chunk.createGeometry(rasteriser, this, registry, modelRegistry, maskFactory, texturePack);
+						} catch (RuntimeException e) {
+							log.error("Failed to build geometry for chunk {},{}; it will be left out of this render", coord.x, coord.z, e);
+							chunk.unloadGeometry();
+						}
 
                         return chunk;
                 });

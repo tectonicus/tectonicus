@@ -318,6 +318,47 @@ class RawChunkTest {
 		assertNull(ContainerKind.fromBlock("minecraft:chest", "minecraft:copper_chest", 0));
 	}
 
+	@Test
+	void hashChangesWhenOnlyARenderedBlockEntityChanges() throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		byte[] plain = potChunk(List.of(pot(8, "minecraft:brick"))).calculateHash(digest);
+		byte[] samePots = potChunk(List.of(pot(8, "minecraft:brick"))).calculateHash(digest);
+		byte[] sherdChanged = potChunk(List.of(pot(8, "minecraft:skull_pottery_sherd"))).calculateHash(digest);
+
+		assertArrayEquals(plain, samePots);
+		assertFalse(MessageDigest.isEqual(plain, sherdChanged), "a new pot sherd must invalidate the cached tile");
+	}
+
+	@Test
+	void renderedEntityHashIgnoresSaveOrder() throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		byte[] forward = potChunk(List.of(pot(1, "minecraft:brick"), pot(2, "minecraft:skull_pottery_sherd"))).calculateHash(digest);
+		byte[] reversed = potChunk(List.of(pot(2, "minecraft:skull_pottery_sherd"), pot(1, "minecraft:brick"))).calculateHash(digest);
+
+		assertArrayEquals(forward, reversed);
+	}
+
+	private static CompoundTag pot(int x, String sherd) {
+		List<Tag> sherds = List.of(new StringTag("", sherd), new StringTag("", "minecraft:brick"),
+				new StringTag("", "minecraft:brick"), new StringTag("", "minecraft:brick"));
+		return new CompoundTag("", Map.of(
+				"id", new StringTag("id", "minecraft:decorated_pot"),
+				"x", new IntTag("x", x), "y", new IntTag("y", 70), "z", new IntTag("z", 8),
+				"sherds", new ListTag("sherds", StringTag.class, sherds)));
+	}
+
+	private RawChunk potChunk(List<CompoundTag> pots) throws Exception {
+		CompoundTag root = new CompoundTag("", Map.of(
+				"DataVersion", new IntTag("DataVersion", 3953),
+				"Status", new StringTag("Status", "minecraft:full"),
+				"yPos", new IntTag("yPos", -4),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, new java.util.ArrayList<Tag>(pots)),
+				"sections", new ListTag("sections", CompoundTag.class, List.of())));
+		RawChunk chunk = readChunk(root, Version.VERSION_21);
+		assertEquals(pots.size(), chunk.getDecoratedPots().size());
+		return chunk;
+	}
+
 	private RawChunk readChunk(CompoundTag root, Version version) throws Exception {
 		return readChunk(root, new WorldInfo(version, false));
 	}

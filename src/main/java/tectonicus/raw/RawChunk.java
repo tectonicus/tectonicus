@@ -1661,7 +1661,70 @@ public class RawChunk {
 				}
 			}
 		}
+
+		// Entities and block entities whose appearance is not captured by block states.
+		List<String> renderedEntities = describeRenderedEntities();
+		if (!renderedEntities.isEmpty()) {
+			hashAlgorithm.update("renderedEntities-v1".getBytes(StandardCharsets.UTF_8));
+			update(hashAlgorithm, new int[] {renderedEntities.size()});
+			for (String entity : renderedEntities)
+				hashAlgorithm.update((entity + '\n').getBytes(StandardCharsets.UTF_8));
+		}
 		return hashAlgorithm.digest();
+	}
+
+	/** Canonical, order-independent descriptions of every rendered entity that affects tile output. */
+	List<String> describeRenderedEntities() {
+		List<String> result = new ArrayList<>();
+		for (PaintingEntity p : paintings)
+			result.add("painting|" + position(p) + "|" + p.getId() + "|" + p.getMotive() + "|" + p.getDirection());
+		for (ArmorStandEntity a : armorStands)
+			result.add("armorStand|" + position(a) + "|" + a.getYaw() + "|" + a.getInvisible() + "|" + a.getNoBasePlate()
+					+ "|" + a.isLeftHanded() + "|" + a.isShowArms() + "|" + a.getLeftArmPose() + "|" + a.getRightArmPose()
+					+ "|" + describeItem(a.getFeetArmor()) + "|" + describeItem(a.getLegsArmor())
+					+ "|" + describeItem(a.getChestArmor()) + "|" + describeItem(a.getHeadArmor())
+					+ "|" + describeItem(a.getMainHandItem()) + "|" + describeItem(a.getOffHandItem()));
+		for (BannerEntity b : banners.values())
+			result.add("banner|" + position(b) + "|" + b.getBaseColor() + "|" + b.getPatterns());
+		for (SkullEntity s : skulls.values())
+			result.add("skull|" + position(s) + "|" + s.getSkullType() + "|" + s.getRotation() + "|" + s.getYOffset()
+					+ "|" + s.getName() + "|" + s.getUUID() + "|" + s.getSkinURL());
+		for (DecoratedPotEntity d : decoratedPots.values())
+			result.add("decoratedPot|" + position(d) + "|" + d.getSherd1() + "|" + d.getSherd2() + "|" + d.getSherd3() + "|" + d.getSherd4());
+		for (FlowerPotEntity f : flowerPots.values())
+			result.add("flowerPot|" + position(f) + "|" + f.getItem() + "|" + f.getData());
+		for (BedEntity b : beds.values())
+			result.add("bed|" + position(b) + "|" + b.getColor());
+		for (BeaconEntity b : beacons.values())
+			result.add("beacon|" + position(b) + "|" + b.getLevels() + "|" + b.getPrimaryEffect() + "|" + b.getSecondaryEffect());
+		for (CushionEntity c : cushions)
+			result.add("cushion|" + c.localX() + "," + c.localY() + "," + c.localZ() + "|" + c.color());
+		// Save order of entity lists can change without any visible difference.
+		Collections.sort(result);
+		return result;
+	}
+
+	private static String position(BlockEntity entity) {
+		return entity.getX() + "," + entity.getY() + "," + entity.getZ();
+	}
+
+	private static String describeItem(Item item) {
+		if (item == null)
+			return "";
+		StringBuilder result = new StringBuilder(String.valueOf(item.id)).append('#').append(item.damage);
+		for (Object component : item.components) {
+			if (component == null)
+				continue;
+			result.append(';');
+			switch (component) {
+				case DyedColorTag dye -> result.append("dye=").append(dye.color);
+				case PotionContentsTag potion -> result.append("potion=").append(potion.potion);
+				case BannerPatternsTag patterns -> result.append("patterns=").append(patterns.patterns());
+				case ArmorTrimTag trim -> result.append("trim=").append(trim.material).append('/').append(trim.pattern);
+				default -> result.append(component.getClass().getSimpleName());
+			}
+		}
+		return result.toString();
 	}
 	
 	private static void updateBlockStates(MessageDigest digest, BlockProperties[] states) {

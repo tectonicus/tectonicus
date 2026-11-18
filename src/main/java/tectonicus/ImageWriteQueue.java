@@ -15,15 +15,16 @@ import tectonicus.configuration.ImageFormat;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class ImageWriteQueue
 {
-	private ThreadPoolExecutor executor;
+	private final ThreadPoolExecutor executor;
+	private final AtomicInteger failures = new AtomicInteger();
 	
 	public ImageWriteQueue(final int numThreads)
 	{
@@ -32,11 +33,20 @@ public class ImageWriteQueue
 	
 	public void write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel)
 	{
-		WriteTask task = new WriteTask(outputFile, img, imageFormat, compressionLevel);
-		executor.submit(task);
+		write(outputFile, img, imageFormat, compressionLevel, null);
+	}
+
+	/**
+	 * Queues an image write. {@code onWritten} runs on the writer thread only after the image is on disk,
+	 * so callers can record cache state that must not claim a file that was never written.
+	 */
+	public void write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel, Runnable onWritten)
+	{
+		executor.execute(new WriteTask(outputFile, img, imageFormat, compressionLevel, onWritten));
 	}
 	
-	public void waitUntilFinished()
+	/** Waits for all queued writes and returns how many of them failed. */
+	public int waitUntilFinished()
 	{
 		try
 		{
@@ -45,30 +55,50 @@ public class ImageWriteQueue
 		}
 		catch (InterruptedException e)
 		{
+			Thread.currentThread().interrupt();
 			log.error("Exception: ", e);
 		}
+		final int failed = failures.get();
+		if (failed > 0)
+			log.warn("{} image(s) could not be written; they will be retried on the next render", failed);
+		return failed;
 	}
 	
-	private static class WriteTask implements Callable<Void>
+	private class WriteTask implements Runnable
 	{
 		private final File outputFile;
 		private final BufferedImage img;
 		private final ImageFormat imageFormat;
 		private final float compressionLevel;
+		private final Runnable onWritten;
 		
-		public WriteTask(File f, BufferedImage i, ImageFormat format, float compression)
+		WriteTask(File f, BufferedImage i, ImageFormat format, float compression, Runnable onWritten)
 		{
 			this.outputFile = f;
 			this.img = i;
 			this.imageFormat = format;
 			this.compressionLevel = compression;
+			this.onWritten = onWritten;
 		}
 		
 		@Override
-		public Void call() throws Exception
+		public void run()
 		{
-			Screenshot.write(outputFile, img, imageFormat, compressionLevel);
-			return null;
+			try
+			{
+				if (!Screenshot.write(outputFile, img, imageFormat, compressionLevel))
+				{
+					failures.incrementAndGet();
+					return;
+				}
+				if (onWritten != null)
+					onWritten.run();
+			}
+			catch (RuntimeException e)
+			{
+				failures.incrementAndGet();
+				log.error("Failed to finish writing {}", outputFile.getAbsolutePath(), e);
+			}
 		}
 	}
 	
@@ -81,8 +111,9 @@ public class ImageWriteQueue
 			{
 				executor.getQueue().put(r);
 			}
-			catch (Exception e)
+			catch (InterruptedException e)
 			{
+				Thread.currentThread().interrupt();
 				log.error("Exception: ", e);
 			}
 		}

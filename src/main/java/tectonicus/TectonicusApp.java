@@ -89,8 +89,10 @@ public class TectonicusApp
 		return result;
 	}
 
+	/** Runs the configured mode and returns the process exit code: 0 on success, 1 if it failed. */
 	public Integer run() throws java.io.IOException
 	{
+		int exitCode = 0;
 		var mapLocalization = config.getMode() == Mode.CMD ? MapLocalization.load(config) : null;
 		InteractiveRenderer interactiveRenderer = null;
 		TileRenderer tileRenderer = null;
@@ -210,13 +212,10 @@ public class TectonicusApp
 				*/
 			}
 		}
-		catch (Exception e)
+		catch (Exception | OutOfMemoryError e)
 		{
 			log.error("Exception: ", e);
-		}
-		catch (OutOfMemoryError e)
-		{
-			log.error("Exception: ", e);
+			exitCode = 1;
 		}
 		finally
 		{
@@ -226,9 +225,12 @@ public class TectonicusApp
 				interactiveRenderer.destroy();
 		}
 		
-		log.info("Finished");
+		if (exitCode == 0)
+			log.info("Finished");
+		else
+			log.error("Finished with errors");
 
-		return 0;
+		return exitCode;
 	}
 
 	public static void main(String[] argArray) throws Exception {
@@ -325,7 +327,9 @@ public class TectonicusApp
 			System.loadLibrary("awt");
 		}
 
-		app.run();
+		int runExitCode = app.run();
+		if (runExitCode != 0)
+			System.exit(runExitCode);
 	}
 
 	private static boolean listLanguages(Configuration config, PrintWriter out, PrintWriter err) throws IOException {

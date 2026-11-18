@@ -273,7 +273,7 @@ public class Region {
 		try {
 			chunk.loadRaw(chunkData, filter, worldStats, worldInfo);
 		} catch (IOException e) {
-			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), entityRegionFile.getAbsolutePath(), e);
+			log.error("Error while trying to load chunk at ({}, {}) from region {}", chunkCoord.getX(), chunkCoord.getZ(), regionFile.getAbsolutePath(), e);
 		}
 
 		return chunk;
