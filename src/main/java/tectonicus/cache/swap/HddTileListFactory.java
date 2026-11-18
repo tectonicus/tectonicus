@@ -63,7 +63,7 @@ public final class HddTileListFactory implements AutoCloseable {
 
 	public HddTileList createList() {
 		MVMap<Long, Boolean> tiles = store().openMap("autoList" + counter++,
-				new MVMap.Builder<Long, Boolean>().keyType(LongDataType.INSTANCE));
+			new MVMap.Builder<Long, Boolean>().keyType(LongDataType.INSTANCE));
 		return new HddTileList(this, tiles);
 	}
 
@@ -78,8 +78,20 @@ public final class HddTileListFactory implements AutoCloseable {
 	private MVStore store() {
 		if (closed)
 			throw new IllegalStateException("Tile list factory is closed");
-		if (store == null)
-			store = new MVStore.Builder().fileName(cacheFile.toString()).cacheSize(16).autoCommitBufferSize(1024).open();
+		if (store == null) {
+			// Auto-compaction must stay off. Lists are routinely iterated while other lists in the
+			// same store are written (e.g. findChangedTiles). Background compaction rewrites the live
+			// pages of the list being iterated into new chunks and, after the retention time, frees
+			// the old chunks. The open cursor still references pages in those freed chunks, which
+			// fails with "MVStoreException: Chunk N not found". Fully dead chunks (from closed lists)
+			// are still freed and their space reused, so the temporary file stays bounded.
+			store = new MVStore.Builder()
+				.fileName(cacheFile.toString())
+				.cacheSize(16)
+				.autoCommitBufferSize(1024)
+				.autoCompactFillRate(0)
+				.open();
+		}
 		return store;
 	}
 
