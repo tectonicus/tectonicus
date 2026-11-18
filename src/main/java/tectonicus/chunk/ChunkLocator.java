@@ -51,6 +51,14 @@ public class ChunkLocator {
 		this.format = regionCache.getFormat();
 	}
 	
+	/**
+	 * Whether a region may contain chunks. Always true for alpha saves, which store chunks individually.
+	 * Cheap to call repeatedly: region files are looked up once.
+	 */
+	public boolean hasRegion(RegionCoord coord) {
+		return format == SaveFormat.ALPHA || regionCache.getRegion(coord) != null;
+	}
+
 	public boolean exists(ChunkCoord coord) {
 		if (format == SaveFormat.ALPHA) {
 			File chunkFile = findChunkFile(baseDir, coord);

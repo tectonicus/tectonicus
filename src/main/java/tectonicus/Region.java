@@ -84,13 +84,13 @@ public class Region {
 
 	private byte[] loadRegionFile(File regionFile, boolean isEntityFile) throws RegionProcessingException, IOException {
 		try (RandomAccessFile file = new RandomAccessFile(regionFile, "r")) {
-			ByteBuffer buffer = ByteBuffer.allocate(1024 * 4);
-
-			// Read chunk locations
-			if (!read(file, buffer))
+			// Read the whole file in one call; the header is parsed from the same bytes.
+			byte[] regionBytes = new byte[(int) file.length()];
+			file.readFully(regionBytes);
+			if (regionBytes.length < SECTOR_SIZE_BYTES)
 				throw new RegionProcessingException(String.format("Failed to read chunk locations for region file %s", regionFile.getAbsolutePath()));
 
-			buffer.rewind();
+			ByteBuffer buffer = ByteBuffer.wrap(regionBytes, 0, (int) SECTOR_SIZE_BYTES);
 
 			// Parse chunk locations
 			for (ChunkInfo chunkInfo : info) {
@@ -109,9 +109,6 @@ public class Region {
 				}
 			}
 
-			byte[] regionBytes = new byte[(int) file.length()];
-			file.seek(0);
-			read(file, regionBytes);
 			return regionBytes;
 		}
 	}
@@ -165,36 +162,6 @@ public class Region {
 	private static int getHeaderOffsetForChunk(final long chunkX, final long chunkZ) {
 		// 4 * ((x mod 32) + (z mod 32) * 32
 		return (int) ((chunkX & 31) + (chunkZ & 31) * 32);
-	}
-
-	private static boolean read(RandomAccessFile file, ByteBuffer buffer) throws IOException {
-		int res;
-		do {
-			res = file.getChannel().read(buffer);
-		}
-		while (res != -1 && buffer.hasRemaining());
-		return res != -1;
-	}
-
-	private static void read(RandomAccessFile file, byte[] dest) throws IOException {
-		int position = 0;
-		ByteBuffer buffer = ByteBuffer.allocate(1024 * 4);
-		int res;
-
-		while (true) {
-			buffer.clear();
-			res = file.getChannel().read(buffer);
-			if (res == -1)
-				break;
-
-			for (int i = 0; i < res; i++) {
-				dest[position + i] = buffer.get(i);
-			}
-
-			position += res;
-			if (position >= dest.length)
-				break;
-		}
 	}
 
 	public static RegionCoord extractRegionCoord(File file) {

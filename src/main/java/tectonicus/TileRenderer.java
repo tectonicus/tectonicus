@@ -825,7 +825,8 @@ public class TileRenderer
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
 
 		try {
-			for (TileCoord t : tiles) {
+			// Column order within Morton blocks keeps neighbouring chunks in the geometry cache.
+			for (TileCoord t : new TileRenderOrder(tiles)) {
 				System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")          \r"); //prints a carriage return after line
 				log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
 				progressListener.onTaskUpdate(done, tiles.size());

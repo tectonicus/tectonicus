@@ -73,7 +73,6 @@ import tectonicus.renderer.Camera;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
-import tectonicus.util.BoundingBox;
 import tectonicus.util.Colour4f;
 import tectonicus.util.DirUtils;
 import tectonicus.util.MapLocalization;
@@ -92,7 +91,6 @@ import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -763,65 +761,14 @@ public class World implements BlockContext, AutoCloseable
 		return result;
 	}
 	
-	/* New, optimised version.
-	 * Project the frustum vertices down onto the ground plane, and find the bounding box.
-	 * Then iterate over each region that touches this box and check against the frustum
-	 * For regions which touch the frustum, then check all contained chunks.
-	 * This gives us a quad-tree-esque lookup method without having to actually store a heavy quad tree in memory.
+	/**
+	 * Find the chunks a camera can see. Only the part of the frustum between the bottom and top of the world
+	 * is searched, and regions with no region file are skipped without testing their chunks.
 	 */
 	public List<ChunkCoord> findVisible(Camera camera)
 	{
-		List<ChunkCoord> result = new ArrayList<>();
-		
-		// Cast verts down onto landscape
-		long minX = Long.MAX_VALUE;
-		long minZ = Long.MAX_VALUE;
-		long maxX = Long.MIN_VALUE;
-		long maxZ = Long.MIN_VALUE;
-		for (org.joml.Vector3d corner : camera.getWorldFrustumVertices())
-		{
-			RegionCoord coord = RegionCoord.fromWorldCoord(corner.x, corner.z);
-			minX = Math.min(minX, coord.x);
-			minZ = Math.min(minZ, coord.z);
-			maxX = Math.max(maxX, coord.x);
-			maxZ = Math.max(maxZ, coord.z);
-		}
-		
-		// First iterate over the touched regions and find which ones touch the camera
-		for (long regionX=minX; regionX<=maxX; regionX++)
-		{
-			for (long regionZ=minZ; regionZ<=maxZ; regionZ++)
-			{
-				BoundingBox regionBounds = new BoundingBox(new Vector3f(regionX*RegionCoord.REGION_WIDTH*RawChunk.WIDTH, 0, regionZ*RegionCoord.REGION_HEIGHT*RawChunk.DEPTH),
-																RawChunk.WIDTH*RegionCoord.REGION_WIDTH, Minecraft.getChunkHeight(),
-																RawChunk.DEPTH*RegionCoord.REGION_HEIGHT);
-				if (regionBounds.isVisible(camera))
-				{
-					
-					// Now iterate over all chunks within the region
-					for (long chunkX=0; chunkX<RegionCoord.REGION_WIDTH; chunkX++)
-					{
-						for (long chunkZ=0; chunkZ<RegionCoord.REGION_HEIGHT; chunkZ++)
-						{
-							ChunkCoord chunkCoord = new ChunkCoord(	regionX*RegionCoord.REGION_WIDTH + chunkX,
-																	regionZ*RegionCoord.REGION_HEIGHT + chunkZ);
-							
-							if (worldSubset.contains(chunkCoord))
-							{
-								BoundingBox chunkBounds = new BoundingBox(new Vector3f(chunkCoord.x*RawChunk.WIDTH, 0, chunkCoord.z*RawChunk.DEPTH), RawChunk.WIDTH, Minecraft.getChunkHeight(), RawChunk.DEPTH);
-								if (chunkBounds.isVisible(camera) && chunkLocator.exists(chunkCoord))
-								{
-									result.add(chunkCoord);
-								}
-							}
-						}
-					}
-					
-				}
-			}
-		}
-		
-		return result;
+		return VisibleChunkFinder.find(camera, Minecraft.getChunkHeight(), worldSubset::contains,
+				chunkLocator::hasRegion, chunkLocator::exists);
 	}
 	
 	public void draw(Camera camera, final boolean showSky, final boolean genAlphaMask)
@@ -830,7 +777,7 @@ public class World implements BlockContext, AutoCloseable
 		List<ChunkCoord> visible = findVisible(camera);
 			
 		// Sort back to front
-		Collections.sort(visible, new BackToFrontSorter(camera));
+		visible = BackToFrontSorter.sort(camera, visible);
 		
 		// Clear the alpha buffer
 		if (genAlphaMask)
@@ -879,18 +826,9 @@ public class World implements BlockContext, AutoCloseable
 		}
 		
 		// Now the chunks in batches
-		List<ChunkCoord> toProcess = new ArrayList<>(visible);
-		while (!toProcess.isEmpty())
+		for (int start = 0; start < visible.size(); start += BATCH_SIZE)
 		{
-			List<ChunkCoord> batch = new ArrayList<>();
-			
-			final int nextBatchSize = Math.min(BATCH_SIZE, toProcess.size());
-			for (int i=0; i<nextBatchSize; i++)
-			{
-				batch.add( toProcess.remove(0) );
-			}
-			
-			draw(camera, batch, genAlphaMask);
+			draw(camera, visible.subList(start, Math.min(start + BATCH_SIZE, visible.size())), genAlphaMask);
 		}
 	}
 	
@@ -1390,42 +1328,36 @@ public class World implements BlockContext, AutoCloseable
 		*/
 	}
 	
-	private static class BackToFrontSorter implements Comparator<ChunkCoord>
+	static final class BackToFrontSorter
 	{
-		private Camera camera;
-		
-		public BackToFrontSorter(Camera camera)
+		private static final float SCALE = 1000000000;
+
+		private record Entry(ChunkCoord coord, float distance) {}
+
+		private BackToFrontSorter() {}
+
+		/**
+		 * Sorts farthest first. Each distance is computed once rather than in every comparison.
+		 */
+		static List<ChunkCoord> sort(Camera camera, List<ChunkCoord> chunks)
 		{
-			this.camera = camera;
+			List<Entry> entries = new ArrayList<>(chunks.size());
+			for (ChunkCoord coord : chunks)
+				entries.add(new Entry(coord, Math.abs(getDistance(camera, coord))));
+			entries.sort((lhs, rhs) -> Math.round(rhs.distance * SCALE - lhs.distance * SCALE));
+			
+			List<ChunkCoord> result = new ArrayList<>(entries.size());
+			for (Entry entry : entries)
+				result.add(entry.coord);
+			return result;
 		}
 
-		@Override
-		public int compare(ChunkCoord lhs, ChunkCoord rhs)
-		{
-			
-			final float lhsDist = Math.abs( getDistance(camera, lhs) );
-			final float rhsDist = Math.abs( getDistance(camera, rhs) );
-			
-			final float scale = 1000000000;
-			
-		//	return Math.round(lhsDist * scale - rhsDist * scale); // correct
-			return Math.round(rhsDist * scale - lhsDist * scale); // correct
-			
-			/*
-			// Hacky and works, but won't work for perspective views
-			Point lhsScreen = camera.project(lhs.getBounds().getCenter());
-			Point rhsScreen = camera.project(rhs.getBounds().getCenter());
-			
-			return lhsScreen.y - rhsScreen.y;
-			*/
-		}
 		private static float getDistance(Camera camera, ChunkCoord coord)
 		{
 			final float worldX = coord.x * RawChunk.WIDTH + (RawChunk.WIDTH / 2.0f);
 			final float worldY = Minecraft.getChunkHeight() / 2.0f;
 			final float worldZ = coord.z * RawChunk.DEPTH + (RawChunk.DEPTH / 2.0f);
-			final float centerDist = Chunk.getDistance(camera, worldX, worldY, worldZ);
-			return centerDist;
+			return Chunk.getDistance(camera, worldX, worldY, worldZ);
 		}
 	}
 

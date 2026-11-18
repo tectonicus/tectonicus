@@ -41,8 +41,9 @@ public class RegionCoord implements Comparable<RegionCoord>
 	
 	public static RegionCoord fromChunkCoord(final ChunkCoord chunkCoord)
 	{
-		final long regionX = (long)Math.floor(chunkCoord.x / (float)REGION_WIDTH);
-		final long regionZ = (long)Math.floor(chunkCoord.z / (float)REGION_HEIGHT);
+		// Integer division: exact for every coordinate and avoids float conversion on each chunk lookup.
+		final long regionX = Math.floorDiv(chunkCoord.x, (long)REGION_WIDTH);
+		final long regionZ = Math.floorDiv(chunkCoord.z, (long)REGION_HEIGHT);
 		
 		return new RegionCoord(regionX, regionZ);
 	}

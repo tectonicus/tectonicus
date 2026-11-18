@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import tectonicus.chunk.ChunkLocator;
 
 import java.io.File;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class RegionCache {
@@ -25,6 +27,10 @@ public class RegionCache {
 	private final File dimensionDir;
 	
 	private final Cache<RegionCoord, Region> cache;
+	
+	// The cache does not store null, so without this every lookup in a missing or unreadable region
+	// would touch the disk again. Kept separate so absent regions never evict loaded ones.
+	private final Set<RegionCoord> unavailable = ConcurrentHashMap.newKeySet();
 	
 	public RegionCache(File dimensionDir) {
 		if (dimensionDir == null)
@@ -57,10 +63,10 @@ public class RegionCache {
 	
 	public Region getRegion(RegionCoord coord)
 	{
-		if (format == SaveFormat.ALPHA)
+		if (format == SaveFormat.ALPHA || unavailable.contains(coord))
 			return null;
 
-		return cache.get(coord, c -> {
+		Region region = cache.get(coord, c -> {
 			File regionFile = ChunkLocator.findRegionFile(dimensionDir, c, format);
 			if (regionFile.exists() && regionFile.length() > 0)
 			{
@@ -75,5 +81,8 @@ public class RegionCache {
 			}
 			return null;
 		});
+		if (region == null)
+			unavailable.add(coord);
+		return region;
 	}
 }
