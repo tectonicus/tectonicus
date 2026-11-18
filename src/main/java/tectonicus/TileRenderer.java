@@ -51,6 +51,7 @@ import tectonicus.world.WorldVectors;
 import tectonicus.world.filter.ExploredCaveFilter;
 import tectonicus.world.filter.ExploredCaveFilter113;
 import tectonicus.world.filter.NetherBlockFilter;
+import tectonicus.world.filter.NullBlockFilter;
 import tectonicus.world.filter.NetherBlockFilter113;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.UnionWorldSubset;
@@ -510,6 +511,9 @@ public class TileRenderer
 		world.setLightStyle(layer.getLightStyle());
 		world.setDefaultBlockId(BlockIds.AIR);
 		world.setDefaultBlockName(Block.AIR.getName());
+		// Clear any filter and mask left by an earlier cave or nether layer before applying this layer's style.
+		world.setBlockFilter(new NullBlockFilter());
+		world.setBlockMaskFactory(new NullBlockMaskFactory());
 
 		if (layer.getRenderStyle() == RenderStyle.CAVE) {
 			if (world.getTexturePack().getVersion().getNumVersion() < VERSION_13.getNumVersion()) {
