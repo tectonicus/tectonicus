@@ -34,13 +34,13 @@ import tectonicus.configuration.filter.PlayerFilter;
 import tectonicus.configuration.filter.SignFilterType;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinition;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
+import tectonicus.itemregistry.ItemLayers;
 import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
-import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.ContainerKind;
@@ -811,48 +811,8 @@ public class OutputResourcesUtil {
                                                                 // Ignore particles
                                                                 continue;
                                                         }
-                                                        final String[] layerTexture = layer.getValue().split(":");
-                                                        final String namespace = layerTexture.length == 1 ? "minecraft" : layerTexture[0];
-                                                        final String textureId = layerTexture.length == 1 ? layerTexture[0] : layerTexture[1];
-                                                        
-                                                        BufferedImage texture;
-                                                        String texturePath;
-                                                        
-                                                        if (!layer.getKey().equals("layer0") && textureId.contains("trim")) {
-                                                                String[] trimParts = textureId.split("_trim_");
-                                                                
-                                                                texturePath = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
-                                                                String palette;
-                                                                String keyPalette;
-                                                                String newKeyPalette = "assets/" + namespace + "/textures/palettes/trim_base.png";
-                                                                if (texturePack.getZipStack().hasFile(newKeyPalette)) { //26.3+
-                                                                        palette = "assets/" + namespace + "/textures/palettes/trim/" + trimParts[1] + ".png";
-                                                                        keyPalette = newKeyPalette;
-                                                                } else {
-                                                                        palette = "assets/" + namespace + "/textures/trims/color_palettes/" + trimParts[1] + ".png";
-                                                                        keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
-                                                                }
-                                                                
-                                                                texture = texturePack.loadPalettedTexture(texturePath, palette, keyPalette);
-                                                        } else {
-                                                                texturePath = "assets/" + namespace + "/textures/" + textureId + ".png";
-                                                                texture = texturePack.loadTexture(texturePath);
-                                                        }
-                                                        texture = texturePack.getTextureFirstFrame(texturePath, texture);
-                                                        
-                                                        var block = blockRegistry.getBlockModels().getIfPresent(layer.getValue());
-                                                        if (block != null) {
-                                                                if (block.getElements().get(0).getFaces().values().iterator().next().isTinted()) {
-                                                                        Colour4f tintColor = texturePack.getFoliageColor(BiomesOld.FOREST);
-                                                                        for (int y=0; y<texture.getHeight(); y++) {
-                                                                                for (int x=0; x<texture.getWidth(); x++) {
-                                                                                        Colour4f pixel = new Colour4f(texture.getRGB(x, y));
-                                                                                        pixel.multiply(tintColor);
-                                                                                        texture.setRGB(x, y, pixel.toArgb());
-                                                                                }
-                                                                        }
-                                                                }
-                                                        }
+                                                        final String textureId = layer.getValue().substring(layer.getValue().indexOf(':') + 1);
+                                                        BufferedImage texture = ItemLayers.load(texturePack, blockRegistry, layer.getKey(), layer.getValue());
                                                               
                                                         if (layer.getKey().equals("layer0") &&
                                                                 (

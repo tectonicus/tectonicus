@@ -69,4 +69,37 @@ class ItemModelDefinitionTest {
 				""", ItemModelDefinition.class).getInventoryModel();
 		assertEquals("minecraft:item/compass_16", definition.getModelName());
 	}
+
+	@Test
+	void usesFixedCaseForItemFrames() {
+		var definition = mapper.readValue("""
+				{"model":{"type":"minecraft:select","property":"minecraft:display_context",
+				"cases":[{"when":["gui","ground","fixed"],"model":{"type":"minecraft:model","model":"minecraft:item/trident"}}],
+				"fallback":{"type":"minecraft:special","model":{"type":"minecraft:trident"}}}}
+				""", ItemModelDefinition.class).getModelForContext("fixed");
+		assertEquals("minecraft:item/trident", definition.getModelName());
+	}
+
+	@Test
+	void keepsCompositeModelsWithTheirTransformations() {
+		var definition = mapper.readValue("""
+				{"model":{"type":"minecraft:composite","models":[
+				{"type":"minecraft:model","model":"minecraft:block/red_bed_head"},
+				{"type":"minecraft:model","model":"minecraft:block/red_bed_foot","transformation":{"translation":[0,0,1]}}]}}
+				""", ItemModelDefinition.class).getModelForContext("fixed");
+		assertEquals("minecraft:composite", definition.getType());
+		assertEquals(2, definition.getModels().size());
+		assertEquals("minecraft:block/red_bed_foot", definition.getModels().get(1).getModelName());
+		assertNotNull(definition.getModels().get(1).getTransformation());
+	}
+
+	@Test
+	void readsTintSources() {
+		var definition = mapper.readValue("""
+				{"model":{"type":"minecraft:model","model":"minecraft:item/leather_helmet",
+				"tints":[{"type":"minecraft:dye","default":-6265536}]}}
+				""", ItemModelDefinition.class).getModelForContext("fixed");
+		assertEquals("minecraft:dye", definition.getTints().getFirst().get("type"));
+		assertEquals(-6265536, ((Number) definition.getTints().getFirst().get("default")).intValue());
+	}
 }

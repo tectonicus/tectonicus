@@ -199,6 +199,24 @@ public class ItemRenderer
 	}
 
 	public void renderInventoryBlockState(File outFile, BlockRegistry registry, TexturePack texturePack, String blockName, String baseModel) throws Exception {
+		Geometry geometry = guiGeometry(texturePack, baseModel, blockStateItemTransform(blockName));
+		addBlockStateItem(geometry, registry, texturePack, blockName);
+		renderGui(geometry, outFile);
+	}
+
+	/**
+	 * @return how to place a special item that is drawn with its block's model before applying the item's display
+	 * transform, or null if it needs no change
+	 */
+	public static Matrix4f blockStateItemTransform(String blockName) {
+		// The statue's display transforms expect the special item renderer's coordinates.
+		// Convert the north-facing, floor-aligned block model before applying them.
+		return blockName.endsWith("copper_golem_statue")
+				? new Matrix4f().translation(0, 1.5f, 1).scale(1, -1, -1) : null;
+	}
+
+	/** Adds the default state of a block, for special items drawn with their block's model. */
+	public static void addBlockStateItem(Geometry geometry, BlockRegistry registry, TexturePack texturePack, String blockName) {
 		BlockStateWrapper block = registry.getBlock(blockName);
 		BlockProperties properties = block.getPropertiesWithDefaults(null);
 		RawChunk rawChunk = new RawChunk();
@@ -207,15 +225,9 @@ public class ItemRenderer
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
 		rawChunk.setSkyLight(0, 0, 0, (byte) 16);
 		ItemContext context = new ItemContext(texturePack, null, registry);
-		// The statue's GUI pose expects the special item renderer's coordinates.
-		// Convert the north-facing, floor-aligned block model before applying that pose.
-		Matrix4f modelTransform = blockName.endsWith("copper_golem_statue")
-				? new Matrix4f().translation(0, 1.5f, 1).scale(1, -1, -1) : null;
-		Geometry geometry = guiGeometry(texturePack, baseModel, modelTransform);
 		for (var model : block.getModels(properties, 0, 0, 0)) {
 			model.createGeometry(0, 0, 0, context, rawChunk, geometry);
 		}
-		renderGui(geometry, outFile);
 	}
 
 	public void renderShield(File outFile, BlockRegistry registry, TexturePack texturePack, String baseModel) throws Exception {
@@ -429,6 +441,17 @@ public class ItemRenderer
 
 	public void renderItem(File outFile, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack,
 			String blockName, String baseModel, List<Banner.Pattern> bannerPatterns) throws Exception {
+		Geometry geometry = guiGeometry(texturePack, baseModel);
+		addSpecialItem(geometry, registry, modelRegistry, texturePack, blockName, bannerPatterns);
+		renderGui(geometry, outFile);
+	}
+
+	/**
+	 * Adds an item that Minecraft draws with a special renderer (chests, banners, heads and similar), using the block
+	 * type that draws the block in the world.
+	 */
+	public static void addSpecialItem(Geometry geometry, BlockTypeRegistry registry, BlockRegistry modelRegistry, TexturePack texturePack,
+			String blockName, List<Banner.Pattern> bannerPatterns) {
 		RawChunk rawChunk = new RawChunk();
 		rawChunk.setBlockName(0, 0, 0, blockName);
 		rawChunk.setBlockLight(0, 0, 0, (byte) 16);
@@ -443,9 +466,7 @@ public class ItemRenderer
 			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("facing", "south")));
 		if (type instanceof tectonicus.blockTypes.Skull)
 			rawChunk.setBlockState(0, 0, 0, new BlockProperties(Map.of("rotation", "8")));
-		Geometry geometry = guiGeometry(texturePack, baseModel);
 		type.addInteriorGeometry(0, 0, 0, new ItemContext(texturePack, registry, modelRegistry), registry, rawChunk, geometry);
-		renderGui(geometry, outFile);
 	}
 
 	private void renderItem(ItemGeometry item, File outFile, int imageSize, int numDownsamples, float cameraAngle, float cameraElevationAngle) {

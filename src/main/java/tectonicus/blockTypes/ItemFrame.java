@@ -28,6 +28,7 @@ public class ItemFrame implements BlockType
 {
 	private final String name;
 	private final SubTexture background, border, map;
+	private final ItemFrameItems items = new ItemFrameItems();
 
 	public ItemFrame(String name, SubTexture background, SubTexture border, SubTexture map)
 	{	
@@ -71,13 +72,17 @@ public class ItemFrame implements BlockType
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry)
 	{
-		Mesh mesh = geometry.getMesh(border.texture, Geometry.MeshType.Solid);
-		Mesh backgroundMesh = geometry.getMesh(background.texture, Geometry.MeshType.Solid);
+		Mesh frameMesh = geometry.getMesh(border.texture, Geometry.MeshType.Solid);
+		Mesh frameBackgroundMesh = geometry.getMesh(background.texture, Geometry.MeshType.Solid);
 		
 		final float texel = 1.0f/16.0f;
 			
 		for (ItemFrameEntity entity : rawChunk.getItemFrames())
 		{
+			items.add(entity, world, registry, rawChunk, geometry);
+			// Invisible frames only show their item or map.
+			Mesh mesh = entity.isInvisible() ? DiscardingMesh.INSTANCE : frameMesh;
+			Mesh backgroundMesh = entity.isInvisible() ? DiscardingMesh.INSTANCE : frameBackgroundMesh;
 			x = entity.getLocalX();
 			y = entity.getLocalY();
 			z = entity.getLocalZ();

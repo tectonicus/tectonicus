@@ -41,7 +41,7 @@ import java.util.Set;
  * Items without a flat icon are rendered with the legacy block renderer from their numeric block ID and damage value.
  */
 @Slf4j
-final class LegacyItemIcons {
+public final class LegacyItemIcons {
 	private static final Set<String> CHESTS = Set.of("minecraft:chest", "minecraft:trapped_chest", "minecraft:ender_chest",
 			"minecraft:furnace", "minecraft:dispenser", "minecraft:dropper");
 	private static final Set<String> TINTED_TEXTURES = Set.of("tallgrass", "fern", "vine", "waterlily",
@@ -87,6 +87,14 @@ final class LegacyItemIcons {
 			}
 		}
 		log.info("Rendered {} inventory item icons with the {} jar", rendered, version);
+	}
+
+	/**
+	 * @param name the 1.13 item ID without its namespace
+	 * @return the layers of a flat item in a pre-1.13 jar, bottom first, or an empty list for a block or a 3D item
+	 */
+	public static List<BufferedImage> flatItemLayers(TexturePack texturePack, LegacyItems.Entry entry, String name) throws IOException {
+		return new LegacyItemIcons(texturePack, null, null, null).flatLayers(entry, name);
 	}
 
 	private List<BufferedImage> flatLayers(LegacyItems.Entry entry, String name) throws IOException {

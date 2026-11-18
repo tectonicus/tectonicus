@@ -489,7 +489,8 @@ public class RawChunk {
 		}
 
 		int localY = is118 ? y + Math.abs(minSectionY) * SECTION_HEIGHT : y;
-		itemFrames.add(new ItemFrameEntity(x, y, z, x - chunkX * WIDTH, localY, z - chunkZ * DEPTH, id, direction, entity));
+		itemFrames.add(new ItemFrameEntity(x, y, z, x - chunkX * WIDTH, localY, z - chunkZ * DEPTH, id, direction, entity,
+				LegacyItems.isLegacy(dataVersion)));
 	}
 
 	private void parseCushion(CompoundTag entity) {
@@ -1637,16 +1638,25 @@ public class RawChunk {
 		}
 
 		if (!itemFrames.isEmpty()) {
-			hashAlgorithm.update("itemFrames-v1".getBytes(StandardCharsets.UTF_8));
+			hashAlgorithm.update("itemFrames-v2".getBytes(StandardCharsets.UTF_8));
 			update(hashAlgorithm, new int[] {itemFrames.size()});
 			for (ItemFrameEntity frame : itemFrames) {
 				Integer mapId = frame.getMapId();
 				byte[] contentHash = mapId == null ? null : mapContentHash.apply(mapId);
 				update(hashAlgorithm, new int[] {frame.getX(), frame.getY(), frame.getZ(), frame.getDirection(),
 						frame.getRotation(), frame.isGlow() ? 1 : 0, frame.isFilledMap() ? 1 : 0,
-						mapId == null ? -1 : mapId, contentHash == null ? 0 : contentHash.length});
+						mapId == null ? -1 : mapId, contentHash == null ? 0 : contentHash.length,
+						frame.isInvisible() ? 1 : 0, frame.getItemRotation()});
 				if (contentHash != null)
 					hashAlgorithm.update(contentHash);
+				Item item = frame.getItem();
+				hashAlgorithm.update((item == null ? "" : item.id).getBytes(StandardCharsets.UTF_8));
+				if (item != null) {
+					DyedColorTag dye = item.getComponent(DyedColorTag.class);
+					BannerPatternsTag patterns = item.getComponent(BannerPatternsTag.class);
+					update(hashAlgorithm, new int[] {dye == null ? -1 : dye.color});
+					hashAlgorithm.update((patterns == null ? "" : patterns.toString()).getBytes(StandardCharsets.UTF_8));
+				}
 			}
 		}
 		return hashAlgorithm.digest();

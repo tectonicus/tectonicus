@@ -25,7 +25,7 @@ import tectonicus.chunk.Chunk;
 import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
-import tectonicus.itemregistry.GuiGeometry;
+import tectonicus.itemregistry.PosedGeometry;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
@@ -86,8 +86,8 @@ public class MeshUtil {
 		if (model == null || bakedModel.getQuads().isEmpty())
 			return;
 
-		if (geometry instanceof GuiGeometry) {
-			// GUI meshes light the posed surface normals. World AO and cardinal shading
+		if (geometry instanceof PosedGeometry) {
+			// Posed item meshes light the posed surface normals. World AO and cardinal shading
 			// must not be baked into the input colours as well.
 			for (BakedQuad quad : bakedModel.getQuads()) {
 				ElementFace face = quad.getFace();
