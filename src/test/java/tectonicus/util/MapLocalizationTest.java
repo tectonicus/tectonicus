@@ -231,4 +231,10 @@ class MapLocalizationTest {
 		}
 		return file;
 	}
+
+	@org.junit.jupiter.api.Test
+	void findsLanguageFilesInJarsBefore1_11() {
+		assertEquals(java.util.List.of("assets/minecraft/lang/en_us.json", "assets/minecraft/lang/en_us.lang",
+				"assets/minecraft/lang/en_US.lang", "lang/en_US.lang"), MapLocalization.packLanguagePaths("en_us"));
+	}
 }

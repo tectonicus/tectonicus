@@ -39,7 +39,7 @@ import java.util.zip.ZipFile;
 /** Browser assets referenced by the markers exported across one world's dimensions. */
 @Slf4j
 public final class WorldViewerAssets {
-	private static final List<String> ENGLISH_TABLES = MapLocalization.languagePaths("en_us");
+	private static final List<String> ENGLISH_TABLES = MapLocalization.packLanguagePaths("en_us");
 	private static final Pattern CUSTOM_NAME = Pattern.compile("\\{(?:text:[^,)]*)?,?(?:translate:(?<key>[^,)]*))?,?(?:color:[^)]*)?}");
 	private static final Pattern POTION_DURATION = Pattern.compile("^(strong|long)_");
 	private static final Pattern MASK_NAME = Pattern.compile("[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*");

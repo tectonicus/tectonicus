@@ -136,12 +136,23 @@ public final class MapLocalization {
 	}
 
 	List<String> resourcePaths() {
-		return languagePaths(localeCode);
+		return packLanguagePaths(localeCode);
 	}
 
 	static List<String> languagePaths(String code) {
 		String path = "assets/minecraft/lang/" + code;
 		return List.of(path + ".json", path + ".lang");
+	}
+
+	/** Language file paths in a jar or resource pack, including the names used before 1.11. */
+	static List<String> packLanguagePaths(String code) {
+		// 1.6 to 1.10 named language files like en_US.lang, and 1.5 and older kept them in lang/ at the jar root.
+		int separator = code.indexOf('_');
+		String legacyCode = separator < 0 ? code : code.substring(0, separator) + code.substring(separator).toUpperCase(Locale.ROOT);
+		var paths = new java.util.ArrayList<>(languagePaths(code));
+		paths.add("assets/minecraft/lang/" + legacyCode + ".lang");
+		paths.add("lang/" + legacyCode + ".lang");
+		return List.copyOf(paths);
 	}
 
 	static Map<String, String> readMinecraftTable(List<String> paths, LanguageSource source) throws IOException {
