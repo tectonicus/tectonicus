@@ -139,6 +139,9 @@ public class FileTileCache implements TileCache
 				? dimension.getWorld().isUsingProgrammerArt() : args.isUsingProgrammerArt();
 		buffer.append("useProgrammerArt=").append(programmerArt).append('\n');
 		buffer.append("signFontLocale=").append(args.getMapLocale()).append('\n');
+		// Only written when enabled so existing caches rendered with the default palette stay valid.
+		if (args.useOldColorPalette())
+			buffer.append("useOldColorPalette=true\n");
 		
 		// Paths
 		buffer.append(args.getOutputDir().getAbsolutePath());
