@@ -803,11 +803,12 @@ public class OutputResourcesUtil {
                                                         final String textureId = layerTexture.length == 1 ? layerTexture[0] : layerTexture[1];
                                                         
                                                         BufferedImage texture;
+                                                        String texturePath;
                                                         
                                                         if (!layer.getKey().equals("layer0") && textureId.contains("trim")) {
                                                                 String[] trimParts = textureId.split("_trim_");
                                                                 
-                                                                String trim = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
+                                                                texturePath = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
                                                                 String palette;
                                                                 String keyPalette;
                                                                 String newKeyPalette = "assets/" + namespace + "/textures/palettes/trim_base.png";
@@ -819,10 +820,12 @@ public class OutputResourcesUtil {
                                                                         keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
                                                                 }
                                                                 
-                                                                texture = texturePack.loadPalettedTexture(trim, palette, keyPalette);
+                                                                texture = texturePack.loadPalettedTexture(texturePath, palette, keyPalette);
                                                         } else {
-                                                                texture = texturePack.loadTexture("assets/" + namespace + "/textures/" + textureId + ".png");
+                                                                texturePath = "assets/" + namespace + "/textures/" + textureId + ".png";
+                                                                texture = texturePack.loadTexture(texturePath);
                                                         }
+                                                        texture = texturePack.getTextureFirstFrame(texturePath, texture);
                                                         
                                                         var block = blockRegistry.getBlockModels().getIfPresent(layer.getValue());
                                                         if (block != null) {
@@ -849,7 +852,12 @@ public class OutputResourcesUtil {
                                                                 writeImage(texture, 16, 16, outFile);
 								outFile = new File(itemIconDir, entryKey + "_overlay.png");
                                                         } else {
-                                                                composited.getGraphics().drawImage(texture, 0, 0, null);
+                                                                var graphics = composited.createGraphics();
+                                                                try {
+                                                                        graphics.drawImage(texture, 0, 0, composited.getWidth(), composited.getHeight(), null);
+                                                                } finally {
+                                                                        graphics.dispose();
+                                                                }
                                                         }
                                                 }
                                                 writeImage(composited, 16, 16, outFile);

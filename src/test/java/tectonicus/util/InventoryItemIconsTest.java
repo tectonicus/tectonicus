@@ -37,6 +37,7 @@ import tectonicus.texture.ZipStack;
 import tectonicus.world.Colors;
 
 import javax.imageio.ImageIO;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
@@ -76,9 +77,27 @@ class InventoryItemIconsTest {
 				json(out, "assets/minecraft/models/item/red_banner.json", "{\"parent\":\"builtin/entity\"}");
 			if (modern) {
 				json(out, "assets/minecraft/models/item/canonical.json", """
-						{"parent":"builtin/generated","textures":{"layer0":"minecraft:entity/conduit/base"}}
+						{"parent":"builtin/generated","textures":{
+						    "layer0":"minecraft:item/large_sprite","layer1":"minecraft:item/animated_sprite"}}
 						""");
 				json(out, "assets/minecraft/items/alias.json", "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"minecraft:item/canonical\"}}");
+				BufferedImage sprite = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+				sprite.setRGB(30, 30, 2, 2, new int[] {Color.RED.getRGB(), Color.RED.getRGB(),
+						Color.RED.getRGB(), Color.RED.getRGB()}, 0, 2);
+				out.putNextEntry(new ZipEntry("assets/minecraft/textures/item/large_sprite.png"));
+				ImageIO.write(sprite, "png", out);
+				out.closeEntry();
+
+				BufferedImage animation = new BufferedImage(32, 64, BufferedImage.TYPE_INT_ARGB);
+				animation.setRGB(30, 0, 2, 2, new int[] {Color.BLUE.getRGB(), Color.BLUE.getRGB(),
+						Color.BLUE.getRGB(), Color.BLUE.getRGB()}, 0, 2);
+				animation.setRGB(30, 32, 2, 2, new int[] {Color.GREEN.getRGB(), Color.GREEN.getRGB(),
+						Color.GREEN.getRGB(), Color.GREEN.getRGB()}, 0, 2);
+				out.putNextEntry(new ZipEntry("assets/minecraft/textures/item/animated_sprite.png"));
+				ImageIO.write(animation, "png", out);
+				out.closeEntry();
+				json(out, "assets/minecraft/textures/item/animated_sprite.png.mcmeta",
+						"{\"animation\":{\"frames\":[{\"index\":1,\"time\":2},0]}}");
 				json(out, "assets/minecraft/items/shield.json", """
 						{"model":{"type":"minecraft:condition","on_false":{"type":"minecraft:special",
 						"base":"minecraft:item/shield","model":{"type":"minecraft:shield"}}}}
@@ -208,6 +227,11 @@ class InventoryItemIconsTest {
 			float expected = 0.5f + (modern ? 1 : -1) * (float) Math.sqrt(0.5) / 4;
 			assertTrue(iconCenters.stream().anyMatch(center -> center.equals(new Vector3f(expected, 0.5f, expected), 0.00001f)));
 			if (modern) {
+				BufferedImage icon = ImageIO.read(directory.resolve("Items/canonical.png").toFile());
+				assertEquals(16, icon.getWidth());
+				assertEquals(16, icon.getHeight());
+				assertEquals(Color.RED.getRGB(), icon.getRGB(15, 15), "Scale the entire static sprite");
+				assertEquals(Color.GREEN.getRGB(), icon.getRGB(15, 0), "Use the first scheduled animation frame");
 				assertNotNull(textures.getPackTexture("banner_base_red"), "Entityless banners must retain their item color");
 				assertArrayEquals(Files.readAllBytes(directory.resolve("Items/canonical.png")), Files.readAllBytes(directory.resolve("Items/alias.png")));
 				assertTrue(Files.exists(directory.resolve("Items/shield.png")));

@@ -809,6 +809,42 @@ public class TexturePack
 	public BufferedImage loadTexture(String path) throws FileNotFoundException {
 		return copy((BufferedImage) loadImage(path).getRenderedImage());
 	}
+
+	/** Select the initial animation frame for a static preview of an already loaded sprite. */
+	public BufferedImage getTextureFirstFrame(String path, BufferedImage image) {
+		String metadataPath = path + ".mcmeta";
+		// Animation metadata belongs to the same resource as the sprite.
+		try (InputStream in = zipStack.hasOverrideFile(path)
+				? zipStack.getOverrideStream(metadataPath) : zipStack.getBaseStream(metadataPath)) {
+			if (in == null)
+				return image;
+
+			JsonNode root = JSON_MAPPER.readTree(in);
+			JsonNode animation = root == null ? null : root.get("animation");
+			if (animation == null || !animation.isObject())
+				return image;
+
+			int width = image.getWidth();
+			int height = image.getHeight();
+			int defaultSize = Math.min(width, height);
+			int frameWidth = animation.path("width").asInt(animation.has("height") ? width : defaultSize);
+			int frameHeight = animation.path("height").asInt(animation.has("width") ? height : defaultSize);
+			if (frameWidth <= 0 || frameHeight <= 0 || width % frameWidth != 0 || height % frameHeight != 0)
+				return image;
+
+			int columns = width / frameWidth;
+			int rows = height / frameHeight;
+			JsonNode firstFrame = animation.path("frames").path(0);
+			int index = firstFrame.isObject() ? firstFrame.path("index").asInt(0) : firstFrame.asInt(0);
+			if (index < 0 || index / columns >= rows)
+				index = 0;
+			return image.getSubimage(index % columns * frameWidth, index / columns * frameHeight,
+					frameWidth, frameHeight);
+		} catch (IOException | JacksonException e) {
+			log.debug("Unable to read animation metadata for {}", path, e);
+			return image;
+		}
+	}
         
         private BufferedImage loadTexture(String path, File minecraftJar, File texturePack) throws MissingAssetException, IOException {
                 try {

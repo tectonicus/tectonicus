@@ -233,6 +233,43 @@ test('inventory glyphs use world font assets offline and preserve shaping fallba
     assert.match(context.renderMinecraftText('ã'), /http:\/\/localhost\/maps\/World0\/Images\/InventoryFont\.png/);
 });
 
+test('localized item names render resource-pack glyphs and hide legacy formatting codes', () => {
+    const {context} = createAssetsViewer(undefined, {
+        protocol: 'file:',
+        contents: [{worldId: 'World0', localizationsScript: 'Scripts/World0/localizations.js'}]
+    });
+    const glyph = '\u{f0001}';
+    context.registerWorldLocalizations('World0', {
+        translations: {'item.minecraft.apple': '\u00a76a \u00a7r\u00a7f' + glyph},
+        inventoryFont: {0: [32, 16], 32: [0, 0, 0, 0, 4, 0], 97: [0, 0, 5, 8, 6, 0],
+            1575: [8, 0, 5, 8, 6, 0], [glyph.codePointAt(0)]: [16, 0, 8, 9, 9, 0]}
+    });
+    context.registerWorldMasks('World0', {'InventoryFont.png': 'data:image/png;base64,AAAA'});
+    const name = context.getItemName({id: 'minecraft:apple'});
+    assert.match(name, /mask-position:-0px -0px;color:#ffaa00/);
+    assert.match(name, /mask-position:-16px -0px;color:#ffffff/);
+    assert.doesNotMatch(name, /\u00a7|mc_text_fallback/);
+    assert.match(context.renderMinecraftText('a \u{f0002}'), /mc_text_fallback/);
+    assert.match(context.renderMinecraftText('ا ' + glyph), /mc_text_fallback/);
+});
+
+test('legacy styles combine and clear on color or reset in atlas and fallback text', () => {
+    const {context} = createAssetsViewer();
+    context.registerWorldLocalizations('World0', {
+        inventoryFont: {0: [16, 16], 97: [0, 0, 5, 8, 6, 0]}
+    });
+    const atlas = context.renderMinecraftText('\u00a7l\u00a7o\u00a7m\u00a7na\u00a7ca\u00a7ra');
+    assert.match(atlas, /mc_atlas_char mc_text_bold mc_text_italic mc_text_struck mc_text_underlined"/);
+    assert.equal((atlas.match(/mc_text_bold/g) || []).length, 1);
+    assert.equal((atlas.match(/color:#ff5555/g) || []).length, 1);
+    const fallback = context.renderMinecraftText('\u00a7l\u00a7n漢\u00a7c字\u00a7r!');
+    assert.match(fallback, /mc_text_bold mc_text_underlined">漢<\/span>/);
+    assert.match(fallback, /style="color:#ff5555">字<\/span>!/);
+    const obfuscated = context.renderMinecraftText('\u00a7kSecret\u00a7r字');
+    assert.match(obfuscated, /aria-label="Secret字">[A-Z0-9]{6}字/);
+    assert.doesNotMatch(obfuscated, />Secret字/);
+});
+
 test('chest images, item masks, overlays, player status and markers use the selected world assets', () => {
     const viewer = createAssetsViewer();
     const item = {id: 'minecraft:leather_helmet', count: 2, slot: 0, color: 0x123456,

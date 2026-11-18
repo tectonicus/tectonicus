@@ -552,6 +552,45 @@ html, body, #map {
     height: 8px;
 }
 
+.mc_char.mc_text_colored::before,
+.item_description .mc_char.mc_text_colored::before {
+    background: currentColor;
+}
+
+.mc_char.mc_text_bold::before {
+    scale: 1.2 1;
+    transform-origin: left;
+}
+
+.mc_char.mc_text_italic::before {
+    transform: skewX(-14deg);
+}
+
+.mc_text_underlined,
+.mc_text_struck {
+    position: relative;
+}
+
+:is(.mc_char, .mc_space).mc_text_underlined::after,
+:is(.mc_char, .mc_space).mc_text_struck::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: -1px;
+    top: 0;
+    height: 8px;
+    background: linear-gradient(var(--mc-strike, transparent), var(--mc-strike, transparent)) 0 4px / 100% 1px no-repeat,
+                linear-gradient(var(--mc-underline, transparent), var(--mc-underline, transparent)) 0 7px / 100% 1px no-repeat;
+}
+
+.mc_text_underlined { --mc-underline: currentColor; }
+.mc_text_struck { --mc-strike: currentColor; }
+.mc_text_fallback .mc_text_bold { font-weight: bold; }
+.mc_text_fallback .mc_text_italic { font-style: italic; }
+.mc_text_fallback .mc_text_underlined { text-decoration-line: underline; }
+.mc_text_fallback .mc_text_struck { text-decoration-line: line-through; }
+.mc_text_fallback .mc_text_underlined.mc_text_struck { text-decoration-line: underline line-through; }
+
 .equipment_tooltip {
     pointer-events: none;
     top: 18px;

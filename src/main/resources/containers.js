@@ -266,8 +266,42 @@ function minecraftTextRuns(text, colors) {
         offset = end;
     }
     if (offset < text.length) runs.push({text: text.slice(offset)});
-    return runs;
+    const palette = ['#000000', '#0000aa', '#00aa00', '#00aaaa', '#aa0000', '#aa00aa', '#ffaa00', '#aaaaaa',
+        '#555555', '#5555ff', '#55ff55', '#55ffff', '#ff5555', '#ff55ff', '#ffff55', '#ffffff'];
+    let legacyColor;
+    const formats = new Set();
+    return runs.flatMap(run => {
+        const formatted = [];
+        let offset = 0;
+        const append = end => {
+            if (end <= offset) return;
+            const plain = run.text.slice(offset, end);
+            const visible = formats.has('k')
+                ? Array.from(plain, (char, index) => /\s/u.test(char) ? char
+                    : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[(char.codePointAt(0) + index) % 36]).join('')
+                : plain;
+            formatted.push({text: visible, plain, color: legacyColor ?? run.color,
+                classes: [...(legacyColor ? ['mc_text_colored'] : []), ...formats].filter(format => format !== 'k')});
+        };
+        for (const match of run.text.matchAll(/\u00a7([0-9a-fk-or])/gi)) {
+            append(match.index);
+            const code = match[1].toLowerCase();
+            if (code === 'r' || /^[0-9a-f]$/.test(code)) {
+                formats.clear();
+                legacyColor = code === 'r' ? undefined : palette[parseInt(code, 16)];
+            } else {
+                formats.add(legacyTextClasses[code] ?? code);
+            }
+            offset = match.index + match[0].length;
+        }
+        append(run.text.length);
+        return formatted;
+    });
 }
+
+const legacyTextClasses = {
+    l: 'mc_text_bold', m: 'mc_text_struck', n: 'mc_text_underlined', o: 'mc_text_italic'
+};
 
 function renderMinecraftText(text, className, layer = activeBaseLayer, colors = []) {
     if (!text)
@@ -278,33 +312,40 @@ function renderMinecraftText(text, className, layer = activeBaseLayer, colors = 
     className = escapeHtml(className || '');
     const runs = minecraftTextRuns(text, colors);
     const characters = runs.flatMap(run =>
-        Array.from(run.text.normalize('NFC'), char => ({char, color: run.color})));
+        Array.from(run.text.normalize('NFC'), char => ({char, color: run.color, classes: run.classes})));
     const normalized = characters.map(({char}) => char).join('');
-    const label = escapeHtml(text);
+    const label = escapeHtml(runs.map(run => run.plain).join(''));
+    const obfuscated = runs.some(run => run.text !== run.plain);
     const font = worldLocalizations.get(layer?.worldId)?.inventoryFont;
     const atlas = font?.[0] && fontMaskUrl('InventoryFont.png', layer);
     // Let the browser shape combining, joining and right-to-left scripts as a complete string.
-    const needsShaping = !/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Number}\p{Punctuation}\p{Symbol}\p{Space_Separator}]*$/u.test(normalized);
+    const needsShaping = !/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Number}\p{Punctuation}\p{Symbol}\p{Space_Separator}\p{Private_Use}]*$/u.test(normalized);
     if (atlas && !needsShaping && characters.every(({char}) => Object.hasOwn(font, char.codePointAt(0)))) {
             const [atlasWidth, atlasHeight] = font[0];
-            const glyphs = characters.map(({char, color}) => {
+            const glyphs = characters.map(({char, color, classes}) => {
                     const [x, y, width, height, advance, top] = font[char.codePointAt(0)];
-                    if (width === 0) return `<span class="mc_space" style="width:${advance}px"></span>`;
+                    const cssClasses = classes.length ? ' ' + classes.join(' ') : '';
                     const tint = color ? `;color:${color}` : '';
-                    return `<span class="mc_char mc_atlas_char" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px${tint}"></span>`;
+                    if (width === 0) return `<span class="mc_space${cssClasses}" style="width:${advance}px${tint}"></span>`;
+                    return `<span class="mc_char mc_atlas_char${cssClasses}" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px${tint}"></span>`;
             }).join('');
             return `<div class="mc_text_container ${className}" aria-label="${label}" style="--minecraft-font:url('${atlas}');--minecraft-font-size:${atlasWidth}px ${atlasHeight}px"><span aria-hidden="true">${glyphs}</span></div>`;
     }
 
     if (!worldMaskUrl('Font.png', layer) || characters.some(({char}) => !charMap.includes(char))) {
-            const content = runs.map(run => run.color
-                ? `<span style="color:${run.color}">${escapeHtml(run.text)}</span>` : escapeHtml(run.text)).join('');
-            return '<div class="mc_text_container mc_text_fallback ' + className + '">' + content + '</div>';
+            const content = runs.map(run => {
+                const classes = run.classes.length ? ` class="${run.classes.join(' ')}"` : '';
+                const color = run.color ? ` style="color:${run.color}"` : '';
+                const text = escapeHtml(run.text);
+                return classes || color ? `<span${classes}${color}>${text}</span>` : text;
+            }).join('');
+            const ariaLabel = obfuscated ? ` aria-label="${label}"` : '';
+            return '<div class="mc_text_container mc_text_fallback ' + className + '"' + ariaLabel + '>' + content + '</div>';
     }
 
     let html = '<div class="mc_text_container ' + className + '" aria-label="' + label + '">';
 
-    for (const {char, color} of characters) {
+    for (const {char, color, classes} of characters) {
             const position = findCharacterRowAndColumn(char);
 
             const left = position[0] * 8;
@@ -320,7 +361,8 @@ function renderMinecraftText(text, className, layer = activeBaseLayer, colors = 
             }
 
             const tint = color ? ` color:${color};` : '';
-            html += `<div class="mc_char" style="mask-position: -${left}px -${top}px;${widthOverride}${tint}"></div>`;
+            const cssClasses = classes.length ? ' ' + classes.join(' ') : '';
+            html += `<div class="mc_char${cssClasses}" style="mask-position: -${left}px -${top}px;${widthOverride}${tint}"></div>`;
     }
 
     html += '</div>';
