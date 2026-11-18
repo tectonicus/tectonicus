@@ -156,7 +156,9 @@ public class Downsampler {
 				if (empty) {
 					Files.deleteIfExists(outputFile.toPath());
 				} else {
-					Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel);
+					// Leave the tile pending so the next render retries a failed write.
+					if (!Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel))
+						return null;
 					changedFileList.writeLine(outputFile.getAbsolutePath());
 				}
 				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, empty);

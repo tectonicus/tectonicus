@@ -542,7 +542,7 @@ public class TileRenderer
 
 	private WorldStats preProcess(World world, tectonicus.configuration.DimensionConfig map, File portalsFile, File signsFile, File viewsFile)
 	{
-		WorldStats stats = null;
+		WorldStats stats;
 		
 		HddObjectListWriter<PortalColumn> portals = null;
 		HddObjectListWriter<Sign> signs = null;
@@ -560,7 +560,8 @@ public class TileRenderer
 		}
 		catch (Exception e)
 		{
-			log.error("Exception: ", e);
+			// Without the chunk search there is nothing to render, so fail with the real cause.
+			throw new IllegalStateException("Failed to scan chunks for map " + map.getId(), e);
 		}
 		finally
 		{
@@ -804,44 +805,49 @@ public class TileRenderer
 
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
 
-		for (TileCoord t : tiles) {
-			System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")          \r"); //prints a carriage return after line
-			log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
-			progressListener.onTaskUpdate(done, tiles.size());
+		try {
+			for (TileCoord t : tiles) {
+				System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")          \r"); //prints a carriage return after line
+				log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
+				progressListener.onTaskUpdate(done, tiles.size());
 
-			setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
+				setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
 
-			rasteriser.resetState();
-			rasteriser.clear(layer.getBackgroundColorRGB());
+				rasteriser.resetState();
+				rasteriser.clear(layer.getBackgroundColorRGB());
 
-			world.draw(camera, false, true);
+				world.draw(camera, false, true);
 
-			File outputFile = getImageFile(layerDir, t.x, t.y, imageFormat);
-			BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, tileWidth, tileHeight, imageFormat);
-			if (tileImage != null) {
-				boolean empty = imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(tileImage);
-				if (empty) {
-					try {
-						Files.deleteIfExists(outputFile.toPath());
-					} catch (IOException e) {
-						throw new IllegalStateException("Could not remove empty tile " + outputFile, e);
+				File outputFile = getImageFile(layerDir, t.x, t.y, imageFormat);
+				BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, tileWidth, tileHeight, imageFormat);
+				if (tileImage != null) {
+					boolean empty = imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(tileImage);
+					if (empty) {
+						try {
+							Files.deleteIfExists(outputFile.toPath());
+						} catch (IOException e) {
+							throw new IllegalStateException("Could not remove empty tile " + outputFile, e);
+						}
+						tileCache.writeImageCache(t, true);
+					} else {
+						// Only record the tile hash once the image is on disk, so a failed write is retried next run.
+						imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel(), () -> {
+							changedFileList.writeLine(outputFile.getAbsolutePath());
+							tileCache.writeImageCache(t, false);
+						});
 					}
 				} else {
-					imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel());
-					changedFileList.writeLine(outputFile.getAbsolutePath());
+					log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:" + tileWidth + " height:" + tileHeight + " format:" + imageFormat + ")");
 				}
-				tileCache.writeImageCache(t, empty);
-			} else {
-				log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:" + tileWidth + " height:" + tileHeight + " format:" + imageFormat + ")");
+
+				done++;
+
+				if (abort)
+					break;
 			}
-
-			done++;
-
-			if (abort)
-				break;
+		} finally {
+			imageWriteQueue.waitUntilFinished();
 		}
-
-		imageWriteQueue.waitUntilFinished();
 
 		log.info("\nBase tile render complete");
 	}

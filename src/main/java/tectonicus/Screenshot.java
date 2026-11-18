@@ -24,7 +24,8 @@ import java.io.File;
 public class Screenshot
 {
 	
-	public static void write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel)
+	/** Encodes and writes the image, returning false (after logging) if it could not be written. */
+	public static boolean write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel)
 	{
 		ImageWriter writer = null;
 		FileImageOutputStream output = null;
@@ -49,10 +50,12 @@ public class Screenshot
 			output = new FileImageOutputStream(outputFile);
 			output.write(memOut.toByteArray(), 0, memOut.size());
                         output.flush();
+			return true;
 		}
 		catch (Exception e)
 		{
-			log.error("Exception: ", e);
+			log.error("Failed to write image {}", outputFile.getAbsolutePath(), e);
+			return false;
 		}
 		finally
 		{

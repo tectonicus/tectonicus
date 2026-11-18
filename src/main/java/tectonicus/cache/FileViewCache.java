@@ -185,12 +185,16 @@ public class FileViewCache
 		return hashAlgorithm.digest();
 	}
 	
-	public void writeHash(Sign sign, Rasteriser rasteriser, World world, ViewConfig viewConfig)
+	/**
+	 * Calculates the view's hash now, while the world and sign are current, and returns a task that
+	 * records it later. Run the task only after the view image has been written successfully.
+	 */
+	public Runnable prepareHashWrite(Sign sign, Rasteriser rasteriser, World world, ViewConfig viewConfig)
 	{
 		final byte[] hash = calculateHash(rasteriser, world, sign, viewConfig);
 		final File file = findViewHashFile(cacheDir, sign);
 		
-		CacheUtil.writeCacheFile(file, hash);
+		return () -> CacheUtil.writeCacheFile(file, hash);
 	}
 	
 	private static File findViewHashFile(File baseDir, Sign sign)

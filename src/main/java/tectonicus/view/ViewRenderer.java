@@ -97,9 +97,9 @@ public class ViewRenderer
 		final float imageCompression = viewConfig.getImageCompressionLevel();
 		
 		HddObjectListReader<Sign> viewsIn = null;
+		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(numDownsampleThreads);
 		try
 		{
-			ImageWriteQueue imageWriteQueue = new ImageWriteQueue(numDownsampleThreads);
 			
 			viewsIn = new HddObjectListReader<>(viewsFile);
 			Sign sign = new Sign();
@@ -180,16 +180,17 @@ public class ViewRenderer
                                 }
 
                                 File outputFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);
-                                imageWriteQueue.write(outputFile, viewImage, imageFormat, imageCompression);
-                                changedFiles.writeLine(outputFile.getAbsolutePath());
-                                
-				viewCache.writeHash(sign, rasteriser, world, viewConfig);
+                                // The sign object is reused for the next view, so hash it now and record it once the image is written.
+                                Runnable recordHash = viewCache.prepareHashWrite(sign, rasteriser, world, viewConfig);
+                                imageWriteQueue.write(outputFile, viewImage, imageFormat, imageCompression, () -> {
+                                        changedFiles.writeLine(outputFile.getAbsolutePath());
+                                        recordHash.run();
+                                });
 			}
-			
-			imageWriteQueue.waitUntilFinished();
 		} catch (Exception e) {
 			log.error("Exception: ", e);
 		} finally {
+			imageWriteQueue.waitUntilFinished();
 			if (viewsIn != null)
 				viewsIn.close();
 		}
