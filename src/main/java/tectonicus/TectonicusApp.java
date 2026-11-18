@@ -327,9 +327,9 @@ public class TectonicusApp
 			System.loadLibrary("awt");
 		}
 
-		int exitCode = app.run();
-		if (exitCode != 0)
-			System.exit(exitCode);
+		int runExitCode = app.run();
+		if (runExitCode != 0)
+			System.exit(runExitCode);
 	}
 
 	private static boolean listLanguages(Configuration config, PrintWriter out, PrintWriter err) throws IOException {
