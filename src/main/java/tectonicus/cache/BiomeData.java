@@ -9,8 +9,8 @@
 
 package tectonicus.cache;
 
-import biomeextractor.ByteCoord;
-import biomeextractor.WorldProcessor;
+import org.tectonicus.biomeextractor.ByteCoord;
+import org.tectonicus.biomeextractor.WorldProcessor;
 import org.jnbt.*;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.NbtUtil;

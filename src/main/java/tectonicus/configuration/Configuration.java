@@ -9,6 +9,8 @@
 
 package tectonicus.configuration;
 
+import tectonicus.Minecraft;
+
 import ch.qos.logback.classic.Level;
 import lombok.Data;
 import lombok.Getter;
@@ -111,7 +113,7 @@ public class Configuration implements Callable<Configuration> {
 	private List<File> texturePacks = new ArrayList<>();
 
 	@Option(names = {"-p", "--useOldColorPalette", "useOldColorPalette"}, arity = "0..1", paramLabel = "<boolean>")
-	private boolean useOldColorPalette; //TODO: is this working?
+	private boolean useOldColorPalette;
 
 	@Option(names = {"-a", "--useProgrammerArt"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean usingProgrammerArt;
@@ -235,6 +237,8 @@ public class Configuration implements Callable<Configuration> {
 	}
 
 	public void applyCommandLineOverrides(ParseResult options) {
+		// Colors reads the palette from Minecraft, so publish the final XML/command-line value there.
+		Minecraft.setUseOldColorPalette(useOldColorPalette);
 		for (WorldConfig world : worlds) {
 			if (options.hasMatchedOption("--minecraftJar"))
 				world.setMinecraftJar(minecraftJar);

@@ -128,11 +128,7 @@ public class XmlConfigurationParser
 
 			config.setUsingProgrammerArt(getBoolean(configNode, "useProgrammerArt", false));
 
-			boolean useOldColorPalette = false;
-			if (configNode.hasAttribute("useOldColorPalette"))
-			{
-				useOldColorPalette = getBoolean(configNode, "useOldColorPalette", false);
-			}
+			boolean useOldColorPalette = getBoolean(configNode, "useOldColorPalette", false);
 			config.setUseOldColorPalette(useOldColorPalette);
 			Minecraft.setUseOldColorPalette(useOldColorPalette);
 			

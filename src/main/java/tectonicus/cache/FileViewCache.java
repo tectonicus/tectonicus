@@ -136,6 +136,8 @@ public class FileViewCache
 		hashAlgorithm.update(("signFontLocale=" + world.getTexturePack().getSignFont().getLocale().toLanguageTag() + "\n")
 				.getBytes(StandardCharsets.UTF_8));
 		hashAlgorithm.update(("useBiomeColours=" + world.useBiomeColours() + "\n").getBytes());
+		if (tectonicus.Minecraft.useOldColorPalette())
+			hashAlgorithm.update("useOldColorPalette=true\n".getBytes(StandardCharsets.UTF_8));
 		hashAlgorithm.update(("smoothLit=" + world.isSmoothLit() + "\n").getBytes());
 		if (world.isSmoothLit())
 			hashAlgorithm.update(CacheUtil.SMOOTH_LIGHTING_REVISION.getBytes(StandardCharsets.UTF_8));

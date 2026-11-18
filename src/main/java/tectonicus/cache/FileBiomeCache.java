@@ -9,7 +9,7 @@
 
 package tectonicus.cache;
 
-import biomeextractor.WorldProcessor;
+import org.tectonicus.biomeextractor.WorldProcessor;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.Minecraft;
 import tectonicus.chunk.ChunkCoord;

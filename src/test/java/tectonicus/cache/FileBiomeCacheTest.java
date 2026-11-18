@@ -1,6 +1,6 @@
 package tectonicus.cache;
 
-import biomeextractor.WorldProcessor;
+import org.tectonicus.biomeextractor.WorldProcessor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;

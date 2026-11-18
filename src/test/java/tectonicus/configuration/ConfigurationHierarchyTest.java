@@ -734,6 +734,37 @@ class ConfigurationHierarchyTest {
 		assertFalse(world.isUsingProgrammerArt());
 	}
 
+	@Test
+	void oldColorPaletteFromCommandLineOrXmlReachesBlockColors() throws Exception {
+		try {
+			Configuration cli = parse("<world worldDir=\"save\"><dimension><layer/></dimension></world>");
+			cli.applyCommandLineOverrides(new CommandLine(cli).registerConverter(Level.class, Level::toLevel).parseArgs("-p"));
+			assertTrue(tectonicus.Minecraft.useOldColorPalette());
+			assertEquals(new java.awt.Color(216, 127, 51), tectonicus.world.Colors.ORANGE.getColor());
+
+			Configuration xml = parse("<config useOldColorPalette=\"true\"/><world worldDir=\"save\"><dimension><layer/></dimension></world>");
+			tectonicus.Minecraft.setUseOldColorPalette(false);
+			xml.applyCommandLineOverrides(new CommandLine(xml).registerConverter(Level.class, Level::toLevel).parseArgs());
+			assertTrue(tectonicus.Minecraft.useOldColorPalette());
+
+			Configuration off = parse("<config useOldColorPalette=\"true\"/><world worldDir=\"save\"><dimension><layer/></dimension></world>");
+			off.applyCommandLineOverrides(new CommandLine(off).registerConverter(Level.class, Level::toLevel).parseArgs("--useOldColorPalette=false"));
+			assertFalse(tectonicus.Minecraft.useOldColorPalette());
+			assertEquals(new java.awt.Color(249, 128, 29), tectonicus.world.Colors.ORANGE.getColor());
+		} finally {
+			tectonicus.Minecraft.setUseOldColorPalette(false);
+		}
+	}
+
+	@Test
+	void oldColorPaletteInvalidatesTileCacheOnlyWhenEnabled() throws Exception {
+		Configuration config = parse("<world worldDir=\"save\"><dimension><layer/></dimension></world>");
+		String defaultOptions = tectonicus.cache.FileTileCache.calcOptionsString(config, config.getDimensionConfig(0));
+		assertFalse(defaultOptions.contains("useOldColorPalette"));
+		config.setUseOldColorPalette(true);
+		assertNotEquals(defaultOptions, tectonicus.cache.FileTileCache.calcOptionsString(config, config.getDimensionConfig(0)));
+	}
+
 	private Configuration parse(String body) throws Exception {
 		Path file = directory.resolve("config.xml");
 		Files.writeString(file, "<tectonicus version='2'>" + body + "</tectonicus>");

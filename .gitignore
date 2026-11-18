@@ -21,5 +21,4 @@ tectonicus.xml
 *.jar
 *.jar.new
 !/gradle/wrapper/gradle-wrapper.jar
-!/libs/BiomeExtractor.jar
 !/libs/jnbt.jar
