@@ -94,6 +94,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
@@ -339,10 +340,14 @@ public class OutputResourcesUtil {
 	}
 
 	public static List<Portal> outputPortals(File outFile, File portalListFile, DimensionConfig map) {
-		return outputPortals(outFile, portalListFile, map, null);
+		return outputPortals(outFile, portalListFile, map, (Supplier<PortalLinker>) null);
 	}
 
 	public static List<Portal> outputPortals(File outFile, File portalListFile, DimensionConfig map, World world) {
+		return outputPortals(outFile, portalListFile, map, world == null ? null : () -> PortalLinker.forWorld(world));
+	}
+
+	public static List<Portal> outputPortals(File outFile, File portalListFile, DimensionConfig map, Supplier<PortalLinker> linkerFactory) {
 		log.info("Exporting portals...");
 		HddObjectListReader<PortalColumn> portalsIn = null;
 		try (JsArrayWriter jsWriter = new JsArrayWriter(outFile, map.getJavascriptId() + "_portalData")) {
@@ -356,9 +361,9 @@ public class OutputResourcesUtil {
 
 			List<Portal> visiblePortals = Portal.groupColumns(columns);
 			PortalLinker linker = null;
-			if (world != null && !visiblePortals.isEmpty()) {
+			if (linkerFactory != null && !visiblePortals.isEmpty()) {
 				try {
-					linker = PortalLinker.forWorld(world);
+					linker = linkerFactory.get();
 				} catch (RuntimeException e) {
 					log.warn("Could not open portal search terrain. Exporting markers without jump links.", e);
 				}

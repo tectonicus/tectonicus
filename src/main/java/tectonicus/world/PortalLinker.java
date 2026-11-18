@@ -29,22 +29,31 @@ public class PortalLinker {
 		this.scale = scale;
 	}
 
+	/**
+	 * Opens saved terrain for a world's portals. Every dimension gets a source scanner, so pieces of one portal that a
+	 * subset splits apart still resolve to the same identity. Exits are only searched between the Overworld and Nether.
+	 */
 	public static PortalLinker forWorld(World world) {
 		Dimension sourceDimension = world.getDimension();
-		if (sourceDimension != Dimension.OVERWORLD && sourceDimension != Dimension.NETHER)
-			return null;
-		Dimension targetDimension = sourceDimension == Dimension.OVERWORLD ? Dimension.NETHER : Dimension.OVERWORLD;
 		var version = world.getWorldInfo().version();
 		File sourceDirectory = DirUtils.getDimensionDir(world.getWorldDir().toPath(), world.getDimensionInfo()).toFile();
 		var source = PortalScanner.open(sourceDirectory, version, world.getBiomeCache(), sourceDimension);
+		if (sourceDimension != Dimension.OVERWORLD && sourceDimension != Dimension.NETHER)
+			return new PortalLinker(source, null, null, 1);
+		Dimension targetDimension = sourceDimension == Dimension.OVERWORLD ? Dimension.NETHER : Dimension.OVERWORLD;
 		File targetDirectory = DirUtils.getDimensionDir(world.getWorldDir().toPath(),
 				new DimensionInfo(targetDimension, targetDimension.getId())).toFile();
 		if (!targetDirectory.isDirectory())
 			return new PortalLinker(source, null, null, 1);
-		var target = PortalScanner.open(targetDirectory, version, world.getBiomeCache(), targetDimension);
-		var level = world.getLevelDat();
-		PortalSearch rules = PortalSearch.forSave(level.getDataVersion(), level.getVersion(), target.getFormat(), targetDimension);
-		return new PortalLinker(source, target, rules, targetDimension == Dimension.NETHER ? 1.0 / 8 : 8);
+		try {
+			var target = PortalScanner.open(targetDirectory, version, world.getBiomeCache(), targetDimension);
+			var level = world.getLevelDat();
+			PortalSearch rules = PortalSearch.forSave(level.getDataVersion(), level.getVersion(), target.getFormat(), targetDimension);
+			return new PortalLinker(source, target, rules, targetDimension == Dimension.NETHER ? 1.0 / 8 : 8);
+		} catch (RuntimeException e) {
+			log.warn("Could not open {} terrain for portal exits. Exporting portals without jump links.", targetDimension, e);
+			return new PortalLinker(source, null, null, 1);
+		}
 	}
 
 	public Link resolve(Portal visible) {

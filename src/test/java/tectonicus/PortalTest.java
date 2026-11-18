@@ -9,10 +9,13 @@ import tectonicus.configuration.filter.PortalFilterType;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.PortalLinker;
+import tectonicus.world.PortalScanner;
 import tectonicus.world.subset.HeightRange;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +41,29 @@ class PortalTest {
 		assertEquals(new Portal.EntryPosition(0, 6, 2.5), portals.getFirst().entryPos());
 		assertEquals(0, portals.getFirst().position().x);
 		assertEquals(7, portals.getFirst().position().y);
+	}
+
+	@Test
+	void subsetSplitPortalsExportOneMarkerEvenWithoutAnExitDimension() throws Exception {
+		// A 4-wide portal whose middle columns are hidden by a subset, as in the End or a world without a Nether.
+		var saved = new PortalColumn[] {new PortalColumn(14, 0, 64, 66, X), new PortalColumn(15, 0, 64, 66, X),
+				new PortalColumn(16, 0, 64, 66, X), new PortalColumn(17, 0, 64, 66, X)};
+		var swap = directory.resolve("split.list").toFile();
+		var writer = new HddObjectListWriter<PortalColumn>(swap, true);
+		try {
+			writer.add(saved[0]);
+			writer.add(saved[3]);
+		} finally {
+			writer.close();
+		}
+		var exported = directory.resolve("split.js").toFile();
+		var map = new DimensionConfig("Map0");
+		assertEquals(2, outputPortals(exported, swap, map).size());
+		var source = new PortalScanner(coord -> Arrays.stream(saved).filter(column ->
+				Math.floorDiv(column.getX(), 16) == coord.x && Math.floorDiv(column.getZ(), 16) == coord.z).toList());
+		List<Portal> portals = outputPortals(exported, swap, map, () -> new PortalLinker(source, null, null, 1));
+		assertEquals(1, portals.size());
+		assertEquals(new Portal.EntryPosition(16, 64, 0.5), portals.getFirst().entryPos());
 	}
 
 	@Test
