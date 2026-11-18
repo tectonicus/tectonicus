@@ -49,7 +49,7 @@ function localizeMapControls() {
     const selectors = {
         '.leaflet-control-zoom-in': 'tectonicus.controls.zoomIn',
         '.leaflet-control-zoom-out': 'tectonicus.controls.zoomOut',
-        '.leaflet-control-layers-toggle:not(.toggle-menu-button)': 'tectonicus.controls.layers'
+        '.leaflet-control-layers-toggle:not(.toggle-menu-button):not(.overlay-control-toggle)': 'tectonicus.controls.layers'
     };
     const container = mymap.getContainer();
     for (const [selector, key] of Object.entries(selectors)) {
@@ -189,6 +189,7 @@ async function mainAsync()
 
         await containersMainPromise;
         let dimensionStates = new Map();
+        let overlayStates = new Map();
         for (let i = 0; i < contents.length; i++) {
             let tecMap = contents[i];
             for (let j = 0; j < tecMap.layers.length; j++) {
@@ -214,6 +215,11 @@ async function mainAsync()
                     dimensionStates.set(tecMap.id, {...tileLayer.controlState});
                 }
                 tileLayer.controlState = dimensionStates.get(tecMap.id);
+                tileLayer.overlays = tecMap.overlays ?? null;
+                if (!overlayStates.has(tecMap.id)) {
+                    overlayStates.set(tecMap.id, overlayVisibility(tileLayer));
+                }
+                tileLayer.overlayVisibility = overlayStates.get(tecMap.id);
                 const layerLabel = layer.nameKey ? mapText(layer.nameKey, {}, tileLayer, layer.name) : layer.name;
                 tileLayer.label = tileLayer.mapName + " - " + layerLabel;
                 tileLayer.layerName = layer.name;
@@ -292,6 +298,8 @@ async function mainAsync()
         for (const tooltip of controlTooltips) tooltip.destroy();
         controlTooltips = [];
     });
+
+	initOverlays();
 
 	// Manually fire this event to set the initial state
     mymap.fireEvent('baselayerchange', {layer: startLayer});
@@ -409,6 +417,7 @@ function onBaseLayerChange(e) {
             group.addTo(mymap);
         }
     }
+	refreshOverlays(e.layer);
 	compassControl.remove();
 	compassControl = CreateCompassControl(e.layer.compassUrl);
 	mymap.addControl(compassControl);

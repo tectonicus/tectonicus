@@ -141,6 +141,17 @@
 
 		<beacons filter="all / activated / none" />
 
+		<!-- Vector overlays drawn by the viewer (see Overlays.md). Each is off / on / hidden (exported, initially hidden). -->
+		<overlays
+			chunkGrid="off / on / hidden"
+			regionGrid="off / on / hidden"
+			slimeChunks="off / on / hidden" <!-- Overworld only; exports the slime chunk list, not the seed -->
+			worldBorder="off / on / hidden"
+			file="" <!-- JSON file of lines, polygons and markers, relative to this config file -->
+			fileVisible="on / hidden"
+			y="64" <!-- block height flat overlays are drawn at -->
+		/>
+
 		<!-- A generated map layer (can be more than one per map) -->
 		<!-- lightStyle defaults to night in the Nether and day elsewhere. -->
 		<!-- renderStyle defaults to nether in the Nether and normal elsewhere.

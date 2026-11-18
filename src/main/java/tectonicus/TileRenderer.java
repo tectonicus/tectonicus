@@ -52,6 +52,7 @@ import tectonicus.world.filter.ExploredCaveFilter;
 import tectonicus.world.filter.ExploredCaveFilter113;
 import tectonicus.world.filter.NetherBlockFilter;
 import tectonicus.world.filter.NetherBlockFilter113;
+import tectonicus.world.overlay.OverlayExporter;
 import tectonicus.world.subset.RegionIterator;
 import tectonicus.world.subset.UnionWorldSubset;
 
@@ -149,6 +150,7 @@ public class TileRenderer
 	private boolean abort;
 	private HddTileList discoveredTiles;
 	private boolean useFullHeightBounds;
+	private OverlayExporter overlayExporter;
 	private final Map<UnionWorldSubset.Member, WorldVectors.HeightBounds> subsetHeights = new HashMap<>();
 	
 	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
@@ -269,6 +271,7 @@ public class TileRenderer
 				setupInitialCamera(map);
 			
 				WorldVectors worldVectors = WorldVectors.calcWorldVectors(camera);
+				overlayExporter = new OverlayExporter(map, world.getLevelDat().getWorldSeed());
 			
 				// FIXME: These paths need to change per map
 				File portalsFile = tempArea.generateTempFile("portals", ".list");
@@ -393,6 +396,9 @@ public class TileRenderer
 				// Output world vectors for this camera config
 				worldVectors.outputWorldVectors(new File(mapDir, "worldVectors.js"), map, bounds, world,
 						worldStats.numChunks(), portals, numZoomLevels, tileWidth, tileHeight, subsetHeights);
+				overlayExporter.write(new File(mapDir, OverlayExporter.FILE_NAME), world.getWorldDir().toPath(),
+						DirUtils.getDimensionDir(world.getWorldDir().toPath(), map.getDimensionInfo()));
+				overlayExporter = null;
 			}
 		}
 
@@ -725,6 +731,8 @@ public class TileRenderer
 				if (height != null) {
 					if (useFullHeightBounds)
 						height = new int[] {0, Minecraft.getChunkHeight()};
+					if (overlayExporter != null)
+						overlayExporter.addRenderedChunk(c.getCoord());
 					TileCoordBounds tileBounds = getTileBoundsForChunk(camera, c.getCoord(), tileWidth, tileHeight, height[0], height[1]);
 					for (int x = tileBounds.min.x; x <= tileBounds.max.x; x++)
 						for (int y = tileBounds.min.y; y <= tileBounds.max.y; y++)

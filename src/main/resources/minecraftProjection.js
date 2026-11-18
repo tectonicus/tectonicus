@@ -25,7 +25,15 @@ MinecraftProjection.prototype.worldToMap = function (world) {
 	return [point.y / -2, point.x / 2];
 }
 
-MinecraftProjection.prototype.mapToWorld = function(latLng) {
+// Leaflet coordinates for a world position. The projection is affine, so straight
+// world segments stay straight and can be drawn by projecting only their ends.
+MinecraftProjection.prototype.worldToLatLng = function (world) {
+	return L.latLng(this.worldToMap(world));
+}
+
+// A map position has no height. Pass the block height to solve for; the default
+// is the start view height, which share links also use.
+MinecraftProjection.prototype.mapToWorld = function(latLng, y) {
     let point = new L.Point(latLng.lng * 2, latLng.lat * -2);
 
     point.x -= this.worldVectors.origin.x;
@@ -33,7 +41,7 @@ MinecraftProjection.prototype.mapToWorld = function(latLng) {
 
     // It is not possible to determine altitude only from longitude and latitude,
     // so let's get approximate coordinates using startView y value
-    let worldY = this.worldVectors.startView.y;
+    let worldY = Number.isFinite(y) ? y : this.worldVectors.startView.y;
     let offsetWorldY = worldY; //We use the offset y value for calculating the approximate x and z values
 
     if (this.worldVectors.yOffset > 0) {

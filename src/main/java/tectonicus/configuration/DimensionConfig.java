@@ -47,6 +47,7 @@ public class DimensionConfig extends RenderOptions {
 	private Dimension dimension = Dimension.OVERWORLD;
 	private DimensionInfo dimensionInfo = new DimensionInfo(dimension, dimension.getId());
 	private MarkerVisibility markerVisibility = new MarkerVisibility();
+	private OverlayConfig overlays = new OverlayConfig();
 	private int numZoomLevels = 8;
 	private int closestZoomSize = 32;
 	private int cameraAngleDeg = 45;
