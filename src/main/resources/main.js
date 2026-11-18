@@ -679,13 +679,15 @@ function refreshViewMarkers(layer) {
 
 		let html = '';
 		html += '<div>';
-		html += '<a href="' + view.imageFile + '">';
-		html += '<img width="512" height="288" src="' + view.imageFile + '"/>';
+		const imageFile = escapeHtml(view.imageFile);
+		html += '<a href="' + imageFile + '">';
+		html += '<img width="512" height="288" src="' + imageFile + '"/>';
 		html += '</a>';
 		html += '</div>';
 		html += '';
 		html += '<center>';
-		html += view.text;
+		// View text comes from player-written signs, so it must never be treated as markup.
+		html += escapeHtml(view.text);
 		html += '</center>';
 		html += '';
 
