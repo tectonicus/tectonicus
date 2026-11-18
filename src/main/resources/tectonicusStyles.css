@@ -700,3 +700,19 @@ html, body, #map {
         .container_name .mc_char::before {
             background: #3f3f3f;
         }
+
+/* Vector overlay toggles reuse Leaflet's layer control with a grid icon. */
+.overlay-control .leaflet-control-layers-toggle {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.6'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M9.33 4v16M14.67 4v16M4 9.33h16M4 14.67h16'/%3E%3Cpath d='M9.33 9.33h5.34v5.34H9.33z' fill='%235cd65c' fill-opacity='.7' stroke='none'/%3E%3C/svg%3E");
+    background-size: 26px 26px;
+}
+
+.overlay-feature-name {
+    font-weight: bold;
+    text-align: center;
+}
+
+.overlay-feature-description {
+    white-space: pre-line;
+    max-width: 320px;
+}

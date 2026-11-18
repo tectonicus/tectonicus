@@ -202,6 +202,7 @@ public class XmlConfigurationParser
 			DimensionConfig map = new DimensionConfig(entry.id());
 			map.setNumZoomLevels(parseNumZoomLevels(getString(mapElement, "numZoomLevels")));
 			map.setMarkerVisibility(parseMarkerVisibility(mapElement));
+			map.setOverlays(parseOverlays(getChild(mapElement, "overlays"), file.toPath().toAbsolutePath().getParent()));
 			map.setShowPlayerInventories(getBoolean(mapElement, "showPlayerInventories", false));
 			
 			map.setWorldDir( new File(getString(mapElement, "worldDir")) );
@@ -563,6 +564,40 @@ public class XmlConfigurationParser
 		String radius = getString(render, "biomeBlendRadius");
 		if (StringUtils.isNotBlank(radius))
 			options.setBiomeBlendRadius(parseBiomeBlendRadius(radius));
+	}
+
+	static OverlayConfig parseOverlays(Element element, java.nio.file.Path configDir) {
+		OverlayConfig overlays = new OverlayConfig();
+		if (element == null)
+			return overlays;
+		overlays.setChunkGrid(parseOverlayVisibility(element, "chunkGrid", OverlayConfig.Visibility.OFF));
+		overlays.setRegionGrid(parseOverlayVisibility(element, "regionGrid", OverlayConfig.Visibility.OFF));
+		overlays.setSlimeChunks(parseOverlayVisibility(element, "slimeChunks", OverlayConfig.Visibility.OFF));
+		overlays.setWorldBorder(parseOverlayVisibility(element, "worldBorder", OverlayConfig.Visibility.OFF));
+		String file = getString(element, "file");
+		if (!file.isBlank()) {
+			overlays.setFeaturesFile(configDir == null ? new File(file) : configDir.resolve(file).toFile());
+			overlays.setFeatures(parseOverlayVisibility(element, "fileVisible", OverlayConfig.Visibility.SHOWN));
+		}
+		String elevation = getString(element, "y");
+		if (!elevation.isBlank()) {
+			try {
+				overlays.setElevation(Integer.parseInt(elevation.trim()));
+			} catch (NumberFormatException e) {
+				log.warn("Invalid overlay y '{}'; using {}", elevation, OverlayConfig.DEFAULT_ELEVATION);
+			}
+		}
+		return overlays;
+	}
+
+	private static OverlayConfig.Visibility parseOverlayVisibility(Element element, String attribute, OverlayConfig.Visibility defaultValue) {
+		String value = getString(element, attribute);
+		try {
+			return OverlayConfig.Visibility.parse(value, defaultValue);
+		} catch (IllegalArgumentException e) {
+			log.warn("Invalid overlay setting {}=\"{}\"; use off, on or hidden", attribute, value);
+			return defaultValue;
+		}
 	}
 
 	private static MarkerVisibility parseMarkerVisibility(Element element) {

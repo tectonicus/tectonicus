@@ -24,7 +24,6 @@ import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
 import tectonicus.util.FileUtils;
 import tectonicus.util.JsonWriter;
-import tectonicus.util.Vector2f;
 import tectonicus.util.Vector3l;
 import tectonicus.world.subset.UnionWorldSubset;
 
@@ -45,12 +44,13 @@ public class WorldVectors {
 		}
 	}
 
-	private Vector2f origin;
-	private Vector2f xAxis;
-	private Vector2f yAxis;
-	private Vector2f zAxis;
-	private Vector2f mapXUnit;
-	private Vector2f mapYUnit;
+	// Doubles keep overlay vertices aligned with the tiles far from the world origin.
+	private Vector2d origin;
+	private Vector2d xAxis;
+	private Vector2d yAxis;
+	private Vector2d zAxis;
+	private Vector2d mapXUnit;
+	private Vector2d mapYUnit;
 	private int yOffset;
 
 	public static WorldVectors calcWorldVectors(OrthoCamera camera) {
@@ -74,12 +74,12 @@ public class WorldVectors {
 		}
 
 		return WorldVectors.builder()
-				.origin(new Vector2f((float)originScreenPos.x, (float)originScreenPos.y))
-				.xAxis(new Vector2f((float)(p100.x - originScreenPos.x), (float)(p100.y - originScreenPos.y)))
-				.yAxis(new Vector2f((float)(p010.x - originScreenPos.x), (float)(p010.y - originScreenPos.y)))
-				.zAxis(new Vector2f((float)(p001.x - originScreenPos.x), (float)(p001.y - originScreenPos.y)))
-				.mapXUnit(new Vector2f((float)(mapXUnit.x - base.x), (float)(mapXUnit.z - base.z)))
-				.mapYUnit(new Vector2f((float)(mapYUnit.x - base.x), (float)(mapYUnit.z - base.z)))
+				.origin(new Vector2d(originScreenPos))
+				.xAxis(new Vector2d(p100).sub(originScreenPos))
+				.yAxis(new Vector2d(p010).sub(originScreenPos))
+				.zAxis(new Vector2d(p001).sub(originScreenPos))
+				.mapXUnit(new Vector2d(mapXUnit.x - base.x, mapXUnit.z - base.z))
+				.mapYUnit(new Vector2d(mapYUnit.x - base.x, mapYUnit.z - base.z))
 				.yOffset(yOffset).build();
 	}
 
@@ -147,27 +147,16 @@ public class WorldVectors {
 				json.endArray();
 			}
 
-			Vector2f scaledOrigin = new Vector2f();
-			scaledOrigin.x = (this.origin.x / scale);
-			scaledOrigin.y = (this.origin.y / scale);
-			json.writeMapsPoint("origin", scaledOrigin);
+			json.writeMapsPoint("origin", origin.x / scale, origin.y / scale);
 
 			// Axes
-			Vector2f scaledXAxis = new Vector2f(this.xAxis.x / scale, this.xAxis.y / scale);
-			json.writeMapsPoint("xAxis", scaledXAxis);
-
-			Vector2f scaledYAxis = new Vector2f(this.yAxis.x / scale, this.yAxis.y / scale);
-			json.writeMapsPoint("yAxis", scaledYAxis);
-
-			Vector2f scaledZAxis = new Vector2f(this.zAxis.x / scale, this.zAxis.y / scale);
-			json.writeMapsPoint("zAxis", scaledZAxis);
+			json.writeMapsPoint("xAxis", xAxis.x / scale, xAxis.y / scale);
+			json.writeMapsPoint("yAxis", yAxis.x / scale, yAxis.y / scale);
+			json.writeMapsPoint("zAxis", zAxis.x / scale, zAxis.y / scale);
 
 			// Units
-			Vector2f scaledMapXUnit = new Vector2f(this.mapXUnit.x * scale, this.mapXUnit.y * scale);
-			json.writeMapsPoint("mapXUnit", scaledMapXUnit);
-
-			Vector2f scaledMapYUnit = new Vector2f(this.mapYUnit.x * scale, this.mapYUnit.y * scale);
-			json.writeMapsPoint("mapYUnit", scaledMapYUnit);
+			json.writeMapsPoint("mapXUnit", mapXUnit.x * scale, mapXUnit.y * scale);
+			json.writeMapsPoint("mapYUnit", mapYUnit.x * scale, mapYUnit.y * scale);
 
 			// Min and max bounds
 			final long mapXMin = (long) bounds.min.x * tileWidth;

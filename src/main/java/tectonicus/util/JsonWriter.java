@@ -149,6 +149,11 @@ public class JsonWriter implements AutoCloseable
 		writeRawVariable(varName, val);
 	}
 	
+	public void writeMapsPoint(String varName, final double x, final double y)
+	{
+		writeRawVariable(varName, "new L.Point(" + x + ", " + y + ")");
+	}
+	
 	public void writeMapsPoint(String varName, final long x, final long y)
 	{
 		String val = "new L.Point("+x+", "+y+")";

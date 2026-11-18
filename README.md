@@ -112,6 +112,9 @@ Description here
 #f90
 ```
 
+## Map overlays
+Chunk and region grids, slime chunks, the world border, and your own roads, areas and markers can be drawn over the map as toggleable overlays. See [Map overlays](Docs/Overlays.md).
+
 ## Headless rendering
 To render on a server or in a container without a display, set `useEGL="true"` on the `<rasteriser>` element. See [Headless rendering](Docs/HeadlessRendering.md) for EGL, OSMesa and the Docker image.
 

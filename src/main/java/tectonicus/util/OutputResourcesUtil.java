@@ -59,6 +59,7 @@ import tectonicus.world.Colors;
 import tectonicus.world.PortalLinker;
 import tectonicus.world.Sign;
 import tectonicus.world.World;
+import tectonicus.world.overlay.OverlayExporter;
 import tectonicus.world.subset.WorldSubset;
 
 import javax.imageio.ImageIO;
@@ -1142,6 +1143,7 @@ public class OutputResourcesUtil {
 		scriptResources.add("marker.js");
 		scriptResources.add("controls.js");
 		scriptResources.add("minecraftProjection.js");
+		scriptResources.add("vectorOverlays.js");
 		scriptResources.add("containers.js");
 		scriptResources.add("main.js");
 		outputMergedJs(new File(exportDir, "Scripts/tectonicus.js"), scriptResources, numZoomLevels, config, tileWidth, tileHeight);
@@ -1396,6 +1398,10 @@ public class OutputResourcesUtil {
 				writer.println("\t\tblockStats: "+m.getJavascriptId()+"_blockStats,");
 				writer.println("\t\tworldStats: "+m.getJavascriptId()+"_worldStats,");
 				writer.println("\t\tworldVectors: "+m.getJavascriptId()+"_worldVectors,");
+				if (m.getOverlays().isEnabled()) {
+					String overlays = m.getJavascriptId() + "_overlays";
+					writer.println("\t\toverlays: typeof " + overlays + " === 'undefined' ? null : " + overlays + ",");
+				}
 
 				writer.println("\t\tlayers:");
 				writer.println("\t\t[");
@@ -1564,6 +1570,12 @@ public class OutputResourcesUtil {
 								outLine.append(templateStart);
 								outLine.append("Scripts/").append(map.getId()).append("/worldVectors.js");
 								outLine.append(templateEnd);
+
+								if (map.getOverlays().isEnabled()) {
+									outLine.append(templateStart);
+									outLine.append("Scripts/").append(map.getId()).append("/").append(OverlayExporter.FILE_NAME);
+									outLine.append(templateEnd);
+								}
 
 								outLine.append(templateStart);
 								outLine.append("Scripts/").append(map.getId()).append("/blockStats.js");
