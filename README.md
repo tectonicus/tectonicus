@@ -112,6 +112,9 @@ Description here
 #f90
 ```
 
+## Headless rendering
+To render on a server or in a container without a display, set `useEGL="true"` on the `<rasteriser>` element. See [Headless rendering](Docs/HeadlessRendering.md) for EGL, OSMesa and the Docker image.
+
 ## Logging
 
 Tectonicus generates a log file that is overwritten each time you run the program. By default, the log is located in log/tectonicus.log in the current working directory.

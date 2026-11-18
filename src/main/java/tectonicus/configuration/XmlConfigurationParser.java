@@ -200,6 +200,8 @@ public class XmlConfigurationParser
 			config.setNumSamples(parseNumSamples(getString(rasteriserNode, "numSamples")));
 			config.setTileSize(parseTileSize(getString(rasteriserNode, "tileSize")));
 			config.setUseEGL(getBoolean(rasteriserNode, "useEGL", false));
+			config.setUseOSMesa(getBoolean(rasteriserNode, "useOSMesa", false));
+			config.setEglDevice(parseEglDevice(getString(rasteriserNode, "eglDevice")));
 		}
 		
 		int legacyLayerNumber = 0;
@@ -628,6 +630,21 @@ public class XmlConfigurationParser
 		}
 
 		return value;
+	}
+
+	static int parseEglDevice(String value) {
+		if (value == null || value.isBlank()) {
+			return -1;
+		}
+		try {
+			int device = Integer.parseInt(value.trim());
+			if (device >= 0) {
+				return device;
+			}
+		} catch (NumberFormatException ignored) {
+			// fall through to the error below
+		}
+		throw new IllegalArgumentException("eglDevice must be a device index of 0 or more, but was '" + value + "'");
 	}
 
 	public static boolean getBoolean(Element element, String attributeName, boolean defaultValue) {
