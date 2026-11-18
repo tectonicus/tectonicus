@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -145,8 +146,8 @@ public class FileTileCache implements TileCache
 		File jar = dimension != null && dimension.getWorld() != null ? dimension.getWorld().getMinecraftJar() : args.getMinecraftJar();
 		buffer.append(jar != null ? jar.getAbsolutePath() : "");
 		buffer.append('\n');
-		File pack = dimension != null && dimension.getWorld() != null ? dimension.getWorld().getTexturePack() : args.getTexturePack();
-		buffer.append(pack != null ? pack.getAbsolutePath() : "");
+		List<File> packs = dimension != null && dimension.getWorld() != null ? dimension.getWorld().getTexturePacks() : args.getTexturePacks();
+		buffer.append(String.join(File.pathSeparator, packs.stream().map(File::getAbsolutePath).toList()));
 		buffer.append('\n');
 		
 		return buffer.toString();

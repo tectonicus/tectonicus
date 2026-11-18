@@ -18,7 +18,6 @@ import tectonicus.Version;
 import tectonicus.rasteriser.Texture;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -226,22 +225,14 @@ class ParticleTexturesTest {
 	}
 
 	private ZipStack openStack(Path base, Path override) throws Exception {
-		ZipStack stack = new ZipStack(base.toFile(), override == null ? null : override.toFile(), List.of());
+		ZipStack stack = new ZipStack(base.toFile(), override == null ? List.of() : List.of(override.toFile()), List.of());
 		stacks.add(stack);
 		return stack;
 	}
 
 	@AfterEach
 	void closeStacks() throws Exception {
-		// ZipStack owns its file systems but does not currently expose a close method.
-		for (ZipStack stack : stacks) {
-			for (String name : List.of("base", "override")) {
-				var field = ZipStack.class.getDeclaredField(name);
-				field.setAccessible(true);
-				FileSystem fileSystem = (FileSystem) field.get(stack);
-				if (fileSystem != null)
-					fileSystem.close();
-			}
-		}
+		for (ZipStack stack : stacks)
+			stack.close();
 	}
 }

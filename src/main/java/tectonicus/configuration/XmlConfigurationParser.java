@@ -124,12 +124,7 @@ public class XmlConfigurationParser
 			}
 			config.setMinecraftJar(minecraftJar);
 			
-			File texturePack = null;
-			if (configNode.hasAttribute("texturePack"))
-			{
-				texturePack = new File(getString(configNode, "texturePack"));
-			}
-			config.setTexturePack(texturePack);
+			config.setTexturePacks(parseResourcePacks(configNode));
 
 			config.setUsingProgrammerArt(getBoolean(configNode, "useProgrammerArt", false));
 
@@ -429,8 +424,8 @@ public class XmlConfigurationParser
 				world.setName(worldName.isBlank() ? WorldConfig.defaultName(world.getWorldDir()) : worldName);
 				String jar = getString(effective, "minecraftJar");
 				world.setMinecraftJar(jar.isBlank() ? null : new File(jar));
-				String pack = getString(effective, "texturePack");
-				world.setTexturePack(pack.isBlank() ? null : new File(pack));
+				// A world's own texturePack or <resourcePacks> replaces the inherited packs as a whole.
+				world.setTexturePacks(parseResourcePacks(declaresResourcePacks(element) ? element : effective));
 				world.setUsingProgrammerArt(getBoolean(effective, "useProgrammerArt", false));
 				world.setMarkerVisibility(parseMarkerVisibility(effective));
 				world.setShowPlayerInventories(getBoolean(effective, "showPlayerInventories", false));
@@ -470,6 +465,33 @@ public class XmlConfigurationParser
 	}
 
 	/** Merge only settings; hierarchy children always belong to their original scope. */
+	private static boolean declaresResourcePacks(Element element) {
+		return element.hasAttribute("texturePack") || getChild(element, "resourcePacks") != null;
+	}
+
+	/**
+	 * Resource packs, highest priority first, from {@code <resourcePacks><resourcePack path="..."/></resourcePacks>},
+	 * or from the single-pack {@code texturePack} attribute when there is no {@code <resourcePacks>} element.
+	 */
+	static List<File> parseResourcePacks(Element element) {
+		Element packs = getChild(element, "resourcePacks");
+		if (packs != null) {
+			if (element.hasAttribute("texturePack") && !getString(element, "texturePack").isBlank())
+				log.warn("Both texturePack and <resourcePacks> are configured; using <resourcePacks>.");
+			List<File> result = new ArrayList<>();
+			for (Element pack : getChildren(packs, "resourcePack")) {
+				String path = getString(pack, "path");
+				if (path.isBlank())
+					log.warn("Ignoring <resourcePack> without a path");
+				else
+					result.add(new File(path));
+			}
+			return result;
+		}
+		String pack = getString(element, "texturePack");
+		return pack.isBlank() ? new ArrayList<>() : new ArrayList<>(List.of(new File(pack)));
+	}
+
 	private static Element inherit(Element defaults, Element overrides) {
 		Element result = (Element) overrides.cloneNode(false);
 		if (defaults != null) {
@@ -491,7 +513,7 @@ public class XmlConfigurationParser
 		for (Element child : getChildren(overrides, null)) {
 			Element previous = getChild(result, child.getTagName());
 			if (previous != null && !List.of("layer", "map", "dimension", "world").contains(child.getTagName())) {
-				Element merged = List.of("mods", "subset").contains(child.getTagName())
+				Element merged = List.of("mods", "subset", "resourcePacks").contains(child.getTagName())
 						? (Element) child.cloneNode(true) : inherit(previous, child);
 				result.replaceChild(merged, previous);
 			} else {

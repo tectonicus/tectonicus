@@ -16,10 +16,13 @@ import java.nio.file.StandardCopyOption;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /** Reuses exported icons, including their optional color overlays, across renders. */
 @Slf4j
@@ -39,7 +42,12 @@ public class ItemIconCache {
 			MessageDigest digest = newDigest();
 			update(digest, RENDERER_VERSION + "\n" + options);
 			update(digest, hashFile(Path.of(resources.getBaseFileName())));
-			update(digest, resources.getOverrideFileName() == null ? "none" : hashFile(Path.of(resources.getOverrideFileName())));
+			// Pack order matters, so each pack is hashed in priority order.
+			var packs = resources.getResourcePackFiles();
+			if (packs.isEmpty())
+				update(digest, "none");
+			for (var pack : packs)
+				update(digest, Files.isDirectory(pack.toPath()) ? hashDirectory(pack.toPath()) : hashFile(pack.toPath()));
 			for (var mod : resources.getModJars())
 				update(digest, hashFile(mod.toPath()));
 			inputs = HexFormat.of().formatHex(digest.digest());
@@ -111,6 +119,20 @@ public class ItemIconCache {
 		MessageDigest digest = newDigest();
 		try (var in = new DigestInputStream(Files.newInputStream(file), digest)) {
 			in.transferTo(java.io.OutputStream.nullOutputStream());
+		}
+		return HexFormat.of().formatHex(digest.digest());
+	}
+
+	/** Hash a folder resource pack from its relative file names and contents. */
+	private static String hashDirectory(Path directory) throws IOException {
+		MessageDigest digest = newDigest();
+		List<Path> files;
+		try (Stream<Path> walk = Files.walk(directory)) {
+			files = walk.filter(Files::isRegularFile).sorted(Comparator.comparing(file -> directory.relativize(file).toString())).toList();
+		}
+		for (Path file : files) {
+			update(digest, directory.relativize(file).toString().replace('\\', '/'));
+			update(digest, hashFile(file));
 		}
 		return HexFormat.of().formatHex(digest.digest());
 	}

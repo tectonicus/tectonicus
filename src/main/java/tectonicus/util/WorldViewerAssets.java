@@ -12,11 +12,11 @@ import tectonicus.raw.BannerPatternsTag;
 import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.Item;
 import tectonicus.raw.LegacyItems;
+import tectonicus.texture.ResourcePack;
 import tectonicus.texture.ZipStack;
 import tectonicus.world.Colors;
 import tools.jackson.core.JacksonException;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -34,7 +35,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
-import java.util.zip.ZipFile;
 
 /** Browser assets referenced by the markers exported across one world's dimensions. */
 @Slf4j
@@ -163,9 +163,9 @@ public final class WorldViewerAssets {
 		if (!effect.equals("none")) translationKeys.add("effect.minecraft." + effect);
 	}
 
-	void write(ZipStack assets, File resourcePack, MapLocalization localization, String worldId, Path scriptsDir, Path imagesDir,
+	void write(ZipStack assets, MapLocalization localization, String worldId, Path scriptsDir, Path imagesDir,
 			boolean hasFont, boolean usesBlockSignTextures) {
-		Map<String, String> translations = readTranslations(assets, resourcePack, localization, worldId);
+		Map<String, String> translations = readTranslations(assets, localization, worldId);
 		for (int code = 32; code <= 126; code++) fontCharacters.add(code);
 		// Counts can use the map locale's numbering system.
 		addText(java.text.NumberFormat.getIntegerInstance(localization.locale()).format(1023456789));
@@ -187,7 +187,7 @@ public final class WorldViewerAssets {
 						"signBackgrounds", exportedSignBackgrounds));
 	}
 
-	private Map<String, String> readTranslations(ZipStack assets, File resourcePack, MapLocalization localization, String worldId) {
+	private Map<String, String> readTranslations(ZipStack assets, MapLocalization localization, String worldId) {
 		Map<String, String> translations = new TreeMap<>();
 		translationKeys.addAll(MapLocalization.english().keySet());
 		try {
@@ -196,21 +196,15 @@ public final class WorldViewerAssets {
 			log.warn("Unable to read US English translations in {}", assets.getBaseFileName(), e);
 		}
 		List<String> paths = localization.resourcePaths();
-		Map<String, String> packTranslations = Map.of();
-		try {
-			if (resourcePack != null && !resourcePack.getPath().equals(assets.getOverrideFileName())) {
-				// Programmer Art may have replaced the configured pack for rendering.
-				try (var zip = new ZipFile(resourcePack)) {
-					packTranslations = MapLocalization.readMinecraftTable(paths, path -> {
-						var entry = zip.getEntry(path);
-						return entry == null ? null : zip.getInputStream(entry);
-					});
-				}
-			} else {
-				packTranslations = MapLocalization.readMinecraftTable(paths, assets::getOverrideStream);
+		// Language files merge key by key: apply packs from lowest to highest priority so higher packs win.
+		Map<String, String> packTranslations = new HashMap<>();
+		for (ResourcePack pack : assets.getResourcePacks().reversed()) {
+			try {
+				packTranslations.putAll(MapLocalization.readMinecraftTable(paths,
+						path -> assets.getLayers(path).contains(pack) ? pack.open(path) : null));
+			} catch (IOException | JacksonException e) {
+				log.warn("Unable to read resource pack translations at {} in {}", paths, pack, e);
 			}
-		} catch (IOException | JacksonException e) {
-			log.warn("Unable to read resource pack translations at {}", paths, e);
 		}
 		Map<String, String> minecraftTranslations = localization.minecraftTranslations(assets);
 		addTranslations(translations, packTranslations);

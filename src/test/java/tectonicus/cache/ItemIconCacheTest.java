@@ -11,7 +11,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.texture.ZipStack;
 
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -65,6 +64,26 @@ class ItemIconCacheTest {
 	}
 
 	@Test
+	void regeneratesWhenPackOrderOrFolderPackChanges() throws Exception {
+		Path first = archive("first.zip", "first");
+		Path second = archive("second.zip", "second");
+		populate(cache(jar, List.of(first, second), "settings"));
+		ItemIconCache same = cache(jar, List.of(first, second), "settings");
+		assertEquals(ITEMS, same.prepare(ITEMS));
+		same.save(ITEMS, Set.of());
+		assertTrue(cache(jar, List.of(second, first), "settings").prepare(ITEMS).isEmpty(), "Pack order changes the icons");
+
+		Path folder = Files.createDirectories(directory.resolve("folder/assets"));
+		Files.writeString(folder.resolve("a.txt"), "one");
+		populate(cache(jar, List.of(folder.getParent()), "settings"));
+		ItemIconCache unchanged = cache(jar, List.of(folder.getParent()), "settings");
+		assertEquals(ITEMS, unchanged.prepare(ITEMS));
+		unchanged.save(ITEMS, Set.of());
+		Files.writeString(folder.resolve("a.txt"), "two");
+		assertTrue(cache(jar, List.of(folder.getParent()), "settings").prepare(ITEMS).isEmpty(), "Editing a folder pack changes the icons");
+	}
+
+	@Test
 	void retriesFailedIconsEvenWhenTheyWrotePartialOutput() throws Exception {
 		ItemIconCache cache = cache("settings");
 		populate(cache);
@@ -95,21 +114,23 @@ class ItemIconCacheTest {
 	}
 
 	private ItemIconCache cache(String options) throws Exception {
-		return cache(jar, null, List.of(), options);
+		return cache(jar, List.of(), List.of(), options);
 	}
 
 	private ItemIconCache cache(Path base, Path pack, List<Path> mods, String options) throws Exception {
-		ZipStack resources = new ZipStack(base.toFile(), pack == null ? null : pack.toFile(), mods.stream().map(Path::toFile).toList());
+		return cache(base, pack == null ? List.of() : List.of(pack), mods, options);
+	}
+
+	private ItemIconCache cache(Path base, List<Path> packs, String options) throws Exception {
+		return cache(base, packs, List.of(), options);
+	}
+
+	private ItemIconCache cache(Path base, List<Path> packs, List<Path> mods, String options) throws Exception {
+		ZipStack resources = new ZipStack(base.toFile(), packs.stream().map(Path::toFile).toList(), mods.stream().map(Path::toFile).toList());
 		try {
 			return new ItemIconCache(icons, resources, options);
 		} finally {
-			for (String name : List.of("base", "override")) {
-				var field = ZipStack.class.getDeclaredField(name);
-				field.setAccessible(true);
-				FileSystem fs = (FileSystem) field.get(resources);
-				if (fs != null)
-					fs.close();
-			}
+			resources.close();
 		}
 	}
 

@@ -11,7 +11,6 @@ import tectonicus.texture.ZipStack;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -87,12 +86,12 @@ class MapLocalizationTest {
 		Path indexFile = Files.createDirectories(directory.resolve("assets/indexes")).resolve("34.json");
 		Files.writeString(indexFile, index);
 		Path cachedLanguage = Files.write(objects.resolve(hash), language);
-		ZipStack zip = new ZipStack(jar.toFile(), pack.toFile(), List.of());
+		ZipStack zip = new ZipStack(jar.toFile(), List.of(pack.toFile()), List.of());
 		try {
 			var assets = new WorldViewerAssets();
 			assets.addItem("minecraft:apple", null, false, null, null, null);
 			var cached = new MinecraftLanguageAssets(directory, uri -> fail("Unexpected network request: " + uri));
-			assets.write(zip, pack.toFile(), MapLocalization.load(config, cached), "World0", directory, directory, false, false);
+			assets.write(zip, MapLocalization.load(config, cached), "World0", directory, directory, false, false);
 			String script = Files.readString(directory.resolve("localizations.js"));
 			assertTrue(script.contains("リンゴ"));
 			assertFalse(script.contains("青リンゴ"));
@@ -110,13 +109,13 @@ class MapLocalizationTest {
 				return uri.toString().equals(indexUrl) ? index.getBytes(StandardCharsets.UTF_8) : language;
 			});
 			var localization = MapLocalization.load(config, remote);
-			assets.write(zip, pack.toFile(), localization, "World0", directory, directory, false, false);
+			assets.write(zip, localization, "World0", directory, directory, false, false);
 			assertTrue(Files.readString(directory.resolve("localizations.js")).contains("リンゴ"));
-			assets.write(zip, pack.toFile(), localization, "World1", directory, directory, false, false);
+			assets.write(zip, localization, "World1", directory, directory, false, false);
 			assertEquals(List.of(indexUrl, "https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash), requests);
 
 			var offline = new MinecraftLanguageAssets(directory, uri -> { throw new IOException("Offline"); });
-			assets.write(zip, pack.toFile(), MapLocalization.load(config, offline), "World0", directory, directory, false, false);
+			assets.write(zip, MapLocalization.load(config, offline), "World0", directory, directory, false, false);
 			assertTrue(Files.readString(directory.resolve("localizations.js")).contains("青リンゴ"));
 
 			Files.delete(directory.resolve("client.json"));
@@ -134,11 +133,7 @@ class MapLocalizationTest {
 			});
 			assertEquals("リンゴ", MapLocalization.load(config, noMetadata).minecraftTranslations(zip).get("item.minecraft.apple"));
 		} finally {
-			for (String name : List.of("base", "override")) {
-				var field = ZipStack.class.getDeclaredField(name);
-				field.setAccessible(true);
-				((FileSystem) field.get(zip)).close();
-			}
+			zip.close();
 		}
 	}
 
@@ -168,14 +163,32 @@ class MapLocalizationTest {
 				""");
 		Configuration config = new Configuration();
 		config.setMapLocale("fr_fr");
-		try (var assets = new ZipStack(jar.toFile(), pack.toFile(), List.of())) {
+		try (var assets = new ZipStack(jar.toFile(), List.of(pack.toFile()), List.of())) {
 			var localization = MapLocalization.load(config, new MinecraftLanguageAssets(directory, uri -> fail("Unexpected download " + uri)));
 			assertEquals(Map.of("container.chest", "Coffre spécial=1"), localization.minecraftTranslations(assets));
-			new WorldViewerAssets().write(assets, pack.toFile(), localization, "World0", directory, directory, false, false);
+			new WorldViewerAssets().write(assets, localization, "World0", directory, directory, false, false);
 			String script = Files.readString(directory.resolve("localizations.js"));
 			assertTrue(script.contains("Coffre spécial=1"));
 			assertTrue(script.contains("Grand coffre"));
 			assertTrue(script.contains("Ender Chest"));
+		}
+	}
+
+	@Test
+	void mergesLanguageFilesFromStackedResourcePacksKeyByKey() throws Exception {
+		Path jar = zip("client.jar", "en_us.lang", "container.enderchest=Ender Chest\n");
+		Path low = zip("low.zip", "fr_fr.lang", "container.chestDouble=Bas double\ncontainer.enderchest=Coffre bas\n");
+		Path high = zip("high.zip", "fr_fr.lang", "container.chestDouble=Haut double\n");
+		writeLauncherLanguage("minecraft/lang/fr_fr.lang", "container.chest=Coffre\n");
+		Configuration config = new Configuration();
+		config.setMapLocale("fr_fr");
+		try (var assets = new ZipStack(jar.toFile(), List.of(high.toFile(), low.toFile()), List.of())) {
+			var localization = MapLocalization.load(config, new MinecraftLanguageAssets(directory, uri -> fail("Unexpected download " + uri)));
+			new WorldViewerAssets().write(assets, localization, "World0", directory, directory, false, false);
+			String script = Files.readString(directory.resolve("localizations.js"));
+			assertTrue(script.contains("Haut double"));
+			assertFalse(script.contains("Bas double"));
+			assertTrue(script.contains("Coffre bas"));
 		}
 	}
 

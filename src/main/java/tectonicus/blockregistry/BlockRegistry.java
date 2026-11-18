@@ -35,13 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -136,27 +129,27 @@ public class BlockRegistry {
 	}
 	
 	public void deserializeBlockstates() {
-		log.debug("Loading blockstate json from minecraft jar");
+		log.debug("Loading blockstate json from minecraft jar and resource packs");
 		loadDefaultBlockStates();
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()));
-			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
-			deserializeBlockstates(entries);
-		} catch (NotDirectoryException e) {
-			log.warn("No blockstates directory found. This is probably a pre 1.8 minecraft jar.");
+		// A blockstate file is replaced as a whole by the highest-priority resource pack that has it.
+		String blockstates = "assets/minecraft/blockstates";
+		try {
+			List<String> files = zips.listFilesInDirectory(blockstates);
+			if (files.isEmpty())
+				log.warn("No blockstates directory found. This is probably a pre 1.8 minecraft jar.");
+			for (String file : files) {
+				String fileName = file.substring(file.lastIndexOf('/') + 1);
+				if (!fileName.toLowerCase().endsWith(".json"))
+					continue;
+				try (InputStream in = zips.getStream(file)) {
+					if (in != null)
+						deserializeBlockstate(fileName, in);
+				} catch (Exception e) {
+					log.error("Unable to read blockstate {}", file, e);
+				}
+			}
 		} catch (IOException e) {
 			log.error("Exception: ", e);
-		}
-		
-		if (zips.getOverrideFileName() != null) {
-			log.debug("Loading blockstate json from resource pack");
-			try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getOverrideFileName()));
-				 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/blockstates"))) {
-				deserializeBlockstates(entries);
-			} catch (NotDirectoryException e) {
-				log.info("No blockstate directory found in resource pack");
-			} catch (Exception e) {
-				log.error("Exception: ", e);
-			}
 		}
 		
 		applyDefaultBlockStates();
@@ -186,65 +179,60 @@ public class BlockRegistry {
 		}
 	}
 	
-	private void deserializeBlockstates(DirectoryStream<Path> entries) throws IOException {
-		for (Path blockStateFile : entries) {
-			String fileName = blockStateFile.getFileName().toString();
-			JsonNode root = null;
-			if (fileName.toLowerCase().endsWith(".json")) {
-				if (fileName.contains("copper_golem_statue")) { //Use custom blockstate files for copper golem statues
-					try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("blockstates/" + fileName)) {
-						if (in != null) {
-							log.trace("Loading local blockstate file for: {}", fileName);
-							root = OBJECT_MAPPER.readTree(new InputStreamReader(in));
-						}
-					}
-				} else {
-					root = OBJECT_MAPPER.readTree(Files.newBufferedReader(blockStateFile, StandardCharsets.UTF_8));
+	private void deserializeBlockstate(String fileName, InputStream blockStateStream) throws IOException {
+		JsonNode root = null;
+		if (fileName.contains("copper_golem_statue")) { //Use custom blockstate files for copper golem statues
+			try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("blockstates/" + fileName)) {
+				if (in != null) {
+					log.trace("Loading local blockstate file for: {}", fileName);
+					root = OBJECT_MAPPER.readTree(new InputStreamReader(in));
 				}
-				
-				String name = "minecraft:" + Strings.CI.removeEnd(fileName, ".json");
-				singleVariantBlocks.invalidate(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
-				log.trace("Parsing {}.json", name);
-				
-				BlockStateWrapper states = new BlockStateWrapper(name);
-				if (root != null && root.has("multipart")) {
-					root.get("multipart").forEach(node -> {
-						List<Map<String, String>> whenClauses = new ArrayList<>();
-						if (node.has("when")) {
-							JsonNode whenField = node.get("when");
-							if (whenField.has("OR")) {
-								whenField.get("OR").forEach(whenClause -> whenClauses.add(parseStates(whenClause)));
-							} else if (whenField.has("AND")) {
-								Map<String, String> andClause = new HashMap<>();
-								whenField.get("AND").forEach(whenCondition -> andClause.putAll(parseStates(whenCondition)));
-								whenClauses.add(andClause);
-							} else {
-								whenClauses.add(parseStates(whenField));
-							}
-						}
-						
-						states.addState(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
-					});
-				} else if (root != null && root.has("variants")) {
-					JsonNode variants = root.get("variants");
-					
-					for (Entry<String, JsonNode> entry : variants.properties()) {
-						String key = entry.getKey();
-						List<BlockStateModel> blockStateModels = deserializeBlockStateModels(entry.getValue());
-						BlockStateModelsWeight modelsAndWeight = new BlockStateModelsWeight(blockStateModels);
-						if (!key.contains("=")) {
-							singleVariantBlocks.put(name, modelsAndWeight);
-						}
-						BlockVariant blockVariant = new BlockVariant(key, modelsAndWeight);
-						states.addState(blockVariant);
-					}
-				} else {
-					log.warn("Invalid blockstate file: {}", blockStateFile);
-				}
-				
-				blockStates.put(name, states);
 			}
+		} else {
+			root = OBJECT_MAPPER.readTree(new InputStreamReader(blockStateStream, StandardCharsets.UTF_8));
 		}
+		
+		String name = "minecraft:" + Strings.CI.removeEnd(fileName, ".json");
+		singleVariantBlocks.invalidate(name);  // This is needed when loading resource packs as some blocks may change to having multiple variants
+		log.trace("Parsing {}.json", name);
+		
+		BlockStateWrapper states = new BlockStateWrapper(name);
+		if (root != null && root.has("multipart")) {
+			root.get("multipart").forEach(node -> {
+				List<Map<String, String>> whenClauses = new ArrayList<>();
+				if (node.has("when")) {
+					JsonNode whenField = node.get("when");
+					if (whenField.has("OR")) {
+						whenField.get("OR").forEach(whenClause -> whenClauses.add(parseStates(whenClause)));
+					} else if (whenField.has("AND")) {
+						Map<String, String> andClause = new HashMap<>();
+						whenField.get("AND").forEach(whenCondition -> andClause.putAll(parseStates(whenCondition)));
+						whenClauses.add(andClause);
+					} else {
+						whenClauses.add(parseStates(whenField));
+					}
+				}
+				
+				states.addState(new BlockStateCase(whenClauses, new BlockStateModelsWeight(deserializeBlockStateModels(node.get("apply")))));
+			});
+		} else if (root != null && root.has("variants")) {
+			JsonNode variants = root.get("variants");
+			
+			for (Entry<String, JsonNode> entry : variants.properties()) {
+				String key = entry.getKey();
+				List<BlockStateModel> blockStateModels = deserializeBlockStateModels(entry.getValue());
+				BlockStateModelsWeight modelsAndWeight = new BlockStateModelsWeight(blockStateModels);
+				if (!key.contains("=")) {
+					singleVariantBlocks.put(name, modelsAndWeight);
+				}
+				BlockVariant blockVariant = new BlockVariant(key, modelsAndWeight);
+				states.addState(blockVariant);
+			}
+		} else {
+			log.warn("Invalid blockstate file: {}", fileName);
+		}
+		
+		blockStates.put(name, states);
 	}
 	
 	public void deserializeModels() {

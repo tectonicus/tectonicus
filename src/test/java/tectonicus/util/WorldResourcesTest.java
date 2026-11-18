@@ -30,7 +30,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -52,7 +51,7 @@ class WorldResourcesTest {
 			String id = "World" + i;
 			int color = i == 0 ? 0xff123456 : 0xffabcdef;
 			Path jar = createJar(id, color);
-			TexturePack textures = new TexturePack(rasteriser(), jar.toFile(), null, false, List.of(), List.of());
+			TexturePack textures = new TexturePack(rasteriser(), jar.toFile(), List.of(), false, List.of(), List.of());
 			try {
 				WorldConfig world = new WorldConfig(id, directory.toFile());
 				WorldViewerAssets viewerAssets = new WorldViewerAssets();
@@ -70,9 +69,7 @@ class WorldResourcesTest {
 				OutputResourcesUtil.outputWorldResources(textures, new PlayerIconAssembler(null), config,
 						directory.toFile(), world, viewerAssets, MapLocalization.load(config));
 			} finally {
-				var field = ZipStack.class.getDeclaredField("base");
-				field.setAccessible(true);
-				((FileSystem) field.get(textures.getZipStack())).close();
+				textures.getZipStack().close();
 			}
 		}
 		for (int i = 0; i < 2; i++) {

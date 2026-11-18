@@ -36,7 +36,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
@@ -117,9 +116,7 @@ class BlockModelTextureDiagnosticsTest {
 		loggers.forEach(logger -> logger.detachAppender(messages));
 		messages.stop();
 		if (textures != null) {
-			var field = ZipStack.class.getDeclaredField("base");
-			field.setAccessible(true);
-			((FileSystem) field.get(textures.getZipStack())).close();
+			textures.getZipStack().close();
 		}
 	}
 

@@ -1144,7 +1144,7 @@ public class OutputResourcesUtil {
 		File scriptsDir = new File(exportDir, "Scripts/" + world.getId());
 		FileUtils.ensureExists(scriptsDir);
 		MarkerShadows.write(imagesDir.toPath());
-		viewerAssets.write(texturePack.getZipStack(), world.getTexturePack(), localization, world.getId(), scriptsDir.toPath(),
+		viewerAssets.write(texturePack.getZipStack(), localization, world.getId(), scriptsDir.toPath(),
 				imagesDir.toPath(), hasFont, texturePackVersion.getNumVersion() >= VERSION_26_2.getNumVersion());
 	}
 

@@ -127,8 +127,10 @@ public class Minecraft
 	public static VersionJson getVersionJson(ZipStack zipStack) {
 		VersionJson versionJson = new VersionJson();
 		try {
-			if (zipStack.hasFile("version.json")) { //version.json was added in 1.14
-				versionJson = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class).readValue(zipStack.getStream("version.json"));
+			if (zipStack.hasBaseFile("version.json")) { //version.json was added in 1.14; only the Minecraft jar identifies the game
+				try (var in = zipStack.getBaseStream("version.json")) {
+					versionJson = FileUtils.getOBJECT_MAPPER().readerFor(VersionJson.class).readValue(in);
+				}
 			}
 		} catch (IOException e) {
 			log.error("Failed to read version.json file.", e);

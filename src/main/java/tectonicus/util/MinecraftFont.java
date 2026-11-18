@@ -83,19 +83,20 @@ public final class MinecraftFont {
 	private void loadDefinition(String id) {
 		String path = resource(id, "font/", ".json");
 		if (path == null || remaining.isEmpty() || !loaded.add(path)) return;
-		try (var override = assets.getOverrideStream("assets/" + path);
-			 var base = assets.getBaseStream("assets/" + path)) {
-			if (override != null) loadProviders(FileUtils.getOBJECT_MAPPER().readTree(override).path("providers"), path);
+		// Font definitions merge: providers from higher-priority resource packs come first.
+		for (var layer : assets.getLayers("assets/" + path)) {
 			if (remaining.isEmpty()) return;
-			JsonNode providers = base == null ? null : FileUtils.getOBJECT_MAPPER().readTree(base).path("providers");
-			if ((providers == null || providers.isEmpty()) && path.equals("minecraft/font/include/unifont.json")) {
-				// Modern clients ship an empty placeholder for this launcher asset.
-				byte[] data = launcherAsset.apply(path);
-				if (data.length > 0) providers = FileUtils.getOBJECT_MAPPER().readTree(data).path("providers");
+			try (var in = layer.open("assets/" + path)) {
+				JsonNode providers = in == null ? null : FileUtils.getOBJECT_MAPPER().readTree(in).path("providers");
+				if (assets.isBase(layer) && (providers == null || providers.isEmpty()) && path.equals("minecraft/font/include/unifont.json")) {
+					// Modern clients ship an empty placeholder for this launcher asset.
+					byte[] data = launcherAsset.apply(path);
+					if (data.length > 0) providers = FileUtils.getOBJECT_MAPPER().readTree(data).path("providers");
+				}
+				if (providers != null) loadProviders(providers, path);
+			} catch (IOException | JacksonException e) {
+				log.debug("Unable to read font definition {} from {}", path, layer, e);
 			}
-			if (providers != null) loadProviders(providers, path);
-		} catch (IOException | JacksonException e) {
-			log.debug("Unable to read font definition {}", path, e);
 		}
 	}
 
@@ -351,8 +352,8 @@ public final class MinecraftFont {
 
 	private InputStream open(String path) throws IOException {
 		String resource = "assets/" + path;
-		var override = assets.getOverrideStream(resource);
-		return override != null ? override : assets.getBaseStream(resource);
+		var layers = assets.getLayers(resource);
+		return layers.isEmpty() ? null : layers.getFirst().open(resource);
 	}
 
 	private static String resource(String id, String prefix, String suffix) {

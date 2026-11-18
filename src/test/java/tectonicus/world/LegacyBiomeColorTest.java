@@ -152,7 +152,7 @@ class LegacyBiomeColorTest {
 			javax.imageio.ImageIO.write(new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB), "png", out);
 			out.closeEntry();
 		}
-		var overridden = new tectonicus.texture.TexturePack(rasteriser(), jar, pack.toFile(), false, List.of(), List.of());
+		var overridden = new tectonicus.texture.TexturePack(rasteriser(), jar, List.of(pack.toFile()), false, List.of(), List.of());
 		assertFalse(overridden.canGenerateProceduralFluid("terrain[15, 12]", false));
 		assertFalse(overridden.canGenerateProceduralFluid("terrain[15, 15]", true));
 	}
