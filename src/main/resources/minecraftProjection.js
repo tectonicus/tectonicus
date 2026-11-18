@@ -1,6 +1,13 @@
 // members:
 //	WorldVectors worldVectors
 
+// World vectors are in rendered tile pixels; Leaflet draws every tile 256 units wide.
+// contents.js sets tileSize, which older outputs may lack (they always used 512).
+function tilePixelScale() {
+	const size = typeof tileSize === 'number' && tileSize > 0 ? tileSize : 512;
+	return size / 256;
+}
+
 function MinecraftProjection(worldVecs) {
 	this.worldVectors = worldVecs;
 };
@@ -22,7 +29,8 @@ MinecraftProjection.prototype.worldToMap = function (world) {
 	point.x += this.worldVectors.zAxis.x * world.z;
 	point.y += this.worldVectors.zAxis.y * world.z;
 
-	return [point.y / -2, point.x / 2];
+	const scale = tilePixelScale();
+	return [point.y / -scale, point.x / scale];
 }
 
 // Leaflet coordinates for a world position. The projection is affine, so straight
@@ -34,7 +42,8 @@ MinecraftProjection.prototype.worldToLatLng = function (world) {
 // A map position has no height. Pass the block height to solve for; the default
 // is the start view height, which share links also use.
 MinecraftProjection.prototype.mapToWorld = function(latLng, y) {
-    let point = new L.Point(latLng.lng * 2, latLng.lat * -2);
+    const scale = tilePixelScale();
+    let point = new L.Point(latLng.lng * scale, latLng.lat * -scale);
 
     point.x -= this.worldVectors.origin.x;
     point.y -= this.worldVectors.origin.y;
