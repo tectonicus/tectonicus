@@ -11,4 +11,16 @@ package tectonicus.world;
 
 import tectonicus.Version;
 
-public record WorldInfo(Version version, boolean sectionArrayOffset) {}
+/**
+ * @param sectionArrayOffset whether chunk-local y is shifted up so that blocks below Y 0 fit (1.18+ worlds)
+ * @param minY               lowest block Y of the dimension; older chunks without a yPos are placed from here
+ */
+public record WorldInfo(Version version, boolean sectionArrayOffset, int minY) {
+	public WorldInfo(Version version, boolean sectionArrayOffset) {
+		this(version, sectionArrayOffset, sectionArrayOffset ? DimensionHeight.CAVES_AND_CLIFFS.minY() : 0);
+	}
+
+	public int minSectionY() {
+		return Math.floorDiv(minY, 16);
+	}
+}

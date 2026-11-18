@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static tectonicus.util.FindEntityUtil.findPortalColumns;
@@ -47,13 +48,16 @@ public class PortalScanner {
 	}
 
 	public static PortalScanner open(File directory, Version version, BiomeCache biomeCache, Dimension dimension) {
+		return open(directory, version, biomeCache, format -> DimensionHeight.resolve(null, Map.of(), List.of(),
+				dimension.getId(), dimension, version, format));
+	}
+
+	/** @param heightFor the dimension's vertical range for the save format found in {@code directory} */
+	public static PortalScanner open(File directory, Version version, BiomeCache biomeCache, Function<SaveFormat, DimensionHeight> heightFor) {
 		var regions = new RegionCache(directory);
 		var locator = new ChunkLocator(biomeCache, regions, directory);
-		boolean oldHeight = regions.getFormat() != SaveFormat.ANVIL;
-		boolean offset = !oldHeight && dimension == Dimension.OVERWORLD && version != Version.VERSION_UNKNOWN
-				&& version.getNumVersion() >= Version.VERSION_18.getNumVersion();
-		int height = oldHeight ? 128 : offset ? 384 : 256;
-		var worldInfo = new WorldInfo(version, offset);
+		DimensionHeight dimensionHeight = heightFor.apply(regions.getFormat());
+		var worldInfo = new WorldInfo(version, dimensionHeight.minY() != 0, dimensionHeight.minY());
 		return new PortalScanner(regions.getFormat(), coord -> {
 			// RegionCache and ChunkLocator log read failures. Distinguish a failed read from an absent saved chunk.
 			if (regions.getFormat() == SaveFormat.ALPHA) {
@@ -68,15 +72,15 @@ public class PortalScanner {
 			}
 			if (!locator.exists(coord))
 				return List.of();
-			int previousHeight = Minecraft.getChunkHeight();
-			Minecraft.setChunkHeight(height);
+			DimensionHeight previousHeight = Minecraft.getDimensionHeight();
+			Minecraft.setDimensionHeight(dimensionHeight);
 			try {
 				var chunk = locator.loadChunk(coord, new NullBlockFilter(), null, worldInfo);
 				if (chunk == null || chunk.getRawChunk() == null || !chunk.getRawChunk().isFullChunk())
 					throw new IllegalStateException("Could not read portal chunk " + coord + " in " + directory);
 				return findPortalColumns(chunk.getRawChunk());
 			} finally {
-				Minecraft.setChunkHeight(previousHeight);
+				Minecraft.setDimensionHeight(previousHeight);
 			}
 		});
 	}

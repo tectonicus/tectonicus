@@ -213,7 +213,7 @@ public class InteractiveRenderer {
 	public void display(World world) {
 		if (world.getLevelDat().getSpawnDimensionId().equals(world.getDimensionInfo().name())) {
 			orthoCamPosition.x = world.getSpawnPosition().x;
-			orthoCamPosition.y = world.getSpawnPosition().y + (float) (world.getWorldInfo().sectionArrayOffset() ? 64 : 0);
+			orthoCamPosition.y = world.getSpawnPosition().y + (float) -world.getWorldInfo().minY();
 			orthoCamPosition.z = world.getSpawnPosition().z;
 		} else {
 			log.warn("World spawn is in a different dimension to the one being rendered - ortho camera will be positioned at (0,0,0)");
