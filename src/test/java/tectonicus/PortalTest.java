@@ -9,10 +9,13 @@ import tectonicus.configuration.filter.PortalFilterType;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;
 import tectonicus.world.subset.FullWorldSubset;
+import tectonicus.world.PortalLinker;
+import tectonicus.world.PortalScanner;
 import tectonicus.world.subset.HeightRange;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +40,43 @@ class PortalTest {
 		assertEquals(List.of(west, east), portals.getFirst().columns());
 		assertEquals(new Portal.EntryPosition(0, 6, 2.5), portals.getFirst().entryPos());
 		assertEquals(0, portals.getFirst().position().x);
-		assertEquals(7, portals.getFirst().position().y);
+		assertEquals(7.5, portals.getFirst().position().y);
+		assertEquals(2.5, portals.getFirst().position().z);
+	}
+
+	@Test
+	void markersSitAtTheVisibleCenterOrOnTheNearestVisibleBlock() {
+		// A 3-wide, 3-tall Z-axis portal is centered in its middle block.
+		var odd = Portal.groupColumns(List.of(new PortalColumn(4, 10, 64, 66, Z), new PortalColumn(4, 11, 64, 66, Z),
+				new PortalColumn(4, 12, 64, 66, Z))).getFirst().position();
+		assertEquals(List.of(4.5, 65.5, 11.5), List.of(odd.x, odd.y, odd.z));
+		// A subset left a U shape whose bounding-box center (1.5, 66, 0.5) is not on a visible block.
+		var cut = Portal.groupColumns(List.of(new PortalColumn(0, 0, 64, 67, X), new PortalColumn(1, 0, 64, 64, X),
+				new PortalColumn(2, 0, 64, 67, X))).getFirst().position();
+		assertEquals(List.of(0.5, 66.5, 0.5), List.of(cut.x, cut.y, cut.z));
+	}
+
+	@Test
+	void subsetSplitPortalsExportOneMarkerEvenWithoutAnExitDimension() throws Exception {
+		// A 4-wide portal whose middle columns are hidden by a subset, as in the End or a world without a Nether.
+		var saved = new PortalColumn[] {new PortalColumn(14, 0, 64, 66, X), new PortalColumn(15, 0, 64, 66, X),
+				new PortalColumn(16, 0, 64, 66, X), new PortalColumn(17, 0, 64, 66, X)};
+		var swap = directory.resolve("split.list").toFile();
+		var writer = new HddObjectListWriter<PortalColumn>(swap, true);
+		try {
+			writer.add(saved[0]);
+			writer.add(saved[3]);
+		} finally {
+			writer.close();
+		}
+		var exported = directory.resolve("split.js").toFile();
+		var map = new DimensionConfig("Map0");
+		assertEquals(2, outputPortals(exported, swap, map).size());
+		var source = new PortalScanner(coord -> Arrays.stream(saved).filter(column ->
+				Math.floorDiv(column.getX(), 16) == coord.x && Math.floorDiv(column.getZ(), 16) == coord.z).toList());
+		List<Portal> portals = outputPortals(exported, swap, map, () -> new PortalLinker(source, null, null, 1));
+		assertEquals(1, portals.size());
+		assertEquals(new Portal.EntryPosition(16, 64, 0.5), portals.getFirst().entryPos());
 	}
 
 	@Test
@@ -75,7 +114,7 @@ class PortalTest {
 			assertEquals(Z, portals.getLast().columns().getFirst().getAxis());
 			assertEquals(15, portals.getLast().entryPos().y());
 			String script = Files.readString(exported);
-			assertTrue(script.contains("worldPos: new WorldCoord(1, 3, 0)"));
+			assertTrue(script.contains("worldPos: new WorldCoord(1.0, 3.0, 0.5)"));
 			assertTrue(script.contains("entryPos: {"));
 			assertTrue(script.contains("columns: [{"));
 
