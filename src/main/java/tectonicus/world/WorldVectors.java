@@ -216,10 +216,10 @@ public class WorldVectors {
 				//Prefer using a portal as the start view in the Nether
 				if (!portals.isEmpty()) {
 					for (Portal portal : portals) {
-						Vector3l position = portal.position();
-						double distance = Math.hypot(position.x - (double) spawnPosition.x, position.z - (double) spawnPosition.z);
+						tectonicus.util.Vector3d position = portal.position();
+						double distance = Math.hypot(position.x - spawnPosition.x, position.z - spawnPosition.z);
 						if (distance < prevDistance) {
-							startView = position;
+							startView = new Vector3l((long) Math.floor(position.x), (long) Math.floor(position.y), (long) Math.floor(position.z));
 							prevDistance = distance;
 						}
 					}

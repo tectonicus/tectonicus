@@ -9,7 +9,7 @@
 package tectonicus;
 
 import tectonicus.PortalColumn.Axis;
-import tectonicus.util.Vector3l;
+import tectonicus.util.Vector3d;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public record Portal(Vector3l position, EntryPosition entryPos, List<PortalColumn> columns) {
+/** @param position where the map marker goes: the visible portal's center, or the middle of a visible block near it */
+public record Portal(Vector3d position, EntryPosition entryPos, List<PortalColumn> columns) {
 	public record EntryPosition(double x, int y, double z) {}
 	private record ColumnPosition(long x, long z) {}
 	private static final Comparator<PortalColumn> COLUMN_ORDER = Comparator.comparingLong(PortalColumn::getX)
@@ -92,14 +93,28 @@ public record Portal(Vector3l position, EntryPosition entryPos, List<PortalColum
 		long minZ = bottomRow.stream().mapToLong(PortalColumn::getZ).min().orElseThrow();
 		long maxZ = bottomRow.stream().mapToLong(PortalColumn::getZ).max().orElseThrow();
 		var entry = new EntryPosition(minX + (maxX - minX + 1) / 2.0, bottomY, minZ + (maxZ - minZ + 1) / 2.0);
-		// Place the marker on a visible block even when the render subset cuts through the portal.
-		int centerY = bottomY + (topY - bottomY + 1) / 2;
-		long centerX = (long) Math.floor(entry.x());
-		long centerZ = (long) Math.floor(entry.z());
-		Vector3l position = columns.stream().map(column -> new Vector3l(column.getX(),
-				Math.clamp(centerY, column.getMinY(), column.getMaxY()), column.getZ()))
-				.min(Comparator.comparingDouble(point -> Math.hypot(Math.hypot(point.x - centerX, point.z - centerZ),
-						point.y - centerY))).orElseThrow();
+		Vector3d position = markerPosition(columns, bottomY, topY);
 		return new Portal(position, entry, List.copyOf(columns));
+	}
+
+	/**
+	 * Uses the center of the visible portal's bounding box. A portal is a flat rectangle, so that point is on the portal
+	 * unless a subset cut it into an odd shape. Then the marker goes in the middle of the visible block nearest the center.
+	 */
+	private static Vector3d markerPosition(List<PortalColumn> columns, int bottomY, int topY) {
+		long minX = columns.stream().mapToLong(PortalColumn::getX).min().orElseThrow();
+		long maxX = columns.stream().mapToLong(PortalColumn::getX).max().orElseThrow();
+		long minZ = columns.stream().mapToLong(PortalColumn::getZ).min().orElseThrow();
+		long maxZ = columns.stream().mapToLong(PortalColumn::getZ).max().orElseThrow();
+		var center = new Vector3d((minX + maxX + 1) / 2.0, (bottomY + topY + 1) / 2.0, (minZ + maxZ + 1) / 2.0);
+		boolean visible = columns.stream().anyMatch(column -> column.getX() <= center.x && center.x <= column.getX() + 1
+				&& column.getZ() <= center.z && center.z <= column.getZ() + 1
+				&& column.getMinY() <= center.y && center.y <= column.getMaxY() + 1);
+		if (visible)
+			return center;
+		return columns.stream().map(column -> new Vector3d(column.getX() + 0.5,
+				Math.clamp(Math.floor(center.y), column.getMinY(), column.getMaxY()) + 0.5, column.getZ() + 0.5))
+				.min(Comparator.comparingDouble(point -> Math.hypot(Math.hypot(point.x - center.x, point.z - center.z),
+						point.y - center.y))).orElseThrow();
 	}
 }

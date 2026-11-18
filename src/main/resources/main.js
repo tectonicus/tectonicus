@@ -784,7 +784,7 @@ function refreshPortalMarkers(layer) {
 		const icon = createWorldMarkerIcon('Portal.png', [17, 20], layer);
 		const marker = bindMarkerPopup(L.marker(point, {icon}), () =>
 			'<div style="text-align:center">' + escapeHtml(mapText('block.minecraft.nether_portal', {}, layer)) + '</div><br/>'
-			+ '<div class="center">' + escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(portal.worldPos), layer)) + '</div>'
+			+ '<div class="center">' + escapeHtml(mapText('tectonicus.marker.coordinates', formatMapCoordinates(portal.worldPos, Math.floor), layer)) + '</div>'
 			+ portalJumpButton(layer, portal), portal.worldPos, layer);
 		group.addLayer(marker);
 	}

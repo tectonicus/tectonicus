@@ -377,7 +377,7 @@ public class OutputResourcesUtil {
 					continue;
 				Portal portal = link.portal();
 				portals.add(portal);
-				Vector3l position = portal.position();
+				Vector3d position = portal.position();
 				String worldPos = "new WorldCoord(" + position.x + ", " + position.y + ", " + position.z + ")";
 				Map<String, String> args = new LinkedHashMap<>();
 				args.put("worldPos", worldPos);

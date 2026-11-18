@@ -40,7 +40,20 @@ class PortalTest {
 		assertEquals(List.of(west, east), portals.getFirst().columns());
 		assertEquals(new Portal.EntryPosition(0, 6, 2.5), portals.getFirst().entryPos());
 		assertEquals(0, portals.getFirst().position().x);
-		assertEquals(7, portals.getFirst().position().y);
+		assertEquals(7.5, portals.getFirst().position().y);
+		assertEquals(2.5, portals.getFirst().position().z);
+	}
+
+	@Test
+	void markersSitAtTheVisibleCenterOrOnTheNearestVisibleBlock() {
+		// A 3-wide, 3-tall Z-axis portal is centered in its middle block.
+		var odd = Portal.groupColumns(List.of(new PortalColumn(4, 10, 64, 66, Z), new PortalColumn(4, 11, 64, 66, Z),
+				new PortalColumn(4, 12, 64, 66, Z))).getFirst().position();
+		assertEquals(List.of(4.5, 65.5, 11.5), List.of(odd.x, odd.y, odd.z));
+		// A subset left a U shape whose bounding-box center (1.5, 66, 0.5) is not on a visible block.
+		var cut = Portal.groupColumns(List.of(new PortalColumn(0, 0, 64, 67, X), new PortalColumn(1, 0, 64, 64, X),
+				new PortalColumn(2, 0, 64, 67, X))).getFirst().position();
+		assertEquals(List.of(0.5, 66.5, 0.5), List.of(cut.x, cut.y, cut.z));
 	}
 
 	@Test
@@ -101,7 +114,7 @@ class PortalTest {
 			assertEquals(Z, portals.getLast().columns().getFirst().getAxis());
 			assertEquals(15, portals.getLast().entryPos().y());
 			String script = Files.readString(exported);
-			assertTrue(script.contains("worldPos: new WorldCoord(1, 3, 0)"));
+			assertTrue(script.contains("worldPos: new WorldCoord(1.0, 3.0, 0.5)"));
 			assertTrue(script.contains("entryPos: {"));
 			assertTrue(script.contains("columns: [{"));
 
