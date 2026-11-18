@@ -17,6 +17,20 @@ class RasteriserConfigurationTest {
 		var config = parse("<rasteriser type=\"lwjgl\"/>");
 		assertFalse(config.isUseEGL());
 		assertFalse(config.isUseOSMesa());
+		assertEquals(-1, config.getEglDevice());
+	}
+
+	@Test void eglDeviceIsReadFromTheRasteriserNode() throws Exception {
+		var config = parse("<rasteriser type=\"lwjgl\" useEGL=\"true\" eglDevice=\"1\"/>");
+		assertTrue(config.isUseEGL());
+		assertEquals(1, config.getEglDevice());
+	}
+
+	@Test void invalidEglDeviceFailsWithAnActionableError() {
+		for (String value : new String[]{"-1", "gpu"}) {
+			var error = assertThrows(IllegalArgumentException.class, () -> parse("<rasteriser type=\"lwjgl\" eglDevice=\"" + value + "\"/>"));
+			assertTrue(error.getMessage().contains("eglDevice"));
+		}
 	}
 
 	@Test void useOSMesaIsReadFromTheRasteriserNode() throws Exception {

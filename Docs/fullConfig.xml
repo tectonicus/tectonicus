@@ -45,7 +45,8 @@
 		alphaBits="8"
 		numSamples="4"
 		tileSize="512 / 64 - 2048"
-		useEGL="false / true" <!-- headless rendering through EGL, falls back to the Mesa surfaceless platform when there is no display -->
+		useEGL="false / true" <!-- headless rendering through EGL (Linux only): uses the default display, then the first GPU, then Mesa software rendering -->
+		eglDevice="0" <!-- optional, index of the GPU to use with EGL on multi-GPU machines (see the debug log for the device list) -->
 		useOSMesa="false / true" <!-- headless software rendering through OSMesa, needs the OSMesa library installed (e.g. libosmesa6) -->
 	/>
 

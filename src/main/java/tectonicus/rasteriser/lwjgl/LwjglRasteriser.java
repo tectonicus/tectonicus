@@ -19,6 +19,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWNativeOSMesa;
 import org.lwjgl.egl.EGL;
+import org.lwjgl.egl.EGLCapabilities;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -50,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.lwjgl.egl.EGL10.EGL_EXTENSIONS;
 import static org.lwjgl.egl.EGL10.EGL_NONE;
 import static org.lwjgl.egl.EGL10.EGL_NO_CONTEXT;
 import static org.lwjgl.egl.EGL10.EGL_NO_DISPLAY;
@@ -58,6 +60,7 @@ import static org.lwjgl.egl.EGL10.EGL_VENDOR;
 import static org.lwjgl.egl.EGL10.EGL_VERSION;
 import static org.lwjgl.egl.EGL10.eglChooseConfig;
 import static org.lwjgl.egl.EGL10.eglCreateContext;
+import static org.lwjgl.egl.EGL10.eglDestroyContext;
 import static org.lwjgl.egl.EGL10.eglGetError;
 import static org.lwjgl.egl.EGL10.eglInitialize;
 import static org.lwjgl.egl.EGL10.eglMakeCurrent;
@@ -73,6 +76,10 @@ import static org.lwjgl.egl.EGL15.EGL_CONTEXT_MAJOR_VERSION;
 import static org.lwjgl.egl.EGL15.EGL_CONTEXT_MINOR_VERSION;
 import static org.lwjgl.egl.EGL15.EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
 import static org.lwjgl.egl.EGL15.EGL_CONTEXT_OPENGL_PROFILE_MASK;
+import static org.lwjgl.egl.EXTDeviceDRM.EGL_DRM_DEVICE_FILE_EXT;
+import static org.lwjgl.egl.EXTDeviceEnumeration.eglQueryDevicesEXT;
+import static org.lwjgl.egl.EXTDeviceQuery.eglQueryDeviceStringEXT;
+import static org.lwjgl.egl.EXTPlatformDevice.EGL_PLATFORM_DEVICE_EXT;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetKey;
 import static org.lwjgl.glfw.GLFW.glfwGetVersionString;
@@ -141,6 +148,8 @@ public class LwjglRasteriser implements Rasteriser {
 	
 	private long window = 0;
 	private long eglDisplay = 0;
+	private long eglContext = 0;
+	private String eglDisplaySource = "";
 	
 	private final int width, height;
 	
@@ -151,6 +160,17 @@ public class LwjglRasteriser implements Rasteriser {
 	private long prevMillis;
 	
 	public LwjglRasteriser(DisplayType type, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples) throws Exception {
+		this(type, displayWidth, displayHeight, colourDepth, alphaBits, depthBits, numSamples, -1);
+	}
+	
+	/**
+	 * @param eglDevice index of the EGL device (GPU) to render on when using EGL, or -1 to choose automatically
+	 */
+	public LwjglRasteriser(DisplayType type, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples, final int eglDevice) throws Exception {
+		if (type == DisplayType.OFFSCREEN_EGL && !OsDetect.isUnix()) {
+			log.warn("EGL is only supported on Linux, using the default offscreen context instead");
+			type = DisplayType.OFFSCREEN;
+		}
 		this.type = type;
 		
 		this.width = displayWidth;
@@ -283,48 +303,7 @@ public class LwjglRasteriser implements Rasteriser {
 				}
 			}
 		} else if (type == DisplayType.OFFSCREEN_EGL) {
-			IntBuffer major = BufferUtils.createIntBuffer(1);
-			IntBuffer minor = BufferUtils.createIntBuffer(1);
-			eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-			if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
-				// No window system available (e.g. no X11 or Wayland display). Mesa can still render
-				// offscreen through its surfaceless platform, which is what EGL_PLATFORM=surfaceless selects.
-				log.debug("Default EGL display unavailable, trying the Mesa surfaceless platform.");
-				eglDisplay = getSurfacelessDisplay();
-				if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
-					throw new RuntimeException("Failed to initialize EGL. EGL error: " + String.format("0x%04X", eglGetError()));
-				}
-			}
-			log.debug("Using EGL for context creation.");
-			
-			int[] configCount = new int[1];
-			
-			int[] attributes = pixelFormats.get(0).getEGLAttributes();
-			
-			//TODO: we should be smarter about choosing config here see https://github.com/LWJGL/lwjgl3/issues/336
-			if (!eglChooseConfig(eglDisplay, attributes, null, configCount)) {
-				throw new RuntimeException("EGL error: " + eglGetError());
-			}
-			
-			PointerBuffer configs = BufferUtils.createPointerBuffer(configCount[0]);
-			
-			eglChooseConfig(eglDisplay, attributes, configs, configCount);
-			eglBindAPI(EGL_OPENGL_API);
-			
-			int[] contextAttributes = {
-					EGL_CONTEXT_MAJOR_VERSION, 3,
-					EGL_CONTEXT_MINOR_VERSION, 0,
-					EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
-					EGL_NONE
-			};
-			
-			long context = eglCreateContext(eglDisplay, configs.get(0), EGL_NO_CONTEXT, contextAttributes);
-			
-			if (context == 0) {
-				throw new RuntimeException("Failed to create EGL context!");
-			}
-			
-			eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, context);
+			createEglContext(pixelFormats, eglDevice);
 		} else {
 			throw new RuntimeException("Unknown display type: " + type);
 		}
@@ -369,6 +348,10 @@ public class LwjglRasteriser implements Rasteriser {
 	@Override
 	public void destroy() {
 		if (type == DisplayType.OFFSCREEN_EGL) {
+			eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			if (eglContext != EGL_NO_CONTEXT) {
+				eglDestroyContext(eglDisplay, eglContext);
+			}
 			eglReleaseThread();
 			eglTerminate(eglDisplay);
 		} else {
@@ -387,6 +370,7 @@ public class LwjglRasteriser implements Rasteriser {
 		log.debug("\twidth: {}", width);
 		log.debug("\theight: {}", height);
 		if (type == DisplayType.OFFSCREEN_EGL) {
+			log.debug("\tEGL display: {}", eglDisplaySource);
 			log.debug("\tEGL version: {}", eglQueryString(eglDisplay, EGL_VERSION));
 			log.debug("\tEGL vendor: {}", eglQueryString(eglDisplay, EGL_VENDOR));
 			log.debug("\tSupported client apis: {}", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
@@ -743,14 +727,142 @@ public class LwjglRasteriser implements Rasteriser {
 	}
 	
 	/**
-	 * Gets an EGL display on Mesa's surfaceless platform. LWJGL's eglGetPlatformDisplay binding rejects a null native
-	 * display, but EGL_MESA_platform_surfaceless requires EGL_DEFAULT_DISPLAY, so the function is called directly.
+	 * Creates an OpenGL compatibility context with EGL and makes it current without a surface; rendering goes to the
+	 * framebuffer object created afterwards. With no eglDevice set, the display is chosen in this order: the default
+	 * display (the running X11 or Wayland session), the first EGL device (a GPU, no window system needed), and Mesa's
+	 * surfaceless platform (software rendering through llvmpipe).
 	 */
-	private static long getSurfacelessDisplay() {
-		long eglGetPlatformDisplay = EGL.getCapabilities().eglGetPlatformDisplay;
-		if (eglGetPlatformDisplay == 0) {
+	private void createEglContext(List<LwjglPixelFormat> pixelFormats, int eglDevice) {
+		IntBuffer major = BufferUtils.createIntBuffer(1);
+		IntBuffer minor = BufferUtils.createIntBuffer(1);
+		
+		if (eglDevice >= 0) {
+			eglDisplay = getDeviceDisplay(eglDevice);
+			if (eglDisplay == EGL_NO_DISPLAY) {
+				throw new RuntimeException("EGL device " + eglDevice + " is not available. The devices found are listed in the debug log.");
+			}
+			if (!eglInitialize(eglDisplay, major, minor)) {
+				throw new RuntimeException("Failed to initialize EGL device " + eglDevice + ". EGL error: " + eglErrorString());
+			}
+		} else {
+			eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+			eglDisplaySource = "default display";
+			if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
+				log.debug("Default EGL display unavailable, trying EGL devices.");
+				eglDisplay = getDeviceDisplay(0);
+				if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
+					// Mesa can still render offscreen through its surfaceless platform, which is what EGL_PLATFORM=surfaceless selects
+					log.debug("No usable EGL device, trying the Mesa surfaceless platform.");
+					eglDisplay = getPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY);
+					eglDisplaySource = "Mesa surfaceless platform";
+					if (eglDisplay == EGL_NO_DISPLAY || !eglInitialize(eglDisplay, major, minor)) {
+						throw new RuntimeException("Failed to initialize EGL. EGL error: " + eglErrorString());
+					}
+				}
+			}
+		}
+		log.debug("Using EGL for context creation: {}", eglDisplaySource);
+		
+		long config = chooseEglConfig(pixelFormats);
+		
+		if (!eglBindAPI(EGL_OPENGL_API)) {
+			throw new RuntimeException("EGL display does not support desktop OpenGL. EGL error: " + eglErrorString());
+		}
+		
+		int[] contextAttributes = {
+				EGL_CONTEXT_MAJOR_VERSION, 3,
+				EGL_CONTEXT_MINOR_VERSION, 0,
+				EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
+				EGL_NONE
+		};
+		
+		eglContext = eglCreateContext(eglDisplay, config, EGL_NO_CONTEXT, contextAttributes);
+		if (eglContext == EGL_NO_CONTEXT) {
+			throw new RuntimeException("Failed to create EGL context. EGL error: " + eglErrorString());
+		}
+		
+		if (!eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, eglContext)) {
+			throw new RuntimeException("Failed to make EGL context current. EGL error: " + eglErrorString());
+		}
+	}
+	
+	/** Returns the first EGL config that matches one of the pixel formats, trying them in order of preference. */
+	private long chooseEglConfig(List<LwjglPixelFormat> pixelFormats) {
+		PointerBuffer configs = BufferUtils.createPointerBuffer(1);
+		int[] configCount = new int[1];
+		for (LwjglPixelFormat pf : pixelFormats) {
+			if (!eglChooseConfig(eglDisplay, pf.getEGLAttributes(), configs, configCount)) {
+				throw new RuntimeException("eglChooseConfig failed. EGL error: " + eglErrorString());
+			}
+			if (configCount[0] > 0) {
+				return configs.get(0);
+			}
+		}
+		throw new RuntimeException("No EGL config supports OpenGL rendering with any of the requested pixel formats");
+	}
+	
+	/** Gets a display for the EGL device at the given index, or EGL_NO_DISPLAY if there is no such device. */
+	private long getDeviceDisplay(int index) {
+		// LWJGL's client capability flags don't reliably reflect the client extension string, so check it directly
+		String clientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+		boolean canEnumerate = clientExtensions != null
+				&& (clientExtensions.contains("EGL_EXT_device_enumeration") || clientExtensions.contains("EGL_EXT_device_base"))
+				&& clientExtensions.contains("EGL_EXT_platform_device");
+		if (!canEnumerate || EGL.getCapabilities().eglQueryDevicesEXT == 0) {
+			log.debug("EGL device enumeration is not supported");
 			return EGL_NO_DISPLAY;
 		}
-		return JNI.callPPP(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, 0L, eglGetPlatformDisplay);
+		
+		int[] count = new int[1];
+		if (!eglQueryDevicesEXT(null, count) || count[0] == 0) {
+			log.debug("No EGL devices found");
+			return EGL_NO_DISPLAY;
+		}
+		PointerBuffer devices = BufferUtils.createPointerBuffer(count[0]);
+		eglQueryDevicesEXT(devices, count);
+		
+		for (int i = 0; i < count[0]; i++) {
+			log.debug("EGL device {}: {}", i, describeDevice(devices.get(i)));
+		}
+		if (index >= count[0]) {
+			log.error("EGL device {} requested but only {} device(s) found", index, count[0]);
+			return EGL_NO_DISPLAY;
+		}
+		
+		long device = devices.get(index);
+		eglDisplaySource = "EGL device " + index + " (" + describeDevice(device) + ")";
+		return getPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device);
+	}
+	
+	private static String describeDevice(long device) {
+		String extensions = eglQueryDeviceStringEXT(device, EGL_EXTENSIONS);
+		if (extensions != null && extensions.contains("EGL_EXT_device_drm")) {
+			String drmFile = eglQueryDeviceStringEXT(device, EGL_DRM_DEVICE_FILE_EXT);
+			if (drmFile != null) {
+				return drmFile;
+			}
+		}
+		if (extensions != null && extensions.contains("EGL_MESA_device_software")) {
+			return "Mesa software renderer";
+		}
+		return "unknown device";
+	}
+	
+	/**
+	 * Calls eglGetPlatformDisplay directly. LWJGL's binding rejects a null native display, but
+	 * EGL_MESA_platform_surfaceless requires EGL_DEFAULT_DISPLAY.
+	 */
+	private static long getPlatformDisplay(int platform, long nativeDisplay) {
+		EGLCapabilities caps = EGL.getCapabilities();
+		long function = caps.eglGetPlatformDisplay != 0 ? caps.eglGetPlatformDisplay : caps.eglGetPlatformDisplayEXT;
+		if (function == 0) {
+			return EGL_NO_DISPLAY;
+		}
+		// eglGetPlatformDisplay takes an EGLAttrib list and the EXT variant an EGLint list; null works for both
+		return JNI.callPPP(platform, nativeDisplay, 0L, function);
+	}
+	
+	private static String eglErrorString() {
+		return String.format("0x%04X", eglGetError());
 	}
 }

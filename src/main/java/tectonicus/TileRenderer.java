@@ -192,7 +192,7 @@ public class TileRenderer
 			type = DisplayType.OFFSCREEN_OSMESA;
 		}
 
-		rasteriser = RasteriserFactory.createRasteriser(config.getRasteriserType(), type, 2048, 2048, config.getColourDepth(), config.getAlphaBits(), 24, config.getNumSamples());
+		rasteriser = RasteriserFactory.createRasteriser(config.getRasteriserType(), type, 2048, 2048, config.getColourDepth(), config.getAlphaBits(), 24, config.getNumSamples(), config.getEglDevice());
 
 		if (rasteriser != null)
 		{

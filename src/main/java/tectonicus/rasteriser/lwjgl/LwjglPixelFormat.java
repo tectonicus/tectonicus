@@ -20,7 +20,6 @@ import static org.lwjgl.egl.EGL10.EGL_BLUE_SIZE;
 import static org.lwjgl.egl.EGL10.EGL_DEPTH_SIZE;
 import static org.lwjgl.egl.EGL10.EGL_GREEN_SIZE;
 import static org.lwjgl.egl.EGL10.EGL_NONE;
-import static org.lwjgl.egl.EGL10.EGL_PBUFFER_BIT;
 import static org.lwjgl.egl.EGL10.EGL_RED_SIZE;
 import static org.lwjgl.egl.EGL10.EGL_STENCIL_SIZE;
 import static org.lwjgl.egl.EGL10.EGL_SURFACE_TYPE;
@@ -89,13 +88,14 @@ public class LwjglPixelFormat {
 
 	public int[] getEGLAttributes() {
 		return new int[] {
+				// No surface type is required: the context is made current without a surface and renders to a framebuffer object
 				EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-				EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+				EGL_SURFACE_TYPE, 0,
 				EGL_BLUE_SIZE, bitsPerColor,
 				EGL_GREEN_SIZE, bitsPerColor,
 				EGL_RED_SIZE, bitsPerColor,
 				EGL_DEPTH_SIZE, depth,
-				EGL_STENCIL_SIZE, 8,
+				EGL_STENCIL_SIZE, stencil,
 				EGL_NONE};
 	}
 
