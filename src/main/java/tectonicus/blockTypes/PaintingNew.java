@@ -9,6 +9,7 @@
 
 package tectonicus.blockTypes;
 
+import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
@@ -22,11 +23,19 @@ import tectonicus.rasteriser.MeshUtil;
 import tectonicus.raw.PaintingEntity;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.Geometry;
+import tectonicus.texture.PackTexture;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
 
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Slf4j
 public class PaintingNew implements BlockType
 {
+	private static final Set<String> MISSING_MOTIVES = ConcurrentHashMap.newKeySet();
+
 	private final String name;
 
 	public PaintingNew(String name)
@@ -58,6 +67,20 @@ public class PaintingNew implements BlockType
 		addEdgeGeometry(x, y, z, world, registry, rawChunk, geometry);
 	}
 
+	/**
+	 * Converts a painting's saved motive to the namespaced id that textures and painting variants use. Worlds saved
+	 * before 1.13 store motives like "Kebab" or "DonkeyKong" with no namespace.
+	 */
+	static String normaliseMotive(String motive) {
+		String id = switch (motive) {
+			case "SkullAndRoses" -> "skull_and_roses";
+			case "DonkeyKong" -> "donkey_kong";
+			case "BurningSkull" -> "burning_skull";
+			default -> motive.toLowerCase(Locale.ROOT);
+		};
+		return id.contains(":") ? id : "minecraft:" + id;
+	}
+
 	@Override
 	public void addEdgeGeometry(int x, int y, int z, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
 		final float texel = 1.0f/16.0f;
@@ -66,8 +89,14 @@ public class PaintingNew implements BlockType
 		TexturePack texturePack = world.getTexturePack();
 
 		for (PaintingEntity entity : rawChunk.getPaintings()) {
-			String motive = entity.getMotive().toLowerCase();
-			SubTexture painting = texturePack.getPackTexture(motive).getFullTexture();
+			String motive = normaliseMotive(entity.getMotive());
+			PackTexture paintingTexture = texturePack.getPackTexture(motive);
+			if (paintingTexture == null) {
+				if (MISSING_MOTIVES.add(motive))
+					log.warn("No texture for painting '{}', skipping paintings that use it", entity.getMotive());
+				continue;
+			}
+			SubTexture painting = paintingTexture.getFullTexture();
 			SubTexture backing = texturePack.getPackTexture("minecraft:back").getFullTexture();
 			Mesh mesh = geometry.getMesh(painting.texture, Geometry.MeshType.AlphaTest);
 			Mesh backMesh = geometry.getMesh(backing.texture, Geometry.MeshType.AlphaTest);
@@ -82,8 +111,8 @@ public class PaintingNew implements BlockType
 			int width = 1;  //width in blocks
 			int height = 1; //height in blocks
 			
-			if (!paintingRegistry.isEmpty()) { //1.21 or higher
-				PaintingVariant variant = paintingRegistry.get(motive);
+			PaintingVariant variant = paintingRegistry.get(motive);
+			if (variant != null) { //1.21 or higher
 				width = variant.getWidth();
 				height = variant.getHeight();
 			} else {
