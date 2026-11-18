@@ -40,6 +40,7 @@ import tectonicus.raw.PotionColors;
 import tectonicus.raw.PotionContentsTag;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
+import tectonicus.raw.SpawnEggColors;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
@@ -461,6 +462,10 @@ final class ItemFrameItems {
 
 	/** @return the colour Minecraft multiplies into a flat item layer before 1.21.4 for the few items Tectonicus can colour */
 	private static int namedTint(String name, int layer, Item item) {
+		if (name.endsWith("_spawn_egg")) {
+			int[] colors = SpawnEggColors.of(item.id);
+			return colors == null || layer > 1 ? -1 : colors[layer];
+		}
 		if (layer != 0)
 			return -1;
 		if (name.startsWith("leather_")) {
