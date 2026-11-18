@@ -41,7 +41,6 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -334,9 +333,7 @@ class InventoryItemIconsTest {
 			assertTrue(emittedPositions.isEmpty(), "Invisible stands must hide their wooden arms");
 		} finally {
 			Minecraft.setChunkHeight(previousHeight);
-			var base = ZipStack.class.getDeclaredField("base");
-			base.setAccessible(true);
-			((FileSystem) base.get(textures.getZipStack())).close();
+			textures.getZipStack().close();
 		}
 	}
 

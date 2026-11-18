@@ -124,16 +124,17 @@ public class TexturePack
 
 	public TexturePack(Rasteriser rasteriser, Configuration config, List<File> modJars, List<String> dataPacks)
 	{
-		this(rasteriser, config.getMinecraftJar(), config.getTexturePack(), config.isUsingProgrammerArt(), modJars, dataPacks,
+		this(rasteriser, config.getMinecraftJar(), config.getTexturePacks(), config.isUsingProgrammerArt(), modJars, dataPacks,
 				MapLocalization.parseLocale(config.getMapLocale()));
 	}
 
-	public TexturePack(Rasteriser rasteriser, File minecraftJar, File resourcePack, boolean usingProgrammerArt,
+	public TexturePack(Rasteriser rasteriser, File minecraftJar, List<File> resourcePacks, boolean usingProgrammerArt,
 			List<File> modJars, List<String> dataPacks) {
-		this(rasteriser, minecraftJar, resourcePack, usingProgrammerArt, modJars, dataPacks, Locale.ENGLISH);
+		this(rasteriser, minecraftJar, resourcePacks, usingProgrammerArt, modJars, dataPacks, Locale.ENGLISH);
 	}
 
-	public TexturePack(Rasteriser rasteriser, File minecraftJar, File resourcePack, boolean usingProgrammerArt,
+	/** @param resourcePacks resource packs, highest priority first, as in Minecraft's pack selection screen */
+	public TexturePack(Rasteriser rasteriser, File minecraftJar, List<File> resourcePacks, boolean usingProgrammerArt,
 			List<File> modJars, List<String> dataPacks, Locale locale) {
 		
 		if (!minecraftJar.exists())
@@ -145,27 +146,29 @@ public class TexturePack
 		loadedPackTextures = new HashMap<>();
 
 		try {
+			List<File> packs = new ArrayList<>(resourcePacks == null ? List.of() : resourcePacks);
 			if (usingProgrammerArt) { //programmer art resource pack added in 1.14
-				//TODO: currently we are overwriting the value of resourcePack if useProgrammerArt is true, we need to implement an ordered list of resource packs instead
+				// Programmer Art sits directly above vanilla, so the configured packs still take priority over it
 				File programmerArtResourcePack = new File(Minecraft.findMinecraftDir(), "assets/objects/1c/1cbd8e7b9a0d2f5e4a3c8b9cbbd1e7e6a9f0b2a");
 				if (programmerArtResourcePack.isFile()) {
-					resourcePack = programmerArtResourcePack;
+					packs.add(programmerArtResourcePack);
 				} else {
 					log.warn("Couldn't find programmer art resource pack, which was added in Minecraft 1.14. Using default resource pack instead.");
 				}
 			}
-			zipStack = new ZipStack(minecraftJar, resourcePack, modJars);
+			zipStack = new ZipStack(minecraftJar, packs, modJars);
 		} catch (Exception e) {
 			throw new RuntimeException("Couldn't open jar files for texture reading", e);
 		}
 		signFont = new SignFont(rasteriser, zipStack, locale);
 
-		// pack.mcmeta gives us the resource pack information (some older versions of Minecraft also have pack.mcmeta 1.13-1.16)
+		// The jar's pack.mcmeta identifies the game (1.13-1.16 jars have one); a resource pack's only describes that pack.
+		// Version detection therefore reads only the Minecraft jar.
 		PackMcmeta packMcMeta = new PackMcmeta();
-		if (zipStack.hasFile("pack.mcmeta")) {
-			try {
+		if (zipStack.hasBaseFile("pack.mcmeta")) {
+			try (InputStream in = zipStack.getBaseStream("pack.mcmeta")) {
 				ObjectReader packMcmetaReader = FileUtils.getOBJECT_MAPPER().readerFor(PackMcmeta.class);
-				packMcMeta = packMcmetaReader.readValue(zipStack.getStream("pack.mcmeta"));
+				packMcMeta = packMcmetaReader.readValue(in);
 			} catch (IOException e) {
 				log.error("Failed to read pack.mcmeta file.", e);
 			}
@@ -177,21 +180,21 @@ public class TexturePack
 		if (versionJson.getPackVersion() != null) {
 			String name = versionJson.getName();
 			version = Minecraft.getVersion(name);
-		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
+		} else if (packMcMeta.getPack().getPackVersion() == 4 && zipStack.hasBaseFile("assets/minecraft/textures/block/acacia_door_bottom.png")) {
 			version = VERSION_13;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
+		} else if (zipStack.hasBaseFile("assets/minecraft/textures/blocks/concrete_lime.png")) {
 			version = VERSION_12;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/chorus_flower.png")) {
+		} else if (zipStack.hasBaseFile("assets/minecraft/textures/blocks/chorus_flower.png")) {
 			version = VERSIONS_9_TO_11;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
+		} else if (zipStack.hasBaseFile("assets/minecraft/textures/blocks/usb_charger_side.png")) {
 			version = VERSION_RV;
-		} else if (zipStack.hasFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
+		} else if (zipStack.hasBaseFile("assets/minecraft/textures/blocks/redstone_dust_cross.png")) {
 			version = VERSIONS_6_TO_8;
-		} else if (zipStack.hasFile("textures/blocks/activatorRail.png")) {
+		} else if (zipStack.hasBaseFile("textures/blocks/activatorRail.png")) {
 			version = VERSION_5;
-		} else if (zipStack.hasFile("item/chest.png")) {
+		} else if (zipStack.hasBaseFile("item/chest.png")) {
 			version = VERSION_4;
-		} else if (zipStack.hasFile("terrain.png")) {
+		} else if (zipStack.hasBaseFile("terrain.png")) {
 			version = VERSION_ALPHA_BETA;
 		} else {
 			version = VERSION_UNKNOWN;
@@ -277,18 +280,18 @@ public class TexturePack
                         // From version 1.20.2 resource pack version was increased to 18 and there was a following change:
                         // All textures containing multiple sprites in a sheet for GUI have been split into individual sprites under textures/gui/sprites (automated by Slicer tool).
                         if (versionJson.getPackVersion() != null && versionJson.getPackVersion().getResource() >= 18) {
-                                emptyHeart = loadTexture(path + "gui/sprites/hud/heart/container.png", minecraftJar, resourcePack);
-                                halfHeart = loadTexture(path + "gui/sprites/hud/heart/half.png", minecraftJar, resourcePack);
-                                fullHeart = loadTexture(path + "gui/sprites/hud/heart/full.png", minecraftJar, resourcePack);
+                                emptyHeart = loadRequiredTexture(path + "gui/sprites/hud/heart/container.png");
+                                halfHeart = loadRequiredTexture(path + "gui/sprites/hud/heart/half.png");
+                                fullHeart = loadRequiredTexture(path + "gui/sprites/hud/heart/full.png");
 
-                                emptyFood = loadTexture(path + "gui/sprites/hud/food_empty.png", minecraftJar, resourcePack);
-                                halfFood = loadTexture(path + "gui/sprites/hud/food_half.png", minecraftJar, resourcePack);
-                                fullFood = loadTexture(path + "gui/sprites/hud/food_full.png", minecraftJar, resourcePack);
+                                emptyFood = loadRequiredTexture(path + "gui/sprites/hud/food_empty.png");
+                                halfFood = loadRequiredTexture(path + "gui/sprites/hud/food_half.png");
+                                fullFood = loadRequiredTexture(path + "gui/sprites/hud/food_full.png");
 
-                                emptyAir = loadTexture(path + "gui/sprites/hud/air_bursting.png", minecraftJar, resourcePack);
-                                fullAir = loadTexture(path + "gui/sprites/hud/air.png", minecraftJar, resourcePack);
+                                emptyAir = loadRequiredTexture(path + "gui/sprites/hud/air_bursting.png");
+                                fullAir = loadRequiredTexture(path + "gui/sprites/hud/air.png");
                         } else {
-                                BufferedImage iconSheet = loadTexture(path + "gui/icons.png", minecraftJar, resourcePack);
+                                BufferedImage iconSheet = loadRequiredTexture(path + "gui/icons.png");
                             
                                 emptyHeart = getIcon(iconSheet, 16, 0, 9, 9);
                                 halfHeart = getIcon(iconSheet, 61, 0, 9, 9);
@@ -305,7 +308,7 @@ public class TexturePack
 			try {
 				chestImage = loadChestImage(zipStack, path);
 			} catch (IllegalArgumentException e) {
-				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar, resourcePack));
+				throw new MissingAssetException("Couldn't find generic_54.png in "+formatPaths(minecraftJar));
 			}
 			
 			try {
@@ -314,7 +317,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "colormap/grass.png");
 				grassLookupImage = copy(ImageIO.read(imgStream));
 			} catch (IllegalArgumentException e) {
-				log.warn("Couldn't find grasscolor.png in {}", formatPaths(minecraftJar, resourcePack));
+				log.warn("Couldn't find grasscolor.png in {}", formatPaths(minecraftJar));
 			}
 			
 			try {
@@ -323,7 +326,7 @@ public class TexturePack
 					imgStream = zipStack.getStream(path + "colormap/foliage.png");
 				foliageLookupImage = copy(ImageIO.read(imgStream));
 			} catch (IllegalArgumentException e) {
-				log.warn("Couldn't find foliagecolor.png in {}", formatPaths(minecraftJar, resourcePack));
+				log.warn("Couldn't find foliagecolor.png in {}", formatPaths(minecraftJar));
 			}
 			
 			if (zipStack.hasFile(path + "colormap/dry_foliage.png")) { //This was added in 1.20.5 and is used for leaf litter
@@ -344,28 +347,24 @@ public class TexturePack
 				BufferedImage fontSheet = ImageIO.read( imgStream );
 				font = new Font(rasteriser, fontSheet, textIn);
 			} catch (IllegalArgumentException e) {
-				log.warn("Couldn't find font resources in {}", formatPaths(minecraftJar, resourcePack));
+				log.warn("Couldn't find font resources in {}", formatPaths(minecraftJar));
 			}
 		}
 		catch (Exception e)
 		{
-			throw new MissingAssetException("Couldn't load textures from "+formatPaths(minecraftJar, resourcePack), e);
+			throw new MissingAssetException("Couldn't load textures from "+formatPaths(minecraftJar), e);
 		}
 	}
 	
-	private String formatPaths(File first, File second)
+	/** The Minecraft jar followed by the resource packs in use, for error messages. */
+	private String formatPaths(File minecraftJar)
 	{
-		String result = "";
-		
-		if (first != null)
-			result += first.getAbsolutePath();
-		
-		result += " ";
-		
-		if (second != null)
-			result += second.getAbsolutePath();
-		
-		return result.trim();
+		List<String> paths = new ArrayList<>();
+		if (minecraftJar != null)
+			paths.add(minecraftJar.getAbsolutePath());
+		if (zipStack != null)
+			zipStack.getResourcePackFiles().forEach(pack -> paths.add(pack.getAbsolutePath()));
+		return String.join(" ", paths);
 	}
 
 	public PackTexture getPackTexture(String path) {
@@ -389,7 +388,7 @@ public class TexturePack
 	/** Keep explicit pack atlases and custom block textures intact. */
 	public boolean canGenerateProceduralFluid(String texturePath, boolean lava) {
 		return (version == VERSION_ALPHA_BETA || version == VERSION_4)
-				&& !zipStack.hasOverrideFile("terrain.png")
+				&& !zipStack.hasPackFile("terrain.png")
 				&& texturePath.replace(" ", "").equals(lava ? "terrain[15,15]" : "terrain[15,12]");
 	}
 
@@ -814,8 +813,7 @@ public class TexturePack
 	public BufferedImage getTextureFirstFrame(String path, BufferedImage image) {
 		String metadataPath = path + ".mcmeta";
 		// Animation metadata belongs to the same resource as the sprite.
-		try (InputStream in = zipStack.hasOverrideFile(path)
-				? zipStack.getOverrideStream(metadataPath) : zipStack.getBaseStream(metadataPath)) {
+		try (InputStream in = zipStack.getSiblingStream(path, metadataPath)) {
 			if (in == null)
 				return image;
 
@@ -846,11 +844,11 @@ public class TexturePack
 		}
 	}
         
-        private BufferedImage loadTexture(String path, File minecraftJar, File texturePack) throws MissingAssetException, IOException {
+        private BufferedImage loadRequiredTexture(String path) throws MissingAssetException, IOException {
                 try {
                         return copy( ImageIO.read( zipStack.getStream(path) ) );
                 } catch (IllegalArgumentException e) {
-                        throw new MissingAssetException("Couldn't find "+path+" in "+formatPaths(minecraftJar, texturePack));
+                        throw new MissingAssetException("Couldn't find "+path+" in "+formatPaths(new File(zipStack.getBaseFileName())));
                 }
         }
 

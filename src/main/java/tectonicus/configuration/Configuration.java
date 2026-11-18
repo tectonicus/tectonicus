@@ -106,8 +106,9 @@ public class Configuration implements Callable<Configuration> {
 	@Option(names = {"--useSmoothLighting"}, paramLabel = "<boolean>")
 	private boolean smoothLit;
 
+	/** Resource packs, highest priority first, as in Minecraft's pack selection screen. Repeat the option to stack packs. */
 	@Option(names = {"-t", "--texturePack", "texturePack"}, paramLabel = "<String>")
-	private File texturePack;
+	private List<File> texturePacks = new ArrayList<>();
 
 	@Option(names = {"-p", "--useOldColorPalette", "useOldColorPalette"}, arity = "0..1", paramLabel = "<boolean>")
 	private boolean useOldColorPalette; //TODO: is this working?
@@ -238,7 +239,7 @@ public class Configuration implements Callable<Configuration> {
 			if (options.hasMatchedOption("--minecraftJar"))
 				world.setMinecraftJar(minecraftJar);
 			if (options.hasMatchedOption("--texturePack"))
-				world.setTexturePack(texturePack);
+				world.setTexturePacks(texturePacks);
 			if (options.hasMatchedOption("--useProgrammerArt"))
 				world.setUsingProgrammerArt(usingProgrammerArt);
 		}
@@ -283,7 +284,7 @@ public class Configuration implements Callable<Configuration> {
 		log.debug("\toutputDir:{}", outputDir.getAbsolutePath());
 		log.debug("\tuseCache:{}", useCache());
 		log.debug("\tcacheDir:{}", cacheDir.getAbsolutePath());
-		log.debug("\ttexturePack:{}", texturePack != null ? texturePack.getAbsolutePath() : "none");
+		log.debug("\ttexturePacks:{}", texturePacks.isEmpty() ? "none" : texturePacks.stream().map(File::getAbsolutePath).toList());
 		log.debug("\tuseOldColorPalette:{}", useOldColorPalette());
 		log.debug("\tcolourDepth:{}", this.getColourDepth());
 		log.debug("\talphaBits:{}", this.getAlphaBits());
@@ -394,11 +395,12 @@ public class Configuration implements Callable<Configuration> {
 		this.minecraftJar = minecraftJar;
 	}
 
-	public void setTexturePack(File texturePack) {
+	public void setTexturePacks(List<File> texturePacks) {
+		List<File> packs = texturePacks == null ? new ArrayList<>() : new ArrayList<>(texturePacks);
 		for (WorldConfig world : worlds)
-			if (java.util.Objects.equals(world.getTexturePack(), this.texturePack))
-				world.setTexturePack(texturePack);
-		this.texturePack = texturePack;
+			if (world.getTexturePacks().equals(this.texturePacks))
+				world.setTexturePacks(packs);
+		this.texturePacks = packs;
 	}
 
 	public void setUsingProgrammerArt(boolean usingProgrammerArt) {
@@ -443,7 +445,7 @@ public class Configuration implements Callable<Configuration> {
 			world = new WorldConfig("World" + worlds.size(), dimension.getWorldDir());
 			world.setName(WorldConfig.defaultName(dimension.getWorldDir()));
 			world.setMinecraftJar(minecraftJar);
-			world.setTexturePack(texturePack);
+			world.setTexturePacks(texturePacks);
 			world.setUsingProgrammerArt(usingProgrammerArt);
 			world.setModJars(dimension.getModJars());
 			addWorld(world);

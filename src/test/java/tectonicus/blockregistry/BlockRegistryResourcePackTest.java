@@ -16,7 +16,6 @@ import tectonicus.texture.ZipStack;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,7 +37,7 @@ class BlockRegistryResourcePackTest {
 		Path pack = zip("pack.zip", Map.of(
 				"assets/minecraft/models/" + path + ".json", "{\"parent\":\"templates/face\"}",
 				"assets/minecraft/models/templates/face.json", "{\"elements\":[]}"));
-		ZipStack stack = new ZipStack(base.toFile(), pack.toFile(), List.of());
+		ZipStack stack = new ZipStack(base.toFile(), List.of(pack.toFile()), List.of());
 		try {
 			BlockRegistry registry = new BlockRegistry();
 			var field = BlockRegistry.class.getDeclaredField("zips");
@@ -51,11 +50,7 @@ class BlockRegistryResourcePackTest {
 			assertEquals(path, model.getName());
 			assertSame(model, registry.loadModel(modelId));
 		} finally {
-			for (String fieldName : List.of("base", "override")) {
-				var field = ZipStack.class.getDeclaredField(fieldName);
-				field.setAccessible(true);
-				((FileSystem) field.get(stack)).close();
-			}
+			stack.close();
 		}
 	}
 
@@ -171,8 +166,36 @@ class BlockRegistryResourcePackTest {
 		return path;
 	}
 
+	@Test
+	void blockstatesComeFromTheHighestPriorityPackAsWholeFiles() throws Exception {
+		String stone = "assets/minecraft/blockstates/stone.json";
+		Path base = zip("client.jar", Map.of(stone, variant("block/stone"),
+				"assets/minecraft/blockstates/dirt.json", variant("block/dirt")));
+		Path low = zip("low.zip", Map.of(stone, variant("block/low_stone"),
+				"assets/minecraft/blockstates/dirt.json", variant("block/low_dirt")));
+		Path high = zip("high.zip", Map.of(stone, variant("block/high_stone")));
+		try (ZipStack stack = new ZipStack(base.toFile(), List.of(high.toFile(), low.toFile()), List.of())) {
+			BlockRegistry registry = new BlockRegistry();
+			var field = BlockRegistry.class.getDeclaredField("zips");
+			field.setAccessible(true);
+			field.set(registry, stack);
+			registry.deserializeBlockstates();
+			assertEquals(List.of("block/high_stone"), modelNames(registry, "minecraft:stone"));
+			assertEquals(List.of("block/low_dirt"), modelNames(registry, "minecraft:dirt"));
+		}
+	}
+
+	private static String variant(String model) {
+		return "{\"variants\":{\"\":{\"model\":\"minecraft:" + model + "\"}}}";
+	}
+
+	private static List<String> modelNames(BlockRegistry registry, String block) {
+		return registry.getBlock(block).getAllModels().stream()
+				.map(model -> model.getModel().replace("minecraft:", "")).toList();
+	}
+
 	private void withRegistry(Path base, Path pack, RegistryCheck check) throws Exception {
-		ZipStack stack = new ZipStack(base.toFile(), pack.toFile(), List.of());
+		ZipStack stack = new ZipStack(base.toFile(), List.of(pack.toFile()), List.of());
 		try {
 			BlockRegistry registry = new BlockRegistry();
 			var field = BlockRegistry.class.getDeclaredField("zips");
@@ -180,11 +203,7 @@ class BlockRegistryResourcePackTest {
 			field.set(registry, stack);
 			check.run(registry);
 		} finally {
-			for (String name : List.of("base", "override")) {
-				var field = ZipStack.class.getDeclaredField(name);
-				field.setAccessible(true);
-				((FileSystem) field.get(stack)).close();
-			}
+			stack.close();
 		}
 	}
 

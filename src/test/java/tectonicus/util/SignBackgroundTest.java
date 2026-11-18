@@ -29,7 +29,7 @@ class SignBackgroundTest {
 		try (var zip = new ZipOutputStream(Files.newOutputStream(pack))) {
 			addSheet(zip, spruce, 64, 64, 0, 4);
 		}
-		try (var assets = new ZipStack(jar.toFile(), pack.toFile(), List.of())) {
+		try (var assets = new ZipStack(jar.toFile(), List.of(pack.toFile()), List.of())) {
 			var spruceBoard = SignBackground.forBlock("minecraft:spruce_wall_sign");
 			assertEquals(spruceBoard, SignBackground.forBlock("minecraft:spruce_sign"));
 			assertBoard(spruceBoard, assets, true, 48, 24);

@@ -16,7 +16,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -89,15 +88,11 @@ class TexturePackGuiImageTest {
 	}
 
 	private void withStack(Path base, Path pack, ImageCheck check) throws Exception {
-		ZipStack stack = new ZipStack(base.toFile(), pack.toFile(), List.of());
+		ZipStack stack = new ZipStack(base.toFile(), List.of(pack.toFile()), List.of());
 		try {
 			check.run(stack);
 		} finally {
-			for (String name : List.of("base", "override")) {
-				var field = ZipStack.class.getDeclaredField(name);
-				field.setAccessible(true);
-				((FileSystem) field.get(stack)).close();
-			}
+			stack.close();
 		}
 	}
 

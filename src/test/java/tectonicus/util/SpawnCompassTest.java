@@ -12,7 +12,6 @@ import tectonicus.texture.ZipStack;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -70,9 +69,7 @@ class SpawnCompassTest {
 			assertTrue(Files.isRegularFile(output));
 			return ImageIO.read(output.toFile());
 		} finally {
-			var field = ZipStack.class.getDeclaredField("base");
-			field.setAccessible(true);
-			((FileSystem) field.get(stack)).close();
+			stack.close();
 		}
 	}
 }

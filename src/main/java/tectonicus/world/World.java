@@ -309,7 +309,7 @@ public class World implements BlockContext, AutoCloseable
 		log.info("Loading textures");
 		usingProgrammerArt = worldConfig != null ? worldConfig.isUsingProgrammerArt() : config.isUsingProgrammerArt();
 		texturePack = new TexturePack(rasteriser, minecraftJar,
-				worldConfig != null ? worldConfig.getTexturePack() : config.getTexturePack(),
+				worldConfig != null ? worldConfig.getTexturePacks() : config.getTexturePacks(),
 				usingProgrammerArt,
 				map.getModJars(), levelDat.getDataPacks(), MapLocalization.parseLocale(config.getMapLocale()));
 		this.textureVersion = texturePack.getVersion();

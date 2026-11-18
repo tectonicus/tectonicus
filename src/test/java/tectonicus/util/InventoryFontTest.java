@@ -9,7 +9,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -73,9 +72,7 @@ class InventoryFontTest {
 			assertEquals(-1, atlas.getRGB(32, 0));
 			assertEquals(0, atlas.getRGB(47, 0));
 		} finally {
-			var field = ZipStack.class.getDeclaredField("base");
-			field.setAccessible(true);
-			((FileSystem) field.get(assets)).close();
+			assets.close();
 		}
 	}
 

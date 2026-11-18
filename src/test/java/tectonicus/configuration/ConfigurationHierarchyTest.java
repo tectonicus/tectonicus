@@ -18,9 +18,11 @@ import tectonicus.world.subset.HeightRange;
 import tectonicus.world.subset.PolygonalWorldSubset;
 import tectonicus.world.subset.UnionWorldSubset;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -575,7 +577,7 @@ class ConfigurationHierarchyTest {
 				""");
 		WorldConfig world = config.getWorlds().getFirst();
 		assertEquals("world.jar", world.getMinecraftJar().getPath());
-		assertEquals("global.zip", world.getTexturePack().getPath());
+		assertEquals("global.zip", world.getTexturePacks().getFirst().getPath());
 		assertTrue(world.isUsingProgrammerArt());
 		assertEquals("global-mod.jar", world.getModJars().getFirst().getPath());
 		assertEquals(1024, world.getDimensions().getFirst().getViewConfig().getWidth());
@@ -656,11 +658,11 @@ class ConfigurationHierarchyTest {
 				<world worldDir="b" minecraftJar="own.jar" texturePack="own.zip"><dimension/></world>
 				""");
 		config.setMinecraftJar(Path.of("updated.jar").toFile());
-		config.setTexturePack(Path.of("updated.zip").toFile());
+		config.setTexturePacks(List.of(Path.of("updated.zip").toFile()));
 		assertEquals("updated.jar", config.getWorlds().getFirst().getMinecraftJar().getPath());
-		assertEquals("updated.zip", config.getWorlds().getFirst().getTexturePack().getPath());
+		assertEquals("updated.zip", config.getWorlds().getFirst().getTexturePacks().getFirst().getPath());
 		assertEquals("own.jar", config.getWorlds().get(1).getMinecraftJar().getPath());
-		assertEquals("own.zip", config.getWorlds().get(1).getTexturePack().getPath());
+		assertEquals("own.zip", config.getWorlds().get(1).getTexturePacks().getFirst().getPath());
 	}
 
 	@ParameterizedTest
@@ -676,9 +678,43 @@ class ConfigurationHierarchyTest {
 		config.applyCommandLineOverrides(options);
 		for (WorldConfig world : config.getWorlds()) {
 			assertEquals(Path.of("cli.jar").toFile(), world.getMinecraftJar());
-			assertEquals(Path.of("cli.zip").toFile(), world.getTexturePack());
+			assertEquals(List.of(Path.of("cli.zip").toFile()), world.getTexturePacks());
 			assertTrue(world.isUsingProgrammerArt());
 		}
+	}
+
+	@Test
+	void readsOrderedResourcePacksAndWorldOverrides() throws Exception {
+		Configuration config = parse("""
+				<config minecraftJar="global.jar">
+				    <resourcePacks>
+				        <resourcePack path="top.zip"/>
+				        <resourcePack path="folder pack"/>
+				    </resourcePacks>
+				</config>
+				<world worldDir="a"><dimension><layer/></dimension></world>
+				<world worldDir="b" texturePack="own.zip"><dimension><layer/></dimension></world>
+				<world worldDir="c"><resourcePacks><resourcePack path="c.zip"/></resourcePacks><dimension><layer/></dimension></world>
+				<world worldDir="d"><resourcePacks/><dimension><layer/></dimension></world>
+				""");
+		List<File> global = List.of(new File("top.zip"), new File("folder pack"));
+		assertEquals(global, config.getTexturePacks());
+		assertEquals(global, config.getWorlds().get(0).getTexturePacks());
+		assertEquals(List.of(new File("own.zip")), config.getWorlds().get(1).getTexturePacks());
+		assertEquals(List.of(new File("c.zip")), config.getWorlds().get(2).getTexturePacks());
+		assertEquals(List.of(), config.getWorlds().get(3).getTexturePacks());
+	}
+
+	@Test
+	void repeatedTexturePackOptionStacksPacksInOrder() throws Exception {
+		Configuration config = parse("""
+				<config minecraftJar="global.jar" texturePack="global.zip"/>
+				<world worldDir="a"><dimension><layer/></dimension></world>
+				""");
+		var options = new CommandLine(config).registerConverter(Level.class, Level::toLevel)
+				.parseArgs("-t", "top.zip", "--texturePack", "bottom.zip");
+		config.applyCommandLineOverrides(options);
+		assertEquals(List.of(new File("top.zip"), new File("bottom.zip")), config.getWorlds().getFirst().getTexturePacks());
 	}
 
 	@Test
@@ -691,7 +727,7 @@ class ConfigurationHierarchyTest {
 		config.applyCommandLineOverrides(command.parseArgs("--numZoomLevels", "3"));
 		WorldConfig world = config.getWorlds().getFirst();
 		assertEquals("own.jar", world.getMinecraftJar().getPath());
-		assertEquals("own.zip", world.getTexturePack().getPath());
+		assertEquals("own.zip", world.getTexturePacks().getFirst().getPath());
 		assertTrue(world.isUsingProgrammerArt());
 		assertEquals(3, config.getDimensionConfig(0).getNumZoomLevels());
 		config.applyCommandLineOverrides(command.parseArgs("--useProgrammerArt=false"));

@@ -28,7 +28,8 @@ public class WorldConfig extends RenderOptions {
 	private String name;
 	private File worldDir;
 	private File minecraftJar;
-	private File texturePack;
+	/** Resource packs, highest priority first, as in Minecraft's pack selection screen. */
+	private List<File> texturePacks = new ArrayList<>();
 	private boolean usingProgrammerArt;
 	private List<File> modJars = new ArrayList<>();
 	private MarkerVisibility markerVisibility = new MarkerVisibility();
@@ -56,6 +57,10 @@ public class WorldConfig extends RenderOptions {
 			}
 		}
 		return directory.getFileName() != null ? directory.getFileName().toString() : directory.toString();
+	}
+
+	public void setTexturePacks(List<File> texturePacks) {
+		this.texturePacks = texturePacks == null ? new ArrayList<>() : new ArrayList<>(texturePacks);
 	}
 
 	public List<DimensionConfig> getDimensions() {

@@ -16,14 +16,9 @@ import org.apache.commons.lang3.Strings;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
 
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,24 +37,21 @@ public class ItemModelDefinitionRegistry {
 	}
 
 	public void deserializeItemModels() {
-		log.debug("Loading item model definition json from minecraft jar");
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()))) {
-                        Path itemModelDefinitionsPath = fs.getPath("/assets/minecraft/items");
-                        if (Files.exists(itemModelDefinitionsPath)) {
-                                try (DirectoryStream<Path> entries = Files.newDirectoryStream(itemModelDefinitionsPath)) {
-                                        deserializeItemModels(entries);
-                                }                                
-                        }                            			
+		log.debug("Loading item model definition json from minecraft jar and resource packs");
+		try {
+			for (String file : zips.listFilesInDirectory("assets/minecraft/items")) {
+				String fileName = file.substring(file.lastIndexOf('/') + 1);
+				if (!fileName.toLowerCase().endsWith(".json"))
+					continue;
+				// The highest-priority resource pack that has the definition replaces it as a whole.
+				try (InputStream in = zips.getStream(file)) {
+					if (in != null)
+						modelDefinitions.put(Strings.CI.removeEnd(fileName, ".json"),
+								OBJECT_MAPPER.readValue(new InputStreamReader(in, StandardCharsets.UTF_8), ItemModelDefinition.class));
+				}
+			}
 		} catch (Exception e) {
 			log.error("Exception: ", e);
-		}
-	}
-
-	private void deserializeItemModels(DirectoryStream<Path> entries) throws IOException {
-		for (Path itemJsonFile : entries) {
-			ItemModelDefinition itemModel = OBJECT_MAPPER.readValue(Files.newBufferedReader(itemJsonFile, StandardCharsets.UTF_8), ItemModelDefinition.class);
-			String name = Strings.CI.removeEnd(itemJsonFile.getFileName().toString(), ".json");
-			modelDefinitions.put(name, itemModel);
 		}
 	}
 }

@@ -16,15 +16,9 @@ import org.apache.commons.lang3.Strings;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
 
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,23 +38,27 @@ public class ItemRegistry {
 	}
 	
 	public void deserializeItemModels() {
-		log.debug("Loading item json from minecraft jar");
-		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zips.getBaseFileName()));
-			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("/assets/minecraft/models/item"))) {
-			deserializeItemModels(entries);
+		log.debug("Loading item json from minecraft jar and resource packs");
+		try {
+			List<String> files = zips.listFilesInDirectory("assets/minecraft/models/item");
+			if (files.isEmpty()) {
+				log.warn("No item models directory found.");
+				return;
+			}
+			for (String file : files) {
+				String fileName = file.substring(file.lastIndexOf('/') + 1);
+				if (!fileName.toLowerCase().endsWith(".json"))
+					continue;
+				// The highest-priority resource pack that has the model replaces it as a whole.
+				try (InputStream in = zips.getStream(file)) {
+					if (in != null)
+						models.put(Strings.CI.removeEnd(fileName, ".json"),
+								OBJECT_MAPPER.readValue(new InputStreamReader(in, StandardCharsets.UTF_8), ItemModel.class));
+				}
+			}
 			log.info("All item json files loaded.");
-		} catch (NotDirectoryException e) {
-			log.warn("No item models directory found.");
 		} catch (Exception e) {
 			log.error("Exception: ", e);
-		}
-	}
-	
-	private void deserializeItemModels(DirectoryStream<Path> entries) throws IOException {
-		for (Path itemJsonFile : entries) {
-			ItemModel itemModel = OBJECT_MAPPER.readValue(Files.newBufferedReader(itemJsonFile, StandardCharsets.UTF_8), ItemModel.class);
-			String name = Strings.CI.removeEnd(itemJsonFile.getFileName().toString(), ".json");
-			models.put(name, itemModel);
 		}
 	}
 	

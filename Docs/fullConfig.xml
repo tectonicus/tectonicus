@@ -10,7 +10,7 @@
 	<config
 		mode="cmd / gui / interactive / players / views"
 		minecraftJar="(auto-find)"
-		texturePack=""
+		texturePack="" <!-- a single resource pack zip or folder; use <resourcePacks> below to stack several -->
 		useOldColorPalette="false / true"
 		useProgrammerArt="false / true"
 		outputDir="."
@@ -37,6 +37,21 @@
 		customScript="<your_javascript_filename>" <!-- the custom file should be placed in the Scripts directory -->
 		useCdn="unpkg / cdnjs / jsdelivr"
 	/>
+
+	<!--
+		Optional ordered list of resource packs (zips or folders), highest priority first, as in Minecraft's
+		resource pack screen. Replaces texturePack when present. Packs are stacked like Minecraft does it:
+		each file comes from the highest pack that has it, language files and font definitions merge, and
+		pack.mcmeta filters and overlays are honored. Programmer Art (useProgrammerArt) sits just above vanilla.
+		Can also be set on a <world>; a world's own texturePack or <resourcePacks> replaces the inherited list,
+		and an empty <resourcePacks/> clears it. On the command line, repeat the -t (texturePack) option in the same order.
+	-->
+	<config>
+		<resourcePacks>
+			<resourcePack path="" />
+			<resourcePack path="" />
+		</resourcePacks>
+	</config>
 
 	<!-- Rasteriser config applies to all maps/layers -->
 	<rasteriser

@@ -15,7 +15,6 @@ import tectonicus.texture.ZipStack;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -89,9 +88,7 @@ class ItemGuiTransformTest {
 		ZipStack zips = new ZipStack(jar.toFile(), null, List.of());
 		try { test.accept(zips); }
 		finally {
-			var base = ZipStack.class.getDeclaredField("base");
-			base.setAccessible(true);
-			((FileSystem) base.get(zips)).close();
+			zips.close();
 		}
 	}
 
