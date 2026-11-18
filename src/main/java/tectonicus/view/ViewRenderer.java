@@ -107,11 +107,6 @@ public class ViewRenderer
 			{
 				viewsIn.read(sign);
 				
-				if (sign.getText(3).contains("home"))
-				{
-					System.out.println("problem sign");
-				}
-				
 				if (ViewUtil.parseLightStyle(sign) != lightStyle)
 					continue;
 				
@@ -147,6 +142,8 @@ public class ViewRenderer
                                 viewGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                                 // Iterate over each section and capture it
+                                boolean captured = true;
+                                sections:
                                 for (int y = 0; y < numVerticalSections; y++) {
                                         for (int x = 0; x < numHorizontalSections; x++) {
                                                 // Calculate the dimensions and starting coordinates of the section to capture
@@ -165,7 +162,8 @@ public class ViewRenderer
                                                 BufferedImage viewSection = rasteriser.takeScreenshot(0, 0, sectionWidth, sectionHeight, imageFormat);
                                                 if (viewSection == null) {
                                                         log.error("Error: Rasteriser.takeScreenshot gave us a null image (format: {})", imageFormat);
-                                                        break;
+                                                        captured = false;
+                                                        break sections;
                                                 }
 
                                                 // Draw the section onto the final image
@@ -177,6 +175,13 @@ public class ViewRenderer
                                                         sectionHeight/SAMPLES,
                                                         null);
                                         }
+                                }
+                                viewGraphics.dispose();
+
+                                if (!captured) {
+                                        // Leave the hash unrecorded so the view is retried next run instead of caching a partial image.
+                                        log.warn("Skipping view at ({}, {}, {}) because it could not be captured", sign.getX(), sign.getY(), sign.getZ());
+                                        continue;
                                 }
 
                                 File outputFile = ViewUtil.createViewFile(viewsDir, sign, imageFormat);

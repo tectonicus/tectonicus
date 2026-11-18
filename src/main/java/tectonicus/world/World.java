@@ -27,7 +27,6 @@ import tectonicus.Minecraft;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
-import tectonicus.SaveFormat;
 import tectonicus.Version;
 import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
@@ -110,7 +109,6 @@ import static tectonicus.Version.VERSION_5;
 import static tectonicus.Version.VERSION_12;
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_15;
-import static tectonicus.Version.VERSION_18;
 import static tectonicus.Version.VERSION_UNKNOWN;
 
 @Slf4j
@@ -271,17 +269,9 @@ public class World implements BlockContext, AutoCloseable
 			throw new RuntimeException("Alpha world rendering only supports the Overworld and Nether dimensions");
 		
 		Version version = VERSION_UNKNOWN;
-		Minecraft.setChunkHeight(256);
-		boolean sectionArrayOffset = false;
 		String worldVersion = levelDat.getVersion(); //Version tag was added in 1.9
-		if (worldVersion != null) {
+		if (worldVersion != null)
 			version = Minecraft.getVersion(worldVersion);
-
-			if (version.getNumVersion() >= VERSION_18.getNumVersion() && dimension != Dimension.NETHER && dimension != Dimension.END) {
-				Minecraft.setChunkHeight(384);
-				sectionArrayOffset = true;
-			}
-		}
 		
 		// Use the world dir and the dimension to find the dimension dir
 		dimensionDir = DirUtils.getDimensionDir(worldDir.toPath(), dimensionInfo).toFile();
@@ -291,6 +281,12 @@ public class World implements BlockContext, AutoCloseable
 			throw new RuntimeException("Invalid dimension dir! Missing " + dimensionDir.getAbsolutePath());
 		if (!alphaWorld && !Minecraft.isValidDimensionDir(dimensionDir))
 			throw new RuntimeException("Invalid dimension dir! No /region/*.mcr or /region/*.mca found in "+dimensionDir.getAbsolutePath());
+
+		regionCache = new RegionCache(dimensionDir);
+		DimensionHeight dimensionHeight = DimensionHeight.resolve(worldDir.toPath(), levelDat.getDimensionTypes(), levelDat.getDataPacks(),
+				dimensionInfo.name(), dimension, version, regionCache.getFormat());
+		Minecraft.setDimensionHeight(dimensionHeight);
+		boolean sectionArrayOffset = dimensionHeight.minY() != 0;
 
 		tectonicus.configuration.WorldConfig worldConfig = map.getWorld();
 		File minecraftJar = worldConfig != null ? worldConfig.getMinecraftJar() : config.getMinecraftJar();
@@ -302,7 +298,7 @@ public class World implements BlockContext, AutoCloseable
 			worldConfig.setMinecraftJar(minecraftJar);
 		log.info("Using Minecraft jar: {}", minecraftJar.getName());
 
-		worldInfo = new WorldInfo(version, sectionArrayOffset);
+		worldInfo = new WorldInfo(version, sectionArrayOffset, dimensionHeight.minY());
 
 		this.blockMaskFactory = new NullBlockMaskFactory();
 
@@ -350,10 +346,6 @@ public class World implements BlockContext, AutoCloseable
 		beds = new ConcurrentLinkedQueue<>();
 		beacons = new ConcurrentLinkedQueue<>();
 		
-		regionCache = new RegionCache(dimensionDir);
-		if (regionCache.getFormat() == SaveFormat.MC_REGION || regionCache.getFormat() == SaveFormat.ALPHA) {
-			Minecraft.setChunkHeight(RawChunk.MC_REGION_HEIGHT);
-		}
 		this.biomeCache = biomeCache != null ? biomeCache
 				: CacheUtil.createBiomeCache(config, map, minecraftJar, regionCache.getFormat(), levelDat.getWorldSeed());
 		try {

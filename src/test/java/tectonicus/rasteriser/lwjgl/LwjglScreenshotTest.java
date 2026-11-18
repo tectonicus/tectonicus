@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
+ *
+ * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
+ * the top-level directory of this distribution.  The full list of project contributors is contained
+ * in the AUTHORS file found in the same location.
+ *
+ */
+
+package tectonicus.rasteriser.lwjgl;
+
+import org.junit.jupiter.api.Test;
+import org.lwjgl.opengl.GL11;
+import tectonicus.configuration.Configuration.RasteriserType;
+import tectonicus.configuration.ImageFormat;
+import tectonicus.rasteriser.Rasteriser;
+import tectonicus.rasteriser.RasteriserFactory;
+import tectonicus.rasteriser.RasteriserFactory.DisplayType;
+
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+class LwjglScreenshotTest {
+	@Test
+	void flipsTightlyPackedRowsForWidthsThatAreNotMultiplesOfFour() {
+		int width = 5, height = 3, rowLength = width * 3;
+		ByteBuffer source = ByteBuffer.allocate(rowLength * height);
+		for (int row = 0; row < height; row++)
+			for (int i = 0; i < rowLength; i++)
+				source.put((byte) row);
+		byte[] dest = new byte[rowLength * height];
+		LwjglRasteriser.copyRowsFlipped(source, dest, rowLength, height);
+		for (int row = 0; row < height; row++) {
+			byte[] expected = new byte[rowLength];
+			java.util.Arrays.fill(expected, (byte) (height - 1 - row));
+			assertArrayEquals(expected, java.util.Arrays.copyOfRange(dest, row * rowLength, (row + 1) * rowLength));
+		}
+	}
+
+	@Test
+	void opaqueScreenshotsWithOddWidthsAreNotSkewed() throws Exception {
+		Rasteriser rasteriser;
+		try {
+			rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.OFFSCREEN, 64, 64, 24, 8, 24, 0);
+		} catch (Throwable e) {
+			rasteriser = null;
+		}
+		assumeTrue(rasteriser != null, "No OpenGL context available");
+		try {
+			rasteriser.setViewport(0, 0, 64, 64);
+			rasteriser.clear(Color.BLACK);
+			GL11.glEnable(GL11.GL_SCISSOR_TEST);
+			GL11.glScissor(0, 0, 1, 64);
+			rasteriser.clear(Color.RED);
+			GL11.glDisable(GL11.GL_SCISSOR_TEST);
+
+			for (int width : new int[] {13, 14, 15, 16}) {
+				BufferedImage image = rasteriser.takeScreenshot(0, 0, width, 10, ImageFormat.JPG);
+				for (int y = 0; y < image.getHeight(); y++) {
+					assertEquals(0xFF0000, image.getRGB(0, y) & 0xFFFFFF, "width " + width + " row " + y + " left column");
+					assertEquals(0x000000, image.getRGB(1, y) & 0xFFFFFF, "width " + width + " row " + y + " second column");
+				}
+			}
+		} finally {
+			rasteriser.destroy();
+		}
+	}
+}

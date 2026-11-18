@@ -26,7 +26,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -47,6 +49,8 @@ public class LevelDat {
 	private boolean snapshot;
 	private Long worldSeed;
 	private List<String> dataPacks = Collections.emptyList();
+	/** Dimension id to its saved dimension type: a type id (StringTag) or an inline definition (CompoundTag). */
+	private final Map<String, Tag> dimensionTypes = new HashMap<>();
 	
 	public LevelDat(Path datFile, String singlePlayerName) {
 		spawnPosition = new Vector3l();
@@ -124,6 +128,7 @@ public class LevelDat {
 	private void loadWorldSeed(CompoundTag data, Path worldDir) throws IOException {
 		// Through 1.15 the seed lived directly in level.dat; 1.16 moved it into WorldGenSettings.
 		CompoundTag settings = NbtUtil.getChild(data, "WorldGenSettings", CompoundTag.class);
+		readDimensionTypes(settings);
 		LongTag seedTag = settings != null ? NbtUtil.getChild(settings, "seed", LongTag.class) : null;
 		if (seedTag == null)
 			seedTag = NbtUtil.getChild(data, "RandomSeed", LongTag.class);
@@ -139,6 +144,7 @@ public class LevelDat {
 				if (in.readTag() instanceof CompoundTag root) {
 					CompoundTag savedData = NbtUtil.getChild(root, "data", CompoundTag.class);
 					if (savedData != null) {
+						readDimensionTypes(savedData);
 						LongTag savedSeed = NbtUtil.getChild(savedData, "seed", LongTag.class);
 						if (savedSeed != null)
 							worldSeed = savedSeed.getValue();
@@ -148,6 +154,16 @@ public class LevelDat {
 		}
 	}
 	
+	private void readDimensionTypes(CompoundTag settings) {
+		CompoundTag dimensions = settings == null ? null : NbtUtil.getChild(settings, "dimensions", CompoundTag.class);
+		if (dimensions == null)
+			return;
+		dimensions.getValue().forEach((id, value) -> {
+			if (value instanceof CompoundTag dimension && dimension.getValue().get("type") != null)
+				dimensionTypes.putIfAbsent(id, dimension.getValue().get("type"));
+		});
+	}
+
 	public Vector3l getSpawnPosition() {
 		return new Vector3l(spawnPosition);
 	}

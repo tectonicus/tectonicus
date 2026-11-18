@@ -139,3 +139,15 @@ for (const mode of ['clipboard', 'rejected', 'legacy', 'manual', 'legacyDenied']
         assert.equal(focused, mode !== 'clipboard');
     });
 }
+
+test('view popups show sign text as text, not markup', () => {
+    const {context, markers} = viewer();
+    const pos = {x: 0.5, y: 64, z: 0.5};
+    const layer = {layerId: 'day', worldStats: {}, projection: {worldToMap: () => [0, 0]},
+        views: [{worldPos: pos, text: '<img src=x onerror="alert(1)">', imageFile: 'Views/a".png'}]};
+    context.refreshViewMarkers(layer);
+    assert.equal(markers.length, 1);
+    assert.ok(!markers[0].html.includes('<img src=x'));
+    assert.match(markers[0].html, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt;/);
+    assert.match(markers[0].html, /src="Views\/a&quot;\.png"/);
+});

@@ -193,7 +193,7 @@ public class RawChunk {
 					ListTag sectionsTag = NbtUtil.getChild(level, "Sections", ListTag.class);
 					if (sectionsTag != null) {
 						if (worldInfo.sectionArrayOffset())
-							minSectionY = -4;
+							minSectionY = worldInfo.minSectionY();
 						// Parse as anvil format
 						parseAnvilData(level, sectionsTag, worldStats, worldInfo);
 					} else {
@@ -220,8 +220,8 @@ public class RawChunk {
 					
 					parseChunkPosition(root);
 
-					//yPos is the minimum or lowest section position in the chunk (-4 in 1.18)
-					minSectionY = NbtUtil.getInt(root, "yPos", -4);
+					//yPos is the minimum or lowest section position in the chunk (-4 in the 1.18+ Overworld)
+					minSectionY = NbtUtil.getInt(root, "yPos", worldInfo.minSectionY());
 
 					ListTag sectionsTag = NbtUtil.getChild(root, "sections", ListTag.class);
 					parseAnvilDataNew(sectionsTag, worldStats);
@@ -323,7 +323,7 @@ public class RawChunk {
 					final int localX = x - (chunkX * WIDTH);
 					int localY;
 					if (is118) {
-						localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
+						localY = y - minSectionY * SECTION_HEIGHT;
 					} else {
 						localY = y;
 					}
@@ -350,7 +350,7 @@ public class RawChunk {
 						final int localX = x - (chunkX * WIDTH);
 						int localY;
 						if (is118) {
-							localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
+							localY = y - minSectionY * SECTION_HEIGHT;
 						} else {
 							localY = y;
 						}
@@ -488,7 +488,7 @@ public class RawChunk {
 			}
 		}
 
-		int localY = is118 ? y + Math.abs(minSectionY) * SECTION_HEIGHT : y;
+		int localY = is118 ? y - minSectionY * SECTION_HEIGHT : y;
 		itemFrames.add(new ItemFrameEntity(x, y, z, x - chunkX * WIDTH, localY, z - chunkZ * DEPTH, id, direction, entity,
 				LegacyItems.isLegacy(dataVersion)));
 	}
@@ -506,7 +506,7 @@ public class RawChunk {
 		if (!(xValue instanceof Number) || !(yValue instanceof Number) || !(zValue instanceof Number))
 			return;
 		
-		int yOffset = Math.abs(minSectionY) * SECTION_HEIGHT;
+		int yOffset = -minSectionY * SECTION_HEIGHT;
 		float localX = (float) (((Number)xValue).doubleValue() - chunkX * WIDTH);
 		float localY = ((Number)yValue).floatValue() + yOffset;
 		float localZ = (float) (((Number)zValue).doubleValue() - chunkZ * DEPTH);
@@ -534,7 +534,7 @@ public class RawChunk {
 					final int localX = x - (chunkX * WIDTH);
 					int localY;
 					if (is118) {
-						localY = y + Math.abs(minSectionY) * SECTION_HEIGHT;
+						localY = y - minSectionY * SECTION_HEIGHT;
 					} else {
 						localY = y;
 					}
@@ -781,7 +781,7 @@ public class RawChunk {
 		for (Tag t : sectionsTag.getValue()) {
 			CompoundTag compound = (CompoundTag) t;
 
-			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) + Math.abs(minSectionY);
+			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) - minSectionY;
 
 			if (sectionY < 0 || sectionY >= maxSections)
 				continue;
@@ -913,7 +913,7 @@ public class RawChunk {
 			/* In order to get block checking between 1.17 and 1.18 chunks to work and to
 			   have chunks line up correctly when rendering we need to offset 1.17 or older chunks */
 			if (worldInfo.sectionArrayOffset())
-				sectionY += Math.abs(minSectionY);
+				sectionY -= minSectionY;
 
 			if (sectionY < 0 || sectionY >= maxSections)
 				continue;
@@ -1391,7 +1391,7 @@ public class RawChunk {
 	}
 
 	static int toWorldY(final int y, final int minSectionY) {
-		return y - Math.abs(minSectionY) * SECTION_HEIGHT;
+		return y + minSectionY * SECTION_HEIGHT;
 	}
 
 	public void setBlockName(final int x, final int y, final int z, final String blockName) {

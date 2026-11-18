@@ -67,11 +67,8 @@ public class WorldVectors {
 		Vector3d mapXUnit = camera.unprojectd(1, 0);
 		Vector3d mapYUnit = camera.unprojectd(0, 1);
 
-		// For 1.18 and higher we need to offset the map markers
-		int yOffset = 0;
-		if (Minecraft.getChunkHeight() > 256) {
-			yOffset = 64;
-		}
+		// Chunk-local y 0 is the dimension's lowest block, so markers are shifted by that amount (64 in the 1.18+ Overworld)
+		int yOffset = -Minecraft.getMinY();
 
 		return WorldVectors.builder()
 				.origin(new Vector2d(originScreenPos))

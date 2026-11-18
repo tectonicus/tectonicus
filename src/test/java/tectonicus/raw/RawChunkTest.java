@@ -191,6 +191,35 @@ class RawChunkTest {
 		assertEquals(new ChunkCoord(7, -3), chunk.getChunkCoord());
 	}
 
+	@Test
+	void datapackHeightsPlaceSectionsFromTheDimensionMinimum() throws Exception {
+		Minecraft.setChunkHeight(512);
+		RawChunk tall = readChunk(modernSections(-8, Map.of(-8, "minecraft:stone", 23, "minecraft:glass")),
+				new WorldInfo(Version.VERSION_21, true, -128));
+		assertEquals("minecraft:stone", tall.getBlockName(0, 0, 0));
+		assertEquals("minecraft:glass", tall.getBlockName(0, 511, 0));
+		assertEquals(-128, tall.getWorldY(0));
+		assertEquals(383, tall.getWorldY(511));
+
+		Minecraft.setChunkHeight(128);
+		RawChunk raised = readChunk(modernSections(4, Map.of(4, "minecraft:stone", 11, "minecraft:glass")),
+				new WorldInfo(Version.VERSION_21, true, 64));
+		assertEquals("minecraft:stone", raised.getBlockName(0, 0, 0));
+		assertEquals("minecraft:glass", raised.getBlockName(0, 127, 0));
+		assertEquals(64, raised.getWorldY(0));
+	}
+
+	private static CompoundTag modernSections(int minSectionY, Map<Integer, String> blocks) {
+		List<Tag> sections = blocks.entrySet().stream().<Tag>map(entry -> {
+			CompoundTag palette = new CompoundTag("", Map.of("Name", new StringTag("Name", entry.getValue())));
+			return new CompoundTag("", Map.of("Y", new ByteTag("Y", entry.getKey().byteValue()),
+					"block_states", new CompoundTag("block_states", Map.of("palette", new ListTag("palette", CompoundTag.class, List.of(palette))))));
+		}).toList();
+		return new CompoundTag("", Map.of("Status", new StringTag("Status", "full"), "yPos", new IntTag("yPos", minSectionY),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of()),
+				"sections", new ListTag("sections", CompoundTag.class, sections)));
+	}
+
 	private RawChunk readLegacyChunk(String status) throws Exception {
 		return readLegacyChunk(status, new WorldInfo(Version.VERSION_13, false));
 	}

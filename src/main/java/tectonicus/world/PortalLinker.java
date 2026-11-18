@@ -7,11 +7,13 @@ package tectonicus.world;
 
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.Portal;
+import tectonicus.SaveFormat;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionInfo;
 import tectonicus.util.DirUtils;
 
 import java.io.File;
+import java.util.function.Function;
 
 @Slf4j
 public class PortalLinker {
@@ -37,7 +39,7 @@ public class PortalLinker {
 		Dimension sourceDimension = world.getDimension();
 		var version = world.getWorldInfo().version();
 		File sourceDirectory = DirUtils.getDimensionDir(world.getWorldDir().toPath(), world.getDimensionInfo()).toFile();
-		var source = PortalScanner.open(sourceDirectory, version, world.getBiomeCache(), sourceDimension);
+		var source = PortalScanner.open(sourceDirectory, version, world.getBiomeCache(), heightFor(world, world.getDimensionInfo().name(), sourceDimension));
 		if (sourceDimension != Dimension.OVERWORLD && sourceDimension != Dimension.NETHER)
 			return new PortalLinker(source, null, null, 1);
 		Dimension targetDimension = sourceDimension == Dimension.OVERWORLD ? Dimension.NETHER : Dimension.OVERWORLD;
@@ -46,7 +48,7 @@ public class PortalLinker {
 		if (!targetDirectory.isDirectory())
 			return new PortalLinker(source, null, null, 1);
 		try {
-			var target = PortalScanner.open(targetDirectory, version, world.getBiomeCache(), targetDimension);
+			var target = PortalScanner.open(targetDirectory, version, world.getBiomeCache(), heightFor(world, targetDimension.getId(), targetDimension));
 			var level = world.getLevelDat();
 			PortalSearch rules = PortalSearch.forSave(level.getDataVersion(), level.getVersion(), target.getFormat(), targetDimension);
 			return new PortalLinker(source, target, rules, targetDimension == Dimension.NETHER ? 1.0 / 8 : 8);
@@ -54,6 +56,12 @@ public class PortalLinker {
 			log.warn("Could not open {} terrain for portal exits. Exporting portals without jump links.", targetDimension, e);
 			return new PortalLinker(source, null, null, 1);
 		}
+	}
+
+	private static Function<SaveFormat, DimensionHeight> heightFor(World world, String dimensionId, Dimension dimension) {
+		var level = world.getLevelDat();
+		return format -> DimensionHeight.resolve(world.getWorldDir().toPath(), level.getDimensionTypes(), level.getDataPacks(),
+				dimensionId, dimension, world.getWorldInfo().version(), format);
 	}
 
 	public Link resolve(Portal visible) {

@@ -43,6 +43,19 @@ public class Minecraft
 	@Getter
 	@Setter
 	private static int chunkHeight;
+	/** Lowest block Y of the dimension being rendered; chunk-local y 0 is this world Y. */
+	@Getter
+	@Setter
+	private static int minY;
+
+	public static void setDimensionHeight(tectonicus.world.DimensionHeight height) {
+		minY = height.minY();
+		chunkHeight = height.height();
+	}
+
+	public static tectonicus.world.DimensionHeight getDimensionHeight() {
+		return new tectonicus.world.DimensionHeight(minY, chunkHeight);
+	}
 	
 	public static boolean useOldColorPalette()
 	{

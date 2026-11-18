@@ -519,34 +519,39 @@ public class LwjglRasteriser implements Rasteriser {
 	}
 	
 	public BufferedImage takeScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat) {
-		BufferedImage img = null;
-		
 		ByteBuffer screenContentsBytes = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
-		IntBuffer screenContents = screenContentsBytes.asIntBuffer();
-		
+		// Rows must be tightly packed: the default alignment of 4 pads 3-byte BGR rows whose width isn't a multiple of 4.
+		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
+
 		if (imageFormat.hasAlpha()) {
-			img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+			BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			int[] pixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
-			
+			IntBuffer screenContents = screenContentsBytes.asIntBuffer();
 			glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContents);
-			
-			for (int y = startY; y < startY + height; y++) {
-				screenContents.position(y * width);
-				screenContents.get(pixels, (height - y - 1) * width, width);
-			}
-		} else {
-			img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
-			byte[] pixels = ((DataBufferByte) (img.getRaster().getDataBuffer())).getData();
-			
-			glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContents);
-			
-			for (int y = startY; y < startY + height; y++) {
-				screenContentsBytes.position(y * width * 3);
-				screenContentsBytes.get(pixels, (height - y - 1) * width * 3, width * 3);
-			}
+			copyRowsFlipped(screenContents, pixels, width, height);
+			return img;
 		}
-		
+
+		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+		byte[] pixels = ((DataBufferByte) (img.getRaster().getDataBuffer())).getData();
+		glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContentsBytes);
+		copyRowsFlipped(screenContentsBytes, pixels, width * 3, height);
 		return img;
+	}
+
+	/** Copies bottom-up OpenGL rows (relative to the read origin) into a top-down image buffer. */
+	static void copyRowsFlipped(IntBuffer source, int[] dest, int rowLength, int height) {
+		for (int row = 0; row < height; row++) {
+			source.position(row * rowLength);
+			source.get(dest, (height - row - 1) * rowLength, rowLength);
+		}
+	}
+
+	static void copyRowsFlipped(ByteBuffer source, byte[] dest, int rowLength, int height) {
+		for (int row = 0; row < height; row++) {
+			source.position(row * rowLength);
+			source.get(dest, (height - row - 1) * rowLength, rowLength);
+		}
 	}
 	
 	public void bindTexture(Texture texture) {
