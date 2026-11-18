@@ -36,7 +36,10 @@ import tectonicus.raw.DyedColorTag;
 import tectonicus.raw.Item;
 import tectonicus.raw.ItemFrameEntity;
 import tectonicus.raw.LegacyItems;
+import tectonicus.raw.PotionColors;
+import tectonicus.raw.PotionContentsTag;
 import tectonicus.raw.RawChunk;
+import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
 import tectonicus.texture.SubTexture;
 import tectonicus.texture.TexturePack;
@@ -69,8 +72,6 @@ final class ItemFrameItems {
 	private static final float UNIT = 1 / 16f;
 	/** Leather armor that has not been dyed */
 	private static final int DEFAULT_LEATHER_COLOR = 0xA06540;
-	/** Water bottles, and potions whose colour Tectonicus does not know */
-	private static final int DEFAULT_POTION_COLOR = 0x385DC6;
 	private static final Set<String> LEGACY_CHESTS = Set.of("minecraft:chest", "minecraft:trapped_chest", "minecraft:ender_chest");
 
 	/** Draws a resolved item model in its own model space, after its display transform has been applied. */
@@ -166,7 +167,9 @@ final class ItemFrameItems {
 	private static String cacheKey(Item item) {
 		DyedColorTag dye = item.getComponent(DyedColorTag.class);
 		BannerPatternsTag patterns = item.getComponent(BannerPatternsTag.class);
+		PotionContentsTag potion = item.getComponent(PotionContentsTag.class);
 		return item.id + (dye == null ? "" : "#" + Integer.toHexString(dye.color))
+				+ (potion == null ? "" : "/" + potion.potion)
 				+ (patterns == null ? "" : patterns.toString());
 	}
 
@@ -437,6 +440,11 @@ final class ItemFrameItems {
 			case "grass" -> {
 				return texturePack.getGrassColor(BiomesOld.FOREST).toArgb() & 0xFFFFFF;
 			}
+			case "potion" -> {
+				Integer potion = potionColor(item);
+				if (potion != null)
+					return potion;
+			}
 			default -> { }
 		}
 		return color(tint.get("default"));
@@ -459,9 +467,16 @@ final class ItemFrameItems {
 			DyedColorTag dye = item.getComponent(DyedColorTag.class);
 			return dye == null ? DEFAULT_LEATHER_COLOR : dye.color & 0xFFFFFF;
 		}
-		if (name.endsWith("potion") || name.equals("tipped_arrow"))
-			return DEFAULT_POTION_COLOR;
+		if (name.endsWith("potion") || name.equals("tipped_arrow")) {
+			Integer potion = potionColor(item);
+			return potion == null ? PotionColors.WATER : potion;
+		}
 		return -1;
+	}
+
+	private static Integer potionColor(Item item) {
+		PotionContentsTag contents = item.getComponent(PotionContentsTag.class);
+		return contents == null ? null : PotionColors.of(contents.potion);
 	}
 
 	private static ResolvedItem flatItem(String key, List<BufferedImage> layers, List<Integer> tints, Matrix4f display,
@@ -527,6 +542,19 @@ final class ItemFrameItems {
 			return null;
 		Matrix4f display = modelName == null ? blockDisplay() : display(texturePack, modelName, blockDisplay());
 		ItemContext context = new ItemContext(texturePack, registry, modelRegistry);
+		if (type instanceof Skull skull) {
+			// Heads keep their type in a block entity. The item's damage value is that type.
+			SkullEntity head = new SkullEntity(0, 0, 0, 0, 0, 0, entry.damage(), 8, 0);
+			// Jars before 1.8 have no item models to take the head's display transform from.
+			boolean hasModel = modelName != null
+					&& texturePack.fileExists("assets/minecraft/models/" + modelName.substring("minecraft:".length()) + ".json");
+			return ResolvedItem.of(hasModel ? display : skullDisplay(), geometry -> {
+				RawChunk chunk = fullyLitChunk();
+				chunk.setBlockId(0, 0, 0, entry.numericId());
+				chunk.setBlockData(0, 0, 0, (byte) 1);
+				skull.addEdgeGeometry(0, 0, 0, context, registry, chunk, geometry, head);
+			});
+		}
 		return ResolvedItem.of(display, geometry -> {
 			RawChunk chunk = fullyLitChunk();
 			chunk.setBlockId(0, 0, 0, entry.numericId());
@@ -545,6 +573,11 @@ final class ItemFrameItems {
 	/** {@code item/generated}'s fixed transform, for models without one: turned to face out of the frame. */
 	static Matrix4f generatedDisplay() {
 		return new Matrix4f().rotateY((float) Math.PI).translate(-0.5f, -0.5f, -0.5f);
+	}
+
+	/** The fixed transform of 1.8 to 1.12 head models, for jars without item models */
+	static Matrix4f skullDisplay() {
+		return new Matrix4f().translate(0, 4 * UNIT, 0).rotateY((float) Math.PI).translate(-0.5f, -0.5f, -0.5f);
 	}
 
 	/** {@code block/block}'s fixed transform, for models without one: half size. */

@@ -139,6 +139,20 @@ class ItemFrameEntityTest {
 		assertFalse(MessageDigest.isEqual(sword, hashWithItem(digest, "minecraft:diamond_sword", 0, true)));
 	}
 
+	@Test
+	void chunkHashDependsOnHeldPotion() throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		assertFalse(MessageDigest.isEqual(hashWithPotion(digest, "minecraft:swiftness"), hashWithPotion(digest, "minecraft:healing")));
+	}
+
+	private static byte[] hashWithPotion(MessageDigest digest, String potion) throws IOException {
+		var entity = modernFrame(3, 0);
+		entity.put("Item", new CompoundTag("Item", Map.of("id", new StringTag("id", "minecraft:potion"), "count", new IntTag("count", 1),
+				"components", new CompoundTag("components", Map.of("minecraft:potion_contents",
+						new CompoundTag("minecraft:potion_contents", Map.of("potion", new StringTag("potion", potion))))))));
+		return readSplit(entity).calculateHash(digest, mapId -> null);
+	}
+
 	private static byte[] hashWithItem(MessageDigest digest, String id, int rotation, boolean invisible) throws IOException {
 		var entity = modernFrame(3, rotation);
 		entity.put("Invisible", new ByteTag("Invisible", (byte) (invisible ? 1 : 0)));

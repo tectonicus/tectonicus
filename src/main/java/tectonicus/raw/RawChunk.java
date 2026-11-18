@@ -1654,7 +1654,9 @@ public class RawChunk {
 				if (item != null) {
 					DyedColorTag dye = item.getComponent(DyedColorTag.class);
 					BannerPatternsTag patterns = item.getComponent(BannerPatternsTag.class);
+					PotionContentsTag potion = item.getComponent(PotionContentsTag.class);
 					update(hashAlgorithm, new int[] {dye == null ? -1 : dye.color});
+					hashAlgorithm.update((potion == null || potion.potion == null ? "" : potion.potion).getBytes(StandardCharsets.UTF_8));
 					hashAlgorithm.update((patterns == null ? "" : patterns.toString()).getBytes(StandardCharsets.UTF_8));
 				}
 			}
