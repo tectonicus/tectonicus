@@ -210,7 +210,7 @@ class RawChunkTest {
 	}
 
 	private static CompoundTag modernSections(int minSectionY, Map<Integer, String> blocks) {
-		List<CompoundTag> sections = blocks.entrySet().stream().map(entry -> {
+		List<Tag> sections = blocks.entrySet().stream().<Tag>map(entry -> {
 			CompoundTag palette = new CompoundTag("", Map.of("Name", new StringTag("Name", entry.getValue())));
 			return new CompoundTag("", Map.of("Y", new ByteTag("Y", entry.getKey().byteValue()),
 					"block_states", new CompoundTag("block_states", Map.of("palette", new ListTag("palette", CompoundTag.class, List.of(palette))))));
