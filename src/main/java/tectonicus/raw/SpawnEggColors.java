@@ -9,16 +9,22 @@
 package tectonicus.raw;
 
 import lombok.extern.slf4j.Slf4j;
+import tectonicus.itemregistry.ItemLayers;
+import tectonicus.util.Colour4f;
 import tectonicus.util.FileUtils;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Colours of spawn eggs in jars before 1.21.4, where Minecraft tinted one grey egg texture in code rather than
- * listing the colours in item model definitions. {@code spawnEggColors.json} holds the colours registered by 1.13.2.
+ * listing the colours in item model definitions. {@code spawnEggColors.json} holds the colours registered by 1.21.3,
+ * plus zombie_pigman_spawn_egg from 1.13.2, which 1.16 renamed to zombified_piglin_spawn_egg.
  */
 @Slf4j
 public final class SpawnEggColors {
@@ -35,6 +41,34 @@ public final class SpawnEggColors {
 		return colors == null ? null : colors.clone();
 	}
 
+	/**
+	 * Colours the grey egg and spot layers of a spawn egg icon. Eggs from 1.21.5 on have one coloured texture and are
+	 * returned unchanged, as is anything that is not a known spawn egg.
+	 *
+	 * @param itemId a spawn egg ID, such as "minecraft:pig_spawn_egg"
+	 * @param layers the layers of the item model, bottom first
+	 * @return tinted copies of the two layers, or the given layers
+	 */
+	public static List<BufferedImage> tint(String itemId, List<BufferedImage> layers) {
+		int[] colors = COLORS.get(itemId);
+		if (colors == null || layers.size() != 2)
+			return layers;
+		List<BufferedImage> tinted = new ArrayList<>(2);
+		for (int i = 0; i < 2; i++) {
+			BufferedImage source = layers.get(i);
+			BufferedImage copy = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+			var graphics = copy.createGraphics();
+			try {
+				graphics.drawImage(source, 0, 0, null);
+			} finally {
+				graphics.dispose();
+			}
+			ItemLayers.tint(copy, new Colour4f(0xFF000000 | colors[i]));
+			tinted.add(copy);
+		}
+		return tinted;
+	}
+
 	private static Map<String, int[]> load() {
 		Map<String, int[]> colors = new HashMap<>();
 		try (InputStream in = SpawnEggColors.class.getResourceAsStream("/spawnEggColors.json")) {
@@ -45,9 +79,6 @@ public final class SpawnEggColors {
 		} catch (IOException e) {
 			log.warn("Unable to load spawn egg colours", e);
 		}
-		// Renamed in 1.16 with the same colours.
-		if (colors.containsKey("minecraft:zombie_pigman_spawn_egg"))
-			colors.put("minecraft:zombified_piglin_spawn_egg", colors.get("minecraft:zombie_pigman_spawn_egg"));
 		return Map.copyOf(colors);
 	}
 }

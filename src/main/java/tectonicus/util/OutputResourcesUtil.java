@@ -51,6 +51,7 @@ import tectonicus.raw.EnchantmentsTag;
 import tectonicus.raw.Item;
 import tectonicus.raw.Player;
 import tectonicus.raw.PotionContentsTag;
+import tectonicus.raw.SpawnEggColors;
 import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -800,11 +801,31 @@ public class OutputResourcesUtil {
                                 
                                 // Items that are just 2d textures
                                 if (modelName.endsWith("builtin/generated")) {
-                                        final Map<String, String> textures = itemModel.getTextures();
+                                        final Map<String, String> textures = itemRegistry.findTextures(itemModel);
                                         if (textures == null) {
                                                 // Textureless generated models are parent templates, not renderable items.
                                                 continue;
                                         }
+					if (entryKey.endsWith("_spawn_egg")) {
+						// Before 1.21.5 the egg is two grey layers that Minecraft colours in code
+						List<BufferedImage> eggLayers = new ArrayList<>();
+						for (String layerKey : List.of("layer0", "layer1")) {
+							if (textures.containsKey(layerKey))
+								eggLayers.add(ItemLayers.load(texturePack, blockRegistry, layerKey, textures.get(layerKey)));
+						}
+						if (eggLayers.size() == 2) {
+							BufferedImage egg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+							var graphics = egg.createGraphics();
+							try {
+								for (BufferedImage layer : SpawnEggColors.tint("minecraft:" + entryKey, eggLayers))
+									graphics.drawImage(layer, 0, 0, egg.getWidth(), egg.getHeight(), null);
+							} finally {
+								graphics.dispose();
+							}
+							writeImage(egg, 16, 16, outFile);
+							continue;
+						}
+					}
                                                 BufferedImage composited = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
                                                 for (var layer : textures.entrySet()) {
                                                         if (!layer.getKey().startsWith("layer")) {

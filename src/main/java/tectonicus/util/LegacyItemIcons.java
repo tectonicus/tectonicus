@@ -16,6 +16,7 @@ import tectonicus.Version;
 import tectonicus.blockTypes.Air;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.LegacyItems;
+import tectonicus.raw.SpawnEggColors;
 import tectonicus.texture.TexturePack;
 import tools.jackson.databind.JsonNode;
 
@@ -73,7 +74,7 @@ public final class LegacyItemIcons {
 				continue;
 			String name = id.substring(id.indexOf(':') + 1);
 			try {
-				List<BufferedImage> layers = flatLayers(entry, name);
+				List<BufferedImage> layers = SpawnEggColors.tint(id, flatLayers(entry, name));
 				if (!layers.isEmpty()) {
 					writeFlatIcon(name, layers);
 					rendered++;
