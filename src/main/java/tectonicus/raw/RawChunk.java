@@ -705,26 +705,14 @@ public class RawChunk {
 						final List<Item> items = new ArrayList<>();
 						final ListTag itemsTag = NbtUtil.getChild(entity, "Items", ListTag.class);
 						if (itemsTag != null) {
+							boolean legacyItems = LegacyItems.isLegacy(dataVersion);
 							for (var i : itemsTag.getValue()) {
 								if (i instanceof CompoundTag itemTag) {
-									
-									final StringTag itemIdTag = NbtUtil.getChild(itemTag, "id", StringTag.class);
 									final ByteTag itemSlotTag = NbtUtil.getChild(itemTag, "Slot", ByteTag.class);
-									
-									if (itemIdTag != null && itemSlotTag != null) {
-										final ByteTag itemCountByteTag = NbtUtil.getChild(itemTag, "Count", ByteTag.class);
-										final IntTag itemCountIntTag = NbtUtil.getChild(itemTag, "Count", IntTag.class); //1.20.5 changed to using IntTag for item count
-										int itemCount = 0;
-										if (itemCountIntTag != null) {
-											itemCount = itemCountIntTag.getValue();
-										} else if (itemCountByteTag != null) {
-											itemCount = itemCountByteTag.getValue();
-										}
-										
-										items.add(new Item(itemIdTag.getValue(), 0, itemCount, itemSlotTag.getValue(), parseItemComponents(itemTag)));
-									}
+									Item item = itemSlotTag == null ? null : ItemNbtParser.parse(itemTag, itemSlotTag.getValue(), legacyItems);
+									if (item != null)
+										items.add(item);
 								}
-								
 							}
 						}
 						

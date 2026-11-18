@@ -158,6 +158,67 @@ class PlayerInventoryTest {
 				"EnderItems", new ListTag("EnderItems", CompoundTag.class, List.of())))).getEnderChestInventory().isEmpty());
 	}
 
+	@Test
+	void convertsItemsSavedBeforeTheFlattening() {
+		CompoundTag numericSword = new CompoundTag("", Map.of(
+				"id", new ShortTag("id", (short) 276),
+				"Slot", new ByteTag("Slot", (byte) 0),
+				"Count", new ByteTag("Count", (byte) 1),
+				"Damage", new ShortTag("Damage", (short) 12),
+				"tag", new CompoundTag("tag", Map.of(
+						"ench", new ListTag("ench", CompoundTag.class, List.of(
+								new CompoundTag("", Map.of("id", new ShortTag("id", (short) 16),
+										"lvl", new ShortTag("lvl", (short) 4)))))))));
+		CompoundTag wool = legacyStack("minecraft:wool", 1, 14, 32);
+		CompoundTag splashPotion = legacyStack("minecraft:potion", 2, 16386, 1);
+		CompoundTag numericEgg = new CompoundTag("", Map.of("id", new ShortTag("id", (short) 383),
+				"Slot", new ByteTag("Slot", (byte) 3), "Count", new ByteTag("Count", (byte) 1),
+				"Damage", new ShortTag("Damage", (short) 90)));
+		CompoundTag egg = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:spawn_egg"),
+				"Slot", new ByteTag("Slot", (byte) 4), "Count", new ByteTag("Count", (byte) 1),
+				"tag", new CompoundTag("tag", Map.of("EntityTag", new CompoundTag("EntityTag",
+						Map.of("id", new StringTag("id", "minecraft:creeper")))))));
+		CompoundTag book = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:enchanted_book"),
+				"Slot", new ByteTag("Slot", (byte) 5), "Count", new ByteTag("Count", (byte) 1),
+				"tag", new CompoundTag("tag", Map.of("StoredEnchantments", new ListTag("StoredEnchantments", CompoundTag.class,
+						List.of(new CompoundTag("", Map.of("id", new ShortTag("id", (short) 70),
+								"lvl", new ShortTag("lvl", (short) 1)))))))));
+		Player player = new Player("Alex", new CompoundTag("", Map.of(
+				"DataVersion", new IntTag("DataVersion", 1343),
+				"Inventory", new ListTag("Inventory", CompoundTag.class,
+						List.of(numericSword, wool, splashPotion, numericEgg, egg, book)))));
+
+		List<Item> inventory = player.getInventory();
+		assertEquals(List.of("minecraft:diamond_sword", "minecraft:red_wool", "minecraft:splash_potion",
+				"minecraft:pig_spawn_egg", "minecraft:creeper_spawn_egg", "minecraft:enchanted_book"),
+				inventory.stream().map(item -> item.id).toList());
+		Item sword = inventory.getFirst();
+		assertEquals(12, sword.damage);
+		EnchantmentTag sharpness = sword.getComponent(EnchantmentsTag.class).enchantments.getFirst();
+		assertEquals("minecraft:sharpness", sharpness.id);
+		assertEquals(4, sharpness.level);
+		assertEquals(0, inventory.get(1).damage);
+		assertEquals(32, inventory.get(1).count);
+		assertEquals("minecraft:swiftness", inventory.get(2).getComponent(PotionContentsTag.class).potion);
+		assertEquals("minecraft:mending", inventory.get(5).getComponent(StoredEnchantmentsTag.class).enchantments.getFirst().id);
+	}
+
+	@Test
+	void readsLevelDatPlayersFromBeforeTheFlatteningAsLegacy() {
+		Player player = new Player("", new CompoundTag("", Map.of("Inventory", new ListTag("Inventory", CompoundTag.class,
+				List.of(legacyStack("minecraft:planks", 0, 2, 1))))), 0);
+		assertEquals("minecraft:birch_planks", player.getInventory().getFirst().id);
+		// Without a data version, string IDs are read as current IDs.
+		Player modern = new Player("", new CompoundTag("", Map.of("Inventory", new ListTag("Inventory", CompoundTag.class,
+				List.of(legacyStack("minecraft:birch_planks", 0, 0, 1))))));
+		assertEquals("minecraft:birch_planks", modern.getInventory().getFirst().id);
+	}
+
+	private static CompoundTag legacyStack(String id, int slot, int damage, int count) {
+		return new CompoundTag("", Map.of("id", new StringTag("id", id), "Slot", new ByteTag("Slot", (byte) slot),
+				"Count", new ByteTag("Count", (byte) count), "Damage", new ShortTag("Damage", (short) damage)));
+	}
+
 	private static Player playerWithInventory(CompoundTag... items) {
 		return new Player("Alex", new CompoundTag("", Map.of(
 				"Inventory", new ListTag("Inventory", CompoundTag.class, List.of(items)))));

@@ -9,11 +9,13 @@
 
 package tectonicus.raw;
 
+import org.jnbt.ByteTag;
 import org.jnbt.CompoundTag;
 import org.jnbt.IntTag;
 import org.jnbt.ListTag;
 import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
+import org.jnbt.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,12 +25,71 @@ final class ItemNbtParser {
 	private ItemNbtParser() {}
 
 	static Item parse(CompoundTag itemTag, int slot) {
-		String id = NbtUtil.getString(itemTag, "id", "");
+		return parse(itemTag, slot, false);
+	}
+
+	/**
+	 * @param legacy true if the item was saved before the 1.13 flattening, where the damage value can pick an item
+	 *               variant. Items saved with a numeric ID (before 1.8) are always read as legacy items.
+	 */
+	static Item parse(CompoundTag itemTag, int slot, boolean legacy) {
+		Tag idTag = itemTag.getValue().get("id");
+		String id = "";
+		if (idTag instanceof StringTag stringId) {
+			id = stringId.getValue();
+		} else if (numberValue(idTag) != null) {
+			legacy = true;
+			String legacyId = LegacyItems.get().fromNumericId(numberValue(idTag));
+			id = legacyId == null ? "" : legacyId;
+		}
 		int count = NbtUtil.getInt(itemTag, "Count", NbtUtil.getByte(itemTag, "Count", (byte) 1));
-		if (id.isEmpty() || id.equals("minecraft:air") || count <= 0)
+		if (id.isEmpty() || id.equals("minecraft:air") || id.equals("air") || count <= 0)
 			return null;
 
-		return new Item(id, NbtUtil.getShort(itemTag, "Damage", (short) 0), count, slot, parseItemComponents(itemTag));
+		int damage = NbtUtil.getShort(itemTag, "Damage", (short) 0);
+		if (legacy)
+			return parseLegacy(id, damage, count, slot, NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
+		return new Item(id, damage, count, slot, parseItemComponents(itemTag));
+	}
+
+	/** Converts an item saved before 1.13 to its 1.13 ID, as Minecraft does when it upgrades a world. */
+	private static Item parseLegacy(String id, int damage, int count, int slot, CompoundTag tag) {
+		LegacyItems legacyItems = LegacyItems.get();
+		if (id.indexOf(':') < 0)
+			id = "minecraft:" + id;
+		List<Object> components = parseTagTag(tag);
+		if (components == null)
+			components = new ArrayList<>();
+
+		if (id.equals("minecraft:spawn_egg")) {
+			// 1.9 to 1.12 eggs name their entity in EntityTag. Older eggs store the numeric entity ID as damage.
+			CompoundTag entityTag = tag == null ? null : NbtUtil.getChild(tag, "EntityTag", CompoundTag.class);
+			String entity = entityTag == null ? null : NbtUtil.getString(entityTag, "id", null);
+			if (entity == null)
+				entity = legacyItems.spawnEggEntity(damage);
+			String egg = legacyItems.spawnEggItem(entity);
+			return new Item(egg == null ? "minecraft:pig_spawn_egg" : egg, 0, count, slot, components);
+		}
+
+		if (id.equals("minecraft:potion") && (tag == null || NbtUtil.getChild(tag, "Potion", StringTag.class) == null)) {
+			// Before 1.9 the damage value held the potion effect and whether it was a splash potion.
+			components.add(new PotionContentsTag(legacyItems.potionFromDamage(damage)));
+			return new Item(LegacyItems.isSplashPotionDamage(damage) ? "minecraft:splash_potion" : "minecraft:potion",
+					0, count, slot, components);
+		}
+
+		boolean variant = legacyItems.usesDamageForVariant(id);
+		return new Item(legacyItems.toModernId(id, damage), variant ? 0 : damage, count, slot, components);
+	}
+
+	private static Integer numberValue(Tag tag) {
+		if (tag instanceof ShortTag shortTag)
+			return (int) shortTag.getValue();
+		if (tag instanceof IntTag intTag)
+			return intTag.getValue();
+		if (tag instanceof ByteTag byteTag)
+			return (int) byteTag.getValue();
+		return null;
 	}
 
 	static List<Object> parseItemComponents(CompoundTag itemTag) {
@@ -141,16 +202,23 @@ final class ItemNbtParser {
 			isStoredEnchantments = false;
 			enchantmentsTag = NbtUtil.getChild(tagTag, "Enchantments", ListTag.class);
 		}
+		if (enchantmentsTag == null) {
+			// 1.12 and older
+			enchantmentsTag = NbtUtil.getChild(tagTag, "ench", ListTag.class);
+		}
 		
 		if (enchantmentsTag != null) {
 			List<EnchantmentTag> enchantments = new ArrayList<>();
 			
 			for (var enchantmentTag : enchantmentsTag.getValue()) {
 				if (enchantmentTag instanceof CompoundTag enchantmentCompoundTag) {
-					StringTag idTag = NbtUtil.getChild(enchantmentCompoundTag, "id", StringTag.class);
-					ShortTag levelTag = NbtUtil.getChild(enchantmentCompoundTag, "lvl", ShortTag.class);
-					if (idTag != null && levelTag != null) {
-						enchantments.add(new EnchantmentTag(idTag.getValue(), Integer.valueOf(levelTag.getValue())));
+					Tag idTag = enchantmentCompoundTag.getValue().get("id");
+					Integer level = numberValue(enchantmentCompoundTag.getValue().get("lvl"));
+					// Enchantments had numeric IDs before 1.13
+					String id = idTag instanceof StringTag stringId ? stringId.getValue()
+							: numberValue(idTag) == null ? null : LegacyItems.get().enchantment(numberValue(idTag));
+					if (id != null && level != null) {
+						enchantments.add(new EnchantmentTag(id, level));
 					}
 				}
 			}

@@ -11,6 +11,7 @@ import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BannerPatternsTag;
 import tectonicus.raw.EnchantmentTag;
 import tectonicus.raw.Item;
+import tectonicus.raw.LegacyItems;
 import tectonicus.texture.ZipStack;
 import tectonicus.world.Colors;
 import tools.jackson.core.JacksonException;
@@ -38,7 +39,7 @@ import java.util.zip.ZipFile;
 /** Browser assets referenced by the markers exported across one world's dimensions. */
 @Slf4j
 public final class WorldViewerAssets {
-	private static final List<String> ENGLISH_TABLES = MapLocalization.languagePaths("en_us");
+	private static final List<String> ENGLISH_TABLES = MapLocalization.packLanguagePaths("en_us");
 	private static final Pattern CUSTOM_NAME = Pattern.compile("\\{(?:text:[^,)]*)?,?(?:translate:(?<key>[^,)]*))?,?(?:color:[^)]*)?}");
 	private static final Pattern POTION_DURATION = Pattern.compile("^(strong|long)_");
 	private static final Pattern MASK_NAME = Pattern.compile("[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*");
@@ -47,6 +48,7 @@ public final class WorldViewerAssets {
 	private final Set<String> translationKeys = new TreeSet<>(Set.of("attribute.name.armor", "attribute.name.generic.armor",
 			"container.inventory", "container.enderchest", "item.dyed", "item.minecraft.smithing_template.upgrade"));
 	private final Set<String> itemMasks = new TreeSet<>();
+	private final Set<String> itemIds = new TreeSet<>();
 	private final Set<Integer> fontCharacters = new TreeSet<>();
 	private final Set<SignBackground> signBackgrounds = new HashSet<>();
 	private final Map<BannerIcon, String> bannerIcons = new LinkedHashMap<>();
@@ -81,10 +83,16 @@ public final class WorldViewerAssets {
 		return bannerIcons;
 	}
 
+	/** @return the IDs of the items shown in exported inventories */
+	Set<String> itemIds() {
+		return itemIds;
+	}
+
 	void addItem(String id, String customName, boolean dyed, String potion, ArmorTrimTag trim, List<EnchantmentTag> enchantments) {
 		String[] item = id.split(":", -1);
 		if (item.length < 2) return;
 		String name = item[1];
+		itemIds.add(id);
 		addText(name);
 		String itemKey = "item." + item[0] + "." + name;
 		translationKeys.add(itemKey + ".desc");
@@ -215,6 +223,13 @@ public final class WorldViewerAssets {
 	private void addTranslations(Map<String, String> translations, Map<String, String> source) {
 		for (String key : translationKeys) {
 			String value = source.get(key);
+			if (value == null) {
+				// Language files before 1.13 use different keys, for example item.swordDiamond.name.
+				for (String legacyKey : LegacyItems.get().translationAliases(key)) {
+					value = source.get(legacyKey);
+					if (value != null) break;
+				}
+			}
 			if (value != null && !value.isEmpty()) translations.put(key, value);
 		}
 	}
