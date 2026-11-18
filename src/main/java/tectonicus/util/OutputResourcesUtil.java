@@ -34,13 +34,13 @@ import tectonicus.configuration.filter.PlayerFilter;
 import tectonicus.configuration.filter.SignFilterType;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinition;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
+import tectonicus.itemregistry.ItemLayers;
 import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
-import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.ContainerKind;
@@ -51,6 +51,7 @@ import tectonicus.raw.EnchantmentsTag;
 import tectonicus.raw.Item;
 import tectonicus.raw.Player;
 import tectonicus.raw.PotionContentsTag;
+import tectonicus.raw.SpawnEggColors;
 import tectonicus.raw.StoredEnchantmentsTag;
 import tectonicus.texture.TexturePack;
 import tectonicus.texture.ZipStack;
@@ -800,59 +801,39 @@ public class OutputResourcesUtil {
                                 
                                 // Items that are just 2d textures
                                 if (modelName.endsWith("builtin/generated")) {
-                                        final Map<String, String> textures = itemModel.getTextures();
+                                        final Map<String, String> textures = itemRegistry.findTextures(itemModel);
                                         if (textures == null) {
                                                 // Textureless generated models are parent templates, not renderable items.
                                                 continue;
                                         }
+					if (entryKey.endsWith("_spawn_egg")) {
+						// Before 1.21.5 the egg is two grey layers that Minecraft colours in code
+						List<BufferedImage> eggLayers = new ArrayList<>();
+						for (String layerKey : List.of("layer0", "layer1")) {
+							if (textures.containsKey(layerKey))
+								eggLayers.add(ItemLayers.load(texturePack, blockRegistry, layerKey, textures.get(layerKey)));
+						}
+						if (eggLayers.size() == 2) {
+							BufferedImage egg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+							var graphics = egg.createGraphics();
+							try {
+								for (BufferedImage layer : SpawnEggColors.tint("minecraft:" + entryKey, eggLayers))
+									graphics.drawImage(layer, 0, 0, egg.getWidth(), egg.getHeight(), null);
+							} finally {
+								graphics.dispose();
+							}
+							writeImage(egg, 16, 16, outFile);
+							continue;
+						}
+					}
                                                 BufferedImage composited = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
                                                 for (var layer : textures.entrySet()) {
                                                         if (!layer.getKey().startsWith("layer")) {
                                                                 // Ignore particles
                                                                 continue;
                                                         }
-                                                        final String[] layerTexture = layer.getValue().split(":");
-                                                        final String namespace = layerTexture.length == 1 ? "minecraft" : layerTexture[0];
-                                                        final String textureId = layerTexture.length == 1 ? layerTexture[0] : layerTexture[1];
-                                                        
-                                                        BufferedImage texture;
-                                                        String texturePath;
-                                                        
-                                                        if (!layer.getKey().equals("layer0") && textureId.contains("trim")) {
-                                                                String[] trimParts = textureId.split("_trim_");
-                                                                
-                                                                texturePath = "assets/" + namespace + "/textures/" + trimParts[0] + "_trim.png";
-                                                                String palette;
-                                                                String keyPalette;
-                                                                String newKeyPalette = "assets/" + namespace + "/textures/palettes/trim_base.png";
-                                                                if (texturePack.getZipStack().hasFile(newKeyPalette)) { //26.3+
-                                                                        palette = "assets/" + namespace + "/textures/palettes/trim/" + trimParts[1] + ".png";
-                                                                        keyPalette = newKeyPalette;
-                                                                } else {
-                                                                        palette = "assets/" + namespace + "/textures/trims/color_palettes/" + trimParts[1] + ".png";
-                                                                        keyPalette = "assets/" + namespace + "/textures/trims/color_palettes/trim_palette.png";
-                                                                }
-                                                                
-                                                                texture = texturePack.loadPalettedTexture(texturePath, palette, keyPalette);
-                                                        } else {
-                                                                texturePath = "assets/" + namespace + "/textures/" + textureId + ".png";
-                                                                texture = texturePack.loadTexture(texturePath);
-                                                        }
-                                                        texture = texturePack.getTextureFirstFrame(texturePath, texture);
-                                                        
-                                                        var block = blockRegistry.getBlockModels().getIfPresent(layer.getValue());
-                                                        if (block != null) {
-                                                                if (block.getElements().get(0).getFaces().values().iterator().next().isTinted()) {
-                                                                        Colour4f tintColor = texturePack.getFoliageColor(BiomesOld.FOREST);
-                                                                        for (int y=0; y<texture.getHeight(); y++) {
-                                                                                for (int x=0; x<texture.getWidth(); x++) {
-                                                                                        Colour4f pixel = new Colour4f(texture.getRGB(x, y));
-                                                                                        pixel.multiply(tintColor);
-                                                                                        texture.setRGB(x, y, pixel.toArgb());
-                                                                                }
-                                                                        }
-                                                                }
-                                                        }
+                                                        final String textureId = layer.getValue().substring(layer.getValue().indexOf(':') + 1);
+                                                        BufferedImage texture = ItemLayers.load(texturePack, blockRegistry, layer.getKey(), layer.getValue());
                                                               
                                                         if (layer.getKey().equals("layer0") &&
                                                                 (

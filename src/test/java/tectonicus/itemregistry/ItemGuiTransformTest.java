@@ -51,6 +51,17 @@ class ItemGuiTransformTest {
 		});
 	}
 
+	@Test void readsOtherDisplayContextsAndReportsMissingOnes() throws Exception {
+		withModels(Map.of(
+				"item/sword", "{\"parent\":\"item/generated\"}",
+				"item/generated", "{\"display\":{\"fixed\":{\"rotation\":[0,180,0]}}}"), zips -> {
+			Matrix4f fixed = ItemGuiTransform.loadDisplay(zips, "minecraft:item/sword", "fixed");
+			// Turned half way around the centre of the model, which then sits at the origin.
+			assertTrue(new Vector3f(0.5f, 0, -0.5f).equals(fixed.transformPosition(new Vector3f(0, 0.5f, 1)), 0.00001f));
+			assertNull(ItemGuiTransform.loadDisplay(zips, "item/sword", "head"));
+		});
+	}
+
 	@Test void appliesScaleThenXyzRotationThenTranslationAroundModelCenter() {
 		Matrix4f pose = ItemGuiTransform.fromJson(new ObjectMapper().readTree("""
 				{"rotation":[0,0,90],"translation":[0,8,0],"scale":[2,1,1]}

@@ -66,6 +66,15 @@ public class Geometry
 		meshes.put(MeshType.Transparent, new HashMap<>());
 	}
 	
+	/** Lets a wrapper add vertices to another geometry's meshes. */
+	protected Geometry(Geometry target)
+	{
+		rasteriser = target.rasteriser;
+		baseMesh = target.baseMesh;
+		transparentMesh = target.transparentMesh;
+		meshes = target.meshes;
+	}
+	
 	public void destroy()
 	{
 		baseMesh.destroy();

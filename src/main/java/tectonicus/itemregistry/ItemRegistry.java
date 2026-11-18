@@ -73,6 +73,22 @@ public class ItemRegistry {
 		}
 	}
 	
+	/**
+	 * @return the textures of the model, or of its nearest parent that has some, such as the template that spawn eggs
+	 *         use from 1.13 to 1.21.4; null if no model in the chain has textures
+	 */
+	public Map<String, String> findTextures(ItemModel itemModel) {
+		for (int depth = 0; itemModel != null && depth < 32; depth++) {
+			if (itemModel.getTextures() != null)
+				return itemModel.getTextures();
+			if (itemModel.getParent() == null)
+				return null;
+			String parentKey = Strings.CI.removeStart(itemModel.getParent(), "minecraft:");
+			itemModel = models.get(Strings.CI.removeStart(parentKey, "item/"));
+		}
+		return null;
+	}
+	
 	public List<Map<String, ArrayList<Float>>> getTransformsList(ItemModel itemModel) {
 		List<Map<String, ArrayList<Float>>> transforms = new ArrayList<>();
 		while (true) {

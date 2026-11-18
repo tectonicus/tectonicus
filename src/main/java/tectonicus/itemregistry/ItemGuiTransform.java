@@ -23,17 +23,26 @@ public final class ItemGuiTransform {
 	private ItemGuiTransform() {}
 
 	public static Matrix4f load(ZipStack zips, String model) throws IOException {
-		JsonNode gui = inheritedProperty(zips, model, "gui");
-		return gui == null ? new Matrix4f().translate(-0.5f, -0.5f, -0.5f) : fromJson(gui);
+		Matrix4f gui = loadDisplay(zips, model, "gui");
+		return gui == null ? new Matrix4f().translate(-0.5f, -0.5f, -0.5f) : gui;
+	}
+
+	/**
+	 * @param context a display context of the model, such as "gui" or "fixed"
+	 * @return the model's transform for that context, or null if neither the model nor its parents set one
+	 */
+	public static Matrix4f loadDisplay(ZipStack zips, String model, String context) throws IOException {
+		JsonNode display = inheritedProperty(zips, model, context, true);
+		return display == null ? null : fromJson(display);
 	}
 
 	public static boolean isSideLit(ZipStack zips, String model) throws IOException {
-		JsonNode light = inheritedProperty(zips, model, "gui_light");
+		JsonNode light = inheritedProperty(zips, model, "gui_light", false);
 		// gui_light was introduced after 1.13; legacy 3D item models use side lighting.
 		return light == null || !"front".equals(light.asString());
 	}
 
-	private static JsonNode inheritedProperty(ZipStack zips, String model, String property) throws IOException {
+	private static JsonNode inheritedProperty(ZipStack zips, String model, String property, boolean display) throws IOException {
 		Set<String> visited = new HashSet<>();
 		while (model != null && visited.add(model)) {
 			String[] id = model.split(":", 2);
@@ -43,8 +52,8 @@ public final class ItemGuiTransform {
 				if (stream == null)
 					break;
 				JsonNode json = MAPPER.readTree(stream);
-				JsonNode container = property.equals("gui") ? json.get("display") : json;
-				// A child's GUI entry replaces the parent's entire entry, including omitted defaults.
+				JsonNode container = display ? json.get("display") : json;
+				// A child's display entry replaces the parent's entire entry, including omitted defaults.
 				if (container != null && container.has(property))
 					return container.get(property);
 				model = json.has("parent") ? json.get("parent").asString() : null;

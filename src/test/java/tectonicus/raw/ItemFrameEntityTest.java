@@ -82,6 +82,84 @@ class ItemFrameEntityTest {
 		assertFalse(MessageDigest.isEqual(initial, readSplit(modernFrame(2, 1)).calculateHash(digest, id -> new byte[] {1})));
 	}
 
+	@Test
+	void readsHeldItemEighthTurnsAndInvisibility() throws IOException {
+		var entity = modernFrame(3, 5);
+		entity.put("Invisible", new ByteTag("Invisible", (byte) 1));
+		entity.put("Item", new CompoundTag("Item", Map.of("id", new StringTag("id", "minecraft:leather_helmet"),
+				"count", new IntTag("count", 1),
+				"components", new CompoundTag("components", Map.of("minecraft:dyed_color", new IntTag("minecraft:dyed_color", 0x3366FF))))));
+		ItemFrameEntity frame = readSplit(entity).getItemFrames().getFirst();
+		assertEquals("minecraft:leather_helmet", frame.getItem().id);
+		assertEquals(0x3366FF, frame.getItem().getComponent(DyedColorTag.class).color);
+		assertEquals(5, frame.getItemRotation());
+		assertEquals(1, frame.getRotation());
+		assertTrue(frame.isInvisible());
+		assertFalse(frame.isFilledMap());
+	}
+
+	@Test
+	void mapsAreNotHeldItems() throws IOException {
+		ItemFrameEntity frame = readSplit(modernFrame(2, 0)).getItemFrames().getFirst();
+		assertNull(frame.getItem());
+		assertFalse(frame.isInvisible());
+	}
+
+	@Test
+	void convertsNumericItemsAndQuarterTurnsFromBefore18() throws IOException {
+		Map<String, Tag> entity = oldPosition("ItemFrame");
+		entity.put("Direction", new ByteTag("Direction", (byte) 0));
+		entity.put("ItemRotation", new ByteTag("ItemRotation", (byte) 3));
+		entity.put("Item", new CompoundTag("Item", Map.of("id", new ShortTag("id", (short) 35),
+				"Damage", new ShortTag("Damage", (short) 14), "Count", new ByteTag("Count", (byte) 1))));
+		ItemFrameEntity frame = readEmbedded(entity, Version.VERSION_4).getItemFrames().getFirst();
+		assertEquals("minecraft:red_wool", frame.getItem().id);
+		assertEquals(6, frame.getItemRotation());
+	}
+
+	@Test
+	void convertsDamageVariantsSavedBefore113() throws IOException {
+		Map<String, Tag> entity = oldPosition("minecraft:item_frame");
+		entity.put("Facing", new ByteTag("Facing", (byte) 0));
+		entity.put("ItemRotation", new ByteTag("ItemRotation", (byte) 3));
+		entity.put("Item", new CompoundTag("Item", Map.of("id", new StringTag("id", "minecraft:log"),
+				"Damage", new ShortTag("Damage", (short) 2), "Count", new ByteTag("Count", (byte) 1))));
+		ItemFrameEntity frame = readEmbedded(entity, Version.VERSION_12).getItemFrames().getFirst();
+		assertEquals("minecraft:birch_log", frame.getItem().id);
+		assertEquals(3, frame.getItemRotation());
+	}
+
+	@Test
+	void chunkHashDependsOnHeldItem() throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		byte[] sword = hashWithItem(digest, "minecraft:diamond_sword", 0, false);
+		assertArrayEquals(sword, hashWithItem(digest, "minecraft:diamond_sword", 0, false));
+		assertFalse(MessageDigest.isEqual(sword, hashWithItem(digest, "minecraft:iron_sword", 0, false)));
+		assertFalse(MessageDigest.isEqual(sword, hashWithItem(digest, "minecraft:diamond_sword", 5, false)));
+		assertFalse(MessageDigest.isEqual(sword, hashWithItem(digest, "minecraft:diamond_sword", 0, true)));
+	}
+
+	@Test
+	void chunkHashDependsOnHeldPotion() throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-1");
+		assertFalse(MessageDigest.isEqual(hashWithPotion(digest, "minecraft:swiftness"), hashWithPotion(digest, "minecraft:healing")));
+	}
+
+	private static byte[] hashWithPotion(MessageDigest digest, String potion) throws IOException {
+		var entity = modernFrame(3, 0);
+		entity.put("Item", new CompoundTag("Item", Map.of("id", new StringTag("id", "minecraft:potion"), "count", new IntTag("count", 1),
+				"components", new CompoundTag("components", Map.of("minecraft:potion_contents",
+						new CompoundTag("minecraft:potion_contents", Map.of("potion", new StringTag("potion", potion))))))));
+		return readSplit(entity).calculateHash(digest, mapId -> null);
+	}
+
+	private static byte[] hashWithItem(MessageDigest digest, String id, int rotation, boolean invisible) throws IOException {
+		var entity = modernFrame(3, rotation);
+		entity.put("Invisible", new ByteTag("Invisible", (byte) (invisible ? 1 : 0)));
+		entity.put("Item", new CompoundTag("Item", Map.of("id", new StringTag("id", id), "count", new IntTag("count", 1))));
+		return readSplit(entity).calculateHash(digest, mapId -> null);
+	}
+
 	private static Map<String, Tag> oldPosition(String entityId) {
 		return new HashMap<>(Map.of("id", new StringTag("id", entityId), "TileX", new IntTag("TileX", 0),
 				"TileY", new IntTag("TileY", 64), "TileZ", new IntTag("TileZ", 4)));
@@ -106,7 +184,7 @@ class ItemFrameEntityTest {
 
 	private static RawChunk readSplit(Map<String, Tag> entity) throws IOException {
 		ChunkData blocks = data(Map.of("sections", emptyList("sections"), "block_entities", emptyList("block_entities"),
-				"yPos", new IntTag("yPos", -4)));
+				"yPos", new IntTag("yPos", -4), "DataVersion", new IntTag("DataVersion", Version.VERSION_26_3.getDataVersion())));
 		return new RawChunk(blocks, data(Map.of("Entities", entities(entity))), null, new WorldInfo(Version.VERSION_26_3, true));
 	}
 
