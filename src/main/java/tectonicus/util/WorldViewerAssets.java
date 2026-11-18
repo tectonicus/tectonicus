@@ -225,8 +225,10 @@ public final class WorldViewerAssets {
 			String value = source.get(key);
 			if (value == null) {
 				// Language files before 1.13 use different keys, for example item.swordDiamond.name.
-				String legacyKey = LegacyItems.get().translationAlias(key);
-				if (legacyKey != null) value = source.get(legacyKey);
+				for (String legacyKey : LegacyItems.get().translationAliases(key)) {
+					value = source.get(legacyKey);
+					if (value != null) break;
+				}
 			}
 			if (value != null && !value.isEmpty()) translations.put(key, value);
 		}

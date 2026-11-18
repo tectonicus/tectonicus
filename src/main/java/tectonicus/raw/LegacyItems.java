@@ -50,6 +50,7 @@ public final class LegacyItems {
 	private final Map<Integer, String> enchantments = new HashMap<>();
 	private final Map<String, Entry> items = new HashMap<>();
 	private final Map<String, String> translationAliases = new HashMap<>();
+	private final Map<String, List<String>> olderLangKeys = new HashMap<>();
 
 	/**
 	 * How an item was saved before 1.13 and where to find its name and icon in an old jar.
@@ -114,6 +115,12 @@ public final class LegacyItems {
 					Collections.unmodifiableList(textures), item.path("atlas").asInt(-1)));
 		});
 		readMap(root.path("translationAliases"), translationAliases);
+		root.path("olderLangKeys").properties().forEach(e -> {
+			List<String> keys = new ArrayList<>();
+			for (JsonNode key : e.getValue())
+				keys.add(key.asString());
+			olderLangKeys.put(e.getKey(), List.copyOf(keys));
+		});
 	}
 
 	private static void readMap(JsonNode node, Map<String, String> map) {
@@ -217,6 +224,24 @@ public final class LegacyItems {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * @return the keys to look up, in order, in a pre-1.13 language file for a 1.13 translation key. After the 1.12 key
+	 * come the keys used by older jars, for example {@code tile.log.name} for oak logs before 1.3.
+	 */
+	public List<String> translationAliases(String key) {
+		String alias = translationAlias(key);
+		if (alias == null)
+			return List.of();
+		List<String> keys = new ArrayList<>();
+		keys.add(alias);
+		keys.addAll(olderLangKeys.getOrDefault(alias, List.of()));
+		// Before 1.3 most variants shared one name, for example tile.wood.name instead of tile.wood.oak.name.
+		String[] parts = alias.split("\\.");
+		if (parts.length == 4 && "name".equals(parts[3]))
+			keys.add(parts[0] + "." + parts[1] + ".name");
+		return keys;
 	}
 
 	private static String namespaced(String id) {

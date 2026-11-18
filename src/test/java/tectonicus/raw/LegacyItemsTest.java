@@ -81,6 +81,17 @@ class LegacyItemsTest {
 	}
 
 	@Test
+	void triesLanguageKeysOfJarsBefore1_3() {
+		assertEquals(List.of("tile.log.oak.name", "tile.log.name"), items.translationAliases("item.minecraft.oak_log"));
+		assertEquals(List.of("tile.stone.stone.name", "tile.stone.name"), items.translationAliases("block.minecraft.stone"));
+		assertEquals(List.of("item.diamond.name", "item.emerald.name"), items.translationAliases("item.minecraft.diamond"));
+		assertEquals(List.of("tile.stoneSlab.name", "tile.stoneSlab.stone.name"),
+				items.translationAliases("item.minecraft.stone_slab"));
+		assertEquals(List.of("item.swordDiamond.name"), items.translationAliases("item.minecraft.diamond_sword"));
+		assertEquals(List.of(), items.translationAliases("container.inventory"));
+	}
+
+	@Test
 	void treatsSavesBeforeTheFlatteningAsLegacy() {
 		assertTrue(LegacyItems.isLegacy(0));
 		assertTrue(LegacyItems.isLegacy(1343));

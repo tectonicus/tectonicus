@@ -1624,6 +1624,19 @@
   "minecraft:zombie_spawn_egg": {"legacy": "minecraft:spawn_egg", "damage": 0, "numericId": 383, "model": "spawn_egg", "lang": "item.monsterPlacer.name", "textures": ["items/spawn_egg", "items/spawn_egg_overlay"], "atlas": 153},
   "minecraft:zombie_villager_spawn_egg": {"legacy": "minecraft:spawn_egg", "damage": 0, "numericId": 383, "model": "spawn_egg", "lang": "item.monsterPlacer.name", "textures": ["items/spawn_egg", "items/spawn_egg_overlay"], "atlas": 153}
 },
+"olderLangKeys": {
+  "item.diamond.name": ["item.emerald.name"],
+  "item.doorOak.name": ["item.doorWood.name"],
+  "item.fish.cod.cooked.name": ["item.fishCooked.name"],
+  "item.fish.cod.raw.name": ["item.fishRaw.name"],
+  "tile.flower1.dandelion.name": ["tile.flower.name"],
+  "tile.flower2.poppy.name": ["tile.rose.name"],
+  "tile.monsterStoneEgg.name": ["tile.monsterStoneEgg.stone.name"],
+  "tile.pressurePlateStone.name": ["tile.pressurePlate.name"],
+  "tile.pressurePlateWood.name": ["tile.pressurePlate.name"],
+  "tile.stoneSlab.name": ["tile.stoneSlab.stone.name"],
+  "tile.woodSlab.name": ["tile.woodSlab.oak.name"]
+},
 "translationAliases": {
   "effect.minecraft.absorption": "effect.absorption",
   "effect.minecraft.blindness": "effect.blindness",
