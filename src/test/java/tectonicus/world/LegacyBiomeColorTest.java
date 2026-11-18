@@ -1,6 +1,6 @@
 package tectonicus.world;
 
-import biomeextractor.WorldProcessor;
+import org.tectonicus.biomeextractor.WorldProcessor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

@@ -1,7 +1,7 @@
 package tectonicus.cache;
 
-import biomeextractor.ByteCoord;
-import biomeextractor.WorldProcessor;
+import org.tectonicus.biomeextractor.ByteCoord;
+import org.tectonicus.biomeextractor.WorldProcessor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.chunk.ChunkCoord;
