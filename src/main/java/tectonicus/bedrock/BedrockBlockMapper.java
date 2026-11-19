@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -43,6 +44,7 @@ import java.util.zip.GZIPInputStream;
 @Slf4j
 public final class BedrockBlockMapper {
 	private static final String RESOURCE = "/bedrock/blocks.tsv.gz";
+	private static final String LEGACY_RESOURCE = "/bedrock/legacy.tsv.gz";
 	private static final Set<String> CHESTS = Set.of("minecraft:chest", "minecraft:trapped_chest");
 
 	/**
@@ -76,13 +78,20 @@ public final class BedrockBlockMapper {
 	private static volatile BedrockBlockMapper instance;
 
 	private final Map<String, String> table;
+	/** States by Bedrock name and data value, such as {@code minecraft:fence:5}, for palettes saved before 1.13. */
+	private final Map<String, String> legacy;
 	private final Map<String, List<Candidate>> byName = new HashMap<>();
 	private final Map<String, JavaState> cache = new ConcurrentHashMap<>();
 	private final Map<JavaState, JavaState> waterlogged = new ConcurrentHashMap<>();
 	private final Set<String> reported = ConcurrentHashMap.newKeySet();
 
 	BedrockBlockMapper(Map<String, String> table) {
+		this(table, Map.of());
+	}
+
+	BedrockBlockMapper(Map<String, String> table, Map<String, String> legacy) {
 		this.table = table;
+		this.legacy = legacy;
 		for (Map.Entry<String, String> entry : table.entrySet()) {
 			String key = entry.getKey();
 			byName.computeIfAbsent(name(key), k -> new ArrayList<>()).add(new Candidate(parseProperties(key), entry.getValue()));
@@ -95,7 +104,7 @@ public final class BedrockBlockMapper {
 			synchronized (BedrockBlockMapper.class) {
 				mapper = instance;
 				if (mapper == null) {
-					mapper = new BedrockBlockMapper(load());
+					mapper = new BedrockBlockMapper(load(), loadLegacy());
 					instance = mapper;
 				}
 			}
@@ -105,28 +114,56 @@ public final class BedrockBlockMapper {
 
 	private static Map<String, String> load() {
 		Map<String, String> table = new HashMap<>(32768);
-		try (InputStream raw = BedrockBlockMapper.class.getResourceAsStream(RESOURCE)) {
+		readTable(RESOURCE, line -> {
+			int tab = line.indexOf('\t');
+			if (tab > 0)
+				table.put(line.substring(0, tab), line.substring(tab + 1));
+		});
+		log.debug("Loaded {} Bedrock block states", table.size());
+		return table;
+	}
+
+	private static Map<String, String> loadLegacy() {
+		Map<String, String> legacy = new HashMap<>(8192);
+		readTable(LEGACY_RESOURCE, line -> {
+			String[] parts = line.split("\t");
+			if (parts.length == 3)
+				legacy.put(parts[0] + ':' + parts[1], parts[2]);
+		});
+		return legacy;
+	}
+
+	private static void readTable(String resource, Consumer<String> lines) {
+		try (InputStream raw = BedrockBlockMapper.class.getResourceAsStream(resource)) {
 			if (raw == null)
-				throw new IllegalStateException("Missing resource " + RESOURCE);
+				throw new IllegalStateException("Missing resource " + resource);
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(raw), StandardCharsets.UTF_8))) {
 				String line;
 				while ((line = reader.readLine()) != null) {
-					if (line.isEmpty() || line.startsWith("#"))
-						continue;
-					int tab = line.indexOf('\t');
-					if (tab > 0)
-						table.put(line.substring(0, tab), line.substring(tab + 1));
+					if (!line.isEmpty() && !line.startsWith("#"))
+						lines.accept(line);
 				}
 			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		log.debug("Loaded {} Bedrock block states", table.size());
-		return table;
 	}
 
-	/** Maps one palette entry: a compound with {@code name} and a {@code states} compound. */
+	/**
+	 * Maps one palette entry: a compound with {@code name} and a {@code states} compound, or, in worlds saved by
+	 * Bedrock 1.2.13 to 1.12, a {@code val} data value instead of the states.
+	 */
 	public JavaState map(CompoundTag paletteEntry) {
+		Tag val = paletteEntry.getValue().get("val");
+		if (val != null && !(paletteEntry.getValue().get("states") instanceof CompoundTag states && !states.getValue().isEmpty())) {
+			String name = bedrockName(paletteEntry);
+			int data = BedrockItems.number(val, 0);
+			String key = legacy.get(name + ':' + data);
+			if (key == null)
+				key = legacy.get(name + ":0"); // A data value the block does not use
+			if (key != null)
+				return map(key);
+		}
 		return map(key(paletteEntry));
 	}
 

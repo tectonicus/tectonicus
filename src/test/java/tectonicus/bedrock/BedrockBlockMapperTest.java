@@ -12,6 +12,7 @@ package tectonicus.bedrock;
 import org.tectonicus.jnbt.ByteTag;
 import org.tectonicus.jnbt.CompoundTag;
 import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ShortTag;
 import org.tectonicus.jnbt.StringTag;
 import org.tectonicus.jnbt.Tag;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,26 @@ class BedrockBlockMapperTest {
 		JavaState door = mapper.map("minecraft:wooden_door[direction=0,door_hinge_bit=0,open_bit=0,upper_block_bit=1]");
 		assertEquals("minecraft:oak_door", door.name());
 		assertEquals("upper", door.properties().get("half"));
+	}
+
+	private JavaState legacy(String name, int val) {
+		return mapper.map(new CompoundTag("", Map.of("name", new StringTag("name", name), "val", new ShortTag("val", (short) val))));
+	}
+
+	@Test
+	void mapsDataValuesFromBefore113() {
+		assertEquals("minecraft:oak_fence", legacy("minecraft:fence", 0).name());
+		assertEquals("minecraft:dark_oak_fence", legacy("minecraft:fence", 5).name());
+		assertEquals("minecraft:cobblestone_wall", legacy("minecraft:cobblestone_wall", 0).name());
+		assertEquals("minecraft:mossy_cobblestone_wall", legacy("minecraft:cobblestone_wall", 1).name());
+		assertEquals("minecraft:red_wool", legacy("minecraft:wool", 14).name());
+		JavaState log = legacy("minecraft:log", 6);
+		assertEquals("minecraft:birch_log", log.name());
+		assertEquals("x", log.get("axis"));
+		assertEquals("top", legacy("minecraft:oak_stairs", 4).get("half"));
+		assertEquals("0", legacy("minecraft:water", 0).get("level"));
+		assertEquals("minecraft:stone", legacy("minecraft:stone", 0).name());
+		assertEquals("minecraft:oak_fence", legacy("minecraft:fence", 9).name()); // Unused data value
 	}
 
 	@Test

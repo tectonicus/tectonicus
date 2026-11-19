@@ -10,6 +10,11 @@ blocks.tsv.gz holds one line per Bedrock block state: the Bedrock name and state
 name and properties, both in name[key=value,...] form with keys sorted. Tables for older Bedrock versions
 fill in block names that newer versions renamed, so worlds with sub-chunks saved by older versions still
 map. The newest table wins when two tables disagree.
+
+legacy.tsv.gz maps the data values that Bedrock 1.2.13 to 1.12 saved in palettes ({name, val} instead of
+{name, states}) to states: the Bedrock name, a tab, the data value, a tab, then the state in the blocks.tsv form.
+The bedrock/1.16.201 blockStates.json lists each block's states in data value order, so a state's position among
+its block's states is its data value.
 """
 import gzip
 import json
@@ -57,6 +62,9 @@ BIOMES = {
 # Numeric ids missing from the newest minecraft-data table that lists real ids (bedrock/1.20.0).
 EXTRA_BIOME_IDS = {192: 'cherry_grove', 193: 'pale_garden'}
 
+# The newest minecraft-data table whose block states are listed in data value order.
+LEGACY_VERSION = '1.16.201'
+
 STATE = re.compile(r'^([^\[]+)\[(.*)\]$')
 
 
@@ -94,6 +102,19 @@ def main(data_dir, out_dir):
 		f.write(f'# Bedrock to Java block states from minecraft-data {", ".join(versions)} (MIT licence)\n')
 		for key in sorted(blocks):
 			f.write(f'{key}\t{blocks[key]}\n')
+
+	legacy = {}
+	for state in json.loads((bedrock / LEGACY_VERSION / 'blockStates.json').read_text()):
+		name = 'minecraft:' + state['name']
+		values = legacy.setdefault(name, [])
+		if len(values) < 16:
+			props = ','.join(f'{k}={v["value"]}' for k, v in sorted(state['states'].items()))
+			values.append(f'{name}[{props}]')
+	with gzip.open(out / 'legacy.tsv.gz', 'wt', encoding='utf-8', compresslevel=9) as f:
+		f.write(f'# Bedrock data values to block states from minecraft-data {LEGACY_VERSION} (MIT licence)\n')
+		for name in sorted(legacy):
+			for value, key in enumerate(legacy[name]):
+				f.write(f'{name}\t{value}\t{key}\n')
 
 	ids = {b['id']: b['name'] for b in json.loads((bedrock / '1.20.0' / 'biomes.json').read_text())}
 	ids.update(EXTRA_BIOME_IDS)

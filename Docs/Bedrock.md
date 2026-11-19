@@ -45,3 +45,5 @@ treated as 1x1.
 The block and biome tables in `src/main/resources/bedrock` are generated from
 [PrismarineJS minecraft-data](https://github.com/PrismarineJS/minecraft-data) (MIT licence) by
 `SourceData/bedrock/generate_bedrock_mappings.py`. Regenerate them when a new Minecraft version adds blocks.
+Worlds saved by Bedrock 1.2.13 to 1.12 name each block's variant with a data value instead of states;
+`legacy.tsv.gz` turns those into states.
