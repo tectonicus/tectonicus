@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * The Minecraft jar with any number of resource packs stacked on top, resolved like Minecraft's resource manager:
@@ -122,8 +123,12 @@ public class ZipStack implements AutoCloseable
 	}
 
 	private ResourcePack top(String path) {
+		return top(path, ResourcePack::has);
+	}
+
+	private ResourcePack top(String path, BiPredicate<ResourcePack, String> hasPath) {
 		for (ResourcePack layer : layers) {
-			if (layer.has(path))
+			if (hasPath.test(layer, path))
 				return layer;
 			if (layer.hides(path))
 				return null;
@@ -190,6 +195,10 @@ public class ZipStack implements AutoCloseable
 	public boolean hasFile(String file)
 	{
 		return top(file) != null;  //TODO: Maybe need to check mod jar files too?
+	}
+
+	boolean hasDirectory(String path) {
+		return top(path, ResourcePack::hasDirectory) != null;
 	}
 
 	public String getBaseFileName()

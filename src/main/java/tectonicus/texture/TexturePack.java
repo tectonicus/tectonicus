@@ -232,12 +232,12 @@ public class TexturePack
 //			}
 			
 			String bedTextureDir = "assets/minecraft/textures/entity/bed";
-			if (zipStack.hasFile(bedTextureDir)) { //1.12-26.1
+			if (zipStack.hasDirectory(bedTextureDir)) { //1.12-26.1
 				loadTexturesFromDirectory("assets/minecraft/textures/entity/bed", "bed_", StringUtils.EMPTY);
 			}
 			
 			String trimTextureDir = "assets/minecraft/textures/trims/entity/humanoid";
-			if (zipStack.hasFile(trimTextureDir)) { //load 1.21.2+ armor and trim textures
+			if (zipStack.hasDirectory(trimTextureDir)) { //load 1.21.2+ armor and trim textures
 				loadTexturesFromDirectory(trimTextureDir, "trim_", StringUtils.EMPTY);
 				loadTexturesFromDirectory(trimTextureDir + "_leggings", "trim_", "_leggings");
 				loadTexturesFromDirectory("assets/minecraft/textures/entity/equipment/humanoid", "armor_", StringUtils.EMPTY);

@@ -36,6 +36,7 @@ import java.util.regex.PatternSyntaxException;
 @Slf4j
 public final class ResourcePack implements AutoCloseable {
 	private static final Pattern OVERLAY_DIRECTORY = Pattern.compile("[a-z0-9_.-]+");
+	private static final String PACK_METADATA = "pack.mcmeta";
 
 	@Getter
 	private final File file;
@@ -73,7 +74,7 @@ public final class ResourcePack implements AutoCloseable {
 		}
 
 		JsonNode metadata = null;
-		Path mcmeta = root.resolve("pack.mcmeta");
+		Path mcmeta = root.resolve(PACK_METADATA);
 		if (Files.isRegularFile(mcmeta)) {
 			try (InputStream in = Files.newInputStream(mcmeta)) {
 				metadata = FileUtils.getOBJECT_MAPPER().readTree(in);
@@ -104,7 +105,7 @@ public final class ResourcePack implements AutoCloseable {
 			}
 			int[][] range = overlayRange(entry);
 			if (range == null) {
-				log.warn("Ignoring overlay '{}' without a supported format range in {}", directory, pack);
+				log.warn("Ignoring overlay '{}' with a missing or invalid format range in {}", directory, pack);
 				continue;
 			}
 			if (compare(gameFormat, range[0]) >= 0 && compare(gameFormat, range[1]) <= 0) {
@@ -118,35 +119,48 @@ public final class ResourcePack implements AutoCloseable {
 		return overlays;
 	}
 
-	/** Returns {min, max} as {major, minor} pairs, or null if the entry has no range. */
+	/** Returns {min, max} as {major, minor} pairs, or null if the range is missing or invalid. */
 	static int[][] overlayRange(JsonNode entry) {
-		if (entry.has("min_format") || entry.has("max_format")) { // 1.21.9+
-			int[] min = formatVersion(entry.get("min_format"), 0);
-			int[] max = formatVersion(entry.get("max_format"), Integer.MAX_VALUE);
-			if (min == null && max == null)
-				return null;
-			return new int[][] {min != null ? min : new int[] {0, 0}, max != null ? max : new int[] {Integer.MAX_VALUE, Integer.MAX_VALUE}};
+		JsonNode minFormat = entry.path("min_format");
+		JsonNode maxFormat = entry.path("max_format");
+		int[] min;
+		int[] max;
+		if (!minFormat.isMissingNode() || !maxFormat.isMissingNode()) { // 1.21.9+
+			min = minFormat.isMissingNode() ? new int[] {0, 0} : formatVersion(minFormat, 0);
+			max = maxFormat.isMissingNode() ? new int[] {Integer.MAX_VALUE, Integer.MAX_VALUE} : formatVersion(maxFormat, Integer.MAX_VALUE);
+		} else {
+			JsonNode formats = entry.path("formats"); // 1.20.2 to 1.21.8
+			minFormat = formats;
+			maxFormat = formats;
+			if (formats.isArray() && formats.size() == 2) {
+				minFormat = formats.get(0);
+				maxFormat = formats.get(1);
+			} else if (formats.isObject()) {
+				minFormat = formats.path("min_inclusive");
+				maxFormat = formats.path("max_inclusive");
+			}
+			min = majorVersion(minFormat, 0);
+			max = majorVersion(maxFormat, Integer.MAX_VALUE);
 		}
-		JsonNode formats = entry.get("formats"); // 1.20.2 to 1.21.8
-		if (formats == null)
-			return null;
-		if (formats.isInt())
-			return new int[][] {{formats.asInt(), 0}, {formats.asInt(), Integer.MAX_VALUE}};
-		if (formats.isArray() && formats.size() == 2)
-			return new int[][] {{formats.get(0).asInt(), 0}, {formats.get(1).asInt(), Integer.MAX_VALUE}};
-		if (formats.isObject() && formats.has("min_inclusive") && formats.has("max_inclusive"))
-			return new int[][] {{formats.get("min_inclusive").asInt(), 0}, {formats.get("max_inclusive").asInt(), Integer.MAX_VALUE}};
-		return null;
+		return min != null && max != null && compare(min, max) <= 0 ? new int[][] {min, max} : null;
 	}
 
 	private static int[] formatVersion(JsonNode node, int defaultMinor) {
-		if (node == null)
-			return null;
-		if (node.isInt())
-			return new int[] {node.asInt(), defaultMinor};
-		if (node.isArray() && !node.isEmpty())
-			return new int[] {node.get(0).asInt(), node.size() > 1 ? node.get(1).asInt() : defaultMinor};
+		if (!node.isArray())
+			return majorVersion(node, defaultMinor);
+		if (node.size() == 1)
+			return majorVersion(node.get(0), defaultMinor);
+		if (node.size() == 2 && isFormatNumber(node.get(1)))
+			return majorVersion(node.get(0), node.get(1).asInt());
 		return null;
+	}
+
+	private static int[] majorVersion(JsonNode major, int minor) {
+		return isFormatNumber(major) ? new int[] {major.asInt(), minor} : null;
+	}
+
+	private static boolean isFormatNumber(JsonNode node) {
+		return node.isInt() && node.asInt() >= 0;
 	}
 
 	private static int compare(int[] a, int[] b) {
@@ -181,24 +195,37 @@ public final class ResourcePack implements AutoCloseable {
 		return result;
 	}
 
-	private Path find(String path) {
-		String relative = normalize(path);
-		for (Path root : roots) {
+	private static boolean isPackRootFile(Path relative) {
+		if (relative.getNameCount() != 1)
+			return false;
+		FileSystem fs = relative.getFileSystem();
+		return relative.equals(fs.getPath(PACK_METADATA)) || relative.equals(fs.getPath("pack.png"));
+	}
+
+	private Path find(String path, Predicate<Path> matches) {
+		Path packRoot = roots.getLast();
+		Path relative = packRoot.getFileSystem().getPath(normalize(path));
+		List<Path> searchRoots = roots.size() > 1 && isPackRootFile(relative.normalize()) ? List.of(packRoot) : roots;
+		for (Path root : searchRoots) {
 			Path candidate = root.resolve(relative);
-			if (Files.exists(candidate))
+			if (matches.test(candidate))
 				return candidate;
 		}
 		return null;
 	}
 
 	public boolean has(String path) {
-		return find(path) != null;
+		return find(path, Files::isRegularFile) != null;
+	}
+
+	boolean hasDirectory(String path) {
+		return find(path, Files::isDirectory) != null;
 	}
 
 	/** Returns null when this layer does not contain the file. */
 	public InputStream open(String path) throws IOException {
-		Path found = find(path);
-		return found == null || Files.isDirectory(found) ? null : Files.newInputStream(found);
+		Path found = find(path, Files::isRegularFile);
+		return found == null ? null : Files.newInputStream(found);
 	}
 
 	/** The names of the entries in a directory, across the pack root and its active overlays. */
@@ -209,9 +236,13 @@ public final class ResourcePack implements AutoCloseable {
 			Path dir = root.resolve(relative);
 			if (!Files.isDirectory(dir))
 				continue;
+			boolean overlayRoot = !root.equals(roots.getLast()) && dir.normalize().equals(root.normalize());
 			try (DirectoryStream<Path> entries = Files.newDirectoryStream(dir)) {
 				for (Path entry : entries) {
-					String name = entry.getFileName().toString();
+					Path fileName = entry.getFileName();
+					if (overlayRoot && isPackRootFile(fileName))
+						continue;
+					String name = fileName.toString();
 					names.add(name.endsWith("/") ? name.substring(0, name.length() - 1) : name);
 				}
 			}

@@ -7,12 +7,16 @@ package tectonicus.texture;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import tectonicus.util.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -111,7 +115,7 @@ class ZipStackTest {
 
 	@Test
 	void overlayRangesUseMajorAndMinorFormats() {
-		var mapper = tectonicus.util.FileUtils.getOBJECT_MAPPER();
+		var mapper = FileUtils.getOBJECT_MAPPER();
 		int[][] range = ResourcePack.overlayRange(mapper.readTree("{\"min_format\":[69,1],\"max_format\":70}"));
 		assertArrayEquals(new int[] {69, 1}, range[0]);
 		assertArrayEquals(new int[] {70, Integer.MAX_VALUE}, range[1]);
@@ -119,6 +123,78 @@ class ZipStackTest {
 		assertArrayEquals(new int[] {42, 0}, range[0]);
 		assertArrayEquals(new int[] {42, Integer.MAX_VALUE}, range[1]);
 		assertNull(ResourcePack.overlayRange(mapper.readTree("{\"directory\":\"x\"}")));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"\"formats\":[\"17\",18]",
+			"\"formats\":{\"min_inclusive\":{},\"max_inclusive\":18}",
+			"\"formats\":[18,2147483648]",
+			"\"formats\":[18,17]",
+			"\"min_format\":[69,{}],\"max_format\":70",
+			"\"min_format\":69,\"max_format\":null",
+			"\"min_format\":[69,0,1],\"max_format\":70",
+			"\"min_format\":[69,1],\"max_format\":[69,0]"
+	})
+	void rejectsMalformedOverlayRanges(String fields) {
+		var mapper = FileUtils.getOBJECT_MAPPER();
+		assertNull(ResourcePack.overlayRange(mapper.readTree("{" + fields + "}")));
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	void malformedOverlayDoesNotPreventPackLoading(boolean archived) throws Exception {
+		Path jar = format18Jar(Map.of());
+		Path pack = pack(archived, Map.of(
+				"pack.mcmeta", """
+						{"pack":{"pack_format":18},"overlays":{"entries":[
+						 {"directory":"valid","formats":18},
+						 {"directory":"invalid","formats":{"min_inclusive":{},"max_inclusive":18}}
+						]}}""",
+				STONE, "root stone", DIRT, "root dirt",
+				"valid/" + STONE, "overlay stone", "invalid/" + STONE, "invalid overlay stone"));
+		try (ZipStack stack = new ZipStack(jar.toFile(), List.of(pack.toFile()), List.of())) {
+			assertEquals("overlay stone", read(stack, STONE));
+			assertEquals("root dirt", read(stack, DIRT));
+		}
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	void overlayDirectoriesDoNotHideFiles(boolean archived) throws Exception {
+		Path jar = format18Jar(Map.of(DIRT, "vanilla dirt"));
+		Path pack = pack(archived, Map.of(
+				"pack.mcmeta", """
+						{"pack":{"pack_format":18},"overlays":{"entries":[
+						 {"directory":"earlier","formats":18}, {"directory":"later","formats":18}
+						]}}""",
+				STONE, "root stone", "earlier/" + STONE, "earlier stone",
+				"later/" + STONE + "/child", "child", "later/" + DIRT + "/child", "child"));
+		try (ZipStack stack = new ZipStack(jar.toFile(), List.of(pack.toFile()), List.of())) {
+			assertEquals("earlier stone", read(stack, STONE));
+			assertEquals("vanilla dirt", read(stack, DIRT));
+			assertFalse(stack.hasPackFile(DIRT));
+			assertEquals(1, stack.getLayers(DIRT).size());
+			assertTrue(stack.hasDirectory(DIRT));
+		}
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	void overlayRootMetadataAndIconAreIgnored(boolean archived) throws Exception {
+		Path jar = format18Jar(Map.of());
+		String metadata = "{\"pack\":{\"pack_format\":18},\"overlays\":{\"entries\":[{\"directory\":\"overlay\",\"formats\":18}]}}";
+		Path pack = pack(archived, Map.of("pack.mcmeta", metadata,
+				"overlay/pack.mcmeta", "overlay metadata", "overlay/pack.png", "overlay icon",
+				"overlay/" + STONE, "overlay stone", "overlay/" + STONE + ".mcmeta", "texture metadata"));
+		try (ZipStack stack = new ZipStack(jar.toFile(), List.of(pack.toFile()), List.of())) {
+			assertEquals(metadata, read(stack, "/pack.mcmeta"));
+			assertFalse(stack.hasFile("pack.png"));
+			assertNull(stack.getStream("./pack.png"));
+			assertFalse(stack.getResourcePacks().getFirst().list("/").contains("pack.png"));
+			assertEquals("overlay stone", read(stack, STONE));
+			assertEquals("texture metadata", read(stack.getSiblingStream(STONE, STONE + ".mcmeta")));
+		}
 	}
 
 	@Test
@@ -150,6 +226,24 @@ class ZipStackTest {
 		try (in) {
 			return new String(in.readAllBytes(), StandardCharsets.UTF_8);
 		}
+	}
+
+	private Path format18Jar(Map<String, String> entries) throws IOException {
+		var jarEntries = new HashMap<>(entries);
+		jarEntries.put("version.json", "{\"pack_version\":{\"resource\":18,\"data\":18}}");
+		return zip("client.jar", jarEntries);
+	}
+
+	private Path pack(boolean archived, Map<String, String> entries) throws IOException {
+		if (archived)
+			return zip("pack.zip", entries);
+		Path folder = directory.resolve("pack");
+		for (var entry : entries.entrySet()) {
+			Path file = folder.resolve(entry.getKey());
+			Files.createDirectories(file.getParent());
+			Files.writeString(file, entry.getValue());
+		}
+		return folder;
 	}
 
 	private Path zip(String name, Map<String, String> entries) throws IOException {
