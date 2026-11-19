@@ -41,6 +41,7 @@ dependencies {
 	val h2Version = "2.5.252"
 	val webpImageIoVersion = "0.11.0"
 	val biomeExtractorVersion = "2.0.0"
+	val jnbtVersion = "2.0.0"
 	val hamcrestVersion = "3.0"
 
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
@@ -61,7 +62,7 @@ dependencies {
 	implementation("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 	implementation("com.github.usefulness:webp-imageio:$webpImageIoVersion")
 	implementation("org.tectonicus:biome-extractor:$biomeExtractorVersion")
-	implementation(files("libs/jnbt.jar"))
+	implementation("org.tectonicus:jnbt:$jnbtVersion")
 
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows")
 	runtimeOnly("org.lwjgl:lwjgl-glfw::natives-windows")

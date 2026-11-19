@@ -9,9 +9,9 @@
 package tectonicus.raw;
 
 import lombok.Getter;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
 
 @Getter
 public class ItemFrameEntity extends BlockEntity {

@@ -1,10 +1,10 @@
 package tectonicus.world;
 
-import org.jnbt.ByteArrayTag;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.ListTag;
-import org.jnbt.NBTOutputStream;
+import org.tectonicus.jnbt.ByteArrayTag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.NBTOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.jnbt.*;
+import org.tectonicus.jnbt.*;
 import tectonicus.Minecraft;
 import tectonicus.SaveFormat;
 import tectonicus.cache.CacheUtil;

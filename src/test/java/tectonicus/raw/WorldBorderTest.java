@@ -8,10 +8,10 @@
 
 package tectonicus.raw;
 
-import org.jnbt.CompoundTag;
-import org.jnbt.DoubleTag;
-import org.jnbt.NBTOutputStream;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.DoubleTag;
+import org.tectonicus.jnbt.NBTOutputStream;
+import org.tectonicus.jnbt.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.configuration.Dimension;

@@ -10,10 +10,10 @@
 package tectonicus.world;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.SaveFormat;
 import tectonicus.Version;
 import tectonicus.configuration.Dimension;
@@ -138,9 +138,9 @@ public record DimensionHeight(int minY, int height) {
 	}
 
 	private static DimensionHeight fromNbt(CompoundTag type) {
-		if (!(type.getValue().get("min_y") instanceof IntTag minY) || !(type.getValue().get("height") instanceof IntTag height))
+		if (!type.contains("min_y", IntTag.class) || !type.contains("height", IntTag.class))
 			return null;
-		return of(minY.getValue(), height.getValue());
+		return of(type.getInt("min_y"), type.getInt("height"));
 	}
 
 	/** Minecraft requires both values to be multiples of 16 and the height to be positive. */

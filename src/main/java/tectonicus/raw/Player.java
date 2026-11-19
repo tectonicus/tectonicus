@@ -14,16 +14,15 @@ import tools.jackson.databind.ObjectReader;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.DoubleTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.ShortTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.DoubleTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.NBTInputStream;
+import org.tectonicus.jnbt.ShortTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionInfo;
 import tectonicus.util.FileUtils;
@@ -106,9 +105,7 @@ public class Player {
 		skinURL = null;
 		
 		try (InputStream in = Files.newInputStream(playerFile); NBTInputStream nbtIn = new NBTInputStream(in)) {
-			Tag tag = nbtIn.readTag();
-			if (tag instanceof CompoundTag) {
-				CompoundTag root = (CompoundTag) tag;
+			if (nbtIn.readTag() instanceof CompoundTag root) {
 				parse(root, NbtUtil.getInt(root, "DataVersion", 0));
 			}
 		}
@@ -200,7 +197,7 @@ public class Player {
 		CompoundTag respawnTag = NbtUtil.getChild(root, "respawn", CompoundTag.class);
 		
 		if (respawnTag != null) {
-			int[] pos = NbtUtil.getChild(respawnTag, "pos", IntArrayTag.class).getValue();
+			int[] pos = respawnTag.getIntArray("pos");
 			spawnPosition = new Vector3l(pos[0], pos[1], pos[2]);
 			spawnDimensionId = NbtUtil.getString(respawnTag, "dimension", Dimension.OVERWORLD.getId());
 			spawnDimension = Dimension.byId(spawnDimensionId);

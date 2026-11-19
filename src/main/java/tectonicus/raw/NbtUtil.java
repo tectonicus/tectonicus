@@ -10,16 +10,16 @@
 package tectonicus.raw;
 
 import lombok.experimental.UtilityClass;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.DoubleTag;
-import org.jnbt.FloatTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongTag;
-import org.jnbt.ShortTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.DoubleTag;
+import org.tectonicus.jnbt.FloatTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.LongTag;
+import org.tectonicus.jnbt.ShortTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,34 +30,23 @@ import java.util.TreeMap;
 public class NbtUtil
 {
 
-	@SuppressWarnings("unchecked")
+	/** Reads an optional tag, falling back to the lowercase name if the exact name is absent. */
 	public <T extends Tag> T getChild(CompoundTag parent, String name, Class<T> clazz)
 	{
 		Tag child = parent.getValue().get(name);
 		if (child == null) { //check for lowercase version of name
 			child = parent.getValue().get(name.toLowerCase());
 		}
-		if (clazz.isInstance(child))
-		{
-			return (T)child;
-		}
-		else
-		{
-			return null;
-		}
+		return clazz.isInstance(child) ? clazz.cast(child) : null;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public <T extends Tag> T getChild(ListTag list, final int index, Class<T> clazz)
 	{
 		List<Tag> tags = list.getValue();
 		if (index >= 0 && index < tags.size())
 		{
-			Tag t = tags.get(index);
-			if (clazz.isInstance(t))
-			{
-				return (T)t;
-			}
+			Tag tag = tags.get(index);
+			return clazz.isInstance(tag) ? clazz.cast(tag) : null;
 		}
 		
 		return null;
@@ -131,8 +120,7 @@ public class NbtUtil
 		if (properties != null) {
 			Map<String, String> props = new TreeMap<>();
 			for (Map.Entry<String, Tag> entry : properties.getValue().entrySet()) {
-				String key = entry.getKey();
-				props.put(key, getString(properties, key, ""));
+				props.put(entry.getKey(), entry.getValue() instanceof StringTag tag ? tag.getValue() : "");
 			}
 			return new BlockProperties(props);
 		} else {

@@ -8,17 +8,17 @@
 
 package tectonicus.world;
 
-import org.jnbt.ByteArrayTag;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongArrayTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.NBTOutputStream;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteArrayTag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntArrayTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.LongArrayTag;
+import org.tectonicus.jnbt.NBTCompression;
+import org.tectonicus.jnbt.NBTOutputStream;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -215,7 +215,7 @@ class BiomeSamplerTest {
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {
 			out.writeTag(root);
 		}
-		return new RawChunk(new ChunkData(bytes.toByteArray(), NBTInputStream.Compression.Gzip), null,
+		return new RawChunk(new ChunkData(bytes.toByteArray(), NBTCompression.GZIP), null,
 				new WorldInfo(Version.VERSION_26_3, false));
 	}
 }

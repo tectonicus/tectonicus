@@ -10,9 +10,9 @@
 package tectonicus.raw;
 
 import lombok.Getter;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
 import tectonicus.blockTypes.Banner.Pattern;
 import tectonicus.world.Colors;
 

@@ -11,13 +11,13 @@ package tectonicus.raw;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntArrayTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.LongTag;
+import org.tectonicus.jnbt.NBTInputStream;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.configuration.Dimension;
 import tectonicus.util.Vector3l;
 
@@ -63,8 +63,9 @@ public class LevelDat {
 				CompoundTag data = NbtUtil.getChild(compoundTag, "Data", CompoundTag.class);
 				
 				Optional.ofNullable(NbtUtil.getChild(data, "DataPacks", CompoundTag.class)).ifPresent(dataPackTag -> {
-					List<Tag> enabledTags = NbtUtil.getChild(dataPackTag, "Enabled", ListTag.class).getValue();
-					dataPacks = enabledTags.stream().filter(t -> !t.getValue().equals("vanilla")).map(t -> (String) t.getValue()).toList();
+					String enabledKey = dataPackTag.contains("Enabled") ? "Enabled" : "enabled";
+					dataPacks = dataPackTag.getList(enabledKey, StringTag.class).stream()
+							.map(StringTag::getValue).filter(name -> !name.equals("vanilla")).toList();
 					log.debug("Enabled data packs: {}", dataPacks);
 				});
 				
@@ -73,11 +74,10 @@ public class LevelDat {
 				Optional.ofNullable(NbtUtil.getChild(data, "spawn", CompoundTag.class)).ifPresentOrElse(
 						spawnTag -> {
 							IntArrayTag spawnPosTag = NbtUtil.getChild(spawnTag, "pos", IntArrayTag.class);
-							if (spawnPosTag !=null) {
-								int[] pos = spawnPosTag.getValue();
-								spawnPosition.x = pos[0];
-								spawnPosition.y = pos[1];
-								spawnPosition.z = pos[2];
+							if (spawnPosTag != null) {
+								spawnPosition.x = spawnPosTag.get(0);
+								spawnPosition.y = spawnPosTag.get(1);
+								spawnPosition.z = spawnPosTag.get(2);
 							} else {
 								log.warn("No spawn pos tag in level.dat. Default to (0,64,0)");
 								spawnPosition.x = 0;
@@ -159,8 +159,8 @@ public class LevelDat {
 		if (dimensions == null)
 			return;
 		dimensions.getValue().forEach((id, value) -> {
-			if (value instanceof CompoundTag dimension && dimension.getValue().get("type") != null)
-				dimensionTypes.putIfAbsent(id, dimension.getValue().get("type"));
+			if (value instanceof CompoundTag dimension)
+				dimension.find("type", Tag.class).ifPresent(type -> dimensionTypes.putIfAbsent(id, type));
 		});
 	}
 

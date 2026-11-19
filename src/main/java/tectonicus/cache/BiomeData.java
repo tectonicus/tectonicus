@@ -11,9 +11,8 @@ package tectonicus.cache;
 
 import org.tectonicus.biomeextractor.ByteCoord;
 import org.tectonicus.biomeextractor.WorldProcessor;
-import org.jnbt.*;
+import org.tectonicus.jnbt.*;
 import tectonicus.chunk.ChunkCoord;
-import tectonicus.raw.NbtUtil;
 import tectonicus.raw.RawChunk;
 
 import java.io.*;
@@ -54,14 +53,16 @@ public class BiomeData {
 
 	public BiomeData(File file) throws IOException {
 		try (NBTInputStream input = new NBTInputStream(Files.newInputStream(file.toPath()))) {
-			if (!(input.readTag() instanceof CompoundTag root) || NbtUtil.getInt(root, "version", 0) != VERSION)
+			if (!(input.readTag() instanceof CompoundTag root) || !root.contains("version", IntTag.class)
+					|| root.getInt("version") != VERSION)
 				throw new IOException("Wrong biome cache version: " + file);
-			if (!(root.getValue().get("colourCoords") instanceof ByteArrayTag tag) || tag.getValue().length != COORDINATE_BYTES)
+			byte[] coordinates = root.contains("colourCoords", ByteArrayTag.class) ? root.getByteArray("colourCoords") : null;
+			if (coordinates == null || coordinates.length != COORDINATE_BYTES)
 				throw new IOException("Invalid biome coordinate array: " + file);
-			if (!(root.getValue().get("swamps") instanceof ByteArrayTag mask) || mask.getValue().length != swamps.length)
+			byte[] mask = root.contains("swamps", ByteArrayTag.class) ? root.getByteArray("swamps") : null;
+			if (mask == null || mask.length != swamps.length)
 				throw new IOException("Invalid swamp mask: " + file);
-			System.arraycopy(mask.getValue(), 0, swamps, 0, swamps.length);
-			byte[] coordinates = tag.getValue();
+			System.arraycopy(mask, 0, swamps, 0, swamps.length);
 			int position = 0;
 			for (int x = 0; x < RawChunk.WIDTH; x++) {
 				for (int z = 0; z < RawChunk.DEPTH; z++) {

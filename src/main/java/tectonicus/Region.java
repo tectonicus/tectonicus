@@ -12,7 +12,7 @@ package tectonicus;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.NBTInputStream.Compression;
+import org.tectonicus.jnbt.NBTCompression;
 import tectonicus.cache.BiomeCache;
 import tectonicus.chunk.Chunk;
 import tectonicus.chunk.ChunkCoord;
@@ -290,11 +290,11 @@ public class Region {
 
 		assert (byteOffset + actualLengthBytes <= MAX_SIZE_BYTES);
 
-		Compression compressionType;
+		NBTCompression compressionType;
 		if (compressionByte == COMPRESSION_TYPE_GZIP)
-			compressionType = Compression.Gzip;
+			compressionType = NBTCompression.GZIP;
 		else if (compressionByte == COMPRESSION_TYPE_DEFLATE)
-			compressionType = Compression.Deflate;
+			compressionType = NBTCompression.DEFLATE;
 		else
 			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionByte);
 

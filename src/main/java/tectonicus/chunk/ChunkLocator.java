@@ -10,7 +10,7 @@
 package tectonicus.chunk;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.NBTInputStream.Compression;
+import org.tectonicus.jnbt.NBTCompression;
 import tectonicus.Region;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
@@ -80,7 +80,7 @@ public class ChunkLocator {
 				try {
 					chunk = new Chunk(chunkCoord, biomeCache);
 					byte[] chunkBytes = Files.readAllBytes(chunkFile.toPath());
-					chunk.loadRaw(new ChunkData(chunkBytes, Compression.Gzip), filter, worldStats, worldInfo);
+					chunk.loadRaw(new ChunkData(chunkBytes, NBTCompression.GZIP), filter, worldStats, worldInfo);
 				} catch (Exception e) {
 					log.error("ChunkLocator: Error while trying to load alpha chunk at ({}, {}) from {}", chunkCoord.x, chunkCoord.z, chunkFile.getAbsolutePath(), e);
 				}
