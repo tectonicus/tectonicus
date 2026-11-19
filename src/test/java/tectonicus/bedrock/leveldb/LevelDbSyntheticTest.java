@@ -59,8 +59,14 @@ class LevelDbSyntheticTest {
 		return all;
 	}
 
+	@Test
+	void rejectsSnappyBlocks() {
+		LevelDbException e = assertThrows(LevelDbException.class, () -> Compression.decompress(Compression.SNAPPY, new byte[4], 0, 4));
+		assertTrue(e.getMessage().contains("snappy"));
+	}
+
 	@ParameterizedTest
-	@ValueSource(ints = {Compression.NONE, Compression.SNAPPY, Compression.ZLIB, Compression.ZLIB_RAW})
+	@ValueSource(ints = {Compression.NONE, Compression.ZLIB, Compression.ZLIB_RAW})
 	void readsEveryCompressionType(int compression) throws IOException {
 		List<TestDbWriter.Entry> entries = new ArrayList<>();
 		for (int i = 0; i < 1000; i++) {
@@ -138,7 +144,7 @@ class LevelDbSyntheticTest {
 		List<TestDbWriter.TableFile> files = List.of(
 			TestDbWriter.writeTable(dir, 2, 3, l2, Compression.ZLIB_RAW, 200),
 			TestDbWriter.writeTable(dir, 1, 5, l1a, Compression.ZLIB, 512),
-			TestDbWriter.writeTable(dir, 1, 6, l1b, Compression.SNAPPY, 128),
+			TestDbWriter.writeTable(dir, 1, 6, l1b, Compression.ZLIB_RAW, 128),
 			TestDbWriter.writeTable(dir, 0, 8, l0.get(0), Compression.NONE, 1024),
 			TestDbWriter.writeTable(dir, 0, 9, l0.get(1), Compression.ZLIB_RAW, 4096));
 

@@ -1,5 +1,5 @@
 // Generates LevelDB fixture databases for tectonicus.bedrock.leveldb tests.
-// Usage: npm install classic-level@1 snappyjs@0.7.0 && node gen.js <outDir> (vectors.js writes snappy-vectors.txt)
+// Usage: npm install classic-level@1 && node gen.js <outDir>
 const { ClassicLevel } = require('classic-level');
 const fs = require('fs');
 const path = require('path');
@@ -140,7 +140,6 @@ async function leveled(dir, compression) {
 
 (async () => {
 	await memtableOnly(path.join(out, 'memtable'));
-	await leveled(path.join(out, 'leveled-snappy'), true);
 	await leveled(path.join(out, 'leveled-none'), false);
 })().catch((e) => {
 	console.error(e);

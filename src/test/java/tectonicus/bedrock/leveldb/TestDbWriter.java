@@ -104,35 +104,10 @@ final class TestDbWriter {
 	static byte[] compress(byte[] data, int compression) {
 		return switch (compression) {
 			case Compression.NONE -> data;
-			case Compression.SNAPPY -> snappyLiteral(data);
 			case Compression.ZLIB -> deflate(data, false);
 			case Compression.ZLIB_RAW -> deflate(data, true);
 			default -> throw new IllegalArgumentException("compression " + compression);
 		};
-	}
-
-	/** Valid Snappy encoding using only literals (no copies). */
-	static byte[] snappyLiteral(byte[] data) {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		putVarint(out, data.length);
-		int pos = 0;
-		while (pos < data.length) {
-			int n = Math.min(data.length - pos, 65536);
-			int lenMinus1 = n - 1;
-			if (lenMinus1 < 60) {
-				out.write(lenMinus1 << 2);
-			} else if (lenMinus1 < 256) {
-				out.write(60 << 2);
-				out.write(lenMinus1);
-			} else {
-				out.write(61 << 2);
-				out.write(lenMinus1 & 0xff);
-				out.write(lenMinus1 >>> 8);
-			}
-			out.write(data, pos, n);
-			pos += n;
-		}
-		return out.toByteArray();
 	}
 
 	private static byte[] deflate(byte[] data, boolean nowrap) {

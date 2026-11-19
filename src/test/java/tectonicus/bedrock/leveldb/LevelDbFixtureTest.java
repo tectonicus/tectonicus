@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>
  * {@code memtable} holds only a write-ahead log; the {@code leveled-*} databases have a compacted
  * deeper level, two overlapping level-0 tables and a log, with overwrites and deletions at every stage,
- * written with and without Snappy compression.
+ * written without compression.
  */
 class LevelDbFixtureTest {
 	private static final HexFormat HEX = HexFormat.of();
@@ -72,7 +72,7 @@ class LevelDbFixtureTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"memtable", "leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"memtable", "leveled-none"})
 	void iteratesExactlyTheLiveEntriesInOrder(String name) throws Exception {
 		LinkedHashMap<String, byte[]> expected = expected(name);
 		LinkedHashMap<String, byte[]> actual = new LinkedHashMap<>();
@@ -86,7 +86,7 @@ class LevelDbFixtureTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"memtable", "leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"memtable", "leveled-none"})
 	void getReturnsNewestValueForEveryKey(String name) throws Exception {
 		LinkedHashMap<String, byte[]> expected = expected(name);
 		try (LevelDbReader db = LevelDbReader.open(fixture(name))) {
@@ -97,7 +97,7 @@ class LevelDbFixtureTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"leveled-none"})
 	void deletedAndAbsentKeysAreNotFound(String name) throws Exception {
 		LinkedHashMap<String, byte[]> expected = expected(name);
 		List<String> missing = List.of(
@@ -134,7 +134,7 @@ class LevelDbFixtureTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"leveled-none"})
 	void leveledFixtureSpansSeveralLevelsAndTheLog(String name) throws Exception {
 		try (LevelDbReader db = LevelDbReader.open(fixture(name))) {
 			Version v = db.version();
@@ -148,33 +148,8 @@ class LevelDbFixtureTest {
 		}
 	}
 
-	@Test
-	void snappyFixtureReallyUsesSnappyBlocks() throws Exception {
-		Path dir = fixture("leveled-snappy");
-		int snappyBlocks = 0;
-		try (Stream<Path> files = Files.list(dir)) {
-			for (Path file : files.filter(p -> p.toString().endsWith(".ldb")).toList()) {
-				long number = Long.parseLong(file.getFileName().toString().substring(0, 6));
-				Table table = Table.open(number, file, true, null);
-				try {
-					Block.Iter index = table.indexIterator();
-					for (index.seekToFirst(); index.isValid(); index.next()) {
-						BlockHandle h = BlockHandle.decode(index.value());
-						byte[] raw = table.readRawBlock(h);
-						if ((raw[(int) h.size()] & 0xff) == Compression.SNAPPY) {
-							snappyBlocks++;
-						}
-					}
-				} finally {
-					table.evict();
-				}
-			}
-		}
-		assertTrue(snappyBlocks > 0, "expected snappy-compressed data blocks");
-	}
-
 	@ParameterizedTest
-	@ValueSource(strings = {"memtable", "leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"memtable", "leveled-none"})
 	void prefixIterationMatchesFilteredExpectation(String name) throws Exception {
 		LinkedHashMap<String, byte[]> expected = expected(name);
 		List<byte[]> prefixes = new ArrayList<>(List.of(key("key000"), key("key001"), key("key0059"), key("mem01"),
@@ -204,7 +179,7 @@ class LevelDbFixtureTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"leveled-none"})
 	void concurrentGetsWithTinyCaches(String name) throws Exception {
 		LinkedHashMap<String, byte[]> expected = expected(name);
 		List<String> keys = List.copyOf(expected.keySet());
@@ -240,7 +215,7 @@ class LevelDbFixtureTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"memtable", "leveled-snappy", "leveled-none"})
+	@ValueSource(strings = {"memtable", "leveled-none"})
 	void readingLeavesTheDatabaseDirectoryUntouched(String name) throws Exception {
 		Path dir = fixture(name);
 		Map<String, String> before = snapshot(dir);

@@ -16,6 +16,7 @@ import java.util.zip.Inflater;
 /** Block compression types found in LevelDB tables (including Mojang's leveldb-mcpe additions). */
 final class Compression {
 	static final int NONE = 0;
+	/** Snappy, the compression of standard LevelDB; Minecraft never writes it, so it is not supported. */
 	static final int SNAPPY = 1;
 	/** zlib stream with header (Mojang leveldb-mcpe {@code kZlibCompression}). */
 	static final int ZLIB = 2;
@@ -34,7 +35,7 @@ final class Compression {
 				System.arraycopy(data, off, out, 0, len);
 				yield out;
 			}
-			case SNAPPY -> Snappy.decompress(data, off, len);
+			case SNAPPY -> throw new LevelDbException("Unsupported block compression: snappy (1)");
 			case ZLIB -> inflate(data, off, len, false);
 			case ZLIB_RAW -> inflate(data, off, len, true);
 			case ZSTD -> throw new LevelDbException("Unsupported block compression: zstd (3)");
