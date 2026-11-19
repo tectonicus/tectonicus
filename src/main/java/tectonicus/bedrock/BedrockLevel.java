@@ -78,7 +78,8 @@ public record BedrockLevel(String name, int spawnX, int spawnY, int spawnZ, Long
 
 	/**
 	 * The Java Edition version with roughly the same blocks, used to choose version-dependent behaviour. Bedrock and
-	 * Java ship the same game drops, but Bedrock numbers its releases differently.
+	 * Java ship the same game drops, but Bedrock numbers its releases differently. Worlds older than 1.21 use 1.21:
+	 * the block mapping always gives modern, flattened Java names, which older Java versions' assets cannot draw.
 	 */
 	public String javaVersion() {
 		if (lastOpenedWithVersion.length < 3)
@@ -86,10 +87,8 @@ public record BedrockLevel(String name, int spawnX, int spawnY, int spawnZ, Long
 		int major = lastOpenedWithVersion[0];
 		int minor = lastOpenedWithVersion[1];
 		int patch = lastOpenedWithVersion[2];
-		if (major == 1 && minor < 21)
-			return "1." + minor;
-		if (major == 1 && minor == 21)
-			return patch >= 110 ? "1.21.10" : "1.21";
+		if (major == 1 && minor <= 21)
+			return minor == 21 && patch >= 110 ? "1.21.10" : "1.21";
 		// Bedrock 1.26.x and later use the year-based Java numbering.
 		int drop = major == 1 ? patch : minor;
 		if (drop < 20)

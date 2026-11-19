@@ -94,7 +94,8 @@ class BedrockBlockMapperTest {
 
 	@Test
 	void mapsBedrockVersionsToJavaVersions() {
-		assertEquals("1.20", level(1, 20, 80).javaVersion());
+		assertEquals("1.21", level(1, 16, 210).javaVersion());
+		assertEquals("1.21", level(1, 20, 80).javaVersion());
 		assertEquals("1.21", level(1, 21, 50).javaVersion());
 		assertEquals("1.21.10", level(1, 21, 120).javaVersion());
 		assertEquals("26.1", level(1, 26, 0).javaVersion());
