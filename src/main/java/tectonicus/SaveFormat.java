@@ -12,7 +12,9 @@ package tectonicus;
 public enum SaveFormat {
 	ALPHA("dat"),
 	MC_REGION("mcr"),
-	ANVIL("mca");
+	ANVIL("mca"),
+	/** Bedrock Edition: chunks are in a LevelDB database, not region files. */
+	BEDROCK("ldb");
 	
 	public final String extension;
 	

@@ -1,0 +1,2 @@
+# LevelDB write-ahead logs are part of the fixture databases
+!*.log

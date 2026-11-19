@@ -13,6 +13,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.chunk.ChunkLocator;
 
 import java.io.File;
@@ -29,6 +30,14 @@ public class RegionCache {
 	public RegionCache(File dimensionDir) {
 		if (dimensionDir == null)
 			throw new IllegalArgumentException("dimensionDir cannot be null");
+		if (BedrockWorld.forDimensionDir(dimensionDir).isPresent()) {
+			// Bedrock has no dimension folders or region files; ChunkLocator reads its database.
+			this.dimensionDir = dimensionDir;
+			this.format = SaveFormat.BEDROCK;
+			this.cache = Caffeine.newBuilder().maximumSize(1).build();
+			log.info("Detected {} save format", format);
+			return;
+		}
 		if (!dimensionDir.exists())
 			throw new IllegalArgumentException("dimensionDir must exist (" + dimensionDir.getAbsolutePath() + ")");
 		
@@ -57,7 +66,7 @@ public class RegionCache {
 	
 	public Region getRegion(RegionCoord coord)
 	{
-		if (format == SaveFormat.ALPHA)
+		if (format == SaveFormat.ALPHA || format == SaveFormat.BEDROCK)
 			return null;
 
 		return cache.get(coord, c -> {

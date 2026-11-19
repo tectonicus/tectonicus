@@ -1,0 +1,2 @@
+# Fixture databases are binary; never convert line endings
+* -text

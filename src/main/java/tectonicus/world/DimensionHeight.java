@@ -42,6 +42,17 @@ public record DimensionHeight(int minY, int height) {
 
 	private static final ObjectMapper JSON = new ObjectMapper();
 
+	/** Bedrock's fixed heights: the Nether is 128 blocks tall, and the Overworld grew to Y -64 to 319 in 1.18. */
+	public static DimensionHeight bedrock(Dimension dimension, Version version) {
+		if (dimension == Dimension.NETHER)
+			return MC_REGION;
+		if (dimension == Dimension.END)
+			return CLASSIC;
+		boolean modern = version == null || version == Version.VERSION_UNKNOWN
+				|| version.getNumVersion() >= Version.VERSION_18.getNumVersion();
+		return modern ? CAVES_AND_CLIFFS : CLASSIC;
+	}
+
 	public int minSectionY() {
 		return Math.floorDiv(minY, RawChunk.SECTION_HEIGHT);
 	}
@@ -52,6 +63,8 @@ public record DimensionHeight(int minY, int height) {
 	 */
 	public static DimensionHeight resolve(Path worldDir, Map<String, Tag> dimensionTypes, List<String> dataPacks,
 			String dimensionId, Dimension dimension, Version version, SaveFormat format) {
+		if (format == SaveFormat.BEDROCK)
+			return bedrock(dimension, version);
 		if (format != SaveFormat.ANVIL)
 			return MC_REGION;
 		boolean modern = version != null && version != Version.VERSION_UNKNOWN

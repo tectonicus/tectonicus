@@ -611,7 +611,7 @@ public class TileRenderer
 		//		gather world stats and signs for each chunk
 		
 		final Date beginTime = new Date();
-		if (world.isAlphaWorld()) {
+		if (world.isChunkListWorld()) {
 			ChunkCoord[] alphaChunkCoords = world.getAlphaChunkCoords();
 			ChunkCoord[] sortedAlphaChunks = Arrays.copyOf(alphaChunkCoords, alphaChunkCoords.length);
 			Arrays.sort(sortedAlphaChunks, (lhs, rhs) -> {
@@ -633,7 +633,7 @@ public class TileRenderer
 				return Long.compare(lhs.z, rhs.z);
 			});
 			
-			log.debug("Looking for alpha chunks in {}", world.getWorldDir().getAbsolutePath());
+			log.debug("Looking for listed chunks in {}", world.getWorldDir().getAbsolutePath());
 			
 			//Group alpha chunks by "region" to use the regionHashStore and regionLoadQueue
 			RegionCoord currentRegion = null;
@@ -716,7 +716,7 @@ public class TileRenderer
 			
 			log.error("Failed to find any chunks!");
 			File inspectDir = world.getWorldDir();
-			if (!world.isAlphaWorld()) {
+			if (!world.isChunkListWorld()) {
 				RegionIterator it = world.createRegionIterator();
 				inspectDir = it.getBaseDir();
 			}
