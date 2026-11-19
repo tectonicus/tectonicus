@@ -23,6 +23,9 @@ import java.nio.ByteBuffer;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class LwjglScreenshotTest {
@@ -40,6 +43,24 @@ class LwjglScreenshotTest {
 			java.util.Arrays.fill(expected, (byte) (height - 1 - row));
 			assertArrayEquals(expected, java.util.Arrays.copyOfRange(dest, row * rowLength, (row + 1) * rowLength));
 		}
+	}
+
+	@Test
+	void screenshotBufferIsReusedWhileLargeEnough() {
+		ByteBuffer first = LwjglRasteriser.reuseBuffer(null, 64);
+		assertTrue(first.isDirect());
+		assertEquals(64, first.limit());
+
+		first.position(10);
+		ByteBuffer smaller = LwjglRasteriser.reuseBuffer(first, 48);
+		assertSame(first, smaller);
+		assertEquals(0, smaller.position());
+		assertEquals(48, smaller.limit());
+
+		ByteBuffer larger = LwjglRasteriser.reuseBuffer(smaller, 100);
+		assertNotSame(first, larger);
+		assertEquals(100, larger.limit());
+		assertEquals(java.nio.ByteOrder.LITTLE_ENDIAN, larger.order());
 	}
 
 	@Test

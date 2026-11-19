@@ -158,6 +158,10 @@ public class LwjglRasteriser implements Rasteriser {
 	private final Map<Integer, Boolean> prevKeyStates;
 	
 	private long prevMillis;
+
+	// Reused for every screenshot: a tile render takes thousands, and each direct buffer
+	// would otherwise stay allocated until the garbage collector happened to free it.
+	private ByteBuffer screenshotBuffer;
 	
 	public LwjglRasteriser(DisplayType type, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples) throws Exception {
 		this(type, displayWidth, displayHeight, colourDepth, alphaBits, depthBits, numSamples, -1);
@@ -347,6 +351,7 @@ public class LwjglRasteriser implements Rasteriser {
 	
 	@Override
 	public void destroy() {
+		screenshotBuffer = null;
 		if (type == DisplayType.OFFSCREEN_EGL) {
 			eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			if (eglContext != EGL_NO_CONTEXT) {
@@ -519,7 +524,10 @@ public class LwjglRasteriser implements Rasteriser {
 	}
 	
 	public BufferedImage takeScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat) {
-		ByteBuffer screenContentsBytes = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
+		// The image itself is not reused: the write queue still holds earlier tiles while they are saved.
+		final int bytesPerPixel = imageFormat.hasAlpha() ? 4 : 3;
+		screenshotBuffer = reuseBuffer(screenshotBuffer, width * height * bytesPerPixel);
+		ByteBuffer screenContentsBytes = screenshotBuffer;
 		// Rows must be tightly packed: the default alignment of 4 pads 3-byte BGR rows whose width isn't a multiple of 4.
 		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
 
@@ -537,6 +545,17 @@ public class LwjglRasteriser implements Rasteriser {
 		glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContentsBytes);
 		copyRowsFlipped(screenContentsBytes, pixels, width * 3, height);
 		return img;
+	}
+
+	/**
+	 * Returns {@code buffer} cleared and limited to {@code bytes}, or a new direct buffer when it is too small.
+	 * A larger buffer is kept for smaller screenshots, so alternating sizes do not reallocate.
+	 */
+	static ByteBuffer reuseBuffer(ByteBuffer buffer, int bytes) {
+		if (buffer == null || buffer.capacity() < bytes)
+			buffer = ByteBuffer.allocateDirect(bytes).order(ByteOrder.LITTLE_ENDIAN);
+		buffer.clear().limit(bytes);
+		return buffer;
 	}
 
 	/** Copies bottom-up OpenGL rows (relative to the read origin) into a top-down image buffer. */
