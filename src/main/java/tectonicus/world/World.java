@@ -97,6 +97,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -218,7 +219,7 @@ public class World implements BlockContext, AutoCloseable
 	@Getter
 	private final float cameraElevationRad;
 
-	private final Map<Location, String> unknownBlocks;
+	private final Set<String> unknownBlocks; // Block names already warned about, so each is reported once
 
 	public World(Rasteriser rasteriser, tectonicus.configuration.DimensionConfig map, PlayerSkinCache playerSkinCache, Configuration config) {
 		this(rasteriser, map, null, playerSkinCache, config);
@@ -394,7 +395,7 @@ public class World implements BlockContext, AutoCloseable
 			this.daySkybox = SkyboxUtil.generateDaySkybox(rasteriser);
 			this.nightSkybox = SkyboxUtil.generateNightSkybox(rasteriser);
 
-			this.unknownBlocks = new HashMap<>();
+			this.unknownBlocks = ConcurrentHashMap.newKeySet();
 
 			this.smoothLit = map.isSmoothLit();
 			this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
@@ -409,8 +410,9 @@ public class World implements BlockContext, AutoCloseable
 	public void close() {
 		try {
 			flushGeometryCache();
-			texturePack.getSignFont().close();
 			savedMaps.close();
+			// Without this each dimension leaves its block, font and sign textures in GPU memory.
+			texturePack.close();
 		} finally {
 			biomeCache.close();
 		}
@@ -691,32 +693,46 @@ public class World implements BlockContext, AutoCloseable
 
 	@Override
 	public int getBeaconLevels(RawChunk chunk, BeaconEntity beacon) {
-		return beaconLevels.computeIfAbsent(new BeaconPosition(beacon.getX(), beacon.getY(), beacon.getZ()), key -> {
-			RawChunk original = worldSubset.hasHeightBounds() ? loadUnfilteredChunk(chunk.getChunkCoord()) : chunk;
-			if (original == null)
-				return 0;
-			return BeaconActivation.resolve(original, beacon, this::loadUnfilteredChunk, (raw, x, y, z) -> {
-				String name = raw.getBlockName(x, y, z);
-				if ("minecraft:air".equals(name) || "minecraft:cave_air".equals(name) || "minecraft:void_air".equals(name)
-						|| name == null && raw.getBlockId(x, y, z) == 0)
-					return false;
-				// Discovery precedes layer setup. Empty columns and inactive pyramids
-				// need no registry; initialize it only for a potential obstruction.
-				if (registry == null)
-					loadBlockRegistry(null, true);
-				if (name == null)
-					return registry.find(raw.getBlockId(x, y, z), raw.getBlockData(x, y, z)).isSolid();
-				BlockStateWrapper block = modelRegistry.getBlock(name);
-				if (block == null)
-					return false;
-				if (block.isFullOpaqueBlock())
-					return true;
-				// Slabs and other blocks can have both partial and full-cube states.
-				return block.getModels(block.getPropertiesWithDefaults(raw.getBlockState(x, y, z)),
-						x, raw.getWorldY(y), z).stream().anyMatch(model -> model.getBlockModel() != null
-						&& model.getBlockModel().isFullBlock() && model.getBlockModel().isSolid());
-			});
+		BeaconPosition key = new BeaconPosition(beacon.getX(), beacon.getY(), beacon.getZ());
+		Integer cached = beaconLevels.get(key);
+		if (cached != null)
+			return cached;
+		// Computed outside computeIfAbsent: it loads chunks and may build the block registry, which must not
+		// run while the map holds a bin lock. Two threads may compute the same beacon; both get the same answer.
+		int levels = computeBeaconLevels(chunk, beacon);
+		Integer previous = beaconLevels.putIfAbsent(key, levels);
+		return previous != null ? previous : levels;
+	}
+
+	private int computeBeaconLevels(RawChunk chunk, BeaconEntity beacon) {
+		RawChunk original = worldSubset.hasHeightBounds() ? loadUnfilteredChunk(chunk.getChunkCoord()) : chunk;
+		if (original == null)
+			return 0;
+		return BeaconActivation.resolve(original, beacon, this::loadUnfilteredChunk, (raw, x, y, z) -> {
+			String name = raw.getBlockName(x, y, z);
+			if ("minecraft:air".equals(name) || "minecraft:cave_air".equals(name) || "minecraft:void_air".equals(name)
+					|| name == null && raw.getBlockId(x, y, z) == 0)
+				return false;
+			// Discovery precedes layer setup. Empty columns and inactive pyramids
+			// need no registry; initialize it only for a potential obstruction.
+			ensureBlockRegistry();
+			if (name == null)
+				return registry.find(raw.getBlockId(x, y, z), raw.getBlockData(x, y, z)).isSolid();
+			BlockStateWrapper block = modelRegistry.getBlock(name);
+			if (block == null)
+				return false;
+			if (block.isFullOpaqueBlock())
+				return true;
+			// Slabs and other blocks can have both partial and full-cube states.
+			return block.getModels(block.getPropertiesWithDefaults(raw.getBlockState(x, y, z)),
+					x, raw.getWorldY(y), z).stream().anyMatch(model -> model.getBlockModel() != null
+					&& model.getBlockModel().isFullBlock() && model.getBlockModel().isSolid());
 		});
+	}
+
+	private synchronized void ensureBlockRegistry() {
+		if (registry == null)
+			loadBlockRegistry(null, true);
 	}
 
 	private RawChunk loadUnfilteredChunk(ChunkCoord coord) {
@@ -1155,10 +1171,7 @@ public class World implements BlockContext, AutoCloseable
 				if (block != null) {
 					return block;
 				} else {
-					unknownBlocks.computeIfAbsent(location, loc -> {
-						log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
-						return name;
-					});
+					warnUnknownBlock(name, location);
 
 					return modelRegistry.getBlock(defaultBlockName);
 				}
@@ -1183,12 +1196,14 @@ public class World implements BlockContext, AutoCloseable
 		if (block != null)
 			return block;
 
-		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
-		unknownBlocks.computeIfAbsent(new Location(chunkCoord, x, y, z), loc -> {
-			log.warn("Unable to find {} block in registry. {}, Region file: {}", name, loc, RegionCoord.getFilenameFromChunkCoord(loc.getCoord()));
-			return name;
-		});
+		warnUnknownBlock(name, new Location(rawChunk.getChunkCoord(), x, y, z));
 		return modelRegistry.getBlock(defaultBlockName);
+	}
+
+	private void warnUnknownBlock(String name, Location location) {
+		if (unknownBlocks.add(name))
+			log.warn("Unable to find {} block in registry. First seen at {}, Region file: {}", name, location,
+					RegionCoord.getFilenameFromChunkCoord(location.getCoord()));
 	}
 
 	@Override

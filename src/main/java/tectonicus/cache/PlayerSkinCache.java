@@ -23,16 +23,22 @@ import tectonicus.util.ImageUtils;
 import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,7 +47,7 @@ public class PlayerSkinCache
 {
 	private static final int INDEX_VERSION = 1;
 	
-	public static final long MAX_AGE_BEFORE_REFRESH = 1000L * 60 * 60 * 60;
+	public static final long MAX_AGE_BEFORE_REFRESH = 1000L * 60 * 60 * 24; // 24 hours
 	
 	private final File cacheDir;
 	
@@ -54,7 +60,8 @@ public class PlayerSkinCache
 		cacheDir = new File(config.getCacheDir(), "skinCache");
 		cacheDir.mkdirs();
 		
-		skinCache = new HashMap<>();
+		// Player loading and skull rendering both read and update the cache from worker threads.
+		skinCache = new ConcurrentHashMap<>();
 		
 		boolean indexOk = false;
 		
@@ -123,38 +130,50 @@ public class PlayerSkinCache
 	
 	public void destroy()
 	{
-		log.info("Writing player skin cache info ({} skin{} to write)", skinCache.size(), skinCache.size() > 1 ? "s" : "");
+		log.info("Writing player skin cache info ({} skin{} to write)", skinCache.size(), skinCache.size() != 1 ? "s" : "");
 		
-		try (PrintWriter writer = new PrintWriter(new File(cacheDir, "skins.cache")))
+		File indexFile = new File(cacheDir, "skins.cache");
+		File tempFile = new File(cacheDir, "skins.cache.tmp");
+		try
 		{
-			writer.println("<skinCache version=\""+INDEX_VERSION+"\">");
-			writer.println("\t<entries>");
-			
-			int count = 0;
-			
-			for (CacheEntry entry : skinCache.values())
-			{
-				writer.println("\t\t<entry playerName=\""+entry.playerName+"\" playerUUID=\""+entry.playerUUID+"\" skinURL=\""+entry.skinURL+"\" skinFile=\""+entry.skinFile+"\" fetchedTime=\""+entry.fetchedTime+"\" />");
-				
-				count++;
-				if (count % 100 == 0)
-				{
-					final int percentage = (int)Math.floor((count / (float)skinCache.size()) * 100);
-					System.out.print(percentage+"%\r"); //prints a carraige return after line
-				}
-			}
-			
-			System.out.println("100%");
-			
-			writer.println("\t</entries>");
-			writer.println("</skinCache>");
+			writeIndex(tempFile);
+			// Replace the old index only once the new one is complete.
+			Files.move(tempFile.toPath(), indexFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			log.info("Player skin cache written");
 		}
 		catch (Exception e)
 		{
-			log.error("Exception: ", e);
+			log.error("Couldn't write player skin cache index {}", indexFile.getAbsolutePath(), e);
 		}
-		
-		log.info("Player skin cache written");
+	}
+
+	private void writeIndex(File file) throws Exception
+	{
+		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+		Element root = doc.createElement("skinCache");
+		root.setAttribute("version", Integer.toString(INDEX_VERSION));
+		doc.appendChild(root);
+		Element entries = doc.createElement("entries");
+		root.appendChild(entries);
+
+		// The DOM serializer escapes quotes, ampersands and angle brackets in the attribute values.
+		for (CacheEntry entry : skinCache.values())
+		{
+			Element e = doc.createElement("entry");
+			e.setAttribute("playerName", String.valueOf(entry.playerName));
+			e.setAttribute("playerUUID", String.valueOf(entry.playerUUID));
+			e.setAttribute("skinURL", String.valueOf(entry.skinURL));
+			e.setAttribute("skinFile", String.valueOf(entry.skinFile));
+			e.setAttribute("fetchedTime", Long.toString(entry.fetchedTime));
+			entries.appendChild(e);
+		}
+
+		Transformer transformer = TransformerFactory.newInstance().newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		try (OutputStream out = Files.newOutputStream(file.toPath()))
+		{
+			transformer.transform(new DOMSource(doc), new StreamResult(out));
+		}
 	}
 	
 	public CacheEntry getCacheEntry(String playerUUID)
@@ -199,11 +218,14 @@ public class PlayerSkinCache
 					return null;
 				try
 				{
-					return ImageIO.read( new File(cacheDir, existing.playerName + ".png") );
+					// Read the file the entry recorded, since the player may have been renamed since it was written.
+					BufferedImage cached = ImageIO.read(new File(cacheDir, existing.skinFile));
+					if (cached != null)
+						return cached;
 				}
 				catch (Exception e)
 				{
-					log.warn("Couldn't read skin cache file: ", e);
+					log.warn("Couldn't read skin cache file {}", existing.skinFile, e);
 				}
 			}
 		}
@@ -213,19 +235,21 @@ public class PlayerSkinCache
 		
 		CacheEntry newEntry = new CacheEntry();
 		BufferedImage newSkin = fetchSkinFromNetwork(player.getSkinURL());
-		File skinFile = null;
 		if (newSkin != null)
 		{
-			skinFile = new File(cacheDir, player.getName()+".png");
+			// Name the file by UUID: it survives a name change and can't contain path characters.
+			String fileName = skinFileName(player.getUuid());
 			try
 			{
-				ImageIO.write(newSkin, "png", skinFile);
+				ImageIO.write(newSkin, "png", new File(cacheDir, fileName));
 			}
 			catch (Exception e)
 			{
-				log.error("Exception: ", e);
+				log.error("Couldn't write skin for player {}", player.getName(), e);
+				// Don't record a file that isn't there; the next render fetches it again.
+				return ImageUtils.copy(newSkin);
 			}
-			newEntry.skinFile = player.getName() + ".png";
+			newEntry.skinFile = fileName;
 		}
 		else
 		{
@@ -241,6 +265,11 @@ public class PlayerSkinCache
 		skinCache.put(player.getUuid(), newEntry);
 		
 		return ImageUtils.copy(newSkin);
+	}
+	
+	static String skinFileName(String uuid)
+	{
+		return uuid.replaceAll("[^0-9A-Za-z-]", "_") + ".png";
 	}
 	
 	private BufferedImage fetchSkinFromNetwork(String skinURL)

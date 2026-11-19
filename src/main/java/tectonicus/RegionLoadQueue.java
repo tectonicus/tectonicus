@@ -16,18 +16,13 @@ import tectonicus.chunk.Chunk;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
+import tectonicus.util.BoundedExecutor;
 import tectonicus.world.Sign;
 
 import java.security.MessageDigest;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static tectonicus.util.FindEntityUtil.findBeds;
 import static tectonicus.util.FindEntityUtil.findContainers;
@@ -38,42 +33,32 @@ import static tectonicus.util.FindEntityUtil.findViews;
 @Slf4j
 public class RegionLoadQueue
 {
-	private final ThreadPoolExecutor executor;
+	private final BoundedExecutor executor;
 	private final IntFunction<byte[]> mapContentHash;
-        
-        private final AtomicInteger numberOfRegionsStarted;
-        public static final AtomicInteger numberOfHashesAdded = new AtomicInteger();
-        
+	
 	public RegionLoadQueue(final int numThreads, IntFunction<byte[]> mapContentHash)
 	{
 		this.mapContentHash = mapContentHash;
-                numberOfRegionsStarted = new AtomicInteger();
-            
-		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(16), new ResubmitHandler());
+		executor = new BoundedExecutor("region-loader", numThreads, 16);
 	}
 	
 	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
 					 DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
-		numberOfRegionsStarted.incrementAndGet();
 		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, containers, beds);
-		executor.submit(task);
+		executor.execute("loading chunk " + chunk.getCoord(), task);
 	}
 	
-	public void waitUntilFinished()
+	/** Waits for all queued chunks and returns how many of them failed to load. */
+	public int waitUntilFinished()
 	{
-		try
-		{                
-			executor.shutdown();
-			executor.awaitTermination(1, TimeUnit.DAYS);
-		}
-                catch (InterruptedException e)
-                {
-			log.error("Exception: ", e);
-		}
+		final int failed = executor.awaitCompletion();
+		if (failed > 0)
+			log.warn("{} chunk(s) could not be loaded and were left out of the signs, portals, views and containers", failed);
+		return failed;
 	}
 	
-	private class LoadTask implements Callable<Void> {
+	private class LoadTask implements Runnable {
 		private final Chunk chunk;
 		private final RegionHashStore regionHashStore;
 		private final MessageDigest hashAlgorithm;
@@ -99,42 +84,18 @@ public class RegionLoadQueue
 		}
 		
 		@Override
-		public Void call() {
-			try {
-				chunk.calculateHash(hashAlgorithm, mapContentHash);
-				regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
-				
-				numberOfHashesAdded.incrementAndGet();
-				
-				findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
-				
-				findPortals(chunk.getRawChunk(), portals, map.getPortalFilter(), map.getWorldSubset());
-				findBeds(chunk.getRawChunk(), beds);
-				
-				findViews(chunk.getRawChunk(), views, map.getViewFilter());
-				
-				findContainers(chunk.getRawChunk(), map.getContainerFilter(), containers);
-			} catch (Exception e) {
-				log.error("Exception: ", e);
-			}
+		public void run() {
+			chunk.calculateHash(hashAlgorithm, mapContentHash);
+			regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
 			
-			return null;
-		}
-	}
-	
-	private static class ResubmitHandler implements RejectedExecutionHandler
-	{
-		@Override
-		public void rejectedExecution(Runnable r, ThreadPoolExecutor executor)
-		{
-			try
-			{
-				executor.getQueue().put(r);
-			}
-			catch (Exception e)
-			{
-				log.error("Exception: ", e);
-			}
+			findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
+			
+			findPortals(chunk.getRawChunk(), portals, map.getPortalFilter(), map.getWorldSubset());
+			findBeds(chunk.getRawChunk(), beds);
+			
+			findViews(chunk.getRawChunk(), views, map.getViewFilter());
+			
+			findContainers(chunk.getRawChunk(), map.getContainerFilter(), containers);
 		}
 	}
 }

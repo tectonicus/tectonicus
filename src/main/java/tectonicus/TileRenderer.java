@@ -263,6 +263,9 @@ public class TileRenderer
 			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
 
+			// Each map gets its own temp folder, removed when the map finishes or fails.
+			TempArea mapTemp = tempArea.subArea(map.getId());
+			HddTileList visibleTiles = null;
 			// Create the world for this map
 			try (World currentWorld = new World(rasteriser, map, playerSkinCache, config)) {
 				World world = currentWorld;
@@ -274,10 +277,9 @@ public class TileRenderer
 				WorldVectors worldVectors = WorldVectors.calcWorldVectors(camera);
 				overlayExporter = new OverlayExporter(map, world.getLevelDat().getWorldSeed());
 			
-				// FIXME: These paths need to change per map
-				File portalsFile = tempArea.generateTempFile("portals", ".list");
-				File signsFile = tempArea.generateTempFile("signs", ".list");
-				File viewsFile = tempArea.generateTempFile("views", ".list");
+				File portalsFile = mapTemp.generateTempFile("portals", ".list");
+				File signsFile = mapTemp.generateTempFile("signs", ".list");
+				File viewsFile = mapTemp.generateTempFile("views", ".list");
 
 				discoveredTiles = hddTileListFactory.createList();
 				subsetHeights.clear();
@@ -286,7 +288,7 @@ public class TileRenderer
 				WorldStats worldStats = preProcess(world, map, portalsFile, signsFile, viewsFile);
 			
 				// Find visible tiles
-				HddTileList visibleTiles = discoveredTiles;
+				visibleTiles = discoveredTiles;
 				discoveredTiles = null;
 				log.info("found {} total tiles to output using occupied chunk heights", visibleTiles.size());
 			
@@ -308,7 +310,7 @@ public class TileRenderer
 				outputBeacons(new File(mapDir, "beacons.js"), map, world.getBeacons(), viewerAssets);
 
 				// Render views
-				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, mapTemp, hashAlgorithm, regionHashStore);
 				ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
 				viewRenderer.output(world, mapDir, viewsFile, changedFileList);
 			
@@ -318,7 +320,7 @@ public class TileRenderer
 					log.warn("No layers found!!!");
 			
 				File tileHashFile = config.useCache() && map.numLayers() > 1
-						? tempArea.generateTempFile("tileHashes", ".cache") : null;
+						? mapTemp.generateTempFile("tileHashes", ".cache") : null;
 				try (TileHashCache tileHashes = new TileHashCache(tileHashFile, world, map, camera, regionHashStore,
 						tileWidth, tileHeight, hashAlgorithm)) {
 					for (LayerConfig layer : map.getLayers()) {
@@ -369,7 +371,6 @@ public class TileRenderer
 					}
 				}
 
-				visibleTiles.close();
 				outputCompass(exportDir, map, rasteriser);
 				// Export shared resources after the last dimension that can actually render.
 				if (map == renderableDimensions.stream().filter(d -> d.getWorld() == map.getWorld()).toList().getLast()) {
@@ -400,6 +401,14 @@ public class TileRenderer
 				overlayExporter.write(new File(mapDir, OverlayExporter.FILE_NAME), world.getWorldDir().toPath(),
 						DirUtils.getDimensionDir(world.getWorldDir().toPath(), map.getDimensionInfo()));
 				overlayExporter = null;
+			} finally {
+				if (discoveredTiles != null) {
+					discoveredTiles.close();
+					discoveredTiles = null;
+				}
+				if (visibleTiles != null)
+					visibleTiles.close();
+				mapTemp.delete();
 			}
 		}
 
@@ -452,15 +461,15 @@ public class TileRenderer
 			File mapDir = new File(exportDir, "Scripts/" + map.getId());
 			FileUtils.ensureExists(mapDir);
 
+			TempArea mapTemp = tempArea.subArea(map.getId());
 			// Create the world for this map
 			try (World world = new World(rasteriser, map, playerSkinCache, config)) {
 
 				// TODO: Load custom blocks here
 			
-				// FIXME: These paths need to change per map
-				File portalsFile = tempArea.generateTempFile("portals", ".list");
-				File signsFile = tempArea.generateTempFile("signs", ".list");
-				File viewsFile = tempArea.generateTempFile("views", ".list");
+				File portalsFile = mapTemp.generateTempFile("portals", ".list");
+				File signsFile = mapTemp.generateTempFile("signs", ".list");
+				File viewsFile = mapTemp.generateTempFile("views", ".list");
 			
 				preProcess(world, map, portalsFile, signsFile, viewsFile);
 			
@@ -468,9 +477,11 @@ public class TileRenderer
 				outputViews(new File(mapDir, "views.js"), viewsFile, map);
 			
 				// Render views
-				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, tempArea, hashAlgorithm, regionHashStore);
+				FileViewCache viewCache = CacheUtil.createViewCache(config.getCacheDir(), map, mapTemp, hashAlgorithm, regionHashStore);
 				ViewRenderer viewRenderer = new ViewRenderer(rasteriser, viewCache, config.getNumDownsampleThreads(), map.getViewConfig());
 				viewRenderer.output(world, mapDir, viewsFile, changedFileList);
+			} finally {
+				mapTemp.delete();
 			}
 		}
 		

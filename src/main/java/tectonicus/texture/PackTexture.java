@@ -240,4 +240,16 @@ public class PackTexture
 		
 		return dest;
 	}
+
+	/** Frees the GL textures. SubTextures handed out earlier must not be drawn afterwards. */
+	public void destroy()
+	{
+		if (fullTexture != null)
+			rasteriser.destroyTexture(fullTexture);
+		if (tileTexture != null)
+			rasteriser.destroyTexture(tileTexture);
+		fullTexture = null;
+		tileTexture = null;
+		subTextures.clear();
+	}
 }
