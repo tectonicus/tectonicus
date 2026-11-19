@@ -488,12 +488,9 @@ public class ItemRenderer
 		rasteriser.clearDepthBuffer();
 		
 		OrthoCamera camera = new OrthoCamera(rasteriser, capturedImageSize, capturedImageSize);
-		final float lookX = bounds.getCenterX();
-		final float lookY = bounds.getCenterY();
-		final float lookZ = bounds.getCenterZ();
 		final float size = (float)Math.sqrt(bounds.getWidth()*bounds.getWidth() + bounds.getHeight()*bounds.getHeight());
 		
-		camera.lookAt(lookX, lookY, lookZ, size, cameraAngle, cameraElevationAngle);
+		lookAtItem(camera, bounds, size, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
 		ArrayList<Vector2f> corners = new ArrayList<>();
@@ -528,7 +525,7 @@ public class ItemRenderer
 		final float ySize = topLeftWorld.sub(bottomLeftWorld, new Vector3f()).length();
 		float longest = gui ? 1 : Math.max(xSize, ySize);
 		
-		camera.lookAt(lookX, lookY, lookZ, longest, cameraAngle, cameraElevationAngle);
+		lookAtItem(camera, bounds, longest, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
 		geometry.finalise();
@@ -573,6 +570,20 @@ public class ItemRenderer
 		}
 		
 		Screenshot.write(outFile, outImg, ImageFormat.PNG, 1.0f);
+	}
+	
+	/**
+	 * Points the camera at the centre of the item's bounds. The camera's near plane passes through its
+	 * look-at point when looking straight down, which would clip the item, so the look-at point is pulled
+	 * towards the eye by the bounds' diagonal. This moves the item away from the near plane without changing
+	 * the orthographic image.
+	 */
+	static void lookAtItem(OrthoCamera camera, BoundingBox bounds, float zoom, float cameraAngle, float cameraElevationAngle) {
+		camera.lookAt(bounds.getCenterX(), bounds.getCenterY(), bounds.getCenterZ(), zoom, cameraAngle, cameraElevationAngle);
+		final Vector3f forward = camera.getForward();
+		final float depth = (float)Math.sqrt(bounds.getWidth()*bounds.getWidth() + bounds.getHeight()*bounds.getHeight() + bounds.getDepth()*bounds.getDepth());
+		camera.lookAt(bounds.getCenterX() - forward.x*depth, bounds.getCenterY() - forward.y*depth, bounds.getCenterZ() - forward.z*depth,
+				zoom, cameraAngle, cameraElevationAngle);
 	}
 	
 	private float getAngleRad(float angle)
