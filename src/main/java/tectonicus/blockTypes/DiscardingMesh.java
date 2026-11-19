@@ -15,6 +15,8 @@ import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
 import tectonicus.util.Colour4f;
 
+import java.nio.IntBuffer;
+
 /** A mesh that ignores its vertices, for parts that are hidden, such as the frame of an invisible item frame. */
 final class DiscardingMesh implements Mesh {
 	static final DiscardingMesh INSTANCE = new DiscardingMesh();
@@ -31,6 +33,7 @@ final class DiscardingMesh implements Mesh {
 	@Override public int getFaceCount() { return 0; }
 	@Override public float getFaceDepth(int faceIndex, Vector3f eye, Vector3f forward, float xOffset, float yOffset, float zOffset) { return 0; }
 	@Override public void drawFaces(int firstFace, int faceCount, float xOffset, float yOffset, float zOffset) { }
+	@Override public void drawQuads(IntBuffer vertexIndices, float xOffset, float yOffset, float zOffset) { }
 	@Override public int getMemorySize() { return 0; }
 	@Override public int getTotalVertices() { return 0; }
 	@Override public void addVertex(Vector3f position, Vector4f colour, float u, float v) { }
