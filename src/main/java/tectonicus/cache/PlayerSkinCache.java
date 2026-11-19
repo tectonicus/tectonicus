@@ -47,7 +47,7 @@ public class PlayerSkinCache
 {
 	private static final int INDEX_VERSION = 1;
 	
-	public static final long MAX_AGE_BEFORE_REFRESH = 1000L * 60 * 60 * 60;
+	public static final long MAX_AGE_BEFORE_REFRESH = 1000L * 60 * 60 * 24; // 24 hours
 	
 	private final File cacheDir;
 	
