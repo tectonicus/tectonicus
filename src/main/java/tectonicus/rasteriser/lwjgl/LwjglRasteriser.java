@@ -23,6 +23,8 @@ import org.lwjgl.egl.EGLCapabilities;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL21;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.system.FunctionProvider;
 import org.lwjgl.system.JNI;
@@ -30,6 +32,7 @@ import tectonicus.configuration.ImageFormat;
 import tectonicus.rasteriser.AlphaFunc;
 import tectonicus.rasteriser.BlendFunc;
 import tectonicus.rasteriser.Mesh;
+import tectonicus.rasteriser.PendingScreenshot;
 import tectonicus.rasteriser.PrimitiveType;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -162,6 +165,14 @@ public class LwjglRasteriser implements Rasteriser {
 	// Reused for every screenshot: a tile render takes thousands, and each direct buffer
 	// would otherwise stay allocated until the garbage collector happened to free it.
 	private ByteBuffer screenshotBuffer;
+
+	// Pixel pack buffers let glReadPixels return immediately; the copy completes on the GPU while
+	// the next frame is prepared. Two are used in turn so one can be read while the other is filled.
+	private static final int PIXEL_PACK_BUFFER_COUNT = 2;
+	private int[] pixelPackBuffers;
+	private final int[] pixelPackBufferSizes = new int[PIXEL_PACK_BUFFER_COUNT];
+	private final PixelPackScreenshot[] pixelPackInFlight = new PixelPackScreenshot[PIXEL_PACK_BUFFER_COUNT];
+	private int nextPixelPackBuffer;
 	
 	public LwjglRasteriser(DisplayType type, final int displayWidth, final int displayHeight, final int colourDepth, final int alphaBits, final int depthBits, final int numSamples) throws Exception {
 		this(type, displayWidth, displayHeight, colourDepth, alphaBits, depthBits, numSamples, -1);
@@ -352,6 +363,11 @@ public class LwjglRasteriser implements Rasteriser {
 	@Override
 	public void destroy() {
 		screenshotBuffer = null;
+		if (pixelPackBuffers != null) {
+			GL15.glDeleteBuffers(pixelPackBuffers);
+			pixelPackBuffers = null;
+			java.util.Arrays.fill(pixelPackInFlight, null);
+		}
 		if (type == DisplayType.OFFSCREEN_EGL) {
 			eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			if (eglContext != EGL_NO_CONTEXT) {
@@ -531,18 +547,96 @@ public class LwjglRasteriser implements Rasteriser {
 		// Rows must be tightly packed: the default alignment of 4 pads 3-byte BGR rows whose width isn't a multiple of 4.
 		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
 
-		if (imageFormat.hasAlpha()) {
+		if (imageFormat.hasAlpha())
+			glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContentsBytes.asIntBuffer());
+		else
+			glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContentsBytes);
+		return toImage(screenContentsBytes, width, height, imageFormat.hasAlpha());
+	}
+
+	@Override
+	public PendingScreenshot startScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat) {
+		if (!GL.getCapabilities().OpenGL21) {
+			BufferedImage image = takeScreenshot(startX, startY, width, height, imageFormat);
+			return () -> image;
+		}
+		if (pixelPackBuffers == null) {
+			pixelPackBuffers = new int[PIXEL_PACK_BUFFER_COUNT];
+			GL15.glGenBuffers(pixelPackBuffers);
+		}
+
+		final int slot = nextPixelPackBuffer;
+		nextPixelPackBuffer = (slot + 1) % PIXEL_PACK_BUFFER_COUNT;
+		// Collect an older capture still in this buffer before overwriting it.
+		if (pixelPackInFlight[slot] != null)
+			pixelPackInFlight[slot].get();
+
+		final boolean alpha = imageFormat.hasAlpha();
+		final int bytes = width * height * (alpha ? 4 : 3);
+		GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, pixelPackBuffers[slot]);
+		try {
+			if (pixelPackBufferSizes[slot] < bytes) {
+				GL15.glBufferData(GL21.GL_PIXEL_PACK_BUFFER, bytes, GL15.GL_STREAM_READ);
+				pixelPackBufferSizes[slot] = bytes;
+			}
+			GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
+			// With a pack buffer bound the last argument is an offset into it, and the call does not wait.
+			GL11.glReadPixels(startX, startY, width, height, alpha ? GL12.GL_BGRA : GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, 0L);
+		} finally {
+			GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, 0);
+		}
+
+		PixelPackScreenshot screenshot = new PixelPackScreenshot(slot, width, height, alpha, bytes);
+		pixelPackInFlight[slot] = screenshot;
+		return screenshot;
+	}
+
+	private final class PixelPackScreenshot implements PendingScreenshot {
+		private final int slot, width, height, bytes;
+		private final boolean alpha;
+		private boolean collected;
+		private BufferedImage image;
+
+		private PixelPackScreenshot(int slot, int width, int height, boolean alpha, int bytes) {
+			this.slot = slot;
+			this.width = width;
+			this.height = height;
+			this.alpha = alpha;
+			this.bytes = bytes;
+		}
+
+		@Override
+		public BufferedImage get() {
+			if (collected)
+				return image;
+			collected = true;
+			if (pixelPackInFlight[slot] != this)
+				throw new IllegalStateException("Screenshot buffer was released before the screenshot was collected");
+			pixelPackInFlight[slot] = null;
+
+			screenshotBuffer = reuseBuffer(screenshotBuffer, bytes);
+			GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, pixelPackBuffers[slot]);
+			try {
+				GL15.glGetBufferSubData(GL21.GL_PIXEL_PACK_BUFFER, 0, screenshotBuffer);
+			} finally {
+				GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, 0);
+			}
+			image = toImage(screenshotBuffer, width, height, alpha);
+			return image;
+		}
+	}
+
+	/** Converts bottom-up BGRA (alpha) or BGR rows read from OpenGL into a top-down image. */
+	private static BufferedImage toImage(ByteBuffer screenContentsBytes, int width, int height, boolean alpha) {
+		if (alpha) {
 			BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			int[] pixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
-			IntBuffer screenContents = screenContentsBytes.asIntBuffer();
-			glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContents);
-			copyRowsFlipped(screenContents, pixels, width, height);
+			copyRowsFlipped(screenContentsBytes.asIntBuffer(), pixels, width, height);
 			return img;
 		}
 
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 		byte[] pixels = ((DataBufferByte) (img.getRaster().getDataBuffer())).getData();
-		glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContentsBytes);
 		copyRowsFlipped(screenContentsBytes, pixels, width * 3, height);
 		return img;
 	}

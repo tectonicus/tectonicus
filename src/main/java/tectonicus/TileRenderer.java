@@ -28,6 +28,7 @@ import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.WorldConfig;
 import tectonicus.itemmodeldefinitionregistry.ItemModelDefinitionRegistry;
 import tectonicus.itemregistry.ItemRegistry;
+import tectonicus.rasteriser.PendingScreenshot;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -823,6 +824,9 @@ public class TileRenderer
 		int done = 0;
 
 		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
+		// Each tile's pixels are collected after the next tile has been drawn, so the CPU prepares
+		// the next tile instead of waiting for the GPU to finish the current one.
+		RenderedTile pending = null;
 
 		try {
 			// Column order within Morton blocks keeps neighbouring chunks in the geometry cache.
@@ -838,38 +842,65 @@ public class TileRenderer
 
 				world.draw(camera, false, true);
 
-				File outputFile = getImageFile(layerDir, t.x, t.y, imageFormat);
-				BufferedImage tileImage = rasteriser.takeScreenshot(0, 0, tileWidth, tileHeight, imageFormat);
-				if (tileImage != null) {
-					boolean empty = imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(tileImage);
-					if (empty) {
-						try {
-							Files.deleteIfExists(outputFile.toPath());
-						} catch (IOException e) {
-							throw new IllegalStateException("Could not remove empty tile " + outputFile, e);
-						}
-						tileCache.writeImageCache(t, true);
-					} else {
-						// Only record the tile hash once the image is on disk, so a failed write is retried next run.
-						imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel(), () -> {
-							changedFileList.writeLine(outputFile.getAbsolutePath());
-							tileCache.writeImageCache(t, false);
-						});
-					}
-				} else {
-					log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:" + tileWidth + " height:" + tileHeight + " format:" + imageFormat + ")");
-				}
+				RenderedTile current = new RenderedTile(t, getImageFile(layerDir, t.x, t.y, imageFormat),
+						rasteriser.startScreenshot(0, 0, tileWidth, tileHeight, imageFormat));
+				RenderedTile previous = pending;
+				pending = current;
+				if (previous != null)
+					saveTile(previous, layer, tileCache, imageWriteQueue);
 
 				done++;
 
 				if (abort)
 					break;
 			}
+			if (pending != null) {
+				RenderedTile last = pending;
+				pending = null;
+				saveTile(last, layer, tileCache, imageWriteQueue);
+			}
 		} finally {
+			// Only reached with a tile left over when rendering failed: keep the tile that did render.
+			if (pending != null) {
+				try {
+					saveTile(pending, layer, tileCache, imageWriteQueue);
+				} catch (RuntimeException e) {
+					log.error("Could not save tile {},{} after a rendering error", pending.coord().x, pending.coord().y, e);
+				}
+			}
 			imageWriteQueue.waitUntilFinished();
 		}
 
 		log.info("\nBase tile render complete");
+	}
+
+	private record RenderedTile(TileCoord coord, File outputFile, PendingScreenshot screenshot) {}
+
+	private void saveTile(RenderedTile tile, LayerConfig layer, TileCache tileCache, ImageWriteQueue imageWriteQueue)
+	{
+		final ImageFormat imageFormat = layer.getImageFormat();
+		final TileCoord t = tile.coord();
+		final File outputFile = tile.outputFile();
+		BufferedImage tileImage = tile.screenshot().get();
+		if (tileImage != null) {
+			boolean empty = imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(tileImage);
+			if (empty) {
+				try {
+					Files.deleteIfExists(outputFile.toPath());
+				} catch (IOException e) {
+					throw new IllegalStateException("Could not remove empty tile " + outputFile, e);
+				}
+				tileCache.writeImageCache(t, true);
+			} else {
+				// Only record the tile hash once the image is on disk, so a failed write is retried next run.
+				imageWriteQueue.write(outputFile, tileImage, imageFormat, layer.getImageCompressionLevel(), () -> {
+					changedFileList.writeLine(outputFile.getAbsolutePath());
+					tileCache.writeImageCache(t, false);
+				});
+			}
+		} else {
+			log.error("Error: Rasteriser.takeScreenshot gave us a null image (width:" + tileWidth + " height:" + tileHeight + " format:" + imageFormat + ")");
+		}
 	}
 
 	public static void setupCameraForTile(OrthoCamera camera, TileCoord tile, final int tileWidth, final int tileHeight, final float cameraAngleRads, final float cameraElevationRads, final int zoom)

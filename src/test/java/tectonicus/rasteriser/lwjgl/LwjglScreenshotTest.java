@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.GL11;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.ImageFormat;
+import tectonicus.rasteriser.PendingScreenshot;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
@@ -90,5 +91,58 @@ class LwjglScreenshotTest {
 		} finally {
 			rasteriser.destroy();
 		}
+	}
+
+	@Test
+	void pendingScreenshotsKeepThePixelsFromWhenTheyWereStarted() {
+		Rasteriser rasteriser;
+		try {
+			rasteriser = RasteriserFactory.createRasteriser(RasteriserType.LWJGL, DisplayType.OFFSCREEN, 64, 64, 24, 8, 24, 0);
+		} catch (Throwable e) {
+			rasteriser = null;
+		}
+		assumeTrue(rasteriser != null, "No OpenGL context available");
+		try {
+			rasteriser.setViewport(0, 0, 64, 64);
+			for (ImageFormat format : new ImageFormat[] {ImageFormat.JPG, ImageFormat.PNG}) {
+				Color[] colours = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
+				PendingScreenshot[] pending = new PendingScreenshot[colours.length];
+				BufferedImage[] expected = new BufferedImage[colours.length];
+				for (int i = 0; i < colours.length; i++) {
+					// A different picture each time: the frame colour plus a marker column whose position changes.
+					rasteriser.clear(colours[i]);
+					GL11.glEnable(GL11.GL_SCISSOR_TEST);
+					GL11.glScissor(i, 0, 1, 64);
+					rasteriser.clear(Color.WHITE);
+					GL11.glDisable(GL11.GL_SCISSOR_TEST);
+
+					expected[i] = rasteriser.takeScreenshot(0, 0, 13, 10, format);
+					pending[i] = rasteriser.startScreenshot(0, 0, 13, 10, format);
+					// Collect only every other capture straight away; the rest wait while later frames are drawn,
+					// including captures that are older than the number of buffers in use.
+					if (i % 2 == 1)
+						assertImagesEqual(expected[i], pending[i].get(), format + " capture " + i);
+				}
+				rasteriser.clear(Color.BLACK);
+				for (int i = 0; i < colours.length; i++) {
+					BufferedImage image = pending[i].get();
+					assertImagesEqual(expected[i], image, format + " capture " + i);
+					assertEquals(colours[i].getRGB() & 0xFFFFFF, image.getRGB(12, 5) & 0xFFFFFF, format + " capture " + i);
+					assertEquals(0xFFFFFF, image.getRGB(i, 5) & 0xFFFFFF, format + " capture " + i + " marker");
+					assertSame(image, pending[i].get(), "repeated get returns the same image");
+				}
+			}
+		} finally {
+			rasteriser.destroy();
+		}
+	}
+
+	private static void assertImagesEqual(BufferedImage expected, BufferedImage actual, String context) {
+		assertEquals(expected.getType(), actual.getType(), context);
+		assertEquals(expected.getWidth(), actual.getWidth(), context);
+		assertEquals(expected.getHeight(), actual.getHeight(), context);
+		for (int y = 0; y < expected.getHeight(); y++)
+			for (int x = 0; x < expected.getWidth(); x++)
+				assertEquals(expected.getRGB(x, y), actual.getRGB(x, y), context + " pixel " + x + "," + y);
 	}
 }
