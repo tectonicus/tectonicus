@@ -11,24 +11,19 @@ package tectonicus;
 
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.configuration.ImageFormat;
+import tectonicus.util.BoundedExecutor;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class ImageWriteQueue
 {
-	private final ThreadPoolExecutor executor;
-	private final AtomicInteger failures = new AtomicInteger();
+	private final BoundedExecutor executor;
 	
 	public ImageWriteQueue(final int numThreads)
 	{
-		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(16), new ResubmitHandler());
+		executor = new BoundedExecutor("image-writer", numThreads, 16);
 	}
 	
 	public void write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel)
@@ -42,80 +37,24 @@ public class ImageWriteQueue
 	 */
 	public void write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel, Runnable onWritten)
 	{
-		executor.execute(new WriteTask(outputFile, img, imageFormat, compressionLevel, onWritten));
+		executor.execute("writing " + outputFile.getAbsolutePath(), () -> {
+			// Screenshot.write logs its own errors and reports them by returning false.
+			if (!Screenshot.write(outputFile, img, imageFormat, compressionLevel))
+			{
+				executor.recordFailure();
+				return;
+			}
+			if (onWritten != null)
+				onWritten.run();
+		});
 	}
 	
 	/** Waits for all queued writes and returns how many of them failed. */
 	public int waitUntilFinished()
 	{
-		try
-		{
-			executor.shutdown();
-			executor.awaitTermination(1, TimeUnit.DAYS);
-		}
-		catch (InterruptedException e)
-		{
-			Thread.currentThread().interrupt();
-			log.error("Exception: ", e);
-		}
-		final int failed = failures.get();
+		final int failed = executor.awaitCompletion();
 		if (failed > 0)
 			log.warn("{} image(s) could not be written; they will be retried on the next render", failed);
 		return failed;
-	}
-	
-	private class WriteTask implements Runnable
-	{
-		private final File outputFile;
-		private final BufferedImage img;
-		private final ImageFormat imageFormat;
-		private final float compressionLevel;
-		private final Runnable onWritten;
-		
-		WriteTask(File f, BufferedImage i, ImageFormat format, float compression, Runnable onWritten)
-		{
-			this.outputFile = f;
-			this.img = i;
-			this.imageFormat = format;
-			this.compressionLevel = compression;
-			this.onWritten = onWritten;
-		}
-		
-		@Override
-		public void run()
-		{
-			try
-			{
-				if (!Screenshot.write(outputFile, img, imageFormat, compressionLevel))
-				{
-					failures.incrementAndGet();
-					return;
-				}
-				if (onWritten != null)
-					onWritten.run();
-			}
-			catch (RuntimeException e)
-			{
-				failures.incrementAndGet();
-				log.error("Failed to finish writing {}", outputFile.getAbsolutePath(), e);
-			}
-		}
-	}
-	
-	private static class ResubmitHandler implements RejectedExecutionHandler
-	{
-		@Override
-		public void rejectedExecution(Runnable r, ThreadPoolExecutor executor)
-		{
-			try
-			{
-				executor.getQueue().put(r);
-			}
-			catch (InterruptedException e)
-			{
-				Thread.currentThread().interrupt();
-				log.error("Exception: ", e);
-			}
-		}
 	}
 }

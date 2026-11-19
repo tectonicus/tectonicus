@@ -24,6 +24,18 @@ public class TempArea
 		FileUtils.ensureExists(baseDir);
 	}
 	
+	/** A fresh area in a subfolder, for files that belong to one map. */
+	public TempArea subArea(String name)
+	{
+		return new TempArea(new File(baseDir, name.replaceAll("[^0-9A-Za-z._-]", "_")));
+	}
+	
+	/** Removes the area's folder and every file in it. */
+	public void delete()
+	{
+		FileUtils.deleteDirectory(baseDir);
+	}
+	
 	public File generateTempFile(String prefix, String extension)
 	{
 		if (extension.charAt(0) != '.')

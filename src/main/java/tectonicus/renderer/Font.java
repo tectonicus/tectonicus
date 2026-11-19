@@ -87,4 +87,11 @@ public class Font
 	{
 		return characterMap.get(ch);
 	}
+
+	public void destroy(Rasteriser rasteriser)
+	{
+		if (texture != null)
+			rasteriser.destroyTexture(texture);
+		texture = null;
+	}
 }

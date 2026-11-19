@@ -113,8 +113,7 @@ public class TectonicusApp
 
 					interactiveRenderer.display(world);
 				}
-				
-				interactiveRenderer.destroy();
+				// The finally block below destroys the renderer.
 			}
 			else if (config.getMode() == Mode.CMD)
 			{

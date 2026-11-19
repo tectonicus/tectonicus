@@ -15,6 +15,7 @@ import tectonicus.cache.TileCache;
 import tectonicus.cache.swap.HddTileList;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.configuration.LayerConfig;
+import tectonicus.util.BoundedExecutor;
 import tectonicus.util.ImageUtils;
 
 import javax.imageio.ImageIO;
@@ -28,21 +29,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.nio.file.Files;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Iterator;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class Downsampler {
 	private final ChangeFile changedFileList;
-	private final ThreadPoolExecutor executor;
+	private final BoundedExecutor executor;
 	
 	public Downsampler(final int numThreads, ChangeFile changedFileList) {
 		this.changedFileList = changedFileList;
-		executor = new ThreadPoolExecutor(numThreads, numThreads, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(64), new ResubmitHandler());
+		executor = new BoundedExecutor("downsampler", numThreads, 64);
 	}
 	
 	public void downsample(File inputDir, File outputDir, HddTileList tiles, LayerConfig layer, final int tileWidth, final int tileHeight, ProgressListener progressListener, TileCache tileCache, int zoomLevel) {
@@ -51,8 +49,8 @@ public class Downsampler {
 		Shared state = new Shared(inputDir, outputDir, layer.getImageFormat(), layer.getImageCompressionLevel(), layer.getBackgroundColorRGB(), tileWidth, tileHeight, zoomLevel);
 		
 		for (TileCoord tile : tiles) {
-			DownsampleTask task = new DownsampleTask(tile, state, changedFileList, tileCache);
-			executor.submit(task);
+			DownsampleTask task = new DownsampleTask(tile, state, changedFileList, tileCache, executor);
+			executor.execute("downsampling tile " + tile.x + "," + tile.y + " at zoom " + zoomLevel, task);
 			
 			count++;
 			if (count % 128 == 0) {
@@ -64,13 +62,10 @@ public class Downsampler {
 		
 		System.out.println("\t100%");
 		
-		try {
-			log.debug("\tFinalizing downsampling...");
-			executor.shutdown();
-			executor.awaitTermination(1, TimeUnit.DAYS);
-		} catch (InterruptedException e) {
-			log.error("Exception: ", e);
-		}
+		log.debug("\tFinalizing downsampling...");
+		final int failed = executor.awaitCompletion();
+		if (failed > 0)
+			log.warn("{} tile(s) at zoom {} could not be downsampled; they will be retried on the next render", failed, zoomLevel);
 		
 		log.debug("\tDownsampling complete");
 	}
@@ -90,22 +85,34 @@ public class Downsampler {
 	}
 
 	@RequiredArgsConstructor
-	private static class DownsampleTask implements Callable<Void> {
+	private static class DownsampleTask implements Runnable {
 		private final TileCoord tile;
 		private final Shared state;
 		private final ChangeFile changedFileList;
 		private final TileCache tileCache;
+		private final BoundedExecutor executor;
 		
 		@Override
-		public Void call() throws Exception {
+		public void run() {
+			try {
+				downsample();
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		}
+
+		private void downsample() throws IOException {
 			// Find the four input files
 			BufferedImage[] inputs = new BufferedImage[4];
 			for (int i = 0; i < inputs.length; i++) {
 				File file = TileRenderer.getImageFile(state.inputDir, tile.x * 2 + i % 2, tile.y * 2 + i / 2, state.imageFormat);
 				inputs[i] = getTile(file);
 				// Unreadable files must not be mistaken for deliberately omitted empty children.
-				if (inputs[i] == null && file.exists())
-					return null;
+				if (inputs[i] == null && file.exists()) {
+					log.warn("Skipping tile {},{} at zoom {} because {} could not be read", tile.x, tile.y, state.zoomLevel, file.getAbsolutePath());
+					executor.recordFailure();
+					return;
+				}
 			}
 			BufferedImage in00 = inputs[0], in10 = inputs[1], in01 = inputs[2], in11 = inputs[3];
 			
@@ -113,13 +120,13 @@ public class Downsampler {
 			if (in00 == null && in10 == null && in01 == null && in11 == null) {
 				Files.deleteIfExists(outputFile.toPath());
 				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, true);
-				return null;
+				return;
 			}
 
 			if (state.imageFormat.hasAlpha() && isEmpty(in00) && isEmpty(in10) && isEmpty(in01) && isEmpty(in11)) {
 				Files.deleteIfExists(outputFile.toPath());
 				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, true);
-				return null;
+				return;
 			}
 			
 			log.trace("\tDownsampling to create meta tile at "+tile.x+","+tile.y);
@@ -151,22 +158,18 @@ public class Downsampler {
 				g.drawImage(in11, halfWidth, halfHeight, halfWidth, halfHeight, null);
 			g.dispose();
 			
-			try {
-				boolean empty = state.imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(outImg);
-				if (empty) {
-					Files.deleteIfExists(outputFile.toPath());
-				} else {
-					// Leave the tile pending so the next render retries a failed write.
-					if (!Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel))
-						return null;
-					changedFileList.writeLine(outputFile.getAbsolutePath());
+			boolean empty = state.imageFormat.hasAlpha() && ImageUtils.isFullyTransparent(outImg);
+			if (empty) {
+				Files.deleteIfExists(outputFile.toPath());
+			} else {
+				// Leave the tile pending so the next render retries a failed write.
+				if (!Screenshot.write(outputFile, outImg, state.imageFormat, state.imageCompressionLevel)) {
+					executor.recordFailure();
+					return;
 				}
-				tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, empty);
-			} catch (Exception e) {
-				log.error("Exception: ", e);
+				changedFileList.writeLine(outputFile.getAbsolutePath());
 			}
-			
-			return null;
+			tileCache.updateTileDownsampleStatus(tile, state.zoomLevel, empty);
 		}
 
 		private static boolean isEmpty(BufferedImage image) {
@@ -197,22 +200,6 @@ public class Downsampler {
 				log.error("Error getting tile {}", file.getAbsolutePath(), e);
 			}
 			return null;
-		}
-	}
-	
-	private static class ResubmitHandler implements RejectedExecutionHandler
-	{
-		@Override
-		public void rejectedExecution(Runnable r, ThreadPoolExecutor executor)
-		{
-			try
-			{
-				executor.getQueue().put(r);
-			}
-			catch (Exception e)
-			{
-				log.error("Exception: ", e);
-			}
 		}
 	}
 }

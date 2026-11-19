@@ -1393,6 +1393,20 @@ public class TexturePack
 	{
 		return font;
 	}
+
+	/** Frees every GL texture this pack created. Call it on the thread that owns the GL context. */
+	public void close()
+	{
+		loadedPackTextures.values().forEach(PackTexture::destroy);
+		loadedPackTextures.clear();
+		particleTextures.clear();
+		if (vignetteTexture != null)
+			rasteriser.destroyTexture(vignetteTexture);
+		vignetteTexture = null;
+		if (font != null)
+			font.destroy(rasteriser);
+		signFont.close();
+	}
 	
 	private Point iconVirtualToActual(final BufferedImage iconSheet, final int virtualX, final int virtualY)
 	{
