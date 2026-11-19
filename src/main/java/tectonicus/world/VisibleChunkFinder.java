@@ -82,27 +82,33 @@ final class VisibleChunkFinder {
 		// Same loop order as before (region x, region z, chunk x, chunk z), so callers see the same list order.
 		for (long regionX = minRegionX; regionX <= maxRegionX; regionX++) {
 			for (long regionZ = minRegionZ; regionZ <= maxRegionZ; regionZ++) {
-				if (!regionExists.test(new RegionCoord(regionX, regionZ)))
-					continue;
-
 				final long baseChunkX = regionX * regionWidth;
 				final long baseChunkZ = regionZ * regionHeight;
 				if (!isBoxVisible(camera, baseChunkX * RawChunk.WIDTH, baseChunkZ * RawChunk.DEPTH,
 						RawChunk.WIDTH * RegionCoord.REGION_WIDTH, worldHeight, RawChunk.DEPTH * RegionCoord.REGION_HEIGHT))
 					continue;
 
+				// Checking for the region file loads the whole region, so do it last: only once a chunk
+				// of this region is known to be in the subset and visible.
+				Boolean regionPresent = null;
+
 				final long fromX = Math.max(minChunkX, baseChunkX);
 				final long toX = Math.min(maxChunkX, baseChunkX + regionWidth - 1);
 				final long fromZ = Math.max(minChunkZ, baseChunkZ);
 				final long toZ = Math.min(maxChunkZ, baseChunkZ + regionHeight - 1);
+				chunks:
 				for (long chunkX = fromX; chunkX <= toX; chunkX++) {
 					for (long chunkZ = fromZ; chunkZ <= toZ; chunkZ++) {
 						ChunkCoord chunkCoord = new ChunkCoord(chunkX, chunkZ);
-						if (inSubset.test(chunkCoord)
-								&& isBoxVisible(camera, chunkX * RawChunk.WIDTH, chunkZ * RawChunk.DEPTH, RawChunk.WIDTH, worldHeight, RawChunk.DEPTH)
-								&& chunkExists.test(chunkCoord)) {
+						if (!inSubset.test(chunkCoord)
+								|| !isBoxVisible(camera, chunkX * RawChunk.WIDTH, chunkZ * RawChunk.DEPTH, RawChunk.WIDTH, worldHeight, RawChunk.DEPTH))
+							continue;
+						if (regionPresent == null)
+							regionPresent = regionExists.test(new RegionCoord(regionX, regionZ));
+						if (!regionPresent)
+							break chunks;
+						if (chunkExists.test(chunkCoord))
 							result.add(chunkCoord);
-						}
 					}
 				}
 			}

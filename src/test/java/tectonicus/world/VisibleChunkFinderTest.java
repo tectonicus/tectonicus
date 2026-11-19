@@ -90,6 +90,31 @@ class VisibleChunkFinderTest {
 		assertFalse(checked.isEmpty());
 	}
 
+	/** Looking up a region loads its whole file, so only regions with a visible chunk in the subset are looked up. */
+	@Test
+	void looksUpOnlyRegionsWithVisibleChunksInTheSubset() {
+		for (int angle : new int[]{0, 45, 135}) {
+			for (int zoom : new int[]{8, 32}) {
+				OrthoCamera camera = new OrthoCamera(RASTERISER, SIZE, SIZE);
+				camera.lookAtTile(5, -3, zoom, radians(angle), radians(45));
+				// All visible chunks in the subset, ignoring region and chunk existence.
+				List<ChunkCoord> candidates = VisibleChunkFinder.find(camera, 384, chunk -> true, region -> true, chunk -> true);
+				assertFalse(candidates.isEmpty());
+				RegionCoord kept = RegionCoord.fromChunkCoord(candidates.get(0));
+				Predicate<ChunkCoord> inSubset = chunk -> RegionCoord.fromChunkCoord(chunk).equals(kept);
+
+				List<RegionCoord> checked = new ArrayList<>();
+				List<ChunkCoord> found = VisibleChunkFinder.find(camera, 384, inSubset, region -> {
+					checked.add(region);
+					return true;
+				}, chunk -> true);
+
+				assertEquals(List.of(kept), checked);
+				assertEquals(candidates.stream().filter(inSubset).toList(), found);
+			}
+		}
+	}
+
 	@Test
 	void footprintIsTheFrustumCutToTheWorldHeight() {
 		// A vertical box from y=-100 to y=100 over x 0..10, z 0..20, given in an arbitrary vertex order.
