@@ -208,6 +208,8 @@ final class BedrockBlockEntities {
 		if (plant == null)
 			return;
 		String name = mapper.map(plant).name();
+		if (name.equals("minecraft:air") || name.equals("minecraft:cave_air"))
+			return; // An emptied pot keeps an air PlantBlock
 		String potted = switch (name) {
 			case "minecraft:azalea" -> "minecraft:potted_azalea_bush";
 			case "minecraft:flowering_azalea" -> "minecraft:potted_flowering_azalea_bush";
