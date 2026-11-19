@@ -9,6 +9,8 @@
 
 package tectonicus.cache.swap;
 
+import org.h2.mvstore.FileStore;
+import org.h2.mvstore.MVStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.TileCoord;
@@ -108,6 +110,61 @@ class HddTileListTests {
 			}
 		}
 		assertFalse(Files.exists(directory.resolve("tileLists.mv")));
+	}
+
+	@Test
+	void keepsAnOpenIteratorReadableWhileOtherListsAreReclaimed() throws Exception {
+		try (HddTileListFactory factory = new HddTileListFactory(directory.toFile())) {
+			HddTileList source = factory.createList();
+			HddTileList disposable = factory.createList();
+			// Tune storage pressure without replacing the factory's actual compaction configuration.
+			var storeField = HddTileListFactory.class.getDeclaredField("store");
+			storeField.setAccessible(true);
+			MVStore store = (MVStore)storeField.get(factory);
+			store.setCacheSize(1);
+			store.setRetentionTime(0);
+			store.setAutoCommitDelay(0);
+			// Run the real background housekeeping synchronously, avoiding sleeps and thread races.
+			var housekeeping = FileStore.class.getDeclaredMethod("writeInBackground");
+			housekeeping.setAccessible(true);
+
+			final int count = 65_536;
+			for (int i = 0; i < count; i++) {
+				source.add(new TileCoord(i * 8191, Integer.rotateLeft(i * 0x9E3779B9, 13)));
+				for (int j = 0; j < 8; j++) {
+					int key = i * 8 + j;
+					disposable.add(new TileCoord(key, Integer.rotateLeft(key * 0x9E3779B9, 13)));
+				}
+				// Interleave both maps' persisted pages so removing one leaves partially live chunks.
+				if (i % 512 == 511)
+					store.commit();
+			}
+			store.commit();
+			Iterator<TileCoord> cursor = source.iterator();
+			disposable.close();
+			store.commit();
+			for (int round = 0; round < 24; round++) {
+				try (HddTileList other = factory.createList()) {
+					for (int j = 0; j < 4096; j++)
+						other.add(new TileCoord(round * 4096 + j, j));
+					store.commit();
+					housekeeping.invoke(store.getFileStore());
+					store.commit();
+				}
+				store.commit();
+				housekeeping.invoke(store.getFileStore());
+			}
+
+			Iterator<TileCoord> current = source.iterator();
+			int read = 0;
+			while (current.hasNext()) {
+				assertTrue(cursor.hasNext());
+				assertEquals(current.next(), cursor.next());
+				read++;
+			}
+			assertEquals(count, read);
+			assertFalse(cursor.hasNext());
+		}
 	}
 
 	@Test
