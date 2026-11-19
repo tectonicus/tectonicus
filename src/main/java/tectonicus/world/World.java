@@ -185,6 +185,8 @@ public class World implements BlockContext, AutoCloseable
 
 	private final RawCache rawLoadedChunks;
 	private final GeometryCache geometryLoadedChunks;
+	// Biome tint samples of the chunk whose geometry is being built.
+	private final TintSampleCache tintSamples = new TintSampleCache();
 	
 	private LightStyle lightStyle;
 	@Getter
@@ -378,11 +380,14 @@ public class World implements BlockContext, AutoCloseable
 							if (original != null)
 								maskFactory = (chunkCoord, raw) -> blockMaskFactory.createMask(chunkCoord, original);
 						}
+						tintSamples.begin(coord);
 						try {
 							chunk.createGeometry(rasteriser, this, registry, modelRegistry, maskFactory, texturePack);
 						} catch (RuntimeException e) {
 							log.error("Failed to build geometry for chunk {},{}; it will be left out of this render", coord.x, coord.z, e);
 							chunk.unloadGeometry();
+						} finally {
+							tintSamples.end();
 						}
 
                         return chunk;
@@ -1470,7 +1475,7 @@ public class World implements BlockContext, AutoCloseable
 		if (!useBiomeColours)
 			return version >= VERSION_15.getNumVersion()
 					? getTintColor(Biomes.PLAINS, isFoliage, isDryFoliage) : getTintColorOld(1, isFoliage);
-		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
+		BiomeColorBlender.ColorResolver resolver = (sampleX, sampleZ) -> {
 			Location location = resolve(chunkCoord, sampleX, y, sampleZ);
 			Chunk chunk = rawLoadedChunks.get(location.coord);
 			BiomeData.ColourCoord extracted = chunk != null ? chunk.getBiomeColourCoord(location.x, location.z) : null;
@@ -1490,7 +1495,10 @@ public class World implements BlockContext, AutoCloseable
 			if (version < VERSION_15.getNumVersion())
 				return getTintColor(biome, elevation, isFoliage);
 			return getTintColor(biome, isFoliage, isDryFoliage);
-		});
+		};
+		// Neighbouring blocks and faces share most samples; compute each one once per chunk.
+		return BiomeColorBlender.blend(x, z, biomeBlendRadius,
+				tintSamples.wrap(chunkCoord, y, TintSampleCache.plantKind(isFoliage, isDryFoliage), resolver));
 	}
 
 	/** Get tint color for Minecraft 1.6 and earlier */
@@ -1551,7 +1559,7 @@ public class World implements BlockContext, AutoCloseable
 		if (!useBiomeColours)
 			return textureVersion.getNumVersion() < VERSION_13.getNumVersion() ? new Colour4f() : new Colour4f(ColorsWater.DEFAULT.getWaterColor());
 		ChunkCoord chunkCoord = rawChunk.getChunkCoord();
-		return BiomeColorBlender.blend(x, z, biomeBlendRadius, (sampleX, sampleZ) -> {
+		BiomeColorBlender.ColorResolver resolver = (sampleX, sampleZ) -> {
 			Biome biome = sampleX >= 0 && sampleX < RawChunk.WIDTH && sampleZ >= 0 && sampleZ < RawChunk.DEPTH
 					? getBiome(rawChunk, sampleX, y, sampleZ)
 					: getBiome(chunkCoord, sampleX, y, sampleZ);
@@ -1563,6 +1571,7 @@ public class World implements BlockContext, AutoCloseable
 				return swamp ? new Colour4f(new Color(swampWaterTint.getRgb())) : new Colour4f();
 			}
 			return biome.getWaterColor();
-		});
+		};
+		return BiomeColorBlender.blend(x, z, biomeBlendRadius, tintSamples.wrap(chunkCoord, y, TintSampleCache.WATER, resolver));
 	}
 }
