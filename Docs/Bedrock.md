@@ -27,12 +27,18 @@ Java worlds: `dimension="nether"` or `dimension="end"` on the `<map>` element.
 | --- | --- |
 | Worlds saved by Bedrock 1.2.13 and later (sub-chunk formats 1, 8 and 9) | Older Pocket Edition worlds |
 | Overworld (Y -64 to 319 from 1.18, 0 to 255 before), Nether and End | |
-| Block states, including waterlogged blocks and double chests | Fence, pane, wall and redstone connections; stair shapes |
+| Block states, including waterlogged blocks and double chests | |
+| States Bedrock leaves to the game: fence, pane, bar, chorus and tripwire connections, redstone wire, stair shapes, door halves, tall plants and snowy grass | Fire faces, attached stems and a few other cosmetic states |
 | Per-block biomes and Java biome colours | Bedrock's own biome water colours |
-| Signs, including back text and glowing text | Banners, beds, skulls, flower pots, item frames and other block entities |
-| Day lighting, estimated from the blocks above each column | Saved light: Bedrock saves none, so Night and Cave lighting are dark |
-| | Paintings, armor stands, players and maps |
+| Sky and block light, computed as Java does since Bedrock saves none, so Day, Night and Cave lighting all work | |
+| Signs (with back and glowing text), banners (including the ominous banner), bed colours, heads, flower pots, item frames and glow item frames, decorated pots, shulker boxes, beacons, and chest, barrel and shulker box contents | Player head skins: Bedrock saves none |
+| Paintings and armor stands with their equipment (poses: default, none, brandish, salute and zombie) | Other armor stand poses |
+| Players: the local player and others who joined, with position, dimension, health and inventory | Player names and skins: Bedrock saves none, so the local player takes `singlePlayerName` from the config and others show as "Player" |
+| Maps in item frames | |
 | | Bedrock resource packs |
+
+Paintings are placed from the centre Bedrock saves, using the vanilla painting sizes; a painting from an add-on is
+treated as 1x1.
 
 ## Mapping data
 

@@ -14,6 +14,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.jnbt.CompoundTag;
 import org.joml.Vector3f;
 import tectonicus.Block;
 import tectonicus.BlockContext;
@@ -33,6 +34,7 @@ import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.cache.CacheUtil;
@@ -1477,6 +1479,11 @@ public class World implements BlockContext, AutoCloseable
 		if (players.isEmpty() && singlePlayer != null) {
 			submitPlayerTask(singlePlayer, playerSkinCache, executor);
 			players.add(singlePlayer);
+		}
+		if (BedrockWorld.isBedrockWorld(worldDir.toPath())) {
+			// Bedrock keeps players in its database, with no names; label them as Java does unnamed players
+			for (CompoundTag tag : BedrockWorld.open(worldDir.toPath()).serverPlayers())
+				players.add(new Player(null, tag));
 		}
 		
 		try {

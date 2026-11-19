@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.regex.Pattern;
 
 /**
  * Decodes one Bedrock Edition chunk from its LevelDB records into a {@link RawChunk} holding Java Edition block
- * states, biomes and signs. Bedrock saves no light, so sky light is estimated per column; block light is left dark.
+ * states, biomes, block entities and entities.
  */
 @Slf4j
 public final class BedrockChunkReader {
@@ -42,13 +43,14 @@ public final class BedrockChunkReader {
 	public static final byte TAG_DATA_2D = 0x2D;
 	public static final byte TAG_SUB_CHUNK = 0x2F;
 	public static final byte TAG_BLOCK_ENTITY = 0x31;
+	public static final byte TAG_ENTITY = 0x32;
 	public static final byte TAG_FINALIZED_STATE = 0x36;
 	public static final byte TAG_VERSION_OLD = 0x76;
 
 	private static final int SIZE = RawChunk.SECTION_SIZE;
-	private static final String AIR = "minecraft:air";
-	private static final BlockProperties NO_PROPERTIES = new BlockProperties();
 	private static final Pattern FORMATTING = Pattern.compile("§.");
+	private static final byte[] DIGEST_PREFIX = "digp".getBytes(StandardCharsets.US_ASCII);
+	private static final byte[] ACTOR_PREFIX = "actorprefix".getBytes(StandardCharsets.US_ASCII);
 	private static final Set<Integer> reportedVersions = ConcurrentHashMap.newKeySet();
 
 	/** Reads a LevelDB value by key, returning null when the key is absent. */
@@ -94,33 +96,64 @@ public final class BedrockChunkReader {
 	}
 
 	/**
-	 * Reads a chunk.
+	 * Reads a chunk's blocks as Java states, with Bedrock's water layer turned into waterlogging.
 	 *
 	 * @param minSectionY  the dimension's lowest section, such as -4 in the 1.18+ Overworld
 	 * @param sectionCount the number of sections in the dimension
 	 */
-	public RawChunk read(int chunkX, int chunkZ, int minSectionY, int sectionCount) throws IOException {
-		RawChunk chunk = new RawChunk(chunkX, chunkZ, minSectionY);
-		sectionCount = Math.min(sectionCount, chunk.getSectionCount());
-
+	public Blocks readBlocks(int chunkX, int chunkZ, int minSectionY, int sectionCount) throws IOException {
+		JavaState[][] sections = new JavaState[sectionCount][];
 		for (int section = 0; section < sectionCount; section++) {
 			byte[] data = records.get(key(chunkX, chunkZ, dimension, TAG_SUB_CHUNK, minSectionY + section));
 			if (data == null)
 				continue;
 			try {
-				readSubChunk(chunk, section, data);
+				sections[section] = readSubChunk(data);
 			} catch (IOException | RuntimeException e) {
 				log.warn("Skipping unreadable sub-chunk {} of Bedrock chunk {},{}", minSectionY + section, chunkX, chunkZ, e);
 			}
 		}
+		return new Blocks(chunkX, chunkZ, minSectionY, sections);
+	}
+
+	/**
+	 * Builds the chunk Tectonicus renders from its blocks: biomes, block entities and entities, with the Bedrock block
+	 * entities that change a block's Java state (bed and banner colours, heads, flower pots, item frames) applied.
+	 * Light and neighbour-derived states are left to {@link LightEngine} and {@link BlockStateFixups}.
+	 */
+	public RawChunk read(Blocks blocks, Neighbourhood neighbourhood) throws IOException {
+		int chunkX = blocks.chunkX();
+		int chunkZ = blocks.chunkZ();
+		RawChunk chunk = new RawChunk(chunkX, chunkZ, blocks.minSectionY());
+		int sectionCount = Math.min(blocks.sections().length, chunk.getSectionCount());
+		for (int section = 0; section < sectionCount; section++) {
+			JavaState[] states = blocks.sections()[section];
+			if (states == null)
+				continue;
+			String[] names = new String[SIZE];
+			BlockProperties[] properties = new BlockProperties[SIZE];
+			for (int i = 0; i < SIZE; i++) {
+				names[i] = states[i].name();
+				properties[i] = states[i].properties();
+			}
+			chunk.setSection(section, names, properties);
+		}
 
 		readBiomes(chunk, chunkX, chunkZ, sectionCount);
-		estimateSkyLight(chunk, sectionCount);
-		readBlockEntities(chunk, chunkX, chunkZ);
+		BedrockBlockEntities blockEntities = new BedrockBlockEntities(chunk, neighbourhood, mapper);
+		readBlockEntities(chunk, blockEntities, chunkX, chunkZ);
+		blockEntities.finish();
+		BedrockEntities.read(chunk, readActors(chunkX, chunkZ), mapper);
 		return chunk;
 	}
 
-	private void readSubChunk(RawChunk chunk, int section, byte[] data) throws IOException {
+	/** Reads a whole chunk on its own, without light or states that depend on neighbouring chunks. */
+	RawChunk read(int chunkX, int chunkZ, int minSectionY, int sectionCount) throws IOException {
+		Blocks blocks = readBlocks(chunkX, chunkZ, minSectionY, sectionCount);
+		return read(blocks, Neighbourhood.of(blocks));
+	}
+
+	private JavaState[] readSubChunk(byte[] data) throws IOException {
 		ByteBuffer in = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
 		int version = in.get() & 0xFF;
 		int layers;
@@ -134,17 +167,16 @@ public final class BedrockChunkReader {
 			default -> {
 				if (reportedVersions.add(version))
 					log.warn("Bedrock sub-chunk format {} (from before 1.2.13) is not supported; those sub-chunks are skipped", version);
-				return;
+				return null;
 			}
 		}
 		if (layers == 0)
-			return;
+			return null;
 
 		JavaState[] blocks = readLayer(in);
 		JavaState[] liquids = layers > 1 ? readLayer(in) : null;
 
-		String[] names = new String[SIZE];
-		BlockProperties[] states = new BlockProperties[SIZE];
+		JavaState[] states = new JavaState[SIZE];
 		for (int x = 0; x < 16; x++) {
 			for (int z = 0; z < 16; z++) {
 				for (int y = 0; y < 16; y++) {
@@ -154,18 +186,16 @@ public final class BedrockChunkReader {
 						JavaState liquid = liquids[bedrockIndex];
 						if (liquid != null && isWater(liquid.name())) {
 							if (block.waterloggable())
-								block = block.withProperty("waterlogged", "true");
-							else if (AIR.equals(block.name()))
+								block = mapper.waterlogged(block);
+							else if (block.isAir())
 								block = liquid;
 						}
 					}
-					int index = RawChunk.sectionIndex(x, y, z);
-					names[index] = block.name();
-					states[index] = block.properties();
+					states[RawChunk.sectionIndex(x, y, z)] = block;
 				}
 			}
 		}
-		chunk.setSection(section, names, states);
+		return states;
 	}
 
 	private static boolean isWater(String name) {
@@ -281,27 +311,7 @@ public final class BedrockChunkReader {
 		return (y * 16 + z) * 16 + x;
 	}
 
-	/**
-	 * Bedrock saves no light. Until Tectonicus computes it, give each column full sky light down to the first block
-	 * that stops light, dimming it through water and leaves, so the Day light style looks right outdoors.
-	 */
-	private static void estimateSkyLight(RawChunk chunk, int sectionCount) {
-		int height = sectionCount * 16;
-		for (int x = 0; x < 16; x++) {
-			for (int z = 0; z < 16; z++) {
-				int light = 15;
-				for (int y = height - 1; y >= 0 && light > 0; y--) {
-					chunk.setSkyLight(x, y, z, (byte) light);
-					String name = chunk.getBlockName(x, y, z);
-					if (name == null || name.equals(AIR) || name.equals("minecraft:cave_air") || name.equals("minecraft:void_air"))
-						continue;
-					light -= SkyLight.opacity(name, chunk.getBlockState(x, y, z));
-				}
-			}
-		}
-	}
-
-	private void readBlockEntities(RawChunk chunk, int chunkX, int chunkZ) throws IOException {
+	private void readBlockEntities(RawChunk chunk, BedrockBlockEntities converter, int chunkX, int chunkZ) throws IOException {
 		byte[] data = get(chunkX, chunkZ, TAG_BLOCK_ENTITY);
 		if (data == null)
 			return;
@@ -320,20 +330,59 @@ public final class BedrockChunkReader {
 			Integer z = integer(entity, "z");
 			if (x == null || y == null || z == null)
 				continue;
-			switch (id) {
-				case "Sign", "HangingSign" -> {
-					CompoundTag frontTag = compound(entity, "FrontText");
-					CompoundTag backTag = compound(entity, "BackText");
-					SignEntity.Face front = signFace(frontTag != null ? frontTag : entity);
-					SignEntity.Face back = backTag != null ? signFace(backTag) : null;
-					chunk.addSign(x, y, z, front, back);
+			try {
+				switch (id) {
+					case "Sign", "HangingSign" -> {
+						CompoundTag frontTag = compound(entity, "FrontText");
+						CompoundTag backTag = compound(entity, "BackText");
+						SignEntity.Face front = signFace(frontTag != null ? frontTag : entity);
+						SignEntity.Face back = backTag != null ? signFace(backTag) : null;
+						chunk.addSign(x, y, z, front, back);
+					}
+					case "Chest" -> {
+						pairChest(chunk, entity, x - chunkX * 16, y - minY, z - chunkZ * 16);
+						converter.convert(id, entity, x, y, z);
+					}
+					default -> converter.convert(id, entity, x, y, z);
 				}
-				case "Chest" -> pairChest(chunk, entity, x - chunkX * 16, y - minY, z - chunkZ * 16);
-				default -> {
-					// Other block entities come in a later phase
+			} catch (RuntimeException e) {
+				log.warn("Skipping unreadable {} block entity at {},{},{}", id, x, y, z, e);
+			}
+		}
+	}
+
+	/** Reads the chunk's entities: one record per actor since Bedrock 1.18.30, or a list in the chunk before that. */
+	private List<CompoundTag> readActors(int chunkX, int chunkZ) throws IOException {
+		List<CompoundTag> actors = new ArrayList<>();
+		ByteBuffer digest = ByteBuffer.allocate(DIGEST_PREFIX.length + (dimension != 0 ? 12 : 8)).order(ByteOrder.LITTLE_ENDIAN);
+		digest.put(DIGEST_PREFIX).putInt(chunkX).putInt(chunkZ);
+		if (dimension != 0)
+			digest.putInt(dimension);
+		byte[] ids = records.get(digest.array());
+		if (ids != null) {
+			for (int i = 0; i + 8 <= ids.length; i += 8) {
+				byte[] key = new byte[ACTOR_PREFIX.length + 8];
+				System.arraycopy(ACTOR_PREFIX, 0, key, 0, ACTOR_PREFIX.length);
+				System.arraycopy(ids, i, key, ACTOR_PREFIX.length, 8);
+				byte[] actor = records.get(key);
+				if (actor == null)
+					continue;
+				try {
+					actors.add(BedrockNbt.readCompound(actor));
+				} catch (IOException | RuntimeException e) {
+					log.debug("Unreadable Bedrock actor in chunk {},{}", chunkX, chunkZ, e);
 				}
 			}
 		}
+		byte[] legacy = get(chunkX, chunkZ, TAG_ENTITY);
+		if (legacy != null) {
+			try {
+				actors.addAll(BedrockNbt.readAll(legacy));
+			} catch (IOException e) {
+				log.debug("Unreadable entities in Bedrock chunk {},{}", chunkX, chunkZ, e);
+			}
+		}
+		return actors;
 	}
 
 	private static void pairChest(RawChunk chunk, CompoundTag entity, int x, int y, int z) {
@@ -377,17 +426,17 @@ public final class BedrockChunkReader {
 				List.of(List.of(), List.of(), List.of(), List.of()));
 	}
 
-	private static String string(CompoundTag tag, String name, String fallback) {
+	static String string(CompoundTag tag, String name, String fallback) {
 		Tag child = tag.getValue().get(name);
 		return child instanceof StringTag s ? s.getValue() : fallback;
 	}
 
-	private static Integer integer(CompoundTag tag, String name) {
+	static Integer integer(CompoundTag tag, String name) {
 		Tag child = tag.getValue().get(name);
 		return child instanceof IntTag i ? i.getValue() : null;
 	}
 
-	private static CompoundTag compound(CompoundTag tag, String name) {
+	static CompoundTag compound(CompoundTag tag, String name) {
 		Tag child = tag.getValue().get(name);
 		return child instanceof CompoundTag c ? c : null;
 	}

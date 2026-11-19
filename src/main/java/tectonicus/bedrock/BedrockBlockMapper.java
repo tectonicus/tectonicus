@@ -16,6 +16,7 @@ import org.jnbt.IntTag;
 import org.jnbt.ShortTag;
 import org.jnbt.StringTag;
 import org.jnbt.Tag;
+import tectonicus.blockregistry.EmissiveBlock;
 import tectonicus.raw.BlockProperties;
 
 import java.io.BufferedReader;
@@ -44,12 +45,29 @@ public final class BedrockBlockMapper {
 	private static final String RESOURCE = "/bedrock/blocks.tsv.gz";
 	private static final Set<String> CHESTS = Set.of("minecraft:chest", "minecraft:trapped_chest");
 
-	/** A Java block state. {@code waterloggable} is true when Java has a waterlogged property for it. */
-	public record JavaState(String name, BlockProperties properties, boolean waterloggable) {
+	/**
+	 * A Java block state. {@code waterloggable} is true when Java has a waterlogged property for it; {@code opacity}
+	 * (0 to 15) and {@code emission} (0 to 15) are the light the block takes away and gives out.
+	 */
+	public record JavaState(String name, BlockProperties properties, boolean waterloggable, int opacity, int emission) {
+		public static JavaState of(String name, BlockProperties properties, boolean waterloggable) {
+			EmissiveBlock emissive = EmissiveBlock.forBlockName(name);
+			return new JavaState(name, properties, waterloggable, SkyLight.opacity(name, properties),
+					emissive == null ? 0 : emissive.getLightEmission(properties.getProperties()));
+		}
+
 		public JavaState withProperty(String key, String value) {
 			Map<String, String> props = new TreeMap<>(properties.getProperties());
 			props.put(key, value);
-			return new JavaState(name, new BlockProperties(props), waterloggable);
+			return of(name, new BlockProperties(props), waterloggable);
+		}
+
+		public String get(String property) {
+			return properties.get(property);
+		}
+
+		public boolean isAir() {
+			return name.equals("minecraft:air") || name.equals("minecraft:cave_air") || name.equals("minecraft:void_air");
 		}
 	}
 
@@ -60,6 +78,7 @@ public final class BedrockBlockMapper {
 	private final Map<String, String> table;
 	private final Map<String, List<Candidate>> byName = new HashMap<>();
 	private final Map<String, JavaState> cache = new ConcurrentHashMap<>();
+	private final Map<JavaState, JavaState> waterlogged = new ConcurrentHashMap<>();
 	private final Set<String> reported = ConcurrentHashMap.newKeySet();
 
 	BedrockBlockMapper(Map<String, String> table) {
@@ -116,7 +135,15 @@ public final class BedrockBlockMapper {
 		return cache.computeIfAbsent(bedrockKey, this::resolve);
 	}
 
+	/** The same state with water in it, shared between blocks so each distinct state is one object. */
+	public JavaState waterlogged(JavaState state) {
+		return waterlogged.computeIfAbsent(state, s -> s.withProperty("waterlogged", "true"));
+	}
+
 	private JavaState resolve(String key) {
+		JavaState special = special(key);
+		if (special != null)
+			return special;
 		String java = table.get(key);
 		if (java == null) {
 			java = closest(key);
@@ -128,8 +155,32 @@ public final class BedrockBlockMapper {
 		boolean waterloggable = props.containsKey("waterlogged");
 		if (CHESTS.contains(name) && props.containsKey("type"))
 			props.put("type", "single"); // The block entity says which half a double chest is
-		return new JavaState(name, new BlockProperties(props), waterloggable);
+		return JavaState.of(name, new BlockProperties(props), waterloggable);
 	}
+
+	/**
+	 * Blocks the table maps wrongly or that Java does not have. Item frames are blocks in Bedrock and entities in Java,
+	 * so they keep a placeholder name with their facing until the chunk reader turns them into entities. A flower pot's
+	 * plant is in its block entity.
+	 */
+	private static JavaState special(String key) {
+		String name = name(key);
+		return switch (name) {
+			case "minecraft:frame", "minecraft:glow_frame" -> {
+				String facing = FACINGS[Math.floorMod(Integer.parseInt(parseProperties(key).getOrDefault("facing_direction", "2")), 6)];
+				yield JavaState.of(name.equals("minecraft:frame") ? ITEM_FRAME : GLOW_ITEM_FRAME,
+						new BlockProperties(Map.of("facing", facing)), false);
+			}
+			case "minecraft:flower_pot" -> JavaState.of("minecraft:flower_pot", new BlockProperties(), false);
+			default -> null;
+		};
+	}
+
+	/** Placeholder names for item frames, which the chunk reader replaces with air and an entity. */
+	public static final String ITEM_FRAME = "tectonicus:item_frame";
+	public static final String GLOW_ITEM_FRAME = "tectonicus:glow_item_frame";
+	/** Directions by Bedrock's facing_direction and Java's 3D direction index. */
+	public static final String[] FACINGS = {"down", "up", "north", "south", "west", "east"};
 
 	private String closest(String key) {
 		String name = name(key);

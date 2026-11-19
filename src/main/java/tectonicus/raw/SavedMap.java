@@ -42,11 +42,14 @@ public final class SavedMap {
 
 	private final byte[] colors;
 	private final int[] palette;
+	/** Pixels as ARGB, for maps saved as colours rather than palette indices (Bedrock Edition), or null */
+	private final int[] argb;
 	private final byte[] contentHash;
 
 	private SavedMap(byte[] colors, boolean legacyPalette) {
 		this.colors = colors;
 		palette = legacyPalette ? LEGACY_PALETTE : PALETTE;
+		argb = null;
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 			digest.update((byte) (legacyPalette ? 1 : 0));
@@ -54,6 +57,33 @@ public final class SavedMap {
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+
+	private SavedMap(int[] argb, byte[] rgba) {
+		colors = null;
+		palette = null;
+		this.argb = argb;
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			digest.update((byte) 2);
+			contentHash = digest.digest(rgba);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+	/** A map saved as 128 by 128 RGBA pixels, as Bedrock Edition saves them. */
+	public static SavedMap fromRgba(byte[] rgba) {
+		if (rgba.length != SIZE * SIZE * 4)
+			throw new IllegalArgumentException("Expected 128x128 RGBA pixels");
+		int[] argb = new int[SIZE * SIZE];
+		for (int i = 0; i < argb.length; i++) {
+			int alpha = rgba[i * 4 + 3] & 255;
+			if (alpha == 0)
+				continue;
+			argb[i] = alpha << 24 | (rgba[i * 4] & 255) << 16 | (rgba[i * 4 + 1] & 255) << 8 | rgba[i * 4 + 2] & 255;
+		}
+		return new SavedMap(argb, rgba);
 	}
 
 	public static SavedMap load(Path path, boolean useLegacyPalette) throws IOException {
@@ -78,6 +108,10 @@ public final class SavedMap {
 	public BufferedImage toImage() {
 		BufferedImage image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
 		int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		if (argb != null) {
+			System.arraycopy(argb, 0, pixels, 0, argb.length);
+			return image;
+		}
 		for (int i = 0; i < pixels.length; i++) {
 			int packed = Byte.toUnsignedInt(colors[i]);
 			int colorId = packed >>> 2;

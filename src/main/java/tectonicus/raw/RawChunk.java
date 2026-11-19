@@ -217,6 +217,20 @@ public class RawChunk {
 				front, back, null, getBlockState(localX, localY, localZ), block != null ? block : "minecraft:oak_sign"));
 	}
 
+	/** Adds block entities that another format's reader has converted to 1.21.5+ Java NBT. */
+	public void addBlockEntities(ListTag blockEntities) {
+		try {
+			parseBlockEntities(blockEntities, true);
+		} catch (JacksonException e) {
+			throw new IllegalArgumentException("Unreadable block entity", e);
+		}
+	}
+
+	/** Adds entities that another format's reader has converted to 1.21.5+ Java NBT. */
+	public void addEntities(ListTag entities) {
+		parseEntities(entities, true, true);
+	}
+
 	public void setFilterMetadata(String id, Object data) {
 		this.filterData.put(id, data);
 	}

@@ -19,6 +19,7 @@ import org.jnbt.LongTag;
 import org.jnbt.NBTInputStream;
 import org.jnbt.Tag;
 import tectonicus.bedrock.BedrockLevel;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.configuration.Dimension;
 import tectonicus.util.Vector3l;
 
@@ -63,7 +64,7 @@ public class LevelDat {
 		
 		try {
 			if (BedrockLevel.isBedrockLevelDat(datFile)) {
-				readBedrock(BedrockLevel.read(datFile));
+				readBedrock(BedrockLevel.read(datFile), datFile, singlePlayerName);
 				return;
 			}
 		} catch (IOException e) {
@@ -140,7 +141,7 @@ public class LevelDat {
 		}
 	}
 
-	private void readBedrock(BedrockLevel level) {
+	private void readBedrock(BedrockLevel level, Path datFile, String singlePlayerName) {
 		bedrock = true;
 		worldName = level.name();
 		bedrockVersion = level.versionName();
@@ -151,6 +152,12 @@ public class LevelDat {
 		spawnPosition.y = level.spawnY();
 		spawnPosition.z = level.spawnZ();
 		log.info("Bedrock world \"{}\", last opened with Bedrock {}; using Java {} assets", worldName, bedrockVersion, version);
+		Path worldDir = datFile.toAbsolutePath().getParent();
+		if (BedrockWorld.isBedrockWorld(worldDir)) {
+			CompoundTag player = BedrockWorld.open(worldDir).localPlayer();
+			if (player != null)
+				singlePlayer = new Player(singlePlayerName, player, dataVersion);
+		}
 	}
 
 	private void loadWorldSeed(CompoundTag data, Path worldDir) throws IOException {
