@@ -9,14 +9,14 @@
 
 package tectonicus.bedrock;
 
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongTag;
-import org.jnbt.ShortTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.LongTag;
+import org.tectonicus.jnbt.ShortTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.raw.ContainerKind;
 import tectonicus.world.Colors;
 

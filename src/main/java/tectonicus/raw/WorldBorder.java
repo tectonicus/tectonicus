@@ -10,9 +10,9 @@
 package tectonicus.raw;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.CompoundTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.NBTInputStream;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.configuration.Dimension;
 
 import java.io.IOException;
@@ -46,7 +46,7 @@ public record WorldBorder(double centerX, double centerZ, double size) {
 
 	static Optional<WorldBorder> readSavedData(Path file) {
 		return readRoot(file).map(root -> NbtUtil.getChild(root, "data", CompoundTag.class))
-				.filter(data -> data.getValue().containsKey("size"))
+				.filter(data -> data.contains("size"))
 				.map(data -> new WorldBorder(NbtUtil.getDouble(data, "center_x", 0), NbtUtil.getDouble(data, "center_z", 0),
 						NbtUtil.getDouble(data, "size", DEFAULT_SIZE)));
 	}
@@ -54,7 +54,7 @@ public record WorldBorder(double centerX, double centerZ, double size) {
 	static Optional<WorldBorder> readLevelDat(Path file) {
 		// Worlds from before 1.8 have no border fields and no border.
 		return readRoot(file).map(root -> NbtUtil.getChild(root, "Data", CompoundTag.class))
-				.filter(data -> data.getValue().containsKey("BorderSize"))
+				.filter(data -> data.contains("BorderSize"))
 				.map(data -> new WorldBorder(NbtUtil.getDouble(data, "BorderCenterX", 0), NbtUtil.getDouble(data, "BorderCenterZ", 0),
 						NbtUtil.getDouble(data, "BorderSize", DEFAULT_SIZE)));
 	}

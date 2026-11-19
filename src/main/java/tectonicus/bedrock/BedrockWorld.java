@@ -10,8 +10,8 @@
 package tectonicus.bedrock;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.ByteArrayTag;
-import org.jnbt.CompoundTag;
+import org.tectonicus.jnbt.ByteArrayTag;
+import org.tectonicus.jnbt.CompoundTag;
 import tectonicus.Minecraft;
 import tectonicus.bedrock.leveldb.LevelDbReader;
 import tectonicus.chunk.ChunkCoord;

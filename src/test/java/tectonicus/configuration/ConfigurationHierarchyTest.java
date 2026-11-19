@@ -439,9 +439,9 @@ class ConfigurationHierarchyTest {
 				.formatted(save.toString().replace('\\', '/'))).getWorlds().getFirst().getName());
 		Files.writeString(save.resolve("level.dat"), "unreadable");
 		assertEquals("Save folder", WorldConfig.defaultName(save.toFile()));
-		try (org.jnbt.NBTOutputStream out = new org.jnbt.NBTOutputStream(Files.newOutputStream(save.resolve("level.dat")))) {
-			out.writeTag(new org.jnbt.CompoundTag("", java.util.Map.of("Data", new org.jnbt.CompoundTag("Data",
-					java.util.Map.of("LevelName", new org.jnbt.StringTag("LevelName", "   "))))));
+		try (org.tectonicus.jnbt.NBTOutputStream out = new org.tectonicus.jnbt.NBTOutputStream(Files.newOutputStream(save.resolve("level.dat")))) {
+			out.writeTag(new org.tectonicus.jnbt.CompoundTag("", java.util.Map.of("Data", new org.tectonicus.jnbt.CompoundTag("Data",
+					java.util.Map.of("LevelName", new org.tectonicus.jnbt.StringTag("LevelName", "   "))))));
 		}
 		assertEquals("Save folder", WorldConfig.defaultName(save.toFile()));
 	}

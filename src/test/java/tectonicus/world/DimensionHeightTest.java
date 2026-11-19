@@ -9,11 +9,11 @@
 
 package tectonicus.world;
 
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.NBTOutputStream;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.NBTOutputStream;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.SaveFormat;

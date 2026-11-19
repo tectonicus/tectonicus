@@ -21,4 +21,3 @@ tectonicus.xml
 *.jar
 *.jar.new
 !/gradle/wrapper/gradle-wrapper.jar
-!/libs/jnbt.jar

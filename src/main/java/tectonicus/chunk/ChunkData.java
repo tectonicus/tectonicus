@@ -11,11 +11,11 @@ package tectonicus.chunk;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.jnbt.NBTInputStream.Compression;
+import org.tectonicus.jnbt.NBTCompression;
 
 @Getter
 @RequiredArgsConstructor
 public class ChunkData {
 	private final byte[] bytes;
-	private final Compression compressionType;
+	private final NBTCompression compressionType;
 }

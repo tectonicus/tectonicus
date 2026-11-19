@@ -9,13 +9,13 @@
 
 package tectonicus.raw;
 
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.ShortTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.ShortTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -144,10 +144,9 @@ final class ItemNbtParser {
 			
 			List<EnchantmentTag> enchantments = new ArrayList<>();
 			
-			for (var levelTagId : levelsTag.getValue().keySet()) {
-				IntTag levelTag = NbtUtil.getChild(levelsTag, levelTagId, IntTag.class);
-				if (levelTag != null) {
-					enchantments.add(new EnchantmentTag(levelTagId, levelTag.getValue()));
+			for (String enchantmentId : levelsTag.getValue().keySet()) {
+				if (levelsTag.contains(enchantmentId, IntTag.class)) {
+					enchantments.add(new EnchantmentTag(enchantmentId, levelsTag.getInt(enchantmentId)));
 				}
 			}
 			

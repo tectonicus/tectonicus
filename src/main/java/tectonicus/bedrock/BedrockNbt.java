@@ -9,21 +9,21 @@
 
 package tectonicus.bedrock;
 
-import org.jnbt.ByteArrayTag;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.DoubleTag;
-import org.jnbt.EndTag;
-import org.jnbt.FloatTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongArrayTag;
-import org.jnbt.LongTag;
-import org.jnbt.NBTUtils;
-import org.jnbt.ShortTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteArrayTag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.DoubleTag;
+import org.tectonicus.jnbt.EndTag;
+import org.tectonicus.jnbt.FloatTag;
+import org.tectonicus.jnbt.IntArrayTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.LongArrayTag;
+import org.tectonicus.jnbt.LongTag;
+import org.tectonicus.jnbt.NBTUtils;
+import org.tectonicus.jnbt.ShortTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 
 import java.io.IOException;
 import java.nio.BufferUnderflowException;

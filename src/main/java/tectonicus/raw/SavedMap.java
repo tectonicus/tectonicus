@@ -8,9 +8,9 @@
 
 package tectonicus.raw;
 
-import org.jnbt.ByteArrayTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.NBTInputStream;
+import org.tectonicus.jnbt.ByteArrayTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.NBTInputStream;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -92,7 +92,7 @@ public final class SavedMap {
 			if (nbt.readTag() instanceof CompoundTag root) {
 				CompoundTag data = NbtUtil.getChild(root, "data", CompoundTag.class);
 				ByteArrayTag colors = data == null ? null : NbtUtil.getChild(data, "colors", ByteArrayTag.class);
-				if (colors != null && colors.getValue().length == SIZE * SIZE) {
+				if (colors != null && colors.length() == SIZE * SIZE) {
 					boolean legacyPalette = useLegacyPalette && NbtUtil.getInt(root, "DataVersion", 0) == 0;
 					return new SavedMap(colors.getValue(), legacyPalette);
 				}

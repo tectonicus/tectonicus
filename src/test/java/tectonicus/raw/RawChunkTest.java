@@ -15,15 +15,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongArrayTag;
-import org.jnbt.NBTInputStream.Compression;
-import org.jnbt.NBTOutputStream;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.LongArrayTag;
+import org.tectonicus.jnbt.NBTCompression;
+import org.tectonicus.jnbt.NBTOutputStream;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.Version;
 import tectonicus.Minecraft;
 import tectonicus.chunk.ChunkCoord;
@@ -336,7 +336,7 @@ class RawChunkTest {
 			CompoundTag entity = new CompoundTag("", Map.of("id", new StringTag("id", id),
 					"x", new IntTag("x", 8), "y", new IntTag("y", 4), "z", new IntTag("z", 8)));
 			CompoundTag section = new CompoundTag("", Map.of("Y", new ByteTag("Y", (byte) 0),
-					"Blocks", new org.jnbt.ByteArrayTag("Blocks", blocks), "Data", new org.jnbt.ByteArrayTag("Data", data)));
+					"Blocks", new org.tectonicus.jnbt.ByteArrayTag("Blocks", blocks), "Data", new org.tectonicus.jnbt.ByteArrayTag("Data", data)));
 			CompoundTag level = new CompoundTag("Level", Map.of("TileEntities", new ListTag("TileEntities", CompoundTag.class, List.of(entity)),
 					"Sections", new ListTag("Sections", CompoundTag.class, List.of(section))));
 			ContainerEntity loaded = readChunk(new CompoundTag("", Map.of("Level", level)), Version.VERSION_12).getContainers().getFirst();
@@ -461,6 +461,6 @@ class RawChunkTest {
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {
 			out.writeTag(root);
 		}
-		return new RawChunk(new ChunkData(bytes.toByteArray(), Compression.Gzip), null, worldInfo);
+		return new RawChunk(new ChunkData(bytes.toByteArray(), NBTCompression.GZIP), null, worldInfo);
 	}
 }

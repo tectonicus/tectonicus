@@ -9,14 +9,14 @@
 
 package tectonicus.bedrock;
 
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.DoubleTag;
-import org.jnbt.FloatTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.ListTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.DoubleTag;
+import org.tectonicus.jnbt.FloatTag;
+import org.tectonicus.jnbt.IntArrayTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.raw.RawChunk;
 
 import java.util.ArrayList;

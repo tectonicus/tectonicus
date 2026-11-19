@@ -8,13 +8,13 @@
 
 package tectonicus.raw;
 
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.ShortTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.ShortTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -71,14 +71,15 @@ class PlayerInventoryTest {
 	@ValueSource(booleans = {false, true})
 	void readsOrderedBannerPatternsInPlayerAndEnderChestInventories(boolean modern) {
 		String patternTag = modern ? "pattern" : "Pattern";
+		String colorTag = modern ? "color" : "Color";
 		String first = modern ? "minecraft:stripe_top" : "ts";
 		String second = modern ? "minecraft:cross" : "cr";
 		String listName = modern ? "minecraft:banner_patterns" : "Patterns";
 		ListTag layers = new ListTag(listName, CompoundTag.class, List.of(
 				new CompoundTag("", Map.of(patternTag, new StringTag(patternTag, first),
-						"color", modern ? new StringTag("color", "blue") : new IntTag("Color", 11))),
+						colorTag, modern ? new StringTag(colorTag, "blue") : new IntTag(colorTag, 11))),
 				new CompoundTag("", Map.of(patternTag, new StringTag(patternTag, second),
-						"color", modern ? new StringTag("color", "white") : new IntTag("Color", 0)))));
+						colorTag, modern ? new StringTag(colorTag, "white") : new IntTag(colorTag, 0)))));
 		String metadataName = modern ? "components" : "tag";
 		CompoundTag metadata = new CompoundTag(metadataName, modern ? Map.of(listName, layers)
 				: Map.of("BlockEntityTag", new CompoundTag("BlockEntityTag", Map.of(listName, layers))));

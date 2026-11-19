@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.jnbt.*;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.NBTInputStream;
+import org.tectonicus.jnbt.NBTOutputStream;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.LevelDat;
 
@@ -13,7 +15,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -117,12 +118,9 @@ class FileBiomeCacheTest {
 		try (NBTInputStream in = new NBTInputStream(Files.newInputStream(world.resolve("level.dat")))) {
 			root = (CompoundTag)in.readTag();
 		}
-		var data = new HashMap<>(((CompoundTag)root.getValue().get("Data")).getValue());
-		data.put("RandomSeed", new LongTag("RandomSeed", seed + 1));
-		var tags = new HashMap<>(root.getValue());
-		tags.put("Data", new CompoundTag("Data", data));
+		CompoundTag data = root.getCompound("Data").toBuilder().putLong("RandomSeed", seed + 1).build();
 		try (NBTOutputStream out = new NBTOutputStream(Files.newOutputStream(world.resolve("level.dat")))) {
-			out.writeTag(new CompoundTag(root.getName(), tags));
+			out.writeTag(root.toBuilder().put(data).build());
 		}
 		try (FileBiomeCache cache = new FileBiomeCache(directory.resolve("cache").toFile(), world.toFile(), new File(jar), seed + 1)) {
 			assertNotEquals(key, cache.getCacheKey());

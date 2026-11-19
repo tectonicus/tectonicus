@@ -12,15 +12,17 @@ package tectonicus.raw;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
-import org.jnbt.CompoundTag;
-import org.jnbt.LongTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.IntTag;
-import org.jnbt.StringTag;
-import org.jnbt.NBTOutputStream;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.LongTag;
+import org.tectonicus.jnbt.IntArrayTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.NBTOutputStream;
+import org.tectonicus.jnbt.Tag;
 
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,21 @@ class LevelDatTests {
 		writeNbt(level, new CompoundTag("", Map.of("Data", new CompoundTag("Data", Map.of("Version", version,
 				"DataVersion", new IntTag("DataVersion", 2570))))));
 		assertEquals(2570, new LevelDat(level, "").getDataVersion());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"Enabled", "enabled"})
+	void readsEnabledDataPacksInOrder(String enabledKey) throws Exception {
+		Path level = directory.resolve("level.dat");
+		ListTag enabled = ListTag.builder(enabledKey, StringTag.class)
+				.add(new StringTag("", "vanilla"))
+				.add(new StringTag("", "file/first"))
+				.add(new StringTag("", "file/second"))
+				.build();
+		writeNbt(level, CompoundTag.builder()
+				.putCompound("Data", data -> data.putCompound("DataPacks", packs -> packs.put(enabled)))
+				.build());
+		assertEquals(List.of("file/first", "file/second"), new LevelDat(level, "").getDataPacks());
 	}
 
 	@ParameterizedTest

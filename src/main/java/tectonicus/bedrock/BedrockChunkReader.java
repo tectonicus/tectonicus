@@ -10,11 +10,11 @@
 package tectonicus.bedrock;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntTag;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.bedrock.BedrockBlockMapper.JavaState;
 import tectonicus.raw.BlockProperties;
 import tectonicus.raw.RawChunk;

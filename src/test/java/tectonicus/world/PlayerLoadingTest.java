@@ -4,7 +4,7 @@
  */
 package tectonicus.world;
 
-import org.jnbt.CompoundTag;
+import org.tectonicus.jnbt.CompoundTag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.PlayerIconAssembler;

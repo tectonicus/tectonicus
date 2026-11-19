@@ -8,7 +8,7 @@
 
 package tectonicus.raw;
 
-import org.jnbt.*;
+import org.tectonicus.jnbt.*;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -116,6 +116,6 @@ class ArmorStandEntityTest {
 	private ChunkData data(CompoundTag root) throws Exception {
 		var bytes = new ByteArrayOutputStream();
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) { out.writeTag(root); }
-		return new ChunkData(bytes.toByteArray(), NBTInputStream.Compression.Gzip);
+		return new ChunkData(bytes.toByteArray(), NBTCompression.GZIP);
 	}
 }

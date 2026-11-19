@@ -11,17 +11,19 @@ package tectonicus.raw;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.jnbt.ByteArrayTag;
-import org.jnbt.ByteTag;
-import org.jnbt.CompoundTag;
-import org.jnbt.IntArrayTag;
-import org.jnbt.IntTag;
-import org.jnbt.ListTag;
-import org.jnbt.LongArrayTag;
-import org.jnbt.NBTInputStream;
-import org.jnbt.NBTInputStream.Compression;
-import org.jnbt.StringTag;
-import org.jnbt.Tag;
+import org.tectonicus.jnbt.ByteArrayTag;
+import org.tectonicus.jnbt.ByteTag;
+import org.tectonicus.jnbt.CompoundTag;
+import org.tectonicus.jnbt.DoubleTag;
+import org.tectonicus.jnbt.FloatTag;
+import org.tectonicus.jnbt.IntArrayTag;
+import org.tectonicus.jnbt.IntTag;
+import org.tectonicus.jnbt.ListTag;
+import org.tectonicus.jnbt.LongArrayTag;
+import org.tectonicus.jnbt.NBTCompression;
+import org.tectonicus.jnbt.NBTInputStream;
+import org.tectonicus.jnbt.StringTag;
+import org.tectonicus.jnbt.Tag;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
@@ -119,7 +121,7 @@ public class RawChunk {
 
 	public RawChunk(File file) throws IOException {
 		maxSections = Minecraft.getChunkHeight() / SECTION_HEIGHT;
-		init(new ChunkData(Files.readAllBytes(file.toPath()), Compression.Gzip), null, new WorldInfo(VERSION_UNKNOWN, false));
+		init(new ChunkData(Files.readAllBytes(file.toPath()), NBTCompression.GZIP), null, new WorldInfo(VERSION_UNKNOWN, false));
 	}
 
 	public RawChunk(ChunkData chunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
@@ -313,8 +315,7 @@ public class RawChunk {
 					//yPos is the minimum or lowest section position in the chunk (-4 in the 1.18+ Overworld)
 					minSectionY = NbtUtil.getInt(root, "yPos", worldInfo.minSectionY());
 
-					ListTag sectionsTag = NbtUtil.getChild(root, "sections", ListTag.class);
-					parseAnvilDataNew(sectionsTag, worldStats);
+					parseAnvilDataNew(root.getList("sections", CompoundTag.class), worldStats);
 
 					ListTag blockEntitiesTag = NbtUtil.getChild(root, "block_entities", ListTag.class);
 					parseBlockEntities(blockEntitiesTag, true);
@@ -390,7 +391,7 @@ public class RawChunk {
 					IntTag zTag = NbtUtil.getChild(entity, "TileZ", IntTag.class);
 					
 					if (xTag == null) { //probably 1.21.5+
-						int[] blockPos = NbtUtil.getChild(entity, "block_pos", IntArrayTag.class).getValue();
+						int[] blockPos = entity.getIntArray("block_pos");
 						x = blockPos[0];
 						y = blockPos[1];
 						z = blockPos[2];
@@ -431,11 +432,11 @@ public class RawChunk {
 					ByteTag noBasePlateTag = NbtUtil.getChild(entity, "NoBasePlate", ByteTag.class);
 					
 					if (posTag != null && rotationTag != null) {
-						List<Tag> pos = posTag.getValue();
+						List<DoubleTag> pos = entity.getList(posTag.getName(), DoubleTag.class);
 						
-						int x = (int) Math.round(Math.floor((double) pos.get(0).getValue()));
-						int y = (int) Math.round(Math.floor((double) pos.get(1).getValue()));
-						int z = (int) Math.round(Math.floor((double) pos.get(2).getValue()));
+						int x = (int) Math.round(Math.floor(pos.get(0).getValue()));
+						int y = (int) Math.round(Math.floor(pos.get(1).getValue()));
+						int z = (int) Math.round(Math.floor(pos.get(2).getValue()));
 						
 						final int localX = x - (chunkX * WIDTH);
 						int localY;
@@ -446,8 +447,7 @@ public class RawChunk {
 						}
 						final int localZ = z - (chunkZ * DEPTH);
 						
-						List<Tag> rotation = rotationTag.getValue();
-						float yaw = (float) rotation.get(0).getValue();
+						float yaw = entity.getList(rotationTag.getName(), FloatTag.class).getFirst().getValue();
 						
 						boolean invisible = invisibleTag != null && invisibleTag.getValue() == 1;
 						boolean noBasePlate = noBasePlateTag != null && noBasePlateTag.getValue() == 1;
@@ -553,11 +553,10 @@ public class RawChunk {
 
 		int x, y, z;
 		IntArrayTag blockPos = NbtUtil.getChild(entity, "block_pos", IntArrayTag.class);
-		if (blockPos != null && blockPos.getValue().length == 3) {
-			int[] pos = blockPos.getValue();
-			x = pos[0];
-			y = pos[1];
-			z = pos[2];
+		if (blockPos != null && blockPos.length() == 3) {
+			x = blockPos.get(0);
+			y = blockPos.get(1);
+			z = blockPos.get(2);
 		} else {
 			IntTag tileX = NbtUtil.getChild(entity, "TileX", IntTag.class);
 			IntTag tileY = NbtUtil.getChild(entity, "TileY", IntTag.class);
@@ -586,20 +585,20 @@ public class RawChunk {
 	private void parseCushion(CompoundTag entity) {
 		ListTag posTag = NbtUtil.getChild(entity, "Pos", ListTag.class);
 		IntArrayTag blockPos = NbtUtil.getChild(entity, "block_pos", IntArrayTag.class); //Do we actually need this for anything?
-		if (posTag == null || posTag.getValue().size() < 3 || blockPos == null || blockPos.getValue().length < 3)
+		if (posTag == null || posTag.getValue().size() < 3 || blockPos == null || blockPos.length() < 3)
 			return;
 
 		List<Tag> pos = posTag.getValue();
 		Object xValue = pos.get(0).getValue();
 		Object yValue = pos.get(1).getValue();
 		Object zValue = pos.get(2).getValue();
-		if (!(xValue instanceof Number) || !(yValue instanceof Number) || !(zValue instanceof Number))
+		if (!(xValue instanceof Number x) || !(yValue instanceof Number y) || !(zValue instanceof Number z))
 			return;
 		
 		int yOffset = -minSectionY * SECTION_HEIGHT;
-		float localX = (float) (((Number)xValue).doubleValue() - chunkX * WIDTH);
-		float localY = ((Number)yValue).floatValue() + yOffset;
-		float localZ = (float) (((Number)zValue).doubleValue() - chunkZ * DEPTH);
+		float localX = (float) (x.doubleValue() - chunkX * WIDTH);
+		float localY = y.floatValue() + yOffset;
+		float localZ = (float) (z.doubleValue() - chunkZ * DEPTH);
 		
 		String color = NbtUtil.getString(entity, "color", "white").toLowerCase(Locale.ROOT);
 
@@ -867,10 +866,8 @@ public class RawChunk {
 		return "x" + x + "y" + y + "z" + z;
 	}
 
-	private void parseAnvilDataNew(ListTag sectionsTag, WorldStats worldStats) {
-		for (Tag t : sectionsTag.getValue()) {
-			CompoundTag compound = (CompoundTag) t;
-
+	private void parseAnvilDataNew(List<CompoundTag> sectionTags, WorldStats worldStats) {
+		for (CompoundTag compound : sectionTags) {
 			final int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0) - minSectionY;
 
 			if (sectionY < 0 || sectionY >= maxSections)
@@ -896,7 +893,7 @@ public class RawChunk {
 
 				if (blockDataTag != null) {
 					int sectionVolume = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
-					int dataTagLength = blockDataTag.getValue().length;
+					int dataTagLength = blockDataTag.length();
 					bitsPerBlock = dataTagLength * 64 / sectionVolume;
 					blockBitMask = (1 << bitsPerBlock) - 1;
 
@@ -918,7 +915,7 @@ public class RawChunk {
 							Arrays.fill(newSection.blockStates, fromIndex, fromIndex + SECTION_DEPTH, singleBlockState.properties);
 						}
 						for (int z = 0; z < SECTION_DEPTH; z++) {
-							if (blockDataTag != null && blockDataTag.getValue() != null) {
+							if (blockDataTag != null) {
 								final int index = calcAnvilIndex(x, y, z);
 								int longIndex;
 								int bitOffset;
@@ -931,7 +928,7 @@ public class RawChunk {
 									bitOffset = (index % blocksPerLong) * bitsPerBlock;
 								}
 
-								long paletteIndex = (blockDataTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
+								long paletteIndex = (blockDataTag.get(longIndex) >>> bitOffset) & blockBitMask;
 
 								BlockState blockState = blockStatesPalette.get((int) paletteIndex);
 								newSection.blockNames[Section.getIndex(x, y, z)] = blockState.name;
@@ -971,20 +968,20 @@ public class RawChunk {
 	}
 
 	private static String[] parseBiomePalette(CompoundTag container, int size) {
-		List<Tag> palette = NbtUtil.getChild(container, "palette", ListTag.class).getValue();
+		List<StringTag> palette = container.getList("palette", StringTag.class);
 		String[] ids = new String[size];
 		if (palette.size() == 1) {
 			Arrays.fill(ids, palette.getFirst().getValue());
 			return ids;
 		}
-		long[] data = NbtUtil.getChild(container, "data", LongArrayTag.class).getValue();
+		long[] data = container.getLongArray("data");
 		int bits = Integer.SIZE - Integer.numberOfLeadingZeros(palette.size() - 1);
 		int entriesPerLong = Long.SIZE / bits;
 		int mask = (1 << bits) - 1;
 		int index = 0;
 		for (long packed : data) {
 			for (int i = 0; i < entriesPerLong && index < size; i++) {
-				ids[index++] = (String)palette.get((int)(packed & mask)).getValue();
+				ids[index++] = palette.get((int)(packed & mask)).getValue();
 				packed >>>= bits;
 			}
 		}
@@ -993,10 +990,8 @@ public class RawChunk {
 
 	private void parseAnvilData(CompoundTag tag, ListTag sectionsTag, WorldStats worldStats, WorldInfo worldInfo) {
 		for (Tag t : sectionsTag.getValue()) {
-			if (!(t instanceof CompoundTag))
+			if (!(t instanceof CompoundTag compound))
 				continue;
-
-			CompoundTag compound = (CompoundTag) t;
 
 			int sectionY = NbtUtil.getByte(compound, "Y", (byte) 0);
 
@@ -1032,7 +1027,7 @@ public class RawChunk {
 
 			if (blockStatesTag != null) {
 				int sectionVolume = SECTION_WIDTH * SECTION_HEIGHT * SECTION_DEPTH;
-				int blockStatesTagLength = blockStatesTag.getValue().length;
+				int blockStatesTagLength = blockStatesTag.length();
 				bitsPerBlock = blockStatesTagLength * 64 / sectionVolume;
 				blockBitMask = (1 << bitsPerBlock) - 1;
 
@@ -1050,7 +1045,7 @@ public class RawChunk {
 						final int index = calcAnvilIndex(x, y, z);
 
 						if (blocksTag != null) {
-							int id = blocksTag.getValue()[index] & 0xFF;
+							int id = blocksTag.get(index) & 0xFF;
 							newSection.blockIds[Section.getIndex(x, y, z)] = id;
 
 							if (addTag != null) {
@@ -1064,7 +1059,7 @@ public class RawChunk {
 							if (worldStats != null)
 								worldStats.incBlockId(id, data);
 						} else {
-							if (blockStatesTag != null && blockStatesTag.getValue() != null) {
+							if (blockStatesTag != null) {
 								int longIndex;
 								int bitOffset;
 								if (packedBits) {  // 1.13-1.15 format or 1.16+ when bitsPerBlock is power of 2
@@ -1076,7 +1071,7 @@ public class RawChunk {
 									bitOffset = (index % blocksPerLong) * bitsPerBlock;
 								}
 
-								long paletteIndex = (blockStatesTag.getValue()[longIndex] >>> bitOffset) & blockBitMask;
+								long paletteIndex = (blockStatesTag.get(longIndex) >>> bitOffset) & blockBitMask;
 
 								// overflow, only for 1.13-1.15
 								if (packedBits && bitOffset + bitsPerBlock > 64) {
@@ -1084,7 +1079,7 @@ public class RawChunk {
 									int carryMask = (1 << carryBits) - 1;
 									int carryShift = (bitsPerBlock - carryBits);
 
-									paletteIndex |= (blockStatesTag.getValue()[longIndex + 1] & carryMask) << carryShift;
+									paletteIndex |= (blockStatesTag.get(longIndex + 1) & carryMask) << carryShift;
 								}
 
 								BlockState blockState = blockStatesPalette.get((int) paletteIndex);
@@ -1108,20 +1103,20 @@ public class RawChunk {
 		ByteArrayTag biomeDataTag = NbtUtil.getChild(tag, "Biomes", ByteArrayTag.class);
 		IntArrayTag intBiomeDataTag = NbtUtil.getChild(tag, "Biomes", IntArrayTag.class);
 
-		if (biomeDataTag != null || (intBiomeDataTag != null && intBiomeDataTag.getValue().length == 256)) {
+		if (biomeDataTag != null || (intBiomeDataTag != null && intBiomeDataTag.length() == 256)) {
 			biomes = new int[SECTION_WIDTH][SECTION_DEPTH];
 
 			for (int x = 0; x < SECTION_WIDTH; x++) {
 				for (int z = 0; z < SECTION_DEPTH; z++) {
 					final int index = z * SECTION_WIDTH + x;
 					if (biomeDataTag != null) {
-						biomes[x][z] = Byte.toUnsignedInt(biomeDataTag.getValue()[index]);
+						biomes[x][z] = Byte.toUnsignedInt(biomeDataTag.get(index));
 					} else {
-						biomes[x][z] = intBiomeDataTag.getValue()[index];
+						biomes[x][z] = intBiomeDataTag.get(index);
 					}
 				}
 			}
-		} else if (intBiomeDataTag != null && intBiomeDataTag.getValue().length == 1024) {
+		} else if (intBiomeDataTag != null && intBiomeDataTag.length() == 1024) {
 			int width = 4;
 			int height = 64;
 			int depth = 4;
@@ -1133,7 +1128,7 @@ public class RawChunk {
 				for (int y = 0; y < height; y++) {
 					for (int z = 0; z < depth; z++) {
 						final int index = (z * width + x) + y * SECTION_HEIGHT;
-						biomes3d[x][y][z] = intBiomeDataTag.getValue()[index];
+						biomes3d[x][y][z] = intBiomeDataTag.get(index);
 					}
 				}
 			}
@@ -1182,7 +1177,7 @@ public class RawChunk {
 				for (int y = 0; y < MC_REGION_HEIGHT; y++) {
 					for (int z = 0; z < DEPTH; z++) {
 						final int index = calcIndex(x, y, z);
-						final byte blockId = blocks.getValue()[index];
+						final byte blockId = blocks.get(index);
 						setBlockId(x, y, z, blockId);
 					}
 				}
@@ -1256,7 +1251,7 @@ public class RawChunk {
 	}
 
 	private static byte getHalf(ByteArrayTag tag, int index, boolean isUpper) {
-		final int doublet = tag.getValue()[index];
+		final int doublet = tag.get(index);
 
 		byte half;
 		if (isUpper) {
@@ -2081,8 +2076,8 @@ public class RawChunk {
 			for (int i = 1; i < list.getValue().size(); i++) appendSignText(list.getValue().get(i), line, color);
 		} else if (component instanceof CompoundTag compound) {
 			// NBT wraps non-compound elements of mixed lists under an empty key.
-			if (compound.getValue().size() == 1 && compound.getValue().containsKey("")) {
-				return appendSignText(compound.getValue().get(""), line, color);
+			if (compound.getValue().size() == 1 && compound.contains("")) {
+				return appendSignText(compound.get("", Tag.class), line, color);
 			}
 			color = SignTextColor.parse(NbtUtil.getString(compound, "color", ""), color);
 			line.append(NbtUtil.getString(compound, "text", NbtUtil.getString(compound, "fallback", "")), color);

@@ -17,7 +17,7 @@ import tectonicus.Minecraft;
 import tectonicus.RegionCache;
 import tectonicus.SaveFormat;
 import tectonicus.chunk.ChunkCoord;
-import org.jnbt.CompoundTag;
+import org.tectonicus.jnbt.CompoundTag;
 import tectonicus.configuration.Dimension;
 import tectonicus.raw.ArmorStandEntity;
 import tectonicus.raw.BannerEntity;
