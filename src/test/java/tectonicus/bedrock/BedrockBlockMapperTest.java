@@ -74,6 +74,12 @@ class BedrockBlockMapperTest {
 	}
 
 	@Test
+	void mapsTorchesWithUnknownFacingAsStanding() {
+		assertEquals("minecraft:torch", mapper.map("minecraft:torch[torch_facing_direction=unknown]").name());
+		assertEquals("minecraft:soul_torch", mapper.map("minecraft:soul_torch[torch_facing_direction=unknown]").name());
+	}
+
+	@Test
 	void mapsNamesFromOlderBedrockVersions() {
 		assertEquals("minecraft:granite", mapper.map("minecraft:stone[stone_type=granite]").name());
 		assertEquals("minecraft:red_wool", mapper.map("minecraft:wool[color=red]").name());

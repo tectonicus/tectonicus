@@ -182,6 +182,8 @@ public final class BedrockBlockMapper {
 		if (special != null)
 			return special;
 		String java = table.get(key);
+		if (java == null && key.contains("torch_facing_direction=unknown"))
+			java = table.get(key.replace("torch_facing_direction=unknown", "torch_facing_direction=top")); // A standing torch
 		if (java == null) {
 			java = closest(key);
 			if (reported.add(name(key)))
