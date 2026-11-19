@@ -31,6 +31,7 @@ class ChunkRenderOriginTest {
 					switch (method.getName()) {
 						case "draw": offsets.add(new Vector3f((float)args[0], (float)args[1], (float)args[2])); break;
 						case "drawFaces": offsets.add(new Vector3f((float)args[2], (float)args[3], (float)args[4])); break;
+						case "drawQuads": offsets.add(new Vector3f((float)args[1], (float)args[2], (float)args[3])); break;
 						case "getFaceCount": return 1;
 						case "getFaceDepth":
 							sortEyes.add(new Vector3f((Vector3f)args[1]));
