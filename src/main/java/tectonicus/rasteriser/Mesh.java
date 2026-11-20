@@ -14,6 +14,8 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.util.Colour4f;
 
+import java.nio.IntBuffer;
+
 public interface Mesh {
 	void destroy();
 
@@ -34,6 +36,16 @@ public interface Mesh {
 	float getFaceDepth(int faceIndex, Vector3f eye, Vector3f forward, float xOffset, float yOffset, float zOffset);
 
 	void drawFaces(int firstFace, int faceCount, float xOffset, float yOffset, float zOffset);
+
+	/**
+	 * Draws quads in the order given by {@code vertexIndices}, four vertex indices per face, in one draw call.
+	 * The buffer must be direct; its remaining indices are drawn and its position is left unchanged.
+	 * The default draws one face at a time, for meshes that have no faster way.
+	 */
+	default void drawQuads(IntBuffer vertexIndices, float xOffset, float yOffset, float zOffset) {
+		for (int i = vertexIndices.position(); i + 3 < vertexIndices.limit(); i += 4)
+			drawFaces(vertexIndices.get(i) / 4, 1, xOffset, yOffset, zOffset);
+	}
 
 
 	int getMemorySize();

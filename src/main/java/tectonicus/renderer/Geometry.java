@@ -15,6 +15,9 @@ import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.Texture;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -43,7 +46,9 @@ public class Geometry
 	private float cachedForwardX;
 	private float cachedForwardY;
 	private float cachedForwardZ;
-	private int cachedTransparentFaceCount;
+	// Draw calls for the cached sort: one per stretch of sorted faces that share a mesh.
+	private final List<TransparentRun> transparentRuns = new ArrayList<>();
+	private IntBuffer transparentIndices;
 
 	public Geometry(Rasteriser rasteriser)
 	{
@@ -77,6 +82,10 @@ public class Geometry
 	
 	public void destroy()
 	{
+		transparentRuns.clear();
+		transparentIndices = null;
+		hasCachedTransparentSort = false;
+		
 		baseMesh.destroy();
 		transparentMesh.destroy();
 		
@@ -155,13 +164,9 @@ public class Geometry
 		}
 
 		Vector3f forward = camera.getForward();
-		int faceCount;
-		if (hasCachedTransparentSort && sameDirection(forward)) {
-			faceCount = cachedTransparentFaceCount;
-		} else {
+		if (!hasCachedTransparentSort || !sameDirection(forward)) {
 			Vector3f eye = camera.getRenderEyePosition();
-			faceCount = 0;
-			faceCount = addFaces(transparentFaceSortBuffer, faceCount, transparentMesh, eye, forward, xOffset, yOffset, zOffset);
+			int faceCount = addFaces(transparentFaceSortBuffer, 0, transparentMesh, eye, forward, xOffset, yOffset, zOffset);
 			Map<Texture, Mesh> transparentMeshes = meshes.get(MeshType.Transparent);
 			for (Mesh m : transparentMeshes.values())
 				faceCount = addFaces(transparentFaceSortBuffer, faceCount, m, eye, forward, xOffset, yOffset, zOffset);
@@ -171,30 +176,46 @@ public class Geometry
 			cachedForwardX = forward.x;
 			cachedForwardY = forward.y;
 			cachedForwardZ = forward.z;
-			cachedTransparentFaceCount = faceCount;
+			buildTransparentRuns(faces);
 			hasCachedTransparentSort = true;
 		}
-		List<TransparentFace> faces = transparentFaceSortBuffer.subList(0, faceCount);
-		int firstFace = 0;
+		// Each run draws its faces in sorted order through an index list, so faces that are not
+		// next to each other in the vertex buffer no longer need a draw call each.
 		Mesh boundMesh = null;
-		while (firstFace < faceCount) {
-			TransparentFace first = faces.get(firstFace);
-			int runLength = 1;
-			while (firstFace + runLength < faceCount) {
-				TransparentFace next = faces.get(firstFace + runLength);
-				TransparentFace previous = faces.get(firstFace + runLength - 1);
-				if (next.mesh != first.mesh || next.index != previous.index + 1)
-					break;
-				runLength++;
+		for (TransparentRun run : transparentRuns) {
+			if (run.mesh != boundMesh) {
+				run.mesh.bind();
+				boundMesh = run.mesh;
 			}
-			if (first.mesh != boundMesh) {
-				first.mesh.bind();
-				boundMesh = first.mesh;
-			}
-			first.mesh.drawFaces(first.index, runLength, xOffset, yOffset, zOffset);
-			firstFace += runLength;
+			run.mesh.drawQuads(run.vertexIndices, xOffset, yOffset, zOffset);
 		}
 	}
+
+	/** Groups consecutive sorted faces of the same mesh and writes their quad vertex indices in sorted order. */
+	private void buildTransparentRuns(List<TransparentFace> faces) {
+		transparentRuns.clear();
+		final int indexCount = faces.size() * 4;
+		if (transparentIndices == null || transparentIndices.capacity() < indexCount)
+			transparentIndices = ByteBuffer.allocateDirect(indexCount * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
+		transparentIndices.clear();
+
+		int runStart = 0;
+		Mesh runMesh = null;
+		for (TransparentFace face : faces) {
+			if (face.mesh != runMesh) {
+				if (runMesh != null)
+					transparentRuns.add(new TransparentRun(runMesh, transparentIndices.slice(runStart, transparentIndices.position() - runStart)));
+				runMesh = face.mesh;
+				runStart = transparentIndices.position();
+			}
+			final int firstVertex = face.index * 4;
+			transparentIndices.put(firstVertex).put(firstVertex + 1).put(firstVertex + 2).put(firstVertex + 3);
+		}
+		if (runMesh != null)
+			transparentRuns.add(new TransparentRun(runMesh, transparentIndices.slice(runStart, transparentIndices.position() - runStart)));
+	}
+
+	private record TransparentRun(Mesh mesh, IntBuffer vertexIndices) {}
 
 	private boolean sameDirection(Vector3f forward) {
 		// Orthographic map tiles translate the camera while keeping its direction fixed.

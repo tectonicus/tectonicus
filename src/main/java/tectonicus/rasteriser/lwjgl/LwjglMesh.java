@@ -21,6 +21,7 @@ import tectonicus.util.Colour4f;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 @RequiredArgsConstructor
 public class LwjglMesh implements Mesh
@@ -244,6 +245,16 @@ public class LwjglMesh implements Mesh
 		GL11.glPushMatrix();
 		GL11.glTranslatef(xOffset, yOffset, zOffset);
 		GL11.glDrawArrays(GL11.GL_QUADS, firstFace * 4, faceCount * 4);
+		GL11.glPopMatrix();
+	}
+
+	@Override
+	public void drawQuads(IntBuffer vertexIndices, float xOffset, float yOffset, float zOffset) {
+		if (!vertexIndices.hasRemaining())
+			return;
+		GL11.glPushMatrix();
+		GL11.glTranslatef(xOffset, yOffset, zOffset);
+		GL11.glDrawElements(GL11.GL_QUADS, vertexIndices);
 		GL11.glPopMatrix();
 	}
 
