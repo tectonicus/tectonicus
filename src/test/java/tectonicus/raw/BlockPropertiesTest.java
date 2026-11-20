@@ -21,7 +21,9 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BlockPropertiesTest {
@@ -45,6 +47,28 @@ class BlockPropertiesTest {
 	void returnsCorrectToString() {
 		String propsString = properties.toString();
 		assertThat(propsString, is(equalTo("facing=west,half=lower,hinge=left,open=false,powered=false")));
+	}
+
+	@Test
+	void immutableCopyPreservesPropertyMatchingAndProtectsTheSnapshot() {
+		Map<String, String> input = new LinkedHashMap<>();
+		input.put("powered", "false");
+		input.put("facing", "north");
+		BlockProperties original = new BlockProperties(input);
+		BlockProperties snapshot = BlockProperties.immutableCopyOf(input);
+		input.put("facing", "south");
+
+		assertThrows(UnsupportedOperationException.class, () -> snapshot.getProperties().put("facing", "south"));
+		assertThrows(UnsupportedOperationException.class, () -> snapshot.getProperties().entrySet().iterator().next().setValue("south"));
+		assertThrows(UnsupportedOperationException.class, () -> snapshot.setProperties(Map.of("facing", "south")));
+		assertThrows(UnsupportedOperationException.class, () -> snapshot.setPropertiesString("facing=south"));
+		assertEquals("facing=north,powered=false", snapshot.toString());
+		assertEquals(original.getPropertiesString(), snapshot.getPropertiesString());
+		assertEquals(original, snapshot);
+		assertEquals(snapshot, original);
+		assertEquals(original.hashCode(), snapshot.hashCode());
+		assertTrue(snapshot.contains("facing=north"));
+		assertTrue(snapshot.containsAll(Map.of("powered", "false")));
 	}
 
 	@Test

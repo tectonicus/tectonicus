@@ -22,6 +22,9 @@ import java.util.Random;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class BlockStateWrapperTest {
 	@ParameterizedTest
@@ -77,6 +80,31 @@ class BlockStateWrapperTest {
 		assertThat(properties.get("facing"), is("north"));
 		assertThat(models, hasSize(1));
 		assertThat(models.getFirst().getModel(), is("north_model"));
+	}
+
+	@Test
+	void reusesDefaultsForMissingPropertiesAndRefreshesThemWhenSet() {
+		BlockStateWrapper wrapper = new BlockStateWrapper("minecraft:test");
+		BlockProperties empty = new BlockProperties();
+		BlockProperties saved = new BlockProperties(Map.of("facing", "east"));
+		wrapper.setDefaultProperties(Map.of("facing", "north", "powered", "false"));
+		BlockProperties north = wrapper.getPropertiesWithDefaults(null);
+
+		assertSame(north, wrapper.getPropertiesWithDefaults(empty));
+		assertSame(north.getProperties(), wrapper.getDefaultProperties());
+		assertSame(saved, wrapper.getPropertiesWithDefaults(saved));
+		assertThat(saved.getProperties(), is(Map.of("facing", "east")));
+
+		wrapper.setDefaultProperties(Map.of("facing", "south"));
+		BlockProperties south = wrapper.getPropertiesWithDefaults(null);
+		assertNotSame(north, south);
+		assertThat(north.get("facing"), is("north"));
+		assertThat(south.get("facing"), is("south"));
+
+		wrapper.setDefaultProperties(Map.of());
+		assertThat(wrapper.getDefaultProperties().isEmpty(), is(true));
+		assertNull(wrapper.getPropertiesWithDefaults(null));
+		assertSame(empty, wrapper.getPropertiesWithDefaults(empty));
 	}
 
 	@Test

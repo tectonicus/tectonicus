@@ -15,7 +15,6 @@ import tectonicus.BlockOcclusion;
 import tectonicus.raw.BlockProperties;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class BlockStateWrapper {
 	private final String blockName;
 	private final PlantModelOffset modelOffset;
 	private final List<BlockState> states = new ArrayList<>();
-	private Map<String, String> defaultProperties = Collections.emptyMap();
+	private BlockProperties defaultProperties;
 	@Setter
 	private EmissiveBlock emissiveBlock;
 	@Setter
@@ -63,13 +62,19 @@ public class BlockStateWrapper {
 	}
 
 	public void setDefaultProperties(Map<String, String> defaultProperties) {
-		this.defaultProperties = Map.copyOf(defaultProperties);
+		Map<String, String> defaults = Map.copyOf(defaultProperties);
+		this.defaultProperties = defaults.isEmpty() ? null : BlockProperties.immutableCopyOf(defaults);
+	}
+
+	public Map<String, String> getDefaultProperties() {
+		BlockProperties defaults = defaultProperties;
+		return defaults == null ? Map.of() : defaults.getProperties();
 	}
 
 	public BlockProperties getPropertiesWithDefaults(BlockProperties properties) {
-		boolean hasProperties = properties != null && !properties.getProperties().isEmpty();
-		if (!hasProperties && !defaultProperties.isEmpty())
-			return new BlockProperties(defaultProperties);
+		BlockProperties defaults = defaultProperties;
+		if (defaults != null && (properties == null || properties.getProperties().isEmpty()))
+			return defaults;
 
 		return properties;
 	}
@@ -77,7 +82,7 @@ public class BlockStateWrapper {
 	public int getLightEmission(BlockProperties properties) {
 		if (emissiveBlock == null)
 			return 0;
-		Map<String, String> effectiveProperties = new HashMap<>(defaultProperties);
+		Map<String, String> effectiveProperties = new HashMap<>(getDefaultProperties());
 		if (properties != null)
 			effectiveProperties.putAll(properties.getProperties());
 		return emissiveBlock.getLightEmission(effectiveProperties);
@@ -89,9 +94,8 @@ public class BlockStateWrapper {
 			return true;
 		if (!blockName.equals("minecraft:sculk_sensor") && !blockName.equals("minecraft:calibrated_sculk_sensor"))
 			return false;
-		String phase = properties != null
-				? properties.getProperties().getOrDefault("sculk_sensor_phase", defaultProperties.get("sculk_sensor_phase"))
-				: defaultProperties.get("sculk_sensor_phase");
+		String defaultPhase = getDefaultProperties().get("sculk_sensor_phase");
+		String phase = properties != null ? properties.getProperties().getOrDefault("sculk_sensor_phase", defaultPhase) : defaultPhase;
 		return "active".equals(phase);
 	}
 
