@@ -10,6 +10,7 @@
 package tectonicus.util;
 
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
@@ -39,6 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
+@Slf4j
 @UtilityClass
 public class FindEntityUtil {
 	public static void findSigns(RawChunk chunk, HddObjectListWriter<Sign> signs, SignFilter filter) {
@@ -117,6 +119,9 @@ public class FindEntityUtil {
 	public static void findViews(RawChunk chunk, HddObjectListWriter<Sign> views, ViewFilter filter) {
                 for (SignEntity s : chunk.getSigns().values()) {
                         if (filter.passesFilter(s)) {
+                                if (!s.hasDirection())
+                                        log.warn("View sign at {} {} {} has no readable direction in the save; the view will face north (-Z)",
+                                                        s.getX(), s.getY(), s.getZ());
                                 Sign sign = new Sign(s);
                                 views.add(sign);
                         }

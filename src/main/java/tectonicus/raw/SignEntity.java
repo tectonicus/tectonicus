@@ -61,16 +61,39 @@ public class SignEntity extends BlockEntity
 
 	public record Face(List<String> lines, String color, boolean glowing, List<List<SignTextColor>> textColors) {}
 
+	/**
+	 * The sign's direction as a standing-sign rotation (0 to 15, in steps of 22.5 degrees). A view looks the way
+	 * you face while reading a standing sign. Wall signs are given the rotation that looks straight out from the
+	 * wall. Returns 0 when the direction is unknown; see {@link #hasDirection()}.
+	 */
 	public int getBlockData() {
-		int data = 0;
-		if (blockData != null) {
-			data = blockData;
-		} else {
-			if (properties.containsKey("rotation")) {
-				data = Integer.parseInt(properties.get("rotation"));
-			}
+		if (blockData != null)
+			return blockData;
+		if (properties != null) {
+			if (properties.containsKey("rotation"))
+				return Integer.parseInt(properties.get("rotation"));
+			Integer wallRotation = wallSignRotation();
+			if (wallRotation != null)
+				return wallRotation;
 		}
+		return 0;
+	}
 
-		return data;
+	/** Whether the save says which way the sign faces, so {@link #getBlockData()} is not just a fallback. */
+	public boolean hasDirection() {
+		return blockData != null || properties != null && (properties.containsKey("rotation") || wallSignRotation() != null);
+	}
+
+	private Integer wallSignRotation() {
+		if (blockName == null || !blockName.endsWith("_wall_sign") || !properties.containsKey("facing"))
+			return null;
+		// A wall sign's facing is the way its text faces, away from the wall.
+		return switch (properties.get("facing")) {
+			case "north" -> 0;
+			case "east" -> 4;
+			case "south" -> 8;
+			case "west" -> 12;
+			default -> null;
+		};
 	}
 }
