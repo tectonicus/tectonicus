@@ -367,6 +367,42 @@ class RawChunkTest {
 		assertArrayEquals(forward, reversed);
 	}
 
+	@Test
+	void decodesPlayerHeadSkinUrl() {
+		String json = "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/abc\"}}}";
+		String encoded = java.util.Base64.getEncoder().encodeToString(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+		assertEquals("http://textures.minecraft.net/texture/abc", RawChunk.decodeSkinUrl(encoded, 0, 0, 0));
+	}
+
+	@Test
+	void unreadablePlayerHeadSkinOnlyLosesTheSkin() throws Exception {
+		// Invalid Base64 (a length that is not a multiple of four), as found in a real world.
+		assertEquals("", RawChunk.decodeSkinUrl("eyJ0ZXh0dXJlcyI6e30", 0, 0, 0));
+		// Valid Base64 that is not JSON, and JSON without a skin.
+		assertEquals("", RawChunk.decodeSkinUrl(java.util.Base64.getEncoder().encodeToString("not json".getBytes()), 0, 0, 0));
+		assertEquals("", RawChunk.decodeSkinUrl(java.util.Base64.getEncoder().encodeToString("{}".getBytes()), 0, 0, 0));
+
+		CompoundTag textures = new CompoundTag("", Map.of("Value", new StringTag("Value", "eyJ0ZXh0dXJlcyI6e30")));
+		CompoundTag owner = new CompoundTag("SkullOwner", Map.of(
+				"Name", new StringTag("Name", "Steve"),
+				"Properties", new CompoundTag("Properties", Map.of(
+						"textures", new ListTag("textures", CompoundTag.class, List.of(textures))))));
+		CompoundTag skull = new CompoundTag("", Map.of(
+				"id", new StringTag("id", "minecraft:skull"),
+				"x", new IntTag("x", 1), "y", new IntTag("y", 70), "z", new IntTag("z", 2),
+				"SkullOwner", owner));
+		CompoundTag root = new CompoundTag("", Map.of(
+				"DataVersion", new IntTag("DataVersion", 3953),
+				"Status", new StringTag("Status", "minecraft:full"),
+				"yPos", new IntTag("yPos", -4),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of(skull)),
+				"sections", new ListTag("sections", CompoundTag.class, List.of())));
+
+		RawChunk chunk = readChunk(root, Version.VERSION_21);
+		assertEquals(1, chunk.getSkulls().size());
+		assertEquals("Steve", chunk.getSkulls().values().iterator().next().getName());
+	}
+
 	private static CompoundTag pot(int x, String sherd) {
 		List<Tag> sherds = List.of(new StringTag("", sherd), new StringTag("", "minecraft:brick"),
 				new StringTag("", "minecraft:brick"), new StringTag("", "minecraft:brick"));

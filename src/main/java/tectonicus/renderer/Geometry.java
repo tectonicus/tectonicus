@@ -41,7 +41,10 @@ public class Geometry
 	private final Mesh transparentMesh;
 	
 	private final Map<MeshType, Map<Texture, Mesh>> meshes;
-	private final List<TransparentFace> transparentFaceSortBuffer = new ArrayList<>();
+	// Scratch space for sorting transparent faces, shared by all geometry: once the sort is turned into
+	// transparentRuns nothing reads it again, so keeping it per chunk would only hold memory.
+	// Drawing happens on the rendering thread only.
+	private static final List<TransparentFace> transparentFaceSortBuffer = new ArrayList<>();
 	private boolean hasCachedTransparentSort;
 	private float cachedForwardX;
 	private float cachedForwardY;
@@ -177,6 +180,9 @@ public class Geometry
 			cachedForwardY = forward.y;
 			cachedForwardZ = forward.z;
 			buildTransparentRuns(faces);
+			// Drop the mesh references so the shared buffer does not keep this geometry's meshes reachable.
+			for (TransparentFace face : faces)
+				face.set(null, 0, 0);
 			hasCachedTransparentSort = true;
 		}
 		// Each run draws its faces in sorted order through an index list, so faces that are not
@@ -256,6 +262,9 @@ public class Geometry
 		for (Map<Texture, Mesh> meshMap : meshes.values())
 			for (Mesh m : meshMap.values())
 				size += m.getMemorySize();
+		
+		if (transparentIndices != null)
+			size += (long) transparentIndices.capacity() * Integer.BYTES;
 		
 		return baseSize + size;
 	}
