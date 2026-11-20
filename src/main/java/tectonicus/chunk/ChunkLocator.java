@@ -16,6 +16,7 @@ import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
 import tectonicus.SaveFormat;
 import tectonicus.WorldStats;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.cache.BiomeCache;
 import tectonicus.util.Util;
 import tectonicus.world.WorldInfo;
@@ -36,6 +37,7 @@ public class ChunkLocator {
 	private final RegionCache regionCache;
 	private final File baseDir;
 	private final SaveFormat format;
+	private final BedrockWorld.Dimension bedrock;
 	
 	public ChunkLocator(BiomeCache biomeCache, RegionCache regionCache, File baseDir) {
 		if (biomeCache == null)
@@ -49,17 +51,23 @@ public class ChunkLocator {
 		this.regionCache = regionCache;
 		this.baseDir = baseDir;
 		this.format = regionCache.getFormat();
+		this.bedrock = format == SaveFormat.BEDROCK ? BedrockWorld.forDimensionDir(baseDir).orElseThrow() : null;
 	}
 	
 	/**
-	 * Whether a region may contain chunks. Always true for alpha saves, which store chunks individually.
+	 * Whether a region may contain chunks. Always true for alpha saves, which store chunks individually; for
+	 * Bedrock worlds, whether any listed chunk falls in the region.
 	 * Cheap to call repeatedly: region files are looked up once.
 	 */
 	public boolean hasRegion(RegionCoord coord) {
+		if (bedrock != null)
+			return bedrock.hasRegion(coord);
 		return format == SaveFormat.ALPHA || regionCache.getRegion(coord) != null;
 	}
 
 	public boolean exists(ChunkCoord coord) {
+		if (bedrock != null)
+			return bedrock.contains(coord);
 		if (format == SaveFormat.ALPHA) {
 			File chunkFile = findChunkFile(baseDir, coord);
 			return chunkFile.exists() && chunkFile.length() > 0;
@@ -81,6 +89,19 @@ public class ChunkLocator {
 	
 	public Chunk loadChunk(ChunkCoord chunkCoord, BlockFilter filter, WorldStats worldStats, WorldInfo worldInfo) {
 		Chunk chunk = null;
+		
+		if (bedrock != null) {
+			if (!bedrock.contains(chunkCoord))
+				return null;
+			try {
+				chunk = new Chunk(chunkCoord, biomeCache);
+				chunk.loadRaw(bedrock.read(chunkCoord), filter);
+			} catch (Exception e) {
+				log.error("ChunkLocator: Error while trying to load Bedrock chunk at ({}, {})", chunkCoord.x, chunkCoord.z, e);
+				chunk = null;
+			}
+			return chunk;
+		}
 		
 		if (format == SaveFormat.ALPHA) {
 			File chunkFile = findChunkFile(baseDir, chunkCoord);
@@ -113,7 +134,10 @@ public class ChunkLocator {
 		return chunk;
 	}
 	
+	/** Lists the chunks of a world that keeps no region files: an Alpha world's chunk files, or a Bedrock world's database. */
 	public ChunkCoord[] getAlphaChunkCoords() {
+		if (bedrock != null)
+			return bedrock.chunkCoords().toArray(new ChunkCoord[0]);
 		List<ChunkCoord> coords = new ArrayList<>();
 		
 		File[] xDirs = baseDir.listFiles(File::isDirectory);

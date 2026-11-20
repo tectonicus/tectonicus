@@ -228,7 +228,7 @@ public class CacheUtil
 		boolean needsBiomeColours = map.useBiomeColours() && (map.getLayers().isEmpty() || map.getViewFilter().isEnabled())
 				|| map.getLayers().stream().anyMatch(tectonicus.configuration.RenderOptions::useBiomeColours);
 		if (needsBiomeColours && map.getDimension() == tectonicus.configuration.Dimension.OVERWORLD
-				&& format != tectonicus.SaveFormat.ANVIL && worldSeed != null) {
+				&& format != tectonicus.SaveFormat.ANVIL && format != tectonicus.SaveFormat.BEDROCK && worldSeed != null) {
 			try {
 				return new FileBiomeCache(new File(config.getCacheDir(), map.getId()), map.getWorldDir(), minecraftJar, worldSeed);
 			} catch (Exception e) {

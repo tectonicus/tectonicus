@@ -60,7 +60,9 @@ public class PortalScanner {
 		var worldInfo = new WorldInfo(version, dimensionHeight.minY() != 0, dimensionHeight.minY());
 		return new PortalScanner(regions.getFormat(), coord -> {
 			// RegionCache and ChunkLocator log read failures. Distinguish a failed read from an absent saved chunk.
-			if (regions.getFormat() == SaveFormat.ALPHA) {
+			if (regions.getFormat() == SaveFormat.BEDROCK) {
+				// The database reader logs read failures; an absent chunk is simply not listed.
+			} else if (regions.getFormat() == SaveFormat.ALPHA) {
 				File file = ChunkLocator.findChunkFile(directory, coord);
 				if (file.exists() && file.length() == 0)
 					throw new IllegalStateException("Empty portal chunk " + file);

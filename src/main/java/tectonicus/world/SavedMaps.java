@@ -9,6 +9,8 @@
 package tectonicus.world;
 
 import lombok.extern.slf4j.Slf4j;
+import tectonicus.bedrock.BedrockItems;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.TextureFilter;
 import tectonicus.raw.SavedMap;
@@ -49,6 +51,9 @@ final class SavedMaps implements AutoCloseable {
 	}
 
 	private Optional<SavedMap> load(int mapId) {
+		Path worldDir = dataDir.getParent();
+		if (BedrockWorld.isBedrockWorld(worldDir))
+			return loadBedrock(worldDir, mapId);
 		Path path = dataDir.resolve("minecraft/maps/" + mapId + ".dat");
 		if (Files.notExists(path))
 			path = dataDir.resolve("map_" + mapId + ".dat");
@@ -58,6 +63,21 @@ final class SavedMaps implements AutoCloseable {
 			log.warn("Could not load saved map {} from {}: {}", mapId, path, e.toString());
 			return Optional.empty();
 		}
+	}
+
+	private static Optional<SavedMap> loadBedrock(Path worldDir, int mapId) {
+		Long uuid = BedrockItems.mapUuid(mapId);
+		if (uuid == null)
+			return Optional.empty();
+		try {
+			byte[] pixels = BedrockWorld.open(worldDir).mapPixels(uuid);
+			if (pixels != null && pixels.length == 128 * 128 * 4)
+				return Optional.of(SavedMap.fromRgba(pixels));
+			log.warn("Bedrock map {} is missing or not 128x128", uuid);
+		} catch (IOException e) {
+			log.warn("Could not load Bedrock map {}: {}", uuid, e.toString());
+		}
+		return Optional.empty();
 	}
 
 	@Override

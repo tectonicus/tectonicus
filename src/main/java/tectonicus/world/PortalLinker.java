@@ -7,6 +7,7 @@ package tectonicus.world;
 
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.Portal;
+import tectonicus.Minecraft;
 import tectonicus.SaveFormat;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionInfo;
@@ -45,7 +46,7 @@ public class PortalLinker {
 		Dimension targetDimension = sourceDimension == Dimension.OVERWORLD ? Dimension.NETHER : Dimension.OVERWORLD;
 		File targetDirectory = DirUtils.getDimensionDir(world.getWorldDir().toPath(),
 				new DimensionInfo(targetDimension, targetDimension.getId())).toFile();
-		if (!targetDirectory.isDirectory())
+		if (!targetDirectory.isDirectory() && !Minecraft.isValidDimensionDir(targetDirectory))
 			return new PortalLinker(source, null, null, 1);
 		try {
 			var target = PortalScanner.open(targetDirectory, version, world.getBiomeCache(), heightFor(world, targetDimension.getId(), targetDimension));

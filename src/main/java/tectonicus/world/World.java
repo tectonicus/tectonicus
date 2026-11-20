@@ -14,6 +14,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.tectonicus.jnbt.CompoundTag;
 import org.joml.Vector3f;
 import tectonicus.Block;
 import tectonicus.BlockContext;
@@ -24,6 +25,7 @@ import tectonicus.BlockRegistryParser;
 import tectonicus.BlockType;
 import tectonicus.BlockTypeRegistry;
 import tectonicus.Minecraft;
+import tectonicus.SaveFormat;
 import tectonicus.NullBlockMaskFactory;
 import tectonicus.RegionCache;
 import tectonicus.RegionCoord;
@@ -32,6 +34,7 @@ import tectonicus.WorldStats;
 import tectonicus.blockTypes.Air;
 import tectonicus.blockregistry.BlockRegistry;
 import tectonicus.blockregistry.BlockStateWrapper;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.cache.BiomeCache;
 import tectonicus.cache.BiomeData;
 import tectonicus.cache.CacheUtil;
@@ -293,7 +296,8 @@ public class World implements BlockContext, AutoCloseable
 		File minecraftJar = worldConfig != null ? worldConfig.getMinecraftJar() : config.getMinecraftJar();
 		if (minecraftJar == null) {
 			log.info("No Minecraft jar specified.");
-			minecraftJar = Minecraft.selectMinecraftJar(null, worldVersion);
+			// Bedrock blocks are mapped to the newest Java names, so use the newest Java jar.
+			minecraftJar = Minecraft.selectMinecraftJar(null, levelDat.isBedrock() ? null : worldVersion);
 		}
 		if (worldConfig != null)
 			worldConfig.setMinecraftJar(minecraftJar);
@@ -674,6 +678,11 @@ public class World implements BlockContext, AutoCloseable
 		return worldSubset.createRegionIterator(regionCache.getFormat(), dimensionDir);
 	}
 	
+	/** Whether chunks are found by listing them rather than by reading region files: Alpha and Bedrock worlds. */
+	public boolean isChunkListWorld() {
+		return alphaWorld || regionCache.getFormat() == SaveFormat.BEDROCK;
+	}
+
 	public ChunkCoord[] getAlphaChunkCoords() {
 		return chunkLocator.getAlphaChunkCoords();
 	}
@@ -1407,6 +1416,11 @@ public class World implements BlockContext, AutoCloseable
 		if (players.isEmpty() && singlePlayer != null) {
 			submitPlayerTask(singlePlayer, playerSkinCache, executor);
 			players.add(singlePlayer);
+		}
+		if (BedrockWorld.isBedrockWorld(worldDir.toPath())) {
+			// Bedrock keeps players in its database, with no names; label them as Java does unnamed players
+			for (CompoundTag tag : BedrockWorld.open(worldDir.toPath()).serverPlayers())
+				players.add(new Player(null, tag));
 		}
 		
 		try {

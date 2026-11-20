@@ -18,6 +18,8 @@ import org.tectonicus.jnbt.LongTag;
 import org.tectonicus.jnbt.NBTInputStream;
 import org.tectonicus.jnbt.StringTag;
 import org.tectonicus.jnbt.Tag;
+import tectonicus.bedrock.BedrockLevel;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.configuration.Dimension;
 import tectonicus.util.Vector3l;
 
@@ -51,10 +53,24 @@ public class LevelDat {
 	private List<String> dataPacks = Collections.emptyList();
 	/** Dimension id to its saved dimension type: a type id (StringTag) or an inline definition (CompoundTag). */
 	private final Map<String, Tag> dimensionTypes = new HashMap<>();
+	/** True for a Bedrock Edition world, whose chunks are in a LevelDB database in its db folder. */
+	private boolean bedrock;
+	/** The Bedrock version that last opened the world, such as 1.21.120, or null for a Java world. */
+	private String bedrockVersion;
 	
 	public LevelDat(Path datFile, String singlePlayerName) {
 		spawnPosition = new Vector3l();
 		spawnDimension = Dimension.OVERWORLD; //1.21.9 added the ability to set the spawn dimension
+		
+		try {
+			if (BedrockLevel.isBedrockLevelDat(datFile)) {
+				readBedrock(BedrockLevel.read(datFile), datFile, singlePlayerName);
+				return;
+			}
+		} catch (IOException e) {
+			log.error("Exception: ", e);
+			return;
+		}
 		
 		try (InputStream in = Files.newInputStream(datFile);
 			 NBTInputStream nbtIn = new NBTInputStream(in)) {
@@ -122,6 +138,25 @@ public class LevelDat {
 			}
 		} catch (IOException e) {
 			log.error("Exception: ", e);
+		}
+	}
+
+	private void readBedrock(BedrockLevel level, Path datFile, String singlePlayerName) {
+		bedrock = true;
+		worldName = level.name();
+		bedrockVersion = level.versionName();
+		version = level.javaVersion();
+		dataVersion = tectonicus.Minecraft.getVersion(version).getDataVersion();
+		worldSeed = level.seed();
+		spawnPosition.x = level.spawnX();
+		spawnPosition.y = level.spawnY();
+		spawnPosition.z = level.spawnZ();
+		log.info("Bedrock world \"{}\", last opened with Bedrock {}; using Java {} assets", worldName, bedrockVersion, version);
+		Path worldDir = datFile.toAbsolutePath().getParent();
+		if (BedrockWorld.isBedrockWorld(worldDir)) {
+			CompoundTag player = BedrockWorld.open(worldDir).localPlayer();
+			if (player != null)
+				singlePlayer = new Player(singlePlayerName, player, dataVersion);
 		}
 	}
 

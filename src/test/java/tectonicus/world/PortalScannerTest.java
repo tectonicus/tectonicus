@@ -160,7 +160,7 @@ class PortalScannerTest {
 	}
 
 	@ParameterizedTest
-	@EnumSource(SaveFormat.class)
+	@EnumSource(value = SaveFormat.class, mode = EnumSource.Mode.EXCLUDE, names = "BEDROCK") // Bedrock has no region files; see BedrockWorldTest
 	void anEmptySavedChunkOrRegionIsAnErrorInsteadOfMissingTerrain(SaveFormat format) throws Exception {
 		Path file = format == SaveFormat.ALPHA
 				? ChunkLocator.findChunkFile(directory.toFile(), new ChunkCoord(0, 0)).toPath()
@@ -174,7 +174,7 @@ class PortalScannerTest {
 	}
 
 	@ParameterizedTest
-	@EnumSource(SaveFormat.class)
+	@EnumSource(value = SaveFormat.class, mode = EnumSource.Mode.EXCLUDE, names = "BEDROCK") // Bedrock has no region files; see BedrockWorldTest
 	void readsNumericPortalBlocksFromUnfilteredSavedChunks(SaveFormat format) throws Exception {
 		var coord = new ChunkCoord(0, 0);
 		var bytes = new ByteArrayOutputStream();

@@ -14,6 +14,7 @@ import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.Strings;
+import tectonicus.bedrock.BedrockWorld;
 import tectonicus.texture.VersionJson;
 import tectonicus.texture.ZipStack;
 import tectonicus.util.FileUtils;
@@ -315,6 +316,8 @@ public class Minecraft
 	/** Look for dimensionDir/region/*.mcr or dimensionDir/region/*.mca */
 	public static boolean isValidDimensionDir(File dimensionDir)
 	{
+		if (BedrockWorld.forDimensionDir(dimensionDir).isPresent())
+			return true;
 		File regionDir = new File(dimensionDir, "region");
 		if (!regionDir.exists())
 			return false;

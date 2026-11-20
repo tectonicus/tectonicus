@@ -115,6 +115,9 @@ Description here
 ## Map overlays
 Chunk and region grids, slime chunks, the world border, and your own roads, areas and markers can be drawn over the map as toggleable overlays. See [Map overlays](Docs/Overlays.md).
 
+## Bedrock Edition worlds (experimental)
+Point `worldDir` at a Bedrock world folder (the one with `db` and `level.dat`) and Tectonicus renders it with a Java Edition client jar. See [Bedrock Edition worlds](Docs/Bedrock.md) for what is supported so far.
+
 ## Headless rendering
 To render on a server or in a container without a display, set `useEGL="true"` on the `<rasteriser>` element. See [Headless rendering](Docs/HeadlessRendering.md) for EGL, OSMesa and the Docker image.
 

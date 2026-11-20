@@ -142,6 +142,96 @@ public class RawChunk {
 		}
 	}
 
+	/**
+	 * Creates an empty chunk that a reader fills section by section, such as the Bedrock Edition reader.
+	 * Its biomes are stored per block, like 26.4+ Java chunks.
+	 */
+	public RawChunk(int chunkX, int chunkZ, int minSectionY) {
+		maxSections = Minecraft.getChunkHeight() / SECTION_HEIGHT;
+		clear();
+		this.chunkX = chunkX;
+		this.chunkZ = chunkZ;
+		this.minSectionY = minSectionY;
+		this.dataVersion = BLOCK_BIOMES_DATA_VERSION;
+	}
+
+	/**
+	 * Sets one section's blocks. Both arrays hold {@link #SECTION_SIZE} entries indexed by
+	 * {@link #sectionIndex(int, int, int)}; the arrays are kept, not copied.
+	 *
+	 * @param sectionY the section's index in this chunk, counted from its lowest section
+	 */
+	public void setSection(int sectionY, String[] blockNames, BlockProperties[] blockStates) {
+		if (sectionY < 0 || sectionY >= maxSections)
+			return;
+		if (blockNames.length != SECTION_SIZE || blockStates.length != SECTION_SIZE)
+			throw new IllegalArgumentException("A section holds " + SECTION_SIZE + " blocks");
+		Section section = section(sectionY);
+		section.blockNames = blockNames;
+		section.blockStates = blockStates;
+	}
+
+	/**
+	 * Sets one section's per-block biomes as namespaced ids, {@link #SECTION_SIZE} entries indexed
+	 * by {@code (y * 16 + z) * 16 + x}.
+	 */
+	public void setSectionBiomes(int sectionY, String[] biomeIds) {
+		if (sectionY < 0 || sectionY >= maxSections)
+			return;
+		if (biomeIds.length != SECTION_SIZE)
+			throw new IllegalArgumentException("A section holds " + SECTION_SIZE + " biomes");
+		section(sectionY).biomeIds = biomeIds;
+	}
+
+	/** The index of a block within a section's arrays. */
+	public static int sectionIndex(int x, int y, int z) {
+		return Section.getIndex(x, y, z);
+	}
+
+	/** Whether a section has been set or written to. */
+	public boolean hasSection(int sectionY) {
+		return sectionY >= 0 && sectionY < maxSections && sections[sectionY] != null;
+	}
+
+	public int getSectionCount() {
+		return maxSections;
+	}
+
+	private Section section(int sectionY) {
+		Section section = sections[sectionY];
+		if (section == null) {
+			section = new Section();
+			sections[sectionY] = section;
+		}
+		return section;
+	}
+
+	/** Adds a sign whose text was read by another format's parser. Local coordinates are within this chunk. */
+	public void addSign(int x, int y, int z, SignEntity.Face front, SignEntity.Face back) {
+		int localX = x - chunkX * WIDTH;
+		int localY = y - minSectionY * SECTION_HEIGHT;
+		int localZ = z - chunkZ * DEPTH;
+		if (localX < 0 || localX >= WIDTH || localZ < 0 || localZ >= DEPTH || localY < 0 || localY >= maxSections * SECTION_HEIGHT)
+			return;
+		String block = getBlockName(localX, localY, localZ);
+		signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
+				front, back, null, getBlockState(localX, localY, localZ), block != null ? block : "minecraft:oak_sign"));
+	}
+
+	/** Adds block entities that another format's reader has converted to 1.21.5+ Java NBT. */
+	public void addBlockEntities(ListTag blockEntities) {
+		try {
+			parseBlockEntities(blockEntities, true);
+		} catch (JacksonException e) {
+			throw new IllegalArgumentException("Unreadable block entity", e);
+		}
+	}
+
+	/** Adds entities that another format's reader has converted to 1.21.5+ Java NBT. */
+	public void addEntities(ListTag entities) {
+		parseEntities(entities, true, true);
+	}
+
 	public void setFilterMetadata(String id, Object data) {
 		this.filterData.put(id, data);
 	}

@@ -102,6 +102,14 @@ public class Chunk
 		}
 	}
 
+	/** Uses a chunk another reader has already built, such as the Bedrock reader. */
+	public void loadRaw(RawChunk raw, BlockFilter filter) {
+		if (rawChunk == null) {
+			rawChunk = raw;
+			filter.filter(rawChunk);
+		}
+	}
+
 	public void loadRaw(ChunkData chunkData, ChunkData entityChunkData, BlockFilter filter, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		if (rawChunk == null)
 		{
