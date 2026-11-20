@@ -14,6 +14,8 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.OverlayConfig.Visibility;
+import tectonicus.util.Vector3l;
+import tectonicus.world.subset.CircularWorldSubset;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -68,6 +70,34 @@ class OverlayExporterTest {
 		int listed = script.substring(script.indexOf("\"chunks\":[") + 10, script.indexOf(']')).split(",").length / 2;
 		assertEquals(expected, listed);
 		assertFalse(script.contains("worldBorder"));
+	}
+
+	@Test
+	void slimeChunksNeedAColumnInsideTheSubsetNotJustTheEdgeBuffer() throws Exception {
+		var subset = new CircularWorldSubset(new Vector3l(0, 64, 0), 40);
+		// Chunk 3 starts at x=48, outside the circle, but the renderer loads it for edge geometry.
+		assertTrue(subset.contains(new ChunkCoord(3, 0)));
+		assertFalse(OverlayExporter.hasColumnInSubset(subset, new ChunkCoord(3, 0)));
+		assertTrue(OverlayExporter.hasColumnInSubset(subset, new ChunkCoord(2, 0)));
+		assertTrue(OverlayExporter.hasColumnInSubset(subset, new ChunkCoord(-3, 0)));
+
+		DimensionConfig map = slimeMap(Dimension.OVERWORLD);
+		map.setWorldSubset(subset);
+		OverlayExporter exporter = new OverlayExporter(map, SEED);
+		int expected = 0;
+		for (int x = -6; x <= 6; x++) {
+			for (int z = -6; z <= 6; z++) {
+				ChunkCoord coord = new ChunkCoord(x, z);
+				if (!subset.contains(coord)) continue;
+				exporter.addRenderedChunk(coord);
+				if (OverlayExporter.isSlimeChunk(SEED, x, z) && OverlayExporter.hasColumnInSubset(subset, coord)) expected++;
+			}
+		}
+		File file = directory.resolve("overlays.js").toFile();
+		exporter.write(file, directory, directory);
+		String script = Files.readString(file.toPath());
+		String chunks = script.substring(script.indexOf("\"chunks\":[") + 10, script.indexOf(']'));
+		assertEquals(expected, chunks.isEmpty() ? 0 : chunks.split(",").length / 2);
 	}
 
 	@Test

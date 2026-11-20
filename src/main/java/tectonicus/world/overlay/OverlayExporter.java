@@ -14,8 +14,10 @@ import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.Dimension;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.configuration.OverlayConfig;
+import tectonicus.raw.RawChunk;
 import tectonicus.raw.WorldBorder;
 import tectonicus.util.FileUtils;
+import tectonicus.world.subset.WorldSubset;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -61,13 +63,28 @@ public class OverlayExporter {
 		return config.isEnabled();
 	}
 
-	/** Call for every chunk that is rendered in this dimension. Thread safe. */
+	/**
+	 * Call for every chunk that is rendered in this dimension. Thread safe. The renderer also loads
+	 * chunks just outside the subset for edge geometry, so a slime chunk counts only when at least
+	 * one of its columns is inside the subset.
+	 */
 	public void addRenderedChunk(ChunkCoord coord) {
-		if (slimeSeed != null && isSlimeChunk(slimeSeed, (int) coord.x, (int) coord.z)) {
+		if (slimeSeed != null && isSlimeChunk(slimeSeed, (int) coord.x, (int) coord.z)
+				&& hasColumnInSubset(map.getWorldSubset(), coord)) {
 			synchronized (slimeChunks) {
 				slimeChunks.add(new ChunkCoord(coord));
 			}
 		}
+	}
+
+	static boolean hasColumnInSubset(WorldSubset subset, ChunkCoord coord) {
+		long originX = coord.x * RawChunk.WIDTH;
+		long originZ = coord.z * RawChunk.DEPTH;
+		for (int x = 0; x < RawChunk.WIDTH; x++)
+			for (int z = 0; z < RawChunk.DEPTH; z++)
+				if (subset.containsBlock(originX + x, originZ + z))
+					return true;
+		return false;
 	}
 
 	/** Java Edition's slime chunk test, including its int overflow. */
