@@ -47,10 +47,13 @@ function CreateCompassControl(initialImage) {
 
 		onAdd: function (map) {
 			var container = L.DomUtil.create('div', 'compass leaflet-control leaflet-control-custom');
-			container.style.background = "url(" + initialImage + ") center";
-			container.style.backgroundSize = "128px 128px";
-			container.style.width = '100px';
-			container.style.height = '80px';
+			// The image is trimmed to the rose, so show all of it; a top-down rose is the largest.
+			var image = L.DomUtil.create('img', '', container);
+			image.src = initialImage;
+			image.alt = '';
+			image.style.display = 'block';
+			image.style.maxWidth = '100px';
+			image.style.maxHeight = '100px';
 
 			return container;
 		}

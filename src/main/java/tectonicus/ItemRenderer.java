@@ -98,6 +98,35 @@ public class ItemRenderer
 		ItemGeometry item = createCompassGeometry(rasteriser, map.getNorthDirection(), compassImage);
 		
 		renderItem(item, outFile, 128, 4, map.getCameraAngleRad(), map.getCameraElevationRad());
+		
+		// The rendered rose fills a different part of the image at each camera angle, so trim the
+		// transparent margin and let the map size its compass control to what is left.
+		BufferedImage rendered = ImageIO.read(outFile);
+		Screenshot.write(outFile, trimTransparentMargin(rendered, 2), ImageFormat.PNG, 1.0f);
+	}
+	
+	/** Crops an image to its visible pixels plus a transparent border, keeping at least one pixel. */
+	static BufferedImage trimTransparentMargin(BufferedImage image, int padding) {
+		int minX = image.getWidth(), minY = image.getHeight(), maxX = -1, maxY = -1;
+		for (int y = 0; y < image.getHeight(); y++) {
+			for (int x = 0; x < image.getWidth(); x++) {
+				if ((image.getRGB(x, y) >>> 24) != 0) {
+					minX = Math.min(minX, x);
+					minY = Math.min(minY, y);
+					maxX = Math.max(maxX, x);
+					maxY = Math.max(maxY, y);
+				}
+			}
+		}
+		if (maxX < 0) {
+			return image.getSubimage(0, 0, 1, 1);
+		}
+		
+		minX = Math.max(0, minX - padding);
+		minY = Math.max(0, minY - padding);
+		maxX = Math.min(image.getWidth() - 1, maxX + padding);
+		maxY = Math.min(image.getHeight() - 1, maxY + padding);
+		return image.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
 	}
 	
 	public void renderPortal(File outFile, BlockTypeRegistry registry, TexturePack texturePack) throws Exception
