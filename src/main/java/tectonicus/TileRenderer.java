@@ -346,7 +346,7 @@ public class TileRenderer
 								untrimmed.close();
 
 							// Render base tiles
-							renderBaseTiles(world, map, layer, baseTilesDir, changedTiles, tileCache);
+							renderBaseTiles(world, map, layer, baseTilesDir, visibleTiles, changedTiles, tileCache);
 
 							// Retire old candidates, including tiles vacated if terrain shrinks.
 							HddTileList removed = hddTileListFactory.createList();
@@ -803,7 +803,7 @@ public class TileRenderer
 		regionHashStore.endRegion();
 	}
 	
-	private void renderBaseTiles(World world, tectonicus.configuration.DimensionConfig map, LayerConfig layer, File layerDir, HddTileList tiles, TileCache tileCache)
+	private void renderBaseTiles(World world, tectonicus.configuration.DimensionConfig map, LayerConfig layer, File layerDir, HddTileList visibleTiles, HddTileList tiles, TileCache tileCache)
 	{
 		if (abort)
 			return;
@@ -818,56 +818,69 @@ public class TileRenderer
 		setupInitialCamera(map);
 		
 		int done = 0;
-
-		ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
-		// Each tile's pixels are collected after the next tile has been drawn, so the CPU prepares
-		// the next tile instead of waiting for the GPU to finish the current one.
-		RenderedTile pending = null;
-
-		try {
-			// Column order within Morton blocks keeps neighbouring chunks in the geometry cache.
-			for (TileCoord t : new TileRenderOrder(tiles)) {
-				System.out.print("Rendering tile @ " + t.x + "," + t.y + " (tile " + (done + 1) + " of " + tiles.size() + ")          \r"); //prints a carriage return after line
-				log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tiles.size());
-				progressListener.onTaskUpdate(done, tiles.size());
-
-				setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
-
-				rasteriser.resetState();
-				rasteriser.clear(layer.getBackgroundColorRGB());
-
-				world.draw(camera, false, true);
-
-				RenderedTile current = new RenderedTile(t, getImageFile(layerDir, t.x, t.y, imageFormat),
-						rasteriser.startScreenshot(0, 0, tileWidth, tileHeight, imageFormat));
-				RenderedTile previous = pending;
-				pending = current;
-				if (previous != null)
-					saveTile(previous, layer, tileCache, imageWriteQueue);
-
-				done++;
-
-				if (abort)
-					break;
-			}
-			if (pending != null) {
-				RenderedTile last = pending;
-				pending = null;
-				saveTile(last, layer, tileCache, imageWriteQueue);
-			}
-		} finally {
-			// Only reached with a tile left over when rendering failed: keep the tile that did render.
-			if (pending != null) {
-				try {
-					saveTile(pending, layer, tileCache, imageWriteQueue);
-				} catch (RuntimeException e) {
-					log.error("Could not save tile {},{} after a rendering error", pending.coord().x, pending.coord().y, e);
-				}
-			}
-			imageWriteQueue.waitUntilFinished();
+		final int tileCount = tiles.size();
+		if (tileCount == 0) {
+			log.info("Base tile render complete: all {} tiles unchanged", String.format(java.util.Locale.ROOT, "%,d", visibleTiles.size()));
+			return;
 		}
+		// The map covers every visible tile, so unchanged tiles show around the ones being rendered.
+		TileProgress progress = TileProgress.forConsole(visibleTiles, tiles, visibleTiles.getAbsoluteMinCoord(), visibleTiles.getAbsoluteMaxCoord());
 
-		log.info("\nBase tile render complete");
+		// Until closed, log messages are printed above the progress display instead of being drawn over.
+		try {
+			ImageWriteQueue imageWriteQueue = new ImageWriteQueue(config.getNumDownsampleThreads());
+			// Each tile's pixels are collected after the next tile has been drawn, so the CPU prepares
+			// the next tile instead of waiting for the GPU to finish the current one.
+			RenderedTile pending = null;
+
+			try {
+				// Column order within Morton blocks keeps neighbouring chunks in the geometry cache.
+				for (TileCoord t : new TileRenderOrder(tiles)) {
+					progress.started(t);
+					log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tileCount);
+					progressListener.onTaskUpdate(done, tileCount);
+
+					setupCameraForTile(camera, t, tileWidth, tileHeight, map.getCameraAngleRad(), map.getCameraElevationRad(), zoom);
+
+					rasteriser.resetState();
+					rasteriser.clear(layer.getBackgroundColorRGB());
+
+					world.draw(camera, false, true);
+
+					RenderedTile current = new RenderedTile(t, getImageFile(layerDir, t.x, t.y, imageFormat),
+							rasteriser.startScreenshot(0, 0, tileWidth, tileHeight, imageFormat));
+					RenderedTile previous = pending;
+					pending = current;
+					if (previous != null)
+						saveTile(previous, layer, tileCache, imageWriteQueue);
+
+					progress.finished(t);
+					done++;
+
+					if (abort)
+						break;
+				}
+				if (pending != null) {
+					RenderedTile last = pending;
+					pending = null;
+					saveTile(last, layer, tileCache, imageWriteQueue);
+				}
+			} finally {
+				// Only reached with a tile left over when rendering failed: keep the tile that did render.
+				if (pending != null) {
+					try {
+						saveTile(pending, layer, tileCache, imageWriteQueue);
+					} catch (RuntimeException e) {
+						log.error("Could not save tile {},{} after a rendering error", pending.coord().x, pending.coord().y, e);
+					}
+				}
+				imageWriteQueue.waitUntilFinished();
+			}
+
+			log.info("Base tile render complete: {}", progress.complete());
+		} finally {
+			progress.close();
+		}
 	}
 
 	private record RenderedTile(TileCoord coord, File outputFile, PendingScreenshot screenshot) {}
