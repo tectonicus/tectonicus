@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tectonicus.Minecraft;
 import tectonicus.RegionCache;
+import tectonicus.RegionCoord;
+import tectonicus.chunk.ChunkLocator;
+import tectonicus.cache.BiomeData;
 import tectonicus.SaveFormat;
 import tectonicus.chunk.ChunkCoord;
 import org.tectonicus.jnbt.CompoundTag;
@@ -134,6 +137,15 @@ class BedrockWorldTest {
 		assertFalse(chunks.contains(new ChunkCoord(5, 5)));
 		assertTrue(chunks.contains(new ChunkCoord(-2, -2)));
 		assertEquals(List.of(new ChunkCoord(0, 0)), BedrockWorld.forDimensionDir(world.resolve("DIM-1").toFile()).orElseThrow().chunkCoords());
+	}
+
+	@Test
+	void findsRegionsWithChunks() {
+		ChunkLocator locator = new ChunkLocator(coord -> new BiomeData(), new RegionCache(world.toFile()), world.toFile());
+		assertTrue(locator.hasRegion(new RegionCoord(0, 0)));
+		assertTrue(locator.hasRegion(new RegionCoord(-1, -1)));
+		assertFalse(locator.hasRegion(new RegionCoord(3, 0)));
+		assertTrue(locator.exists(new ChunkCoord(-2, -2)));
 	}
 
 	@Test

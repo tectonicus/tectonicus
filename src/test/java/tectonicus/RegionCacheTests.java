@@ -18,6 +18,7 @@ import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
 
 class RegionCacheTests {
 	@Test
@@ -44,5 +45,19 @@ class RegionCacheTests {
 
 		RegionCache cache = new RegionCache(tempPath.toFile());
 		assertThat(cache.getFormat(), is(SaveFormat.MC_REGION));
+	}
+
+	@Test
+	void remembersMissingRegions(@TempDir Path tempPath) throws IOException {
+		File regionDir = new File(tempPath.toFile(), "region");
+		regionDir.mkdirs();
+		new File(regionDir, "r.0.0.mca").createNewFile();
+		RegionCache cache = new RegionCache(tempPath.toFile());
+
+		RegionCoord missing = new RegionCoord(5, -3);
+		assertThat(cache.getRegion(missing), is(nullValue()));
+		// The answer is kept for the rest of the render instead of checking the disk on every lookup.
+		new File(regionDir, "r.5.-3.mca").createNewFile();
+		assertThat(cache.getRegion(missing), is(nullValue()));
 	}
 }

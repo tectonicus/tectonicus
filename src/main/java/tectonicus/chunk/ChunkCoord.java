@@ -50,9 +50,10 @@ public class ChunkCoord implements Comparable<ChunkCoord>
 	@Override
 	public boolean equals(Object obj)
 	{
-		assert (obj instanceof ChunkCoord);
-		
-		ChunkCoord other = (ChunkCoord)obj;
+		if (this == obj)
+			return true;
+		if (!(obj instanceof ChunkCoord other))
+			return false;
 		
 		return this.x == other.x && this.z == other.z;
 	}
@@ -60,12 +61,13 @@ public class ChunkCoord implements Comparable<ChunkCoord>
 	@Override
 	public int hashCode()
 	{
-		//		unused		x		z
-		//	|	12		|	10	| 	10	|
-	
-		final int mask10 = 0x3ff; // lowest ten bits set
-		
-		return (int)( ((x & mask10) << 10) | (z & mask10) );
+		// Chunk caches are keyed by coordinate. The old hash kept only the low 10 bits of x and z, and hash
+		// tables index by the low bits, so chunks in the same row with nearby x often shared a bucket.
+		// Mix all bits of both coordinates instead.
+		long h = x * 0x9E3779B97F4A7C15L + z;
+		h ^= h >>> 32;
+		h *= 0xD6E8FEB86659FD93L;
+		return (int)(h ^ (h >>> 32));
 	}
 	
 	@Override

@@ -50,6 +50,16 @@ public interface Rasteriser {
 	 * Captures a portion of the current display and return it as a buffered image
 	 */
 	BufferedImage takeScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat);
+
+	/**
+	 * Starts capturing a portion of the current display without waiting for the GPU to finish drawing it.
+	 * The image is collected later with {@link PendingScreenshot#get()}, so the caller can prepare the next
+	 * frame in the meantime. Later drawing does not change the captured pixels.
+	 */
+	default PendingScreenshot startScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat) {
+		BufferedImage image = takeScreenshot(startX, startY, width, height, imageFormat);
+		return () -> image;
+	}
 	
 	// Texturing
 	default int getMaxTextureSize() { return Integer.MAX_VALUE; }

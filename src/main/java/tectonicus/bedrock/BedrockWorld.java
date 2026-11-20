@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tectonicus.jnbt.ByteArrayTag;
 import org.tectonicus.jnbt.CompoundTag;
 import tectonicus.Minecraft;
+import tectonicus.RegionCoord;
 import tectonicus.bedrock.leveldb.LevelDbReader;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.raw.RawChunk;
@@ -53,6 +54,7 @@ public final class BedrockWorld {
 	private final Path worldDir;
 	private final LevelDbReader db;
 	private final Map<Integer, Set<ChunkCoord>> chunks = new ConcurrentHashMap<>();
+	private final Map<Integer, Set<RegionCoord>> regions = new ConcurrentHashMap<>();
 	private final Map<BlockKey, Blocks> blockCache = new LinkedHashMap<>(BLOCK_CACHE_SIZE, 0.75f, true) {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<BlockKey, Blocks> eldest) {
@@ -68,6 +70,11 @@ public final class BedrockWorld {
 
 		public List<ChunkCoord> chunkCoords() {
 			return world.chunkCoords(id);
+		}
+
+		/** Whether any chunk of this dimension lies in the 32x32 chunk area of a Java region. */
+		public boolean hasRegion(RegionCoord coord) {
+			return world.regions(id).contains(coord);
 		}
 
 		public RawChunk read(ChunkCoord coord) throws IOException {
@@ -130,6 +137,15 @@ public final class BedrockWorld {
 
 	Set<ChunkCoord> chunks(int dimension) {
 		return chunks.computeIfAbsent(dimension, this::findChunks);
+	}
+
+	Set<RegionCoord> regions(int dimension) {
+		return regions.computeIfAbsent(dimension, d -> {
+			Set<RegionCoord> found = new HashSet<>();
+			for (ChunkCoord coord : chunks(d))
+				found.add(RegionCoord.fromChunkCoord(coord));
+			return Collections.unmodifiableSet(found);
+		});
 	}
 
 	List<ChunkCoord> chunkCoords(int dimension) {

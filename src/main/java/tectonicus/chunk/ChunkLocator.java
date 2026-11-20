@@ -54,6 +54,17 @@ public class ChunkLocator {
 		this.bedrock = format == SaveFormat.BEDROCK ? BedrockWorld.forDimensionDir(baseDir).orElseThrow() : null;
 	}
 	
+	/**
+	 * Whether a region may contain chunks. Always true for alpha saves, which store chunks individually; for
+	 * Bedrock worlds, whether any listed chunk falls in the region.
+	 * Cheap to call repeatedly: region files are looked up once.
+	 */
+	public boolean hasRegion(RegionCoord coord) {
+		if (bedrock != null)
+			return bedrock.hasRegion(coord);
+		return format == SaveFormat.ALPHA || regionCache.getRegion(coord) != null;
+	}
+
 	public boolean exists(ChunkCoord coord) {
 		if (bedrock != null)
 			return bedrock.contains(coord);

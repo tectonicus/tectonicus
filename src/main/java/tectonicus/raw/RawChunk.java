@@ -52,7 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -1684,65 +1683,66 @@ public class RawChunk {
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm, IntFunction<byte[]> mapContentHash) {
-		hashAlgorithm.reset();
+		// Buffers the hashed bytes; the bytes themselves are unchanged, so saved chunk hashes stay valid.
+		ChunkHashWriter hash = new ChunkHashWriter(hashAlgorithm);
 
 		for (Section s : sections) {
 			if (s != null) {
-				update(hashAlgorithm, s.blockIds);
-				update(hashAlgorithm, s.blockData);
-				update(hashAlgorithm, s.blockNames);
-				updateBlockStates(hashAlgorithm, s.blockStates);
-				update(hashAlgorithm, s.biomeIds);
+				hash.updateInts(s.blockIds);
+				hash.update(s.blockData);
+				hash.updateStrings(s.blockNames);
+				hash.updateBlockStates(s.blockStates, BLOCK_STATES_HASH_MARKER);
+				hash.updateStrings(s.biomeIds);
 				if (s.noiseBiomeIds != null)
-					update(hashAlgorithm, s.noiseBiomeIds);
+					hash.updateStrings(s.noiseBiomeIds);
 
-				update(hashAlgorithm, s.skylight);
-				update(hashAlgorithm, s.blocklight);
+				hash.update(s.skylight);
+				hash.update(s.blocklight);
 			} else {
 				byte[] dummy = new byte[3];
-				update(hashAlgorithm, dummy);
+				hash.update(dummy);
 			}
 		}
 
 		if (biomes != null)
 			for (int[] column : biomes)
-				update(hashAlgorithm, column);
+				hash.updateInts(column);
 		if (biomes3d != null)
 			for (int[][] plane : biomes3d)
 				for (int[] column : plane)
-					update(hashAlgorithm, column);
+					hash.updateInts(column);
 
 		if (!signs.isEmpty()) {
-			hashAlgorithm.update("signText-v2".getBytes(StandardCharsets.UTF_8));
+			hash.update("signText-v2".getBytes(StandardCharsets.UTF_8));
 			for (SignEntity sign : signs.values()) {
-				update(hashAlgorithm, new int[] {sign.getX(), sign.getY(), sign.getZ()});
-				hashSignFace(hashAlgorithm, sign.getFront());
-				hashAlgorithm.update((byte) (sign.getBack() == null ? 0 : 1));
-				if (sign.getBack() != null) hashSignFace(hashAlgorithm, sign.getBack());
+				hash.updateInts(new int[] {sign.getX(), sign.getY(), sign.getZ()});
+				hashSignFace(hash, sign.getFront());
+				hash.update((byte) (sign.getBack() == null ? 0 : 1));
+				if (sign.getBack() != null) hashSignFace(hash, sign.getBack());
 			}
 		}
 
 		if (!itemFrames.isEmpty()) {
-			hashAlgorithm.update("itemFrames-v2".getBytes(StandardCharsets.UTF_8));
-			update(hashAlgorithm, new int[] {itemFrames.size()});
+			hash.update("itemFrames-v2".getBytes(StandardCharsets.UTF_8));
+			hash.updateInts(new int[] {itemFrames.size()});
 			for (ItemFrameEntity frame : itemFrames) {
 				Integer mapId = frame.getMapId();
 				byte[] contentHash = mapId == null ? null : mapContentHash.apply(mapId);
-				update(hashAlgorithm, new int[] {frame.getX(), frame.getY(), frame.getZ(), frame.getDirection(),
+				hash.updateInts(new int[] {frame.getX(), frame.getY(), frame.getZ(), frame.getDirection(),
 						frame.getRotation(), frame.isGlow() ? 1 : 0, frame.isFilledMap() ? 1 : 0,
 						mapId == null ? -1 : mapId, contentHash == null ? 0 : contentHash.length,
 						frame.isInvisible() ? 1 : 0, frame.getItemRotation()});
 				if (contentHash != null)
-					hashAlgorithm.update(contentHash);
+					hash.update(contentHash);
 				Item item = frame.getItem();
-				hashAlgorithm.update((item == null ? "" : item.id).getBytes(StandardCharsets.UTF_8));
+				hash.update((item == null ? "" : item.id).getBytes(StandardCharsets.UTF_8));
 				if (item != null) {
 					DyedColorTag dye = item.getComponent(DyedColorTag.class);
 					BannerPatternsTag patterns = item.getComponent(BannerPatternsTag.class);
 					PotionContentsTag potion = item.getComponent(PotionContentsTag.class);
-					update(hashAlgorithm, new int[] {dye == null ? -1 : dye.color});
-					hashAlgorithm.update((potion == null || potion.potion == null ? "" : potion.potion).getBytes(StandardCharsets.UTF_8));
-					hashAlgorithm.update((patterns == null ? "" : patterns.toString()).getBytes(StandardCharsets.UTF_8));
+					hash.updateInts(new int[] {dye == null ? -1 : dye.color});
+					hash.update((potion == null || potion.potion == null ? "" : potion.potion).getBytes(StandardCharsets.UTF_8));
+					hash.update((patterns == null ? "" : patterns.toString()).getBytes(StandardCharsets.UTF_8));
 				}
 			}
 		}
@@ -1750,12 +1750,12 @@ public class RawChunk {
 		// Entities and block entities whose appearance is not captured by block states.
 		List<String> renderedEntities = describeRenderedEntities();
 		if (!renderedEntities.isEmpty()) {
-			hashAlgorithm.update("renderedEntities-v1".getBytes(StandardCharsets.UTF_8));
-			update(hashAlgorithm, new int[] {renderedEntities.size()});
+			hash.update("renderedEntities-v1".getBytes(StandardCharsets.UTF_8));
+			hash.updateInts(new int[] {renderedEntities.size()});
 			for (String entity : renderedEntities)
-				hashAlgorithm.update((entity + '\n').getBytes(StandardCharsets.UTF_8));
+				hash.update((entity + '\n').getBytes(StandardCharsets.UTF_8));
 		}
-		return hashAlgorithm.digest();
+		return hash.digest();
 	}
 
 	/** Canonical, order-independent descriptions of every rendered entity that affects tile output. */
@@ -1812,65 +1812,6 @@ public class RawChunk {
 		return result.toString();
 	}
 	
-	private static void updateBlockStates(MessageDigest digest, BlockProperties[] states) {
-		Map<Map<String, String>, Integer> palette = null;
-		for (int index = 0; index < states.length; index++) {
-			BlockProperties state = states[index];
-			if (state == null || state.getProperties().isEmpty())
-				continue;
-			if (palette == null) {
-				digest.update(BLOCK_STATES_HASH_MARKER);
-				palette = new HashMap<>();
-			}
-
-			Map<String, String> properties = state.getProperties();
-			int nextId = palette.size();
-			Integer existingId = palette.putIfAbsent(properties, nextId);
-			update(digest, index);
-			update(digest, existingId == null ? nextId : existingId);
-			// Emit each distinct state on its first occurrence, in key order.
-			if (existingId == null) {
-				update(digest, properties.size());
-				new TreeMap<>(properties).forEach((key, value) -> {
-					updateBlockProperty(digest, key);
-					updateBlockProperty(digest, value);
-				});
-			}
-		}
-		if (palette != null)
-			update(digest, -1);
-	}
-
-	private static void updateBlockProperty(MessageDigest digest, String property) {
-		byte[] bytes = property.getBytes(StandardCharsets.UTF_8);
-		update(digest, bytes.length);
-		digest.update(bytes);
-	}
-
-	private static void update(MessageDigest hashAlgorithm, int[] data) {
-		for (int val : data)
-			update(hashAlgorithm, val);
-	}
-
-	private static void update(MessageDigest hashAlgorithm, int val) {
-		hashAlgorithm.update((byte) (val & 0xFF));
-		hashAlgorithm.update((byte) ((val >> 8) & 0xFF));
-		hashAlgorithm.update((byte) ((val >> 16) & 0xFF));
-		hashAlgorithm.update((byte) ((val >> 24) & 0xFF));
-	}
-	
-	private static void update(MessageDigest hashAlgorithm, String[] data) {
-		for (String s : data) {
-			if (s != null) {
-				hashAlgorithm.update(s.getBytes());
-			}
-		}
-	}
-
-	private static void update(MessageDigest hashAlgorithm, byte[] data) {
-                hashAlgorithm.update(data);
-	}
-
 	public boolean usesQuartBiomes(int y) {
 		if (biomes3d != null)
 			return true;
@@ -2018,21 +1959,21 @@ public class RawChunk {
 		return new SignEntity.Face(List.copyOf(lines), color, glowing, List.copyOf(textColors));
 	}
 
-	private static void hashSignFace(MessageDigest digest, SignEntity.Face face) {
+	private static void hashSignFace(ChunkHashWriter digest, SignEntity.Face face) {
 		byte[] dye = face.color().getBytes(StandardCharsets.UTF_8);
-		update(digest, new int[] {dye.length});
+		digest.updateInts(new int[] {dye.length});
 		digest.update(dye);
 		digest.update((byte) (face.glowing() ? 1 : 0));
 		for (int i = 0; i < face.lines().size(); i++) {
 			byte[] line = face.lines().get(i).getBytes(StandardCharsets.UTF_8);
-			update(digest, new int[] {line.length});
+			digest.updateInts(new int[] {line.length});
 			digest.update(line);
 			if (i < face.textColors().size()) {
 				var colors = face.textColors().get(i);
-				update(digest, new int[] {colors.size()});
-				for (SignTextColor color : colors) update(digest, new int[] {color.start(), color.end(), color.rgb()});
+				digest.updateInts(new int[] {colors.size()});
+				for (SignTextColor color : colors) digest.updateInts(new int[] {color.start(), color.end(), color.rgb()});
 			} else {
-				update(digest, new int[] {0});
+				digest.updateInts(new int[] {0});
 			}
 		}
 	}
