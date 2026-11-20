@@ -43,6 +43,7 @@ dependencies {
 	val biomeExtractorVersion = "2.0.0"
 	val jnbtVersion = "2.0.0"
 	val hamcrestVersion = "3.0"
+	val hash4jVersion = "0.28.0"
 
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     implementation(platform("tools.jackson:jackson-bom:$jacksonVersion"))
@@ -63,6 +64,7 @@ dependencies {
 	implementation("com.github.usefulness:webp-imageio:$webpImageIoVersion")
 	implementation("org.tectonicus:biome-extractor:$biomeExtractorVersion")
 	implementation("org.tectonicus:jnbt:$jnbtVersion")
+	implementation("com.dynatrace.hash4j:hash4j:$hash4jVersion")
 
 	runtimeOnly("org.lwjgl:lwjgl::natives-windows")
 	runtimeOnly("org.lwjgl:lwjgl-glfw::natives-windows")

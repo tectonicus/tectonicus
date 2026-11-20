@@ -9,6 +9,8 @@
 
 package tectonicus;
 
+import com.dynatrace.hash4j.hashing.HashStream128;
+import com.dynatrace.hash4j.hashing.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.swap.HddObjectListWriter;
@@ -35,6 +37,7 @@ public class RegionLoadQueue
 {
 	private final BoundedExecutor executor;
 	private final IntFunction<byte[]> mapContentHash;
+	private final ThreadLocal<ChunkDigest> chunkDigest = ThreadLocal.withInitial(ChunkDigest::new);
 	
 	public RegionLoadQueue(final int numThreads, IntFunction<byte[]> mapContentHash)
 	{
@@ -42,10 +45,10 @@ public class RegionLoadQueue
 		executor = new BoundedExecutor("region-loader", numThreads, 16);
 	}
 	
-	public void load(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
+	public void load(Chunk chunk, RegionHashStore regionHashStore,
 					 DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
-		LoadTask task = new LoadTask(chunk, regionHashStore, hashAlgorithm, map, portals, signs, views, containers, beds);
+		LoadTask task = new LoadTask(chunk, regionHashStore, map, portals, signs, views, containers, beds);
 		executor.execute("loading chunk " + chunk.getCoord(), task);
 	}
 	
@@ -61,7 +64,6 @@ public class RegionLoadQueue
 	private class LoadTask implements Runnable {
 		private final Chunk chunk;
 		private final RegionHashStore regionHashStore;
-		private final MessageDigest hashAlgorithm;
 		private final DimensionConfig map;
 		private final HddObjectListWriter<PortalColumn> portals;
 		private final HddObjectListWriter<Sign> signs;
@@ -69,12 +71,11 @@ public class RegionLoadQueue
 		private final ConcurrentLinkedQueue<ContainerEntity> containers;
 		private final Queue<BedEntity> beds;
 		
-		public LoadTask(Chunk chunk, RegionHashStore regionHashStore, MessageDigest hashAlgorithm,
+		public LoadTask(Chunk chunk, RegionHashStore regionHashStore,
 						DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
 			this.chunk = chunk;
 			this.regionHashStore = regionHashStore;
-			this.hashAlgorithm = hashAlgorithm;
 			this.map = map;
 			this.portals = portals;
 			this.signs = signs;
@@ -85,7 +86,7 @@ public class RegionLoadQueue
 		
 		@Override
 		public void run() {
-			chunk.calculateHash(hashAlgorithm, mapContentHash);
+			chunk.calculateHash(chunkDigest.get(), mapContentHash);
 			regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
 			
 			findSigns(chunk.getRawChunk(), signs, map.getSignFilter());
@@ -96,6 +97,37 @@ public class RegionLoadQueue
 			findViews(chunk.getRawChunk(), views, map.getViewFilter());
 			
 			findContainers(chunk.getRawChunk(), map.getContainerFilter(), containers);
+		}
+	}
+
+	/** Adapts XXH3 to the existing chunk serialization and confines it to change detection. */
+	private static final class ChunkDigest extends MessageDigest {
+		private final HashStream128 stream = Hashing.xxh3_128().hashStream();
+
+		private ChunkDigest() {
+			super("XXH3-128");
+		}
+
+		@Override
+		protected void engineUpdate(byte value) {
+			stream.putByte(value);
+		}
+
+		@Override
+		protected void engineUpdate(byte[] bytes, int offset, int length) {
+			stream.putBytes(bytes, offset, length);
+		}
+
+		@Override
+		protected byte[] engineDigest() {
+			byte[] hash = stream.get().toByteArray();
+			engineReset();
+			return hash;
+		}
+
+		@Override
+		protected void engineReset() {
+			stream.reset();
 		}
 	}
 }

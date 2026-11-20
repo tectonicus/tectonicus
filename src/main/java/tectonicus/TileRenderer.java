@@ -765,12 +765,7 @@ public class TileRenderer
 			findBeacons(c.getRawChunk(), world.getBeacons(), map.getBeaconFilter(),
 					beacon -> world.getBeaconLevels(c.getRawChunk(), beacon));
 			
-			try {
-				// MessageDigest is not thread safe, so we need to create a new instance for each chunk processed in separate thread...
-				regionLoadQueue.load(c, regionHashStore, (MessageDigest) hashAlgorithm.clone(), map, portals, signs, views, containers, beds);
-			} catch (CloneNotSupportedException e) {
-				log.error("Exception: ", e);
-			}
+			regionLoadQueue.load(c, regionHashStore, map, portals, signs, views, containers, beds);
 		}
 	}
 
