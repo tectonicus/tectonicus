@@ -25,6 +25,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +38,9 @@ public class ChunkLocator {
 	private final RegionCache regionCache;
 	private final File baseDir;
 	private final SaveFormat format;
+	// Chunks whose data could not be read. The chunk caches do not store a failed load, so without this
+	// every block lookup in a damaged chunk would read, parse and log it again.
+	private final Set<ChunkCoord> unreadableChunks = ConcurrentHashMap.newKeySet();
 	
 	public ChunkLocator(BiomeCache biomeCache, RegionCache regionCache, File baseDir) {
 		if (biomeCache == null)
@@ -97,6 +102,9 @@ public class ChunkLocator {
 			return chunk;
 		}
 		
+		if (unreadableChunks.contains(chunkCoord))
+			return null;
+		
 		Region region = null;
 		try {
 			RegionCoord regionCoord = RegionCoord.fromChunkCoord(chunkCoord);
@@ -107,7 +115,9 @@ public class ChunkLocator {
 			}
 		} catch (Exception e) {
 			String regionPath = region != null ? region.getRegionFile().getAbsolutePath() : "unknown region file";
-			log.error("ChunkLocator: Error while trying to load chunk at ({}, {}) from {}", chunkCoord.x, chunkCoord.z, regionPath, e);
+			log.error("ChunkLocator: Error while trying to load chunk at ({}, {}) from {}; it will be left out of this render",
+					chunkCoord.x, chunkCoord.z, regionPath, e);
+			unreadableChunks.add(chunkCoord);
 		}
 		
 		return chunk;

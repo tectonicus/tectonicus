@@ -11,6 +11,7 @@ package tectonicus.raw;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.tectonicus.jnbt.ByteArrayTag;
 import org.tectonicus.jnbt.ByteTag;
 import org.tectonicus.jnbt.CompoundTag;
@@ -63,6 +64,7 @@ import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_18;
 import static tectonicus.Version.VERSION_UNKNOWN;
 
+@Slf4j
 public class RawChunk {
 	public static final int WIDTH = 16;
 	public static final int DEPTH = 16;
@@ -622,12 +624,8 @@ public class RawChunk {
 							if(propertiesList != null) {
 								CompoundTag textureInfo = NbtUtil.getChild(propertiesList, 0, CompoundTag.class);
 								StringTag value = NbtUtil.getChild(textureInfo, "Value", StringTag.class);
-								byte[] decoded = Base64.getDecoder().decode(value.getValue());
-								JsonNode node = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8));
-								JsonNode skin = node.get("textures").get("SKIN");
-								if (skin != null) {
-									textureURL = skin.get("url").asString();
-								}
+								if (value != null)
+									textureURL = decodeSkinUrl(value.getValue(), x, y, z);
 							}
 						} else if (extraType != null && !(extraType.getValue().isEmpty())) {
 							name = uuid = extraType.getValue();
@@ -1586,6 +1584,23 @@ public class RawChunk {
         
         public Map<String, DecoratedPotEntity> getDecoratedPots() {
 		return Collections.unmodifiableMap(decoratedPots);
+	}
+
+	/**
+	 * The skin URL from a player head's Base64 texture property, or "" if it is missing or unreadable.
+	 * A malformed property only loses the custom skin: it must not stop the rest of the chunk from loading.
+	 */
+	static String decodeSkinUrl(String encoded, int x, int y, int z) {
+		try {
+			JsonNode node = OBJECT_READER.readTree(new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8));
+			JsonNode textures = node == null ? null : node.get("textures");
+			JsonNode skin = textures == null ? null : textures.get("SKIN");
+			JsonNode url = skin == null ? null : skin.get("url");
+			return url == null ? "" : url.asString();
+		} catch (IllegalArgumentException | JacksonException e) {
+			log.warn("Ignoring unreadable skin texture of player head at {},{},{}: {}", x, y, z, e.getMessage());
+			return "";
+		}
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm) {
