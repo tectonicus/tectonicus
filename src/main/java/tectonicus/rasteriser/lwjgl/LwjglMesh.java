@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2025 Tectonicus contributors.  All rights reserved.
+ * Copyright (c) 2026 Tectonicus contributors.  All rights reserved.
  *
  * This file is part of Tectonicus. It is subject to the license terms in the LICENSE file found in
  * the top-level directory of this distribution.  The full list of project contributors is contained
  * in the AUTHORS file found in the same location.
- *
  */
 
 package tectonicus.rasteriser.lwjgl;
@@ -15,215 +14,166 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import tectonicus.rasteriser.Mesh;
 import tectonicus.rasteriser.Texture;
 import tectonicus.util.Colour4f;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 @RequiredArgsConstructor
-public class LwjglMesh implements Mesh
-{
-	private final LwjglTexture texture;
-	
-	private FloatBuffer vertices;
-	private ByteBuffer colours;
-	private FloatBuffer texCoords;
-	
-	private int numVertices;
-	private int maxVertices;
-	private float[] faceCentres;
-	
-	private boolean hasDisplayList;
-	private int displayList;
-	
-	private boolean isFinalised;
-	
-	@Override
-	public void destroy()
-	{
-		if (hasDisplayList)
-		{
-			GL11.glDeleteLists(displayList, 1);
-			displayList = 0;
-			hasDisplayList = false;
-		}
-	}
-	
-	@Override
-	public void addVertex(Vector3f position, Vector4f colour, final float u, final float v)
-	{
-		assert(!isFinalised);
-		
-		if (numVertices + 3 > maxVertices)
-		{
-			final int newMax = maxVertices + 4000;
-			
-			vertices = realloc(vertices, maxVertices * 3, newMax * 3);
-			colours = realloc(colours, maxVertices * 4, newMax * 4);
-			texCoords = realloc(texCoords, maxVertices * 2, newMax * 2);
-			
-			maxVertices = newMax;
-		}
-		
-		vertices.put(position.x);
-		vertices.put(position.y);
-		vertices.put(position.z);
-		
-		colours.put( (byte)(colour.x * 255) );
-		colours.put( (byte)(colour.y * 255) );
-		colours.put( (byte)(colour.z * 255) );
-		colours.put( (byte)(colour.w * 255) );
-		
-		texCoords.put(u);
-		texCoords.put(v);
-		
-		numVertices++;
-		assert(numVertices < maxVertices);
-	}
-	
-	@Override
-	public void addVertex(Vector3f position, final float u, final float v)
-	{
-		assert(!isFinalised);
-		
-		vertices.put(position.x);
-		vertices.put(position.y);
-		vertices.put(position.z);
-		
-		colours.put((byte)255);
-		colours.put((byte)255);
-		colours.put((byte)255);
-		colours.put((byte)255);
-		
-		texCoords.put(u);
-		texCoords.put(v);
-		
-		numVertices++;
-		assert(numVertices < maxVertices);
-	}
-	
-	@Override
-	public void addVertex(org.joml.Vector3f position, Colour4f color, final float u, final float v)
-	{
-		assert(!isFinalised);
-		
-		if (numVertices + 3 > maxVertices)
-		{
-			final int newMax = maxVertices + 4000;
-			
-			vertices = realloc(vertices, maxVertices * 3, newMax * 3);
-			colours = realloc(colours, maxVertices * 4, newMax * 4);
-			texCoords = realloc(texCoords, maxVertices * 2, newMax * 2);
-			
-			maxVertices = newMax;
-		}
-		
-		vertices.put(position.x);
-		vertices.put(position.y);
-		vertices.put(position.z);
-		
-		colours.put( (byte)(color.r * 255) );
-		colours.put( (byte)(color.g * 255) );
-		colours.put( (byte)(color.b * 255) );
-		colours.put( (byte)(color.a * 255) );
-		
-		texCoords.put(u);
-		texCoords.put(v);
-		
-		numVertices++;
-		assert(numVertices < maxVertices);
-	}
-	
-	@Override
-	public void finalise()
-	{
-		assert (!isFinalised);
-		
-		if (vertices != null)
-			vertices.flip();
-		
-		if (colours != null)
-			colours.flip();
-		
-		if (texCoords != null)
-			texCoords.flip();
+public class LwjglMesh implements Mesh {
+	private static final int COLOUR_OFFSET = 3 * Float.BYTES;
+	private static final int TEX_COORD_OFFSET = COLOUR_OFFSET + 4;
+	private static final int STRIDE = TEX_COORD_OFFSET + 2 * Float.BYTES;
 
-		faceCentres = new float[(numVertices / 4) * 3];
-		for (int face = 0; face < numVertices / 4; face++) {
-			int vertex = face * 4;
-			faceCentres[face * 3] = (vertices.get(vertex * 3) + vertices.get((vertex + 1) * 3) + vertices.get((vertex + 2) * 3) + vertices.get((vertex + 3) * 3)) * 0.25f;
-			faceCentres[face * 3 + 1] = (vertices.get(vertex * 3 + 1) + vertices.get((vertex + 1) * 3 + 1) + vertices.get((vertex + 2) * 3 + 1) + vertices.get((vertex + 3) * 3 + 1)) * 0.25f;
-			faceCentres[face * 3 + 2] = (vertices.get(vertex * 3 + 2) + vertices.get((vertex + 1) * 3 + 2) + vertices.get((vertex + 2) * 3 + 2) + vertices.get((vertex + 3) * 3 + 2)) * 0.25f;
-		}
-		
-		isFinalised = true;
-	}
-	
+	private final LwjglTexture texture;
+	private ByteBuffer vertices;
+	private int numVertices;
+	private float[] faceCentres;
+	private boolean finalised;
+	private boolean boundOnce;
+	private boolean uploadAttempted;
+	private int vertexBuffer;
+
 	@Override
-	public Texture getTexture()
-	{
+	public void destroy() {
+		if (vertexBuffer != 0) {
+			GL15.glDeleteBuffers(vertexBuffer);
+			vertexBuffer = 0;
+		}
+		vertices = null;
+		faceCentres = null;
+		numVertices = 0;
+	}
+
+	@Override
+	public void addVertex(Vector3f position, Vector4f colour, float u, float v) {
+		addVertex(position, (byte) (colour.x * 255), (byte) (colour.y * 255),
+				(byte) (colour.z * 255), (byte) (colour.w * 255), u, v);
+	}
+
+	@Override
+	public void addVertex(Vector3f position, float u, float v) {
+		addVertex(position, (byte) 255, (byte) 255, (byte) 255, (byte) 255, u, v);
+	}
+
+	@Override
+	public void addVertex(Vector3f position, Colour4f colour, float u, float v) {
+		addVertex(position, (byte) (colour.r * 255), (byte) (colour.g * 255),
+				(byte) (colour.b * 255), (byte) (colour.a * 255), u, v);
+	}
+
+	private void addVertex(Vector3f position, byte red, byte green, byte blue, byte alpha, float u, float v) {
+		assert !finalised;
+		if (vertices == null) {
+			vertices = BufferUtils.createByteBuffer(256 * STRIDE);
+		} else if (!vertices.hasRemaining()) {
+			ByteBuffer grown = BufferUtils.createByteBuffer(vertices.capacity() * 2);
+			grown.put(vertices.flip());
+			vertices = grown;
+		}
+
+		vertices.putFloat(position.x).putFloat(position.y).putFloat(position.z);
+		vertices.put(red).put(green).put(blue).put(alpha);
+		vertices.putFloat(u).putFloat(v);
+		numVertices++;
+	}
+
+	@Override
+	public void finalise() {
+		assert !finalised;
+		if (vertices != null) {
+			vertices.flip();
+			faceCentres = new float[getFaceCount() * 3];
+			for (int face = 0; face < getFaceCount(); face++) {
+				int first = face * 4 * STRIDE;
+				for (int axis = 0; axis < 3; axis++) {
+					int offset = first + axis * Float.BYTES;
+					faceCentres[face * 3 + axis] = (vertices.getFloat(offset) + vertices.getFloat(offset + STRIDE)
+							+ vertices.getFloat(offset + 2 * STRIDE) + vertices.getFloat(offset + 3 * STRIDE)) * 0.25f;
+				}
+			}
+		}
+		finalised = true;
+	}
+
+	@Override
+	public Texture getTexture() {
 		return texture;
 	}
-	
+
 	@Override
-	public void bind()
-	{
-		if (vertices == null)
+	public void bind() {
+		if (numVertices == 0)
 			return;
-		
-		assert (isFinalised);
-		assert (numVertices > 0);
-		
-		//org.lwjgl.opengl.Util.checkGLError();
-		
+		assert finalised;
+
 		GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-		GL11.glVertexPointer(3, GL11.GL_FLOAT, 0, vertices);
-		
 		GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-		GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, 0, colours);
-		
 		GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-		GL11.glTexCoordPointer(2, GL11.GL_FLOAT, 0, texCoords);
-		
-		if (texture != null)
-		{
+		if (!boundOnce || !bindVertexBuffer()) {
+			// Inventory icons usually need one draw. Upload only once the mesh is reused.
+			GL11.glVertexPointer(3, GL11.GL_FLOAT, STRIDE, vertices);
+			GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, STRIDE, vertices.slice(COLOUR_OFFSET, vertices.limit() - COLOUR_OFFSET));
+			GL11.glTexCoordPointer(2, GL11.GL_FLOAT, STRIDE, vertices.slice(TEX_COORD_OFFSET, vertices.limit() - TEX_COORD_OFFSET));
+			boundOnce = true;
+		}
+
+		if (texture != null) {
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture.getId());
-		}
-		else
-		{
+		} else {
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
-		
-		//org.lwjgl.opengl.Util.checkGLError();
+	}
+
+	private boolean bindVertexBuffer() {
+		if (vertexBuffer == 0) {
+			if (uploadAttempted)
+				return false;
+			uploadAttempted = true;
+			vertexBuffer = GL15.glGenBuffers();
+			if (vertexBuffer == 0)
+				return false;
+		}
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vertexBuffer);
+		try {
+			if (vertices != null) {
+				GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertices, GL15.GL_STATIC_DRAW);
+				if (GL15.glGetBufferParameteri(GL15.GL_ARRAY_BUFFER, GL15.GL_BUFFER_SIZE) != vertices.remaining()) {
+					// An allocation failure leaves the mesh usable through its client arrays.
+					GL15.glDeleteBuffers(vertexBuffer);
+					vertexBuffer = 0;
+					return false;
+				}
+				vertices = null;
+			}
+			GL11.glVertexPointer(3, GL11.GL_FLOAT, STRIDE, 0L);
+			GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, STRIDE, (long) COLOUR_OFFSET);
+			GL11.glTexCoordPointer(2, GL11.GL_FLOAT, STRIDE, (long) TEX_COORD_OFFSET);
+			return true;
+		} finally {
+			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		}
 	}
 
 	@Override
 	public void bind(GL2 gl2) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
-	public void draw(final float xOffset, final float yOffset, final float zOffset) {
-		if (vertices == null)
+	public void draw(float xOffset, float yOffset, float zOffset) {
+		if (numVertices == 0)
 			return;
-		
-		assert (numVertices > 0);
-		
-		GL11.glPushMatrix();
-		GL11.glTranslatef(xOffset, yOffset, zOffset);
-		
-		GL11.glDrawArrays(GL11.GL_QUADS, 0, numVertices);
-		
-		GL11.glPopMatrix();
+		drawVertices(0, numVertices, xOffset, yOffset, zOffset);
 	}
 
 	@Override
-	public void draw(final float xOffset, final float yOffset, final float zOffset, GL2 gl2) {
+	public void draw(float xOffset, float yOffset, float zOffset, GL2 gl2) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -242,9 +192,13 @@ public class LwjglMesh implements Mesh
 
 	@Override
 	public void drawFaces(int firstFace, int faceCount, float xOffset, float yOffset, float zOffset) {
+		drawVertices(firstFace * 4, faceCount * 4, xOffset, yOffset, zOffset);
+	}
+
+	private void drawVertices(int firstVertex, int vertexCount, float xOffset, float yOffset, float zOffset) {
 		GL11.glPushMatrix();
 		GL11.glTranslatef(xOffset, yOffset, zOffset);
-		GL11.glDrawArrays(GL11.GL_QUADS, firstFace * 4, faceCount * 4);
+		GL11.glDrawArrays(GL11.GL_QUADS, firstVertex, vertexCount);
 		GL11.glPopMatrix();
 	}
 
@@ -259,47 +213,13 @@ public class LwjglMesh implements Mesh
 	}
 
 	@Override
-	public int getMemorySize()
-	{
-		if (vertices == null)
-			return 0;
-		
-		final int vertexMem = vertices.capacity() * 4;
-		final int coloursMem = colours.capacity();
-		final int texCoordMem = texCoords.capacity() * 4;
-		
-		return vertexMem + coloursMem + texCoordMem;
+	public int getMemorySize() {
+		int size = vertices != null ? vertices.capacity() : vertexBuffer != 0 ? numVertices * STRIDE : 0;
+		return size + (faceCentres == null ? 0 : faceCentres.length * Float.BYTES);
 	}
 
 	@Override
-	public int getTotalVertices()
-	{
+	public int getTotalVertices() {
 		return numVertices;
-	}
-	
-	private static FloatBuffer realloc(FloatBuffer existing, final int existingSize, final int newSize)
-	{
-		FloatBuffer newBuffer = BufferUtils.createFloatBuffer(newSize);
-		
-		if (existing != null)
-		{
-			existing.flip();
-			newBuffer.put(existing);
-		}
-		
-		return newBuffer;
-	}
-
-	private static ByteBuffer realloc(ByteBuffer existing, final int existingSize, final int newSize)
-	{
-		ByteBuffer newBuffer = BufferUtils.createByteBuffer(newSize);
-		
-		if (existing != null)
-		{
-			existing.flip();
-			newBuffer.put(existing);
-		}
-		
-		return newBuffer;
 	}
 }

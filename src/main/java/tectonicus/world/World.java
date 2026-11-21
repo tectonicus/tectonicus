@@ -425,6 +425,8 @@ public class World implements BlockContext, AutoCloseable
 				geometryBuilders.shutdown();
 			tintSamples.remove();
 			flushGeometryCache();
+			daySkybox.destroy();
+			nightSkybox.destroy();
 			savedMaps.close();
 			// Without this each dimension leaves its block, font and sign textures in GPU memory.
 			texturePack.close();

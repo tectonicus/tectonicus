@@ -557,31 +557,26 @@ public class ItemRenderer
 		lookAtItem(camera, bounds, longest, cameraAngle, cameraElevationAngle);
 		camera.apply();
 		
-		geometry.finalise();
-		Vector3f offset = camera.toRenderPosition(0, 0, 0);
-		
-		{
+		try {
+			geometry.finalise();
+			Vector3f offset = camera.toRenderPosition(0, 0, 0);
+
 			rasteriser.enableAlphaTest(false);
 			rasteriser.enableBlending(false);
 			rasteriser.enableDepthWriting(true);
-			
 			geometry.drawSolidSurfaces(offset.x, offset.y, offset.z);
-		}
-		
-		{
+
 			rasteriser.enableAlphaTest(true);
 			rasteriser.enableBlending(false);
 			rasteriser.enableDepthWriting(true);
-			
 			geometry.drawAlphaTestedSurfaces(offset.x, offset.y, offset.z);
-		}
-		
-		{
+
 			rasteriser.enableAlphaTest(false);
 			rasteriser.enableBlending(true);
 			rasteriser.enableDepthWriting(false);
-			
 			geometry.drawTransparentSurfaces(camera, offset.x, offset.y, offset.z);
+		} finally {
+			geometry.destroy();
 		}
 		
 		// Reset to default

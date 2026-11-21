@@ -14,6 +14,7 @@ import org.joml.Vector4f;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import tectonicus.configuration.Configuration.RasteriserType;
 import tectonicus.configuration.ImageFormat;
 import tectonicus.rasteriser.BlendFunc;
@@ -32,6 +33,8 @@ import java.util.Random;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -47,11 +50,11 @@ class LwjglMeshTest {
 			rasteriser = null;
 		}
 		assumeTrue(rasteriser != null, "No OpenGL context available");
+		LwjglMesh mesh = new LwjglMesh(null);
 		try {
 			// Overlapping translucent quads, so the blended result depends on the draw order.
 			Random random = new Random(7);
-			LwjglMesh mesh = new LwjglMesh(null);
-			int faces = 60;
+			int faces = 80;
 			for (int face = 0; face < faces; face++) {
 				float x = random.nextFloat() * 1.4f - 1, y = random.nextFloat() * 1.4f - 1, size = 0.3f + random.nextFloat() * 0.3f;
 				Vector4f colour = new Vector4f(random.nextFloat(), random.nextFloat(), random.nextFloat(), 0.5f);
@@ -71,12 +74,17 @@ class LwjglMeshTest {
 				for (int face : order)
 					mesh.drawFaces(face, 1, 0.05f, -0.05f, 0);
 			});
+			assertEquals(0, GL11.glGetInteger(GL15.GL_VERTEX_ARRAY_BUFFER_BINDING), "first bind uses client arrays");
 			IntBuffer indices = BufferUtils.createIntBuffer(faces * 4);
 			for (int face : order)
 				indices.put(face * 4).put(face * 4 + 1).put(face * 4 + 2).put(face * 4 + 3);
 			indices.flip();
 			BufferedImage indexed = render(rasteriser, mesh, () -> mesh.drawQuads(indices, 0.05f, -0.05f, 0));
 			assertEquals(0, indices.position(), "draw must not consume the index buffer");
+			int buffer = GL11.glGetInteger(GL15.GL_VERTEX_ARRAY_BUFFER_BINDING);
+			assertNotEquals(0, buffer, "second bind uploads to a VBO");
+			mesh.bind();
+			assertEquals(buffer, GL11.glGetInteger(GL15.GL_VERTEX_ARRAY_BUFFER_BINDING), "later binds reuse the VBO");
 
 			Set<Integer> colours = new HashSet<>();
 			for (int y = 0; y < SIZE; y++) {
@@ -86,7 +94,10 @@ class LwjglMeshTest {
 				}
 			}
 			assertTrue(colours.size() > 20, "test scene should contain many blended colours");
+			mesh.destroy();
+			assertFalse(GL15.glIsBuffer(buffer), "destroy releases the VBO");
 		} finally {
+			mesh.destroy();
 			rasteriser.destroy();
 		}
 	}
