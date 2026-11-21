@@ -19,9 +19,8 @@ import java.util.TreeMap;
 /**
  * Feeds chunk data to a {@link MessageDigest} for the chunk hash.
  * <p>
- * The bytes are exactly those the hash has always used, so saved tile caches stay valid. Only the way they
- * reach the digest is cheaper: they are collected in a buffer and passed on in large blocks instead of one
- * byte at a time, and block names, which repeat across thousands of blocks, are converted to bytes once.
+ * The serialized bytes are independent of the digest algorithm. The writer batches updates and shares
+ * the byte encoding of repeated block names.
  * Not thread safe; use one writer per hash.
  */
 final class ChunkHashWriter {
