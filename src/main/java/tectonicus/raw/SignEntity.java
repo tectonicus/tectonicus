@@ -63,8 +63,8 @@ public class SignEntity extends BlockEntity
 
 	/**
 	 * The sign's direction as a standing-sign rotation (0 to 15, in steps of 22.5 degrees). A view looks the way
-	 * you face while reading a standing sign. Wall signs are given the rotation that looks straight out from the
-	 * wall. Returns 0 when the direction is unknown; see {@link #hasDirection()}.
+	 * you face while reading a standing or hanging sign. Regular wall signs aim straight out from the wall.
+	 * Returns 0 when the direction is unknown; see {@link #hasDirection()}.
 	 */
 	public int getBlockData() {
 		if (blockData != null)
@@ -85,15 +85,23 @@ public class SignEntity extends BlockEntity
 	}
 
 	private Integer wallSignRotation() {
-		if (blockName == null || !blockName.endsWith("_wall_sign") || !properties.containsKey("facing"))
+		if (blockName == null || !properties.containsKey("facing"))
 			return null;
-		// A wall sign's facing is the way its text faces, away from the wall.
-		return switch (properties.get("facing")) {
+		boolean wallHanging = blockName.endsWith("_wall_hanging_sign");
+		if (!wallHanging && !blockName.endsWith("_wall_sign") && !blockName.equals("minecraft:wall_sign"))
+			return null;
+
+		Integer rotation = switch (properties.get("facing")) {
 			case "north" -> 0;
 			case "east" -> 4;
 			case "south" -> 8;
 			case "west" -> 12;
 			default -> null;
 		};
+		
+		// For wall hanging sign turn the camera 180 degrees to match the direction the reader looks so we get the same behavior as other non-wall signs
+		if (wallHanging && rotation != null)
+			return (rotation + 8) % 16;
+		return rotation;
 	}
 }

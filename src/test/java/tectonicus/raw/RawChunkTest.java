@@ -533,11 +533,24 @@ class RawChunkTest {
 	}
 
 	@ParameterizedTest
-	@CsvSource({"north, 0", "east, 4", "south, 8", "west, 12"})
-	void wallSignViewsLookOutFromTheWall(String facing, int rotation) {
+	@CsvSource({
+			"minecraft:oak_wall_sign, north, 0",
+			"minecraft:oak_wall_sign, east, 4",
+			"minecraft:oak_wall_sign, south, 8",
+			"minecraft:oak_wall_sign, west, 12",
+			"minecraft:wall_sign, north, 0",
+			"minecraft:wall_sign, east, 4",
+			"minecraft:wall_sign, south, 8",
+			"minecraft:wall_sign, west, 12",
+			"minecraft:oak_wall_hanging_sign, north, 8",
+			"minecraft:oak_wall_hanging_sign, east, 12",
+			"minecraft:oak_wall_hanging_sign, south, 0",
+			"minecraft:oak_wall_hanging_sign, west, 4"
+	})
+	void wallSignViewsUseSavedFacing(String blockName, String facing, int rotation) {
 		var properties = new BlockProperties(Map.of("facing", facing, "waterlogged", "false"));
 		var face = new SignEntity.Face(List.of("#view", "", "", ""), "black", false, List.of());
-		SignEntity sign = new SignEntity(1, 64, 1, 1, 64, 1, face, null, null, properties, "minecraft:oak_wall_sign");
+		SignEntity sign = new SignEntity(1, 64, 1, 1, 64, 1, face, null, null, properties, blockName);
 		assertTrue(sign.hasDirection());
 		assertEquals(rotation, sign.getBlockData());
 	}
