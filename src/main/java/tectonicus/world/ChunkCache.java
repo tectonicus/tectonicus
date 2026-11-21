@@ -13,8 +13,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
+import com.github.benmanes.caffeine.cache.Weigher;
 
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
@@ -38,12 +40,35 @@ class ChunkCache
 	
 	public ChunkCache(int maxSize, Function<ChunkCoord, Chunk> getChunk)
 	{
+		this.getChunk = getChunk;
+		invalidatedChunks = new ConcurrentLinkedQueue<>();
 		chunks = Caffeine.newBuilder()
                         .maximumSize(maxSize)
                         .evictionListener(new RawCacheRemovalListener())
                         .build();
-                this.getChunk = getChunk;
-                invalidatedChunks = new ConcurrentLinkedQueue<>();
+	}
+
+	/**
+	 * Creates a cache limited by total weight rather than entry count. Each chunk is weighed once, when it is
+	 * added, so the weigher must only depend on state that is fixed by then.
+	 */
+	public ChunkCache(long maxWeight, Weigher<ChunkCoord, Chunk> weigher, Function<ChunkCoord, Chunk> getChunk)
+	{
+		this.getChunk = getChunk;
+		invalidatedChunks = new ConcurrentLinkedQueue<>();
+		chunks = Caffeine.newBuilder()
+                        .maximumWeight(maxWeight)
+                        .weigher(weigher)
+                        .evictionListener(new RawCacheRemovalListener())
+                        .build();
+	}
+
+	/** Total weight of the cached chunks, or empty when the cache is limited by entry count. */
+	public OptionalLong weightedSize()
+	{
+		return chunks.policy().eviction()
+				.map(eviction -> eviction.weightedSize())
+				.orElse(OptionalLong.empty());
 	}
 	
 	public void unloadAll()

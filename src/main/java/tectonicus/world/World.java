@@ -370,7 +370,19 @@ public class World implements BlockContext, AutoCloseable
 
                         return chunkLocator.loadChunk(coord, composite, null, worldInfo);
                 });
-			geometryLoadedChunks = new GeometryCache(512, (coord) -> {
+			long videoMemory = rasteriser.getVideoMemoryBytes();
+			long freeVideoMemory = rasteriser.getAvailableVideoMemoryBytes();
+			// Vertex memory reserved for an earlier dimension is reused, so it counts as available.
+			long available = freeVideoMemory < 0 ? -1 : freeVideoMemory + Math.max(0, rasteriser.getVertexMemoryReservedBytes());
+			long vertexMemory = GeometryCache.chooseVertexMemoryBytes(videoMemory, available,
+					System.getProperty(GeometryCache.BUDGET_PROPERTY));
+			rasteriser.setVertexMemoryLimit(vertexMemory);
+			long geometryBudget = GeometryCache.cacheBudgetBytes(vertexMemory);
+			log.debug("Vertex memory: {} MB, geometry cache budget: {} MB (video memory: {}, free: {})",
+					vertexMemory / GeometryCache.MB, geometryBudget / GeometryCache.MB,
+					videoMemory > 0 ? videoMemory / GeometryCache.MB + " MB" : "not reported",
+					freeVideoMemory >= 0 ? freeVideoMemory / GeometryCache.MB + " MB" : "not reported");
+			geometryLoadedChunks = new GeometryCache(geometryBudget, (coord) -> {
                         Chunk chunk = rawLoadedChunks.get(coord);
 						if (chunk == null) {
 							// The region header listed this chunk but it could not be read. Draw nothing for it
@@ -1316,6 +1328,30 @@ public class World implements BlockContext, AutoCloseable
 		}
 	}
 	
+	/** Logs how much of the geometry cache budget and of the vertex memory on the GPU is in use. */
+	public void logGeometryCacheUsage()
+	{
+		if (geometryLoadedChunks == null || !log.isDebugEnabled())
+			return;
+		final long mb = GeometryCache.MB;
+		long meshes = rasteriser.getLiveVertexBufferCount();
+		long used = rasteriser.getVertexMemoryUsedBytes();
+		long reserved = rasteriser.getVertexMemoryReservedBytes();
+		long failed = rasteriser.getVertexMemoryFailedAllocations();
+		long available = rasteriser.getAvailableVideoMemoryBytes();
+		long evictions = rasteriser.getVideoMemoryEvictionCount();
+		log.debug("Geometry cache: {} chunks, ~{} MB of {} MB budget; vertex memory: {} meshes using {} of {} MB reserved, {} drawn from system memory; video memory free: {}, driver evictions: {}",
+				geometryLoadedChunks.size(),
+				geometryLoadedChunks.getEstimatedGpuBytes() / mb,
+				geometryLoadedChunks.getBudgetBytes() / mb,
+				meshes < 0 ? "unknown" : meshes,
+				used < 0 ? "unknown" : used / mb,
+				reserved < 0 ? "unknown" : reserved / mb,
+				failed < 0 ? "unknown" : failed,
+				available < 0 ? "unknown" : available / mb + " MB",
+				evictions < 0 ? "unknown" : evictions);
+	}
+
 	public void dumpMemStats()
 	{
 		System.out.println("---------------");
