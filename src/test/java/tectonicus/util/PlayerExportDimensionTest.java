@@ -31,7 +31,7 @@ class PlayerExportDimensionTest {
 		List<Player> players = ids.stream().map(id -> new Player(id.replace(':', '_').replace('/', '_'),
 				new CompoundTag("", Map.of("Dimension", new StringTag("Dimension", id))))).toList();
 		PlayerIconAssembler icons = new PlayerIconAssembler(null) {
-			@Override public void writeIcon(Player player, File file) {}
+			@Override public void writeIconAsync(Player player, File file) {}
 		};
 		for (int i = 0; i < ids.size(); i++) {
 			DimensionConfig dimension = new DimensionConfig("Dimension" + i);

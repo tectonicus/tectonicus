@@ -18,12 +18,14 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
-public class PlayerIconAssembler
+public class PlayerIconAssembler implements AutoCloseable
 {
 	private final PlayerSkinCache skinCache;
+	private final ExecutorService iconWriters = Executors.newFixedThreadPool(4, Thread.ofPlatform().name("player-icon-", 1).factory());
 
 	public PlayerIconAssembler(PlayerSkinCache skinCache)
 	{
@@ -87,22 +89,12 @@ public class PlayerIconAssembler
 		return icon;
 	}
 
-	public class WriteIconTask implements Callable<Void>
-	{
-		Player player;
-		File iconFile;
+	public void writeIconAsync(Player player, File iconFile) {
+		iconWriters.execute(() -> writeIcon(player, iconFile));
+	}
 
-		public WriteIconTask(Player player, File iconFile)
-		{
-			this.player = player;
-			this.iconFile = iconFile;
-		}
-
-		@Override
-		public Void call() throws Exception
-		{
-			writeIcon(player, iconFile);
-			return null;
-		}
+	@Override
+	public void close() {
+		iconWriters.close();
 	}
 }

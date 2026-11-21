@@ -35,7 +35,7 @@ class PlayerLoadingTest {
 		assertEquals(List.of(player), players);
 		Path output = directory.resolve("players.js");
 		PlayerIconAssembler icons = new PlayerIconAssembler(null) {
-			@Override public void writeIcon(Player exported, File file) {}
+			@Override public void writeIconAsync(Player exported, File file) {}
 		};
 		OutputResourcesUtil.outputPlayers(output.toFile(), directory.resolve("Images").toFile(),
 				new DimensionConfig("Map"), players, icons);
@@ -83,11 +83,15 @@ class PlayerLoadingTest {
 		var noName = new Player("", "uuid", firstTexture.toUri().toString());
 		var noUuid = new Player("Alex", "", secondTexture.toUri().toString());
 		var noIdentity = new Player("", "", secondTexture.toUri().toString());
-		assertEquals(0xffff0000, cache.fetchSkin(noName).getRGB(0, 0));
-		assertEquals(0xff00ff00, cache.fetchSkin(noUuid).getRGB(0, 0));
-		assertEquals(0xff00ff00, cache.fetchSkin(noIdentity).getRGB(0, 0));
-		assertNull(cache.getCacheEntry("uuid"));
-		assertNull(cache.getCacheEntry(""));
+		try {
+			assertEquals(0xffff0000, cache.fetchSkin(noName).getRGB(0, 0));
+			assertEquals(0xff00ff00, cache.fetchSkin(noUuid).getRGB(0, 0));
+			assertEquals(0xff00ff00, cache.fetchSkin(noIdentity).getRGB(0, 0));
+			assertNull(cache.getCacheEntry("uuid"));
+			assertNull(cache.getCacheEntry(""));
+		} finally {
+			cache.destroy();
+		}
 	}
 
 	@Test

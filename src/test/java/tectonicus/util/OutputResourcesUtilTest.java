@@ -160,7 +160,7 @@ class OutputResourcesUtilTest {
 		empty.setName("Steve");
 		PlayerIconAssembler icons = new PlayerIconAssembler(null) {
 			@Override
-			public void writeIcon(Player ignored, java.io.File file) {}
+			public void writeIconAsync(Player ignored, java.io.File file) {}
 		};
 		Path output = directory.resolve("players.js");
 		DimensionConfig visible = new DimensionConfig("Overworld");

@@ -274,9 +274,13 @@ public class Gui
 				
 				renderer = new TileRenderer(config, progressHandler, hashAlgorithm);
 				
-				progressHandler.onTaskStarted(TileRenderer.Task.LOADING_WORLD.toString());
-				
-				TileRenderer.Result res = renderer.output();
+				TileRenderer.Result res;
+				try {
+					progressHandler.onTaskStarted(TileRenderer.Task.LOADING_WORLD.toString());
+					res = renderer.output();
+				} finally {
+					renderer.destroy();
+				}
 				
 				if (!res.aborted)
 				{

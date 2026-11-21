@@ -19,7 +19,6 @@ import tectonicus.configuration.LightFace;
 import tectonicus.rasteriser.SubMesh;
 import tectonicus.rasteriser.SubMesh.Rotation;
 import tectonicus.raw.BlockProperties;
-import tectonicus.raw.Player;
 import tectonicus.raw.RawChunk;
 import tectonicus.raw.SkullEntity;
 import tectonicus.renderer.Geometry;
@@ -150,12 +149,12 @@ public class Skull implements BlockType
 		final boolean dragonHead = blockId == 5 || blockName != null && (blockName.equals("minecraft:dragon_head") || blockName.equals("minecraft:dragon_wall_head"));
 		final boolean piglinHead = blockId == 6 || blockName != null && (blockName.equals("minecraft:piglin_head") || blockName.equals("minecraft:piglin_wall_head"));
 		
-		Player player = new Player(entity.getName(), entity.getUUID(), entity.getSkinURL());
-		if(!player.getSkinURL().isEmpty())
+		String skinUrl = entity.getSkinURL();
+		if (skinUrl != null && !skinUrl.isBlank())
 		{
-			BufferedImage skin = world.getPlayerSkinCache().fetchSkin(player);
+			BufferedImage skin = world.getPlayerSkinCache().fetchHeadSkin(skinUrl);
 			if (skin != null)
-				currentTexture = world.getTexturePack().findTexture(skin, "ph/" + player.getSkinURL());
+				currentTexture = world.getTexturePack().findTexture(skin, "ph/" + skinUrl);
 			else
 				currentTexture = texture;
 		}

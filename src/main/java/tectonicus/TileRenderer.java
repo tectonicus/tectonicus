@@ -221,6 +221,7 @@ public class TileRenderer
 		try {
 			rasteriser.destroy();
 		} finally {
+			playerIconAssembler.close();
 			playerSkinCache.destroy();
 		}
 	}

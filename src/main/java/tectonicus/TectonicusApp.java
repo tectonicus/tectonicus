@@ -112,6 +112,8 @@ public class TectonicusApp
 					TileRenderer.setupWorldForLayer(layer, world);
 
 					interactiveRenderer.display(world);
+				} finally {
+					skinCache.destroy();
 				}
 				// The finally block below destroys the renderer.
 			}
@@ -140,24 +142,22 @@ public class TectonicusApp
 				final Date startTime = new Date();
 				
 				PlayerSkinCache skinCache = new PlayerSkinCache(config, hashAlgorithm);
-				PlayerIconAssembler iconAssembler = new PlayerIconAssembler(skinCache);
-				
-				for (tectonicus.configuration.DimensionConfig map : config.getDimensions())
-				{
-					LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), config.getSinglePlayerName());
-					List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache, levelDat.getSinglePlayer());
-					World.resolveSubsetOrigins(map.getWorldSubset(), levelDat, map.getDimensionInfo(), players);
-									
-					File mapDir = new File(config.getOutputDir(), "Scripts/" + map.getId());
-					File playerDir = new File(mapDir, "players.js");
-					
-					File imagesDir = new File(DirUtils.getWorldImagesDir(config.getOutputDir(), map.getWorld()), "PlayerIcons");
-					FileUtils.ensureExists(mapDir);
+				try (PlayerIconAssembler iconAssembler = new PlayerIconAssembler(skinCache)) {
+					for (tectonicus.configuration.DimensionConfig map : config.getDimensions()) {
+						LevelDat levelDat = new LevelDat(Minecraft.findLevelDat(map.getWorldDir().toPath()), config.getSinglePlayerName());
+						List<Player> players = World.loadPlayers(map.getWorldDir(), skinCache, levelDat.getSinglePlayer());
+						World.resolveSubsetOrigins(map.getWorldSubset(), levelDat, map.getDimensionInfo(), players);
 
-					OutputResourcesUtil.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
+						File mapDir = new File(config.getOutputDir(), "Scripts/" + map.getId());
+						File playerDir = new File(mapDir, "players.js");
+
+						File imagesDir = new File(DirUtils.getWorldImagesDir(config.getOutputDir(), map.getWorld()), "PlayerIcons");
+						FileUtils.ensureExists(mapDir);
+						OutputResourcesUtil.outputPlayers(playerDir, imagesDir, map, players, iconAssembler);
+					}
+				} finally {
+					skinCache.destroy();
 				}
-				
-				skinCache.destroy();
 				
 				final Date endTime = new Date();
 				String time = Util.getElapsedTime(startTime, endTime);

@@ -141,6 +141,7 @@ public class Chunk
 		if (!rawChunk.isFullChunk())
 			return false;
 		
+		rawChunk.getSkulls().values().forEach(skull -> world.getPlayerSkinCache().prefetchHeadSkin(skull.getSkinURL()));
 		BlockMask mask = maskFactory.createMask(coord, rawChunk);
 		
 		geometry = new Geometry(rasteriser);

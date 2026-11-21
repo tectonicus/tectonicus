@@ -9,6 +9,7 @@
 
 package tectonicus.cache;
 
+import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import tectonicus.configuration.Configuration;
 import tectonicus.raw.Player;
-import tectonicus.util.FileUtils;
 import tectonicus.util.ImageUtils;
 
 import javax.imageio.ImageIO;
@@ -33,14 +33,23 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.HexFormat;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class PlayerSkinCache
@@ -52,7 +61,11 @@ public class PlayerSkinCache
 	private final File cacheDir;
 	
 	private final Map<String, CacheEntry> skinCache;
-	private final Cache<String, BufferedImage> skinsByUrl = Caffeine.newBuilder().maximumSize(256).build();
+	private final Cache<String, Optional<BufferedImage>> skinsByUuid = Caffeine.newBuilder().maximumSize(256)
+			.expireAfterWrite(Duration.ofMillis(MAX_AGE_BEFORE_REFRESH)).build();
+	private final ExecutorService headSkinDownloads = Executors.newFixedThreadPool(4, Thread.ofPlatform().name("head-skin-", 1).factory());
+	private final AsyncCache<String, Optional<BufferedImage>> skinsByUrl = Caffeine.newBuilder().maximumSize(256)
+			.expireAfterWrite(Duration.ofMillis(MAX_AGE_BEFORE_REFRESH)).buildAsync();
 	private final Map<String, PlayerProfile> refreshedProfiles = new ConcurrentHashMap<>();
 	
 	public PlayerSkinCache(Configuration config, MessageDigest hashAlgorithm)
@@ -62,8 +75,6 @@ public class PlayerSkinCache
 		
 		// Player loading and skull rendering both read and update the cache from worker threads.
 		skinCache = new ConcurrentHashMap<>();
-		
-		boolean indexOk = false;
 		
 		// Try to open the skin cache file
 		File indexFile = new File(cacheDir, "skins.cache");
@@ -106,39 +117,30 @@ public class PlayerSkinCache
 					}
 				}
 				
-				indexOk = true;
+				log.info("Using existing player skin cache");
 			}
 			catch (Exception e)
 			{
-				log.error("Exception: ", e);
+				log.warn("Could not read player skin cache index {}", indexFile.getAbsolutePath(), e);
 			}
-		}
-		
-		if (indexOk)
-		{
-			log.info("Using existing player skin cache");
-		}
-		else
-		{
-			// Wipe cache dir
-			log.info("Player skin cache is corrupt, cleaning...");
-			
-			FileUtils.deleteDirectory(cacheDir);
-			cacheDir.mkdirs();
 		}
 	}
 	
 	public void destroy()
 	{
+		headSkinDownloads.close();
 		log.info("Writing player skin cache info ({} skin{} to write)", skinCache.size(), skinCache.size() != 1 ? "s" : "");
 		
 		File indexFile = new File(cacheDir, "skins.cache");
-		File tempFile = new File(cacheDir, "skins.cache.tmp");
 		try
 		{
-			writeIndex(tempFile);
-			// Replace the old index only once the new one is complete.
-			Files.move(tempFile.toPath(), indexFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Path temporary = Files.createTempFile(cacheDir.toPath(), "skins-", ".tmp");
+			try {
+				writeIndex(temporary.toFile());
+				Files.move(temporary, indexFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} finally {
+				Files.deleteIfExists(temporary);
+			}
 			log.info("Player skin cache written");
 		}
 		catch (Exception e)
@@ -195,17 +197,19 @@ public class PlayerSkinCache
 		player.setProfileResolved(profile.resolved());
 	}
 	
-	// Geometry workers can request the same player's skin and write the same cache file.
-	public synchronized BufferedImage fetchSkin(Player player)
+	public BufferedImage fetchSkin(Player player)
 	{
 		String skinUrl = player.getSkinURL();
-		boolean hasSkinUrl = skinUrl != null && !skinUrl.isBlank() && !skinUrl.equals("null");
 		if (player.getUuid() == null || player.getUuid().isBlank() || player.isDefaultPlayerName()) {
 			// Player heads can carry a texture without a complete account profile.
-			return hasSkinUrl ? ImageUtils.copy(skinsByUrl.get(skinUrl, this::fetchSkinFromNetwork)) : null;
+			return fetchHeadSkin(skinUrl);
 		}
-		if (!player.isProfileResolved() && !hasSkinUrl) return null;
+		if (!player.isProfileResolved() && !hasSkinUrl(skinUrl)) return null;
 
+		return ImageUtils.copy(skinsByUuid.get(player.getUuid(), ignored -> Optional.ofNullable(loadPlayerSkin(player))).orElse(null));
+	}
+
+	private BufferedImage loadPlayerSkin(Player player) {
 		CacheEntry existing = getCacheEntry(player.getUuid());
 		
 		if (existing != null)
@@ -242,13 +246,13 @@ public class PlayerSkinCache
 			String fileName = skinFileName(player.getUuid());
 			try
 			{
-				ImageIO.write(newSkin, "png", new File(cacheDir, fileName));
+				writeSkinImage(newSkin, new File(cacheDir, fileName));
 			}
 			catch (Exception e)
 			{
 				log.error("Couldn't write skin for player {}", player.getName(), e);
 				// Don't record a file that isn't there; the next render fetches it again.
-				return ImageUtils.copy(newSkin);
+				return newSkin;
 			}
 			newEntry.skinFile = fileName;
 		}
@@ -265,49 +269,107 @@ public class PlayerSkinCache
 		
 		skinCache.put(player.getUuid(), newEntry);
 		
-		return ImageUtils.copy(newSkin);
+		return newSkin;
 	}
 	
 	static String skinFileName(String uuid)
 	{
 		return uuid.replaceAll("[^0-9A-Za-z-]", "_") + ".png";
 	}
+
+	/** Heads specify a particular texture, which can differ from the player's current skin. */
+	public BufferedImage fetchHeadSkin(String skinUrl) {
+		return hasSkinUrl(skinUrl) ? ImageUtils.copy(loadHeadSkinAsync(skinUrl).join().orElse(null)) : null;
+	}
+
+	public void prefetchHeadSkin(String skinUrl) {
+		if (hasSkinUrl(skinUrl))
+			loadHeadSkinAsync(skinUrl);
+	}
+
+	private CompletableFuture<Optional<BufferedImage>> loadHeadSkinAsync(String skinUrl) {
+		return skinsByUrl.get(skinUrl, (url, executor) -> CompletableFuture.supplyAsync(() -> loadHeadSkin(url), headSkinDownloads));
+	}
+
+	private static boolean hasSkinUrl(String url) {
+		return url != null && !url.isBlank() && !url.equals("null");
+	}
+
+	private Optional<BufferedImage> loadHeadSkin(String skinUrl) {
+		File file = new File(cacheDir, headSkinFileName(skinUrl));
+		if (file.isFile() && System.currentTimeMillis() - file.lastModified() < MAX_AGE_BEFORE_REFRESH) {
+			try {
+				BufferedImage skin = ImageIO.read(file);
+				if (skin != null)
+					return Optional.of(skin);
+			} catch (IOException e) {
+				log.warn("Could not read cached head skin {}", file, e);
+			}
+		}
+		BufferedImage skin = fetchSkinFromNetwork(skinUrl);
+		if (skin != null) {
+			try {
+				writeSkinImage(skin, file);
+			} catch (IOException e) {
+				log.warn("Could not cache head skin {}", file, e);
+			}
+		}
+		return Optional.ofNullable(skin);
+	}
+
+	private void writeSkinImage(BufferedImage skin, File file) throws IOException {
+		Path temporary = Files.createTempFile(cacheDir.toPath(), "skin-", ".tmp");
+		try {
+			if (!ImageIO.write(skin, "png", temporary.toFile()))
+				throw new IOException("No PNG writer available");
+			Files.move(temporary, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} finally {
+			Files.deleteIfExists(temporary);
+		}
+	}
+
+	private static String headSkinFileName(String url) {
+		try {
+			byte[] digest = MessageDigest.getInstance("SHA-256").digest(url.getBytes(StandardCharsets.UTF_8));
+			return "head-" + HexFormat.of().formatHex(digest) + ".png";
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 	
 	private BufferedImage fetchSkinFromNetwork(String skinURL)
 	{
+		if (!hasSkinUrl(skinURL))
+			return null;
 		try
 		{
-            URLConnection remote = openConnection(skinURL);
-            InputStream skinStream = remote.getInputStream();
-            try
-            {
-                BufferedImage skin = ImageIO.read(skinStream);
-                if(skin != null)
-					return skin;
-            }
-            finally
-            {
-                skinStream.close();
-            }
+			URLConnection remote = openConnection(skinURL);
+			try (InputStream skinStream = remote.getInputStream()) {
+				return ImageIO.read(skinStream);
+			}
 		}
 		catch (Exception e) {}
 		
 		return null;
 	}
 	
-    private static URLConnection openConnection(String location)
-        throws IOException
-    {
-        URLConnection connection = null;
-        do
-        {
-            URL skinURL = URI.create(location).toURL();
-            connection = skinURL.openConnection();
-            location = connection.getHeaderField("Location");
-        }
-        while(location != null);
-        return connection;
-    }
+	private static URLConnection openConnection(String location) throws IOException {
+		URI url = URI.create(location);
+		for (int redirects = 0; redirects <= 5; redirects++) {
+			URLConnection connection = url.toURL().openConnection();
+			connection.setConnectTimeout(5_000);
+			connection.setReadTimeout(5_000);
+			if (connection instanceof HttpURLConnection http)
+				http.setInstanceFollowRedirects(false);
+			String redirect = connection.getHeaderField("Location");
+			if (redirect == null)
+				return connection;
+			if (connection instanceof HttpURLConnection http)
+				http.disconnect();
+			url = url.resolve(redirect);
+		}
+		throw new IOException("Too many redirects fetching player skin");
+	}
 	
 	public static class CacheEntry
 	{

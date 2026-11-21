@@ -94,8 +94,6 @@ import java.util.Queue;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import static tectonicus.Version.VERSION_12;
@@ -187,7 +185,6 @@ public class OutputResourcesUtil {
 		log.info("Exporting players to {}", playersFile.getAbsolutePath());
 
 		int numOutput = 0;
-		ExecutorService executor = Executors.newCachedThreadPool();
 		try (JsArrayWriter jsWriter = new JsArrayWriter(playersFile, map.getJavascriptId() + "_playerData")) {
 
 			PlayerFilter playerFilter = map.getPlayerFilter();
@@ -222,8 +219,7 @@ public class OutputResourcesUtil {
 
 						if (!player.isDefaultPlayerName()) {
 							File iconFile = new File(imagesDir, player.getName() + ".png");
-							PlayerIconAssembler.WriteIconTask task = playerIconAssembler.new WriteIconTask(player, iconFile);
-							executor.submit(task);
+							playerIconAssembler.writeIconAsync(player, iconFile);
 						}
 
 						numOutput++;
@@ -232,8 +228,6 @@ public class OutputResourcesUtil {
 			}
 		} catch (Exception e) {
 			log.error("Exception: ", e);
-		} finally {
-			executor.shutdown();
 		}
 		log.debug("Exported {} players", numOutput);
 	}
