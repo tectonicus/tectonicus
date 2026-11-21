@@ -10,7 +10,6 @@
 package tectonicus.raw;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.tectonicus.jnbt.ByteArrayTag;
 import org.tectonicus.jnbt.ByteTag;
@@ -29,6 +28,9 @@ import tectonicus.Block;
 import tectonicus.BlockIds;
 import tectonicus.Minecraft;
 import tectonicus.WorldStats;
+import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.BlockStateModelsWeight;
+import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.ChunkData;
 import tectonicus.util.FileUtils;
@@ -83,6 +85,7 @@ public class RawChunk {
 	private static final byte[] BLOCK_STATES_HASH_MARKER = "blockStates-v1".getBytes(StandardCharsets.UTF_8);
 
 	private final int maxSections;
+	private final BlockName air = new BlockName(Block.AIR.getName());
 
 	private static final ObjectReader OBJECT_READER = FileUtils.getOBJECT_MAPPER().reader();
 	private static final int NBT_TEXT_COMPONENTS_DATA_VERSION = 4325; // 1.21.5
@@ -1226,6 +1229,11 @@ public class RawChunk {
 	}
 
 	public String getBlockName(final int x, final int y, final int z) {
+		BlockName block = getNamedBlock(x, y, z);
+		return block == null ? null : block.name;
+	}
+
+	public BlockName getNamedBlock(final int x, final int y, final int z) {
 		final int sectionY = y / SECTION_HEIGHT;
 		final int localY = y % SECTION_HEIGHT;
 
@@ -1255,7 +1263,7 @@ public class RawChunk {
 			for (int i = 0; i < SECTION_SIZE; i++) {
 				if (!visibility.contains(sectionX(i), baseY + sectionLocalY(i), i % SECTION_DEPTH)) {
 					section.blockIds[i] = BlockIds.AIR;
-					section.blockNames[i] = Block.AIR.getName();
+					section.blockNames[i] = air;
 					section.blockData[i] = 0;
 					section.blockStates[i] = null;
 					section.skylight[i] = MAX_LIGHT - 1;
@@ -1344,7 +1352,8 @@ public class RawChunk {
 			int sectionBase = sectionY * SECTION_HEIGHT;
 			int baseWorldY = getWorldY(sectionBase);
 			for (int i = 0; i < SECTION_SIZE; i++) {
-				String name = section.blockNames[i];
+				BlockName block = section.blockNames[i];
+				String name = block == null ? null : block.name;
 				boolean occupied = name == null ? section.blockIds[i] != BlockIds.AIR
 						: !name.equals("minecraft:air") && !name.equals("minecraft:cave_air") && !name.equals("minecraft:void_air");
 				if (!occupied)
@@ -1396,7 +1405,10 @@ public class RawChunk {
 			sections[sectionY] = s;
 		}
 
-		s.blockNames[Section.getIndex(x, localY, z)] = blockName;
+		BlockName namedBlock = null;
+		if (blockName != null)
+			namedBlock = blockName.equals(air.name) ? air : new BlockName(blockName);
+		s.blockNames[Section.getIndex(x, localY, z)] = namedBlock;
 	}
 
 	public BlockProperties getBlockState(final int x, final int y, final int z) {
@@ -1608,14 +1620,17 @@ public class RawChunk {
 	}
 
 	public byte[] calculateHash(MessageDigest hashAlgorithm, IntFunction<byte[]> mapContentHash) {
-		// Buffers the hashed bytes; the bytes themselves are unchanged, so saved chunk hashes stay valid.
+		// Serialize the block names in their original order so saved chunk hashes stay valid.
 		ChunkHashWriter hash = new ChunkHashWriter(hashAlgorithm);
 
 		for (Section s : sections) {
 			if (s != null) {
 				hash.updateInts(s.blockIds);
 				hash.update(s.blockData);
-				hash.updateStrings(s.blockNames);
+				for (BlockName block : s.blockNames) {
+					if (block != null)
+						hash.updateString(block.name);
+				}
 				hash.updateBlockStates(s.blockStates, BLOCK_STATES_HASH_MARKER);
 				hash.updateStrings(s.biomeIds);
 				if (s.noiseBiomeIds != null)
@@ -1808,7 +1823,7 @@ public class RawChunk {
 	private static class Section {
 		public int[] blockIds;
 		public byte[] blockData;
-		public String[] blockNames;
+		public BlockName[] blockNames;
 		public BlockProperties[] blockStates;
 
 		private String[] biomeIds;
@@ -1820,7 +1835,7 @@ public class RawChunk {
 		public Section() {                    
 			blockIds = new int[SECTION_SIZE];
 			blockData = new byte[SECTION_SIZE];
-			blockNames = new String[SECTION_SIZE];
+			blockNames = new BlockName[SECTION_SIZE];
 			blockStates = new BlockProperties[SECTION_SIZE];
 			biomeIds = new String[64];
 
@@ -1854,11 +1869,44 @@ public class RawChunk {
 //		}
 //	}
 
-	@RequiredArgsConstructor
 	private static class BlockState {
-		private final String name;
+		private final BlockName name;
 		private final BlockProperties properties;
+
+		private BlockState(String name, BlockProperties properties) {
+			this.name = new BlockName(name);
+			this.properties = properties;
+		}
 	}
+
+	/** Shared by every position decoded from one block-state palette entry. */
+	public static final class BlockName {
+		@Getter
+		private final String name;
+		@Getter
+		private final boolean air;
+		private volatile ResolvedModels resolved;
+
+		private BlockName(String name) {
+			this.name = name;
+			this.air = name.contains("minecraft:air") || name.contains("_air");
+		}
+
+		public ResolvedModels resolve(BlockRegistry registry) {
+			ResolvedModels models = resolved;
+			return models != null && models.registry() == registry ? models : resolveUncached(registry);
+		}
+
+		private synchronized ResolvedModels resolveUncached(BlockRegistry registry) {
+			// Adjacent chunks can look up this palette entry from different geometry workers.
+			if (resolved == null || resolved.registry() != registry) {
+				resolved = new ResolvedModels(registry, registry.getBlock(name), registry.getSingleVariantBlocks().getIfPresent(name));
+			}
+			return resolved;
+		}
+	}
+
+	public record ResolvedModels(BlockRegistry registry, BlockStateWrapper wrapper, BlockStateModelsWeight singleVariant) {}
 
 	private SignEntity.Face readSignFace(CompoundTag tag, boolean legacy) {
 		ListTag messages = legacy ? null : NbtUtil.getChild(tag, "messages", ListTag.class);

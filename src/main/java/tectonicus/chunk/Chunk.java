@@ -20,6 +20,7 @@ import tectonicus.blockTypes.Air;
 import tectonicus.blockTypes.FlameParticles;
 import tectonicus.blockTypes.Water;
 import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.BlockState;
 import tectonicus.blockregistry.BlockStateModel;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.cache.BiomeCache;
@@ -153,15 +154,17 @@ public class Chunk
 					if (mask.isVisible(x, y, z))
 					{
 						BlockType type;
-						final String blockName = rawChunk.getBlockName(x, y, z);
-						if (blockName != null)
+						RawChunk.BlockName namedBlock = rawChunk.getNamedBlock(x, y, z);
+						if (namedBlock != null)
 						{
-							if (blockName.contains("minecraft:air") || blockName.contains("_air")) {
+							if (namedBlock.isAir()) {
 								continue;
 							}
 
+							final String blockName = namedBlock.getName();
 							final BlockProperties properties = rawChunk.getBlockState(x, y, z);
-							BlockStateWrapper stateWrapper = modelRegistry.getBlock(blockName);
+							RawChunk.ResolvedModels resolved = namedBlock.resolve(modelRegistry);
+							BlockStateWrapper stateWrapper = resolved.wrapper();
 							BlockProperties effectiveProperties = stateWrapper != null
 									? stateWrapper.getPropertiesWithDefaults(properties)
 									: properties;
@@ -173,19 +176,15 @@ public class Chunk
 								final int worldX = (int)(coord.x * RawChunk.WIDTH + x);
 								final int worldY = rawChunk.getWorldY(y);
 								final int worldZ = (int)(coord.z * RawChunk.DEPTH + z);
-								if (modelRegistry.containsSingleVariantBlock(blockName)) {
-									modelRegistry.getSingleVariantModel(blockName, effectiveProperties, worldX, worldY, worldZ)
+								if (resolved.singleVariant() != null) {
+									BlockState.getRandomWeightedModel(resolved.singleVariant(),
+													BlockState.createPositionRandom(blockName, effectiveProperties, worldX, worldY, worldZ))
 											.createGeometry(x, y, z, world, rawChunk, geometry);
 								} else {
-									//TODO: This is quite slow. Need to profile and figure out if it can be sped up
-									List<BlockStateModel> models;
-
-									if (stateWrapper != null)
-										models = stateWrapper.getModels(effectiveProperties, worldX, worldY, worldZ);
-									else
+									if (stateWrapper == null)
 										continue;
 
-									for (BlockStateModel model : models) {
+									for (BlockStateModel model : stateWrapper.getModels(effectiveProperties, worldX, worldY, worldZ)) {
 										model.createGeometry(x, y, z, world, rawChunk, geometry);
 									}
 								}

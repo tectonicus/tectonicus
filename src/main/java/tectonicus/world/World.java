@@ -1104,15 +1104,15 @@ public class World implements BlockContext, AutoCloseable
 
 	static BlockOcclusion resolveBlockOcclusion(RawChunk rawChunk, int x, int y, int z,
 			BlockTypeRegistry registry, BlockRegistry modelRegistry) {
-		String name = rawChunk.getBlockName(x, y, z);
-		if (name == null)
+		RawChunk.BlockName block = rawChunk.getNamedBlock(x, y, z);
+		if (block == null)
 			return registry.find(rawChunk.getBlockId(x, y, z), rawChunk.getBlockData(x, y, z)).getOcclusion();
 
-		BlockType type = registry.find(name);
+		BlockType type = registry.find(block.getName());
 		if (!(type instanceof Air))
 			return type.getOcclusion();
 
-		BlockStateWrapper model = modelRegistry.getBlock(name);
+		BlockStateWrapper model = block.resolve(modelRegistry).wrapper();
 		return model == null ? type.getOcclusion() : model.getOcclusion();
 	}
 
@@ -1135,20 +1135,14 @@ public class World implements BlockContext, AutoCloseable
 		}
 		else
 		{
-			final String name = c.getRawChunk().getBlockName(location.x, location.y, location.z);
-
-			if (name != null) {
-				BlockStateWrapper block = modelRegistry.getBlock(name);
-				if (block != null) {
+			RawChunk.BlockName namedBlock = c.getRawChunk().getNamedBlock(location.x, location.y, location.z);
+			if (namedBlock != null) {
+				BlockStateWrapper block = namedBlock.resolve(modelRegistry).wrapper();
+				if (block != null)
 					return block;
-				} else {
-					warnUnknownBlock(name, location);
-
-					return modelRegistry.getBlock(defaultBlockName);
-				}
-			} else {
-				return modelRegistry.getBlock(defaultBlockName);
+				warnUnknownBlock(namedBlock.getName(), location);
 			}
+			return modelRegistry.getBlock(defaultBlockName);
 		}
 	}
 
@@ -1159,15 +1153,15 @@ public class World implements BlockContext, AutoCloseable
 				|| y < 0 || y >= Minecraft.getChunkHeight())
 			return getBlock(rawChunk.getChunkCoord(), x, y, z);
 
-		final String name = rawChunk.getBlockName(x, y, z);
-		if (name == null)
+		RawChunk.BlockName namedBlock = rawChunk.getNamedBlock(x, y, z);
+		if (namedBlock == null)
 			return modelRegistry.getBlock(defaultBlockName);
 
-		BlockStateWrapper block = modelRegistry.getBlock(name);
+		BlockStateWrapper block = namedBlock.resolve(modelRegistry).wrapper();
 		if (block != null)
 			return block;
 
-		warnUnknownBlock(name, new Location(rawChunk.getChunkCoord(), x, y, z));
+		warnUnknownBlock(namedBlock.getName(), new Location(rawChunk.getChunkCoord(), x, y, z));
 		return modelRegistry.getBlock(defaultBlockName);
 	}
 

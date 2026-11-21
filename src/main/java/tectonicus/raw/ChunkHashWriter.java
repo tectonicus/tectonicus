@@ -77,8 +77,12 @@ final class ChunkHashWriter {
 	void updateStrings(String[] values) {
 		for (String value : values) {
 			if (value != null)
-				update(encode(value));
+				updateString(value);
 		}
+	}
+
+	void updateString(String value) {
+		update(encode(value));
 	}
 
 	/**

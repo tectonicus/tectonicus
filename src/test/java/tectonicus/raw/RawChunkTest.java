@@ -26,6 +26,8 @@ import org.tectonicus.jnbt.StringTag;
 import org.tectonicus.jnbt.Tag;
 import tectonicus.Version;
 import tectonicus.Minecraft;
+import tectonicus.blockregistry.BlockRegistry;
+import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.ChunkData;
 import tectonicus.world.WorldInfo;
@@ -87,6 +89,29 @@ class RawChunkTest {
 		RawChunk chunk = new RawChunk();
 		chunk.getPaintings().add(null);
 		assertArrayEquals(new int[] {0, 256}, chunk.getRenderHeightBounds());
+	}
+
+	@Test
+	void sharesResolvedModelsAcrossPalettePositionsForTheSameRegistry() throws Exception {
+		RawChunk chunk = readLegacyChunk("full");
+		RawChunk.BlockName first = chunk.getNamedBlock(0, 0, 0);
+		RawChunk.BlockName last = chunk.getNamedBlock(15, 15, 15);
+		assertNotNull(first);
+		assertSame(first, last);
+
+		String name = "minecraft:stone";
+		var original = new BlockRegistry();
+		var originalModel = new BlockStateWrapper(name);
+		original.getBlockStates().put(name, originalModel);
+		RawChunk.ResolvedModels resolved = first.resolve(original);
+		assertSame(originalModel, resolved.wrapper());
+		assertSame(resolved, last.resolve(original));
+
+		var replacement = new BlockRegistry();
+		var replacementModel = new BlockStateWrapper(name);
+		replacement.getBlockStates().put(name, replacementModel);
+		assertSame(replacementModel, last.resolve(replacement).wrapper());
+		assertSame(originalModel, first.resolve(original).wrapper());
 	}
 
 	@Test
