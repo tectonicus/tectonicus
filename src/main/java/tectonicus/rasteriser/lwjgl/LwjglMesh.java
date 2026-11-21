@@ -9,7 +9,6 @@
 package tectonicus.rasteriser.lwjgl;
 
 import com.jogamp.opengl.GL2;
-import lombok.RequiredArgsConstructor;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
@@ -21,14 +20,21 @@ import tectonicus.util.Colour4f;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 
-@RequiredArgsConstructor
 public class LwjglMesh implements Mesh {
 	private static final int COLOUR_OFFSET = 3 * Float.BYTES;
 	private static final int TEX_COORD_OFFSET = COLOUR_OFFSET + 4;
 	private static final int STRIDE = TEX_COORD_OFFSET + 2 * Float.BYTES;
 
+	// Vertex buffers currently allocated on the GPU, across all meshes, for diagnosing video memory use.
+	private static final AtomicLong liveBuffers = new AtomicLong();
+	private static final AtomicLong liveBufferBytes = new AtomicLong();
+
 	private final LwjglTexture texture;
+	// Shared vertex buffers to place this mesh in, or null to give the mesh a buffer of its own.
+	private final VertexBufferPool pool;
+	private VertexBufferPool.Allocation allocation;
 	private ByteBuffer vertices;
 	private int numVertices;
 	private float[] faceCentres;
@@ -36,12 +42,41 @@ public class LwjglMesh implements Mesh {
 	private boolean boundOnce;
 	private boolean uploadAttempted;
 	private int vertexBuffer;
+	private long uploadedBytes;
+
+	/** Creates a mesh that gets its own vertex buffer once it is drawn more than once. */
+	public LwjglMesh(LwjglTexture texture) {
+		this(null, texture);
+	}
+
+	/** Creates a mesh whose vertices are placed in {@code pool}'s shared buffers, if there is room. */
+	LwjglMesh(VertexBufferPool pool, LwjglTexture texture) {
+		this.pool = pool;
+		this.texture = texture;
+	}
+
+	public static long getLiveBufferCount() {
+		return liveBuffers.get();
+	}
+
+	public static long getLiveBufferBytes() {
+		return liveBufferBytes.get();
+	}
 
 	@Override
 	public void destroy() {
 		if (vertexBuffer != 0) {
 			GL15.glDeleteBuffers(vertexBuffer);
 			vertexBuffer = 0;
+		}
+		if (allocation != null) {
+			pool.free(allocation);
+			allocation = null;
+		}
+		if (uploadedBytes > 0) {
+			liveBuffers.decrementAndGet();
+			liveBufferBytes.addAndGet(-uploadedBytes);
+			uploadedBytes = 0;
 		}
 		vertices = null;
 		faceCentres = null;
@@ -131,6 +166,8 @@ public class LwjglMesh implements Mesh {
 	}
 
 	private boolean bindVertexBuffer() {
+		if (pool != null)
+			return bindPooledVertexBuffer();
 		if (vertexBuffer == 0) {
 			if (uploadAttempted)
 				return false;
@@ -149,6 +186,9 @@ public class LwjglMesh implements Mesh {
 					vertexBuffer = 0;
 					return false;
 				}
+				uploadedBytes = vertices.remaining();
+				liveBuffers.incrementAndGet();
+				liveBufferBytes.addAndGet(uploadedBytes);
 				vertices = null;
 			}
 			GL11.glVertexPointer(3, GL11.GL_FLOAT, STRIDE, 0L);
@@ -158,6 +198,31 @@ public class LwjglMesh implements Mesh {
 		} finally {
 			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		}
+	}
+
+	private boolean bindPooledVertexBuffer() {
+		if (allocation == null) {
+			if (uploadAttempted || vertices == null)
+				return false;
+			uploadAttempted = true;
+			allocation = pool.allocate(vertices);
+			if (allocation == null)
+				return false; // No room: keep drawing from the client-side copy.
+			uploadedBytes = allocation.bytes();
+			liveBuffers.incrementAndGet();
+			liveBufferBytes.addAndGet(uploadedBytes);
+			vertices = null;
+		}
+		final long base = allocation.offset();
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, allocation.buffer());
+		try {
+			GL11.glVertexPointer(3, GL11.GL_FLOAT, STRIDE, base);
+			GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, STRIDE, base + COLOUR_OFFSET);
+			GL11.glTexCoordPointer(2, GL11.GL_FLOAT, STRIDE, base + TEX_COORD_OFFSET);
+		} finally {
+			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		}
+		return true;
 	}
 
 	@Override
@@ -214,8 +279,13 @@ public class LwjglMesh implements Mesh {
 
 	@Override
 	public int getMemorySize() {
-		int size = vertices != null ? vertices.capacity() : vertexBuffer != 0 ? numVertices * STRIDE : 0;
+		int size = vertices != null ? vertices.capacity() : (vertexBuffer != 0 || allocation != null) ? numVertices * STRIDE : 0;
 		return size + (faceCentres == null ? 0 : faceCentres.length * Float.BYTES);
+	}
+
+	@Override
+	public long getVertexBytes() {
+		return (long) numVertices * STRIDE;
 	}
 
 	@Override
