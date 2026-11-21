@@ -1048,9 +1048,10 @@ public class RawChunk {
 	private List<BlockState> parseBlockStates(ListTag paletteTag) {
 		List<BlockState> blockStatesPalette = new ArrayList<>();
 		for (Tag paletteEntry : paletteTag.getValue()) {
+			// An entry without properties is the block's default state. Newer saves write it as the bare block id,
+			// so fill in the default properties.
 			if (paletteEntry instanceof StringTag stringTag) {
-				blockStatesPalette.add(new BlockState(stringTag.getValue(),
-						NbtUtil.getProperties(null)));
+				blockStatesPalette.add(new BlockState(stringTag.getValue(), DefaultBlockStates.of(stringTag.getValue())));
 			} else if (paletteEntry instanceof CompoundTag compound) {
 				StringTag nameTag = NbtUtil.getChild(compound, "id", StringTag.class);
 				if (nameTag == null) {
@@ -1066,7 +1067,8 @@ public class RawChunk {
 					propertiesTag = NbtUtil.getChild(compound, "Properties", CompoundTag.class);
 				}
 				
-				blockStatesPalette.add(new BlockState(nameTag.getValue(), NbtUtil.getProperties(propertiesTag)));
+				blockStatesPalette.add(new BlockState(nameTag.getValue(), propertiesTag != null
+						? NbtUtil.getProperties(propertiesTag) : DefaultBlockStates.of(nameTag.getValue())));
 			} else {
 				throw new IllegalArgumentException("Unsupported block state palette entry: " + paletteEntry.getClass().getName());
 			}
