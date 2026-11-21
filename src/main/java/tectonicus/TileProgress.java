@@ -9,6 +9,8 @@
 
 package tectonicus;
 
+import tectonicus.configuration.Dimension;
+
 import java.io.Console;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -59,6 +61,7 @@ public final class TileProgress implements AutoCloseable {
 	static final String CYAN = ESC + "36m";
 	static final String GREY = ESC + "90m";
 	static final String BRIGHT_MAGENTA = ESC + "95m";
+	static final String BRIGHT_CYAN = ESC + "96m";
 	/** 256-colour dark green, for tiles rendered on an earlier run. */
 	static final String DARK_GREEN = ESC + "38;5;22m";
 	static final String DARK_GREEN_BACKGROUND = ESC + "48;5;22m";
@@ -70,7 +73,31 @@ public final class TileProgress implements AutoCloseable {
 	enum Cell { EMPTY, UNCHANGED, TO_RENDER, PARTLY, MOSTLY, DONE, CURRENT }
 
 	/** How progress is written: colours, redrawing in place, the width available, and the characters used. */
-	record Style(boolean colour, boolean live, int columns, Glyphs glyphs) {}
+	record Style(boolean colour, boolean live, int columns, Glyphs glyphs, Theme theme) {
+		Style(boolean colour, boolean live, int columns, Glyphs glyphs) {
+			this(colour, live, columns, glyphs, Theme.OVERWORLD);
+		}
+	}
+
+	/**
+	 * Colours that suit the dimension: rendered and unchanged tiles, the shade background behind areas with
+	 * some changed tiles, and the tile being rendered, chosen to stand out from the rest.
+	 */
+	record Theme(String rendered, String unchanged, String unchangedBackground, String current) {
+		static final Theme OVERWORLD = new Theme(GREEN, DARK_GREEN, DARK_GREEN_BACKGROUND, BOLD + BRIGHT_MAGENTA);
+		static final Theme NETHER = new Theme(ESC + "38;5;160m", ESC + "38;5;52m", ESC + "48;5;52m", BOLD + BRIGHT_CYAN);
+		static final Theme END = new Theme(ESC + "38;5;141m", ESC + "38;5;54m", ESC + "48;5;54m", BOLD + BRIGHT_CYAN);
+
+		static Theme of(Dimension dimension) {
+			if (dimension == null)
+				return OVERWORLD;
+			return switch (dimension) {
+				case NETHER -> NETHER;
+				case END -> END;
+				default -> OVERWORLD;
+			};
+		}
+	}
 
 	/** The characters used, chosen from what the output encoding can represent. */
 	record Glyphs(char unchanged, char toRender, char partly, char mostly, char done, char current,
@@ -196,13 +223,16 @@ public final class TileProgress implements AutoCloseable {
 	/**
 	 * Writes to standard output, sized for the terminal and styled for what it supports. Until {@link #close()},
 	 * anything else written to standard output or standard error, such as log messages, is printed above the
-	 * display rather than over it.
+	 * display rather than over it. Colours follow the dimension: green for the overworld, red for the nether and
+	 * purple for the end.
 	 */
-	public static TileProgress forConsole(Iterable<TileCoord> visible, Iterable<TileCoord> toRender, TileCoord min, TileCoord max) {
+	public static TileProgress forConsole(Iterable<TileCoord> visible, Iterable<TileCoord> toRender, TileCoord min, TileCoord max,
+										  Dimension dimension) {
 		int terminalColumns = Math.clamp(environmentSize("COLUMNS", DEFAULT_COLUMNS), 40, 400);
 		int terminalLines = Math.clamp(environmentSize("LINES", DEFAULT_LINES), 10, 200);
 		boolean colour = System.getenv("NO_COLOR") == null && !"dumb".equals(System.getenv("TERM"));
-		Style style = new Style(colour, colour && isInteractiveTerminal(), terminalColumns, Glyphs.forCharset(System.out.charset()));
+		Style style = new Style(colour, colour && isInteractiveTerminal(), terminalColumns, Glyphs.forCharset(System.out.charset()),
+				Theme.of(dimension));
 		int maxColumns = Math.clamp(terminalColumns - 2, 20, 200);
 		int maxRows = Math.clamp(terminalLines - RESERVED_LINES, 4, 80);
 		TileProgress progress = new TileProgress(visible, toRender, min, max, maxColumns, maxRows, System.out, style, System::nanoTime);
@@ -526,15 +556,15 @@ public final class TileProgress implements AutoCloseable {
 		if (style.colour()) {
 			Line area = new Line();
 			if (unchanged > 0)
-				area.styled(DARK_GREEN, String.valueOf(g.done())).plain(" unchanged   ");
-			area.styled(DARK_GREEN_BACKGROUND, "" + g.unchanged() + g.toRender() + g.partly() + g.mostly())
+				area.styled(style.theme().unchanged(), String.valueOf(g.done())).plain(" unchanged   ");
+			area.styled(style.theme().unchangedBackground(), "" + g.unchanged() + g.toRender() + g.partly() + g.mostly())
 					.plain(g.done() + " few to all tiles changed, which are:");
 			lines.add(area.toString());
 			Line states = new Line();
 			states.plain("  ").plain(g.done() + " to render  ")
 					.styled(YELLOW, String.valueOf(g.done())).plain(" rendering  ")
-					.styled(GREEN, String.valueOf(g.done())).plain(" rendered  ")
-					.styled(BOLD + BRIGHT_MAGENTA, String.valueOf(glyph(Cell.CURRENT))).plain(" now");
+					.styled(style.theme().rendered(), String.valueOf(g.done())).plain(" rendered  ")
+					.styled(style.theme().current(), String.valueOf(glyph(Cell.CURRENT))).plain(" now");
 			lines.add(states.toString());
 		} else {
 			Line line = new Line();
@@ -607,7 +637,7 @@ public final class TileProgress implements AutoCloseable {
 		if (part > 0)
 			filled.append(g.barEighths().charAt(part - 1));
 		int empty = width - filled.length();
-		line.plain(g.barStart()).styled(GREEN, filled.toString())
+		line.plain(g.barStart()).styled(style.theme().rendered(), filled.toString())
 				.styled(GREY, String.valueOf(g.barEmpty()).repeat(Math.max(0, empty))).plain(g.barEnd());
 	}
 
@@ -672,7 +702,7 @@ public final class TileProgress implements AutoCloseable {
 		int visible = cellVisible[cell];
 		int changed = Math.min(cellTotals[cell], visible);
 		int rendered = cellDone[cell];
-		String foreground = rendered == 0 ? null : rendered >= changed ? GREEN : YELLOW;
+		String foreground = rendered == 0 ? null : rendered >= changed ? style.theme().rendered() : YELLOW;
 		if (changed >= visible)
 			return new Look(g.done(), foreground);
 		double share = (double) changed / visible;
@@ -680,7 +710,7 @@ public final class TileProgress implements AutoCloseable {
 				: share <= 0.35 ? g.toRender()
 				: share <= 0.65 ? g.partly()
 				: g.mostly();
-		return new Look(shade, (foreground == null ? WHITE : foreground) + DARK_GREEN_BACKGROUND);
+		return new Look(shade, (foreground == null ? WHITE : foreground) + style.theme().unchangedBackground());
 	}
 
 	private char glyph(Cell cell) {
@@ -698,13 +728,13 @@ public final class TileProgress implements AutoCloseable {
 		};
 	}
 
-	private static String colour(Cell cell) {
+	private String colour(Cell cell) {
 		return switch (cell) {
 			case EMPTY, TO_RENDER -> null;
-			case UNCHANGED -> DARK_GREEN;
+			case UNCHANGED -> style.theme().unchanged();
 			case PARTLY, MOSTLY -> YELLOW;
-			case DONE -> GREEN;
-			case CURRENT -> BOLD + BRIGHT_MAGENTA;
+			case DONE -> style.theme().rendered();
+			case CURRENT -> style.theme().current();
 		};
 	}
 

@@ -824,7 +824,8 @@ public class TileRenderer
 			return;
 		}
 		// The map covers every visible tile, so unchanged tiles show around the ones being rendered.
-		TileProgress progress = TileProgress.forConsole(visibleTiles, tiles, visibleTiles.getAbsoluteMinCoord(), visibleTiles.getAbsoluteMaxCoord());
+		TileProgress progress = TileProgress.forConsole(visibleTiles, tiles, visibleTiles.getAbsoluteMinCoord(), visibleTiles.getAbsoluteMaxCoord(),
+				map.getDimensionInfo().dimension());
 
 		// Until closed, log messages are printed above the progress display instead of being drawn over.
 		try {
