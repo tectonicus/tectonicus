@@ -43,7 +43,7 @@ dependencies {
 	val biomeExtractorVersion = "2.0.0"
 	val jnbtVersion = "2.0.0"
 	val hamcrestVersion = "3.0"
-	val hash4jVersion = "0.28.0"
+	val hash4jVersion = "0.31.0"
 
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     implementation(platform("tools.jackson:jackson-bom:$jacksonVersion"))
