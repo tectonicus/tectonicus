@@ -62,7 +62,7 @@ public class Chunk
 	
 	private RawChunk rawChunk;
 	private BiomeData biomeData;
-	private boolean biomeDataLoaded;
+	private volatile boolean biomeDataLoaded;
 	
 	private Geometry geometry;
 	
@@ -118,12 +118,17 @@ public class Chunk
 	public BiomeData.ColourCoord getBiomeColourCoord(int x, int z) {
 		if (rawChunk == null)
 			return null;
+		if (!biomeDataLoaded)
+			loadBiomeData();
+		return biomeData != null ? biomeData.getColourCoord(x, z) : null;
+	}
+
+	private synchronized void loadBiomeData() {
 		if (!biomeDataLoaded) {
-			biomeDataLoaded = true;
 			if (!rawChunk.hasBiomeData())
 				biomeData = biomeCache.loadBiomeData(coord);
+			biomeDataLoaded = true;
 		}
-		return biomeData != null ? biomeData.getColourCoord(x, z) : null;
 	}
 	
 	public boolean createGeometry(Rasteriser rasteriser, World world, BlockTypeRegistry registry, BlockRegistry modelRegistry, BlockMaskFactory maskFactory, TexturePack texturePack)
@@ -438,12 +443,13 @@ public class Chunk
 
 	public long getGeometryMemorySize()
 	{
-		return geometry.getMemorySize();
+		return geometry == null ? 0 : geometry.getMemorySize();
 	}
 
 	public void printGeometryStats()
 	{
-		geometry.printGeometryStats();
+		if (geometry != null)
+			geometry.printGeometryStats();
 	}
 
 	public Map<String, SignEntity> getSigns()

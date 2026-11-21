@@ -40,7 +40,7 @@ public final class SignFont implements AutoCloseable {
 		loader = MinecraftFont.loader(assets, locale);
 	}
 
-	public void collect(SignEntity sign) {
+	public synchronized void collect(SignEntity sign) {
 		for (String line : sign.getFront().lines()) collect(line);
 		if (sign.getBack() != null) {
 			for (String line : sign.getBack().lines()) collect(line);
@@ -59,7 +59,7 @@ public final class SignFont implements AutoCloseable {
 		if (requested.add(code)) pending.add(code);
 	}
 
-	void prepare(SignEntity sign) {
+	synchronized void prepare(SignEntity sign) {
 		collect(sign);
 		if (pending.isEmpty()) return;
 		request('?');
@@ -94,7 +94,7 @@ public final class SignFont implements AutoCloseable {
 		});
 	}
 
-	Glyph getGlyph(int code) {
+	synchronized Glyph getGlyph(int code) {
 		Glyph glyph = glyphs.get(code);
 		return glyph != null || Character.isWhitespace(code) ? glyph : glyphs.get((int) '?');
 	}

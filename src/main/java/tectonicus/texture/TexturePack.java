@@ -57,11 +57,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import static tectonicus.Version.VERSIONS_6_TO_8;
@@ -116,8 +116,8 @@ public class TexturePack
 	private final ZipStack zipStack;
 	
 	private final Map<String, PackTexture> loadedPackTextures;
-	private final Set<String> missingTexturePaths = new HashSet<>();
-	private final Map<String, List<SubTexture>> particleTextures = new HashMap<>();
+	private final Set<String> missingTexturePaths = ConcurrentHashMap.newKeySet();
+	private final Map<String, List<SubTexture>> particleTextures = new ConcurrentHashMap<>();
 	@Getter
 	private final Map<String, BufferedImage> bannerPatternImages;
 	private final List<String> dataPacks;
@@ -143,7 +143,7 @@ public class TexturePack
 		this.rasteriser = rasteriser;
 		this.dataPacks = dataPacks;
 		
-		loadedPackTextures = new HashMap<>();
+		loadedPackTextures = new ConcurrentHashMap<>();
 
 		try {
 			List<File> packs = new ArrayList<>(resourcePacks == null ? List.of() : resourcePacks);
@@ -409,19 +409,17 @@ public class TexturePack
 		if (request.isTile())
 			return findTextureOrDefault(texturePath, defaultTexture);
 		String key = request.path + "#frame=" + Math.max(1, frame);
-		PackTexture texture = loadedPackTextures.get(key);
-		if (texture == null) {
+		PackTexture texture = loadedPackTextures.computeIfAbsent(key, ignored -> {
 			if (missingTexturePaths.contains(request.path))
-				return defaultTexture;
+				return null;
 			try {
-				texture = loadTextureFrame(rasteriser, key, loadTexture(request.path), frame);
-				loadedPackTextures.put(key, texture);
+				return loadTextureFrame(rasteriser, key, loadTexture(request.path), frame);
 			} catch (FileNotFoundException e) {
 				reportMissingTexture(request.path);
-				return defaultTexture;
+				return null;
 			}
-		}
-		return texture.find(new TextureRequest(key, ""), version);
+		});
+		return texture == null ? defaultTexture : texture.find(new TextureRequest(key, ""), version);
 	}
 
 	static PackTexture loadTextureFrame(Rasteriser rasteriser, String path, BufferedImage image, int frame) {
@@ -727,18 +725,13 @@ public class TexturePack
         
         private PackTexture applyPalette(PackTexture texture, PackTexture palette, PackTexture keyPalette) {
                 String path = texture.getPath()+palette.getPath()+keyPalette.getPath();
-                PackTexture tex = loadedPackTextures.get(path);
-                
-                if (tex == null) {
+                return loadedPackTextures.computeIfAbsent(path, key -> {
                         BufferedImage textureImage = texture.getImage();
                         BufferedImage paletteImage = palette.getImage();
                         BufferedImage keyPaletteImage = keyPalette.getImage();
                         
-                        tex = new PackTexture(rasteriser, path, applyPalette(textureImage, paletteImage, keyPaletteImage));
-                        loadedPackTextures.put(path, tex);
-                }
-                
-                return tex;
+                        return new PackTexture(rasteriser, key, applyPalette(textureImage, paletteImage, keyPaletteImage));
+                });
         }
         
         private BufferedImage applyPalette(BufferedImage textureImage, BufferedImage paletteImage, BufferedImage keyPaletteImage) {
@@ -767,25 +760,20 @@ public class TexturePack
         }
 	
 	private PackTexture findTexture(TextureRequest request) {
-		PackTexture tex = loadedPackTextures.get(request.path);
-		
-		if (tex == null) {
-			if (missingTexturePaths.contains(request.path))
+		return loadedPackTextures.computeIfAbsent(request.path, path -> {
+			if (missingTexturePaths.contains(path))
 				return null;
 			try {
-				IIOImage image = loadImage(request.path);
+				IIOImage image = loadImage(path);
 				if (image != null) {
 					BufferedImage bufferedImage = (BufferedImage) image.getRenderedImage();
-					tex = createPackTexture(rasteriser, request.path, bufferedImage);
-					
-					loadedPackTextures.put(request.path, tex);
+					return createPackTexture(rasteriser, path, bufferedImage);
 				}
 			} catch (FileNotFoundException e) {
-				reportMissingTexture(request.path);
+				reportMissingTexture(path);
 			}
-		}
-		
-		return tex;
+			return null;
+		});
 	}
 
 	private void reportMissingTexture(String path) {

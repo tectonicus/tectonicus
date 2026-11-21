@@ -23,7 +23,7 @@ import java.util.Map;
  * block often has several tinted faces, so without this the same sample is computed many times over.
  * A sample's colour depends only on its position, its kind and the loaded chunks, none of which change while
  * a chunk is built, so reusing it gives exactly the same result. Samples are kept for one chunk only.
- * Not thread safe: geometry is built on the rendering thread.
+ * Each geometry worker owns its cache.
  */
 final class TintSampleCache {
 	static final int GRASS = 0;

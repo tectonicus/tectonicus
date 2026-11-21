@@ -195,7 +195,8 @@ public class PlayerSkinCache
 		player.setProfileResolved(profile.resolved());
 	}
 	
-	public BufferedImage fetchSkin(Player player)
+	// Geometry workers can request the same player's skin and write the same cache file.
+	public synchronized BufferedImage fetchSkin(Player player)
 	{
 		String skinUrl = player.getSkinURL();
 		boolean hasSkinUrl = skinUrl != null && !skinUrl.isBlank() && !skinUrl.equals("null");

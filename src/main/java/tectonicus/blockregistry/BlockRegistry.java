@@ -58,7 +58,7 @@ public class BlockRegistry {
 	private final Cache<String, BlockModel> blockModels = Caffeine.newBuilder().build();
 	@Getter
 	private final Cache<String, BlockStateModelsWeight> singleVariantBlocks = Caffeine.newBuilder().build();
-	private final Set<String> missingBlockModels = new HashSet<>();
+	private final Set<String> missingBlockModels = ConcurrentHashMap.newKeySet();
 	private final Map<BakeKey, BakedBlockStateModel> bakedModels = new ConcurrentHashMap<>();
 	private Map<String, Map<String, String>> defaultBlockStates = Collections.emptyMap();
 	private TexturePack texturePack;

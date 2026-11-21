@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static tectonicus.Version.VERSION_13;
 
@@ -91,7 +92,7 @@ final class ItemFrameItems {
 	}
 
 	private final Map<String, Optional<ResolvedItem>> items = new HashMap<>();
-	private final Set<String> failedItems = new HashSet<>();
+	private final Set<String> failedItems = ConcurrentHashMap.newKeySet();
 
 	/** Adds the frame's item to the chunk geometry. Frames holding maps are drawn by the frame itself. */
 	void add(ItemFrameEntity frame, BlockContext world, BlockTypeRegistry registry, RawChunk rawChunk, Geometry geometry) {
@@ -150,7 +151,7 @@ final class ItemFrameItems {
 				+ normal.z() * normal.z() * northSouthLight;
 	}
 
-	private Optional<ResolvedItem> resolve(Item item, BlockContext world, BlockTypeRegistry registry) throws Exception {
+	private synchronized Optional<ResolvedItem> resolve(Item item, BlockContext world, BlockTypeRegistry registry) throws Exception {
 		String key = cacheKey(item);
 		Optional<ResolvedItem> resolved = items.get(key);
 		if (resolved == null) {

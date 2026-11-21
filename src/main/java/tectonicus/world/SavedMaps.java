@@ -17,7 +17,6 @@ import tectonicus.texture.SubTexture;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,8 +28,8 @@ final class SavedMaps implements AutoCloseable {
 	private final boolean legacyPalette;
 	// Hashing and rendering use the same snapshot, including missing maps.
 	private final Map<Integer, Optional<SavedMap>> maps = new ConcurrentHashMap<>();
-	// Texture creation and destruction run on the render thread.
-	private final Map<Integer, SubTexture> textures = new HashMap<>();
+	// Workers can prepare images. The rasteriser uploads and destroys textures on the render thread.
+	private final Map<Integer, SubTexture> textures = new ConcurrentHashMap<>();
 
 	SavedMaps(Path worldDir, Rasteriser rasteriser, boolean legacyPalette) {
 		this.dataDir = worldDir.resolve("data");

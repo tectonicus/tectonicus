@@ -90,12 +90,14 @@ import java.awt.Point;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -114,6 +116,7 @@ import static tectonicus.Version.VERSION_UNKNOWN;
 public class World implements BlockContext, AutoCloseable
 {
 	private static final int BATCH_SIZE = 128;
+	private static final int MAX_GEOMETRY_WORKERS = 8;
 	
 	private final Version textureVersion;
 	@Getter
@@ -186,7 +189,8 @@ public class World implements BlockContext, AutoCloseable
 	private final RawCache rawLoadedChunks;
 	private final GeometryCache geometryLoadedChunks;
 	// Biome tint samples of the chunk whose geometry is being built.
-	private final TintSampleCache tintSamples = new TintSampleCache();
+	private final ThreadLocal<TintSampleCache> tintSamples = ThreadLocal.withInitial(TintSampleCache::new);
+	private final ExecutorService geometryBuilders;
 	
 	private LightStyle lightStyle;
 	@Getter
@@ -380,14 +384,15 @@ public class World implements BlockContext, AutoCloseable
 							if (original != null)
 								maskFactory = (chunkCoord, raw) -> blockMaskFactory.createMask(chunkCoord, original);
 						}
-						tintSamples.begin(coord);
+						TintSampleCache samples = tintSamples.get();
+						samples.begin(coord);
 						try {
 							chunk.createGeometry(rasteriser, this, registry, modelRegistry, maskFactory, texturePack);
 						} catch (RuntimeException e) {
 							log.error("Failed to build geometry for chunk {},{}; it will be left out of this render", coord.x, coord.z, e);
 							chunk.unloadGeometry();
 						} finally {
-							tintSamples.end();
+							samples.end();
 						}
 
                         return chunk;
@@ -403,6 +408,10 @@ public class World implements BlockContext, AutoCloseable
 			this.smoothLit = map.isSmoothLit();
 			this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
 			applyLightmapBrightness(map);
+			int workerCount = Math.min(Runtime.getRuntime().availableProcessors(), MAX_GEOMETRY_WORKERS);
+			geometryBuilders = workerCount > 1
+					? Executors.newFixedThreadPool(workerCount, Thread.ofPlatform().name("geometry-builder-", 1).factory())
+					: null;
 		} catch (RuntimeException | Error e) {
 			this.biomeCache.close();
 			throw e;
@@ -412,6 +421,9 @@ public class World implements BlockContext, AutoCloseable
 	@Override
 	public void close() {
 		try {
+			if (geometryBuilders != null)
+				geometryBuilders.shutdown();
+			tintSamples.remove();
 			flushGeometryCache();
 			savedMaps.close();
 			// Without this each dimension leaves its block, font and sign textures in GPU memory.
@@ -839,15 +851,7 @@ public class World implements BlockContext, AutoCloseable
 	
 	private void draw(Camera camera, List<ChunkCoord> visible, final boolean genAlphaMask)
 	{
-		// Find all visible chunks coordinates
-		List<ChunkCoord> visibleChunks = new ArrayList<>();
-		for (ChunkCoord coord : visible)
-		{
-                        if (worldSubset.contains(coord))
-                        {
-                                visibleChunks.add(coord);
-                        }			
-		}
+		List<Chunk> visibleChunks = buildVisibleGeometry(visible);
 		//System.out.println("Num visible chunks: " + visibleChunks.size());
 		rasteriser.enableDepthTest(true);
 		rasteriser.setBlendFunc(BlendFunc.REGULAR);
@@ -880,7 +884,31 @@ public class World implements BlockContext, AutoCloseable
                 geometryLoadedChunks.unloadInvalidatedChunks();
 	}
 	
-	private void drawGeometry(Camera camera, List<ChunkCoord> visible)
+	private List<Chunk> buildVisibleGeometry(List<ChunkCoord> visible) {
+		List<ChunkCoord> coords = visible.stream().filter(worldSubset::contains).toList();
+		Chunk[] chunks = new Chunk[coords.size()];
+		List<CompletableFuture<Void>> pending = new ArrayList<>();
+
+		for (int i = 0; i < coords.size(); i++) {
+			ChunkCoord coord = coords.get(i);
+			chunks[i] = geometryLoadedChunks.getIfPresent(coord);
+			if (chunks[i] == null) {
+				if (geometryBuilders == null) {
+					chunks[i] = geometryLoadedChunks.get(coord);
+				} else {
+					int index = i;
+					pending.add(CompletableFuture.runAsync(() -> chunks[index] = geometryLoadedChunks.get(coord), geometryBuilders));
+				}
+			}
+		}
+
+		// Keep the established draw order and wait for all raw-data readers before evicting chunks.
+		if (!pending.isEmpty())
+			CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).join();
+		return Arrays.asList(chunks);
+	}
+
+	private void drawGeometry(Camera camera, List<Chunk> visible)
 	{
 		rasteriser.enableDepthWriting(true);
 		
@@ -889,9 +917,9 @@ public class World implements BlockContext, AutoCloseable
 		rasteriser.enableBlending(false);
 		rasteriser.enableAlphaTest(false);
 		
-		for (ChunkCoord coord : visible)
+		for (Chunk chunk : visible)
 		{
-                        geometryLoadedChunks.get(coord).drawSolid(camera);
+			chunk.drawSolid(camera);
 		}
 		
 		// Alpha test pass
@@ -900,9 +928,9 @@ public class World implements BlockContext, AutoCloseable
 		rasteriser.setAlphaFunc(AlphaFunc.GREATER, 0.4f);
 		rasteriser.enableBlending(false);
 		
-		for (ChunkCoord coord : visible)
+		for (Chunk chunk : visible)
 		{	
-			geometryLoadedChunks.get(coord).drawAlphaTestedSurfaces(camera);
+			chunk.drawAlphaTestedSurfaces(camera);
 		}
 		
 		// Transparency pass
@@ -911,9 +939,9 @@ public class World implements BlockContext, AutoCloseable
 		rasteriser.enableBlending(true);
 		rasteriser.enableAlphaTest(false);
 		
-		for (ChunkCoord coord : visible)
+		for (Chunk chunk : visible)
 		{	
-			geometryLoadedChunks.get(coord).drawTransparentSurfaces(camera, sortTranslucentFaces);
+			chunk.drawTransparentSurfaces(camera, sortTranslucentFaces);
 		}
 		
 		rasteriser.enableDepthWriting(true);
@@ -1498,7 +1526,7 @@ public class World implements BlockContext, AutoCloseable
 		};
 		// Neighbouring blocks and faces share most samples; compute each one once per chunk.
 		return BiomeColorBlender.blend(x, z, biomeBlendRadius,
-				tintSamples.wrap(chunkCoord, y, TintSampleCache.plantKind(isFoliage, isDryFoliage), resolver));
+				tintSamples.get().wrap(chunkCoord, y, TintSampleCache.plantKind(isFoliage, isDryFoliage), resolver));
 	}
 
 	/** Get tint color for Minecraft 1.6 and earlier */
@@ -1572,6 +1600,6 @@ public class World implements BlockContext, AutoCloseable
 			}
 			return biome.getWaterColor();
 		};
-		return BiomeColorBlender.blend(x, z, biomeBlendRadius, tintSamples.wrap(chunkCoord, y, TintSampleCache.WATER, resolver));
+		return BiomeColorBlender.blend(x, z, biomeBlendRadius, tintSamples.get().wrap(chunkCoord, y, TintSampleCache.WATER, resolver));
 	}
 }

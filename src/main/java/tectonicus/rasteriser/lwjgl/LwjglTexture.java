@@ -10,13 +10,43 @@
 package tectonicus.rasteriser.lwjgl;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.lwjgl.opengl.GL11;
 import tectonicus.rasteriser.Texture;
 
-@RequiredArgsConstructor
+import java.util.function.IntSupplier;
+
 @Getter
 public class LwjglTexture implements Texture {
-	private final int id;
+	private int id;
 	private final int width;
 	private final int height;
+	private IntSupplier upload;
+
+	public LwjglTexture(int id, int width, int height) {
+		this.id = id;
+		this.width = width;
+		this.height = height;
+	}
+
+	LwjglTexture(int width, int height, IntSupplier upload) {
+		this(0, width, height);
+		this.upload = upload;
+	}
+
+	/** Called only on the thread with the current OpenGL context. */
+	public int getId() {
+		if (upload != null) {
+			id = upload.getAsInt();
+			upload = null;
+		}
+		return id;
+	}
+
+	void destroy() {
+		if (id != 0) {
+			GL11.glDeleteTextures(id);
+			id = 0;
+		}
+		upload = null;
+	}
 }

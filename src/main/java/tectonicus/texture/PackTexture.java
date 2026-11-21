@@ -75,7 +75,7 @@ public class PackTexture
 		fullTexture = rasteriser.createTexture(image, TextureFilter.NEAREST);
 	}
 
-	public SubTexture find(TextureRequest request, Version version)
+	public synchronized SubTexture find(TextureRequest request, Version version)
 	{
 		assert(request.path.equals(path));
 		

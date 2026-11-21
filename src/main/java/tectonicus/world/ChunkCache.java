@@ -48,8 +48,9 @@ class ChunkCache
 	
 	public void unloadAll()
 	{
+		unloadInvalidatedChunks();
+		chunks.asMap().values().forEach(this::unloadInvalidatedChunk);
 		chunks.invalidateAll();
-                unloadInvalidatedChunks();
 	}
 	
 	public int size()
@@ -60,6 +61,11 @@ class ChunkCache
 	public Chunk get(ChunkCoord coord)
 	{
 		return chunks.get(coord, getChunk);
+	}
+
+	public Chunk getIfPresent(ChunkCoord coord)
+	{
+		return chunks.getIfPresent(coord);
 	}
 	
 	public Collection<Chunk> values()
@@ -78,7 +84,7 @@ class ChunkCache
                         
                         // Check whether the chunk is not currently in cache. It could have been re-added
                         // in which case we can not unload it.
-                        if (chunks.getIfPresent(chunk.getCoord()) != null)
+                        if (chunks.getIfPresent(chunk.getCoord()) == chunk)
                         {
                             continue;
                         }

@@ -124,7 +124,6 @@ import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.opengl.GL11.glColorMask;
 import static org.lwjgl.opengl.GL11.glCullFace;
-import static org.lwjgl.opengl.GL11.glDeleteTextures;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glEnable;
@@ -155,6 +154,8 @@ public class LwjglRasteriser implements Rasteriser {
 	private String eglDisplaySource = "";
 	
 	private final int width, height;
+	private final Thread renderThread = Thread.currentThread();
+	private final int maxTextureSize;
 	
 	private final Map<Integer, Integer> keyCodeMap;
 	
@@ -332,6 +333,7 @@ public class LwjglRasteriser implements Rasteriser {
 		}
 		
 		GL.createCapabilities();
+		maxTextureSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);
 		
 		if ((!isMac && (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL)) || isOSMesa) {
 			int fbo = glGenFramebuffers();
@@ -463,22 +465,26 @@ public class LwjglRasteriser implements Rasteriser {
 	
 	@Override
 	public int getMaxTextureSize() {
-		return GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);
+		return maxTextureSize;
 	}
 
 	public Texture createTexture(BufferedImage image, TextureFilter filter) {
+		if (Thread.currentThread() != renderThread)
+			return new LwjglTexture(image.getWidth(), image.getHeight(), () -> LwjglTextureUtils.createTexture(image, filter));
 		final int id = LwjglTextureUtils.createTexture(image, filter);
 		return new LwjglTexture(id, image.getWidth(), image.getHeight());
 	}
 	
 	public Texture createTexture(BufferedImage[] mips, TextureFilter filter) {
+		if (Thread.currentThread() != renderThread)
+			return new LwjglTexture(mips[0].getWidth(), mips[0].getHeight(), () -> LwjglTextureUtils.createTexture(mips, filter));
 		final int id = LwjglTextureUtils.createTexture(mips, filter);
 		return new LwjglTexture(id, mips[0].getWidth(), mips[0].getHeight());
 	}
 
 	@Override
 	public void destroyTexture(Texture texture) {
-		glDeleteTextures(((LwjglTexture) texture).getId());
+		((LwjglTexture) texture).destroy();
 	}
 	
 	public Mesh createMesh(Texture texture) {
