@@ -32,8 +32,14 @@ import static tectonicus.util.FindEntityUtil.findPortals;
 import static tectonicus.util.FindEntityUtil.findSigns;
 import static tectonicus.util.FindEntityUtil.findViews;
 
+/**
+ * Hashes chunks and extracts their signs, portals, views, beds and containers on a pool of worker threads.
+ * <p>
+ * One queue serves a whole map: call {@link #waitUntilFinished()} at the end of each region and {@link #close()} once
+ * the last region is done, so the worker threads are started once rather than for every region.
+ */
 @Slf4j
-public class RegionLoadQueue
+public class RegionLoadQueue implements AutoCloseable
 {
 	private final BoundedExecutor executor;
 	private final IntFunction<byte[]> mapContentHash;
@@ -52,10 +58,24 @@ public class RegionLoadQueue
 		executor.execute("loading chunk " + chunk.getCoord(), task);
 	}
 	
-	/** Waits for all queued chunks and returns how many of them failed to load. */
+	/**
+	 * Waits for all chunks queued so far and returns how many of them failed to load since the previous call. The queue
+	 * stays usable for the next region.
+	 */
 	public int waitUntilFinished()
 	{
-		final int failed = executor.awaitCompletion();
+		return logFailures(executor.awaitIdle());
+	}
+	
+	/** Waits for any chunks still queued, then stops the worker threads. */
+	@Override
+	public void close()
+	{
+		logFailures(executor.awaitCompletion());
+	}
+	
+	private static int logFailures(int failed)
+	{
 		if (failed > 0)
 			log.warn("{} chunk(s) could not be loaded and were left out of the signs, portals, views and containers", failed);
 		return failed;

@@ -41,6 +41,44 @@ class BoundedExecutorTest {
 	}
 
 	@Test
+	void awaitIdleDrainsTasksAndKeepsTheExecutorUsable() {
+		BoundedExecutor executor = new BoundedExecutor("test", 2, 1);
+		AtomicInteger ran = new AtomicInteger();
+		for (int round = 0; round < 3; round++) {
+			for (int i = 0; i < 10; i++) {
+				final int n = i;
+				executor.execute("task " + n, () -> {
+					try {
+						Thread.sleep(1);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+					ran.incrementAndGet();
+					if (n == 3)
+						throw new IllegalStateException("boom " + n);
+				});
+			}
+
+			// Every task of this round has finished, and only this round's failure is reported.
+			assertEquals(1, executor.awaitIdle());
+			assertEquals(10 * (round + 1), ran.get());
+		}
+
+		assertEquals(0, executor.awaitIdle());
+		assertEquals(0, executor.awaitCompletion());
+	}
+
+	@Test
+	void awaitCompletionReportsFailuresSinceTheLastAwaitIdle() {
+		BoundedExecutor executor = new BoundedExecutor("test", 1, 0);
+		executor.execute("first", () -> { throw new IllegalStateException("first"); });
+		assertEquals(1, executor.awaitIdle());
+
+		executor.execute("second", executor::recordFailure);
+		assertEquals(1, executor.awaitCompletion());
+	}
+
+	@Test
 	void mapTempAreasAreRemovedWithTheirFiles(@TempDir Path dir) throws Exception {
 		TempArea root = new TempArea(dir.resolve("temp").toFile());
 		TempArea map = root.subArea("world/overworld");
