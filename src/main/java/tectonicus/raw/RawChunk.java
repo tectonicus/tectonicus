@@ -40,7 +40,6 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectReader;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,8 +135,7 @@ public class RawChunk {
 	public RawChunk(ChunkData chunkData, ChunkData entityChunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		this(chunkData, worldStats, worldInfo);
 
-		byte[] chunkBytes = entityChunkData.getBytes();
-		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
+		try (InputStream in = entityChunkData.openStream();
 			 NBTInputStream nbtIn = new NBTInputStream(in, entityChunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag chunkTag) {
@@ -180,8 +178,7 @@ public class RawChunk {
 	private void init(ChunkData chunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		clear();
 
-		byte [] chunkBytes = chunkData.getBytes();
-		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
+		try (InputStream in = chunkData.openStream();
 			 NBTInputStream nbtIn = new NBTInputStream(in, chunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag root) {

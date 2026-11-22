@@ -265,12 +265,8 @@ public class Region {
 		else
 			throw new UnknownCompressionTypeException("Unrecognised compression type:" + compressionByte);
 
-		// Make a new byte array of the chunk data
-		byte[] chunkData = new byte[chunkDataLengthBytes];     
-                // +4 to skip chunk length, +1 to skip compression type
-                System.arraycopy(regionBytes, (int)(byteOffset + 4 + 1), chunkData, 0, chunkDataLengthBytes);
-
-		return new ChunkData(chunkData, compressionType);
+		// Read the chunk straight from the region bytes: +4 skips the chunk length and +1 the compression type.
+		return new ChunkData(regionBytes, (int) (byteOffset + 4 + 1), chunkDataLengthBytes, compressionType);
 	}
 
 	private int readInt(final int position, byte[] regionBytes) {
