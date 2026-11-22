@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import tectonicus.cache.RegionHashStore;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.chunk.Chunk;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.configuration.DimensionConfig;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.ContainerEntity;
@@ -25,6 +26,8 @@ import java.security.MessageDigest;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static tectonicus.util.FindEntityUtil.findBeds;
 import static tectonicus.util.FindEntityUtil.findContainers;
@@ -33,7 +36,8 @@ import static tectonicus.util.FindEntityUtil.findSigns;
 import static tectonicus.util.FindEntityUtil.findViews;
 
 /**
- * Hashes chunks and extracts their signs, portals, views, beds and containers on a pool of worker threads.
+ * Loads chunks, then hashes them and extracts their signs, portals, views, beds and containers, on a pool of worker
+ * threads.
  * <p>
  * One queue serves a whole map: call {@link #waitUntilFinished()} at the end of each region and {@link #close()} once
  * the last region is done, so the worker threads are started once rather than for every region.
@@ -51,11 +55,16 @@ public class RegionLoadQueue implements AutoCloseable
 		executor = new BoundedExecutor("region-loader", numThreads, 16);
 	}
 	
-	public void load(Chunk chunk, RegionHashStore regionHashStore,
+	/**
+	 * Queues a chunk. On a worker thread, {@code loader} reads and parses it, then {@code discover} looks at it; only a
+	 * chunk that {@code discover} accepts is hashed and searched for entities. Both run concurrently for different
+	 * chunks, so they must be thread safe. A null chunk from {@code loader} is skipped.
+	 */
+	public void load(ChunkCoord coord, Supplier<Chunk> loader, Predicate<Chunk> discover, RegionHashStore regionHashStore,
 					 DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 					 HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
-		LoadTask task = new LoadTask(chunk, regionHashStore, map, portals, signs, views, containers, beds);
-		executor.execute("loading chunk " + chunk.getCoord(), task);
+		LoadTask task = new LoadTask(loader, discover, regionHashStore, map, portals, signs, views, containers, beds);
+		executor.execute("loading chunk " + coord, task);
 	}
 	
 	/**
@@ -82,7 +91,8 @@ public class RegionLoadQueue implements AutoCloseable
 	}
 	
 	private class LoadTask implements Runnable {
-		private final Chunk chunk;
+		private final Supplier<Chunk> loader;
+		private final Predicate<Chunk> discover;
 		private final RegionHashStore regionHashStore;
 		private final DimensionConfig map;
 		private final HddObjectListWriter<PortalColumn> portals;
@@ -91,10 +101,11 @@ public class RegionLoadQueue implements AutoCloseable
 		private final ConcurrentLinkedQueue<ContainerEntity> containers;
 		private final Queue<BedEntity> beds;
 		
-		public LoadTask(Chunk chunk, RegionHashStore regionHashStore,
+		public LoadTask(Supplier<Chunk> loader, Predicate<Chunk> discover, RegionHashStore regionHashStore,
 						DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs,
 						HddObjectListWriter<Sign> views, ConcurrentLinkedQueue<ContainerEntity> containers, Queue<BedEntity> beds) {
-			this.chunk = chunk;
+			this.loader = loader;
+			this.discover = discover;
 			this.regionHashStore = regionHashStore;
 			this.map = map;
 			this.portals = portals;
@@ -106,6 +117,10 @@ public class RegionLoadQueue implements AutoCloseable
 		
 		@Override
 		public void run() {
+			Chunk chunk = loader.get();
+			if (chunk == null || !discover.test(chunk))
+				return;
+			
 			chunk.calculateHash(chunkDigest.get(), mapContentHash);
 			regionHashStore.addHash(chunk.getCoord(), chunk.getHash());
 			

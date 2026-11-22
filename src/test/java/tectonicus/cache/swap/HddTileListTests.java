@@ -20,10 +20,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,6 +49,42 @@ class HddTileListTests {
 			assertEquals(new TileCoord(-10, -30), list.getAbsoluteMinCoord());
 			assertEquals(new TileCoord(20, 40), list.getAbsoluteMaxCoord());
 			assertEquals(Set.of(new TileCoord(-10, 40), new TileCoord(20, -30)), list.toSet());
+		}
+	}
+
+	@Test
+	void concurrentAddsKeepEveryTileAndTheBounds() throws Exception {
+		int threads = 8;
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+		try (HddTileListFactory factory = new HddTileListFactory(directory.toFile())) {
+			HddTileList list = factory.createList();
+			List<Future<?>> tasks = new ArrayList<>();
+			// Each thread adds an overlapping 100x100 block, so both new and duplicate coordinates race.
+			for (int t = 0; t < threads; t++) {
+				final int origin = t * 50 - 200;
+				tasks.add(executor.submit(() -> {
+					for (int x = origin; x < origin + 100; x++)
+						for (int y = -origin - 100; y < -origin; y++)
+							list.add(new TileCoord(x, y));
+				}));
+			}
+			for (Future<?> task : tasks)
+				task.get();
+
+			// Blocks run from x -200 (y 100..199) to x 249 (y -250..-151).
+			assertEquals(new TileCoord(-200, -250), list.getAbsoluteMinCoord());
+			assertEquals(new TileCoord(249, 199), list.getAbsoluteMaxCoord());
+			Set<TileCoord> unique = new HashSet<>();
+			for (int t = 0; t < threads; t++) {
+				int origin = t * 50 - 200;
+				for (int x = origin; x < origin + 100; x++)
+					for (int y = -origin - 100; y < -origin; y++)
+						unique.add(new TileCoord(x, y));
+			}
+			assertEquals(unique.size(), list.size());
+			assertEquals(unique, list.toSet());
+		} finally {
+			executor.shutdownNow();
 		}
 	}
 

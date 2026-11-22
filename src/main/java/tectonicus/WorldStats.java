@@ -11,7 +11,6 @@ package tectonicus;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.mutable.MutableLong;
 import tectonicus.util.FileUtils;
 import tectonicus.util.JsArrayWriter;
 import tectonicus.util.JsonWriter;
@@ -24,21 +23,25 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 
+/** Counts are updated by the chunk discovery workers, so the chunk and block counters are thread safe. */
 @Slf4j
 public class WorldStats
 {
-	private int numChunks;
+	private final AtomicInteger numChunks = new AtomicInteger();
 	private int numPortals;
 	private int numPlayers;
 	@Setter
 	private PortalSearch portalSearch;
 	
-	private final Map<IdDataPair, MutableLong> blockIdCounts;
+	private final Map<IdDataPair, LongAdder> blockIdCounts;
 	
 	public WorldStats()
 	{
-		blockIdCounts = new HashMap<>();
+		blockIdCounts = new ConcurrentHashMap<>();
 	}
 	
 	public void setNumPlayers(final int numPlayers)
@@ -48,7 +51,7 @@ public class WorldStats
 	
 	public void incNumChunks()
 	{
-		numChunks++;
+		numChunks.incrementAndGet();
 	}
 	
 	public void incNumPortals()
@@ -63,18 +66,12 @@ public class WorldStats
 	
 	public void incBlockId(final int blockId, final int data)
 	{
-		IdDataPair key = new IdDataPair(blockId, data);
-
-		MutableLong count = blockIdCounts.get(key);
-		if (count != null)
-			count.increment();
-		else
-			blockIdCounts.put(key, new MutableLong(1L));
+		blockIdCounts.computeIfAbsent(new IdDataPair(blockId, data), key -> new LongAdder()).increment();
 	}
 	
 	public int numChunks()
 	{
-		return numChunks;
+		return numChunks.get();
 	}
 
 	public void outputBlockStats(File statsFile, String varNamePrefix, BlockTypeRegistry registry)
@@ -87,7 +84,7 @@ public class WorldStats
 		// First merge with block id names (so that 'flowing lava' and 'stationary lava' becomes 'lava'
 		Map<String, Long> nameCounts = new HashMap<>();
 		Map<IdDataPair, Boolean> unknownBlockIds = new HashMap<>();
-		for (Map.Entry<IdDataPair, MutableLong> entry : blockIdCounts.entrySet())
+		for (Map.Entry<IdDataPair, LongAdder> entry : blockIdCounts.entrySet())
 		{
 			IdDataPair id = entry.getKey();
 
@@ -103,7 +100,7 @@ public class WorldStats
 				
 				// Get the existing count
 				long count = nameCounts.get(name);
-				count += entry.getValue().toLong();
+				count += entry.getValue().sum();
 				
 				// Update the count
 				nameCounts.put(name, count);
@@ -159,7 +156,7 @@ public class WorldStats
 		try (JsonWriter jsWriter = new JsonWriter(statsFile)) {
 			jsWriter.startObject(varNamePrefix + "_worldStats");
 
-			jsWriter.writeVariable("numChunks", "" + numChunks);
+			jsWriter.writeVariable("numChunks", "" + numChunks.get());
 			jsWriter.writeVariable("numPortals", "" + numPortals);
 			jsWriter.writeVariable("numPlayers", "" + numPlayers);
 			jsWriter.writeVariable("minecraftVersion", version == Version.VERSION_UNKNOWN ? 0 : version.getNumVersion());

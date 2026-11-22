@@ -8,13 +8,20 @@
 
 package tectonicus;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WorldStatsTest {
@@ -27,5 +34,28 @@ class WorldStatsTest {
 		new WorldStats().outputWorldStats(output.toFile(), "Overworld", version);
 		int expected = version == Version.VERSION_UNKNOWN ? 0 : version.getNumVersion();
 		assertTrue(Files.readString(output).contains("minecraftVersion: " + expected));
+	}
+
+	@Test
+	void countsChunksFromSeveralThreads() throws Exception {
+		WorldStats stats = new WorldStats();
+		ExecutorService executor = Executors.newFixedThreadPool(8);
+		try {
+			List<Future<?>> tasks = new ArrayList<>();
+			for (int t = 0; t < 8; t++) {
+				tasks.add(executor.submit(() -> {
+					for (int i = 0; i < 10_000; i++) {
+						stats.incNumChunks();
+						stats.incBlockId(1, i % 4);
+					}
+				}));
+			}
+			for (Future<?> task : tasks)
+				task.get();
+		} finally {
+			executor.shutdownNow();
+		}
+
+		assertEquals(80_000, stats.numChunks());
 	}
 }
