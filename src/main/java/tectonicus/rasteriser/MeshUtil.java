@@ -432,8 +432,11 @@ public class MeshUtil {
 				&& neighborBlock.getBlockName().equals("minecraft:snow") || selfBlock.getBlockName().contains("leaves"))
 			return false;
 
+		// Same-block culling is only safe for full cubes (glass, ice...). Partial blocks with the
+		// same name can have different shapes, e.g. a top slab under another top slab leaves a gap.
 		return neighborBlock.isFullOpaqueBlock()
 				|| world.shouldCullSameBlockFaces()
+					&& selfBlock.isFullBlock()
 					&& selfBlock.getBlockName().equals(neighborBlock.getBlockName());
 	}
 }
