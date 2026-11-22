@@ -156,6 +156,11 @@ public class LwjglRasteriser implements Rasteriser {
 	private final int width, height;
 	private final Thread renderThread = Thread.currentThread();
 	private final int maxTextureSize;
+	private final long videoMemoryBytes;
+	private final boolean nvxMemoryInfo;
+	private final boolean atiMemInfo;
+	// Until a world sets a limit from the available video memory, enough for item icons and the like.
+	private final VertexBufferPool vertexBufferPool = new VertexBufferPool(256L * 1024 * 1024);
 	
 	private final Map<Integer, Integer> keyCodeMap;
 	
@@ -334,6 +339,9 @@ public class LwjglRasteriser implements Rasteriser {
 		
 		GL.createCapabilities();
 		maxTextureSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);
+		nvxMemoryInfo = GL.getCapabilities().GL_NVX_gpu_memory_info;
+		atiMemInfo = GL.getCapabilities().GL_ATI_meminfo;
+		videoMemoryBytes = queryVideoMemoryBytes();
 		
 		if ((!isMac && (type == DisplayType.OFFSCREEN || type == DisplayType.OFFSCREEN_EGL)) || isOSMesa) {
 			int fbo = glGenFramebuffers();
@@ -365,6 +373,7 @@ public class LwjglRasteriser implements Rasteriser {
 	@Override
 	public void destroy() {
 		screenshotBuffer = null;
+		vertexBufferPool.destroy();
 		if (pixelPackBuffers != null) {
 			GL15.glDeleteBuffers(pixelPackBuffers);
 			pixelPackBuffers = null;
@@ -401,6 +410,104 @@ public class LwjglRasteriser implements Rasteriser {
 		log.debug("\tOpenGL Vendor: {}", glGetString(GL_VENDOR));
 		log.debug("\tOpenGL Renderer: {}", glGetString(GL_RENDERER));
 		log.debug("\tOpenGL Version: {}", glGetString(GL_VERSION));
+		log.debug("\tVideo memory: {}", videoMemoryBytes > 0 ? (videoMemoryBytes / (1024 * 1024)) + " MB" : "not reported");
+	}
+
+	private static final int GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX = 0x9047;
+	private static final int GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX = 0x9049;
+	private static final int GPU_MEMORY_INFO_EVICTION_COUNT_NVX = 0x904A;
+	private static final int VBO_FREE_MEMORY_ATI = 0x87FB;
+
+	/** Reads video memory through the NVIDIA or AMD extension, or returns -1 when neither is available. */
+	private static long queryVideoMemoryBytes() {
+		var caps = GL.getCapabilities();
+		if (!caps.GL_NVX_gpu_memory_info && !caps.GL_ATI_meminfo)
+			return -1;
+		clearGlErrors();
+		long kb;
+		if (caps.GL_NVX_gpu_memory_info) {
+			kb = GL11.glGetInteger(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX);
+		} else {
+			// Free memory in the buffer pool rather than the total, which is what is left for geometry.
+			int[] info = new int[4];
+			GL11.glGetIntegerv(VBO_FREE_MEMORY_ATI, info);
+			kb = info[0];
+		}
+		// A driver that advertises the extension but rejects the query must not leave an error behind.
+		if (clearGlErrors())
+			return -1;
+		return kb > 0 ? kb * 1024 : -1;
+	}
+
+	/** Clears pending OpenGL errors and returns whether there were any. */
+	private static boolean clearGlErrors() {
+		boolean any = false;
+		// Bounded, since a lost context can keep reporting an error.
+		for (int i = 0; i < 16 && GL11.glGetError() != GL11.GL_NO_ERROR; i++)
+			any = true;
+		return any;
+	}
+
+	@Override
+	public long getVideoMemoryBytes() {
+		return videoMemoryBytes;
+	}
+
+	@Override
+	public long getAvailableVideoMemoryBytes() {
+		if (!nvxMemoryInfo && !atiMemInfo)
+			return -1;
+		clearGlErrors();
+		long kb;
+		if (nvxMemoryInfo) {
+			kb = GL11.glGetInteger(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX);
+		} else {
+			int[] info = new int[4];
+			GL11.glGetIntegerv(VBO_FREE_MEMORY_ATI, info);
+			kb = info[0];
+		}
+		if (clearGlErrors())
+			return -1;
+		return kb >= 0 ? kb * 1024 : -1;
+	}
+
+	@Override
+	public long getVideoMemoryEvictionCount() {
+		if (!nvxMemoryInfo)
+			return -1;
+		clearGlErrors();
+		long count = GL11.glGetInteger(GPU_MEMORY_INFO_EVICTION_COUNT_NVX);
+		return clearGlErrors() ? -1 : count;
+	}
+
+	@Override
+	public void setVertexMemoryLimit(long bytes) {
+		vertexBufferPool.setLimitBytes(bytes);
+	}
+
+	@Override
+	public long getVertexMemoryReservedBytes() {
+		return vertexBufferPool.getReservedBytes();
+	}
+
+	@Override
+	public long getVertexMemoryUsedBytes() {
+		return vertexBufferPool.getUsedBytes();
+	}
+
+	@Override
+	public long getVertexMemoryFailedAllocations() {
+		return vertexBufferPool.getFailedAllocationCount();
+	}
+
+	@Override
+	public long getLiveVertexBufferCount() {
+		return LwjglMesh.getLiveBufferCount();
+	}
+
+	@Override
+	public long getLiveVertexBufferBytes() {
+		return LwjglMesh.getLiveBufferBytes();
 	}
 	
 	@Override
@@ -488,7 +595,7 @@ public class LwjglRasteriser implements Rasteriser {
 	}
 	
 	public Mesh createMesh(Texture texture) {
-		return new LwjglMesh((LwjglTexture) texture);
+		return new LwjglMesh(vertexBufferPool, (LwjglTexture) texture);
 	}
 	
 	@Override

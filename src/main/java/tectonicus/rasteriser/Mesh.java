@@ -49,6 +49,11 @@ public interface Mesh {
 
 
 	int getMemorySize();
+
+	/** Bytes of vertex data this mesh holds, or will hold, on the GPU. */
+	default long getVertexBytes() {
+		return getMemorySize();
+	}
 	
 	int getTotalVertices();
 	

@@ -269,6 +269,25 @@ public class Geometry
 		return baseSize + size;
 	}
 
+	/**
+	 * Estimates the GPU memory these meshes use once uploaded: their vertex data plus
+	 * {@code perBufferOverhead} for each mesh that has vertices, since each gets its own buffer.
+	 */
+	public long getGpuMemoryEstimate(long perBufferOverhead)
+	{
+		long total = estimateGpuMemory(baseMesh, perBufferOverhead) + estimateGpuMemory(transparentMesh, perBufferOverhead);
+		for (Map<Texture, Mesh> meshMap : meshes.values())
+			for (Mesh m : meshMap.values())
+				total += estimateGpuMemory(m, perBufferOverhead);
+		return total;
+	}
+
+	private static long estimateGpuMemory(Mesh mesh, long perBufferOverhead)
+	{
+		long bytes = mesh.getVertexBytes();
+		return bytes == 0 ? 0 : bytes + perBufferOverhead;
+	}
+
 	public void printGeometryStats()
 	{
 		final int baseVerts = countVertices(MeshType.Solid);

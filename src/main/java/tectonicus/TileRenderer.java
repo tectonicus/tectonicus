@@ -118,6 +118,9 @@ public class TileRenderer
 	}
 	
 	public static final Color clearColour = new Color(229, 227, 223);
+
+	/** How often, in base tiles, to log geometry cache and GPU buffer usage at debug level. */
+	private static final int GEOMETRY_USAGE_LOG_INTERVAL = 1000;
 	
 	private final Configuration config;
 	
@@ -857,10 +860,13 @@ public class TileRenderer
 
 					progress.finished(t);
 					done++;
+					if (done % GEOMETRY_USAGE_LOG_INTERVAL == 0)
+						world.logGeometryCacheUsage();
 
 					if (abort)
 						break;
 				}
+				world.logGeometryCacheUsage();
 				if (pending != null) {
 					RenderedTile last = pending;
 					pending = null;

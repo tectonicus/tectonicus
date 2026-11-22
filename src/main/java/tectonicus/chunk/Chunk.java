@@ -446,6 +446,12 @@ public class Chunk
 		return geometry == null ? 0 : geometry.getMemorySize();
 	}
 
+	/** Estimated GPU memory of this chunk's geometry; see {@link Geometry#getGpuMemoryEstimate(long)}. */
+	public long getGeometryGpuMemoryEstimate(long perBufferOverhead)
+	{
+		return geometry == null ? 0 : geometry.getGpuMemoryEstimate(perBufferOverhead);
+	}
+
 	public void printGeometryStats()
 	{
 		if (geometry != null)

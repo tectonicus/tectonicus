@@ -64,6 +64,36 @@ public interface Rasteriser {
 	// Texturing
 	default int getMaxTextureSize() { return Integer.MAX_VALUE; }
 
+	/** Dedicated video memory in bytes as reported by the driver, or -1 when it is not known. */
+	default long getVideoMemoryBytes() { return -1; }
+
+	/** Video memory currently free, as reported by the driver, or -1 when it is not known. */
+	default long getAvailableVideoMemoryBytes() { return -1; }
+
+	/** How many times the driver has moved data out of video memory, or -1 when it is not known. */
+	default long getVideoMemoryEvictionCount() { return -1; }
+
+	/**
+	 * Limits the video memory reserved for mesh vertices. Meshes that do not fit are drawn from system memory.
+	 * Memory already reserved is kept for reuse.
+	 */
+	default void setVertexMemoryLimit(long bytes) {}
+
+	/** Video memory reserved for mesh vertices, or -1 when not tracked. */
+	default long getVertexMemoryReservedBytes() { return -1; }
+
+	/** Part of the reserved vertex memory in use by meshes, or -1 when not tracked. */
+	default long getVertexMemoryUsedBytes() { return -1; }
+
+	/** How many meshes did not fit in the vertex memory and are drawn from system memory, or -1 when not tracked. */
+	default long getVertexMemoryFailedAllocations() { return -1; }
+
+	/** Meshes whose vertices are currently on the GPU, or -1 when not tracked. */
+	default long getLiveVertexBufferCount() { return -1; }
+
+	/** Bytes of vertex data currently on the GPU, or -1 when not tracked. */
+	default long getLiveVertexBufferBytes() { return -1; }
+
 	Texture createTexture(BufferedImage image, TextureFilter filter);
 	
 	Texture createTexture(BufferedImage[] mips, TextureFilter filter);
