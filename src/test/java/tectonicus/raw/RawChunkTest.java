@@ -503,6 +503,81 @@ class RawChunkTest {
 		assertFalse(java.util.Arrays.equals(glowingHash, chunk.calculateHash(digest)));
 	}
 
+	/** Newer saves store a block in its default state as the bare block id, e.g. a sign facing +Z (rotation 8). */
+	@ParameterizedTest
+	@ValueSource(booleans = {true, false})
+	void compactPaletteEntriesGetTheDefaultBlockState(boolean wrappedInCompound) throws Exception {
+		Tag entry = wrappedInCompound
+				? new CompoundTag("", Map.of("", new StringTag("", "minecraft:oak_sign")))
+				: new StringTag("", "minecraft:oak_sign");
+		RawChunk chunk = signChunk(new ListTag("palette", wrappedInCompound ? CompoundTag.class : StringTag.class, List.of(entry)));
+
+		assertEquals("8", chunk.getBlockState(8, 4, 8).get("rotation"));
+		assertEquals("false", chunk.getBlockState(8, 4, 8).get("waterlogged"));
+		SignEntity sign = chunk.getSigns().values().iterator().next();
+		assertTrue(sign.hasDirection());
+		assertEquals(8, sign.getBlockData(), "the view must face +Z, not fall back to -Z");
+	}
+
+	@Test
+	void savedPropertiesAreKeptAndBlocksWithoutPropertiesStayEmpty() throws Exception {
+		CompoundTag rotated = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:oak_sign"),
+				"properties", new CompoundTag("properties", Map.of("rotation", new StringTag("rotation", "4"),
+						"waterlogged", new StringTag("waterlogged", "false")))));
+		RawChunk chunk = signChunk(new ListTag("palette", CompoundTag.class, List.of(rotated)));
+		assertEquals(4, chunk.getSigns().values().iterator().next().getBlockData());
+
+		RawChunk stone = signChunk(new ListTag("palette", CompoundTag.class,
+				List.of(new CompoundTag("", Map.of("", new StringTag("", "minecraft:stone"))))));
+		assertTrue(stone.getBlockState(8, 4, 8).getProperties().isEmpty());
+	}
+
+	@ParameterizedTest
+	@CsvSource({
+			"minecraft:oak_wall_sign, north, 0",
+			"minecraft:oak_wall_sign, east, 4",
+			"minecraft:oak_wall_sign, south, 8",
+			"minecraft:oak_wall_sign, west, 12",
+			"minecraft:wall_sign, north, 0",
+			"minecraft:wall_sign, east, 4",
+			"minecraft:wall_sign, south, 8",
+			"minecraft:wall_sign, west, 12",
+			"minecraft:oak_wall_hanging_sign, north, 8",
+			"minecraft:oak_wall_hanging_sign, east, 12",
+			"minecraft:oak_wall_hanging_sign, south, 0",
+			"minecraft:oak_wall_hanging_sign, west, 4"
+	})
+	void wallSignViewsUseSavedFacing(String blockName, String facing, int rotation) {
+		var properties = new BlockProperties(Map.of("facing", facing, "waterlogged", "false"));
+		var face = new SignEntity.Face(List.of("#view", "", "", ""), "black", false, List.of());
+		SignEntity sign = new SignEntity(1, 64, 1, 1, 64, 1, face, null, null, properties, blockName);
+		assertTrue(sign.hasDirection());
+		assertEquals(rotation, sign.getBlockData());
+	}
+
+	@Test
+	void signsWithoutAnyDirectionAreReported() {
+		var face = new SignEntity.Face(List.of("#view", "", "", ""), "black", false, List.of());
+		SignEntity sign = new SignEntity(1, 64, 1, 1, 64, 1, face, null, null, new BlockProperties(Map.of()), "minecraft:oak_sign");
+		assertFalse(sign.hasDirection());
+		assertEquals(0, sign.getBlockData());
+		assertFalse(new SignEntity(1, 64, 1, 1, 64, 1, face, null, null, null, "minecraft:oak_sign").hasDirection());
+	}
+
+	/** A modern chunk whose lowest section is filled with the single palette entry, with a view sign in it. */
+	private RawChunk signChunk(ListTag palette) throws Exception {
+		CompoundTag sign = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:sign"),
+				"x", new IntTag("x", 8), "y", new IntTag("y", 4), "z", new IntTag("z", 8),
+				"Text1", new StringTag("Text1", "#view")));
+		CompoundTag section = new CompoundTag("", Map.of("Y", new ByteTag("Y", (byte) 0),
+				"block_states", new CompoundTag("block_states", Map.of("palette", palette))));
+		CompoundTag root = new CompoundTag("", Map.of("DataVersion", new IntTag("DataVersion", Version.VERSION_21.getDataVersion()),
+				"Status", new StringTag("Status", "full"), "yPos", new IntTag("yPos", 0),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of(sign)),
+				"sections", new ListTag("sections", CompoundTag.class, List.of(section))));
+		return readChunk(root, Version.VERSION_21);
+	}
+
 	private SignEntity readSign(Version version, Map<String, Tag> text) throws Exception {
 		var fields = new HashMap<>(text);
 		fields.put("id", new StringTag("id", "minecraft:sign"));
