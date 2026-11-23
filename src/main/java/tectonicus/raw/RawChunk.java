@@ -1259,6 +1259,37 @@ public class RawChunk {
 		}
 	}
 
+	/** Whether any block's name matches. Stops at the first match. */
+	public boolean containsBlock(Predicate<BlockName> matches) {
+		for (Section section : sections) {
+			if (section == null)
+				continue;
+			BlockName previous = null;
+			for (BlockName block : section.blockNames) {
+				// Neighbouring blocks are usually the same palette entry, so test each run once.
+				if (block != previous) {
+					previous = block;
+					if (block != null && matches.test(block))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** Whether any block has the given numeric id, as chunks from before 1.13 store their blocks. */
+	public boolean containsBlockId(int blockId) {
+		for (Section section : sections) {
+			if (section == null)
+				continue;
+			for (int id : section.blockIds) {
+				if (id == blockId)
+					return true;
+			}
+		}
+		return false;
+	}
+
 	public BlockName getNamedBlock(final int x, final int y, final int z) {
 		final int sectionY = y / SECTION_HEIGHT;
 		final int localY = y % SECTION_HEIGHT;

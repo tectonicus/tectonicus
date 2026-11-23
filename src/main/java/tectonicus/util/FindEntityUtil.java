@@ -53,7 +53,7 @@ public class FindEntityUtil {
 	}
 
 	public static void findPortals(RawChunk chunk, HddObjectListWriter<PortalColumn> portals, PortalFilter filter, WorldSubset subset) {
-		if (!filter.passesFilter())
+		if (!filter.passesFilter() || !containsPortalBlock(chunk))
 			return;
 		scanPortalColumns(chunk, subset.visibility(chunk.getChunkCoord()), portals::add);
 	}
@@ -61,8 +61,18 @@ public class FindEntityUtil {
 	/** Complete portal columns, independent of render filters and subsets. */
 	public static List<PortalColumn> findPortalColumns(RawChunk chunk) {
 		List<PortalColumn> columns = new ArrayList<>();
-		scanPortalColumns(chunk, (x, y, z) -> true, columns::add);
+		if (containsPortalBlock(chunk))
+			scanPortalColumns(chunk, (x, y, z) -> true, columns::add);
 		return columns;
+	}
+
+	/**
+	 * Whether the chunk has a nether portal block: by name in 1.13+ chunks, by id in older ones. Almost no chunk has
+	 * one, so this is checked before scanning every column.
+	 */
+	private static boolean containsPortalBlock(RawChunk chunk) {
+		return chunk.containsBlock(block -> Block.NETHER_PORTAL.getName().equals(block.getName()))
+				|| chunk.containsBlockId(BlockIds.PORTAL);
 	}
 
 	private static void scanPortalColumns(RawChunk chunk, RawChunk.BlockVisibility visibility, Consumer<PortalColumn> columns) {
