@@ -9,6 +9,8 @@
 
 package tectonicus.util;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.tectonicus.jnbt.ByteTag;
 import org.tectonicus.jnbt.CompoundTag;
@@ -18,6 +20,7 @@ import org.tectonicus.jnbt.NBTCompression;
 import org.tectonicus.jnbt.NBTOutputStream;
 import org.tectonicus.jnbt.StringTag;
 import tectonicus.BlockIds;
+import tectonicus.Minecraft;
 import tectonicus.PortalColumn;
 import tectonicus.Version;
 import tectonicus.chunk.ChunkData;
@@ -37,6 +40,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FindEntityUtilTest {
+	private int previousHeight;
+
+	// Chunks size their section arrays from the global chunk height, which is unset in tests.
+	@BeforeEach
+	void setChunkHeight() {
+		previousHeight = Minecraft.getChunkHeight();
+		Minecraft.setChunkHeight(256);
+	}
+
+	@AfterEach
+	void restoreChunkHeight() {
+		Minecraft.setChunkHeight(previousHeight);
+	}
+
 	@Test
 	void findsTheHeadOfEachBedInScanOrder() {
 		RawChunk chunk = new RawChunk();
@@ -111,6 +128,7 @@ class FindEntityUtilTest {
 		CompoundTag root = new CompoundTag("", Map.of(
 				"DataVersion", new IntTag("DataVersion", Version.VERSION_21.getDataVersion()),
 				"Status", new StringTag("Status", "full"), "yPos", new IntTag("yPos", 0),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of()),
 				"sections", new ListTag("sections", CompoundTag.class, List.of(section))));
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		try (NBTOutputStream out = new NBTOutputStream(bytes)) {

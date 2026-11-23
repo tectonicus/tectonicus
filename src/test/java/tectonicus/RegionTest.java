@@ -9,6 +9,8 @@
 
 package tectonicus;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.tectonicus.jnbt.CompoundTag;
@@ -36,6 +38,20 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RegionTest {
+	private int previousHeight;
+
+	// Chunks size their section arrays from the global chunk height, which is unset in tests.
+	@BeforeEach
+	void setChunkHeight() {
+		previousHeight = Minecraft.getChunkHeight();
+		Minecraft.setChunkHeight(256);
+	}
+
+	@AfterEach
+	void restoreChunkHeight() {
+		Minecraft.setChunkHeight(previousHeight);
+	}
+
 	@Test
 	void corruptChunkWithoutEntityRegionIsLoggedNotThrown(@TempDir Path world) throws Exception {
 		// Pre-1.17 layout: region/r.0.0.mca with no entities/ folder next to it.
@@ -92,6 +108,7 @@ class RegionTest {
 		CompoundTag root = new CompoundTag("", Map.of(
 				"DataVersion", new IntTag("DataVersion", Version.VERSION_21.getDataVersion()),
 				"Status", new StringTag("Status", "full"),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of()),
 				"sections", new ListTag("sections", CompoundTag.class, List.of())));
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try (NBTOutputStream nbt = new NBTOutputStream(out)) {
