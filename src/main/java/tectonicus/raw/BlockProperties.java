@@ -15,9 +15,6 @@ import lombok.NoArgsConstructor;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
 
 @Data
 @NoArgsConstructor
@@ -58,10 +55,30 @@ public class BlockProperties {
 		}
 	}
 
-    private static final Pattern toStringReplacePattern = Pattern.compile("^\\{|\\s+|}$");
+    /**
+     * The properties as {@code key=value} pairs separated by commas, in the map's order and without any whitespace, for
+     * example {@code facing=north,half=top}. Every palette entry of every chunk builds this, so it avoids a regex.
+     */
     @Override
     public String toString() {
-        return toStringReplacePattern.matcher(properties.toString()).replaceAll(StringUtils.EMPTY);
+        StringBuilder text = new StringBuilder();
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            if (!text.isEmpty())
+                text.append(',');
+            appendWithoutWhitespace(text, String.valueOf(entry.getKey()));
+            text.append('=');
+            appendWithoutWhitespace(text, String.valueOf(entry.getValue()));
+        }
+        return text.toString();
+    }
+
+    /** Appends {@code value} without the characters a regex {@code \s} matches. */
+    private static void appendWithoutWhitespace(StringBuilder text, String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c != ' ' && c != '\t' && c != '\n' && c != '\u000B' && c != '\f' && c != '\r')
+                text.append(c);
+        }
     }
 
     public String get(String key) {
