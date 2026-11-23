@@ -137,21 +137,16 @@ public class FindEntityUtil {
 	}
 
 	public static void findBeds(RawChunk chunk, Queue<BedEntity> beds) {
-		for (int y = 0; y < Minecraft.getChunkHeight(); y++) {
-			for (int x = 0; x < RawChunk.WIDTH; x++) {
-				for (int z = 0; z < RawChunk.DEPTH; z++) {
-					final String blockName = chunk.getBlockName(x, y, z);
-					if (blockName != null && blockName.contains("_bed") && !blockName.contains("straw_bed")) {
-						final BlockProperties blockProperties = chunk.getBlockState(x, y, z);
-						if (blockProperties.containsKey("part") && blockProperties.get("part").equals("head")) {
-							ChunkCoord coord = chunk.getChunkCoord();
-							beds.add(new BedEntity((int) (coord.x * RawChunk.WIDTH + x), chunk.getWorldY(y), (int) (coord.z * RawChunk.DEPTH + z), x, y, z,
-									Colors.byName(blockName.replace("minecraft:", "").replace("_bed", "")).getId()));
-						}
-					}
-				}
+		chunk.forEachBlock(RawChunk.BlockName::isBed, (x, y, z) -> {
+			final BlockProperties blockProperties = chunk.getBlockState(x, y, z);
+			// A bed is two blocks; count only its head.
+			if (blockProperties != null && "head".equals(blockProperties.get("part"))) {
+				final String blockName = chunk.getBlockName(x, y, z);
+				ChunkCoord coord = chunk.getChunkCoord();
+				beds.add(new BedEntity((int) (coord.x * RawChunk.WIDTH + x), chunk.getWorldY(y), (int) (coord.z * RawChunk.DEPTH + z), x, y, z,
+						Colors.byName(blockName.replace("minecraft:", "").replace("_bed", "")).getId()));
 			}
-		}
+		});
 	}
 	
 	public static void findBeacons(RawChunk chunk, Queue<BeaconEntity> beacons, BeaconFilter filter,

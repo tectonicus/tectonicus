@@ -1232,6 +1232,33 @@ public class RawChunk {
 		return block == null ? null : block.name;
 	}
 
+	/** Receives the chunk-local position of a block. */
+	@FunctionalInterface
+	public interface BlockVisitor {
+		void visit(int x, int y, int z);
+	}
+
+	/**
+	 * Calls {@code visitor} with the chunk-local position of every block whose name matches, going up through y, then x,
+	 * then z. Much faster than calling {@link #getBlockName} for every position, and empty sections are skipped.
+	 */
+	public void forEachBlock(Predicate<BlockName> matches, BlockVisitor visitor) {
+		for (int sectionY = 0; sectionY < sections.length; sectionY++) {
+			Section section = sections[sectionY];
+			if (section == null)
+				continue;
+			for (int y = 0; y < SECTION_HEIGHT; y++) {
+				for (int x = 0; x < SECTION_WIDTH; x++) {
+					for (int z = 0; z < SECTION_DEPTH; z++) {
+						BlockName block = section.blockNames[Section.getIndex(x, y, z)];
+						if (block != null && matches.test(block))
+							visitor.visit(x, sectionY * SECTION_HEIGHT + y, z);
+					}
+				}
+			}
+		}
+	}
+
 	public BlockName getNamedBlock(final int x, final int y, final int z) {
 		final int sectionY = y / SECTION_HEIGHT;
 		final int localY = y % SECTION_HEIGHT;
@@ -1881,11 +1908,14 @@ public class RawChunk {
 		private final String name;
 		@Getter
 		private final boolean air;
+		@Getter
+		private final boolean bed;
 		private volatile ResolvedModels resolved;
 
 		private BlockName(String name) {
 			this.name = name;
 			this.air = name.contains("minecraft:air") || name.contains("_air");
+			this.bed = name.contains("_bed") && !name.contains("straw_bed");
 		}
 
 		public ResolvedModels resolve(BlockRegistry registry) {
