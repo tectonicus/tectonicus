@@ -1626,10 +1626,7 @@ public class RawChunk {
 			if (s != null) {
 				hash.updateInts(s.blockIds);
 				hash.update(s.blockData);
-				for (BlockName block : s.blockNames) {
-					if (block != null)
-						hash.updateString(block.name);
-				}
+				hash.updateStrings(s.blockNames, block -> block.name);
 				hash.updateBlockStates(s.blockStates, BLOCK_STATES_HASH_MARKER);
 				hash.updateStrings(s.biomeIds);
 				if (s.noiseBiomeIds != null)
