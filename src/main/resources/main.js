@@ -396,7 +396,9 @@ function onBaseLayerChange(e) {
     const mapStyle = document.querySelector('#map').style;
     const fontMask = fontMaskUrl('Font.png', e.layer);
     mapStyle.setProperty('--minecraft-font', fontMask ? 'url("' + fontMask + '")' : 'none');
-    mapStyle.setProperty('--enchanted-glint', 'url("' + worldImageUrl('EnchantedGlint.png', e.layer) + '")');
+    // url() in a custom property resolves against the stylesheet that uses it (Scripts/), so pass an absolute URL.
+    const glintUrl = new URL(worldImageUrl('EnchantedGlint.png', e.layer), document.baseURI).href;
+    mapStyle.setProperty('--enchanted-glint', 'url("' + glintUrl + '")');
 
     updateMarkerControls(e.layer);
 

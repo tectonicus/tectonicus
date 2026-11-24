@@ -292,7 +292,13 @@ html, body, #map {
     bottom: 0;
     background-image: var(--enchanted-glint, url('../Images/EnchantedGlint.png'));
     mix-blend-mode: color-dodge;
-    animation: enchanted_glint 60s linear infinite;
+    /*
+     The animation moves 384 pixels vertically at 3x scaling, so 1152 pixels in 60 s.
+     Since we do not really need to redraw when the glint moved a subpixel distance,
+     let the number of steps in the animation be 1152 so that we do not redraw more than ~19 times/s
+     (1152 steps divided by 60 s). With linear function the browser would animate at 60 fps.
+    */
+    animation: enchanted_glint 60s steps(1152) infinite;
 }
 
 .item .item_description,
