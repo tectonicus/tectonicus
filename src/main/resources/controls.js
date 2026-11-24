@@ -200,12 +200,9 @@ function CreateToggleControl(marker, image, startEnabled, stateKey) {
 	return new toggleControl();
 }
 
+// The pressed/raised look comes from [aria-pressed] in tectonicusStyles.css.
 function SetToggleBg(control) {
 	control.setAttribute('aria-pressed', String(control.checked));
-	if (control.checked)
-		control.style.backgroundColor = '#FFFFFF';
-	else
-		control.style.backgroundColor = '#CCCCFF';
 }
 
 function updateLinkUrl(currentLayer) {

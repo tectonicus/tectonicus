@@ -1,3 +1,86 @@
+/*
+ * Minecraft-style map UI.
+ *
+ * Font: Mac's Minecraft by macimas (https://github.com/macimas-fonts/macsMinecraft, SIL Open Font License 1.1),
+ * a proportional rendition of the Minecraft font with real bold and italic faces, extracted to fonts/
+ * next to this file. It is drawn on a pixel grid, so it is only sharp when one font pixel covers a whole number of
+ * device pixels; setUpPixelFont() in main.js measures the font and overwrites the --mc-u/--mc-fs*
+ * values below for the current devicePixelRatio. The values here are only the starting point.
+ */
+@font-face {
+    font-family: "Macs Minecraft";
+    src: url("fonts/macsMinecraft-Regular.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Macs Minecraft";
+    src: url("fonts/macsMinecraft-Italic.woff2") format("woff2");
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Macs Minecraft";
+    src: url("fonts/macsMinecraft-Bold.woff2") format("woff2");
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Macs Minecraft";
+    src: url("fonts/macsMinecraft-BoldItalic.woff2") format("woff2");
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+:root {
+    --mc-font: "Macs Minecraft", "Consolas", "Courier New", monospace;
+    --mc-u: 2px;        /* one font pixel; also the text shadow offset */
+    --mc-fs: 20px;      /* normal text */
+    --mc-fs-l: 30px;    /* zoom +/- */
+    --mc-lh: 22px;      /* line height, a whole number of font pixels */
+
+    /* Inventory / GUI panel */
+    --mc-panel: #c6c6c6;
+    --mc-panel-light: #ffffff;
+    --mc-panel-dark: #555555;
+    --mc-outline: #000000;
+    --mc-label: #3f3f3f;
+    --mc-drop-shadow: rgba(0, 0, 0, 0.35);
+
+    /* Button */
+    --mc-button: #6f6f6f;
+    --mc-button-light: #a9a9a9;
+    --mc-button-dark: #4a4a4a;
+    --mc-button-text: #ffffff;
+    --mc-button-hover-border: #ffffff;
+    --mc-text-shadow: #3f3f3f;
+
+    /* Toggle buttons: raised = off, pressed in = on */
+    --mc-toggle-off: #b4b4b4;
+    --mc-toggle-off-light: #f0f0f0;
+    --mc-toggle-off-dark: #5a5a5a;
+    --mc-toggle-on: #7a7a7a;
+    --mc-toggle-on-light: #b8b8b8;
+    --mc-toggle-on-dark: #373737;
+
+    /* Item tooltip */
+    --mc-tooltip: rgba(16, 0, 16, 0.94);
+    --mc-tooltip-border-top: #300088;
+    --mc-tooltip-border-bottom: #1c0048;
+
+    /* F3 debug overlay / chat line */
+    --mc-overlay-bg: rgba(0, 0, 0, 0.5);
+
+    --mc-accent: #3c8527; /* grass green: radio buttons and checkboxes */
+}
+
 body {
     padding: 0;
     margin: 0;
@@ -8,50 +91,254 @@ html, body, #map {
     width: 100%;
 }
 
-.leaflet-popup,
-.leaflet-tooltip,
-.tippy-box,
-.leaflet-container a.leaflet-popup-close-button {
-    font-family: Arial, sans-serif;
+.leaflet-container,
+.tippy-box {
+    font-family: var(--mc-font);
+    font-size: var(--mc-fs);
+    line-height: var(--mc-lh);
+    /* Use only the real bold/italic faces; synthetic ones and kerning smear a pixel font */
+    font-synthesis: none;
+    font-kerning: none;
+    -webkit-font-smoothing: none;
+}
+
+/* Leaflet sets its own fonts on these; keep them on the pixel font. */
+.leaflet-container .leaflet-popup,
+.leaflet-container .leaflet-tooltip,
+.leaflet-container a.leaflet-popup-close-button,
+.leaflet-container .leaflet-control-layers,
+.leaflet-container .leaflet-control-attribution {
+    font-family: var(--mc-font);
+}
+
+/* Pixel art stays pixel art */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+    image-rendering: pixelated;
+}
+
+/* ---------- Shared looks ---------- */
+
+/* GUI panel: light top-left bevel, dark bottom-right bevel, black outline, square corners */
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-control-layers-expanded,
+.toggle-menu-items,
+.world-control,
+.subset-control {
+    color: var(--mc-label);
+    background: var(--mc-panel);
+    border: 2px solid var(--mc-outline);
+    border-radius: 0;
+    box-shadow:
+        inset 2px 2px 0 var(--mc-panel-light),
+        inset -2px -2px 0 var(--mc-panel-dark),
+        3px 3px 0 var(--mc-drop-shadow);
+}
+
+/* Minecraft button; the border turns white on hover/focus like in game */
+.leaflet-container .leaflet-bar a,
+.leaflet-container a.leaflet-popup-close-button,
+.leaflet-container .leaflet-control-layers-toggle,
+.marker_copy_controls button,
+.portal_jump_control button {
+    box-sizing: border-box;
+    color: var(--mc-button-text);
+    background-color: var(--mc-button);
+    border: 2px solid var(--mc-outline);
+    border-radius: 0;
+    box-shadow:
+        inset 2px 2px 0 var(--mc-button-light),
+        inset -2px -3px 0 var(--mc-button-dark);
+    text-shadow: var(--mc-u) var(--mc-u) 0 var(--mc-text-shadow);
+    font-family: var(--mc-font);
+    cursor: pointer;
+}
+
+.leaflet-container .leaflet-bar a:hover,
+.leaflet-container .leaflet-bar a:focus-visible,
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus,
+.leaflet-container .leaflet-control-layers-toggle:hover,
+.leaflet-container .leaflet-control-layers-toggle:focus-visible,
+.toggle-menu-button[aria-expanded="true"],
+.marker_copy_controls button:hover,
+.marker_copy_controls button:focus-visible,
+.portal_jump_control button:hover,
+.portal_jump_control button:focus-visible {
+    color: var(--mc-button-text);
+    background-color: var(--mc-button);
+    border-color: var(--mc-button-hover-border);
+    outline: none;
+}
+
+.leaflet-container .leaflet-bar a:active,
+.marker_copy_controls button:active,
+.portal_jump_control button:active {
+    box-shadow:
+        inset 2px 2px 0 var(--mc-button-dark),
+        inset -2px -2px 0 var(--mc-button-light);
+}
+
+/* ---------- Zoom and reset buttons ---------- */
+
+.leaflet-container .leaflet-bar {
+    border: 0;
+    border-radius: 0;
+    box-shadow: 3px 3px 0 var(--mc-drop-shadow);
+}
+
+.leaflet-container .leaflet-bar a {
+    width: 36px;
+    height: 36px;
+    line-height: 32px;
+    border-radius: 0;
+}
+
+.leaflet-container .leaflet-bar a + a {
+    border-top: 0;
+}
+
+.leaflet-container .leaflet-bar a:first-child,
+.leaflet-container .leaflet-bar a:last-child {
+    border-radius: 0;
+}
+
+.leaflet-container .leaflet-control-zoom-in,
+.leaflet-container .leaflet-control-zoom-out {
+    font: var(--mc-fs-l)/32px var(--mc-font);
+}
+
+.leaflet-container .leaflet-bar a.leaflet-disabled {
+    color: #a0a0a0;
+    background-color: #2c2c2c;
+    border-color: var(--mc-outline);
+    box-shadow: none;
+    cursor: default;
 }
 
 .compass.leaflet-control-custom {
     clear: none;
 }
 
-.leaflet-control-reset {
-    position: absolute;
-}
-
-.leaflet-control-reset-view {
-    background-image: url('../Images/Spawn.png');
-    background-size: 24px 24px;
+.compass img {
     image-rendering: pixelated;
 }
 
-.toggle-menu .toggle-menu-button {
+.leaflet-control-reset {
+    position: absolute;
+    margin-top: 8px;
+}
+
+/* The Spawn icon is 32 px; 24 px keeps it inside the bevels */
+.leaflet-container .leaflet-bar a.leaflet-control-reset-view {
+    background-image: url('../Images/Spawn.png');
+    background-size: 24px 24px;
+    background-position: center;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+/* ---------- Layer switcher and marker menu: identical 44x44 buttons ---------- */
+
+.leaflet-container .leaflet-control-layers:not(.leaflet-control-layers-expanded) {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.leaflet-container .leaflet-control-layers-toggle {
     display: grid;
     place-items: center;
+    width: 44px;
+    height: 44px;
     padding: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg transform='translate(1 1)' fill='none' stroke='%233f3f3f' stroke-width='2'%3E%3Cpath d='M12 3 21 8 12 13 3 8Z' fill='%233f3f3f'/%3E%3Cpath d='M3 12 12 17 21 12M3 16 12 21 21 16'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff' stroke-width='2'%3E%3Cpath d='M12 3 21 8 12 13 3 8Z' fill='%23fff'/%3E%3Cpath d='M3 12 12 17 21 12M3 16 12 21 21 16'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 28px 28px;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: drop-shadow(3px 3px 0 var(--mc-drop-shadow));
+}
+
+/* Vector overlay toggles reuse Leaflet's layer control with a grid icon. */
+.leaflet-container .overlay-control .leaflet-control-layers-toggle {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-width='1.6'%3E%3Cg stroke='%233f3f3f' transform='translate(1 1)'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M9.33 4v16M14.67 4v16M4 9.33h16M4 14.67h16'/%3E%3C/g%3E%3Cg stroke='%23fff'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M9.33 4v16M14.67 4v16M4 9.33h16M4 14.67h16'/%3E%3C/g%3E%3Cpath d='M9.33 9.33h5.34v5.34H9.33z' fill='%235cd65c' stroke='none'/%3E%3C/svg%3E");
+}
+
+/* The marker menu button draws its icon in a span instead */
+.leaflet-container .toggle-menu .toggle-menu-button {
+    background-image: none;
+}
+
+.leaflet-container .leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+    display: none;
+}
+
+.leaflet-container .leaflet-control-layers-expanded {
+    padding: 8px 12px 8px 8px;
+    font-size: var(--mc-fs);
+    line-height: var(--mc-lh);
+}
+
+.leaflet-container .leaflet-control-layers label:hover {
+    color: #000;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* Radio buttons and checkboxes drawn as small inventory slots, sized in font pixels like the text */
+.leaflet-container .leaflet-control-layers input[type="radio"],
+.leaflet-container .leaflet-control-layers input[type="checkbox"] {
+    appearance: none;
+    box-sizing: border-box;
+    width: calc(var(--mc-u) * 8);
+    height: calc(var(--mc-u) * 8);
+    margin: 0 calc(var(--mc-u) * 3) 0 0;
+    vertical-align: calc(var(--mc-u) * -0.5);
+    background: #8b8b8b no-repeat center;
     border: 0;
-    border-radius: 5px;
-    background: white;
+    border-radius: 0;
+    box-shadow:
+        inset var(--mc-u) var(--mc-u) 0 #373737,
+        inset calc(var(--mc-u) * -1) calc(var(--mc-u) * -1) 0 #fff;
     cursor: pointer;
 }
 
-.toggle-menu .toggle-menu-button:hover {
-    background-color: #f4f4f4;
+.leaflet-container .leaflet-control-layers input[type="radio"]:hover,
+.leaflet-container .leaflet-control-layers input[type="checkbox"]:hover,
+.leaflet-container .leaflet-control-layers label:hover input {
+    background-color: #a3a3a3;
 }
 
-.toggle-menu-button:focus-visible {
-    outline: 2px solid #5265b5;
-    outline-offset: 2px;
+.leaflet-container .leaflet-control-layers input[type="radio"]:focus-visible,
+.leaflet-container .leaflet-control-layers input[type="checkbox"]:focus-visible {
+    outline: var(--mc-u) solid #fff;
+    outline-offset: 0;
+}
+
+/* Selected layer: a green square in the slot */
+.leaflet-container .leaflet-control-layers input[type="radio"]:checked {
+    background-image: linear-gradient(var(--mc-accent), var(--mc-accent));
+    background-size: calc(var(--mc-u) * 4) calc(var(--mc-u) * 4);
+}
+
+/* Shown overlay: a pixel check mark */
+.leaflet-container .leaflet-control-layers input[type="checkbox"]:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges' fill='%233c8527'%3E%3Cpath d='M1 3h1v2H1zM2 4h1v2H2zM3 5h1v2H3zM4 4h1v2H4zM5 3h1v2H5zM6 2h1v2H6z'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+}
+
+.leaflet-container .leaflet-control-layers-separator {
+    margin: 6px -4px;
+    border-top: 2px solid var(--mc-panel-dark);
+    border-bottom: 2px solid var(--mc-panel-light);
 }
 
 .toggle-menu-icon {
     width: 24px;
     height: 24px;
     background: url('images/toggles.svg') center / 24px 24px no-repeat;
+    filter: drop-shadow(2px 2px 0 var(--mc-text-shadow));
+    image-rendering: pixelated;
 }
 
 .toggle-menu-panel {
@@ -65,57 +352,198 @@ html, body, #map {
     display: grid;
     direction: rtl;
     width: max-content;
-    grid-template-columns: repeat(var(--toggle-columns, 3), 44px);
+    grid-template-columns: repeat(var(--toggle-columns, 3), 40px);
     gap: 4px;
-    padding: 6px;
-    border-radius: 5px;
-    background: white;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+    padding: 8px;
 }
 
+/* ---------- Marker toggle buttons ---------- */
+/*
+ * The icons are 16 or 32 px, so the content box is exactly 32x32 (40 - 2*2 border - 2*2 padding) and
+ * nearest-neighbour scaling stays even. Enabled = pressed in, disabled = raised.
+ */
 .button.leaflet-control-custom {
     clear: none;
-    width: 34px;
-    height: 34px;
-    padding: 5px;
-    margin-left: -2px;
-    cursor: pointer;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    padding: 2px;
+    background-color: var(--mc-toggle-off);
+    border: 2px solid var(--mc-outline);
+    border-radius: 0;
+    box-shadow:
+        inset 2px 2px 0 var(--mc-toggle-off-light),
+        inset -2px -2px 0 var(--mc-toggle-off-dark);
     image-rendering: pixelated;
+    cursor: pointer;
 }
 
-.toggle-menu-items .button.leaflet-control {
+.button.leaflet-control-custom[aria-pressed="true"] {
+    padding: 3px 1px 1px 3px; /* nudge the icon 1 px down-right; still a 32x32 content box */
+    background-color: var(--mc-toggle-on);
+    box-shadow:
+        inset 2px 2px 0 var(--mc-toggle-on-dark),
+        inset -2px -2px 0 var(--mc-toggle-on-light);
+}
+
+.button.leaflet-control-custom:hover,
+.button.leaflet-control-custom:focus-visible {
+    border-color: var(--mc-button-hover-border);
+    outline: none;
+}
+
+.toggle-menu-items .button.leaflet-control-custom {
     direction: ltr;
     float: none;
-    clear: none;
-    box-sizing: border-box;
-    width: 44px;
-    height: 44px;
     margin: 0;
-    padding: 5px;
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    box-shadow: none;
 }
 
-.leaflet-control-layers-expanded:hover {
-    border-color: rgb(137, 132, 209);
+/* Without the menu the buttons stand alone on the map */
+.leaflet-right > .button.leaflet-control-custom {
+    box-shadow:
+        inset 2px 2px 0 var(--mc-toggle-off-light),
+        inset -2px -2px 0 var(--mc-toggle-off-dark),
+        3px 3px 0 var(--mc-drop-shadow);
 }
+
+.leaflet-right > .button.leaflet-control-custom[aria-pressed="true"] {
+    box-shadow:
+        inset 2px 2px 0 var(--mc-toggle-on-dark),
+        inset -2px -2px 0 var(--mc-toggle-on-light),
+        3px 3px 0 var(--mc-drop-shadow);
+}
+
+/* ---------- World / area selects (styled like a Minecraft text field) ---------- */
 
 .world-control,
 .subset-control {
     padding: 6px 8px;
-    background: white;
-    font: 13px/1.5 Arial, sans-serif;
 }
 
 .world-control select,
 .subset-control select {
     max-width: 220px;
+    padding: 2px 4px;
     font: inherit;
+    color: #fff;
+    background: #000;
+    border: 2px solid #a0a0a0;
+    border-radius: 0;
+    outline: none;
 }
 
-.button:hover {
-    border-color: rgb(137, 132, 209);
+.world-control select:focus,
+.subset-control select:focus {
+    border-color: #fff;
+}
+
+/* ---------- Popups ---------- */
+
+.leaflet-container .leaflet-popup-content-wrapper {
+    padding: 2px;
+}
+
+.leaflet-container .leaflet-popup-content {
+    margin: 14px 30px 14px 16px;
+    font-size: var(--mc-fs);
+    line-height: var(--mc-lh);
+}
+
+.leaflet-container .leaflet-popup-content a {
+    color: #2a2ad6;
+}
+
+.leaflet-container .leaflet-popup-content h4 {
+    margin: 0 0 6px;
+}
+
+/* Speech-bubble tip that overlaps the panel border so the two read as one shape */
+.leaflet-container .leaflet-popup-tip-container {
+    height: 22px;
+    margin-top: -4px;
+}
+
+.leaflet-container .leaflet-popup-tip {
+    margin-top: -11px;
+    background: var(--mc-panel);
+    border: 2px solid var(--mc-outline);
+    box-shadow: none;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font: var(--mc-fs)/16px var(--mc-font);
+    text-align: center;
+}
+
+.leaflet-container .leaflet-popup-content .playerName {
+    margin-bottom: 4px;
+    color: #fff;
+    text-shadow: var(--mc-u) var(--mc-u) 0 var(--mc-text-shadow);
+}
+
+.leaflet-container .leaflet-popup-content #xpDiv {
+    margin-top: 4px;
+    color: #80ff20;
+    text-shadow: var(--mc-u) var(--mc-u) 0 #203f08;
+}
+
+.leaflet-container .leaflet-popup-content img[width="64"] {
+    image-rendering: pixelated;
+}
+
+/* ---------- Tooltips (styled like item tooltips) ---------- */
+
+.leaflet-container .leaflet-tooltip,
+.tippy-box[data-theme~="minecraft"] {
+    color: #fff;
+    background:
+        linear-gradient(var(--mc-tooltip), var(--mc-tooltip)) padding-box,
+        linear-gradient(var(--mc-tooltip-border-top), var(--mc-tooltip-border-bottom)) border-box;
+    border: 2px solid transparent;
+    border-radius: 0;
+    outline: 2px solid var(--mc-tooltip);
+    box-shadow: none;
+    text-shadow: var(--mc-u) var(--mc-u) 0 var(--mc-text-shadow);
+}
+
+.leaflet-container .leaflet-tooltip {
+    padding: 3px 7px;
+    font-size: var(--mc-fs);
+    line-height: var(--mc-lh);
+}
+
+.tippy-box[data-theme~="minecraft"] .tippy-content {
+    padding: 3px 7px;
+}
+
+.tippy-box[data-theme~="minecraft"] a {
+    color: #55ffff;
+}
+
+/* Minecraft tooltips have no arrows */
+.leaflet-container .leaflet-tooltip::before,
+.tippy-box[data-theme~="minecraft"] > .tippy-arrow {
+    display: none;
+}
+
+/* ---------- Attribution (chat-line style) ---------- */
+
+.leaflet-container .leaflet-control-attribution {
+    padding: 1px 6px;
+    color: #e0e0e0;
+    background: var(--mc-overlay-bg);
+    font-size: var(--mc-fs);
+    line-height: var(--mc-lh);
+    text-shadow: var(--mc-u) var(--mc-u) 0 #000;
+}
+
+.leaflet-container .leaflet-control-attribution a {
+    color: #ffff55;
 }
 
 .center {
@@ -636,15 +1064,17 @@ html, body, #map {
     transform-origin: top left;
 }
 
+
 .marker_copy_controls {
     display: grid;
-    grid-template-columns: repeat(3, 30px);
-    min-width: 102px;
+    grid-template-columns: repeat(3, 32px);
+    min-width: 108px;
     justify-content: center;
     gap: 6px;
     margin-top: 10px;
-    border-top: 1px solid #ccc;
-    padding-top: 8px;
+    padding-top: 10px;
+    border-top: 2px solid var(--mc-panel-dark);
+    box-shadow: inset 0 2px 0 var(--mc-panel-light);
 }
 
 .portal_jump_control {
@@ -654,42 +1084,25 @@ html, body, #map {
 
 .marker_copy_controls button,
 .portal_jump_control button {
-    box-sizing: border-box;
-    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     padding: 5px;
-    color: #333;
-    background: #f5f5f5;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-}
-
-.marker_copy_controls button:hover,
-.portal_jump_control button:hover {
-    background: #e5e5e5;
-    border-color: #888;
-}
-
-.marker_copy_controls button:focus-visible,
-.portal_jump_control button:focus-visible {
-    outline: 2px solid #5265b5;
-    outline-offset: 2px;
 }
 
 .marker_copy_controls svg,
 .portal_jump_control svg {
     width: 18px;
     height: 18px;
+    filter: drop-shadow(1px 1px 0 var(--mc-text-shadow));
 }
 
 .marker_copy_status {
     grid-column: 1 / -1;
     text-align: center;
-    font-size: 12px;
+    color: var(--mc-label);
 }
 
 .container_name {
@@ -707,11 +1120,6 @@ html, body, #map {
             background: #3f3f3f;
         }
 
-/* Vector overlay toggles reuse Leaflet's layer control with a grid icon. */
-.overlay-control .leaflet-control-layers-toggle {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.6'%3E%3Cpath d='M4 4h16v16H4z'/%3E%3Cpath d='M9.33 4v16M14.67 4v16M4 9.33h16M4 14.67h16'/%3E%3Cpath d='M9.33 9.33h5.34v5.34H9.33z' fill='%235cd65c' fill-opacity='.7' stroke='none'/%3E%3C/svg%3E");
-    background-size: 26px 26px;
-}
 
 .overlay-feature-name {
     font-weight: bold;
