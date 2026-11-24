@@ -21,11 +21,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A fixed thread pool that makes the submitting thread wait while too many tasks are pending, and that counts and logs
  * tasks that fail instead of losing their exceptions in an unread Future.
+ * <p>
+ * The pool can be drained with {@link #awaitIdle()} and reused, or drained and shut down with {@link #awaitCompletion()}.
  */
 @Slf4j
 public class BoundedExecutor {
 	private final ThreadPoolExecutor executor;
 	private final Semaphore capacity;
+	/** Permits in {@link #capacity}: one per worker plus one per queue slot. Holding all of them means no task is pending. */
+	private final int permits;
 	private final AtomicInteger failures = new AtomicInteger();
 
 	/**
@@ -35,7 +39,8 @@ public class BoundedExecutor {
 	 */
 	public BoundedExecutor(String name, int numThreads, int maxQueued) {
 		int threads = Math.max(1, numThreads);
-		capacity = new Semaphore(threads + Math.max(0, maxQueued));
+		permits = threads + Math.max(0, maxQueued);
+		capacity = new Semaphore(permits);
 		AtomicInteger threadNumber = new AtomicInteger();
 		ThreadFactory factory = runnable -> {
 			Thread thread = new Thread(runnable, name + "-" + threadNumber.incrementAndGet());
@@ -47,7 +52,7 @@ public class BoundedExecutor {
 
 	/**
 	 * Runs the task on a worker, waiting first if the queue is full. A task that throws is logged with its
-	 * description and counted; see {@link #awaitCompletion()}.
+	 * description and counted; see {@link #awaitIdle()} and {@link #awaitCompletion()}.
 	 */
 	public void execute(String description, Runnable task) {
 		try {
@@ -73,12 +78,32 @@ public class BoundedExecutor {
 		}
 	}
 
-	/** Records a failure that a task handled itself, so it is included in {@link #awaitCompletion()}'s count. */
+	/** Records a failure that a task handled itself, so it is included in the next failure count returned. */
 	public void recordFailure() {
 		failures.incrementAndGet();
 	}
 
-	/** Stops accepting tasks, waits for the queued ones to finish and returns how many failed. */
+	/**
+	 * Waits until every task queued so far has finished and returns how many failed since the previous call to this
+	 * method. The workers stay alive, so more tasks can be queued afterwards. Call it from the thread that queues tasks:
+	 * a task queued from another thread while this waits delays it.
+	 */
+	public int awaitIdle() {
+		// Each task holds a permit from execute() until it has finished, so all permits free means nothing is pending.
+		try {
+			capacity.acquire(permits);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while waiting for tasks to finish", e);
+		}
+		capacity.release(permits);
+		return failures.getAndSet(0);
+	}
+
+	/**
+	 * Stops accepting tasks, waits for the queued ones to finish and returns how many failed since the last
+	 * {@link #awaitIdle()}, or since the start if it was never called.
+	 */
 	public int awaitCompletion() {
 		executor.shutdown();
 		try {

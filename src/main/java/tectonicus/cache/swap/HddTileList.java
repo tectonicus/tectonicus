@@ -17,12 +17,14 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * A temporary disk-backed coordinate set owned by a factory. Not thread safe.
+ * A temporary disk-backed coordinate set owned by a factory. {@link #add} may be called from several threads at once;
+ * the other methods are not thread safe and should be used once adding is done.
  * Iteration streams coordinates in Morton order; do not modify a list while iterating over it.
  */
 public final class HddTileList implements Iterable<TileCoord>, AutoCloseable {
 	private final HddTileListFactory factory;
 	private final MVMap<Long, Boolean> tiles;
+	// Guarded by this.
 	private int minTileX = Integer.MAX_VALUE, maxTileX = Integer.MIN_VALUE;
 	private int minTileY = Integer.MAX_VALUE, maxTileY = Integer.MIN_VALUE;
 
@@ -50,15 +52,18 @@ public final class HddTileList implements Iterable<TileCoord>, AutoCloseable {
 		};
 	}
 
-	/** Returns true only when this coordinate was not already present. */
+	/** Returns true only when this coordinate was not already present. Thread safe. */
 	public boolean add(TileCoord coord) {
 		checkOpen();
+		// MVMap handles concurrent writers; only the bounds need a lock.
 		if (tiles.putIfAbsent(encode(coord), Boolean.TRUE) != null)
 			return false;
-		minTileX = Math.min(coord.x, minTileX);
-		maxTileX = Math.max(coord.x, maxTileX);
-		minTileY = Math.min(coord.y, minTileY);
-		maxTileY = Math.max(coord.y, maxTileY);
+		synchronized (this) {
+			minTileX = Math.min(coord.x, minTileX);
+			maxTileX = Math.max(coord.x, maxTileX);
+			minTileY = Math.min(coord.y, minTileY);
+			maxTileY = Math.max(coord.y, maxTileY);
+		}
 		return true;
 	}
 
@@ -73,13 +78,13 @@ public final class HddTileList implements Iterable<TileCoord>, AutoCloseable {
 	}
 
 	/** Independent minimum x and y; this exact coordinate need not be present. */
-	public TileCoord getAbsoluteMinCoord() {
+	public synchronized TileCoord getAbsoluteMinCoord() {
 		checkOpen();
 		return new TileCoord(minTileX, minTileY);
 	}
 
 	/** Independent maximum x and y; this exact coordinate need not be present. */
-	public TileCoord getAbsoluteMaxCoord() {
+	public synchronized TileCoord getAbsoluteMaxCoord() {
 		checkOpen();
 		return new TileCoord(maxTileX, maxTileY);
 	}

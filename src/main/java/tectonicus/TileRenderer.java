@@ -32,8 +32,6 @@ import tectonicus.rasteriser.PendingScreenshot;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.rasteriser.RasteriserFactory;
 import tectonicus.rasteriser.RasteriserFactory.DisplayType;
-import tectonicus.raw.BedEntity;
-import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.LevelDat;
 import tectonicus.raw.RawChunk;
 import tectonicus.renderer.OrthoCamera;
@@ -70,8 +68,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.util.OutputResourcesUtil.outputBeacons;
@@ -156,7 +153,8 @@ public class TileRenderer
 	private HddTileList discoveredTiles;
 	private boolean useFullHeightBounds;
 	private OverlayExporter overlayExporter;
-	private final Map<UnionWorldSubset.Member, WorldVectors.HeightBounds> subsetHeights = new HashMap<>();
+	// Filled by the chunk discovery workers.
+	private final Map<UnionWorldSubset.Member, WorldVectors.HeightBounds> subsetHeights = new ConcurrentHashMap<>();
 	
 	public TileRenderer(Configuration config, ProgressListener listener, MessageDigest hashAlgorithm) throws Exception
 	{
@@ -616,94 +614,77 @@ public class TileRenderer
 		//		gather world stats and signs for each chunk
 		
 		final Date beginTime = new Date();
-		if (world.isAlphaWorld()) {
-			ChunkCoord[] alphaChunkCoords = world.getAlphaChunkCoords();
-			ChunkCoord[] sortedAlphaChunks = Arrays.copyOf(alphaChunkCoords, alphaChunkCoords.length);
-			Arrays.sort(sortedAlphaChunks, (lhs, rhs) -> {
-				RegionCoord lhsRegion = RegionCoord.fromChunkCoord(lhs);
-				RegionCoord rhsRegion = RegionCoord.fromChunkCoord(rhs);
-				
-				int regionXComp = Long.compare(lhsRegion.x, rhsRegion.x);
-				if (regionXComp != 0)
-					return regionXComp;
-				
-				int regionZComp = Long.compare(lhsRegion.z, rhsRegion.z);
-				if (regionZComp != 0)
-					return regionZComp;
-				
-				int chunkXComp = Long.compare(lhs.x, rhs.x);
-				if (chunkXComp != 0)
-					return chunkXComp;
-				
-				return Long.compare(lhs.z, rhs.z);
-			});
-			
-			log.debug("Looking for alpha chunks in {}", world.getWorldDir().getAbsolutePath());
-			
-			//Group alpha chunks by "region" to use the regionHashStore and regionLoadQueue
-			RegionCoord currentRegion = null;
-			RegionLoadQueue regionLoadQueue = null;
-			for (ChunkCoord coord : sortedAlphaChunks) {
-				if (coord == null || !world.contains(coord))
-					continue;
-				
-				RegionCoord regionCoord = RegionCoord.fromChunkCoord(coord);
-				if (currentRegion == null || !currentRegion.equals(regionCoord)) {
-					if (regionLoadQueue != null) {
-						endRegion(portals, signs, views, regionLoadQueue, worldStats);
-					}
+		// One worker pool for the whole map; each region only waits for its own chunks before its hashes are written.
+		try (RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads(), world::getMapContentHash)) {
+			if (world.isAlphaWorld()) {
+				ChunkCoord[] alphaChunkCoords = world.getAlphaChunkCoords();
+				ChunkCoord[] sortedAlphaChunks = Arrays.copyOf(alphaChunkCoords, alphaChunkCoords.length);
+				Arrays.sort(sortedAlphaChunks, (lhs, rhs) -> {
+					RegionCoord lhsRegion = RegionCoord.fromChunkCoord(lhs);
+					RegionCoord rhsRegion = RegionCoord.fromChunkCoord(rhs);
 					
-					currentRegion = regionCoord;
-					regionHashStore.startRegion(regionCoord);
-					regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads(), world::getMapContentHash);
-				}
+					int regionXComp = Long.compare(lhsRegion.x, rhsRegion.x);
+					if (regionXComp != 0)
+						return regionXComp;
+					
+					int regionZComp = Long.compare(lhsRegion.z, rhsRegion.z);
+					if (regionZComp != 0)
+						return regionZComp;
+					
+					int chunkXComp = Long.compare(lhs.x, rhs.x);
+					if (chunkXComp != 0)
+						return chunkXComp;
+					
+					return Long.compare(lhs.z, rhs.z);
+				});
 				
-				Chunk c = null;
-				try {
-					c = world.loadChunk(coord, worldStats);
-				} catch (Exception e) {
-					log.error(String.format("Chunk %1$d,%2$d is probably corrupted.", coord.x, coord.z), e);
-				}
+				log.debug("Looking for alpha chunks in {}", world.getWorldDir().getAbsolutePath());
 				
-				chunkSearch(world, map, portals, signs, views, c, worldStats, regionLoadQueue);
-			}
-			
-			if (regionLoadQueue != null) {
-				endRegion(portals, signs, views, regionLoadQueue, worldStats);
-			}
-		} else {
-			RegionIterator it = world.createRegionIterator();
-			
-			log.debug("Looking for chunks in " + it.getBaseDir().getAbsolutePath());
-			while (it.hasNext()) {
-				File regionFile = it.next();
-				if (regionFile != null && regionFile.length() > 0) {
-					Region region = null;
-					try {
-						region = new Region(regionFile);
-					} catch (Exception e) {
-						log.error("Exception: ", e);
-					}
-					if (region != null) {
-						// For every region...
-						regionHashStore.startRegion(region.getRegionCoord());
-						
-						RegionLoadQueue regionLoadQueue = new RegionLoadQueue(config.getNumDownsampleThreads(), world::getMapContentHash);
-						
-						for (ChunkCoord coord : region.getContainedChunkCoords()) {
-							// For every chunk coord...
-							Chunk c = null;
-							try {
-								c = region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
-							} catch (Exception e) {
-								// Catch exception, log it and skip the chunk
-								log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z), e);
-							}
-							
-							chunkSearch(world, map, portals, signs, views, c, worldStats, regionLoadQueue);
+				//Group alpha chunks by "region" to use the regionHashStore and regionLoadQueue
+				RegionCoord currentRegion = null;
+				for (ChunkCoord coord : sortedAlphaChunks) {
+					if (coord == null || !world.contains(coord))
+						continue;
+					
+					RegionCoord regionCoord = RegionCoord.fromChunkCoord(coord);
+					if (currentRegion == null || !currentRegion.equals(regionCoord)) {
+						if (currentRegion != null) {
+							endRegion(portals, signs, views, regionLoadQueue, worldStats);
 						}
 						
-						endRegion(portals, signs, views, regionLoadQueue, worldStats);
+						currentRegion = regionCoord;
+						regionHashStore.startRegion(regionCoord);
+					}
+					
+					regionLoadQueue.load(coord, () -> loadAlphaChunk(world, coord, worldStats),
+							c -> chunkSearch(world, map, c, worldStats), regionHashStore, map, portals, signs, views,
+							world.getContainers(), world.getBeds());
+				}
+				
+				if (currentRegion != null) {
+					endRegion(portals, signs, views, regionLoadQueue, worldStats);
+				}
+			} else {
+				RegionIterator it = world.createRegionIterator();
+				
+				log.debug("Looking for chunks in " + it.getBaseDir().getAbsolutePath());
+				while (it.hasNext()) {
+					File regionFile = it.next();
+					if (regionFile != null && regionFile.length() > 0) {
+						Region region = openRegion(regionFile);
+						if (region != null) {
+							// For every region...
+							regionHashStore.startRegion(region.getRegionCoord());
+							
+							for (ChunkCoord coord : region.getContainedChunkCoords()) {
+								// Each chunk is read, parsed and searched on a worker thread.
+								regionLoadQueue.load(coord, () -> loadRegionChunk(world, region, coord, worldStats),
+										c -> chunkSearch(world, map, c, worldStats), regionHashStore, map, portals, signs, views,
+										world.getContainers(), world.getBeds());
+							}
+							
+							endRegion(portals, signs, views, regionLoadQueue, worldStats);
+						}
 					}
 				}
 			}
@@ -737,8 +718,41 @@ public class TileRenderer
 		return worldStats;
 	}
 	
-	private void chunkSearch(World world, DimensionConfig map, HddObjectListWriter<PortalColumn> portals, HddObjectListWriter<Sign> signs, HddObjectListWriter<Sign> views, Chunk c, WorldStats worldStats, RegionLoadQueue regionLoadQueue) {
-		if (c != null && c.getRawChunk().isFullChunk()) {
+	private static Region openRegion(File regionFile) {
+		try {
+			return new Region(regionFile);
+		} catch (Exception e) {
+			log.error("Exception: ", e);
+			return null;
+		}
+	}
+	
+	private static Chunk loadAlphaChunk(World world, ChunkCoord coord, WorldStats worldStats) {
+		try {
+			return world.loadChunk(coord, worldStats);
+		} catch (Exception e) {
+			log.error(String.format("Chunk %1$d,%2$d is probably corrupted.", coord.x, coord.z), e);
+			return null;
+		}
+	}
+	
+	private static Chunk loadRegionChunk(World world, Region region, ChunkCoord coord, WorldStats worldStats) {
+		try {
+			return region.loadChunk(coord, world.getBiomeCache(), world.getBlockFilter(), worldStats, world.getWorldInfo());
+		} catch (Exception e) {
+			// Catch exception, log it and skip the chunk
+			log.error(String.format("Chunk %1$d,%2$d in region %3$d,%4$d is probably corrupted.", coord.x, coord.z, region.getRegionCoord().x, region.getRegionCoord().z), e);
+			return null;
+		}
+	}
+	
+	/**
+	 * Records a loaded chunk's tiles, subset heights and beacons, and returns whether it is a full chunk whose hash and
+	 * entities should be collected. Runs on the discovery worker threads, so everything it updates must be thread safe.
+	 */
+	private boolean chunkSearch(World world, DimensionConfig map, Chunk c, WorldStats worldStats) {
+		// A chunk whose data could not be parsed has no raw chunk.
+		if (c.getRawChunk() != null && c.getRawChunk().isFullChunk()) {
 			worldStats.incNumChunks();
 			c.getRawChunk().getSigns().values().forEach(world.getTexturePack().getSignFont()::collect);
 			if (discoveredTiles != null && world.contains(c.getCoord())) {
@@ -764,13 +778,11 @@ public class TileRenderer
 				}
 			}
 			
-			ConcurrentLinkedQueue<ContainerEntity> containers = world.getContainers();
-			Queue<BedEntity> beds = world.getBeds();
 			findBeacons(c.getRawChunk(), world.getBeacons(), map.getBeaconFilter(),
 					beacon -> world.getBeaconLevels(c.getRawChunk(), beacon));
-			
-			regionLoadQueue.load(c, regionHashStore, map, portals, signs, views, containers, beds);
+			return true;
 		}
+		return false;
 	}
 
 	private void collectSubsetHeights(UnionWorldSubset union, Chunk chunk) {

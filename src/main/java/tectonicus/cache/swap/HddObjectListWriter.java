@@ -16,6 +16,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class HddObjectListWriter<T extends Swappable>
@@ -25,7 +26,8 @@ public class HddObjectListWriter<T extends Swappable>
 	private FileOutputStream fileOutput;
 	private DataOutputStream dataOutput;
 	
-	private int size;
+	// Entries are added from several worker threads.
+	private final AtomicInteger size = new AtomicInteger();
         
         private ConcurrentLinkedQueue<T> queue;
 	
@@ -75,7 +77,7 @@ public class HddObjectListWriter<T extends Swappable>
 	public void add(T t)
 	{
                 queue.add(t);
-		size++;
+		size.incrementAndGet();
 	}
         
         public synchronized void flush() throws Exception {
@@ -97,6 +99,6 @@ public class HddObjectListWriter<T extends Swappable>
 	
 	public int size()
 	{
-		return size;
+		return size.get();
 	}
 }

@@ -40,7 +40,6 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectReader;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,8 +135,7 @@ public class RawChunk {
 	public RawChunk(ChunkData chunkData, ChunkData entityChunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		this(chunkData, worldStats, worldInfo);
 
-		byte[] chunkBytes = entityChunkData.getBytes();
-		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
+		try (InputStream in = entityChunkData.openStream();
 			 NBTInputStream nbtIn = new NBTInputStream(in, entityChunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag chunkTag) {
@@ -180,8 +178,7 @@ public class RawChunk {
 	private void init(ChunkData chunkData, WorldStats worldStats, WorldInfo worldInfo) throws IOException {
 		clear();
 
-		byte [] chunkBytes = chunkData.getBytes();
-		try (InputStream in = new ByteArrayInputStream(chunkBytes, 0, chunkBytes.length);
+		try (InputStream in = chunkData.openStream();
 			 NBTInputStream nbtIn = new NBTInputStream(in, chunkData.getCompressionType())) {
 			Tag tag = nbtIn.readTag();
 			if (tag instanceof CompoundTag root) {
@@ -1235,6 +1232,64 @@ public class RawChunk {
 		return block == null ? null : block.name;
 	}
 
+	/** Receives the chunk-local position of a block. */
+	@FunctionalInterface
+	public interface BlockVisitor {
+		void visit(int x, int y, int z);
+	}
+
+	/**
+	 * Calls {@code visitor} with the chunk-local position of every block whose name matches, going up through y, then x,
+	 * then z. Much faster than calling {@link #getBlockName} for every position, and empty sections are skipped.
+	 */
+	public void forEachBlock(Predicate<BlockName> matches, BlockVisitor visitor) {
+		for (int sectionY = 0; sectionY < sections.length; sectionY++) {
+			Section section = sections[sectionY];
+			if (section == null)
+				continue;
+			for (int y = 0; y < SECTION_HEIGHT; y++) {
+				for (int x = 0; x < SECTION_WIDTH; x++) {
+					for (int z = 0; z < SECTION_DEPTH; z++) {
+						BlockName block = section.blockNames[Section.getIndex(x, y, z)];
+						if (block != null && matches.test(block))
+							visitor.visit(x, sectionY * SECTION_HEIGHT + y, z);
+					}
+				}
+			}
+		}
+	}
+
+	/** Whether any block's name matches. Stops at the first match. */
+	public boolean containsBlock(Predicate<BlockName> matches) {
+		for (Section section : sections) {
+			if (section == null)
+				continue;
+			BlockName previous = null;
+			for (BlockName block : section.blockNames) {
+				// Neighbouring blocks are usually the same palette entry, so test each run once.
+				if (block != previous) {
+					previous = block;
+					if (block != null && matches.test(block))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** Whether any block has the given numeric id, as chunks from before 1.13 store their blocks. */
+	public boolean containsBlockId(int blockId) {
+		for (Section section : sections) {
+			if (section == null)
+				continue;
+			for (int id : section.blockIds) {
+				if (id == blockId)
+					return true;
+			}
+		}
+		return false;
+	}
+
 	public BlockName getNamedBlock(final int x, final int y, final int z) {
 		final int sectionY = y / SECTION_HEIGHT;
 		final int localY = y % SECTION_HEIGHT;
@@ -1629,10 +1684,7 @@ public class RawChunk {
 			if (s != null) {
 				hash.updateInts(s.blockIds);
 				hash.update(s.blockData);
-				for (BlockName block : s.blockNames) {
-					if (block != null)
-						hash.updateString(block.name);
-				}
+				hash.updateStrings(s.blockNames, block -> block.name);
 				hash.updateBlockStates(s.blockStates, BLOCK_STATES_HASH_MARKER);
 				hash.updateStrings(s.biomeIds);
 				if (s.noiseBiomeIds != null)
@@ -1887,11 +1939,14 @@ public class RawChunk {
 		private final String name;
 		@Getter
 		private final boolean air;
+		@Getter
+		private final boolean bed;
 		private volatile ResolvedModels resolved;
 
 		private BlockName(String name) {
 			this.name = name;
 			this.air = name.contains("minecraft:air") || name.contains("_air");
+			this.bed = name.contains("_bed") && !name.contains("straw_bed");
 		}
 
 		public ResolvedModels resolve(BlockRegistry registry) {

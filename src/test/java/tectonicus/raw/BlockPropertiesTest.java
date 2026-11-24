@@ -50,6 +50,18 @@ class BlockPropertiesTest {
 	}
 
 	@Test
+	void toStringKeepsTheMapOrderAndDropsWhitespace() {
+		assertEquals("", new BlockProperties().toString());
+
+		Map<String, String> unsorted = new LinkedHashMap<>();
+		unsorted.put("powered", "false");
+		unsorted.put(" facing ", "no rth\t");
+		BlockProperties block = new BlockProperties();
+		block.setProperties(unsorted);
+		assertEquals("powered=false,facing=north", block.toString());
+	}
+
+	@Test
 	void immutableCopyPreservesPropertyMatchingAndProtectsTheSnapshot() {
 		Map<String, String> input = new LinkedHashMap<>();
 		input.put("powered", "false");
