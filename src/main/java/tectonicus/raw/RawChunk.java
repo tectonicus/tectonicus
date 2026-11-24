@@ -1929,7 +1929,9 @@ public class RawChunk {
 
 		private BlockState(String name, BlockProperties properties) {
 			this.name = new BlockName(name);
-			this.properties = properties;
+			// Palette entries share properties across all matching blocks in the section.
+			this.properties = BlockStateWrapper.isSlabName(name) || BlockStateWrapper.isStairsName(name)
+					? BlockProperties.immutableCopyOf(properties.getProperties()) : properties;
 		}
 	}
 

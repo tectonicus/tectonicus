@@ -41,6 +41,13 @@ public interface BlockContext {
 	BlockStateWrapper getBlock(RawChunk rawChunk, int x, int y, int z);
 	BlockProperties getBlockState(ChunkCoord chunkCoord, int x, int y, int z);
 
+	/** Looks up a neighbor relative to the given chunk, including its raw palette entry when available. */
+	default BlockWithProperties getBlockWithProperties(ChunkCoord chunkCoord, int x, int y, int z) {
+		return new BlockWithProperties(null, getBlock(chunkCoord, x, y, z), getBlockState(chunkCoord, x, y, z));
+	}
+
+	record BlockWithProperties(RawChunk.BlockName paletteEntry, BlockStateWrapper block, BlockProperties properties) {}
+
 	default BlockOcclusion getBlockOcclusion(RawChunk rawChunk, int x, int y, int z) {
 		return getBlockType(rawChunk, x, y, z).getOcclusion();
 	}

@@ -32,6 +32,7 @@ public final class BakedBlockStateModel {
 	private final int zRotation;
 	private final boolean uvlock;
 	private final List<BakedQuad> quads;
+	private final boolean fullyCullable;
 
 	public BakedBlockStateModel(BlockModel sourceModel, int xRotation, int yRotation, int zRotation, boolean uvlock) {
 		this.sourceModel = sourceModel;
@@ -40,6 +41,7 @@ public final class BakedBlockStateModel {
 		this.zRotation = zRotation;
 		this.uvlock = uvlock;
 		this.quads = sourceModel == null ? Collections.emptyList() : bakeQuads(sourceModel, xRotation, yRotation, zRotation, uvlock);
+		this.fullyCullable = quads.stream().noneMatch(quad -> quad.getCullDirection() == null);
 	}
 
 	public void createGeometry(int x, int y, int z, BlockContext world, RawChunk rawChunk, Geometry geometry) {

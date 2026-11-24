@@ -24,6 +24,10 @@ import java.util.Random;
 public class BlockStateWrapper {
 	private final String blockName;
 	private final PlantModelOffset modelOffset;
+	private final boolean slab;
+	private final boolean stairs;
+	private final boolean nonOccludingPartialBlock;
+	private final boolean leaves;
 	private final List<BlockState> states = new ArrayList<>();
 	private BlockProperties defaultProperties;
 	@Setter
@@ -38,6 +42,23 @@ public class BlockStateWrapper {
 	public BlockStateWrapper(String blockName) {
 		this.blockName = blockName;
 		this.modelOffset = PlantModelOffset.forBlock(blockName);
+		this.slab = isSlabName(blockName);
+		this.stairs = isStairsName(blockName);
+		// Vanilla trapdoors and hoppers have model geometry but an empty occlusion shape.
+		this.nonOccludingPartialBlock = blockName.endsWith("_trapdoor") || blockName.equals("minecraft:hopper");
+		this.leaves = blockName.contains("leaves");
+	}
+
+	public static boolean isSlabName(String blockName) {
+		return blockName.endsWith("_slab");
+	}
+
+	public static boolean isStairsName(String blockName) {
+		return blockName.endsWith("_stairs");
+	}
+
+	public boolean hasStateDependentFaceCoverage() {
+		return slab || stairs;
 	}
 	
 	public float getShadeBrightness() {

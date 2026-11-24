@@ -65,6 +65,7 @@ class ItemModelLightingTest {
 				BlockContext world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
 						(proxy, method, args) -> switch (method.getName()) {
 							case "getBlock" -> (int) args[1] == 0 && (int) args[2] == 0 && (int) args[3] == 0 ? block : air;
+							case "getBlockWithProperties" -> new BlockContext.BlockWithProperties(null, air, null);
 							case "getLightStyle" -> style;
 							case "isSmoothLit" -> smoothLit;
 							case "getNightLightAdjustment" -> 0.1f;

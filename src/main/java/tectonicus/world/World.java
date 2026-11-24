@@ -1144,20 +1144,34 @@ public class World implements BlockContext, AutoCloseable
 		Location location = resolve(chunkCoord, x, y, z);
 		Chunk c = rawLoadedChunks.get(location.coord);
 		if (c == null)
-		{
 			return modelRegistry.getBlock(defaultBlockName);
+		return resolveBlockModel(c.getRawChunk().getNamedBlock(location.x, location.y, location.z), location);
+	}
+
+	@Override
+	public BlockWithProperties getBlockWithProperties(ChunkCoord chunkCoord, int x, int y, int z) {
+		if (y < 0 || y >= Minecraft.getChunkHeight())
+			return new BlockWithProperties(null, modelRegistry.getBlock(defaultBlockName), null);
+
+		Location location = resolve(chunkCoord, x, y, z);
+		Chunk chunk = rawLoadedChunks.get(location.coord);
+		if (chunk == null)
+			return new BlockWithProperties(null, modelRegistry.getBlock(defaultBlockName), null);
+
+		RawChunk raw = chunk.getRawChunk();
+		RawChunk.BlockName namedBlock = raw.getNamedBlock(location.x, location.y, location.z);
+		return new BlockWithProperties(namedBlock, resolveBlockModel(namedBlock, location),
+				raw.getBlockState(location.x, location.y, location.z));
+	}
+
+	private BlockStateWrapper resolveBlockModel(RawChunk.BlockName namedBlock, Location location) {
+		if (namedBlock != null) {
+			BlockStateWrapper block = namedBlock.resolve(modelRegistry).wrapper();
+			if (block != null)
+				return block;
+			warnUnknownBlock(namedBlock.getName(), location);
 		}
-		else
-		{
-			RawChunk.BlockName namedBlock = c.getRawChunk().getNamedBlock(location.x, location.y, location.z);
-			if (namedBlock != null) {
-				BlockStateWrapper block = namedBlock.resolve(modelRegistry).wrapper();
-				if (block != null)
-					return block;
-				warnUnknownBlock(namedBlock.getName(), location);
-			}
-			return modelRegistry.getBlock(defaultBlockName);
-		}
+		return modelRegistry.getBlock(defaultBlockName);
 	}
 
 	@Override

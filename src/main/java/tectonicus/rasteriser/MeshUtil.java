@@ -15,6 +15,7 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import tectonicus.BlockContext;
+import tectonicus.BlockContext.BlockWithProperties;
 import tectonicus.blockregistry.BakedBlockStateModel;
 import tectonicus.blockregistry.BakedBlockStateModel.BakedQuad;
 import tectonicus.blockregistry.BlockModel;
@@ -22,6 +23,7 @@ import tectonicus.blockregistry.BlockModel.BlockElement.ElementFace;
 import tectonicus.blockregistry.BlockStateWrapper;
 import tectonicus.blockregistry.PlantModelOffset;
 import tectonicus.chunk.Chunk;
+import tectonicus.chunk.ChunkCoord;
 import tectonicus.chunk.LightSample;
 import tectonicus.configuration.LightFace;
 import tectonicus.configuration.LightStyle;
@@ -36,6 +38,9 @@ import tectonicus.util.Util;
 
 @UtilityClass
 public class MeshUtil {
+	private static final int FULL_BLOCK_VOXELS = 0xff;
+	private static final int[] SLAB_VOXELS = {0, 0x0f, 0xf0, FULL_BLOCK_VOXELS};
+
 	public void addQuad(Mesh mesh, Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, Vector4f colour, SubTexture texture) {
 		mesh.addVertex(p0, colour, texture.u0, texture.v0);
 		mesh.addVertex(p1, colour, texture.u1, texture.v0);
@@ -106,31 +111,60 @@ public class MeshUtil {
 		// Empty item-model chunks have neither a name nor an ID and need no legacy lookup.
 		boolean legacyBlock = rawChunk.getBlockName(x, y, z) == null && rawChunk.getBlockId(x, y, z) != 0;
 		BlockStateWrapper selfBlock = legacyBlock ? null : world.getBlock(rawChunk, x, y, z);
-		
+		BlockProperties properties = selfBlock == null ? null : rawChunk.getBlockState(x, y, z);
 		boolean blockEmitsLight = selfBlock != null
-				&& selfBlock.getLightEmission(rawChunk.getBlockState(x, y, z)) > 0;
+				&& selfBlock.getLightEmission(properties) > 0;
 		boolean emissiveRendering = selfBlock != null
-				&& selfBlock.isEmissiveRendering(rawChunk.getBlockState(x, y, z));
-		boolean above = legacyBlock
-				? world.getBlockType(rawChunk, x, y + 1, z).isSolid()
-				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y + 1, z));
-		boolean below = legacyBlock
-				? world.getBlockType(rawChunk, x, y - 1, z).isSolid()
-				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y - 1, z));
-		boolean north = legacyBlock
-				? world.getBlockType(rawChunk, x, y, z - 1).isSolid()
-				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y, z - 1));
-		boolean south = legacyBlock
-				? world.getBlockType(rawChunk, x, y, z + 1).isSolid()
-				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x, y, z + 1));
-		boolean east = legacyBlock
-				? world.getBlockType(rawChunk, x + 1, y, z).isSolid()
-				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x + 1, y, z));
-		boolean west = legacyBlock
-				? world.getBlockType(rawChunk, x - 1, y, z).isSolid()
-				: isFaceCovered(world, selfBlock, world.getBlock(rawChunk, x - 1, y, z));
+				&& selfBlock.isEmissiveRendering(properties);
+		boolean above, below, north, south, east, west;
+		boolean checkAllFaces = false;
+		if (legacyBlock) {
+			above = world.getBlockType(rawChunk, x, y + 1, z).isSolid();
+			below = world.getBlockType(rawChunk, x, y - 1, z).isSolid();
+			north = world.getBlockType(rawChunk, x, y, z - 1).isSolid();
+			south = world.getBlockType(rawChunk, x, y, z + 1).isSolid();
+			east = world.getBlockType(rawChunk, x + 1, y, z).isSolid();
+			west = world.getBlockType(rawChunk, x - 1, y, z).isSolid();
+		} else {
+			// Resolve each cross-chunk neighbor once, with properties available if its shape needs them.
+			ChunkCoord coord = x == 0 || x == RawChunk.WIDTH - 1 || z == 0 || z == RawChunk.DEPTH - 1
+					? rawChunk.getChunkCoord() : null;
+			BlockWithProperties northEdge = z == 0 ? world.getBlockWithProperties(coord, x, y, z - 1) : null;
+			BlockWithProperties southEdge = z == RawChunk.DEPTH - 1 ? world.getBlockWithProperties(coord, x, y, z + 1) : null;
+			BlockWithProperties eastEdge = x == RawChunk.WIDTH - 1 ? world.getBlockWithProperties(coord, x + 1, y, z) : null;
+			BlockWithProperties westEdge = x == 0 ? world.getBlockWithProperties(coord, x - 1, y, z) : null;
+			BlockStateWrapper aboveBlock = world.getBlock(rawChunk, x, y + 1, z);
+			BlockStateWrapper belowBlock = world.getBlock(rawChunk, x, y - 1, z);
+			BlockStateWrapper northBlock = northEdge == null ? world.getBlock(rawChunk, x, y, z - 1) : northEdge.block();
+			BlockStateWrapper southBlock = southEdge == null ? world.getBlock(rawChunk, x, y, z + 1) : southEdge.block();
+			BlockStateWrapper eastBlock = eastEdge == null ? world.getBlock(rawChunk, x + 1, y, z) : eastEdge.block();
+			BlockStateWrapper westBlock = westEdge == null ? world.getBlock(rawChunk, x - 1, y, z) : westEdge.block();
+			boolean selfPartial = selfBlock.hasStateDependentFaceCoverage();
+			boolean selfNonOccluding = selfBlock.isNonOccludingPartialBlock();
+			boolean abovePartial = aboveBlock.hasStateDependentFaceCoverage(), belowPartial = belowBlock.hasStateDependentFaceCoverage();
+			boolean northPartial = northBlock.hasStateDependentFaceCoverage(), southPartial = southBlock.hasStateDependentFaceCoverage();
+			boolean eastPartial = eastBlock.hasStateDependentFaceCoverage(), westPartial = westBlock.hasStateDependentFaceCoverage();
+			checkAllFaces = selfPartial || abovePartial || belowPartial || northPartial || southPartial || eastPartial || westPartial
+					|| selfNonOccluding || belowBlock.isNonOccludingPartialBlock();
+			int selfVoxels = selfPartial ? blockVoxels(selfBlock, properties) : 0;
+			if (selfVoxels == 0 && !selfNonOccluding)
+				selfVoxels = FULL_BLOCK_VOXELS;
+			above = abovePartial ? isPartialFaceCovered(rawChunk, x, y + 1, z, FaceDirection.UP, selfBlock, aboveBlock, selfVoxels, null)
+					: isFaceCovered(world, selfBlock, aboveBlock);
+			below = belowPartial ? isPartialFaceCovered(rawChunk, x, y - 1, z, FaceDirection.DOWN, selfBlock, belowBlock, selfVoxels, null)
+					: isFaceCovered(world, selfBlock, belowBlock);
+			north = northPartial ? isPartialFaceCovered(rawChunk, x, y, z - 1, FaceDirection.NORTH, selfBlock, northBlock, selfVoxels, northEdge)
+					: isFaceCovered(world, selfBlock, northBlock);
+			south = southPartial ? isPartialFaceCovered(rawChunk, x, y, z + 1, FaceDirection.SOUTH, selfBlock, southBlock, selfVoxels, southEdge)
+					: isFaceCovered(world, selfBlock, southBlock);
+			east = eastPartial ? isPartialFaceCovered(rawChunk, x + 1, y, z, FaceDirection.EAST, selfBlock, eastBlock, selfVoxels, eastEdge)
+					: isFaceCovered(world, selfBlock, eastBlock);
+			west = westPartial ? isPartialFaceCovered(rawChunk, x - 1, y, z, FaceDirection.WEST, selfBlock, westBlock, selfVoxels, westEdge)
+					: isFaceCovered(world, selfBlock, westBlock);
+		}
 
-		if (above && north && south && east && west)
+		// Partial shapes can leave undersides or inset quads visible even when the top and sides are covered.
+		if (above && north && south && east && west && (!checkAllFaces || below && bakedModel.isFullyCullable()))
 			return;
 
 		float modelX = x, modelY = y, modelZ = z;
@@ -408,6 +442,7 @@ public class MeshUtil {
 		final int dx, dy, dz;
 		final int axis, tangentA, tangentB;
 		private final LightFace lightFace;
+		private final int voxelFaceMask, voxelShift, oppositeVoxelShift;
 
 		FaceDirection(int dx, int dy, int dz, int tangentA, int tangentB, LightFace lightFace) {
 			this.dx = dx;
@@ -417,6 +452,12 @@ public class MeshUtil {
 			this.tangentA = tangentA;
 			this.tangentB = tangentB;
 			this.lightFace = lightFace;
+			// Align the two opposing slices of an x + 2*z + 4*y voxel mask for comparison.
+			this.voxelFaceMask = dx != 0 ? 0x55 : dy != 0 ? 0x0f : 0x33;
+			int sliceStride = dx != 0 ? 1 : dy != 0 ? 4 : 2;
+			boolean positive = dx + dy + dz > 0;
+			this.voxelShift = positive ? sliceStride : 0;
+			this.oppositeVoxelShift = positive ? 0 : sliceStride;
 		}
 
 		int offsetX(int a, int b) { return (tangentA == 0 ? a : 0) + (tangentB == 0 ? b : 0); }
@@ -424,16 +465,31 @@ public class MeshUtil {
 		int offsetZ(int a, int b) { return (tangentA == 2 ? a : 0) + (tangentB == 2 ? b : 0); }
 	}
 
-	private boolean isFaceCovered(BlockContext world, BlockStateWrapper selfBlock, BlockStateWrapper neighborBlock)
-	{
-		//Ignore snow because it can have adjacent snow blocks with different heights, we could look up the snow layer height
-		//but I don't know if it's worth it
-		if (selfBlock.getBlockName().equals("minecraft:snow")
-				&& neighborBlock.getBlockName().equals("minecraft:snow") || selfBlock.getBlockName().contains("leaves"))
+	private boolean isFaceCovered(BlockContext world, BlockStateWrapper selfBlock, BlockStateWrapper neighbor) {
+		if (selfBlock.isLeaves() || neighbor.isNonOccludingPartialBlock())
 			return false;
+		String selfName = selfBlock.getBlockName();
+		String neighborName = neighbor.getBlockName();
+		// Adjacent snow layers can have different heights.
+		if (selfName.equals("minecraft:snow") && neighborName.equals("minecraft:snow"))
+			return false;
+		return neighbor.isFullOpaqueBlock() || world.shouldCullSameBlockFaces() && selfName.equals(neighborName);
+	}
 
-		return neighborBlock.isFullOpaqueBlock()
-				|| world.shouldCullSameBlockFaces()
-					&& selfBlock.getBlockName().equals(neighborBlock.getBlockName());
+	private boolean isPartialFaceCovered(RawChunk chunk, int x, int y, int z, FaceDirection direction,
+			BlockStateWrapper selfBlock, BlockStateWrapper neighbor, int selfVoxels, BlockWithProperties edge) {
+		if (selfBlock.isLeaves())
+			return false;
+		BlockProperties properties = edge == null ? chunk.getBlockState(x, y, z) : edge.properties();
+		int neighborFace = (blockVoxels(neighbor, properties) >>> direction.oppositeVoxelShift) & direction.voxelFaceMask;
+		int selfFace = (selfVoxels >>> direction.voxelShift) & direction.voxelFaceMask;
+		return neighborFace == direction.voxelFaceMask || selfFace != 0 && (selfFace & neighborFace) == selfFace;
+	}
+
+	private int blockVoxels(BlockStateWrapper block, BlockProperties properties) {
+		BlockProperties resolved = block.getPropertiesWithDefaults(properties);
+		if (resolved == null)
+			return 0;
+		return block.isSlab() ? SLAB_VOXELS[resolved.getSlabCoverage()] : resolved.getStairVoxels();
 	}
 }

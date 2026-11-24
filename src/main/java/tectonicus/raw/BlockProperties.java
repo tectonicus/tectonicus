@@ -19,6 +19,12 @@ import java.util.TreeMap;
 @Data
 @NoArgsConstructor
 public class BlockProperties {
+	public static final int LOWER_SLAB_HALF = 1;
+	public static final int UPPER_SLAB_HALF = 2;
+	public static final int BOTH_SLAB_HALVES = LOWER_SLAB_HALF | UPPER_SLAB_HALF;
+	// North, east, south, west. Quadrant bits are indexed by x + 2*z within a layer.
+	private static final int[] STAIR_HALF_MASKS = {0b0011, 0b1010, 0b1100, 0b0101};
+
     private Map<String, String> properties = new TreeMap<>();  // we use a TreeMap to get automatic sorting
     private String propertiesString;
 
@@ -33,10 +39,25 @@ public class BlockProperties {
 	}
 
 	private static final class ImmutableBlockProperties extends BlockProperties {
+		private final int slabCoverage;
+		private final int stairVoxels;
+
 		private ImmutableBlockProperties(Map<String, String> properties) {
 			getProperties().putAll(properties);
 			super.setProperties(Collections.unmodifiableMap(getProperties()));
 			super.setPropertiesString(super.toString());
+			slabCoverage = super.getSlabCoverage();
+			stairVoxels = super.getStairVoxels();
+		}
+
+		@Override
+		public int getSlabCoverage() {
+			return slabCoverage;
+		}
+
+		@Override
+		public int getStairVoxels() {
+			return stairVoxels;
 		}
 
 		@Override
@@ -80,6 +101,48 @@ public class BlockProperties {
                 text.append(c);
         }
     }
+
+	/** Encodes the occupied vertical halves declared by a slab state. */
+	public int getSlabCoverage() {
+		return switch (get("type")) {
+			case "bottom" -> LOWER_SLAB_HALF;
+			case "top" -> UPPER_SLAB_HALF;
+			case "double" -> BOTH_SLAB_HALVES;
+			case null, default -> 0;
+		};
+	}
+
+	/** Encodes stair occupancy in a 2x2x2 grid indexed by x + 2*z + 4*y. */
+	public int getStairVoxels() {
+		String shape = get("shape");
+		if (shape == null)
+			return 0;
+		int facing = switch (get("facing")) {
+			case "north" -> 0;
+			case "east" -> 1;
+			case "south" -> 2;
+			case "west" -> 3;
+			case null, default -> -1;
+		};
+		if (facing < 0)
+			return 0;
+		int front = STAIR_HALF_MASKS[facing];
+		int step = switch (shape) {
+			case "straight" -> front;
+			case "inner_left" -> front | STAIR_HALF_MASKS[(facing + 3) & 3];
+			case "inner_right" -> front | STAIR_HALF_MASKS[(facing + 1) & 3];
+			case "outer_left" -> front & STAIR_HALF_MASKS[(facing + 3) & 3];
+			case "outer_right" -> front & STAIR_HALF_MASKS[(facing + 1) & 3];
+			default -> 0;
+		};
+		if (step == 0)
+			return 0;
+		return switch (get("half")) {
+			case "bottom" -> (step << 4) | 0x0f;
+			case "top" -> 0xf0 | step;
+			case null, default -> 0;
+		};
+	}
 
     public String get(String key) {
         return properties.get(key);

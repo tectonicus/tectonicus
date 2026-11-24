@@ -378,6 +378,7 @@ class MeshUtilLightingTest {
 		BlockContext world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
 				(proxy, method, args) -> switch (method.getName()) {
 					case "getBlock" -> origin.equals(new Cell((int) args[1], (int) args[2], (int) args[3])) ? block : AIR;
+					case "getBlockWithProperties" -> new BlockContext.BlockWithProperties(null, AIR, null);
 					case "getLightStyle" -> style;
 					case "isSmoothLit", "isNetherNightLighting", "shouldCullSameBlockFaces" -> false;
 					case "getNightLightAdjustment" -> 0f;

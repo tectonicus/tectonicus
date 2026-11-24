@@ -533,6 +533,26 @@ class RawChunkTest {
 	}
 
 	@ParameterizedTest
+	@CsvSource({"minecraft:stone_slab,true", "minecraft:stone_slab,false", "example:stone_slab,true"})
+	void slabPaletteEntriesShareResolvedCoverage(String name, boolean top) throws Exception {
+		Tag entry = top ? new CompoundTag("", Map.of("id", new StringTag("id", name),
+				"properties", new CompoundTag("properties", Map.of("type", new StringTag("type", "top")))))
+				: new StringTag("", name);
+		ListTag palette = new ListTag("palette", top ? CompoundTag.class : StringTag.class, List.of(entry));
+		CompoundTag section = new CompoundTag("", Map.of("Y", new ByteTag("Y", (byte) 0),
+				"block_states", new CompoundTag("block_states", Map.of("palette", palette))));
+		CompoundTag root = new CompoundTag("", Map.of("DataVersion", new IntTag("DataVersion", Version.VERSION_21.getDataVersion()),
+				"Status", new StringTag("Status", "full"), "yPos", new IntTag("yPos", 0),
+				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of()),
+				"sections", new ListTag("sections", CompoundTag.class, List.of(section))));
+		RawChunk chunk = readChunk(root, Version.VERSION_21);
+		BlockProperties state = chunk.getBlockState(0, 0, 0);
+		assertSame(state, chunk.getBlockState(15, 15, 15));
+		assertEquals(top ? BlockProperties.UPPER_SLAB_HALF : BlockProperties.LOWER_SLAB_HALF, state.getSlabCoverage());
+		assertThrows(UnsupportedOperationException.class, () -> state.getProperties().put("type", "double"));
+	}
+
+	@ParameterizedTest
 	@CsvSource({
 			"minecraft:oak_wall_sign, north, 0",
 			"minecraft:oak_wall_sign, east, 4",

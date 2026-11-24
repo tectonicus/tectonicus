@@ -122,6 +122,7 @@ class PlantGeometryTest {
 		BlockContext world = (BlockContext) Proxy.newProxyInstance(BlockContext.class.getClassLoader(), new Class<?>[]{BlockContext.class},
 				(proxy, method, args) -> switch (method.getName()) {
 					case "getBlock" -> (int) args[1] == x && (int) args[2] == y && (int) args[3] == z ? plant : air;
+					case "getBlockWithProperties" -> new BlockContext.BlockWithProperties(null, air, null);
 					case "getLightStyle" -> LightStyle.Day;
 					case "isSmoothLit", "shouldCullSameBlockFaces", "useOldGrayscaleLighting" -> false;
 					case "getLightSample" -> tectonicus.chunk.LightSample.ambient(1);

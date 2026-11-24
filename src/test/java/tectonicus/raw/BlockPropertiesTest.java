@@ -12,6 +12,7 @@ package tectonicus.raw;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashMap;
@@ -81,6 +82,17 @@ class BlockPropertiesTest {
 		assertEquals(original.hashCode(), snapshot.hashCode());
 		assertTrue(snapshot.contains("facing=north"));
 		assertTrue(snapshot.containsAll(Map.of("powered", "false")));
+	}
+
+	@ParameterizedTest
+	@CsvSource({"north,bottom,straight,3f", "east,bottom,straight,af", "south,bottom,straight,cf", "west,bottom,straight,5f",
+			"east,bottom,inner_left,bf", "east,bottom,inner_right,ef", "east,bottom,outer_left,2f", "east,bottom,outer_right,8f",
+			"east,top,straight,fa", "north,top,outer_left,f1", "west,top,inner_right,f7", "east,bottom,unknown,00"})
+	void stairOccupancyFollowsFacingHalfAndShape(String facing, String half, String shape, String expectedMask) {
+		Map<String, String> state = Map.of("facing", facing, "half", half, "shape", shape);
+		int voxels = Integer.parseInt(expectedMask, 16);
+		assertEquals(voxels, new BlockProperties(state).getStairVoxels());
+		assertEquals(voxels, BlockProperties.immutableCopyOf(state).getStairVoxels());
 	}
 
 	@Test
