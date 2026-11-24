@@ -735,7 +735,7 @@ function refreshSignMarkers(layer) {
 		const myIcon = createWorldMarkerIcon('Sign.png', [17, 20], layer);
 		const popup = () => renderSignPopup(sign, layer);
 
-		group.addLayer(bindMarkerPopup(L.marker(point, {icon: myIcon}), popup, sign.worldPos, layer));
+		group.addLayer(bindMarkerPopup(L.marker(point, {icon: myIcon}), popup, sign.worldPos, layer, {className: 'sign_popup'}));
 	}
 }
 

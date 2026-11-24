@@ -853,28 +853,69 @@ html, body, #map {
 .item_description .quartz { color: #e0d1c2; }
 .item_description .redstone { color: #951607; }
 
-/* Signs: text colour comes from the dye, Minecraft draws sign text without a shadow */
+/*
+ * Signs. The board is drawn like in game: 4 text pixels per texel, so a standing/wall sign board
+ * (24x12 texels) is 96x48 and a hanging sign board (14x10) is 56x40, and four lines of text sit
+ * centred on it. The whole sign is then zoomed up as one piece, so every pixel stays square.
+ * Without an exported board texture an oak-coloured board is drawn instead.
+ */
+.sign_popup .leaflet-popup-content {
+    display: flow-root; /* keep the board's margin inside the popup */
+    margin: 34px 20px 12px;
+}
+
+/* The chains of a hanging sign leave room for the close button by themselves. */
+.sign_popup .leaflet-popup-content:has(.sign_text_hanging_board) {
+    margin-top: 12px;
+}
+
 .sign_text {
-    color: #222;
-    text-align: center;
-    zoom: 2;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 96px;
+    height: 48px;
+    margin: 0 auto;
+    padding: 4px 0;
+    color: #000;
+    background-color: #a2824e;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow:
+        inset 0 0 0 4px #6b5432,
+        1px 1px 0 var(--mc-drop-shadow);
+    image-rendering: pixelated;
+    zoom: 3;
 }
 
 .sign_text_board {
-    box-sizing: border-box;
-    min-width: 108px;
-    padding: 7px 9px;
-    background-position: center;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    image-rendering: pixelated;
+    background-color: transparent;
+    box-shadow: 1px 1px 0 var(--mc-drop-shadow);
 }
 
 .sign_text_hanging_board {
-    min-width: 76px;
-    padding-inline: 8px;
+    position: relative;
+    width: 56px;
+    height: 40px;
+    margin-top: 12px;
+    padding: 2px 0;
 }
 
+/* Two chains above the hanging board */
+.sign_text_hanging_board::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 8px;
+    right: 8px;
+    height: 12px;
+    background:
+        repeating-linear-gradient(#3d3d45 0 3px, #6d6d78 3px 4px) left / 4px 100% no-repeat,
+        repeating-linear-gradient(#3d3d45 0 3px, #6d6d78 3px 4px) right / 4px 100% no-repeat;
+}
+
+/* Lines are 10 text pixels apart (9 on hanging signs); Minecraft draws sign text without a shadow. */
 .sign_text_line {
     position: static;
     min-height: 9px;
@@ -882,8 +923,11 @@ html, body, #map {
     font-family: var(--mc-font);
     font-size: 8px;
     line-height: 9px;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    white-space: pre;
+}
+
+.sign_text_hanging_board .sign_text_line {
+    padding-bottom: 0;
 }
 
 .sign_text_line,
