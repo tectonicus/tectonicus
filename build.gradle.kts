@@ -37,7 +37,7 @@ dependencies {
 	val jomlVersion = "1.10.9"
 	val joglVersion = "2.6.0"
     val jacksonVersion = "3.3.0"
-	val logbackVersion = "1.6.6"
+	val logbackVersion = "1.6.8"
 	val h2Version = "2.5.252"
 	val webpImageIoVersion = "0.11.0"
 	val biomeExtractorVersion = "2.0.0"
