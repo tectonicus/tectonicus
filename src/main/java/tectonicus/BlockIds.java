@@ -80,7 +80,7 @@ public class BlockIds
 	//public static final int LADDER				= 65;
 	public static final int MINECART_TRACKS			= 66;
 	//public static final int COBBLESTONE_STAIRS	= 67;
-	//public static final int WALL_SIGN				= 68;
+	public static final int WALL_SIGN				= 68;
 	public static final int LEVER					= 69;
 	public static final int STONE_PRESSURE_PLATE	= 70;
 	//public static final int IRON_DOOR				= 71;

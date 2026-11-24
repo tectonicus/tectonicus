@@ -541,9 +541,9 @@ public class RawChunk {
 					}
 					final int localZ = z - (chunkZ * DEPTH);
 
-					final String containerBlock = getBlockName(localX, localY, localZ);
-					final int containerBlockId = getBlockId(localX, localY, localZ);
-					final ContainerKind containerKind = ContainerKind.fromBlock(id, containerBlock, containerBlockId);
+					final String blockName = getBlockName(localX, localY, localZ);
+					final int blockId = getBlockId(localX, localY, localZ);
+					final ContainerKind containerKind = ContainerKind.fromBlock(id, blockName, blockId);
 					if (id.equals("Sign") || id.equals("minecraft:sign") || id.equals("minecraft:hanging_sign")) {
 						CompoundTag frontText = NbtUtil.getChild(entity, "front_text", CompoundTag.class);
 						CompoundTag backText = NbtUtil.getChild(entity, "back_text", CompoundTag.class);
@@ -554,11 +554,20 @@ public class RawChunk {
 						BlockProperties properties = null;
 						if (dataVersion >= VERSION_13.getDataVersion()) {
 							properties = getBlockState(localX, localY, localZ);
+						} else if (blockId == BlockIds.WALL_SIGN) {
+							// Legacy wall signs store a cardinal facing. Views use standing-sign rotation steps.
+							data = switch (getBlockData(localX, localY, localZ)) {
+								case 2 -> 0;  // North
+								case 3 -> 8;  // South
+								case 4 -> 12; // West
+								case 5 -> 4;  // East
+								default -> null;
+							};
 						} else {
 							data = getBlockData(localX, localY, localZ);
 						}
                                                 
-						String signBlock = containerBlock != null ? containerBlock : id;
+						String signBlock = blockName != null ? blockName : id;
 						signs.put(createKey(localX, localY, localZ), new SignEntity(x, y, z, localX, localY, localZ,
 								front, back, data, properties, signBlock));
 					} else if (id.equals("FlowerPot") || id.equals("minecraft:flower_pot")) {
@@ -715,7 +724,7 @@ public class RawChunk {
 						}
 						
 						containers.add(new ContainerEntity(x, y, z, localX, localY, localZ, name, lockStr, unopenedContainer, facing, type, items,
-								containerKind, containerKind == ContainerKind.SHULKER_BOX ? ContainerKind.shulkerColor(containerBlock, containerBlockId) : null,
+								containerKind, containerKind == ContainerKind.SHULKER_BOX ? ContainerKind.shulkerColor(blockName, blockId) : null,
 								customName == null));
 					} else if (id.equals("minecraft:bed")) {
 						final IntTag color = NbtUtil.getChild(entity, "color", IntTag.class);
