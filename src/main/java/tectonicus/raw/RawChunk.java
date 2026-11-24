@@ -63,6 +63,7 @@ import static tectonicus.raw.ItemNbtParser.parseItemComponents;
 
 import static tectonicus.Version.VERSION_13;
 import static tectonicus.Version.VERSION_18;
+import static tectonicus.Version.VERSION_26_3;
 import static tectonicus.Version.VERSION_UNKNOWN;
 
 @Slf4j
@@ -1045,8 +1046,9 @@ public class RawChunk {
 	private List<BlockState> parseBlockStates(ListTag paletteTag) {
 		List<BlockState> blockStatesPalette = new ArrayList<>();
 		for (Tag paletteEntry : paletteTag.getValue()) {
-			// An entry without properties is the block's default state. Newer saves write it as the bare block id,
-			// so fill in the default properties.
+			// Since 26.3, a block in its default state is written without properties, usually as the bare block id,
+			// so fill in the default properties. Older saves always write every property, so an entry without
+			// properties there is a block that had none in that version.
 			if (paletteEntry instanceof StringTag stringTag) {
 				blockStatesPalette.add(new BlockState(stringTag.getValue(), DefaultBlockStates.of(stringTag.getValue())));
 			} else if (paletteEntry instanceof CompoundTag compound) {
@@ -1054,9 +1056,11 @@ public class RawChunk {
 				if (nameTag == null) {
 					nameTag = NbtUtil.getChild(compound, "Name", StringTag.class);
 				}
+				boolean compactEntry = false;
 				if (nameTag == null && compound.getValue().size() == 1
 						&& compound.getValue().get("") instanceof StringTag stringTag) {
 					nameTag = stringTag;
+					compactEntry = true;
 				}
 				
 				CompoundTag propertiesTag = NbtUtil.getChild(compound, "properties", CompoundTag.class);
@@ -1064,8 +1068,14 @@ public class RawChunk {
 					propertiesTag = NbtUtil.getChild(compound, "Properties", CompoundTag.class);
 				}
 				
-				blockStatesPalette.add(new BlockState(nameTag.getValue(), propertiesTag != null
-						? NbtUtil.getProperties(propertiesTag) : DefaultBlockStates.of(nameTag.getValue())));
+				BlockProperties properties;
+				if (propertiesTag != null)
+					properties = NbtUtil.getProperties(propertiesTag);
+				else if (compactEntry || dataVersion >= VERSION_26_3.getDataVersion())
+					properties = DefaultBlockStates.of(nameTag.getValue());
+				else
+					properties = NbtUtil.getProperties(null);
+				blockStatesPalette.add(new BlockState(nameTag.getValue(), properties));
 			} else {
 				throw new IllegalArgumentException("Unsupported block state palette entry: " + paletteEntry.getClass().getName());
 			}

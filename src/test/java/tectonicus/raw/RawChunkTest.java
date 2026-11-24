@@ -584,18 +584,32 @@ class RawChunkTest {
 		assertFalse(new SignEntity(1, 64, 1, 1, 64, 1, face, null, null, null, "minecraft:oak_sign").hasDirection());
 	}
 
-	/** A modern chunk whose lowest section is filled with the single palette entry, with a view sign in it. */
+	/** Only 26.3+ saves omit default properties; before that, a named entry without properties has none. */
+	@ParameterizedTest
+	@CsvSource({"VERSION_21, Name, ", "VERSION_26_3, Name, 8", "VERSION_26_3, id, 8"})
+	void namedEntriesWithoutPropertiesGetDefaultsOnlyFrom26_3(Version version, String nameKey, String rotation) throws Exception {
+		CompoundTag entry = new CompoundTag("", Map.of(nameKey, new StringTag(nameKey, "minecraft:oak_sign")));
+		RawChunk chunk = signChunk(new ListTag("palette", CompoundTag.class, List.of(entry)), version);
+
+		assertEquals(rotation, chunk.getBlockState(8, 4, 8).get("rotation"));
+	}
+
 	private RawChunk signChunk(ListTag palette) throws Exception {
+		return signChunk(palette, Version.VERSION_26_3);
+	}
+
+	/** A modern chunk whose lowest section is filled with the single palette entry, with a view sign in it. */
+	private RawChunk signChunk(ListTag palette, Version version) throws Exception {
 		CompoundTag sign = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:sign"),
 				"x", new IntTag("x", 8), "y", new IntTag("y", 4), "z", new IntTag("z", 8),
 				"Text1", new StringTag("Text1", "#view")));
 		CompoundTag section = new CompoundTag("", Map.of("Y", new ByteTag("Y", (byte) 0),
 				"block_states", new CompoundTag("block_states", Map.of("palette", palette))));
-		CompoundTag root = new CompoundTag("", Map.of("DataVersion", new IntTag("DataVersion", Version.VERSION_21.getDataVersion()),
+		CompoundTag root = new CompoundTag("", Map.of("DataVersion", new IntTag("DataVersion", version.getDataVersion()),
 				"Status", new StringTag("Status", "full"), "yPos", new IntTag("yPos", 0),
 				"block_entities", new ListTag("block_entities", CompoundTag.class, List.of(sign)),
 				"sections", new ListTag("sections", CompoundTag.class, List.of(section))));
-		return readChunk(root, Version.VERSION_21);
+		return readChunk(root, version);
 	}
 
 	private SignEntity readSign(Version version, Map<String, Tag> text) throws Exception {
