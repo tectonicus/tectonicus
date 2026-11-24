@@ -2,7 +2,6 @@ package tectonicus.util;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import tectonicus.configuration.Configuration;
 import tectonicus.texture.ZipStack;
 
 import javax.imageio.ImageIO;
@@ -14,6 +13,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -24,7 +24,7 @@ class InventoryFontTest {
 	@TempDir Path directory;
 
 	@Test
-	void exportsAccentsAndUnicodeFromFontProvidersAndKeepsOnlyRequestedGlyphs() throws Exception {
+	void loadsAccentsAndUnicodeFromFontProvidersAndKeepsOnlyRequestedGlyphs() throws Exception {
 		var image = new BufferedImage(16, 8, BufferedImage.TYPE_INT_ARGB);
 		image.setRGB(4, 0, -1);
 		image.setRGB(10, 1, -1);
@@ -58,16 +58,15 @@ class InventoryFontTest {
 				{"objects":{"minecraft/font/include/unifont.json":{"hash":"%s"},"minecraft/font/unifont_jp.zip":{"hash":"%s"}}}
 				""".formatted(definitionHash, hexHash));
 		var assets = new ZipStack(jar.toFile(), null, List.of());
-		var config = new Configuration();
-		config.setMapLocale("ja_jp");
 		try {
-			var localization = MapLocalization.load(config, new MinecraftLanguageAssets(directory, uri -> fail("Unexpected download: " + uri)));
-			Path output = directory.resolve(MinecraftFont.IMAGE);
-			var metrics = MinecraftFont.write(assets, localization, Set.of(32, (int) 'ã', (int) '日'), output);
-			assertEquals(Set.of(0, 32, (int) 'ã', (int) '日'), metrics.keySet());
+			var launcherAssets = new MinecraftLanguageAssets(directory, uri -> fail("Unexpected download: " + uri));
+			var glyphs = MinecraftFont.loader(assets, Locale.JAPAN, launcherAssets).apply(Set.of(32, (int) 'ã', (int) '日'));
+			var packed = MinecraftFont.pack(glyphs);
+			var metrics = packed.metrics();
+			assertEquals(Set.of(32, (int) 'ã', (int) '日'), metrics.keySet());
 			assertArrayEquals(new double[] {0, 0, 5, 8, 6, 0}, metrics.get((int) 'ã'));
 			assertArrayEquals(new double[] {16, 0, 8, 8, 9, 0}, metrics.get((int) '日'));
-			var atlas = ImageIO.read(output.toFile());
+			var atlas = packed.image();
 			assertEquals(-1, atlas.getRGB(8, 0));
 			assertEquals(-1, atlas.getRGB(32, 0));
 			assertEquals(0, atlas.getRGB(47, 0));

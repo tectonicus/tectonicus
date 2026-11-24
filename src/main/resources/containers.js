@@ -30,14 +30,7 @@ function loadViewerScript(url) {
 
 function worldMaskUrl(filename, layer = activeBaseLayer) {
     if (isLocalMap()) return worldMasks.get(layer?.worldId)?.[filename];
-    if (filename === 'Font.png' && worldLocalizations.get(layer?.worldId)?.hasFont === false) return;
     return worldImageUrl(filename, layer);
-}
-
-function fontMaskUrl(filename, layer = activeBaseLayer) {
-    const url = worldMaskUrl(filename, layer);
-    const base = globalThis.document?.baseURI;
-    return url && base ? new URL(url, base).href : url;
 }
 
 const hiddenEnchantmentLevels = [
@@ -233,23 +226,6 @@ function intToRoman(num) {
     return roman;
 }
 
-const charMap = ' !"#$%&\'()*+,-./' +
-                '0123456789:;<=>?' +
-                '@ABCDEFGHIJKLMNO' +
-                'PQRSTUVWXYZ[\\]^_' +
-                '`abcdefghijklmno' +
-                'pqrstuvwxyz{|}~';
-const charWidths = ['', '!\',.:;i|', '`l', '"()*I[]t()', '<>fk'];
-
-function findCharacterRowAndColumn(char) {
-    const index = charMap.indexOf(char);
-    
-    const col = index % 16;
-    const row = Math.floor(index / 16 + 2); // +2 because 1st 2 lines are empty
-    
-    return [col, row];
-}
-
 function minecraftTextColor(rgb) {
     if (!Number.isInteger(rgb) || rgb < 0 || rgb > 0xffffff) return null;
     return '#' + rgb.toString(16).padStart(6, '0');
@@ -281,7 +257,7 @@ function minecraftTextRuns(text, colors) {
                     : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[(char.codePointAt(0) + index) % 36]).join('')
                 : plain;
             formatted.push({text: visible, plain, color: legacyColor ?? run.color,
-                classes: [...(legacyColor ? ['mc_text_colored'] : []), ...formats].filter(format => format !== 'k')});
+                classes: [...formats].filter(format => format !== 'k')});
         };
         for (const match of run.text.matchAll(/\u00a7([0-9a-fk-or])/gi)) {
             append(match.index);
@@ -303,71 +279,22 @@ const legacyTextClasses = {
     l: 'mc_text_bold', m: 'mc_text_struck', n: 'mc_text_underlined', o: 'mc_text_italic'
 };
 
-function renderMinecraftText(text, className, layer = activeBaseLayer, colors = []) {
-    if (!text)
-    {
-            return null;
-    }
-    
-    className = escapeHtml(className || '');
+// Renders Minecraft text (with § formatting codes and per-range colours) as real text in the
+// Minecraft web font; styling lives in the .mc_text rules of tectonicusStyles.css.
+function renderMinecraftText(text, className, colors = []) {
+    if (!text) return null;
+
     const runs = minecraftTextRuns(text, colors);
-    const characters = runs.flatMap(run =>
-        Array.from(run.text.normalize('NFC'), char => ({char, color: run.color, classes: run.classes})));
-    const normalized = characters.map(({char}) => char).join('');
-    const label = escapeHtml(runs.map(run => run.plain).join(''));
+    const content = runs.map(run => {
+        const classes = run.classes.length ? ` class="${run.classes.join(' ')}"` : '';
+        const color = run.color ? ` style="color:${run.color}"` : '';
+        const text = escapeHtml(run.text);
+        return classes || color ? `<span${classes}${color}>${text}</span>` : text;
+    }).join('');
+    // Obfuscated (§k) text shows random characters, so give screen readers the real text.
     const obfuscated = runs.some(run => run.text !== run.plain);
-    const font = worldLocalizations.get(layer?.worldId)?.inventoryFont;
-    const atlas = font?.[0] && fontMaskUrl('InventoryFont.png', layer);
-    // Let the browser shape combining, joining and right-to-left scripts as a complete string.
-    const needsShaping = !/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Number}\p{Punctuation}\p{Symbol}\p{Space_Separator}\p{Private_Use}]*$/u.test(normalized);
-    if (atlas && !needsShaping && characters.every(({char}) => Object.hasOwn(font, char.codePointAt(0)))) {
-            const [atlasWidth, atlasHeight] = font[0];
-            const glyphs = characters.map(({char, color, classes}) => {
-                    const [x, y, width, height, advance, top] = font[char.codePointAt(0)];
-                    const cssClasses = classes.length ? ' ' + classes.join(' ') : '';
-                    const tint = color ? `;color:${color}` : '';
-                    if (width === 0) return `<span class="mc_space${cssClasses}" style="width:${advance}px${tint}"></span>`;
-                    return `<span class="mc_char mc_atlas_char${cssClasses}" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px${tint}"></span>`;
-            }).join('');
-            return `<div class="mc_text_container ${className}" aria-label="${label}" style="--minecraft-font:url('${atlas}');--minecraft-font-size:${atlasWidth}px ${atlasHeight}px"><span aria-hidden="true">${glyphs}</span></div>`;
-    }
-
-    if (!worldMaskUrl('Font.png', layer) || characters.some(({char}) => !charMap.includes(char))) {
-            const content = runs.map(run => {
-                const classes = run.classes.length ? ` class="${run.classes.join(' ')}"` : '';
-                const color = run.color ? ` style="color:${run.color}"` : '';
-                const text = escapeHtml(run.text);
-                return classes || color ? `<span${classes}${color}>${text}</span>` : text;
-            }).join('');
-            const ariaLabel = obfuscated ? ` aria-label="${label}"` : '';
-            return '<div class="mc_text_container mc_text_fallback ' + className + '"' + ariaLabel + '>' + content + '</div>';
-    }
-
-    let html = '<div class="mc_text_container ' + className + '" aria-label="' + label + '">';
-
-    for (const {char, color, classes} of characters) {
-            const position = findCharacterRowAndColumn(char);
-
-            const left = position[0] * 8;
-            const top = position[1] * 8;
-            
-            let widthOverride = '';
-            
-            for (let j = 1; j <= 4; j++) {
-                    if (charWidths[j].includes(char)) {
-                            widthOverride = ` width: ${j+1}px;`;
-                            break;
-                    }
-            }
-
-            const tint = color ? ` color:${color};` : '';
-            const cssClasses = classes.length ? ' ' + classes.join(' ') : '';
-            html += `<div class="mc_char${cssClasses}" style="mask-position: -${left}px -${top}px;${widthOverride}${tint}"></div>`;
-    }
-
-    html += '</div>';
-    
-    return html;
+    const label = obfuscated ? ` aria-label="${escapeHtml(runs.map(run => run.plain).join(''))}"` : '';
+    return `<div class="mc_text ${escapeHtml(className || '')}"${label}>${content}</div>`;
 }
 
 function containerMarkerIcon(container) {

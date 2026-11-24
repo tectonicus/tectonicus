@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -30,7 +29,6 @@ import java.util.zip.ZipInputStream;
 /** Loads and packs Minecraft glyphs at twice their logical pixel scale. */
 @Slf4j
 public final class MinecraftFont {
-	static final String IMAGE = "InventoryFont.png";
 	private static final int CELL_SIZE = 32;
 	private static final int COLUMNS = 32;
 
@@ -48,24 +46,12 @@ public final class MinecraftFont {
 		this.remaining = new HashSet<>(characters);
 	}
 
-	static Map<Integer, double[]> write(ZipStack assets, MapLocalization localization, Set<Integer> characters, Path output) {
-		MinecraftFont font = new MinecraftFont(assets, localization.locale(), key -> localization.minecraftFontAsset(assets, key), characters);
-		font.loadDefinition("minecraft:default");
-		Atlas atlas = pack(font.glyphs);
-		if (atlas.image() == null) return Map.of();
-		try {
-			ImageIO.write(atlas.image(), "png", output.toFile());
-			atlas.metrics().put(0, new double[] {atlas.image().getWidth() / 2.0, atlas.image().getHeight() / 2.0});
-			return atlas.metrics();
-		} catch (IOException e) {
-			log.warn("Unable to write the inventory font to {}", output, e);
-			return Map.of();
-		}
-	}
-
 	/** Keeps launcher font data cached when the renderer requests more glyphs. */
 	public static Function<Set<Integer>, Map<Integer, Glyph>> loader(ZipStack assets, Locale locale) {
-		var launcherAssets = new MinecraftLanguageAssets();
+		return loader(assets, locale, new MinecraftLanguageAssets());
+	}
+
+	static Function<Set<Integer>, Map<Integer, Glyph>> loader(ZipStack assets, Locale locale, MinecraftLanguageAssets launcherAssets) {
 		return characters -> {
 			MinecraftFont font = new MinecraftFont(assets, locale, key -> launcherAssets.readAsset(assets, key), characters);
 			font.loadGlyphs();

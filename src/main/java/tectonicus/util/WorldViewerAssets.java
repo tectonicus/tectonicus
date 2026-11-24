@@ -22,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
@@ -49,7 +48,6 @@ public final class WorldViewerAssets {
 			"container.inventory", "container.enderchest", "item.dyed", "item.minecraft.smithing_template.upgrade"));
 	private final Set<String> itemMasks = new TreeSet<>();
 	private final Set<String> itemIds = new TreeSet<>();
-	private final Set<Integer> fontCharacters = new TreeSet<>();
 	private final Set<SignBackground> signBackgrounds = new HashSet<>();
 	private final Map<BannerIcon, String> bannerIcons = new LinkedHashMap<>();
 
@@ -93,7 +91,6 @@ public final class WorldViewerAssets {
 		if (item.length < 2) return;
 		String name = item[1];
 		itemIds.add(id);
-		addText(name);
 		String itemKey = "item." + item[0] + "." + name;
 		translationKeys.add(itemKey + ".desc");
 		translationKeys.add("block." + item[0] + "." + name);
@@ -105,7 +102,6 @@ public final class WorldViewerAssets {
 				translationKeys.add(itemKey + ".effect." + POTION_DURATION.matcher(potionId[1]).replaceFirst(""));
 		}
 		if (customName != null) {
-			addText(customName);
 			var match = CUSTOM_NAME.matcher(customName);
 			if (match.find()) {
 				String key = match.group("key");
@@ -136,14 +132,7 @@ public final class WorldViewerAssets {
 		String[] parts = id.split(":", -1);
 		if (parts.length > 1) {
 			translationKeys.add(category + "." + parts[0] + "." + parts[1]);
-			addText(parts[1]);
 		}
-	}
-
-	void addText(String text) {
-		if (text != null) Normalizer.normalize(text, Normalizer.Form.NFC).codePoints()
-				.filter(code -> !Character.isISOControl(code) && Character.getType(code) != Character.FORMAT)
-				.forEach(fontCharacters::add);
 	}
 
 	String addSignBackground(String blockName) {
@@ -164,18 +153,9 @@ public final class WorldViewerAssets {
 	}
 
 	void write(ZipStack assets, MapLocalization localization, String worldId, Path scriptsDir, Path imagesDir,
-			boolean hasFont, boolean usesBlockSignTextures) {
+			boolean usesBlockSignTextures) {
 		Map<String, String> translations = readTranslations(assets, localization, worldId);
-		for (int code = 32; code <= 126; code++) fontCharacters.add(code);
-		// Counts can use the map locale's numbering system.
-		addText(java.text.NumberFormat.getIntegerInstance(localization.locale()).format(1023456789));
-		MapLocalization.english().values().forEach(this::addText);
-		translations.values().forEach(this::addText);
-		Map<Integer, double[]> inventoryFont = MinecraftFont.write(assets, localization, fontCharacters, imagesDir.resolve(MinecraftFont.IMAGE));
 		Map<String, String> masks = new TreeMap<>();
-		boolean fontAvailable = hasFont && Files.isRegularFile(imagesDir.resolve("Font.png"));
-		if (fontAvailable) addMask(masks, imagesDir, "Font.png");
-		if (!inventoryFont.isEmpty()) addMask(masks, imagesDir, MinecraftFont.IMAGE);
 		for (String filename : itemMasks) addMask(masks, imagesDir, filename);
 		writeScript(scriptsDir.resolve("masks.js"), "registerWorldMasks", worldId, masks);
 		Set<String> exportedSignBackgrounds = new TreeSet<>();
@@ -183,8 +163,7 @@ public final class WorldViewerAssets {
 			if (background.write(assets, imagesDir, usesBlockSignTextures)) exportedSignBackgrounds.add(background.filename());
 		}
 		writeScript(scriptsDir.resolve("localizations.js"), "registerWorldLocalizations", worldId,
-				Map.of("translations", translations, "hasFont", fontAvailable, "inventoryFont", inventoryFont,
-						"signBackgrounds", exportedSignBackgrounds));
+				Map.of("translations", translations, "signBackgrounds", exportedSignBackgrounds));
 	}
 
 	private Map<String, String> readTranslations(ZipStack assets, MapLocalization localization, String worldId) {

@@ -491,8 +491,6 @@ function onBaseLayerChange(e) {
 
 	changeBackgroundColor(e.layer.backgroundColor);
     const mapStyle = document.querySelector('#map').style;
-    const fontMask = fontMaskUrl('Font.png', e.layer);
-    mapStyle.setProperty('--minecraft-font', fontMask ? 'url("' + fontMask + '")' : 'none');
     // url() in a custom property resolves against the stylesheet that uses it (Scripts/), so pass an absolute URL.
     const glintUrl = new URL(worldImageUrl('EnchantedGlint.png', e.layer), document.baseURI).href;
     mapStyle.setProperty('--enchanted-glint', 'url("' + glintUrl + '")');
@@ -759,7 +757,7 @@ function renderSignPopup(sign, layer) {
 		styles.push(`background-image:url('${url}');`);
 	}
 	const lines = [sign.text1, sign.text2, sign.text3, sign.text4].map((line, index) =>
-		renderMinecraftText(line, 'sign_text_line', layer, sign.textColors?.[index]) || '<div class="sign_text_line"></div>');
+		renderMinecraftText(line, 'sign_text_line', sign.textColors?.[index]) || '<div class="sign_text_line"></div>');
 	const style = styles.length ? ` style="${escapeHtml(styles.join(''))}"` : '';
 	return `<div class="${classes.join(' ')}"${style}>${lines.join('')}</div>`;
 }

@@ -161,7 +161,6 @@ public class OutputResourcesUtil {
 				for (int i = 0; i < lines.size(); i++) {
 					String line = lines.get(i);
 					signArgs.put("text" + (i + 1), json.writeValueAsString(line));
-					if (viewerAssets != null) viewerAssets.addText(line);
 				}
 				jsWriter.write(signArgs);
 			}
@@ -508,7 +507,6 @@ public class OutputResourcesUtil {
 					containerArgs.put("nameKey", "null");
 				}
 				containerArgs.put("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(name));
-				if (inventoryAssets != null) inventoryAssets.addText(name);
 				containerArgs.put("items", items.toString());
 				if (partner != null) {
 					containerArgs.put("large", "true");
@@ -1101,8 +1099,6 @@ public class OutputResourcesUtil {
 		writeImage(playerInventoryWithEnderChest, playerInventoryWithEnderChest.getWidth(), playerInventoryWithEnderChest.getHeight(),
 				new File(imagesDir, "PlayerInventoryWithEnderChest.png"));
                 
-		boolean hasFont = texturePack.getFont() != null;
-		if (hasFont) writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));
 
 		// Write default player icon
 		if (defaultSkinPath.equals("mob/char.png") && !texturePack.fileExists(defaultSkinPath))
@@ -1121,7 +1117,7 @@ public class OutputResourcesUtil {
 		FileUtils.ensureExists(scriptsDir);
 		MarkerShadows.write(imagesDir.toPath());
 		viewerAssets.write(texturePack.getZipStack(), localization, world.getId(), scriptsDir.toPath(),
-				imagesDir.toPath(), hasFont, texturePackVersion.getNumVersion() >= VERSION_26_2.getNumVersion());
+				imagesDir.toPath(), texturePackVersion.getNumVersion() >= VERSION_26_2.getNumVersion());
 	}
 
 	public static void outputHtmlResources(Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
