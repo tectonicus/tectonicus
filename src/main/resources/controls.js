@@ -283,3 +283,41 @@ function CreateSubsetControl() {
     });
     return new SubsetControl();
 }
+
+// Shows the in-game X/Z block coordinates under the cursor and the region file that holds them.
+function CreateCoordinatesControl() {
+    const CoordinatesControl = L.Control.extend({
+        options: {position: 'bottomright'},
+
+        onAdd(map) {
+            const container = L.DomUtil.create('div', 'coordinates-control');
+            container.hidden = true;
+            this._coordinates = L.DomUtil.create('span', '', container);
+            container.append(' ');
+            this._region = L.DomUtil.create('span', 'coordinates-region', container);
+            this._onMove = event => this.update(event.latlng);
+            this._onLeave = () => { container.hidden = true; };
+            map.on('mousemove', this._onMove);
+            map.getContainer().addEventListener('mouseleave', this._onLeave);
+            return container;
+        },
+
+        onRemove(map) {
+            map.off('mousemove', this._onMove);
+            map.getContainer().removeEventListener('mouseleave', this._onLeave);
+        },
+
+        update(latlng) {
+            if (!activeBaseLayer) return;
+            const world = activeBaseLayer.projection.mapToWorld(latlng);
+            const x = Math.floor(world.x);
+            const z = Math.floor(world.z);
+            const position = formatMapCoordinates({x, y: 0, z});
+            this._coordinates.textContent = 'X ' + position.x + '  Z ' + position.z;
+            // A region file covers 32x32 chunks of 16x16 blocks.
+            this._region.textContent = '(r.' + Math.floor(x / 512) + '.' + Math.floor(z / 512) + '.mca)';
+            this._container.hidden = false;
+        }
+    });
+    return new CoordinatesControl();
+}

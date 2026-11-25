@@ -348,6 +348,7 @@ async function mainAsync()
         activeBaseLayer = startLayer;
         // Register attribution before layers so Leaflet also observes removal of the first layer.
         L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
+        CreateCoordinatesControl().addTo(mymap);
         mymap.setMaxZoom(startLayer.maxZoom);
         mymap.setView(startView.startPoint, startView.zoom, {animate: false});
         startLayer.addTo(mymap);

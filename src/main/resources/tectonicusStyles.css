@@ -537,9 +537,11 @@ html, body, #map {
     display: none;
 }
 
-/* ---------- Attribution (chat-line style) ---------- */
+/* ---------- Attribution and cursor coordinates (chat-line style) ---------- */
 
-.leaflet-container .leaflet-control-attribution {
+.leaflet-container .leaflet-control-attribution,
+.leaflet-container .leaflet-control.coordinates-control {
+    margin: 0;
     padding: 1px 6px;
     color: #e0e0e0;
     background: var(--mc-overlay-bg);
@@ -548,8 +550,18 @@ html, body, #map {
     text-shadow: var(--mc-u) var(--mc-u) 0 #000;
 }
 
-.leaflet-container .leaflet-control-attribution a {
+.leaflet-container .leaflet-control-attribution a,
+.leaflet-container .coordinates-region {
     color: #ffff55;
+}
+
+.leaflet-container .leaflet-control.coordinates-control {
+    white-space: pre;
+    pointer-events: none;
+}
+
+.leaflet-container .leaflet-control.coordinates-control[hidden] {
+    display: none;
 }
 
 .center {
