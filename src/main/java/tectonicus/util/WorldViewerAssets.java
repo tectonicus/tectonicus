@@ -157,6 +157,10 @@ public final class WorldViewerAssets {
 			addItemMask(icon);
 	}
 
+	void addTranslationKey(String key) {
+		translationKeys.add(key);
+	}
+
 	private void addNamespacedKey(String category, String id) {
 		String[] parts = id.split(":", -1);
 		if (parts.length > 1) {

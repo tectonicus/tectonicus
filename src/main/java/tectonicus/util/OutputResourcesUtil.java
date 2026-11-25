@@ -39,6 +39,8 @@ import tectonicus.itemregistry.ItemModel;
 import tectonicus.itemregistry.ItemRegistry;
 import tectonicus.rasteriser.Rasteriser;
 import tectonicus.raw.ArmorTrimTag;
+import tectonicus.raw.BannerPatternsTag;
+import tectonicus.raw.BaseColorTag;
 import tectonicus.raw.BeaconEntity;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.BlockProperties;
@@ -105,6 +107,13 @@ import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 @Slf4j
 @UtilityClass
 public class OutputResourcesUtil {
+	/** Minecraft lists at most six pattern layers in a banner or shield tooltip. */
+	static final int MAX_TOOLTIP_PATTERNS = 6;
+
+	/** A pattern layer line in an item tooltip, with the pattern and color for when the translation is missing */
+	public record TooltipPattern(String key, String pattern, String color) {
+	}
+
 	public static void outputSigns(File outputFile, File signListFile, tectonicus.configuration.DimensionConfig map) {
 		outputSigns(outputFile, signListFile, map, null);
 	}
@@ -590,6 +599,13 @@ public class OutputResourcesUtil {
 		return result.append("]").toString();
 	}
 
+        /** @return the translation key of a shield's name with a base color, such as "Orange Shield" */
+        static String shieldNameKey(String itemId, String baseColor) {
+                String[] id = itemId.split(":", 2);
+                return id.length < 2 ? "item.minecraft." + itemId + "." + baseColor
+                                : "item." + id[0] + "." + id[1] + "." + baseColor;
+        }
+
         private static String outputItem(Item item, boolean isLeft, WorldViewerAssets viewerAssets) {
                 String result = "\t\t\t{ id: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(item.id) + ", ";
 
@@ -614,6 +630,27 @@ public class OutputResourcesUtil {
                         result += "components: { potionContents: { potion: \"" + potionContents.potion + "\" } }, ";
                 }
                 
+                // Banners and shields list their pattern layers, and a shield made with a banner is named after its color.
+                BaseColorTag baseColorTag = item.getComponent(BaseColorTag.class);
+                if (baseColorTag != null) {
+                        String baseColor = Banner.dyeName(baseColorTag.color());
+                        result += "baseColor: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(baseColor) + ", ";
+                        if (viewerAssets != null)
+                                viewerAssets.addTranslationKey(shieldNameKey(item.id, baseColor));
+                }
+                BannerPatternsTag patternsTag = item.getComponent(BannerPatternsTag.class);
+                if (patternsTag != null && !patternsTag.patterns().isEmpty()) {
+                        List<TooltipPattern> layers = new ArrayList<>();
+                        for (Banner.Pattern pattern : patternsTag.patterns().subList(0, Math.min(patternsTag.patterns().size(), MAX_TOOLTIP_PATTERNS))) {
+                                String key = Banner.patternTranslationKey(pattern);
+                                layers.add(new TooltipPattern(key, Banner.patternName(pattern.getPattern()),
+                                                Banner.dyeName(pattern.getColor())));
+                                if (viewerAssets != null)
+                                        viewerAssets.addTranslationKey(key);
+                        }
+                        result += "patterns: " + FileUtils.getOBJECT_MAPPER().writeValueAsString(layers) + ", ";
+                }
+
                 ArmorTrimTag trimTag = item.getComponent(ArmorTrimTag.class);
                 if (trimTag != null) {
                         result += "trim: { pattern: \"" + trimTag.pattern + "\", material: \"" + trimTag.material + "\" }, ";
