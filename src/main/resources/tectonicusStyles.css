@@ -117,6 +117,12 @@ html, body, #map {
     image-rendering: pixelated;
 }
 
+/* Player figures are smooth 3D renders that are scaled down, not pixel art */
+.leaflet-marker-icon.player_avatar_icon,
+.leaflet-container .leaflet-popup-content img.player_avatar {
+    image-rendering: auto;
+}
+
 /* ---------- Shared looks ---------- */
 
 /* GUI panel: light top-left bevel, dark bottom-right bevel, black outline, square corners */

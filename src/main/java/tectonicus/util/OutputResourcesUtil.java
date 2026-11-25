@@ -1107,7 +1107,10 @@ public class OutputResourcesUtil {
 		if (defaultSkinIcon == null) {
 			log.warn("Unable to find default skin!");
 		} else {
-			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			// Steve-style skins have classic arms; Alex and the skins in the slim folder have slim arms.
+			boolean slim = defaultSkinPath.contains("/slim/") || defaultSkinPath.endsWith("entity/alex.png");
+			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, slim, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			playerIconAssembler.writeDefaultHeadIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Head.png"));
 		}
                 
                 // Extract enchanted glint texture

@@ -44,8 +44,37 @@ function createWorldMarkerIcon(filename, iconAnchor, layer, iconSize) {
 	return createMapIcon(worldImageUrl(filename, layer), filename, iconAnchor, layer, iconSize);
 }
 
+// Player figures are rendered by Tectonicus (PlayerAvatarRenderer) and shown 40px tall on the map.
+// The player shadow and the anchors were made for a 40px figure.
+const PLAYER_MARKER_HEIGHT = 40;
+const PLAYER_POPUP_HEIGHT = 96;
+
+function playerIconWidth(player, height) {
+	const [width, naturalHeight] = player.iconSize ?? [1, 2];
+	return Math.max(1, Math.round(height * width / naturalHeight));
+}
+
+function createPlayerIcon(player, layer) {
+	const height = PLAYER_MARKER_HEIGHT;
+	const width = playerIconWidth(player, height);
+	const options = {
+		iconUrl: player.icon,
+		iconSize: [width, height],
+		iconAnchor: [Math.round(width / 2) + 1, 25],
+		popupAnchor: [0, -10],
+		className: 'player_avatar_icon'
+	};
+	const shadowUrl = layer?.markerShadows?.player;
+	if (shadowUrl) {
+		options.shadowUrl = shadowUrl;
+		options.shadowSize = [80, 54];
+		options.shadowAnchor = [31, 37];
+	}
+	return L.icon(options);
+}
+
 function createPlayerMarker(player, pos, layer = activeBaseLayer) {
-	const icon = createMapIcon(player.icon, 'player', [21, 25], layer, [40, 40]);
+	const icon = createPlayerIcon(player, layer);
 
 	return bindMarkerPopup(L.marker(pos, { icon: icon }), getPlayerHtml(player), player.worldPos, layer, {maxWidth: 380})
 		.bindTooltip(escapeHtml(playerDisplayName(player)));
@@ -170,7 +199,8 @@ function getPlayerHtml(player) {
 		+ '<div style=\"text-align:center\">'
 			+ '<div class="playerName" style="text-align:center; font-size:110%" >' + escapeHtml(playerDisplayName(player)) + '</div>'
 			+ '<div style=\"width:300px; margin:4px auto;\" >'
-			+ 	'<img style=\"float:left; margin:4px;\" src=\"' + player.icon + '\" width=\"64\" height=\"64\" />'
+			+ 	'<img class=\"player_avatar\" style=\"float:left; margin:4px;\" src=\"' + player.icon + '\" width=\"'
+			+		playerIconWidth(player, PLAYER_POPUP_HEIGHT) + '\" height=\"' + PLAYER_POPUP_HEIGHT + '\" alt=\"\" />'
 			+	'<div>'
 			+		'<div>' + getHealthHtml(player) + '</div>'
 			+		'<div>' + getFoodHtml(player) + '</div>'

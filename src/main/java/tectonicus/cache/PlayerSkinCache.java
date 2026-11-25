@@ -189,11 +189,12 @@ public class PlayerSkinCache
 		// A render loads the same player save in each dimension, including after a failed lookup.
 		PlayerProfile profile = refreshedProfiles.computeIfAbsent(player.getUuid(), uuid -> {
 			player.new RequestPlayerInfoTask().call();
-			return new PlayerProfile(player.getUuid(), player.getName(), player.getSkinURL(), player.isProfileResolved());
+			return new PlayerProfile(player.getUuid(), player.getName(), player.getSkinURL(), player.getSlimSkin(), player.isProfileResolved());
 		});
 		player.setUuid(profile.uuid());
 		player.setName(profile.name());
 		player.setSkinURL(profile.skinUrl());
+		player.setSlimSkin(profile.slimSkin());
 		player.setProfileResolved(profile.resolved());
 	}
 	
@@ -380,5 +381,5 @@ public class PlayerSkinCache
 		public String skinFile;
 	}
 
-	private record PlayerProfile(String uuid, String name, String skinUrl, boolean resolved) {}
+	private record PlayerProfile(String uuid, String name, String skinUrl, Boolean slimSkin, boolean resolved) {}
 }

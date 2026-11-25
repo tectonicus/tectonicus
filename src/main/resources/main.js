@@ -366,7 +366,7 @@ async function mainAsync()
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
         viewToggleControl = CreateToggleControl('views', 'Picture.png', viewsInitiallyVisible, 'viewControlChecked');
         signToggleControl = CreateToggleControl('signs', 'Sign.png', signsInitiallyVisible, 'signControlChecked');
-        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Icon.png', playersInitiallyVisible, 'playerControlChecked');
+        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Head.png', playersInitiallyVisible, 'playerControlChecked');
         bedToggleControl = CreateToggleControl('beds', 'Bed.png', bedsInitiallyVisible, 'bedControlChecked');
         respawnAnchorToggleControl = CreateToggleControl('respawnAnchors', 'RespawnAnchor.png', respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
         beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconsInitiallyVisible, 'beaconControlChecked');
@@ -802,21 +802,22 @@ function refreshPlayerMarkers(layer) {
 	for (const player of layer.players) {
 		player.donation = '';
 		const point = layer.projection.worldToMap(player.worldPos);
-		if (player.defaultPlayerName || !player.name || player.name === 'null') {
-			player.icon = fallbackIcon;
-			group.addLayer(createPlayerMarker(player, point, layer));
-			continue;
-		}
-		const src = worldImageUrl('PlayerIcons/' + player.name + '.png', layer);
-		const icon = new Image();
-		const addMarker = iconUrl => {
+		const addMarker = (image, iconUrl) => {
 			if (generation !== playerMarkerGeneration || layer !== activeBaseLayer) return;
 			player.icon = iconUrl;
+			// All player figures are rendered on the same canvas; its size sets the marker's proportions.
+			player.iconSize = image ? [image.naturalWidth, image.naturalHeight] : null;
 			group.addLayer(createPlayerMarker(player, point, layer));
 		};
-		icon.onload = () => addMarker(src);
-		icon.onerror = () => addMarker(fallbackIcon);
-		icon.src = src;
+		const loadIcon = (url, onError) => {
+			const image = new Image();
+			image.onload = () => addMarker(image, url);
+			image.onerror = onError;
+			image.src = url;
+		};
+		const loadFallback = () => loadIcon(fallbackIcon, () => addMarker(null, fallbackIcon));
+		if (player.defaultPlayerName || !player.name || player.name === 'null') loadFallback();
+		else loadIcon(worldImageUrl('PlayerIcons/' + player.name + '.png', layer), loadFallback);
 	}
 }
 
