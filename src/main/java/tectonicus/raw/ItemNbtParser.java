@@ -16,6 +16,7 @@ import org.tectonicus.jnbt.ListTag;
 import org.tectonicus.jnbt.ShortTag;
 import org.tectonicus.jnbt.StringTag;
 import org.tectonicus.jnbt.Tag;
+import tectonicus.world.Colors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ final class ItemNbtParser {
 		LegacyItems legacyItems = LegacyItems.get();
 		if (id.indexOf(':') < 0)
 			id = "minecraft:" + id;
-		List<Object> components = parseTagTag(tag);
+		List<Object> components = parseTagTag(tag, id, true);
 		if (components == null)
 			components = new ArrayList<>();
 
@@ -95,7 +96,7 @@ final class ItemNbtParser {
 	static List<Object> parseItemComponents(CompoundTag itemTag) {
 		CompoundTag components = NbtUtil.getChild(itemTag, "components", CompoundTag.class);
 		return components != null ? parseComponentsTag(components)
-				: parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class));
+				: parseTagTag(NbtUtil.getChild(itemTag, "tag", CompoundTag.class), NbtUtil.getString(itemTag, "id", ""), false);
 	}
 
 	// 1.20.5 and later
@@ -165,11 +166,19 @@ final class ItemNbtParser {
 		}
 		
 		addBannerPatterns(components, NbtUtil.getChild(componentsTag, "minecraft:banner_patterns", ListTag.class), false);
+		StringTag baseColorTag = NbtUtil.getChild(componentsTag, "minecraft:base_color", StringTag.class);
+		Colors baseColor = baseColorTag == null ? null : Colors.byName(baseColorTag.getValue().replace("minecraft:", ""));
+		if (baseColor != null)
+			components.add(new BaseColorTag(baseColor));
 		return components;
 	}
 	
-	// 1.20.4 and older
-	private static List<Object> parseTagTag(CompoundTag tagTag) {
+	/**
+	 * Reads the item tag used by 1.20.4 and older.
+	 *
+	 * @param legacy true if the item was saved before the 1.13 flattening, when dye colors had inverted IDs
+	 */
+	private static List<Object> parseTagTag(CompoundTag tagTag, String itemId, boolean legacy) {
 		if (tagTag == null) {
 			return null;
 		}
@@ -238,8 +247,17 @@ final class ItemNbtParser {
 		
 		CompoundTag blockEntity = NbtUtil.getChild(tagTag, "BlockEntityTag", CompoundTag.class);
 		if (blockEntity != null) {
-			addBannerPatterns(tag, NbtUtil.getChild(blockEntity, "Patterns", ListTag.class),
-					NbtUtil.getChild(blockEntity, "Base", IntTag.class) != null);
+			IntTag baseTag = NbtUtil.getChild(blockEntity, "Base", IntTag.class);
+			// Banner items only kept a Base color before 1.13. Shields kept it after the flattening, with
+			// the dye IDs no longer inverted.
+			boolean shield = itemId.equals("minecraft:shield") || itemId.equals("shield");
+			boolean legacyColors = legacy || (baseTag != null && !shield);
+			addBannerPatterns(tag, NbtUtil.getChild(blockEntity, "Patterns", ListTag.class), legacyColors);
+			if (shield && baseTag != null) {
+				int colorId = baseTag.getValue();
+				if (colorId >= 0 && colorId <= 15)
+					tag.add(new BaseColorTag(Colors.byId(legacyColors ? 15 - colorId : colorId)));
+			}
 		}
 		return tag;
 	}

@@ -872,7 +872,7 @@ public class OutputResourcesUtil {
 				if (reusedIcons.contains(icon))
 					continue;
 				var banner = entry.getKey();
-				if (blockTypeRegistry == null || !(blockTypeRegistry.find(banner.itemId()) instanceof Banner))
+				if (!banner.isShield() && (blockTypeRegistry == null || !(blockTypeRegistry.find(banner.itemId()) instanceof Banner)))
 					continue;
 				try {
 					String itemName = banner.itemId().substring("minecraft:".length());
@@ -880,10 +880,14 @@ public class OutputResourcesUtil {
 					String baseModel = definition == null ? null : definition.getInventoryModel().getBase();
 					if (baseModel == null)
 						baseModel = "minecraft:item/" + itemName;
-					itemRenderer.renderItem(new File(itemIconDir, icon + ".png"), blockTypeRegistry, blockRegistry,
-							texturePack, banner.itemId(), baseModel, banner.patterns());
+					File outFile = new File(itemIconDir, icon + ".png");
+					if (banner.isShield())
+						itemRenderer.renderShield(outFile, blockRegistry, texturePack, baseModel, banner.shieldDesign());
+					else
+						itemRenderer.renderItem(outFile, blockTypeRegistry, blockRegistry,
+								texturePack, banner.itemId(), baseModel, banner.patterns());
 				} catch (Exception e) {
-					log.error("Unable to render patterned banner icon for {}", banner.itemId(), e);
+					log.error("Unable to render patterned icon for {}", banner.itemId(), e);
 					failedIcons.add(icon);
 				}
 			}

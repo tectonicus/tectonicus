@@ -427,7 +427,7 @@ function createItemHtml(item, top, left) {
 
         const pngName = getPngName(item, itemId);
         const itemImage = worldImageUrl('Items/' + pngName + '.png');
-        const bannerIcon = typeof item.bannerIcon === 'string' && /^banner_[0-9a-f]{64}$/.test(item.bannerIcon)
+        const bannerIcon = typeof item.bannerIcon === 'string' && /^(banner|shield)_[0-9a-f]{64}$/.test(item.bannerIcon)
                 ? worldImageUrl('Items/' + item.bannerIcon + '.png') : null;
         let html = '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
         html += '<img src="' + (bannerIcon || itemImage) + '" onload="checkImageSize(this)"';

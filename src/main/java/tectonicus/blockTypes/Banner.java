@@ -303,7 +303,7 @@ public class Banner implements BlockType
 
 
 
-	static void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
+	public static void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
 		if (pattern != null) {
 			// Since 1.15, each pattern contains its own cloth shading and alpha mask.
 			// Multiply by the dye color without modifying the shared pattern texture.

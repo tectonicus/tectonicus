@@ -29,6 +29,7 @@ import tectonicus.itemregistry.ItemLayers;
 import tectonicus.itemregistry.PosedGeometry;
 import tectonicus.itemregistry.ShieldModel;
 import tectonicus.raw.BannerPatternsTag;
+import tectonicus.raw.BaseColorTag;
 import tectonicus.raw.BedEntity;
 import tectonicus.raw.BiomesOld;
 import tectonicus.raw.BlockProperties;
@@ -170,7 +171,9 @@ final class ItemFrameItems {
 		DyedColorTag dye = item.getComponent(DyedColorTag.class);
 		BannerPatternsTag patterns = item.getComponent(BannerPatternsTag.class);
 		PotionContentsTag potion = item.getComponent(PotionContentsTag.class);
+		BaseColorTag baseColor = item.getComponent(BaseColorTag.class);
 		return item.id + (dye == null ? "" : "#" + Integer.toHexString(dye.color))
+				+ (baseColor == null ? "" : "@" + baseColor.color().getName())
 				+ (potion == null ? "" : "/" + potion.potion)
 				+ (patterns == null ? "" : patterns.toString());
 	}
@@ -314,7 +317,9 @@ final class ItemFrameItems {
 		if ("minecraft:shield".equals(specialType) || "shield".equals(specialType) || name.equals("shield")) {
 			// The same placement as the inventory icon: ShieldSpecialRenderer's model in item space.
 			Matrix4f shield = new Matrix4f().scale(1, -1, -1).translate(-0.5f, 0.75f, -9 / 16f).scale(1, -1, 1);
-			return ResolvedItem.of(display, geometry -> ShieldModel.addGeometry(modelRegistry, texturePack, geometry, shield, new Vector4f(1)));
+			ShieldModel.Design design = ShieldModel.Design.of(item);
+			return ResolvedItem.of(display, geometry -> ShieldModel.addGeometry(modelRegistry, texturePack, geometry, shield,
+					new Vector4f(1), design));
 		}
 		return null;
 	}
