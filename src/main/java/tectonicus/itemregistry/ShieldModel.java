@@ -149,9 +149,7 @@ public class ShieldModel {
 		boolean legacy = textures.getVersion().getNumVersion() < VERSION_15.getNumVersion();
 		addPattern(base, images.get("base"), design.baseColor(), legacy, g);
 		for (Banner.Pattern pattern : design.patterns()) {
-			// Field uses the base texture and was saved as "b" before 1.20.5.
-			String patternId = pattern.getPattern().equals("b") ? "base" : pattern.getPattern().replace("minecraft:", "");
-			BufferedImage patternImage = images.get(patternId);
+			BufferedImage patternImage = Banner.findPatternImage(images, pattern.getPattern());
 			if (patternImage == null) {
 				log.warn("Missing shield pattern: {}", pattern.getPattern());
 				continue;

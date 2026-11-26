@@ -35,6 +35,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class Banner implements BlockType
@@ -172,9 +173,7 @@ public class Banner implements BlockType
 		
 		if (!patterns.isEmpty()) {
 			for (Pattern pattern : patterns) {
-				// Field uses the base texture and was saved as "b" before 1.20.5.
-				String patternId = pattern.pattern.equals("b") ? "base" : pattern.pattern.replace("minecraft:", "");
-				BufferedImage patternImage = patternImages.get(patternId);
+				BufferedImage patternImage = findPatternImage(patternImages, pattern.pattern);
 				if (patternImage == null) {
 					log.warn("Missing banner pattern: {}", pattern.pattern);
 					continue;
@@ -377,6 +376,26 @@ public class Banner implements BlockType
 	public static String patternName(String pattern) {
 		String name = pattern.startsWith("minecraft:") ? pattern.substring("minecraft:".length()) : pattern;
 		return LEGACY_PATTERN_NAMES.getOrDefault(name, name);
+	}
+
+	/** Pattern names by the codes saved before 1.20.5, for jars that load their pattern images by code. */
+	private static final Map<String, String> LEGACY_PATTERN_CODES = LEGACY_PATTERN_NAMES.entrySet().stream()
+			.collect(Collectors.toUnmodifiableMap(Map.Entry::getValue, Map.Entry::getKey));
+
+	/**
+	 * Finds a pattern image saved under either a code or a name. Worlds upgraded to 1.20.5 or newer keep the old
+	 * codes, such as "cs", in chunks and items that have not been loaded since. Jars before 1.20.5 load their
+	 * images by code, and 1.20.5 and newer by name.
+	 *
+	 * @param images pattern images by code or name, as loaded by the texture pack
+	 * @return the image, or null if the pack has none for this pattern
+	 */
+	public static BufferedImage findPatternImage(Map<String, BufferedImage> images, String pattern) {
+		String name = patternName(pattern);
+		BufferedImage image = images.get(name);
+		if (image == null && LEGACY_PATTERN_CODES.containsKey(name))
+			image = images.get(LEGACY_PATTERN_CODES.get(name));
+		return image;
 	}
 
 	/** @return the translation key of a pattern layer, as shown in item tooltips since 1.13 */
