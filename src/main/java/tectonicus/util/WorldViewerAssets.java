@@ -7,6 +7,7 @@ package tectonicus.util;
 
 import lombok.extern.slf4j.Slf4j;
 import tectonicus.blockTypes.Banner;
+import tectonicus.itemregistry.ShieldModel;
 import tectonicus.raw.ArmorTrimTag;
 import tectonicus.raw.BannerPatternsTag;
 import tectonicus.raw.EnchantmentTag;
@@ -43,6 +44,7 @@ public final class WorldViewerAssets {
 	private static final Pattern CUSTOM_NAME = Pattern.compile("\\{(?:text:[^,)]*)?,?(?:translate:(?<key>[^,)]*))?,?(?:color:[^)]*)?}");
 	private static final Pattern POTION_DURATION = Pattern.compile("^(strong|long)_");
 	private static final Pattern MASK_NAME = Pattern.compile("[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*");
+	private static final String SHIELD = "minecraft:shield";
 	private static final Set<String> LEATHER_OVERLAYS = Set.of("leather_boots", "leather_chestplate", "leather_helmet", "leather_leggings");
 
 	private final Set<String> translationKeys = new TreeSet<>(Set.of("attribute.name.armor", "attribute.name.generic.armor",
@@ -53,19 +55,42 @@ public final class WorldViewerAssets {
 	private final Set<SignBackground> signBackgrounds = new HashSet<>();
 	private final Map<BannerIcon, String> bannerIcons = new LinkedHashMap<>();
 
-	record BannerIcon(String itemId, List<Banner.Pattern> patterns) {
+	/** A banner or shield design, with a base color only for shields since a banner's item ID holds its color. */
+	record BannerIcon(String itemId, Colors baseColor, List<Banner.Pattern> patterns) {
+		BannerIcon(String itemId, List<Banner.Pattern> patterns) {
+			this(itemId, null, patterns);
+		}
+
+		boolean isShield() {
+			return SHIELD.equals(itemId);
+		}
+
+		ShieldModel.Design shieldDesign() {
+			return new ShieldModel.Design(baseColor, patterns);
+		}
+
 		String filename() {
 			try {
 				MessageDigest digest = MessageDigest.getInstance("SHA-256");
-				byte[] design = FileUtils.getOBJECT_MAPPER().writeValueAsBytes(List.of(itemId, patterns));
-				return "banner_" + HexFormat.of().formatHex(digest.digest(design));
+				byte[] design = FileUtils.getOBJECT_MAPPER().writeValueAsBytes(baseColor == null
+						? List.of(itemId, patterns) : List.of(itemId, baseColor.getName(), patterns));
+				return (isShield() ? "shield_" : "banner_") + HexFormat.of().formatHex(digest.digest(design));
 			} catch (NoSuchAlgorithmException e) {
 				throw new IllegalStateException(e);
 			}
 		}
 	}
 
+	/** @return the name of the icon for a banner or shield with patterns, or null if the item uses its usual icon */
 	String addBannerIcon(Item item) {
+		if (SHIELD.equals(item.id)) {
+			ShieldModel.Design design = ShieldModel.Design.of(item);
+			if (design == null)
+				return null;
+			return bannerIcons.computeIfAbsent(new BannerIcon(item.id, design.baseColor(), design.patterns()),
+					BannerIcon::filename);
+		}
+
 		String prefix = "minecraft:";
 		String suffix = "_banner";
 		if (!item.id.startsWith(prefix) || !item.id.endsWith(suffix)
@@ -130,6 +155,10 @@ public final class WorldViewerAssets {
 		}
 		if (enchantments != null || name.equals("enchanted_golden_apple"))
 			addItemMask(icon);
+	}
+
+	void addTranslationKey(String key) {
+		translationKeys.add(key);
 	}
 
 	private void addNamespacedKey(String category, String id) {

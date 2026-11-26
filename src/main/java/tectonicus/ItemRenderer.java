@@ -260,10 +260,16 @@ public class ItemRenderer
 	}
 
 	public void renderShield(File outFile, BlockRegistry registry, TexturePack texturePack, String baseModel) throws Exception {
+		renderShield(outFile, registry, texturePack, baseModel, null);
+	}
+
+	/** @param design the banner design on the shield, or null for a plain shield */
+	public void renderShield(File outFile, BlockRegistry registry, TexturePack texturePack, String baseModel,
+			ShieldModel.Design design) throws Exception {
 		Geometry geometry = guiGeometry(texturePack, baseModel);
 		ShieldModel.addGeometry(registry, texturePack, geometry,
 				new Matrix4f().scale(1, -1, -1).translate(-0.5f, 0.75f, -9 / 16f).scale(1, -1, 1),
-				new Vector4f(1));
+				new Vector4f(1), design);
 		renderGui(geometry, outFile);
 	}
         

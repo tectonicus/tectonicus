@@ -35,6 +35,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class Banner implements BlockType
@@ -172,9 +173,7 @@ public class Banner implements BlockType
 		
 		if (!patterns.isEmpty()) {
 			for (Pattern pattern : patterns) {
-				// Field uses the base texture and was saved as "b" before 1.20.5.
-				String patternId = pattern.pattern.equals("b") ? "base" : pattern.pattern.replace("minecraft:", "");
-				BufferedImage patternImage = patternImages.get(patternId);
+				BufferedImage patternImage = findPatternImage(patternImages, pattern.pattern);
 				if (patternImage == null) {
 					log.warn("Missing banner pattern: {}", pattern.pattern);
 					continue;
@@ -303,7 +302,7 @@ public class Banner implements BlockType
 
 
 
-	static void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
+	public static void addPattern(BufferedImage pattern, Color color, Graphics2D g) {
 		if (pattern != null) {
 			// Since 1.15, each pattern contains its own cloth shading and alpha mask.
 			// Multiply by the dye color without modifying the shared pattern texture.
@@ -353,6 +352,65 @@ public class Banner implements BlockType
 		g.drawImage(maskedImage, 0, 0, null);
 	}
 	
+	/** Pattern codes saved before 1.20.5, by the pattern names used since then. */
+	private static final Map<String, String> LEGACY_PATTERN_NAMES = Map.ofEntries(
+			Map.entry("b", "base"), Map.entry("bo", "border"), Map.entry("bri", "bricks"), Map.entry("mc", "circle"),
+			Map.entry("cre", "creeper"), Map.entry("cr", "cross"), Map.entry("cbo", "curly_border"),
+			Map.entry("ld", "diagonal_left"), Map.entry("rd", "diagonal_right"), Map.entry("lud", "diagonal_up_left"),
+			Map.entry("rud", "diagonal_up_right"), Map.entry("flo", "flower"), Map.entry("gra", "gradient"),
+			Map.entry("gru", "gradient_up"), Map.entry("hh", "half_horizontal"), Map.entry("hhb", "half_horizontal_bottom"),
+			Map.entry("vh", "half_vertical"), Map.entry("vhr", "half_vertical_right"), Map.entry("moj", "mojang"),
+			Map.entry("mr", "rhombus"), Map.entry("sku", "skull"), Map.entry("ss", "small_stripes"),
+			Map.entry("bl", "square_bottom_left"), Map.entry("br", "square_bottom_right"), Map.entry("tl", "square_top_left"),
+			Map.entry("tr", "square_top_right"), Map.entry("sc", "straight_cross"), Map.entry("bs", "stripe_bottom"),
+			Map.entry("cs", "stripe_center"), Map.entry("dls", "stripe_downleft"), Map.entry("drs", "stripe_downright"),
+			Map.entry("ls", "stripe_left"), Map.entry("ms", "stripe_middle"), Map.entry("rs", "stripe_right"),
+			Map.entry("ts", "stripe_top"), Map.entry("bt", "triangle_bottom"), Map.entry("tt", "triangle_top"),
+			Map.entry("bts", "triangles_bottom"), Map.entry("tts", "triangles_top"), Map.entry("glb", "globe"),
+			Map.entry("pig", "piglin"));
+
+	/**
+	 * @return the name of a saved pattern as used since 1.20.5, such as "stripe_top" for "ts" or
+	 * "minecraft:stripe_top". Patterns from other namespaces keep their namespace.
+	 */
+	public static String patternName(String pattern) {
+		String name = pattern.startsWith("minecraft:") ? pattern.substring("minecraft:".length()) : pattern;
+		return LEGACY_PATTERN_NAMES.getOrDefault(name, name);
+	}
+
+	/** Pattern names by the codes saved before 1.20.5, for jars that load their pattern images by code. */
+	private static final Map<String, String> LEGACY_PATTERN_CODES = LEGACY_PATTERN_NAMES.entrySet().stream()
+			.collect(Collectors.toUnmodifiableMap(Map.Entry::getValue, Map.Entry::getKey));
+
+	/**
+	 * Finds a pattern image saved under either a code or a name. Worlds upgraded to 1.20.5 or newer keep the old
+	 * codes, such as "cs", in chunks and items that have not been loaded since. Jars before 1.20.5 load their
+	 * images by code, and 1.20.5 and newer by name.
+	 *
+	 * @param images pattern images by code or name, as loaded by the texture pack
+	 * @return the image, or null if the pack has none for this pattern
+	 */
+	public static BufferedImage findPatternImage(Map<String, BufferedImage> images, String pattern) {
+		String name = patternName(pattern);
+		BufferedImage image = images.get(name);
+		if (image == null && LEGACY_PATTERN_CODES.containsKey(name))
+			image = images.get(LEGACY_PATTERN_CODES.get(name));
+		return image;
+	}
+
+	/** @return the translation key of a pattern layer, as shown in item tooltips since 1.13 */
+	public static String patternTranslationKey(Pattern pattern) {
+		String name = patternName(pattern.pattern);
+		int separator = name.indexOf(':');
+		String namespace = separator < 0 ? "minecraft" : name.substring(0, separator);
+		return "block." + namespace + ".banner." + name.substring(separator + 1) + "." + dyeName(pattern.color);
+	}
+
+	/** @return the dye name used in IDs and translation keys since 1.13 */
+	public static String dyeName(Colors color) {
+		return color == Colors.SILVER ? "light_gray" : color.getName();
+	}
+
 	@Value
 	public static class Pattern {
 		final String pattern;

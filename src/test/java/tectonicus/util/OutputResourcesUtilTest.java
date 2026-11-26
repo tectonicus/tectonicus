@@ -15,6 +15,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import tectonicus.PlayerIconAssembler;
 import tectonicus.cache.swap.HddObjectListWriter;
 import tectonicus.configuration.DimensionConfig;
+import tectonicus.blockTypes.Banner;
+import tectonicus.raw.BannerPatternsTag;
+import tectonicus.raw.BaseColorTag;
 import tectonicus.raw.CustomNameTag;
 import tectonicus.raw.ContainerEntity;
 import tectonicus.raw.ContainerKind;
@@ -24,6 +27,7 @@ import tectonicus.raw.Item;
 import tectonicus.raw.Player;
 import tectonicus.raw.SignEntity;
 import tectonicus.raw.SignTextColor;
+import tectonicus.world.Colors;
 import tectonicus.world.Sign;
 
 import javax.imageio.ImageIO;
@@ -67,6 +71,26 @@ class OutputResourcesUtilTest {
 		assertTrue(markers[3].contains("color: 0"));
 		assertTrue(markers[3].contains("outlineColor: " + 0xf0ebcc));
 		assertFalse(markers[3].contains("textColors"));
+	}
+
+	@Test
+	void exportsShieldColorAndUpToSixPatternLayersForTooltips() throws Exception {
+		var layers = new java.util.ArrayList<Banner.Pattern>(List.of(new Banner.Pattern("ts", Colors.BLUE),
+				new Banner.Pattern("minecraft:base", Colors.SILVER)));
+		for (int i = 0; i < 5; i++)
+			layers.add(new Banner.Pattern("minecraft:cross", Colors.RED));
+		var containers = new ConcurrentLinkedQueue<ContainerEntity>();
+		containers.add(new ContainerEntity(0, 64, 0, 0, 64, 0, "Chest", "", false, "south", "single", List.of(
+				new Item("minecraft:shield", 0, 1, 0, List.of(new BaseColorTag(Colors.ORANGE), new BannerPatternsTag(layers))))));
+		Path output = directory.resolve("containers.js");
+		WorldViewerAssets assets = new WorldViewerAssets();
+		OutputResourcesUtil.outputContainers(output.toFile(), new DimensionConfig("Map"), containers, assets);
+		String script = Files.readString(output);
+
+		assertTrue(script.contains("baseColor: \"orange\""));
+		assertTrue(script.contains("{\"key\":\"block.minecraft.banner.stripe_top.blue\",\"pattern\":\"stripe_top\",\"color\":\"blue\"}"));
+		assertTrue(script.contains("\"key\":\"block.minecraft.banner.base.light_gray\""));
+		assertEquals(6, script.split("\"key\":", -1).length - 1, "Minecraft lists at most six layers");
 	}
 
 	@Test

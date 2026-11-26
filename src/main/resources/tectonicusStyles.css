@@ -272,6 +272,14 @@ html, body, #map {
     mix-blend-mode: multiply;
 }
 
+.item .color_layer,
+.item .enchanted_glint {
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
 @keyframes enchanted_glint {
     0% {
         background-position-x: 0px;
@@ -289,6 +297,7 @@ html, body, #map {
     height: 16px;
     position: absolute;
     top: 0;
+    left: 0;
     bottom: 0;
     background-image: var(--enchanted-glint, url('../Images/EnchantedGlint.png'));
     mix-blend-mode: color-dodge;

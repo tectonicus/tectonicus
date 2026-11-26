@@ -93,6 +93,35 @@ class PlayerInventoryTest {
 		assertEquals(expected, player.getEnderChestInventory().getFirst().getComponent(BannerPatternsTag.class).patterns());
 	}
 
+	@ParameterizedTest
+	@ValueSource(strings = {"components", "tag", "legacy"})
+	void readsShieldBaseColorAndPatterns(String format) {
+		boolean modern = format.equals("components");
+		boolean legacy = format.equals("legacy");
+		String patternTag = modern ? "pattern" : "Pattern";
+		String colorTag = modern ? "color" : "Color";
+		String listName = modern ? "minecraft:banner_patterns" : "Patterns";
+		// Before 1.13 dye IDs were inverted: 4 was blue and 1 was orange.
+		ListTag layers = new ListTag(listName, CompoundTag.class, List.of(new CompoundTag("", Map.of(
+				patternTag, new StringTag(patternTag, modern ? "minecraft:stripe_top" : "ts"),
+				colorTag, modern ? new StringTag(colorTag, "blue") : new IntTag(colorTag, legacy ? 4 : 11)))));
+		CompoundTag metadata = modern
+				? new CompoundTag("components", Map.of(listName, layers,
+						"minecraft:base_color", new StringTag("minecraft:base_color", "orange")))
+				: new CompoundTag("tag", Map.of("BlockEntityTag", new CompoundTag("BlockEntityTag", Map.of(listName, layers,
+						"Base", new IntTag("Base", legacy ? 14 : 1)))));
+		CompoundTag item = new CompoundTag("", Map.of("id", new StringTag("id", "minecraft:shield"),
+				"Slot", new ByteTag("Slot", (byte) 0), "Count", new ByteTag("Count", (byte) 1), metadata.getName(), metadata));
+		Player player = new Player("Alex", new CompoundTag("", Map.of(
+				"Inventory", new ListTag("Inventory", CompoundTag.class, List.of(item)))),
+				legacy ? 1343 : LegacyItems.FLATTENING_DATA_VERSION);
+
+		Item shield = player.getInventory().getFirst();
+		assertEquals(Colors.ORANGE, shield.getComponent(BaseColorTag.class).color());
+		assertEquals(List.of(new Pattern(modern ? "minecraft:stripe_top" : "ts", Colors.BLUE)),
+				shield.getComponent(BannerPatternsTag.class).patterns());
+	}
+
 	@Test
 	void readsEquipmentSeparatelyAndReplacesLegacyEquipmentInSameSlot() {
 		String[] equipmentNames = {"feet", "legs", "chest", "head", "offhand"};

@@ -176,7 +176,8 @@ public class ArmorStand implements BlockType
 	private void buildHeldShield(int x, int y, int z, BlockContext world, Geometry geometry, ArmorStandEntity stand,
 			Vector4f colour, Item item, boolean leftHand) {
 		if (item != null && "minecraft:shield".equals(item.id))
-			ShieldModel.addGeometry(world.getModelRegistry(), texturePack, geometry, shieldTransform(x, y, z, stand, leftHand), colour);
+			ShieldModel.addGeometry(world.getModelRegistry(), texturePack, geometry, shieldTransform(x, y, z, stand, leftHand),
+					colour, ShieldModel.Design.of(item));
 	}
 
 	private void buildElytraMesh(int x, int y, int z, Geometry geometry, Vector4f colour, float yaw) {

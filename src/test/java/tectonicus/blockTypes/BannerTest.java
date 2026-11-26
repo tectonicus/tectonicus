@@ -33,6 +33,23 @@ class BannerTest {
 	}
 
 	@Test
+	void findsPatternImagesSavedUnderEitherCodesOrNames() {
+		BufferedImage stripe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage field = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		// 1.20.5+ jars load images by name; unconverted chunks and items can still hold the old codes.
+		var modernJar = java.util.Map.of("stripe_center", stripe, "base", field);
+		assertSame(stripe, Banner.findPatternImage(modernJar, "cs"));
+		assertSame(stripe, Banner.findPatternImage(modernJar, "minecraft:stripe_center"));
+		assertSame(field, Banner.findPatternImage(modernJar, "b"));
+		// Older jars load images by code, while newer worlds save names.
+		var legacyJar = java.util.Map.of("cs", stripe, "base", field);
+		assertSame(stripe, Banner.findPatternImage(legacyJar, "minecraft:stripe_center"));
+		assertSame(stripe, Banner.findPatternImage(legacyJar, "cs"));
+		assertSame(field, Banner.findPatternImage(legacyJar, "minecraft:base"));
+		assertNull(Banner.findPatternImage(modernJar, "minecraft:flow"));
+	}
+
+	@Test
 	void whiteDyePreservesOriginalTextureColors() {
 		BufferedImage pattern = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
 		pattern.setRGB(5, 5, 0xffb4c8dc);

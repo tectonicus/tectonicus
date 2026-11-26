@@ -120,6 +120,9 @@ public class TexturePack
 	private final Map<String, List<SubTexture>> particleTextures = new ConcurrentHashMap<>();
 	@Getter
 	private final Map<String, BufferedImage> bannerPatternImages;
+	/** Shield pattern images with the same keys as {@link #bannerPatternImages}, and the "shieldBase" plate texture */
+	@Getter
+	private final Map<String, BufferedImage> shieldPatternImages;
 	private final List<String> dataPacks;
 
 	public TexturePack(Rasteriser rasteriser, Configuration config, List<File> modJars, List<String> dataPacks)
@@ -263,11 +266,8 @@ public class TexturePack
 			}
 			
 			//We load the banner patterns differently because we need bannerBase texture too
-			Map<String, BufferedImage> patterns = loadPatternsJson(); //1.20.5+
-			if (patterns.isEmpty()) { //1.8 - 1.20.4
-				patterns = loadPatterns();
-			}
-			bannerPatternImages = patterns;
+			bannerPatternImages = loadPatternImages("banner");
+			shieldPatternImages = loadPatternImages("shield");
 
 			if (version == VERSION_4 || version == VERSION_ALPHA_BETA) {
 				try {
@@ -903,12 +903,30 @@ public class TexturePack
 		return hasFile;
 	}
 
+	/**
+	 * Loads the pattern images for banners or shields, which use the same pattern names
+	 *
+	 * @param kind "banner" or "shield"
+	 */
+	private Map<String, BufferedImage> loadPatternImages(String kind) {
+		Map<String, BufferedImage> patterns = loadPatternsJson(kind); //1.20.5+
+		if (patterns.isEmpty()) { //1.8 - 1.20.4
+			patterns = loadPatterns(kind);
+		}
+		return patterns;
+	}
+
 	/** Loads banner pattern images from Minecraft 1.8 - 1.20.4 */
-	public Map<String, BufferedImage> loadPatterns()
+	public Map<String, BufferedImage> loadPatterns() {
+		return loadPatterns("banner");
+	}
+
+	/** Loads banner or shield pattern images from Minecraft 1.8 - 1.20.4 */
+	public Map<String, BufferedImage> loadPatterns(String kind)
 	{
 		Map<String, BufferedImage> patterns = new HashMap<>();
 		Map<String, String> codes = new HashMap<>();
-		codes.put("banner_base.png", "bannerBase");
+		codes.put(kind + "_base.png", kind + "Base");
 		codes.put("base.png", "base");
 		codes.put("border.png", "bo");
 		codes.put("bricks.png", "bri");
@@ -953,7 +971,7 @@ public class TexturePack
 
 			
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
-			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/banner")))
+			DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("assets/minecraft/textures/entity/" + kind)))
 		{
 			for (Path entry : entries) {
 				String fileName = entry.getFileName().toString();
@@ -962,12 +980,14 @@ public class TexturePack
 				}
 			}
 			
-			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
+			Path basePattern = fs.getPath("assets/minecraft/textures/entity/" + kind + "_base.png");
 			patterns.put(codes.get(basePattern.getFileName().toString()), loadTexture(basePattern.toString()));
 		}
 		catch (IOException e)
 		{
-			log.warn("No banner patterns found. You may be using an older Minecraft jar file");
+			// Shields were added in 1.9.
+			if (kind.equals("banner") || version.getNumVersion() >= VERSIONS_9_TO_11.getNumVersion())
+				log.warn("No {} patterns found. You may be using an older Minecraft jar file", kind);
 		}
 
 		return patterns;
@@ -975,19 +995,24 @@ public class TexturePack
 	
 	/** Loads banner pattern images from Minecraft 1.20.5 and newer */
 	public Map<String, BufferedImage> loadPatternsJson() {
+		return loadPatternsJson("banner");
+	}
+
+	/** Loads banner or shield pattern images from Minecraft 1.20.5 and newer */
+	public Map<String, BufferedImage> loadPatternsJson(String kind) {
 		Map<String, BufferedImage> patterns = new HashMap<>();
 		
 		try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 			 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath("data/minecraft/banner_pattern"))) {
-			loadPatternTextures(entries, patterns);
+			loadPatternTextures(entries, patterns, kind);
 			
-			Path basePattern = fs.getPath("assets/minecraft/textures/entity/banner/banner_base.png");
+			Path basePattern = fs.getPath("assets/minecraft/textures/entity/" + kind + "/" + kind + "_base.png");
 			if (!Files.exists(basePattern)) { //Fall back to old texture location (1.21.11 and older)
-				basePattern = fs.getPath("assets/minecraft/textures/entity/banner_base.png");
+				basePattern = fs.getPath("assets/minecraft/textures/entity/" + kind + "_base.png");
 			}
-			patterns.put("bannerBase", loadTexture(basePattern.toString()));
+			patterns.put(kind + "Base", loadTexture(basePattern.toString()));
 		} catch (IOException e) {
-			log.warn("No banner pattern json found. You may be using an older Minecraft jar file");
+			log.warn("No {} pattern json found. You may be using an older Minecraft jar file", kind);
 		}
 		
 		//Check data packs for banners
@@ -997,29 +1022,29 @@ public class TexturePack
 			if (hasPatterns) {
 				try (FileSystem fs = FileSystems.newFileSystem(Paths.get(zipStack.getBaseFileName()));
 					 DirectoryStream<Path> entries = Files.newDirectoryStream(fs.getPath(filePath))) {
-					loadPatternTextures(entries, patterns);
+					loadPatternTextures(entries, patterns, kind);
 				} catch (IOException e) {
 					log.error("Error reading pattern json from datapack: {}", "");
 				}
 			}
 		}
 		
-		log.debug("Total number of banner patterns: {}", !patterns.isEmpty() ? patterns.size() - 1 : 0); //Don't count the banner base image as a pattern
+		log.debug("Total number of {} patterns: {}", kind, !patterns.isEmpty() ? patterns.size() - 1 : 0); //Don't count the base image as a pattern
 		return patterns;
 	}
 	
-	private void loadPatternTextures(DirectoryStream<Path> entries, Map<String, BufferedImage> patterns) {
+	private void loadPatternTextures(DirectoryStream<Path> entries, Map<String, BufferedImage> patterns, String kind) {
 		for (Path entry : entries) {
 			//TODO: actually parse the json and get the texture name from the json instead of using the filename
 			String filename = entry.getFileName().toString();
 			String patternId = filename.substring(0, filename.lastIndexOf('.'));
 			try {
-				patterns.put(patternId, loadTexture("assets/minecraft/textures/entity/banner/" + patternId + ".png"));
+				patterns.put(patternId, loadTexture("assets/minecraft/textures/entity/" + kind + "/" + patternId + ".png"));
 			} catch (FileNotFoundException e) {
-				log.error("No texture image found for {} pattern.", patternId);
+				log.error("No {} texture image found for {} pattern.", kind, patternId);
 			}
 			
-			log.trace("loaded: assets/minecraft/textures/entity/banner/{}.png", patternId);
+			log.trace("loaded: assets/minecraft/textures/entity/{}/{}.png", kind, patternId);
 		}
 	}
 	

@@ -421,13 +421,14 @@ function createItemHtml(item, top, left) {
         const itemDescKey = `item.${namespace}.${itemId}.desc`;
         let description = getItemName(item);
         description += renderMinecraftText(localize(itemDescKey, null)) || '';
+        description += getPatternsDescription(item);
         description += getTrimDescription(item);
         description += getEnchantmentsDescription(item);
         description += item.color ? renderMinecraftText(localize('item.dyed'), 'italic') : '';
 
         const pngName = getPngName(item, itemId);
         const itemImage = worldImageUrl('Items/' + pngName + '.png');
-        const bannerIcon = typeof item.bannerIcon === 'string' && /^banner_[0-9a-f]{64}$/.test(item.bannerIcon)
+        const bannerIcon = typeof item.bannerIcon === 'string' && /^(banner|shield)_[0-9a-f]{64}$/.test(item.bannerIcon)
                 ? worldImageUrl('Items/' + item.bannerIcon + '.png') : null;
         let html = '<div class="item" style="top: ' + top + 'px; left: ' + left + 'px;">';
         html += '<img src="' + (bannerIcon || itemImage) + '" onload="checkImageSize(this)"';
@@ -486,7 +487,22 @@ function getItemName(item) {
                 }
                 return renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
         }
-        return renderMinecraftText(localize(itemKey, localize(blockKey, itemId)), 'name' + additionalItemNameCssClass);
+        let name = localize(itemKey, localize(blockKey, itemId));
+        if (typeof item.baseColor === 'string') {
+                // A shield made with a banner is named after its base color, for example "Orange Shield".
+                name = localize(`${itemKey}.${item.baseColor}`, name);
+        }
+        return renderMinecraftText(name, 'name' + additionalItemNameCssClass);
+}
+
+// Banners and shields list up to six pattern layers in gray, for example "Blue Chief".
+function getPatternsDescription(item) {
+        if (!Array.isArray(item.patterns)) return '';
+        const words = text => String(text).replace(/^.*:/, '').split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        return item.patterns.slice(0, 6)
+                .map(layer => renderMinecraftText(localize(layer.key, words(layer.color) + ' ' + words(layer.pattern))) || '')
+                .join('');
 }
 
 function getTrimDescription(item) {
