@@ -20,17 +20,20 @@ import tectonicus.util.ImageUtils;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 @Slf4j
@@ -86,6 +89,11 @@ public class Downsampler {
 
 	@RequiredArgsConstructor
 	private static class DownsampleTask implements Runnable {
+		// A task runs on one thread from start to finish and writes its tile before returning,
+		// so each thread decodes into and draws on the same images from one tile to the next.
+		private static final ThreadLocal<BufferedImage[]> INPUT_IMAGES = ThreadLocal.withInitial(() -> new BufferedImage[4]);
+		private static final ThreadLocal<BufferedImage> OUTPUT_IMAGE = new ThreadLocal<>();
+
 		private final TileCoord tile;
 		private final Shared state;
 		private final ChangeFile changedFileList;
@@ -106,7 +114,7 @@ public class Downsampler {
 			BufferedImage[] inputs = new BufferedImage[4];
 			for (int i = 0; i < inputs.length; i++) {
 				File file = TileRenderer.getImageFile(state.inputDir, tile.x * 2 + i % 2, tile.y * 2 + i / 2, state.imageFormat);
-				inputs[i] = getTile(file);
+				inputs[i] = getTile(file, i);
 				// Unreadable files must not be mistaken for deliberately omitted empty children.
 				if (inputs[i] == null && file.exists()) {
 					log.warn("Skipping tile {},{} at zoom {} because {} could not be read", tile.x, tile.y, state.zoomLevel, file.getAbsolutePath());
@@ -133,7 +141,15 @@ public class Downsampler {
 			
 			final boolean hasAlpha = state.imageFormat.hasAlpha();
 			final int pixelFormat = hasAlpha ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR;
-			BufferedImage outImg = new BufferedImage(state.tileWidth, state.tileHeight, pixelFormat);
+			BufferedImage outImg = OUTPUT_IMAGE.get();
+			if (outImg == null || outImg.getType() != pixelFormat
+					|| outImg.getWidth() != state.tileWidth || outImg.getHeight() != state.tileHeight) {
+				outImg = new BufferedImage(state.tileWidth, state.tileHeight, pixelFormat);
+				OUTPUT_IMAGE.set(outImg);
+			} else if (hasAlpha) {
+				// Quadrants without an input tile must stay transparent rather than show the previous tile.
+				Arrays.fill(((DataBufferByte) outImg.getRaster().getDataBuffer()).getData(), (byte) 0);
+			}
 			Graphics2D g = (Graphics2D)outImg.getGraphics();
 			
 			if (!hasAlpha) {
@@ -176,7 +192,8 @@ public class Downsampler {
 			return image == null || ImageUtils.isFullyTransparent(image);
 		}
 		
-		private static BufferedImage getTile(File file) {
+		/** Reads a tile, decoding into this thread's image for the given quadrant when it has the same layout. */
+		private static BufferedImage getTile(File file, int quadrant) {
 			try {
 				// Keep stream-based WebP decoding without ImageIO's temporary disk cache.
 				try (var inputStream = new FileInputStream(file);
@@ -189,7 +206,12 @@ public class Downsampler {
 					try {
 						var readParam = reader.getDefaultReadParam();
 						reader.setInput(imageInput, true, true);
-						return reader.read(0, readParam);
+						BufferedImage[] reusable = INPUT_IMAGES.get();
+						if (canDecodeInto(reader, reusable[quadrant]))
+							readParam.setDestination(reusable[quadrant]);
+						BufferedImage image = reader.read(0, readParam);
+						reusable[quadrant] = image;
+						return image;
 					} finally {
 						reader.dispose();
 					}
@@ -200,6 +222,22 @@ public class Downsampler {
 				log.error("Error getting tile {}", file.getAbsolutePath(), e);
 			}
 			return null;
+		}
+
+		/**
+		 * Whether the reader would decode into an image laid out like {@code image} anyway, so decoding into it gives
+		 * the same pixels. Indexed images are never reused, since each file has its own palette.
+		 */
+		private static boolean canDecodeInto(ImageReader reader, BufferedImage image) throws IOException {
+			if (image == null || reader.getWidth(0) != image.getWidth() || reader.getHeight(0) != image.getHeight())
+				return false;
+			int type = image.getType();
+			if (type != BufferedImage.TYPE_3BYTE_BGR && type != BufferedImage.TYPE_4BYTE_ABGR
+					&& type != BufferedImage.TYPE_INT_RGB && type != BufferedImage.TYPE_INT_ARGB
+					&& type != BufferedImage.TYPE_BYTE_GRAY)
+				return false;
+			Iterator<ImageTypeSpecifier> types = reader.getImageTypes(0);
+			return types.hasNext() && types.next().getBufferedImageType() == type;
 		}
 	}
 }
