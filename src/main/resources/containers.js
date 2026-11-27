@@ -30,14 +30,7 @@ function loadViewerScript(url) {
 
 function worldMaskUrl(filename, layer = activeBaseLayer) {
     if (isLocalMap()) return worldMasks.get(layer?.worldId)?.[filename];
-    if (filename === 'Font.png' && worldLocalizations.get(layer?.worldId)?.hasFont === false) return;
     return worldImageUrl(filename, layer);
-}
-
-function fontMaskUrl(filename, layer = activeBaseLayer) {
-    const url = worldMaskUrl(filename, layer);
-    const base = globalThis.document?.baseURI;
-    return url && base ? new URL(url, base).href : url;
 }
 
 const hiddenEnchantmentLevels = [
@@ -52,43 +45,123 @@ const hiddenEnchantmentLevels = [
         'vanishing_curse'
 ];
 
-const colorizedNames = {
-        beacon: 'enchanted',
-        conduit: 'enchanted',
-        creeper_head: 'yellow',
-        dragon_breath: 'yellow',
-        dragon_egg: 'purple',
-        dragon_head: 'yellow',
-        enchanted_book: 'yellow',
-        enchanted_golden_apple: 'purple',
-        end_crystal: 'enchanted',
-        experience_bottle: 'yellow',
-        golden_apple: 'enchanted',
-        heart_of_the_sea: 'yellow',
-        music_disc_11: 'enchanted',
-        music_disc_13: 'enchanted',
-        music_disc_5: 'enchanted',
-        music_disc_blocks: 'enchanted',
-        music_disc_cat: 'enchanted',
-        music_disc_chirp: 'enchanted',
-        music_disc_far: 'enchanted',
-        music_disc_mall: 'enchanted',
-        music_disc_mellohi: 'enchanted',
-        music_disc_otherside: 'enchanted',
-        music_disc_pigstep: 'enchanted',
-        music_disc_relic: 'enchanted',
-        music_disc_stal: 'enchanted',
-        music_disc_strad: 'enchanted',
-        music_disc_wait: 'enchanted',
-        music_disc_ward: 'enchanted',
-        nether_star: 'yellow',
-        piglin_head: 'yellow',
-        player_head: 'yellow',
-        skeleton_skull: 'yellow',
-        totem_of_undying: 'yellow',
-        wither_skeleton_skull: 'yellow',
-        zombie_head: 'yellow'
+// Item rarities as in Minecraft Java Edition 1.21.9+ (items not listed are common).
+// The rarity decides the colour of the item name, see rarityCssClasses.
+const itemRarities = {
+        // Uncommon
+        chainmail_boots: 'uncommon',
+        chainmail_chestplate: 'uncommon',
+        chainmail_helmet: 'uncommon',
+        chainmail_leggings: 'uncommon',
+        conduit: 'uncommon',
+        creeper_banner_pattern: 'uncommon',
+        creeper_head: 'uncommon',
+        disc_fragment_5: 'uncommon',
+        dragon_breath: 'uncommon',
+        echo_shard: 'uncommon',
+        experience_bottle: 'uncommon',
+        goat_horn: 'uncommon',
+        heart_of_the_sea: 'uncommon',
+        music_disc_5: 'uncommon',
+        music_disc_11: 'uncommon',
+        music_disc_13: 'uncommon',
+        music_disc_blocks: 'uncommon',
+        music_disc_bounce: 'uncommon',
+        music_disc_cat: 'uncommon',
+        music_disc_chirp: 'uncommon',
+        music_disc_creator_music_box: 'uncommon',
+        music_disc_far: 'uncommon',
+        music_disc_flurry: 'uncommon',
+        music_disc_mall: 'uncommon',
+        music_disc_mellohi: 'uncommon',
+        music_disc_precipice: 'uncommon',
+        music_disc_relic: 'uncommon',
+        music_disc_stal: 'uncommon',
+        music_disc_strad: 'uncommon',
+        music_disc_tears: 'uncommon',
+        music_disc_wait: 'uncommon',
+        music_disc_ward: 'uncommon',
+        nautilus_shell: 'uncommon',
+        netherite_upgrade_smithing_template: 'uncommon',
+        ominous_bottle: 'uncommon',
+        piglin_banner_pattern: 'uncommon',
+        piglin_head: 'uncommon',
+        player_head: 'uncommon',
+        recovery_compass: 'uncommon',
+        skeleton_skull: 'uncommon',
+        sniffer_egg: 'uncommon',
+        totem_of_undying: 'uncommon',
+        zombie_head: 'uncommon',
+        bolt_armor_trim_smithing_template: 'uncommon',
+        coast_armor_trim_smithing_template: 'uncommon',
+        dune_armor_trim_smithing_template: 'uncommon',
+        flow_armor_trim_smithing_template: 'uncommon',
+        host_armor_trim_smithing_template: 'uncommon',
+        raiser_armor_trim_smithing_template: 'uncommon',
+        rib_armor_trim_smithing_template: 'uncommon',
+        sentry_armor_trim_smithing_template: 'uncommon',
+        shaper_armor_trim_smithing_template: 'uncommon',
+        snout_armor_trim_smithing_template: 'uncommon',
+        tide_armor_trim_smithing_template: 'uncommon',
+        wayfinder_armor_trim_smithing_template: 'uncommon',
+        wild_armor_trim_smithing_template: 'uncommon',
+        // Rare
+        beacon: 'rare',
+        enchanted_book: 'rare',
+        enchanted_golden_apple: 'rare',
+        flow_banner_pattern: 'rare',
+        guster_banner_pattern: 'rare',
+        mojang_banner_pattern: 'rare',
+        music_disc_creator: 'rare',
+        music_disc_lava_chicken: 'rare',
+        music_disc_otherside: 'rare',
+        music_disc_pigstep: 'rare',
+        nether_star: 'rare',
+        skull_banner_pattern: 'rare',
+        trident: 'rare',
+        wither_skeleton_skull: 'rare',
+        eye_armor_trim_smithing_template: 'rare',
+        spire_armor_trim_smithing_template: 'rare',
+        vex_armor_trim_smithing_template: 'rare',
+        ward_armor_trim_smithing_template: 'rare',
+        // Epic
+        barrier: 'epic',
+        chain_command_block: 'epic',
+        command_block: 'epic',
+        command_block_minecart: 'epic',
+        debug_stick: 'epic',
+        dragon_egg: 'epic',
+        dragon_head: 'epic',
+        elytra: 'epic',
+        heavy_core: 'epic',
+        jigsaw: 'epic',
+        knowledge_book: 'epic',
+        light: 'epic',
+        mace: 'epic',
+        repeating_command_block: 'epic',
+        silence_armor_trim_smithing_template: 'epic',
+        structure_block: 'epic',
+        structure_void: 'epic',
+        test_block: 'epic',
+        test_instance_block: 'epic'
 };
+
+const rarityCssClasses = {
+        common: '',
+        uncommon: 'yellow',
+        rare: 'enchanted',
+        epic: 'purple'
+};
+
+function getItemRarity(item, itemId) {
+        let rarity = itemRarities[itemId] ?? (itemId.endsWith('_pottery_sherd') ? 'uncommon' : 'common');
+        // Enchanting raises the rarity: common/uncommon -> rare, rare -> epic. Stored enchantments
+        // (enchanted books) don't count, and those are merged into item.enchantments by the exporter.
+        if (item.enchantments?.length && itemId !== 'enchanted_book') {
+                rarity = rarity === 'rare' || rarity === 'epic' ? 'epic' : 'rare';
+        }
+        return rarity;
+}
 
 const potionColors = {
         water: '#385dc6',
@@ -233,23 +306,6 @@ function intToRoman(num) {
     return roman;
 }
 
-const charMap = ' !"#$%&\'()*+,-./' +
-                '0123456789:;<=>?' +
-                '@ABCDEFGHIJKLMNO' +
-                'PQRSTUVWXYZ[\\]^_' +
-                '`abcdefghijklmno' +
-                'pqrstuvwxyz{|}~';
-const charWidths = ['', '!\',.:;i|', '`l', '"()*I[]t()', '<>fk'];
-
-function findCharacterRowAndColumn(char) {
-    const index = charMap.indexOf(char);
-    
-    const col = index % 16;
-    const row = Math.floor(index / 16 + 2); // +2 because 1st 2 lines are empty
-    
-    return [col, row];
-}
-
 function minecraftTextColor(rgb) {
     if (!Number.isInteger(rgb) || rgb < 0 || rgb > 0xffffff) return null;
     return '#' + rgb.toString(16).padStart(6, '0');
@@ -281,7 +337,7 @@ function minecraftTextRuns(text, colors) {
                     : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[(char.codePointAt(0) + index) % 36]).join('')
                 : plain;
             formatted.push({text: visible, plain, color: legacyColor ?? run.color,
-                classes: [...(legacyColor ? ['mc_text_colored'] : []), ...formats].filter(format => format !== 'k')});
+                classes: [...formats].filter(format => format !== 'k')});
         };
         for (const match of run.text.matchAll(/\u00a7([0-9a-fk-or])/gi)) {
             append(match.index);
@@ -303,71 +359,22 @@ const legacyTextClasses = {
     l: 'mc_text_bold', m: 'mc_text_struck', n: 'mc_text_underlined', o: 'mc_text_italic'
 };
 
-function renderMinecraftText(text, className, layer = activeBaseLayer, colors = []) {
-    if (!text)
-    {
-            return null;
-    }
-    
-    className = escapeHtml(className || '');
+// Renders Minecraft text (with § formatting codes and per-range colours) as real text in the
+// Minecraft web font; styling lives in the .mc_text rules of tectonicusStyles.css.
+function renderMinecraftText(text, className, colors = []) {
+    if (!text) return null;
+
     const runs = minecraftTextRuns(text, colors);
-    const characters = runs.flatMap(run =>
-        Array.from(run.text.normalize('NFC'), char => ({char, color: run.color, classes: run.classes})));
-    const normalized = characters.map(({char}) => char).join('');
-    const label = escapeHtml(runs.map(run => run.plain).join(''));
+    const content = runs.map(run => {
+        const classes = run.classes.length ? ` class="${run.classes.join(' ')}"` : '';
+        const color = run.color ? ` style="color:${run.color}"` : '';
+        const text = escapeHtml(run.text);
+        return classes || color ? `<span${classes}${color}>${text}</span>` : text;
+    }).join('');
+    // Obfuscated (§k) text shows random characters, so give screen readers the real text.
     const obfuscated = runs.some(run => run.text !== run.plain);
-    const font = worldLocalizations.get(layer?.worldId)?.inventoryFont;
-    const atlas = font?.[0] && fontMaskUrl('InventoryFont.png', layer);
-    // Let the browser shape combining, joining and right-to-left scripts as a complete string.
-    const needsShaping = !/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Number}\p{Punctuation}\p{Symbol}\p{Space_Separator}\p{Private_Use}]*$/u.test(normalized);
-    if (atlas && !needsShaping && characters.every(({char}) => Object.hasOwn(font, char.codePointAt(0)))) {
-            const [atlasWidth, atlasHeight] = font[0];
-            const glyphs = characters.map(({char, color, classes}) => {
-                    const [x, y, width, height, advance, top] = font[char.codePointAt(0)];
-                    const cssClasses = classes.length ? ' ' + classes.join(' ') : '';
-                    const tint = color ? `;color:${color}` : '';
-                    if (width === 0) return `<span class="mc_space${cssClasses}" style="width:${advance}px${tint}"></span>`;
-                    return `<span class="mc_char mc_atlas_char${cssClasses}" style="width:${width}px;height:${height}px;margin-right:${advance - width}px;top:${top}px;mask-position:-${x}px -${y}px${tint}"></span>`;
-            }).join('');
-            return `<div class="mc_text_container ${className}" aria-label="${label}" style="--minecraft-font:url('${atlas}');--minecraft-font-size:${atlasWidth}px ${atlasHeight}px"><span aria-hidden="true">${glyphs}</span></div>`;
-    }
-
-    if (!worldMaskUrl('Font.png', layer) || characters.some(({char}) => !charMap.includes(char))) {
-            const content = runs.map(run => {
-                const classes = run.classes.length ? ` class="${run.classes.join(' ')}"` : '';
-                const color = run.color ? ` style="color:${run.color}"` : '';
-                const text = escapeHtml(run.text);
-                return classes || color ? `<span${classes}${color}>${text}</span>` : text;
-            }).join('');
-            const ariaLabel = obfuscated ? ` aria-label="${label}"` : '';
-            return '<div class="mc_text_container mc_text_fallback ' + className + '"' + ariaLabel + '>' + content + '</div>';
-    }
-
-    let html = '<div class="mc_text_container ' + className + '" aria-label="' + label + '">';
-
-    for (const {char, color, classes} of characters) {
-            const position = findCharacterRowAndColumn(char);
-
-            const left = position[0] * 8;
-            const top = position[1] * 8;
-            
-            let widthOverride = '';
-            
-            for (let j = 1; j <= 4; j++) {
-                    if (charWidths[j].includes(char)) {
-                            widthOverride = ` width: ${j+1}px;`;
-                            break;
-                    }
-            }
-
-            const tint = color ? ` color:${color};` : '';
-            const cssClasses = classes.length ? ' ' + classes.join(' ') : '';
-            html += `<div class="mc_char${cssClasses}" style="mask-position: -${left}px -${top}px;${widthOverride}${tint}"></div>`;
-    }
-
-    html += '</div>';
-    
-    return html;
+    const label = obfuscated ? ` aria-label="${escapeHtml(runs.map(run => run.plain).join(''))}"` : '';
+    return `<div class="mc_text ${escapeHtml(className || '')}"${label}>${content}</div>`;
 }
 
 function containerMarkerIcon(container) {
@@ -464,13 +471,8 @@ function getItemName(item) {
                 itemKey = `${itemKey}.effect.${potionId.replace(/^(strong|long)_/, '')}`;
         }
     
-        let additionalItemNameCssClass = '';
-        if (item.enchantments) {
-                additionalItemNameCssClass = ' enchanted';
-        }
-        if (colorizedNames[itemId]) {
-                additionalItemNameCssClass = ' ' + colorizedNames[itemId];
-        }
+        const rarityCssClass = rarityCssClasses[getItemRarity(item, itemId)];
+        const additionalItemNameCssClass = rarityCssClass ? ' ' + rarityCssClass : '';
                 
         if (item.customName) {
                 // Parse custom name. Possible values if matched:
@@ -482,7 +484,8 @@ function getItemName(item) {
                 let matches = formattedCustomNameRegex.exec(item.customName);
                 if (matches) {
                         let { text, translate, color } = matches.groups;
-                        return renderMinecraftText(localize(translate, text), 'name italic ' + color + additionalItemNameCssClass);
+                        // An explicit colour in the custom name overrides the rarity colour
+                        return renderMinecraftText(localize(translate, text), 'name italic ' + (color || additionalItemNameCssClass.trim()));
                 }
                 return renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
         }

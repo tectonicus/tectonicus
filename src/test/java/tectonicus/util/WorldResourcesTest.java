@@ -75,14 +75,19 @@ class WorldResourcesTest {
 		for (int i = 0; i < 2; i++) {
 			String id = "World" + i;
 			int color = i == 0 ? 0xff123456 : 0xffabcdef;
-			for (String name : List.of("Sign.png", "FullHeart.png", "Font.png", "EnchantedGlint.png",
+			for (String name : List.of("Sign.png", "FullHeart.png", "EnchantedGlint.png",
 					"PlayerInventory.png", "PlayerInventoryWithEnderChest.png",
-					"PlayerIcons/Tectonicus_Default_Player_Icon.png", "effects/speed.png", "Items/leather_helmet.png", "Items/leather_helmet_overlay.png")) {
+					"effects/speed.png", "Items/leather_helmet.png", "Items/leather_helmet_overlay.png")) {
 				BufferedImage image = ImageIO.read(directory.resolve(id + "/Images/" + name).toFile());
 				assertEquals(color, image.getRGB(16 < image.getWidth() ? 16 : 0, 0), name);
 			}
+			// Player figures are lit renders of the skin; the fully lit top faces keep the skin's colour.
+			for (String name : List.of("PlayerIcons/Tectonicus_Default_Player_Icon.png", "PlayerIcons/Tectonicus_Default_Player_Head.png")) {
+				BufferedImage image = ImageIO.read(directory.resolve(id + "/Images/" + name).toFile());
+				assertTrue(containsColor(image, color), name);
+			}
 			var assets = readScriptPayload(id, "localizations.js", "registerWorldLocalizations");
-			assertTrue(assets.get("hasFont").asBoolean());
+			assertFalse(assets.has("hasFont"));
 			var translations = assets.get("translations");
 			assertEquals(id + " \"Helmet\"", translations.get("custom.helmet").asString());
 			assertEquals("Inventory", translations.get("container.inventory").asString());
@@ -94,13 +99,14 @@ class WorldResourcesTest {
 			assertEquals("Speed", translations.get("effect.minecraft.speed").asString());
 			assertEquals(8, translations.size());
 			var masks = readScriptPayload(id, "masks.js", "registerWorldMasks");
-			assertEquals(3, masks.size());
-			for (String filename : List.of("Font.png", "Items/leather_helmet.png", "Items/leather_helmet_overlay.png")) {
+			assertEquals(2, masks.size());
+			for (String filename : List.of("Items/leather_helmet.png", "Items/leather_helmet_overlay.png")) {
 				String expected = Base64.getEncoder().encodeToString(Files.readAllBytes(directory.resolve(id + "/Images/" + filename)));
 				assertEquals("data:image/png;base64," + expected, masks.get(filename).asString());
 			}
 			assertFalse(Files.exists(directory.resolve("Scripts/" + id + "/localizations.json")));
 		}
+		assertFalse(Files.exists(directory.resolve("World0/Images/Font.png")));
 		assertFalse(Files.exists(directory.resolve("Images/FullHeart.png")));
 		assertFalse(Files.exists(directory.resolve("Scripts/localizations.json")));
 	}
@@ -120,6 +126,13 @@ class WorldResourcesTest {
 		assertTrue(script.endsWith("));\n"));
 		var reader = FileUtils.getOBJECT_MAPPER().reader();
 		return reader.readTree(reader.readTree(script.substring(prefix.length(), script.length() - 4)).asString());
+	}
+
+	private static boolean containsColor(BufferedImage image, int color) {
+		for (int y = 0; y < image.getHeight(); y++)
+			for (int x = 0; x < image.getWidth(); x++)
+				if (image.getRGB(x, y) == color) return true;
+		return false;
 	}
 
 	private Rasteriser rasteriser() {

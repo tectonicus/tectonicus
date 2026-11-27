@@ -57,6 +57,9 @@ public class Player {
 	private String uuid;
 	@Setter
 	private String skinURL;
+	/** Whether the skin is made for the slim (3 pixel) arm model; null when the account profile wasn't loaded. */
+	@Setter
+	private Boolean slimSkin;
 	private Dimension dimension;
 	private String dimensionId;
 	private Vector3d position;
@@ -300,11 +303,15 @@ public class Player {
 		
 		private void getSkinUrl(JsonNode node) {
 			skinURL = null;
+			slimSkin = null;
 			for (JsonNode property : node.path("properties")) {
 				if (!"textures".equals(property.path("name").asString()) || !property.path("value").isString()) continue;
 				byte[] decoded = Base64.getDecoder().decode(property.path("value").asString());
-				var skin = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8)).path("textures").path("SKIN").path("url");
-				skinURL = skin.isString() ? skin.asString() : null;
+				var skin = OBJECT_READER.readTree(new String(decoded, StandardCharsets.UTF_8)).path("textures").path("SKIN");
+				skinURL = skin.path("url").isString() ? skin.path("url").asString() : null;
+				// Profiles only name the model for slim skins; any other skin uses the classic arms.
+				JsonNode model = skin.path("metadata").path("model");
+				slimSkin = skinURL != null && model.isString() && "slim".equals(model.asString());
 				break;
 			}
 		}

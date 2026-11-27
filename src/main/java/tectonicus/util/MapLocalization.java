@@ -54,10 +54,6 @@ public final class MapLocalization {
 		return languageAssets.load(assets, localeCode);
 	}
 
-	byte[] minecraftFontAsset(ZipStack assets, String key) {
-		return languageAssets.readAsset(assets, key);
-	}
-
 	public Map<String, String> languageNames(ZipStack assets) {
 		return catalogs.computeIfAbsent(assets.getBaseFileName(), jar -> {
 			var names = new TreeMap<String, String>();

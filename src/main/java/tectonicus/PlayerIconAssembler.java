@@ -14,8 +14,6 @@ import tectonicus.cache.PlayerSkinCache;
 import tectonicus.raw.Player;
 import tectonicus.util.OutputResourcesUtil;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.concurrent.ExecutorService;
@@ -24,6 +22,9 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class PlayerIconAssembler implements AutoCloseable
 {
+	/** Size of the square head icon used on the player marker toggle button. */
+	public static final int HEAD_ICON_SIZE = 32;
+
 	private final PlayerSkinCache skinCache;
 	private final ExecutorService iconWriters = Executors.newFixedThreadPool(4, Thread.ofPlatform().name("player-icon-", 1).factory());
 
@@ -32,17 +33,16 @@ public class PlayerIconAssembler implements AutoCloseable
 		this.skinCache = skinCache;
 	}
 
-	public void writeDefaultIcon(BufferedImage skin, File file)
+	/** Writes the figure shown for players without a skin of their own. */
+	public void writeDefaultIcon(BufferedImage skin, boolean slim, File file)
 	{
-		try
-		{
-			BufferedImage icon = generateIcon(skin);
-			OutputResourcesUtil.writeImage(icon, 32, 32, file);
-		}
-		catch (Exception e)
-		{
-			log.error("Exception: ", e);
-		}
+		write(PlayerAvatarRenderer.renderBody(skin, slim), file);
+	}
+
+	/** Writes the head of the default skin for the player marker toggle button. */
+	public void writeDefaultHeadIcon(BufferedImage skin, File file)
+	{
+		write(PlayerAvatarRenderer.renderHead(skin, HEAD_ICON_SIZE), file);
 	}
 
 	public void writeIcon(Player player, File file)
@@ -52,8 +52,9 @@ public class PlayerIconAssembler implements AutoCloseable
 			BufferedImage skin = skinCache.fetchSkin(player);
 			if (skin != null)
 			{
-				BufferedImage icon = generateIcon(skin);
-				OutputResourcesUtil.writeImage(icon, 32, 32, file);
+				// The account profile names the arm model; without it, guess from the skin like Minecraft does.
+				boolean slim = player.getSlimSkin() != null ? player.getSlimSkin() : PlayerAvatarRenderer.looksSlim(skin);
+				write(PlayerAvatarRenderer.renderBody(skin, slim), file);
 			}
 		}
 		catch (Exception e)
@@ -62,31 +63,14 @@ public class PlayerIconAssembler implements AutoCloseable
 		}
 	}
 
-	private BufferedImage generateIcon(BufferedImage skin)
+	private static void write(BufferedImage icon, File file)
 	{
-		int imgSize = skin.getWidth();
-		int factor = (int) (imgSize / 64.0f);
-
-		BufferedImage icon = new BufferedImage(factor*32, factor*32, BufferedImage.TYPE_4BYTE_ABGR);
-
-		BufferedImage head = skin.getSubimage(factor*8, factor*8, factor*8, factor*8);
-		BufferedImage body = skin.getSubimage(factor*20, factor*20, factor*8, factor*12);
-		BufferedImage leftArm = skin.getSubimage(factor*48, factor*20, factor*4, factor*12);
-		BufferedImage rightArm = skin.getSubimage(factor*40, factor*20, factor*4, factor*12);
-		BufferedImage leg = skin.getSubimage(factor*4, factor*20, factor*4, factor*12);
-
-		Graphics2D g = (Graphics2D)icon.getGraphics();
-		g.setColor(new Color(0, 0, 0, 0));
-		g.fillRect(0, 0, icon.getWidth(), icon.getHeight());
-
-		g.drawImage(head, factor*12, 0, null);
-		g.drawImage(body, factor*12, factor*8, null);
-		g.drawImage(leftArm, factor*8, factor*9, factor*12, factor*21,   factor*4, 0, 0, factor*12, null); // flip the left arm
-		g.drawImage(rightArm, factor*20, factor*9, null);
-		g.drawImage(leg, factor*12, factor*20, null);
-		g.drawImage(leg, factor*16, factor*20, null);
-
-		return icon;
+		if (icon == null)
+		{
+			log.warn("Unable to render player icon {}: the skin doesn't have skin proportions", file.getName());
+			return;
+		}
+		OutputResourcesUtil.writeImage(icon, icon.getWidth(), icon.getHeight(), file);
 	}
 
 	public void writeIconAsync(Player player, File iconFile) {

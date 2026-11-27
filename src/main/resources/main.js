@@ -16,6 +16,29 @@ let controlTooltips = [];
 const useDesktopToggleMenu = typeof useToggleMenu === 'undefined' || useToggleMenu;
 const narrowToggleLayout = useDesktopToggleMenu ? null : window.matchMedia?.('(max-width: 767px)');
 
+// Replaces the native title tooltip of each element with a themed tippy tooltip and returns the
+// created instances. `options` gives per-element tippy options such as the placement.
+function bindTitleTooltips(references, options = () => ({})) {
+    const tooltips = [];
+    for (const reference of references) {
+        const content = reference.getAttribute('title');
+        if (!content) continue;
+        reference.removeAttribute('title');
+        if (!reference.hasAttribute('aria-label')) {
+            reference.setAttribute('aria-label', content);
+        }
+        tooltips.push(tippy(reference, {
+            content,
+            delay: 0,
+            duration: [100, 75],
+            theme: 'minecraft',
+            touch: false,
+            ...options(reference)
+        }));
+    }
+    return tooltips;
+}
+
 function bindControlTooltips() {
     controlTooltips = controlTooltips.filter(tooltip => {
         if (tooltip.reference.isConnected) return true;
@@ -23,26 +46,27 @@ function bindControlTooltips() {
         return false;
     });
 
-    for (const reference of mymap.getContainer().querySelectorAll('.leaflet-control [title]')) {
-        const content = reference.getAttribute('title');
-        if (!content) continue;
-        reference.removeAttribute('title');
-        if (!reference.hasAttribute('aria-label')) {
-            reference.setAttribute('aria-label', content);
+    const references = mymap.getContainer().querySelectorAll('.leaflet-control [title]');
+    controlTooltips.push(...bindTitleTooltips(references, reference => ({
+        placement: reference.closest('.leaflet-left') ? 'right' : 'left',
+        onShow() {
+            return reference.getClientRects().length > 0
+                && reference.getAttribute('aria-expanded') !== 'true';
         }
-        controlTooltips.push(tippy(reference, {
-            content,
-            delay: 0,
-            duration: [100, 75],
-            placement: reference.closest('.leaflet-left') ? 'right' : 'left',
-            theme: 'light',
-            touch: false,
-            onShow() {
-                return reference.getClientRects().length > 0
-                    && reference.getAttribute('aria-expanded') !== 'true';
-            }
-        }));
-    }
+    })));
+}
+
+// Popup buttons (copy coordinates, portal jump, ...) carry title attributes too.
+function bindPopupTooltips(popup) {
+    bindTitleTooltips(popup.getElement()?.querySelectorAll('[title]') ?? [], () => ({
+        placement: 'top',
+        appendTo: () => document.body
+    }));
+}
+
+// Leaflet rebuilds popup content on every open, so drop the old instances when it closes.
+function unbindPopupTooltips(popup) {
+    for (const reference of popup.getElement()?.querySelectorAll('*') ?? []) reference._tippy?.destroy();
 }
 
 function localizeMapControls() {
@@ -79,12 +103,81 @@ function bindMapInfoTippy() {
             content: mapInfoContent,
             allowHTML: true,
             interactive: true,
-            theme: 'light',
+            theme: 'minecraft',
             maxWidth: 500
         });
     } else {
         mapInfoTippy.setContent(mapInfoContent);
     }
+}
+
+/*
+ * The Minecraft font (Mac's Minecraft) is drawn on a pixel grid and is only sharp when one font pixel covers a whole number of
+ * device pixels. A fixed CSS size (e.g. 15px) makes a font pixel 1.5 device pixels wide, so some strokes
+ * render 1 px and others 2 px. Measure the font once (by drawing glyphs that are one font pixel wide)
+ * and set the --mc-* sizes in tectonicusStyles.css for the current devicePixelRatio; redo it whenever
+ * the ratio changes (browser zoom, moving the window to another screen).
+ */
+const PIXEL_FONT = {
+    family: 'Macs Minecraft',
+    textScale: 2,       // device pixels per font pixel at 100 % scaling, like Minecraft's GUI scale
+    largeTextScale: 3,  // zoom +/- buttons
+    lineHeight: 11      // in font pixels
+};
+
+function measureInkWidth(family, character, size) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size * 2;
+    const context = canvas.getContext('2d', {willReadFrequently: true});
+    context.font = size + 'px "' + family + '"';
+    context.fillText(character, size / 2, size * 1.5);
+    const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let columns = 0;
+    for (let x = 0; x < canvas.width; x++) {
+        for (let y = 0; y < canvas.height; y++) {
+            if (data[(y * canvas.width + x) * 4 + 3] > 127) {
+                columns++;
+                break;
+            }
+        }
+    }
+    return columns;
+}
+
+// Returns font pixels per em, or null if the font does not look like a pixel font.
+function measureFontPixelsPerEm(family) {
+    const size = 200;
+    // One font pixel wide in the Minecraft font; take the narrowest in case one is not.
+    const widths = ['|', '.', '!', 'i'].map(c => measureInkWidth(family, c, size)).filter(w => w > 0);
+    if (!widths.length) return null;
+    const pixelsPerEm = Math.round(size / Math.min(...widths));
+    return pixelsPerEm >= 4 && pixelsPerEm <= 32 ? pixelsPerEm : null;
+}
+
+function applyPixelFontSizes(pixelsPerEm) {
+    const ratio = window.devicePixelRatio || 1;
+    const fontPixel = scale => Math.max(1, Math.round(scale * ratio)) / ratio;
+    const unit = fontPixel(PIXEL_FONT.textScale);
+    const style = document.documentElement.style;
+    style.setProperty('--mc-u', unit + 'px');
+    style.setProperty('--mc-fs', unit * pixelsPerEm + 'px');
+    style.setProperty('--mc-fs-l', fontPixel(PIXEL_FONT.largeTextScale) * pixelsPerEm + 'px');
+    style.setProperty('--mc-lh', unit * PIXEL_FONT.lineHeight + 'px');
+}
+
+function setUpPixelFont() {
+    if (!document.fonts?.load) return;
+    document.fonts.load('16px "' + PIXEL_FONT.family + '"').then(faces => {
+        if (!faces.length) return; // font missing: keep the CSS defaults
+        const pixelsPerEm = measureFontPixelsPerEm(PIXEL_FONT.family);
+        if (!pixelsPerEm) return;
+        const update = () => {
+            applyPixelFontSizes(pixelsPerEm);
+            const ratio = window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+            ratio.addEventListener('change', update, {once: true});
+        };
+        update();
+    }).catch(() => {});
 }
 
 function size(obj) {
@@ -110,6 +203,8 @@ var containerToggleControl = null;
 
 async function mainAsync()
 {        
+        setUpPixelFont();
+
         window.onmousemove = function (e) {
                 // Set handler to update position of item description tooltip to follow the mouse cursor
                 updateContainerItemTooltipPosition(e);
@@ -253,6 +348,7 @@ async function mainAsync()
         activeBaseLayer = startLayer;
         // Register attribution before layers so Leaflet also observes removal of the first layer.
         L.control.attribution({position: 'bottomleft'}).setPrefix('<a href="http://www.leafletjs.com">Leaflet</a>').addTo(mymap);
+        CreateCoordinatesControl().addTo(mymap);
         mymap.setMaxZoom(startLayer.maxZoom);
         mymap.setView(startView.startPoint, startView.zoom, {animate: false});
         startLayer.addTo(mymap);
@@ -271,7 +367,7 @@ async function mainAsync()
 	    compassControl = CreateCompassControl(startLayer.compassUrl);
         viewToggleControl = CreateToggleControl('views', 'Picture.png', viewsInitiallyVisible, 'viewControlChecked');
         signToggleControl = CreateToggleControl('signs', 'Sign.png', signsInitiallyVisible, 'signControlChecked');
-        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Icon.png', playersInitiallyVisible, 'playerControlChecked');
+        playerToggleControl = CreateToggleControl('players', 'PlayerIcons/Tectonicus_Default_Player_Head.png', playersInitiallyVisible, 'playerControlChecked');
         bedToggleControl = CreateToggleControl('beds', 'Bed.png', bedsInitiallyVisible, 'bedControlChecked');
         respawnAnchorToggleControl = CreateToggleControl('respawnAnchors', 'RespawnAnchor.png', respawnAnchorsInitiallyVisible, 'respawnAnchorControlChecked');
         beaconToggleControl = CreateToggleControl('beacons', 'beacon.png', beaconsInitiallyVisible, 'beaconControlChecked');
@@ -288,7 +384,9 @@ async function mainAsync()
 	mymap.on('popupopen', ({popup}) => {
         const close = popup.getElement().querySelector('.leaflet-popup-close-button');
         close?.setAttribute('aria-label', mapText('mco.selectServer.close'));
+        bindPopupTooltips(popup);
     });
+    mymap.on('popupclose', ({popup}) => unbindPopupTooltips(popup));
 	mymap.on('zoomend', onProjectionChanged);
     mymap.on('moveend', onProjectionChanged);
     const updateToggleLayout = () => updateMarkerControls(activeBaseLayer);
@@ -360,7 +458,7 @@ function updateMarkerControls(layer) {
           return reference.markerTooltip();
         },
         placement: 'left',
-        theme: 'light',
+        theme: 'minecraft',
         delay: 0,
         duration: [100, 75],
     });
@@ -394,8 +492,6 @@ function onBaseLayerChange(e) {
 
 	changeBackgroundColor(e.layer.backgroundColor);
     const mapStyle = document.querySelector('#map').style;
-    const fontMask = fontMaskUrl('Font.png', e.layer);
-    mapStyle.setProperty('--minecraft-font', fontMask ? 'url("' + fontMask + '")' : 'none');
     // url() in a custom property resolves against the stylesheet that uses it (Scripts/), so pass an absolute URL.
     const glintUrl = new URL(worldImageUrl('EnchantedGlint.png', e.layer), document.baseURI).href;
     mapStyle.setProperty('--enchanted-glint', 'url("' + glintUrl + '")');
@@ -640,7 +736,7 @@ function refreshSignMarkers(layer) {
 		const myIcon = createWorldMarkerIcon('Sign.png', [17, 20], layer);
 		const popup = () => renderSignPopup(sign, layer);
 
-		group.addLayer(bindMarkerPopup(L.marker(point, {icon: myIcon}), popup, sign.worldPos, layer));
+		group.addLayer(bindMarkerPopup(L.marker(point, {icon: myIcon}), popup, sign.worldPos, layer, {className: 'sign_popup'}));
 	}
 }
 
@@ -662,7 +758,7 @@ function renderSignPopup(sign, layer) {
 		styles.push(`background-image:url('${url}');`);
 	}
 	const lines = [sign.text1, sign.text2, sign.text3, sign.text4].map((line, index) =>
-		renderMinecraftText(line, 'sign_text_line', layer, sign.textColors?.[index]) || '<div class="sign_text_line"></div>');
+		renderMinecraftText(line, 'sign_text_line', sign.textColors?.[index]) || '<div class="sign_text_line"></div>');
 	const style = styles.length ? ` style="${escapeHtml(styles.join(''))}"` : '';
 	return `<div class="${classes.join(' ')}"${style}>${lines.join('')}</div>`;
 }
@@ -707,21 +803,22 @@ function refreshPlayerMarkers(layer) {
 	for (const player of layer.players) {
 		player.donation = '';
 		const point = layer.projection.worldToMap(player.worldPos);
-		if (player.defaultPlayerName || !player.name || player.name === 'null') {
-			player.icon = fallbackIcon;
-			group.addLayer(createPlayerMarker(player, point, layer));
-			continue;
-		}
-		const src = worldImageUrl('PlayerIcons/' + player.name + '.png', layer);
-		const icon = new Image();
-		const addMarker = iconUrl => {
+		const addMarker = (image, iconUrl) => {
 			if (generation !== playerMarkerGeneration || layer !== activeBaseLayer) return;
 			player.icon = iconUrl;
+			// All player figures are rendered on the same canvas; its size sets the marker's proportions.
+			player.iconSize = image ? [image.naturalWidth, image.naturalHeight] : null;
 			group.addLayer(createPlayerMarker(player, point, layer));
 		};
-		icon.onload = () => addMarker(src);
-		icon.onerror = () => addMarker(fallbackIcon);
-		icon.src = src;
+		const loadIcon = (url, onError) => {
+			const image = new Image();
+			image.onload = () => addMarker(image, url);
+			image.onerror = onError;
+			image.src = url;
+		};
+		const loadFallback = () => loadIcon(fallbackIcon, () => addMarker(null, fallbackIcon));
+		if (player.defaultPlayerName || !player.name || player.name === 'null') loadFallback();
+		else loadIcon(worldImageUrl('PlayerIcons/' + player.name + '.png', layer), loadFallback);
 	}
 }
 

@@ -161,7 +161,6 @@ public class OutputResourcesUtil {
 				for (int i = 0; i < lines.size(); i++) {
 					String line = lines.get(i);
 					signArgs.put("text" + (i + 1), json.writeValueAsString(line));
-					if (viewerAssets != null) viewerAssets.addText(line);
 				}
 				jsWriter.write(signArgs);
 			}
@@ -508,7 +507,6 @@ public class OutputResourcesUtil {
 					containerArgs.put("nameKey", "null");
 				}
 				containerArgs.put("name", FileUtils.getOBJECT_MAPPER().writeValueAsString(name));
-				if (inventoryAssets != null) inventoryAssets.addText(name);
 				containerArgs.put("items", items.toString());
 				if (partner != null) {
 					containerArgs.put("large", "true");
@@ -1101,8 +1099,6 @@ public class OutputResourcesUtil {
 		writeImage(playerInventoryWithEnderChest, playerInventoryWithEnderChest.getWidth(), playerInventoryWithEnderChest.getHeight(),
 				new File(imagesDir, "PlayerInventoryWithEnderChest.png"));
                 
-		boolean hasFont = texturePack.getFont() != null;
-		if (hasFont) writeImage(texturePack.getFont().getFontSheet(), 128, 128, new File(imagesDir, "Font.png"));
 
 		// Write default player icon
 		if (defaultSkinPath.equals("mob/char.png") && !texturePack.fileExists(defaultSkinPath))
@@ -1111,7 +1107,10 @@ public class OutputResourcesUtil {
 		if (defaultSkinIcon == null) {
 			log.warn("Unable to find default skin!");
 		} else {
-			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			// Steve-style skins have classic arms; Alex and the skins in the slim folder have slim arms.
+			boolean slim = defaultSkinPath.contains("/slim/") || defaultSkinPath.endsWith("entity/alex.png");
+			playerIconAssembler.writeDefaultIcon(defaultSkinIcon, slim, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Icon.png"));
+			playerIconAssembler.writeDefaultHeadIcon(defaultSkinIcon, new File(imagesDir, "PlayerIcons/Tectonicus_Default_Player_Head.png"));
 		}
                 
                 // Extract enchanted glint texture
@@ -1121,7 +1120,7 @@ public class OutputResourcesUtil {
 		FileUtils.ensureExists(scriptsDir);
 		MarkerShadows.write(imagesDir.toPath());
 		viewerAssets.write(texturePack.getZipStack(), localization, world.getId(), scriptsDir.toPath(),
-				imagesDir.toPath(), hasFont, texturePackVersion.getNumVersion() >= VERSION_26_2.getNumVersion());
+				imagesDir.toPath(), texturePackVersion.getNumVersion() >= VERSION_26_2.getNumVersion());
 	}
 
 	public static void outputHtmlResources(Configuration config, File exportDir, int numZoomLevels, int tileWidth, int tileHeight) {
@@ -1231,6 +1230,12 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("leaflet.js", new File(scriptsDir, "leaflet.js"));
 		FileUtils.extractResource("leaflet.css", new File(scriptsDir, "leaflet.css"));
 		FileUtils.extractResource("tectonicusStyles.css", new File(scriptsDir, "tectonicusStyles.css"));
+		File scriptFontsDir = new File(scriptsDir, "fonts");
+		scriptFontsDir.mkdirs();
+		for (String font : List.of("macsMinecraft-Regular.woff2", "macsMinecraft-Italic.woff2", "macsMinecraft-Bold.woff2",
+				"macsMinecraft-BoldItalic.woff2", "macsMinecraft-OFL.txt")) {
+			FileUtils.extractResource("fonts/" + font, new File(scriptFontsDir, font));
+		}
 		FileUtils.extractResource("Images/layers.png", new File(scriptImagesDir, "layers.png"));
 		FileUtils.extractResource("Images/layers-2x.png", new File(scriptImagesDir, "layers-2x.png"));
 		FileUtils.extractResource("Images/toggles.svg", new File(scriptImagesDir, "toggles.svg"));
@@ -1239,7 +1244,6 @@ public class OutputResourcesUtil {
 		FileUtils.extractResource("Images/marker-shadow.png", new File(scriptImagesDir, "marker-shadow.png"));
 		FileUtils.extractResource("popper.min.js", new File(scriptsDir, "popper.min.js"));
 		FileUtils.extractResource("tippy-bundle.umd.min.js", new File(scriptsDir, "tippy-bundle.umd.min.js"));
-		FileUtils.extractResource("tippy-light-theme.css", new File(scriptsDir, "tippy-light-theme.css"));
 	}
         
 	private void outputMergedJs(File outFile, List<String> inputResources, int numZoomLevels, Configuration config, int tileWidth, int tileHeight)
@@ -1474,20 +1478,16 @@ public class OutputResourcesUtil {
 						} else if (first.value.equals("styleIncludes")) {
 							switch(config.getUseCdn()) {
 								case "unpkg":
-									outLine.append("<link rel=\"stylesheet\" href=\"https://unpkg.com/tippy.js@6/themes/light.css\" />\n");
-									outLine.append("\t\t<link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9/dist/leaflet.css\" integrity=\"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=\" crossorigin=\"\" />");
+									outLine.append("<link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.9/dist/leaflet.css\" integrity=\"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=\" crossorigin=\"\" />");
 									break;
 								case "cdnjs":
-									outLine.append("<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/tippy.js/6.3.7/themes/light.min.css\" integrity=\"sha512-zpbTFOStBclqD3+SaV5Uz1WAKh9d2/vOtaFYpSLkosymyJKnO+M4vu2CK2U4ZjkRCJ7+RvLnISpNrCfJki5JXA==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />\n");
-									outLine.append("\t\t<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css\" integrity=\"sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />");
+									outLine.append("<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css\" integrity=\"sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />");
 									break;
 								case "jsdelivr":
-									outLine.append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tippy.js@6/themes/light.css\" />\n");
-									outLine.append("\t\t<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.min.css\">");
+									outLine.append("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.min.css\">");
 									break;
 								default:
-									outLine.append("<link rel=\"stylesheet\" href=\"Scripts/tippy-light-theme.css\" />");
-									outLine.append("\t\t<link rel=\"stylesheet\" href=\"Scripts/leaflet.css\" />");
+									outLine.append("<link rel=\"stylesheet\" href=\"Scripts/leaflet.css\" />");
 							}
 						} else if (first.value.equals("customStyleIncludes")) {
 							if (config.getCustomStyle() != null) {
