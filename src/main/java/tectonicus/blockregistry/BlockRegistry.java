@@ -451,7 +451,7 @@ public class BlockRegistry {
 	
 	//Set attributes on the entire block instead of just the individuals models. These are used to help with lighting and face culling
 	static void setBlockAttributes(BlockStateWrapper wrapper) {
-		boolean multipart = wrapper.getStates().stream().anyMatch(BlockStateCase.class::isInstance);
+		boolean multipart = wrapper.isMultipart();
 		boolean hasOpaqueFullBlockModel = false;
 		for (BlockStateModel model : wrapper.getAllModels()) {
 			BlockModel blockModel = model.getBlockModel();

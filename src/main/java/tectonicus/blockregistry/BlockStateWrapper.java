@@ -29,6 +29,8 @@ public class BlockStateWrapper {
 	private final boolean nonOccludingPartialBlock;
 	private final boolean leaves;
 	private final List<BlockState> states = new ArrayList<>();
+	/** Whether any state is a multipart case, whose models are chosen with their own random seed. */
+	private boolean multipart;
 	private BlockProperties defaultProperties;
 	@Setter
 	private EmissiveBlock emissiveBlock;
@@ -80,6 +82,8 @@ public class BlockStateWrapper {
 
 	public void addState(BlockState state) {
 		states.add(state);
+		if (state instanceof BlockStateCase)
+			multipart = true;
 	}
 
 	public void setDefaultProperties(Map<String, String> defaultProperties) {
@@ -121,11 +125,11 @@ public class BlockStateWrapper {
 	}
 
 	public List<BlockStateModel> getModels(BlockProperties properties, int x, int y, int z) {
-		List<BlockStateModel> models = new ArrayList<>();
+		// Called for every block of every chunk: a variant block usually matches one model.
+		List<BlockStateModel> models = new ArrayList<>(multipart ? states.size() : 1);
 		Random random = BlockState.createPositionRandom(blockName, properties, x, y, z);
-		boolean hasMultipart = states.stream().anyMatch(BlockStateCase.class::isInstance);
-		long multipartSeed = hasMultipart ? random.nextLong() : 0;
-		Random variantRandom = hasMultipart
+		long multipartSeed = multipart ? random.nextLong() : 0;
+		Random variantRandom = multipart
 				? BlockState.createPositionRandom(blockName, properties, x, y, z)
 				: random;
 		for (BlockState state : states) {

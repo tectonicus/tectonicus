@@ -9,6 +9,7 @@
 
 package tectonicus.blockregistry;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.util.HashMap;
@@ -27,6 +28,13 @@ public class BlockVariant extends BlockState
 	private final String name;
 	private final Map<String, String> states;
 	private final BlockStateModelsWeight modelsAndWeight;
+	// The states as parallel arrays, so matching a block allocates nothing.
+	@Getter(AccessLevel.NONE)
+	@ToString.Exclude
+	private final String[] stateKeys;
+	@Getter(AccessLevel.NONE)
+	@ToString.Exclude
+	private final String[] stateValues;
 	
 	public BlockVariant(String name, BlockStateModelsWeight models)
 	{
@@ -44,12 +52,25 @@ public class BlockVariant extends BlockState
 			else
 				states.put(state[0], "");
 		}
+		stateKeys = states.keySet().toArray(String[]::new);
+		stateValues = new String[stateKeys.length];
+		for (int i = 0; i < stateKeys.length; i++)
+			stateValues[i] = states.get(stateKeys[i]);
 	}
         
         @Override
         void addModels(List<BlockStateModel> models, BlockProperties properties, Random random) {
-		if (name.equals(StringUtils.EMPTY) || properties.containsAll(states)) {
+		if (name.equals(StringUtils.EMPTY) || matches(properties)) {
 			models.add(getRandomWeightedModel(modelsAndWeight, random));
                 }
         }
+
+	/** Whether the block has every state of this variant, like {@code properties.containsAll(states)}. */
+	private boolean matches(BlockProperties properties) {
+		for (int i = 0; i < stateKeys.length; i++) {
+			if (!stateValues[i].equals(properties.get(stateKeys[i])))
+				return false;
+		}
+		return true;
+	}
 }
