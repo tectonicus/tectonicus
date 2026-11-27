@@ -14,23 +14,32 @@ import tectonicus.configuration.ImageFormat;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageWriter;
-import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 @Slf4j
 public class Screenshot
 {
+	/** Encoded tiles are a small fraction of their pixels, so start each thread's buffer small. */
+	private static final int INITIAL_ENCODE_BUFFER_BYTES = 256 * 1024;
+	/** A buffer that grew beyond this, for an unusually large image, is not kept for the next one. */
+	private static final int MAX_KEPT_ENCODE_BUFFER_BYTES = 8 * 1024 * 1024;
+	// Each writer and downsampler thread encodes one image at a time into its own buffer.
+	private static final ThreadLocal<ByteArrayOutputStream> ENCODE_BUFFER =
+			ThreadLocal.withInitial(() -> new ByteArrayOutputStream(INITIAL_ENCODE_BUFFER_BYTES));
 	
 	/** Encodes and writes the image, returning false (after logging) if it could not be written. */
 	public static boolean write(File outputFile, BufferedImage img, ImageFormat imageFormat, final float compressionLevel)
 	{
 		ImageWriter writer = null;
-		FileImageOutputStream output = null;
+		ByteArrayOutputStream memOut = ENCODE_BUFFER.get();
+		memOut.reset();
 		try
 		{
 			if (imageFormat.isPng())
@@ -39,7 +48,6 @@ public class Screenshot
 			writer = imageFormat.createWriter();
 			
 			// First write to an in-memory stream
-			ByteArrayOutputStream memOut = new ByteArrayOutputStream(img.getWidth() * img.getHeight() * 4);
 			MemoryCacheImageOutputStream cacheOut = new MemoryCacheImageOutputStream(memOut);
 			writer.setOutput(cacheOut);
 			
@@ -51,10 +59,10 @@ public class Screenshot
 			
 			outputFile.getParentFile().mkdirs();
 			
-			// Then write the encoded bytes to disk
-			output = new FileImageOutputStream(outputFile);
-			output.write(memOut.toByteArray(), 0, memOut.size());
-                        output.flush();
+			// Then write the encoded bytes to disk, replacing any longer file that was there
+			try (OutputStream output = new FileOutputStream(outputFile)) {
+				memOut.writeTo(output);
+			}
 			return true;
 		}
 		catch (Exception e)
@@ -66,13 +74,8 @@ public class Screenshot
 		{
 			if (writer != null)
 				writer.dispose();
-			
-			try
-			{
-				if (output != null)
-					output.close();
-			}
-			catch (Exception e) {}
+			if (memOut.size() > MAX_KEPT_ENCODE_BUFFER_BYTES)
+				ENCODE_BUFFER.remove();
 		}
 	}
 	

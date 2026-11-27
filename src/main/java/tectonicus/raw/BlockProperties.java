@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 @Data
@@ -156,6 +157,12 @@ public class BlockProperties {
         return propertiesString.contains(props);
     }
     public boolean containsAll(Map<String, String> props) {
-        return properties.entrySet().containsAll(props.entrySet());
+        // A plain loop: the entry-set view and its iterators showed up in allocation profiles.
+        for (Map.Entry<String, String> entry : props.entrySet()) {
+            String value = properties.get(entry.getKey());
+            if (!Objects.equals(value, entry.getValue()) || value == null && !properties.containsKey(entry.getKey()))
+                return false;
+        }
+        return true;
     }
 }
