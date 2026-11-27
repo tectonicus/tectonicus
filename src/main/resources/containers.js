@@ -45,43 +45,123 @@ const hiddenEnchantmentLevels = [
         'vanishing_curse'
 ];
 
-const colorizedNames = {
-        beacon: 'enchanted',
-        conduit: 'enchanted',
-        creeper_head: 'yellow',
-        dragon_breath: 'yellow',
-        dragon_egg: 'purple',
-        dragon_head: 'yellow',
-        enchanted_book: 'yellow',
-        enchanted_golden_apple: 'purple',
-        end_crystal: 'enchanted',
-        experience_bottle: 'yellow',
-        golden_apple: 'enchanted',
-        heart_of_the_sea: 'yellow',
-        music_disc_11: 'enchanted',
-        music_disc_13: 'enchanted',
-        music_disc_5: 'enchanted',
-        music_disc_blocks: 'enchanted',
-        music_disc_cat: 'enchanted',
-        music_disc_chirp: 'enchanted',
-        music_disc_far: 'enchanted',
-        music_disc_mall: 'enchanted',
-        music_disc_mellohi: 'enchanted',
-        music_disc_otherside: 'enchanted',
-        music_disc_pigstep: 'enchanted',
-        music_disc_relic: 'enchanted',
-        music_disc_stal: 'enchanted',
-        music_disc_strad: 'enchanted',
-        music_disc_wait: 'enchanted',
-        music_disc_ward: 'enchanted',
-        nether_star: 'yellow',
-        piglin_head: 'yellow',
-        player_head: 'yellow',
-        skeleton_skull: 'yellow',
-        totem_of_undying: 'yellow',
-        wither_skeleton_skull: 'yellow',
-        zombie_head: 'yellow'
+// Item rarities as in Minecraft Java Edition 1.21.9+ (items not listed are common).
+// The rarity decides the colour of the item name, see rarityCssClasses.
+const itemRarities = {
+        // Uncommon
+        chainmail_boots: 'uncommon',
+        chainmail_chestplate: 'uncommon',
+        chainmail_helmet: 'uncommon',
+        chainmail_leggings: 'uncommon',
+        conduit: 'uncommon',
+        creeper_banner_pattern: 'uncommon',
+        creeper_head: 'uncommon',
+        disc_fragment_5: 'uncommon',
+        dragon_breath: 'uncommon',
+        echo_shard: 'uncommon',
+        experience_bottle: 'uncommon',
+        goat_horn: 'uncommon',
+        heart_of_the_sea: 'uncommon',
+        music_disc_5: 'uncommon',
+        music_disc_11: 'uncommon',
+        music_disc_13: 'uncommon',
+        music_disc_blocks: 'uncommon',
+        music_disc_bounce: 'uncommon',
+        music_disc_cat: 'uncommon',
+        music_disc_chirp: 'uncommon',
+        music_disc_creator_music_box: 'uncommon',
+        music_disc_far: 'uncommon',
+        music_disc_flurry: 'uncommon',
+        music_disc_mall: 'uncommon',
+        music_disc_mellohi: 'uncommon',
+        music_disc_precipice: 'uncommon',
+        music_disc_relic: 'uncommon',
+        music_disc_stal: 'uncommon',
+        music_disc_strad: 'uncommon',
+        music_disc_tears: 'uncommon',
+        music_disc_wait: 'uncommon',
+        music_disc_ward: 'uncommon',
+        nautilus_shell: 'uncommon',
+        netherite_upgrade_smithing_template: 'uncommon',
+        ominous_bottle: 'uncommon',
+        piglin_banner_pattern: 'uncommon',
+        piglin_head: 'uncommon',
+        player_head: 'uncommon',
+        recovery_compass: 'uncommon',
+        skeleton_skull: 'uncommon',
+        sniffer_egg: 'uncommon',
+        totem_of_undying: 'uncommon',
+        zombie_head: 'uncommon',
+        bolt_armor_trim_smithing_template: 'uncommon',
+        coast_armor_trim_smithing_template: 'uncommon',
+        dune_armor_trim_smithing_template: 'uncommon',
+        flow_armor_trim_smithing_template: 'uncommon',
+        host_armor_trim_smithing_template: 'uncommon',
+        raiser_armor_trim_smithing_template: 'uncommon',
+        rib_armor_trim_smithing_template: 'uncommon',
+        sentry_armor_trim_smithing_template: 'uncommon',
+        shaper_armor_trim_smithing_template: 'uncommon',
+        snout_armor_trim_smithing_template: 'uncommon',
+        tide_armor_trim_smithing_template: 'uncommon',
+        wayfinder_armor_trim_smithing_template: 'uncommon',
+        wild_armor_trim_smithing_template: 'uncommon',
+        // Rare
+        beacon: 'rare',
+        enchanted_book: 'rare',
+        enchanted_golden_apple: 'rare',
+        flow_banner_pattern: 'rare',
+        guster_banner_pattern: 'rare',
+        mojang_banner_pattern: 'rare',
+        music_disc_creator: 'rare',
+        music_disc_lava_chicken: 'rare',
+        music_disc_otherside: 'rare',
+        music_disc_pigstep: 'rare',
+        nether_star: 'rare',
+        skull_banner_pattern: 'rare',
+        trident: 'rare',
+        wither_skeleton_skull: 'rare',
+        eye_armor_trim_smithing_template: 'rare',
+        spire_armor_trim_smithing_template: 'rare',
+        vex_armor_trim_smithing_template: 'rare',
+        ward_armor_trim_smithing_template: 'rare',
+        // Epic
+        barrier: 'epic',
+        chain_command_block: 'epic',
+        command_block: 'epic',
+        command_block_minecart: 'epic',
+        debug_stick: 'epic',
+        dragon_egg: 'epic',
+        dragon_head: 'epic',
+        elytra: 'epic',
+        heavy_core: 'epic',
+        jigsaw: 'epic',
+        knowledge_book: 'epic',
+        light: 'epic',
+        mace: 'epic',
+        repeating_command_block: 'epic',
+        silence_armor_trim_smithing_template: 'epic',
+        structure_block: 'epic',
+        structure_void: 'epic',
+        test_block: 'epic',
+        test_instance_block: 'epic'
 };
+
+const rarityCssClasses = {
+        common: '',
+        uncommon: 'yellow',
+        rare: 'enchanted',
+        epic: 'purple'
+};
+
+function getItemRarity(item, itemId) {
+        let rarity = itemRarities[itemId] ?? (itemId.endsWith('_pottery_sherd') ? 'uncommon' : 'common');
+        // Enchanting raises the rarity: common/uncommon -> rare, rare -> epic. Stored enchantments
+        // (enchanted books) don't count, and those are merged into item.enchantments by the exporter.
+        if (item.enchantments?.length && itemId !== 'enchanted_book') {
+                rarity = rarity === 'rare' || rarity === 'epic' ? 'epic' : 'rare';
+        }
+        return rarity;
+}
 
 const potionColors = {
         water: '#385dc6',
@@ -391,13 +471,8 @@ function getItemName(item) {
                 itemKey = `${itemKey}.effect.${potionId.replace(/^(strong|long)_/, '')}`;
         }
     
-        let additionalItemNameCssClass = '';
-        if (item.enchantments) {
-                additionalItemNameCssClass = ' enchanted';
-        }
-        if (colorizedNames[itemId]) {
-                additionalItemNameCssClass = ' ' + colorizedNames[itemId];
-        }
+        const rarityCssClass = rarityCssClasses[getItemRarity(item, itemId)];
+        const additionalItemNameCssClass = rarityCssClass ? ' ' + rarityCssClass : '';
                 
         if (item.customName) {
                 // Parse custom name. Possible values if matched:
@@ -409,7 +484,8 @@ function getItemName(item) {
                 let matches = formattedCustomNameRegex.exec(item.customName);
                 if (matches) {
                         let { text, translate, color } = matches.groups;
-                        return renderMinecraftText(localize(translate, text), 'name italic ' + color + additionalItemNameCssClass);
+                        // An explicit colour in the custom name overrides the rarity colour
+                        return renderMinecraftText(localize(translate, text), 'name italic ' + (color || additionalItemNameCssClass.trim()));
                 }
                 return renderMinecraftText(localize(item.customName), 'name italic' + additionalItemNameCssClass);
         }
