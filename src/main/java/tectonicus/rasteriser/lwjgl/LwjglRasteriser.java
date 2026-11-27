@@ -654,16 +654,10 @@ public class LwjglRasteriser implements Rasteriser {
 	
 	public BufferedImage takeScreenshot(final int startX, final int startY, final int width, final int height, ImageFormat imageFormat) {
 		// The image itself is not reused: the write queue still holds earlier tiles while they are saved.
-		final int bytesPerPixel = imageFormat.hasAlpha() ? 4 : 3;
-		screenshotBuffer = reuseBuffer(screenshotBuffer, width * height * bytesPerPixel);
+		screenshotBuffer = reuseBuffer(screenshotBuffer, width * height * 4);
 		ByteBuffer screenContentsBytes = screenshotBuffer;
-		// Rows must be tightly packed: the default alignment of 4 pads 3-byte BGR rows whose width isn't a multiple of 4.
-		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
-
-		if (imageFormat.hasAlpha())
-			glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContentsBytes.asIntBuffer());
-		else
-			glReadPixels(startX, startY, width, height, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, screenContentsBytes);
+		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4);
+		glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, screenContentsBytes);
 		return toImage(screenContentsBytes, width, height, imageFormat.hasAlpha());
 	}
 
@@ -685,16 +679,18 @@ public class LwjglRasteriser implements Rasteriser {
 			pixelPackInFlight[slot].get();
 
 		final boolean alpha = imageFormat.hasAlpha();
-		final int bytes = width * height * (alpha ? 4 : 3);
+		// Always read 4-byte BGRA, even for opaque formats: drivers copy it straight into the pack buffer,
+		// whereas 3-byte BGR makes them convert on the CPU and block until the frame is finished.
+		final int bytes = width * height * 4;
 		GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, pixelPackBuffers[slot]);
 		try {
 			if (pixelPackBufferSizes[slot] < bytes) {
 				GL15.glBufferData(GL21.GL_PIXEL_PACK_BUFFER, bytes, GL15.GL_STREAM_READ);
 				pixelPackBufferSizes[slot] = bytes;
 			}
-			GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
+			GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4);
 			// With a pack buffer bound the last argument is an offset into it, and the call does not wait.
-			GL11.glReadPixels(startX, startY, width, height, alpha ? GL12.GL_BGRA : GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, 0L);
+			GL11.glReadPixels(startX, startY, width, height, GL12.GL_BGRA, GL11.GL_UNSIGNED_BYTE, 0L);
 		} finally {
 			GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, 0);
 		}
@@ -739,7 +735,7 @@ public class LwjglRasteriser implements Rasteriser {
 		}
 	}
 
-	/** Converts bottom-up BGRA (alpha) or BGR rows read from OpenGL into a top-down image. */
+	/** Converts bottom-up BGRA rows read from OpenGL into a top-down ARGB image, or a BGR image without the alpha. */
 	private static BufferedImage toImage(ByteBuffer screenContentsBytes, int width, int height, boolean alpha) {
 		if (alpha) {
 			BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -750,7 +746,7 @@ public class LwjglRasteriser implements Rasteriser {
 
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 		byte[] pixels = ((DataBufferByte) (img.getRaster().getDataBuffer())).getData();
-		copyRowsFlipped(screenContentsBytes, pixels, width * 3, height);
+		copyRowsFlippedDroppingAlpha(screenContentsBytes, pixels, width, height);
 		return img;
 	}
 
@@ -773,10 +769,18 @@ public class LwjglRasteriser implements Rasteriser {
 		}
 	}
 
-	static void copyRowsFlipped(ByteBuffer source, byte[] dest, int rowLength, int height) {
-		for (int row = 0; row < height; row++) {
-			source.position(row * rowLength);
-			source.get(dest, (height - row - 1) * rowLength, rowLength);
+	/** Copies bottom-up BGRA rows into a top-down 3-byte BGR buffer, dropping the alpha byte of each pixel. */
+	static void copyRowsFlippedDroppingAlpha(ByteBuffer source, byte[] dest, int width, int height) {
+		byte[] row = new byte[width * 4];
+		for (int y = 0; y < height; y++) {
+			source.position(y * width * 4);
+			source.get(row);
+			int out = (height - y - 1) * width * 3;
+			for (int in = 0; in < row.length; in += 4) {
+				dest[out++] = row[in];
+				dest[out++] = row[in + 1];
+				dest[out++] = row[in + 2];
+			}
 		}
 	}
 	

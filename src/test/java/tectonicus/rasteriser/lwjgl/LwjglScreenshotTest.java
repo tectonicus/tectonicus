@@ -31,18 +31,23 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class LwjglScreenshotTest {
 	@Test
-	void flipsTightlyPackedRowsForWidthsThatAreNotMultiplesOfFour() {
-		int width = 5, height = 3, rowLength = width * 3;
-		ByteBuffer source = ByteBuffer.allocate(rowLength * height);
+	void dropsAlphaAndFlipsRowsForWidthsThatAreNotMultiplesOfFour() {
+		int width = 5, height = 3;
+		ByteBuffer source = ByteBuffer.allocate(width * 4 * height);
 		for (int row = 0; row < height; row++)
-			for (int i = 0; i < rowLength; i++)
-				source.put((byte) row);
-		byte[] dest = new byte[rowLength * height];
-		LwjglRasteriser.copyRowsFlipped(source, dest, rowLength, height);
+			for (int x = 0; x < width; x++)
+				source.put((byte) (10 * row + x)).put((byte) 100).put((byte) -row).put((byte) 0x7f);
+		byte[] dest = new byte[width * 3 * height];
+		LwjglRasteriser.copyRowsFlippedDroppingAlpha(source, dest, width, height);
 		for (int row = 0; row < height; row++) {
-			byte[] expected = new byte[rowLength];
-			java.util.Arrays.fill(expected, (byte) (height - 1 - row));
-			assertArrayEquals(expected, java.util.Arrays.copyOfRange(dest, row * rowLength, (row + 1) * rowLength));
+			int sourceRow = height - 1 - row;
+			byte[] expected = new byte[width * 3];
+			for (int x = 0; x < width; x++) {
+				expected[x * 3] = (byte) (10 * sourceRow + x);
+				expected[x * 3 + 1] = 100;
+				expected[x * 3 + 2] = (byte) -sourceRow;
+			}
+			assertArrayEquals(expected, java.util.Arrays.copyOfRange(dest, row * width * 3, (row + 1) * width * 3), "row " + row);
 		}
 	}
 
