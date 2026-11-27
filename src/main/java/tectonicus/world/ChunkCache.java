@@ -92,6 +92,12 @@ class ChunkCache
 	{
 		return chunks.getIfPresent(coord);
 	}
+
+	/** Number of evicted chunks waiting for {@link #unloadInvalidatedChunks}. */
+	public int pendingUnloadCount()
+	{
+		return invalidatedChunks.size();
+	}
 	
 	public Collection<Chunk> values()
 	{

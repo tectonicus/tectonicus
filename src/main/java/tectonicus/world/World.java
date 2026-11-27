@@ -117,6 +117,8 @@ public class World implements BlockContext, AutoCloseable
 {
 	private static final int BATCH_SIZE = 128;
 	private static final int MAX_GEOMETRY_WORKERS = 8;
+	/** Evicted chunks left loaded while prefetching keeps the caches busy, before a draw waits to unload them. */
+	private static final int MAX_DEFERRED_UNLOADS = 256;
 	
 	private final Version textureVersion;
 	@Getter
@@ -190,7 +192,7 @@ public class World implements BlockContext, AutoCloseable
 	private final GeometryCache geometryLoadedChunks;
 	// Biome tint samples of the chunk whose geometry is being built.
 	private final ThreadLocal<TintSampleCache> tintSamples = ThreadLocal.withInitial(TintSampleCache::new);
-	private final ExecutorService geometryBuilders;
+	private final GeometryBuilder geometryBuilder;
 	
 	private LightStyle lightStyle;
 	@Getter
@@ -421,8 +423,8 @@ public class World implements BlockContext, AutoCloseable
 			this.oldGrayscaleLighting = map.useOldGrayscaleLighting();
 			applyLightmapBrightness(map);
 			int workerCount = Math.min(Runtime.getRuntime().availableProcessors(), MAX_GEOMETRY_WORKERS);
-			geometryBuilders = workerCount > 1
-					? Executors.newFixedThreadPool(workerCount, Thread.ofPlatform().name("geometry-builder-", 1).factory())
+			geometryBuilder = workerCount > 1
+					? new GeometryBuilder(workerCount, Thread.ofPlatform().name("geometry-builder-", 1).factory(), geometryLoadedChunks::get)
 					: null;
 		} catch (RuntimeException | Error e) {
 			this.biomeCache.close();
@@ -433,8 +435,8 @@ public class World implements BlockContext, AutoCloseable
 	@Override
 	public void close() {
 		try {
-			if (geometryBuilders != null)
-				geometryBuilders.shutdown();
+			if (geometryBuilder != null)
+				geometryBuilder.close();
 			tintSamples.remove();
 			flushGeometryCache();
 			daySkybox.destroy();
@@ -804,11 +806,17 @@ public class World implements BlockContext, AutoCloseable
 	
 	public void draw(Camera camera, final boolean showSky, final boolean genAlphaMask)
 	{
-		// Find visible chunks
-		List<ChunkCoord> visible = findVisible(camera);
-			
+		draw(camera, findVisible(camera), showSky, genAlphaMask);
+	}
+
+	/**
+	 * Draws the given chunks, which must be what {@link #findVisible} returns for this camera. Lets a caller that
+	 * already found them, such as to prefetch their geometry, skip searching again.
+	 */
+	public void draw(Camera camera, List<ChunkCoord> visibleChunks, final boolean showSky, final boolean genAlphaMask)
+	{
 		// Sort back to front
-		visible = BackToFrontSorter.sort(camera, visible);
+		List<ChunkCoord> visible = BackToFrontSorter.sort(camera, visibleChunks);
 		
 		// Clear the alpha buffer
 		if (genAlphaMask)
@@ -893,32 +901,85 @@ public class World implements BlockContext, AutoCloseable
 			rasteriser.enableColourWriting(true, false);
 		}
                 
-                // Unload raw data and geometry from chunks that were evicted from cache
-                rawLoadedChunks.unloadInvalidatedChunks();
-                geometryLoadedChunks.unloadInvalidatedChunks();
+		unloadEvictedChunks();
+	}
+
+	/**
+	 * Unloads raw data and geometry from chunks that were evicted from the caches. Prefetched geometry may still
+	 * be building and reading those chunks, so unloading waits for a moment when no build is running, unless
+	 * too many evicted chunks have piled up.
+	 */
+	private void unloadEvictedChunks()
+	{
+		Runnable unload = () -> {
+			rawLoadedChunks.unloadInvalidatedChunks();
+			geometryLoadedChunks.unloadInvalidatedChunks();
+		};
+		if (geometryBuilder == null)
+			unload.run();
+		else if (!geometryBuilder.tryRunExclusive(unload)
+				&& rawLoadedChunks.pendingUnloadCount() + geometryLoadedChunks.pendingUnloadCount() >= MAX_DEFERRED_UNLOADS)
+			geometryBuilder.runExclusive(unload);
+	}
+
+	/** Runs the action once no geometry is building, dropping prefetches that have not started. */
+	private void whileGeometryIdle(Runnable action)
+	{
+		if (geometryBuilder == null) {
+			action.run();
+		} else {
+			geometryBuilder.cancelPrefetches();
+			geometryBuilder.runExclusive(action);
+		}
+	}
+
+	/**
+	 * Starts building the geometry of chunks a later draw will need, as found by {@link #findVisible}. It is
+	 * built only while no worker has geometry to build for a draw. Call it after the current draw: workers that
+	 * have started a prefetch finish it before turning to geometry a draw is waiting for.
+	 */
+	public void prefetchGeometry(List<ChunkCoord> visible)
+	{
+		if (geometryBuilder == null)
+			return;
+		for (ChunkCoord coord : visible) {
+			if (worldSubset.contains(coord) && geometryLoadedChunks.getIfPresent(coord) == null)
+				geometryBuilder.prefetch(coord);
+		}
+	}
+
+	/** Drops prefetched geometry that has not started building, such as after the last tile. */
+	public void cancelGeometryPrefetch()
+	{
+		if (geometryBuilder != null)
+			geometryBuilder.cancelPrefetches();
 	}
 	
 	private List<Chunk> buildVisibleGeometry(List<ChunkCoord> visible) {
 		List<ChunkCoord> coords = visible.stream().filter(worldSubset::contains).toList();
 		Chunk[] chunks = new Chunk[coords.size()];
-		List<CompletableFuture<Void>> pending = new ArrayList<>();
+		List<CompletableFuture<Chunk>> pending = new ArrayList<>();
+		int[] pendingIndex = new int[coords.size()];
 
 		for (int i = 0; i < coords.size(); i++) {
 			ChunkCoord coord = coords.get(i);
 			chunks[i] = geometryLoadedChunks.getIfPresent(coord);
 			if (chunks[i] == null) {
-				if (geometryBuilders == null) {
+				if (geometryBuilder == null) {
 					chunks[i] = geometryLoadedChunks.get(coord);
 				} else {
-					int index = i;
-					pending.add(CompletableFuture.runAsync(() -> chunks[index] = geometryLoadedChunks.get(coord), geometryBuilders));
+					pendingIndex[pending.size()] = i;
+					pending.add(geometryBuilder.build(coord));
 				}
 			}
 		}
 
-		// Keep the established draw order and wait for all raw-data readers before evicting chunks.
-		if (!pending.isEmpty())
+		// Keep the established draw order.
+		if (!pending.isEmpty()) {
 			CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).join();
+			for (int p = 0; p < pending.size(); p++)
+				chunks[pendingIndex[p]] = pending.get(p).join();
+		}
 		return Arrays.asList(chunks);
 	}
 
@@ -1326,11 +1387,13 @@ public class World implements BlockContext, AutoCloseable
 	{
 		if (rawLoadedChunks != null)
 		{
-			// Flush geometry
-			geometryLoadedChunks.unloadAll();
-			
-			// Flush raw loaded chunks
-			rawLoadedChunks.unloadAll();
+			whileGeometryIdle(() -> {
+				// Flush geometry
+				geometryLoadedChunks.unloadAll();
+
+				// Flush raw loaded chunks
+				rawLoadedChunks.unloadAll();
+			});
 		}
 	}
 	
@@ -1338,7 +1401,7 @@ public class World implements BlockContext, AutoCloseable
 	{
 		if (geometryLoadedChunks != null)
 		{
-			geometryLoadedChunks.unloadAll();
+			whileGeometryIdle(geometryLoadedChunks::unloadAll);
 		}
 	}
 	

@@ -62,10 +62,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,6 +120,8 @@ public class TileRenderer
 
 	/** How often, in base tiles, to log geometry cache and GPU buffer usage at debug level. */
 	private static final int GEOMETRY_USAGE_LOG_INTERVAL = 1000;
+	/** Tiles ahead of the one being drawn whose geometry is built on otherwise idle workers. */
+	private static final int PREFETCH_TILES = 3;
 	
 	private final Configuration config;
 	
@@ -848,10 +852,22 @@ public class TileRenderer
 			// Each tile's pixels are collected after the next tile has been drawn, so the CPU prepares
 			// the next tile instead of waiting for the GPU to finish the current one.
 			RenderedTile pending = null;
+			// Positioned on upcoming tiles to find the chunks whose geometry to build ahead of time.
+			OrthoCamera prefetchCamera = new OrthoCamera(rasteriser, tileWidth, tileHeight);
 
 			try {
 				// Column order within Morton blocks keeps neighbouring chunks in the geometry cache.
-				for (TileCoord t : new TileRenderOrder(tiles)) {
+				Iterator<TileCoord> order = new TileRenderOrder(tiles).iterator();
+				// Tiles after the one being drawn, with their visible chunks, whose geometry is being prefetched.
+				ArrayDeque<UpcomingTile> upcoming = new ArrayDeque<>();
+				while (true) {
+					UpcomingTile next = upcoming.poll();
+					if (next == null && order.hasNext())
+						next = findVisibleChunks(world, prefetchCamera, order.next(), map, zoom);
+					if (next == null)
+						break;
+					TileCoord t = next.coord();
+
 					progress.started(t);
 					log.trace("Rendering tile @ {},{} (tile {} of {})", t.x, t.y, done+1, tileCount);
 					progressListener.onTaskUpdate(done, tileCount);
@@ -861,7 +877,15 @@ public class TileRenderer
 					rasteriser.resetState();
 					rasteriser.clear(layer.getBackgroundColorRGB());
 
-					world.draw(camera, false, true);
+					world.draw(camera, next.visible(), false, true);
+
+					// Prefetch only once this tile's geometry is built, so that workers busy with a prefetch
+					// never hold up the draw. They build ahead while the GPU draws and the previous tile is saved.
+					while (upcoming.size() < PREFETCH_TILES && order.hasNext()) {
+						UpcomingTile ahead = findVisibleChunks(world, prefetchCamera, order.next(), map, zoom);
+						world.prefetchGeometry(ahead.visible());
+						upcoming.add(ahead);
+					}
 
 					RenderedTile current = new RenderedTile(t, getImageFile(layerDir, t.x, t.y, imageFormat),
 							rasteriser.startScreenshot(0, 0, tileWidth, tileHeight, imageFormat));
@@ -885,6 +909,7 @@ public class TileRenderer
 					saveTile(last, layer, tileCache, imageWriteQueue);
 				}
 			} finally {
+				world.cancelGeometryPrefetch();
 				// Only reached with a tile left over when rendering failed: keep the tile that did render.
 				if (pending != null) {
 					try {
@@ -903,6 +928,15 @@ public class TileRenderer
 	}
 
 	private record RenderedTile(TileCoord coord, File outputFile, PendingScreenshot screenshot) {}
+
+	/** A tile still to be drawn, with the chunks found visible from it so the draw need not search again. */
+	private record UpcomingTile(TileCoord coord, List<ChunkCoord> visible) {}
+
+	private static UpcomingTile findVisibleChunks(World world, OrthoCamera camera, TileCoord tile, DimensionConfig map, int zoom)
+	{
+		camera.lookAtTile(tile.x, tile.y, zoom, map.getCameraAngleRad(), map.getCameraElevationRad());
+		return new UpcomingTile(tile, world.findVisible(camera));
+	}
 
 	private void saveTile(RenderedTile tile, LayerConfig layer, TileCache tileCache, ImageWriteQueue imageWriteQueue)
 	{
